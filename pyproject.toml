@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.isort]
+multi_line_output = 10
+skip_gitignore = true
+use_parentheses = true
+
+[tool.black]
+line-length = 79
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+pretty = true
+non_interactive = true

@@ -1,0 +1,26 @@
+# only has to pass for python 3.8
+name: Static code checks
+
+on:
+  push:
+    branches:
+      main
+  pull_request:
+    branches:
+      main
+
+jobs:
+  run-code-check:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+
+      - name: precommit checker
+        uses: pre-commit/action@v2.0.3
