@@ -1,5 +1,5 @@
-# aieng-template
-aieng template repo, the static code checker runs on python3.8
+# FL4Health
+Repository containing a federated learning engine aimed at health experimentation with an ultimate target of integration into the DHDP, the static code checker runs on python3.8
 
 # Installing dependencies
 ```
