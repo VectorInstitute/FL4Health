@@ -8,3 +8,5 @@ pytest-cov
 toml
 types-requests
 types-setuptools
+numpy
+torch
