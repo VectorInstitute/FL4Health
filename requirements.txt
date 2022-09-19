@@ -10,3 +10,5 @@ types-requests
 types-setuptools
 numpy
 torch
+torchvision
+flwr

@@ -130,3 +130,9 @@ dmypy.json
 
 # pycharm
 .idea/
+
+#mac
+.DS_Store
+
+#datasets
+**/cifar_data/**
