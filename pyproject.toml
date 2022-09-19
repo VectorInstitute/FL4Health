@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.isort]
 multi_line_output = 10
-line_length = 119
+line_length = 79
 skip_gitignore = true
 use_parentheses = true
 
 [tool.black]
-line-length = 119
+line-length = 79
 
 [tool.mypy]
 ignore_missing_imports = true
