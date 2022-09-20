@@ -3,10 +3,10 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-line-length = 79
+line-length = 119
 
 [tool.isort]
-line_length = 79
+line_length = 119
 profile = "black"
 skip_gitignore = true
 

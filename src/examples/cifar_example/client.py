@@ -10,13 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from flwr.common.logger import log
-from flwr.common.typing import (
-    Config,
-    EvaluateRes,
-    FitRes,
-    GetParametersRes,
-    Parameters,
-)
+from flwr.common.typing import Config, EvaluateRes, FitRes, GetParametersRes, Parameters
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
@@ -50,12 +44,8 @@ def load_data(data_dir: Path) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    training_set = CIFAR10(
-        str(data_dir), train=True, download=True, transform=transform
-    )
-    validation_set = CIFAR10(
-        str(data_dir), train=False, download=True, transform=transform
-    )
+    training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
+    validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
     train_loader = DataLoader(training_set, batch_size=32, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=32)
     num_examples = {
@@ -91,12 +81,11 @@ def train(
             correct += (predicted == labels).sum().item()
 
         accuracy = correct / total
+        # Local client logging.
         log(
             INFO,
-            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches},"
-            f"Client Training Accuracy: {accuracy}",
+            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches}," f"Client Training Accuracy: {accuracy}",
         )
-        running_loss = 0.0
     return accuracy
 
 
@@ -118,10 +107,10 @@ def validate(
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
     accuracy = correct / total
+    # Local client logging.
     log(
         INFO,
-        f"Client Validation Loss: {loss/n_batches},"
-        f"Client Validation Accuracy: {accuracy}",
+        f"Client Validation Loss: {loss/n_batches}," f"Client Validation Accuracy: {accuracy}",
     )
     return loss / n_batches, accuracy
 
@@ -142,18 +131,24 @@ class CifarClient(fl.client.NumPyClient):
         self.device = device
 
     def get_parameters(self, config: Config) -> GetParametersRes:
+        # Determines which weights are sent back to the server for aggregation.
+        # Currently sending all of them ordered by state_dict keys
+        # NOTE: Order matters, because it is relied upon by set_parameters below
         return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
     def set_parameters(self, parameters: Parameters, config: Config) -> None:
+        # Sets the local model parameters transfered from the server. The state_dict is
+        # reconstituted because parameters is simply a list of bytes
         params_dict = zip(self.model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
     def fit(self, parameters: Parameters, config: Config) -> FitRes:
         self.set_parameters(parameters, config)
-        accuracy = train(
-            self.model, self.train_loader, epochs=3, device=self.device
-        )
+        # TODO: training parameters should be set via the config, passed from the server.
+        accuracy = train(self.model, self.train_loader, epochs=3, device=self.device)
+        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
+        # calculation results.
         return (
             self.get_parameters(config),
             num_examples["train_set"],
@@ -163,8 +158,10 @@ class CifarClient(fl.client.NumPyClient):
     def evaluate(self, parameters: Parameters, config: Config) -> EvaluateRes:
         self.set_parameters(parameters, config)
         loss, accuracy = validate(net, validation_loader, device=self.device)
+        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
+        # calculation results.
         return (
-            float(loss),
+            loss,
             num_examples["validation_set"],
             {"accuracy": accuracy},
         )
@@ -174,10 +171,6 @@ if __name__ == "__main__":
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net = Net().to(DEVICE)
-    train_loader, validation_loader, num_examples = load_data(
-        Path(os.path.join(os.getcwd(), "cifar_data/"))
-    )
-    client = CifarClient(
-        net, train_loader, validation_loader, num_examples, DEVICE
-    )
+    train_loader, validation_loader, num_examples = load_data(Path(os.path.join(os.getcwd(), "cifar_data/")))
+    client = CifarClient(net, train_loader, validation_loader, num_examples, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
