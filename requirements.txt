@@ -1,10 +1,14 @@
 black
 flake8
+flwr
 isort
 mypy
+numpy
 pre-commit
 pytest
 pytest-cov
 toml
+torch
+torchvision
 types-requests
 types-setuptools
