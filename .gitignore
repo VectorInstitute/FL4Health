@@ -131,8 +131,12 @@ dmypy.json
 # pycharm
 .idea/
 
+# vscode
+launch.json
+
 #mac
 .DS_Store
 
 #datasets
 **/cifar_data/**
+**/news_classification/distributed_datasets/**
