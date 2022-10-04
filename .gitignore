@@ -139,4 +139,4 @@ launch.json
 
 #datasets
 **/cifar_data/**
-**/news_classification/distributed_datasets/**
+**/news_classification/partitioned_datasets/**
