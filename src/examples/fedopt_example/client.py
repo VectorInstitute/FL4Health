@@ -1,5 +1,4 @@
 import argparse
-import os
 from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
@@ -11,9 +10,9 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
-from src.examples.fedopt_dp_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
-from src.examples.fedopt_dp_example.metrics import ClientMetrics
-from src.examples.fedopt_dp_example.model import LSTM
+from src.examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
+from src.examples.fedopt_example.metrics import ClientMetrics
+from src.examples.fedopt_example.model import LSTM
 
 
 def train(
@@ -181,19 +180,11 @@ class NewsClassifier(fl.client.NumPyClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
-    parser.add_argument("--dataset_name", action="store", type=str, help="Name of the local dataset")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
 
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_path = Path(
-        os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "datasets",
-            "news_classification",
-            "distributed_datasets",
-            args.dataset_name,
-        )
-    )
+    data_path = Path(args.dataset_path)
     client = NewsClassifier(data_path, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
