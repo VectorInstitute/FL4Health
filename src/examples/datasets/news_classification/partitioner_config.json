@@ -1,0 +1,4 @@
+{
+    "dataset_partitioner_type": "JSON_TO_PANDAS",
+    "json_lines": "True"
+}
