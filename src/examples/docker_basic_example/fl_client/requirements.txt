@@ -1,0 +1,17 @@
+black
+flake8
+flwr
+isort
+mypy
+nltk
+numpy
+pandas
+pre-commit
+pytest
+pytest-cov
+sklearn
+toml
+torch
+torchvision
+types-requests
+types-setuptools
