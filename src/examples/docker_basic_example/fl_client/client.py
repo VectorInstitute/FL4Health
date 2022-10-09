@@ -11,10 +11,9 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, EvaluateRes, FitRes, GetParametersRes, Parameters
+from settings import FLOWER_SERVER_URL
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
-
-from settings import FLOWER_SERVER_URL
 
 
 class Net(nn.Module):

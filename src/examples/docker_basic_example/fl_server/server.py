@@ -3,8 +3,7 @@ from typing import List, Tuple
 import flwr as fl
 from flwr.common.typing import Metrics
 from flwr.server.strategy import FedAvg
-
-from settings import SERVER_INTERNAL_HOST, SERVER_INTERNAL_PORT, NUM_ROUNDS, NUM_CLIENTS
+from settings import NUM_CLIENTS, NUM_ROUNDS, SERVER_INTERNAL_HOST, SERVER_INTERNAL_PORT
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
@@ -54,7 +53,7 @@ def main() -> None:
     )
     fl.server.start_server(
         server_address=f"{SERVER_INTERNAL_HOST}:{SERVER_INTERNAL_PORT}",
-        config=fl.server.ServerConfig(num_rounds=10),
+        config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         strategy=strategy,
     )
 
