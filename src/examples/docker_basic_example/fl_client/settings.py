@@ -1,3 +1,3 @@
 import os
 
-FLOWER_SERVER_URL = os.getenv("FLOWER_SERVER_URL")
+FLOWER_SERVER_URL = os.getenv("FLOWER_SERVER_URL")  # type: ignore
