@@ -7,8 +7,8 @@ from flwr.server.strategy import FedAvg
 
 NUM_CLIENTS = int(os.getenv("NUM_CLIENTS"))  # type: ignore
 NUM_ROUNDS = int(os.getenv("NUM_ROUNDS"))  # type: ignore
-SERVER_INTERNAL_HOST = os.getenv("SERVER_INTERNAL_HOST")  # type: ignore
-SERVER_INTERNAL_PORT = os.getenv("SERVER_INTERNAL_PORT")  # type: ignore
+SERVER_INTERNAL_HOST = os.getenv("SERVER_INTERNAL_HOST")
+SERVER_INTERNAL_PORT = os.getenv("SERVER_INTERNAL_PORT")
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:

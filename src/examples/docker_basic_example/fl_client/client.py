@@ -14,7 +14,7 @@ from flwr.common.typing import Config, EvaluateRes, FitRes, GetParametersRes, Pa
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-FLOWER_SERVER_URL = os.getenv("FLOWER_SERVER_URL")  # type: ignore
+FLOWER_SERVER_URL = os.getenv("FLOWER_SERVER_URL")
 
 
 class Net(nn.Module):
