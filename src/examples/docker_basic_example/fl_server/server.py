@@ -5,8 +5,8 @@ import flwr as fl
 from flwr.common.typing import Metrics
 from flwr.server.strategy import FedAvg
 
-NUM_CLIENTS = int(os.getenv("NUM_CLIENTS"))  # type: ignore
-NUM_ROUNDS = int(os.getenv("NUM_ROUNDS"))  # type: ignore
+NUM_CLIENTS = int(str(os.getenv("NUM_CLIENTS")))
+NUM_ROUNDS = int(str(os.getenv("NUM_ROUNDS")))
 SERVER_INTERNAL_HOST = os.getenv("SERVER_INTERNAL_HOST")
 SERVER_INTERNAL_PORT = os.getenv("SERVER_INTERNAL_PORT")
 
