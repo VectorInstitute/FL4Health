@@ -1,0 +1,32 @@
+
+version: '3'
+services: # Define services in multi-container Docker Application
+
+    fl_server: # FL Server container specification
+        build: fl_server # Path to dockerfile for container
+        container_name: fl_server # Name of the container
+        ports: # Mapping of local ports to virtual docker ports
+        - "5000:8080"
+        environment: # Specification of environment variables
+            SERVER_INTERNAL_HOST: "0.0.0.0"
+            SERVER_INTERNAL_PORT: "8080"
+            NUM_CLIENTS: 2
+            NUM_ROUNDS: 10
+
+    fl_client_1:  # FL Client container specification
+        build: fl_client  # Path to dockerfile for container
+        container_name: fl_client_1 # Name of the container
+        depends_on: # Container dependencies
+        - fl_server
+        environment:  # Specification of environment variables
+            FLOWER_SERVER_URL: "fl_server:8080"
+            FLOWER_CLIENT_NUMBER: "1"
+
+    fl_client_2: # FL Client container specification
+        build: fl_client  # Path to dockerfile for container
+        container_name: fl_client_2 # Name of the container
+        depends_on: # Container dependencies
+        - fl_server
+        environment: # Specification of environment variables
+            FLOWER_SERVER_URL: "fl_server:8080"
+            FLOWER_CLIENT_NUMBER: "2"
