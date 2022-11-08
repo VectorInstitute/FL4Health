@@ -1,9 +1,6 @@
-# Basic Federated Learning Example
-This example provides an very simple implementation of a federated learning training setup on the CIFAR dataset. The
-FL server expects two clients to be spun up (i.e. it will wait until two clients report in before starting training).
-Each client has the same "local" dataset. I.e. they each load the complete CIFAR dataset and therefore have the same
-training and validation sets. The server has some custom metrics aggregation, but is otherwise a vanilla FL
-implementation using FedAvg as the server side optimization.
+# Instance Level Differential Privacy Federated Learning Example
+
+This example shows how to implement Differential Privacy into the Federated Learning framework. In this case we focus on *instance level* privacy rather than the more substantial client-level privacy. Hence, the example uses the Opacus DP-SGD algorithm to impose DP guarantees and accounting is done using instance-level privacy accountants. The server side optimization simply uses FedAvg to combine the weights at the server level. The clients and their underlying data are Poisson sampled.
 
 # Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
@@ -17,15 +14,13 @@ to install all of the dependencies for this project.
 
 The next step is to start the server by running
 ```
-python -m src.examples.basic_example.server
+python -m src.examples.fedopt_example.server
 ```
-from the FL4Health directory.
 
 ## Starting Clients
 
-Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
-clients. This is done by simply running (remembering to activate your environment)
+Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the clients expected by the server. This is done by simply running (remembering to activate your environment)
 ```
-python -m src.examples.basic_example.client
+python -m src.examples.fedopt_example.client
 ```
-After both clients have been started federated learning should commence.
+After the minimum number of clients have been started federated learning should commence.
