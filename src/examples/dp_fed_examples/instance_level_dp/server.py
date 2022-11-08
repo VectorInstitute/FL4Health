@@ -100,6 +100,9 @@ def main() -> None:
     accountant = FlInstanceLevelAccountant(
         CLIENT_SAMPLING, CLIENT_NOISE_MULTIPLIER, CLIENT_EPOCHS, [CLIENT_BATCH_SIZE], [CLIENT_DATA_SIZES]
     )
+    target_delta = 1.0 / TOTAL_DATA_SIZE
+    epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
+    log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = FedAvgSampling(
@@ -118,10 +121,6 @@ def main() -> None:
         strategy=strategy,
         client_manager=client_manager,
     )
-
-    target_delta = 1.0 / TOTAL_DATA_SIZE
-    epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
-    log(INFO, f"Privacy ({epsilon}, {target_delta})")
 
 
 if __name__ == "__main__":
