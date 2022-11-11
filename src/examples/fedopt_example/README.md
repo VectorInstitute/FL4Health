@@ -43,16 +43,16 @@ not specified, the partition script with throw an error.
 
 The next step is to start the server by running something like
 ```
-python -m src.examples.fedopt_example.server  --n_clients 2 --local_epochs 1
---batch_size, 256 --vocab_dimension, 64 --hidden_size 64 --sequence_length 64
+python -m src.examples.fedopt_example.server  --config_path /path/to/config.yaml
 ```
-from the FL4Health directory. The arguments specify the following
+from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
 * `local_epochs`: number of epochs each client will train for locally
 * `batch_size`: size of the batches each client will train on
 * `vocab_dimension`: embedding dimension of the word embeddings
 * `hidden_size`: hidden size of the LSTM layers
 * `sequence_length`: input sequence length of the LSTM model to be trained
+* `n_server_rounds`: The number of rounds to run FL
 
 ## Starting Clients
 

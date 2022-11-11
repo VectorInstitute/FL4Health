@@ -2,5 +2,4 @@
 
 sleep 10
 # start server
-
-python3 src/server.py
+python3 -m src.examples.docker_basic_example.fl_server.server --config_path src/examples/docker_basic_example/config.yaml

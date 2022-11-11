@@ -3,7 +3,7 @@ import os
 from functools import partial
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 from flwr.common.logger import log
@@ -15,6 +15,7 @@ from sklearn.model_selection import train_test_split
 from src.examples.fedopt_example.client_data import LabelEncoder, Vocabulary, get_local_data, word_tokenize
 from src.examples.fedopt_example.metrics import Outcome, ServerMetrics
 from src.examples.fedopt_example.model import LSTM
+from src.utils.config import load_config
 
 
 def get_initial_model_parameters(vocab_size: int, vocab_dimension: int, hidden_size: int) -> Parameters:
@@ -116,16 +117,7 @@ def pretrain_vocabulary(path: Path) -> Tuple[Vocabulary, LabelEncoder]:
     return Vocabulary(None, text), label_encoder
 
 
-def main(
-    n_server_rounds: int,
-    n_clients: int,
-    sequence_length: int,
-    local_epochs: int,
-    batch_size: int,
-    vocab_dimension: int,
-    hidden_size: int,
-) -> None:
-
+def main(config: Dict[str, Any]) -> None:
     log(INFO, "Fitting vocabulary to a centralized text sample")
     data_path = Path(
         os.path.join(
@@ -138,25 +130,36 @@ def main(
 
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
-        fit_config, sequence_length, local_epochs, batch_size, vocab_dimension, hidden_size, vocabulary, label_encoder
+        fit_config,
+        config["sequence_length"],
+        config["local_epochs"],
+        config["batch_size"],
+        config["vocab_dimension"],
+        config["hidden_size"],
+        vocabulary,
+        label_encoder,
     )
 
     # Server performs FedAdam as the server side optimization strategy.
     # Uses the default parameters for moment accumulation
+
     strategy = FedAdam(
-        min_fit_clients=n_clients,
-        min_evaluate_clients=n_clients,
+        min_fit_clients=config["n_clients"],
+        min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=n_clients,
+        min_available_clients=config["n_clients"],
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
         # Server side weight initialization
-        initial_parameters=get_initial_model_parameters(vocabulary.vocabulary_size, vocab_dimension, hidden_size),
+        initial_parameters=get_initial_model_parameters(
+            vocabulary.vocabulary_size, config["vocab_dimension"], config["batch_size"]
+        ),
     )
+
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=n_server_rounds),
+        server_address=config["server_address"],
+        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
     )
 
@@ -164,35 +167,13 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
     parser.add_argument(
-        "--n_clients",
+        "--config_path",
         action="store",
-        type=int,
-        help="Number of clients expected to participate in the FL training",
-        default=64,
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
     )
-    parser.add_argument(
-        "--n_server_rounds",
-        action="store",
-        type=int,
-        help="Number of rounds of server aggregation (local to global model aggregation)",
-        default=10,
-    )
-    parser.add_argument(
-        "--sequence_length", action="store", type=int, help="Length of LSTM sequence (n tokens input", default=64
-    )
-    parser.add_argument("--local_epochs", action="store", type=int, help="How many epochs each client runs", default=3)
-    parser.add_argument(
-        "--batch_size", action="store", type=int, help="Batch size used during local training", default=64
-    )
-    parser.add_argument("--vocab_dimension", action="store", type=int, help="Size of the word embeddings", default=100)
-    parser.add_argument("--hidden_size", action="store", type=int, help="Hidden size of the LSTM layers", default=64)
     args = parser.parse_args()
-    main(
-        args.n_server_rounds,
-        args.n_clients,
-        args.sequence_length,
-        args.local_epochs,
-        args.batch_size,
-        args.vocab_dimension,
-        args.hidden_size,
-    )
+
+    config = load_config(args.config_path)
+    main(config)
