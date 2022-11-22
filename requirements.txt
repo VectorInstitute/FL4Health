@@ -10,6 +10,7 @@ pre-commit
 pytest
 pytest-cov
 sklearn
+tensorflow-privacy
 toml
 torch
 torchvision
