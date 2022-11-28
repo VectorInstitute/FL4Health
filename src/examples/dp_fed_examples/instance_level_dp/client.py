@@ -111,10 +111,7 @@ def validate(
             correct += (predicted == labels).sum().item()
     accuracy = correct / total
     # Local client logging.
-    log(
-        INFO,
-        f"Client Validation Loss: {loss/n_batches}," f"Client Validation Accuracy: {accuracy}",
-    )
+    log(INFO, f"Client Validation Loss: {loss/n_batches}, Client Validation Accuracy: {accuracy}")
     return loss / n_batches, accuracy
 
 
@@ -161,6 +158,7 @@ class CifarClient(fl.client.NumPyClient):
             data_loader=self.train_loader,
             noise_multiplier=self.noise_multiplier,
             max_grad_norm=self.clipping_bound,
+            clipping="adaptive",
         )
 
     def setup_client(self, config: Config) -> None:

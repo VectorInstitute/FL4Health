@@ -111,7 +111,7 @@ def validate(
     # Local client logging.
     log(
         INFO,
-        f"Client Validation Loss: {loss/n_batches}," f"Client Validation Accuracy: {accuracy}",
+        f"Client Validation Loss: {loss/n_batches} Client Validation Accuracy: {accuracy}",
     )
     return loss / n_batches, accuracy
 

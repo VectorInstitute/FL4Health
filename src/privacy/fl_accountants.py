@@ -95,7 +95,7 @@ class ClientLevelAccountant(ABC):
             assert isinstance(self.noise_multiplier, float)
 
 
-class PoissonSamplingFlClientLevelAccountant(ClientLevelAccountant):
+class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
     """
     This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
     """
@@ -131,7 +131,7 @@ class PoissonSamplingFlClientLevelAccountant(ClientLevelAccountant):
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
 
 
-class FixedSamplingNoReplacementFlClientLevelAccountant(ClientLevelAccountant):
+class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
     """
     This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
     """
