@@ -57,24 +57,22 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def construct_config(
-    _: int,
-    local_epochs: int,
-    batch_size: int,
-) -> Config:
+def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
+        "adaptive_clipping": adaptive_clipping,
     }
 
 
 def fit_config(
     local_epochs: int,
     batch_size: int,
+    adaptive_clipping: bool,
     server_round: int,
 ) -> Config:
-    return construct_config(server_round, local_epochs, batch_size)
+    return construct_config(server_round, local_epochs, batch_size, adaptive_clipping)
 
 
 def main() -> None:
@@ -100,7 +98,7 @@ def main() -> None:
     CLIPPING_QUANTILE = 0.5
 
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE)
+    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, ADAPTIVE_CLIPPING)
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()

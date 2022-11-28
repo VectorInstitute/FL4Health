@@ -136,6 +136,7 @@ class CifarClient(NumpyClippingClient):
     def setup_client(self, config: Config) -> None:
         self.batch_size = config["batch_size"]
         self.local_epochs = config["local_epochs"]
+        self.adaptive_clipping = config["adaptive_clipping"]
 
         train_loader, validation_loader, num_examples = load_data(
             Path(os.path.join(os.path.dirname(os.getcwd()), "examples", "datasets", "cifar_data")), self.batch_size

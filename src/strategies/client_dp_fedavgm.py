@@ -1,7 +1,10 @@
 """
-This implementation allows for Poisson Sampling in addition to Fixed w/o Replacement Sampling
+This strategy implements the Federated Learning with client-level DP approach discussed in Differentially Private
+Learning with Adaptive Clipping. This function provides a noised version of unweighted FedAvgM.
+NOTE: It assumes that the models are packaging clipping bits along with the model parameters. If adaptive clipping is
+false, these bits will simply be 0.
 
-Paper: https://arxiv.org/abs/1602.05629
+Paper: https://arxiv.org/abs/1905.03871
 """
 
 import math

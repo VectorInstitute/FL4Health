@@ -1,6 +1,6 @@
-# Instance Level Differential Privacy Federated Learning Example
+# Client Level Differential Privacy Federated Learning Example
 
-This example shows how to implement Differential Privacy into the Federated Learning framework. In this case we focus on *instance level* privacy rather than the more substantial client-level privacy. Hence, the example uses the Opacus DP-SGD algorithm to impose DP guarantees and accounting is done using instance-level privacy accountants. The server side optimization simply uses FedAvg to combine the weights at the server level. The clients and their underlying data are Poisson sampled.
+This example shows how to implement Differential Privacy into the Federated Learning framework. In this case we focus on *client level* privacy which is a more substantial version of instance level DP, where the participation of an entire client's set of data is protected from training dataset membership inference. This example uses the FedAvgM implementation with unweighted averaging (To be implemented) suggested in Differentially Private Learning with Adaptive Clipping. The example uses an accountant specifically tailered to this approach. The clients are Poisson sampled by default.
 
 # Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run

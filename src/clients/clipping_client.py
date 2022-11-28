@@ -8,9 +8,10 @@ from numpy import linalg
 
 
 class NumpyClippingClient(NumPyClient):
-    def __init__(self) -> None:
+    def __init__(self, adaptive_clipping: bool = False) -> None:
         self.clipping_bound: Optional[float] = None
         self.current_weights: Optional[NDArrays] = None
+        self.adaptive_clipping = adaptive_clipping
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
@@ -23,8 +24,9 @@ class NumpyClippingClient(NumPyClient):
         network_frobenius_norm = self.calculate_parameters_norm(parameters)
         log(INFO, f"Update norm: {network_frobenius_norm}, Clipping Bound: {self.clipping_bound}")
         if network_frobenius_norm <= self.clipping_bound:
-            # parameters and clipping bit
-            return parameters, 1.0
+            # if we're not adaptively clipping then don't send clipping bit info
+            clipping_bit = 1.0 if self.adaptive_clipping else 0.0
+            return parameters, clipping_bit
         clip_scalar = min(1.0, self.clipping_bound / network_frobenius_norm)
         # parameters and clipping bit
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
