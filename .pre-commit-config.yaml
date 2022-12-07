@@ -15,10 +15,13 @@ repos:
       - id: trailing-whitespace
       - id: check-yaml
 
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+  - repo: local
     hooks:
-      - id: flake8
+    - id: flake8
+      name: flake8
+      language: python
+      entry: pflake8
+      files: ".*.py$"
 
   - repo: https://github.com/psf/black
     rev: 22.3.0
