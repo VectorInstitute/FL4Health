@@ -1,3 +1,4 @@
+# Requirements file for FL server container
 black
 flake8
 flwr
@@ -5,14 +6,11 @@ isort
 mypy
 nltk
 numpy
-opacus
 pandas
 pre-commit
-pyproject-flake8==5.0.4
 pytest
 pytest-cov
 sklearn
-tensorflow-privacy
 toml
 torch
 torchvision
