@@ -7,6 +7,7 @@ nltk
 numpy
 pandas
 pre-commit
+pyproject-flake8==5.0.4
 pytest
 pytest-cov
 sklearn

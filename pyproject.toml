@@ -1,3 +1,18 @@
+[project]
+name = "fl4health"
+version = "0.0.1"
+authors = [
+  { name="AI Engineering", email="ai_engineering@vectorinstitute.ai" },
+]
+description = "Federated Learning for Health"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -18,3 +33,7 @@ non_interactive = true
 disallow_untyped_defs = true
 no_implicit_optional = true
 check_untyped_defs = true
+
+[tool.flake8]
+max-line-length = 119
+extend-ignore = ["E203", "W503"]

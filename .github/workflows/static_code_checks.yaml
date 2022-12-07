@@ -22,5 +22,8 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: precommit checker
-        uses: pre-commit/action@v2.0.3
+      - name: precommit checks
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pre-commit run --all-files

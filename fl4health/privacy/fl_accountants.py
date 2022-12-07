@@ -1,7 +1,7 @@
 from math import ceil
 from typing import List, Optional, Union
 
-from src.privacy.moments_accountant import (
+from fl4health.privacy.moments_accountant import (
     FixedSamplingWithoutReplacement,
     MomentsAccountant,
     PoissonSampling,

@@ -8,11 +8,10 @@ import flwr as fl
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torch.utils.data import DataLoader
-
 from src.examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
 from src.examples.fedopt_example.metrics import ClientMetrics
 from src.examples.fedopt_example.model import LSTM
+from torch.utils.data import DataLoader
 
 
 def train(

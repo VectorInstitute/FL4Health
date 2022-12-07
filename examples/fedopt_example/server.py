@@ -11,7 +11,6 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAdam
 from sklearn.model_selection import train_test_split
-
 from src.examples.fedopt_example.client_data import LabelEncoder, Vocabulary, get_local_data, word_tokenize
 from src.examples.fedopt_example.metrics import Outcome, ServerMetrics
 from src.examples.fedopt_example.model import LSTM
