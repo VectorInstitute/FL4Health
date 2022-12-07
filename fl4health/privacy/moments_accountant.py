@@ -44,7 +44,11 @@ class MomentsAccountant:
     def __init__(self, moment_orders: Optional[List[float]] = None) -> None:
         """Moment orders are equivalent to lambda from Deep Learning with Differential Privacy (Abadi et. al. 2016).
         They form the set of moments to estimate the infimum of Theorem 2 part 2. The default values were taken from
-        a tensorflow example notebook. In the paper, they state that trying lambda <= 32 is usually sufficient.
+        the tensorflow federated DP tutorial notebook:
+        https://github.com/tensorflow/federated/blob/main/docs/tutorials/
+        federated_learning_with_differential_privacy.ipynb
+
+        In the paper above, they state that trying lambda <= 32 is usually sufficient.
 
         Sampling type is the data point sampling strategy: i.e. examples from dataset for a batch with probability q
         Noise type specifies whether Gaussian or Laplacian noise is added to the updates
