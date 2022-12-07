@@ -6,9 +6,9 @@ import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config, Metrics
 
-from src.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from src.privacy.fl_accountants import FlInstanceLevelAccountant
-from src.strategies.fedavg import FedAvgSampling
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
+from fl4health.strategies.fedavg import FedAvgSampling
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:

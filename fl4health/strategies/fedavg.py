@@ -10,7 +10,7 @@ from flwr.common import EvaluateIns, FitIns, MetricsAggregationFn, NDArrays, Par
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 
-from src.client_managers.base_sampling_manager import BaseSamplingManager
+from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 
 
 class FedAvgSampling(FedAvg):

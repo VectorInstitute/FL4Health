@@ -16,8 +16,8 @@ from flwr.common import (
 )
 from flwr.server.client_proxy import ClientProxy
 
-from src.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
-from src.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 
 
 class CustomClientProxy(ClientProxy):

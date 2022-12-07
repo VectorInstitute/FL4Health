@@ -6,7 +6,7 @@ from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 
-from src.client_managers.base_sampling_manager import BaseSamplingManager
+from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 
 
 class FixedSamplingWithoutReplacementClientManager(BaseSamplingManager):
