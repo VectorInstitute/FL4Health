@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 
 import numpy as np
 from sklearn.metrics import confusion_matrix
+
 from examples.fedopt_example.client_data import LabelEncoder
 
 
