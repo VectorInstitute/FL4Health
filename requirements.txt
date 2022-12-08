@@ -11,7 +11,7 @@ pre-commit
 pyproject-flake8==5.0.4
 pytest
 pytest-cov
-sklearn
+scikit-learn
 tensorflow-privacy
 toml
 torch
