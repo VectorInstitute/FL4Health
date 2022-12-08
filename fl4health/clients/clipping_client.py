@@ -24,7 +24,8 @@ class NumpyClippingClient(NumPyClient):
         network_frobenius_norm = self.calculate_parameters_norm(parameters)
         log(INFO, f"Update norm: {network_frobenius_norm}, Clipping Bound: {self.clipping_bound}")
         if network_frobenius_norm <= self.clipping_bound:
-            # if we're not adaptively clipping then don't send clipping bit info
+            # if we're not adaptively clipping then don't send true clipping bit info as this would potentially leak
+            # information
             clipping_bit = 1.0 if self.adaptive_clipping else 0.0
             return parameters, clipping_bit
         clip_scalar = min(1.0, self.clipping_bound / network_frobenius_norm)

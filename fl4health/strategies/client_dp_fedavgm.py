@@ -66,9 +66,9 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         clipping_noise_mutliplier: float = 1.0,
         beta: float = 0.9,
     ) -> None:
-        """Federated Averaging strategy.
+        """Client-level differentially private federated averaging with momentum and adaptive clipping.
 
-        Implementation based on https://arxiv.org/abs/1602.05629
+        Implementation based on https://arxiv.org/abs/1905.03871
 
         Parameters
         ----------
@@ -181,6 +181,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             self.m_t = weights_update
         else:
             self.m_t = [
+                # NOTE: This is not normalized (beta vs. 1-beta) as used in the original implementation
                 self.beta * prev_layer_update + noised_layer_update
                 for prev_layer_update, noised_layer_update in zip(self.m_t, weights_update)
             ]
