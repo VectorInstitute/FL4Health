@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from math import ceil
 from typing import List, Optional, Union
 
@@ -71,7 +72,30 @@ class FlInstanceLevelAccountant:
         return max(deltas)
 
 
-class PoissonSamplingFlClientLevelAccountant:
+class ClientLevelAccountant(ABC):
+    def __init__(
+        self, noise_multiplier: Union[float, List[float]], moment_orders: Optional[List[float]] = None
+    ) -> None:
+        self.noise_multiplier = noise_multiplier
+        self.accountant = MomentsAccountant(moment_orders)
+
+    @abstractmethod
+    def get_epsilon(self, server_updates: Union[int, List[int]], delta: float) -> float:
+        pass
+
+    @abstractmethod
+    def get_delta(self, server_updates: Union[int, List[int]], epsilon: float) -> float:
+        pass
+
+    def _validate_server_updates(self, server_updates: Union[int, List[int]]) -> None:
+        if isinstance(server_updates, list):
+            assert isinstance(self.noise_multiplier, list)
+            assert len(server_updates) == len(self.noise_multiplier)
+        else:
+            assert isinstance(self.noise_multiplier, float)
+
+
+class PoissonSamplingFlClientLevelAccountant(ClientLevelAccountant):
     """
     This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
     """
@@ -88,22 +112,13 @@ class PoissonSamplingFlClientLevelAccountant:
         NOTE: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
         """
-        self.noise_multiplier = noise_multiplier
+        super().__init__(noise_multiplier, moment_orders)
         self.sampling_strategy: Union[SamplingStrategy, List[PoissonSampling]]
 
         if isinstance(client_sampling, list):
             self.sampling_strategy = [PoissonSampling(q) for q in client_sampling]
         else:
             self.sampling_strategy = PoissonSampling(client_sampling)
-
-        self.accountant = MomentsAccountant(moment_orders)
-
-    def _validate_server_updates(self, server_updates: Union[int, List[int]]) -> None:
-        if isinstance(server_updates, list):
-            assert isinstance(self.noise_multiplier, list)
-            assert len(server_updates) == len(self.noise_multiplier)
-        else:
-            assert isinstance(self.noise_multiplier, float)
 
     def get_epsilon(self, server_updates: Union[int, List[int]], delta: float) -> float:
         """server_updates: number of central server updates performed"""
@@ -116,7 +131,7 @@ class PoissonSamplingFlClientLevelAccountant:
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
 
 
-class FixedSamplingNoReplacementFlClientLevelAccountant:
+class FixedSamplingNoReplacementFlClientLevelAccountant(ClientLevelAccountant):
     """
     This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
     """
@@ -135,7 +150,7 @@ class FixedSamplingNoReplacementFlClientLevelAccountant:
         NOTE: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
         """
-        self.noise_multiplier = noise_multiplier
+        super().__init__(noise_multiplier, moment_orders)
         self.sampling_strategy: Union[SamplingStrategy, List[FixedSamplingWithoutReplacement]]
 
         if isinstance(n_clients_sampled, list):
@@ -144,15 +159,6 @@ class FixedSamplingNoReplacementFlClientLevelAccountant:
             ]
         else:
             self.sampling_strategy = FixedSamplingWithoutReplacement(n_total_clients, n_clients_sampled)
-
-        self.accountant = MomentsAccountant(moment_orders)
-
-    def _validate_server_updates(self, server_updates: Union[int, List[int]]) -> None:
-        if isinstance(server_updates, list):
-            assert isinstance(self.noise_multiplier, list)
-            assert len(server_updates) == len(self.noise_multiplier)
-        else:
-            assert isinstance(self.noise_multiplier, float)
 
     def get_epsilon(self, server_updates: Union[int, List[int]], delta: float) -> float:
         """server_updates: number of central server updates performed"""

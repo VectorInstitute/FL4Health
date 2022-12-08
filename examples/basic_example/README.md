@@ -17,7 +17,7 @@ to install all of the dependencies for this project.
 
 The next step is to start the server by running
 ```
-python -m src.examples.basic_example.server
+python -m examples.basic_example.server
 ```
 from the FL4Health directory.
 
@@ -26,6 +26,6 @@ from the FL4Health directory.
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m src.examples.basic_example.client
+python -m examples.basic_example.client
 ```
 After both clients have been started federated learning should commence.

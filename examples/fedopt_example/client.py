@@ -106,7 +106,7 @@ class NewsClassifier(fl.client.NumPyClient):
     ) -> None:
         self.data_path = data_path
         self.device = device
-        self.intialized = False
+        self.initialized = False
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation.
@@ -140,12 +140,13 @@ class NewsClassifier(fl.client.NumPyClient):
         self.weight_matrix = weight_matrix
 
         self.setup_model(vocabulary.vocabulary_size, vocab_dimension, hidden_size)
+        self.initialized = True
 
     def setup_model(self, vocab_size: int, vocab_dimension: int, hidden_size: int) -> None:
         self.model = LSTM(vocab_size, vocab_dimension, hidden_size)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.intialized:
+        if not self.initialized:
             self.setup_client(config)
         # Once the model is created model weights are initialized from server
         self.set_parameters(parameters, config)
@@ -167,6 +168,8 @@ class NewsClassifier(fl.client.NumPyClient):
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        if not self.initialized:
+            self.setup_client(config)
         self.set_parameters(parameters, config)
         loss, evaluate_metrics = validate(self.model, self.validation_loader, self.label_encoder, self.device)
         # Result should return the loss, number of examples on client, and a dictionary holding metrics

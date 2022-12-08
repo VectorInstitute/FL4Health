@@ -71,8 +71,6 @@ def construct_config(
     vocabulary: Vocabulary,
     label_encoder: LabelEncoder,
 ) -> Config:
-    # Unfortunately, a new client is created in each round, which means a new model and dataloaders are also created
-    # so we need to ship these values, vocabulary, and label encoder at each fit round.
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         "sequence_length": sequence_length,
@@ -151,6 +149,7 @@ def main(
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_initial_model_parameters(vocabulary.vocabulary_size, vocab_dimension, hidden_size),
     )
