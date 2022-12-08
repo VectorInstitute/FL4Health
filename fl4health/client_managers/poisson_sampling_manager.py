@@ -1,4 +1,3 @@
-import random
 from logging import WARNING
 from typing import List, Optional
 
@@ -43,10 +42,7 @@ class PoissonSamplingClientManager(BaseSamplingManager):
             log(
                 WARNING,
                 f"Sample fraction of {round(sample_fraction, 3)} from {n_available_cids} clients results "
-                f"in expected value of {round(expected_clients_selected, 3)} selected. A minimum of one client "
-                "will be selected",
+                f"in expected value of {round(expected_clients_selected, 3)} selected.",
             )
         sampled_cids = self._poisson_sample(sample_fraction, available_cids)
-        if len(sampled_cids) == 0:
-            sampled_cids = random.sample(available_cids, 1)
         return [self.clients[cid] for cid in sampled_cids]
