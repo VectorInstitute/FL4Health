@@ -36,7 +36,8 @@ class FixedSamplingWithoutReplacementClientManager(BaseSamplingManager):
             log(
                 WARNING,
                 f"Sample fraction of {round(sample_fraction, 3)} resulted in 0 samples to being selected"
-                f"from {n_available_cids}, selecting only one client",
+                f"from {n_available_cids}.",
             )
-        sampled_cids = random.sample(available_cids, max(num_to_sample, 1))
+            return []
+        sampled_cids = random.sample(available_cids, num_to_sample)
         return [self.clients[cid] for cid in sampled_cids]
