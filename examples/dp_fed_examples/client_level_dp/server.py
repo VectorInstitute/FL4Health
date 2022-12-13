@@ -79,6 +79,9 @@ def main() -> None:
 
     # Server parameters
     NUM_SERVER_ROUNDS = 20
+    # NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
+    # example due to the small number of clients (3, see below), which, when combined with the clipping implies that
+    # much more noise can kill server side convergence.
     SERVER_NOISE_MULTIPLIER = 0.01
     NUM_CLIENTS = 3
     CLIENT_SAMPLING = 2.0 / NUM_CLIENTS
@@ -94,6 +97,8 @@ def main() -> None:
     ADAPTIVE_CLIPPING = True
     CLIPPING_BOUND = 0.1
     CLIPPING_LEARNING_RATE = 0.5
+    # NOTE: The noise multiplier here is just picked for convenience. The recommended heuristic is
+    # expected clients per round/20
     CLIPPING_BIT_NOISE_MULTIPLIER = 0.5
     CLIPPING_QUANTILE = 0.5
 
