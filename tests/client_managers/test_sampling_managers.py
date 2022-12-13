@@ -71,6 +71,7 @@ def test_poisson_sampling_subset() -> None:
 
 
 def test_poisson_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -> None:
+    np.random.seed(42)
     client_manager = PoissonSamplingClientManager()
     client_proxies = [
         CustomClientProxy("c1"),
@@ -89,6 +90,7 @@ def test_poisson_sampling_when_low_probability(caplog: pytest.LogCaptureFixture)
 
 
 def test_fixed_without_replacement_subset() -> None:
+    np.random.seed(42)
     client_manager = FixedSamplingWithoutReplacementClientManager()
     client_proxies = [
         CustomClientProxy("c1"),
@@ -110,6 +112,7 @@ def test_fixed_without_replacement_subset() -> None:
 
 
 def test_fixed_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -> None:
+    np.random.seed(42)
     client_manager = FixedSamplingWithoutReplacementClientManager()
     client_proxies = [
         CustomClientProxy("c1"),

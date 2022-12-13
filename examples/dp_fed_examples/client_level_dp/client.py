@@ -5,37 +5,20 @@ from pathlib import Path
 from typing import Dict, Tuple
 
 import flwr as fl
+import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-
-class Net(nn.Module):
-    def __init__(self) -> None:
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+from examples.dp_fed_examples.client_level_dp.model import Net
+from fl4health.clients.clipping_client import NumpyClippingClient
 
 
-def load_data(data_dir: Path) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load CIFAR-10 (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
     transform = transforms.Compose(
@@ -46,8 +29,8 @@ def load_data(data_dir: Path) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     )
     training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
     validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
-    train_loader = DataLoader(training_set, batch_size=32, shuffle=True)
-    validation_loader = DataLoader(validation_set, batch_size=32)
+    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
+    validation_loader = DataLoader(validation_set, batch_size=batch_size)
     num_examples = {
         "train_set": len(training_set),
         "validation_set": len(validation_set),
@@ -63,7 +46,8 @@ def train(
 ) -> float:
     """Train the network on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = torch.optim.AdamW(net.parameters(), lr=0.0001)
+
     for epoch in range(epochs):
         correct, total, running_loss = 0, 0, 0.0
         n_batches = len(train_loader)
@@ -84,7 +68,8 @@ def train(
         # Local client logging.
         log(
             INFO,
-            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches}," f"Client Training Accuracy: {accuracy}",
+            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches},"
+            f" Client Training Accuracy: {accuracy}",
         )
     return accuracy
 
@@ -108,58 +93,91 @@ def validate(
             correct += (predicted == labels).sum().item()
     accuracy = correct / total
     # Local client logging.
-    log(INFO, f"Client Validation Loss: {loss/n_batches}, Client Validation Accuracy: {accuracy}")
+    log(INFO, f"Client Validation Loss: {loss/n_batches} Client Validation Accuracy: {accuracy}")
     return loss / n_batches, accuracy
 
 
-class CifarClient(fl.client.NumPyClient):
+class CifarClient(NumpyClippingClient):
     def __init__(
         self,
         model: nn.Module,
-        train_loader: torch.utils.data.DataLoader,
-        validation_loader: torch.utils.data.DataLoader,
-        num_examples: Dict,
         device: torch.device,
     ) -> None:
+        super().__init__()
         self.model = model
-        self.train_loader = train_loader
-        self.validation_loader = validation_loader
-        self.num_examples = num_examples
         self.device = device
+        self.initialized = False
+        self.train_loader: DataLoader
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation.
         # Currently sending all of them ordered by state_dict keys
         # NOTE: Order matters, because it is relied upon by set_parameters below
-        return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
+        model_weights = [val.cpu().numpy() for _, val in self.model.state_dict().items()]
+        # Clipped the weights and store clipping information in parameters
+        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
+        return clipped_weight_update + [np.array([clipping_bit])]
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Sets the local model parameters transfered from the server. The state_dict is
         # reconstituted because parameters is simply a list of bytes
-        params_dict = zip(self.model.state_dict().keys(), parameters)
+        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
+        server_model_parameters = parameters[:-1]
+        params_dict = zip(self.model.state_dict().keys(), server_model_parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
+        # Store the starting parameters without clipping bound before client optimization steps
+        self.current_weights = server_model_parameters
+
+        clipping_bound = parameters[-1]
+        self.clipping_bound = float(clipping_bound)
+
+    def setup_client(self, config: Config) -> None:
+        self.batch_size = config["batch_size"]
+        self.local_epochs = config["local_epochs"]
+        self.adaptive_clipping = config["adaptive_clipping"]
+
+        train_loader, validation_loader, num_examples = load_data(
+            Path(os.path.join(os.path.dirname(os.getcwd()), "examples", "datasets", "cifar_data")), self.batch_size
+        )
+
+        self.train_loader = train_loader
+        self.validation_loader = validation_loader
+        self.num_examples = num_examples
+        self.initialized = True
+
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        # Expectation is that the last entry in the parameters NDArrays is a clipping bound
+        if not self.initialized:
+            self.setup_client(config)
         self.set_parameters(parameters, config)
-        # TODO: training parameters should be set via the config, passed from the server.
-        accuracy = train(self.model, self.train_loader, epochs=3, device=self.device)
+        accuracy = train(
+            self.model,
+            self.train_loader,
+            self.local_epochs,
+            self.device,
+        )
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             self.get_parameters(config),
-            num_examples["train_set"],
+            self.num_examples["train_set"],
             {"accuracy": accuracy},
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        # Expectation is that the last entry in the parameters NDArrays is a clipping bound (even if it isn't used
+        # for evaluation)
+        if not self.initialized:
+            self.setup_client(config)
         self.set_parameters(parameters, config)
-        loss, accuracy = validate(self.model, validation_loader, device=self.device)
+        loss, accuracy = validate(self.model, self.validation_loader, device=self.device)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             loss,
-            num_examples["validation_set"],
+            self.num_examples["validation_set"],
             {"accuracy": accuracy},
         )
 
@@ -168,8 +186,5 @@ if __name__ == "__main__":
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     net = Net().to(DEVICE)
-    train_loader, validation_loader, num_examples = load_data(
-        Path(os.path.join(os.path.dirname(os.getcwd()), "examples", "datasets", "cifar_data"))
-    )
-    client = CifarClient(net, train_loader, validation_loader, num_examples, DEVICE)
+    client = CifarClient(net, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

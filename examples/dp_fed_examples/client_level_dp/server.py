@@ -4,11 +4,20 @@ from typing import List, Tuple
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.typing import Config, Metrics
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Config, Metrics, Parameters
 
+from examples.dp_fed_examples.client_level_dp.model import Net
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
+from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
+
+
+def get_initial_model_parameters() -> Parameters:
+    # The server-side strategy requires that we provide server side parameter initialization.
+    # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = Net()
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
@@ -48,64 +57,65 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def construct_config(
-    _: int,
-    local_epochs: int,
-    batch_size: int,
-    noise_multiplier: float,
-    clipping_bound: float,
-) -> Config:
-    # NOTE: a new client is created in each round
+def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
-        "noise_multiplier": noise_multiplier,
-        "clipping_bound": clipping_bound,
+        "adaptive_clipping": adaptive_clipping,
     }
 
 
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    noise_multiplier: float,
-    clipping_bound: float,
+    adaptive_clipping: bool,
     server_round: int,
 ) -> Config:
-    return construct_config(server_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
+    return construct_config(server_round, local_epochs, batch_size, adaptive_clipping)
 
 
 def main() -> None:
 
-    NUM_SERVER_ROUNDS = 5
-
+    # Server parameters
+    NUM_SERVER_ROUNDS = 20
+    # NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
+    # example due to the small number of clients (3, see below), which, when combined with the clipping implies that
+    # much more noise can kill server side convergence.
+    SERVER_NOISE_MULTIPLIER = 0.01
     NUM_CLIENTS = 3
-    CLIENT_SAMPLING = 2.0 / 3.0
-    CLIENT_EPOCHS = 4
+    CLIENT_SAMPLING = 2.0 / NUM_CLIENTS
+    SERVER_LEARNING_RATE = 1.0
+    SERVER_MOMENTUM = 0.2
 
-    CLIENT_NOISE_MULTIPLIER = 1.0
-    ClIENT_CLIPPING = 5.0
+    # Client training parameters
+    CLIENT_EPOCHS = 1
+    CLIENT_BATCH_SIZE = 128
 
-    CLIENT_BATCH_SIZE = 64
-    CLIENT_DATA_SIZES = 50000
-    TOTAL_DATA_SIZE = CLIENT_DATA_SIZES * 3
+    # Clipping settings for update and optionally
+    # adaptive clipping
+    ADAPTIVE_CLIPPING = True
+    CLIPPING_BOUND = 0.1
+    CLIPPING_LEARNING_RATE = 0.5
+    # NOTE: The noise multiplier here is just picked for convenience. The recommended heuristic is
+    # expected clients per round/20
+    CLIPPING_BIT_NOISE_MULTIPLIER = 0.5
+    CLIPPING_QUANTILE = 0.5
 
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, CLIENT_NOISE_MULTIPLIER, ClIENT_CLIPPING)
+    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, ADAPTIVE_CLIPPING)
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
     # Accountant that computes the privacy through training
-    accountant = FlInstanceLevelAccountant(
-        CLIENT_SAMPLING, CLIENT_NOISE_MULTIPLIER, CLIENT_EPOCHS, [CLIENT_BATCH_SIZE], [CLIENT_DATA_SIZES]
-    )
-    target_delta = 1.0 / TOTAL_DATA_SIZE
+    accountant = FlClientLevelAccountantPoissonSampling(CLIENT_SAMPLING, SERVER_NOISE_MULTIPLIER)
+    target_delta = 1.0 / NUM_CLIENTS
     epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
     log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
-    strategy = FedAvgSampling(
+    strategy = ClientLevelDPFedAvgM(
         fraction_fit=CLIENT_SAMPLING,
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=NUM_CLIENTS,
@@ -113,6 +123,16 @@ def main() -> None:
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
         on_evaluate_config_fn=fit_config_fn,
+        # Server side weight initialization
+        initial_parameters=get_initial_model_parameters(),
+        adaptive_clipping=ADAPTIVE_CLIPPING,
+        server_learning_rate=SERVER_LEARNING_RATE,
+        clipping_learning_rate=CLIPPING_LEARNING_RATE,
+        clipping_quantile=CLIPPING_QUANTILE,
+        initial_clipping_bound=CLIPPING_BOUND,
+        weight_noise_multiplier=SERVER_NOISE_MULTIPLIER,
+        clipping_noise_mutliplier=CLIPPING_BIT_NOISE_MULTIPLIER,
+        beta=SERVER_MOMENTUM,
     )
 
     fl.server.start_server(

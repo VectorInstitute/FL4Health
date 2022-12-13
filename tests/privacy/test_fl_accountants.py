@@ -1,9 +1,9 @@
 import pytest
 
 from fl4health.privacy.fl_accountants import (
-    FixedSamplingNoReplacementFlClientLevelAccountant,
+    FlClientLevelAccountantFixedSamplingNoReplacement,
+    FlClientLevelAccountantPoissonSampling,
     FlInstanceLevelAccountant,
-    PoissonSamplingFlClientLevelAccountant,
 )
 
 
@@ -127,7 +127,7 @@ def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
     for K, C, z, q, d in zip(n_clients, clients_per_round, noise_values, sampling_probabilities, target_deltas):
         expected_epsilons = expected_results[(K, C, z)]
         for t in updates:
-            accountant = PoissonSamplingFlClientLevelAccountant(q, z)
+            accountant = FlClientLevelAccountantPoissonSampling(q, z)
             estimated_epsilon = accountant.get_epsilon(t, d)
             expected_epsilon = expected_epsilons[t]
             assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
@@ -145,8 +145,8 @@ def test_user_level_accoutant_with_equivalent_trajectories() -> None:
     updates_trajectory = [updates] * trajectory_length
     target_delta = 1 / pow(pow(10, 9), 1.1)
 
-    trajectory_accountant = PoissonSamplingFlClientLevelAccountant(sampling_rates, noise_multipliers)
-    non_trajectory_accountant = PoissonSamplingFlClientLevelAccountant(sampling_rate, noise_mulitplier)
+    trajectory_accountant = FlClientLevelAccountantPoissonSampling(sampling_rates, noise_multipliers)
+    non_trajectory_accountant = FlClientLevelAccountantPoissonSampling(sampling_rate, noise_mulitplier)
 
     trajectory_epsilon = trajectory_accountant.get_epsilon(updates_trajectory, target_delta)
 
@@ -159,9 +159,9 @@ def test_user_level_accoutant_with_equivalent_trajectories() -> None:
 def test_user_level_accoutant_with_longer_trajectories() -> None:
     # Tests whether performing the same process in a sequence of accountant processes is equivalent to a gathered
     # set of accounting
-    increasing_noise_accountant = PoissonSamplingFlClientLevelAccountant([0.2] * 3, [1.0, 1.2, 1.4])
-    constant_accountant = PoissonSamplingFlClientLevelAccountant([0.2] * 3, [1.0] * 3)
-    increasing_sample_rate_accountant = PoissonSamplingFlClientLevelAccountant([0.2, 0.3, 0.4], [1.0] * 3)
+    increasing_noise_accountant = FlClientLevelAccountantPoissonSampling([0.2] * 3, [1.0, 1.2, 1.4])
+    constant_accountant = FlClientLevelAccountantPoissonSampling([0.2] * 3, [1.0] * 3)
+    increasing_sample_rate_accountant = FlClientLevelAccountantPoissonSampling([0.2, 0.3, 0.4], [1.0] * 3)
 
     # increasing noise smaller epsilon
     smaller_epsilon = increasing_noise_accountant.get_epsilon([10000] * 3, 1 / pow(pow(10, 9), 1.1))
@@ -196,7 +196,7 @@ def test_user_accountant_fixed_sampling_reproduce_results() -> None:
     # delta values should be close to this value, for input of expected epsilon
     expected_delta = 1 / pow(n_clients, 1.1)
     for n_clients_per_round, z, t in zip(clients_per_round, noise_values, updates):
-        accountant = FixedSamplingNoReplacementFlClientLevelAccountant(n_clients, n_clients_per_round, z)
+        accountant = FlClientLevelAccountantFixedSamplingNoReplacement(n_clients, n_clients_per_round, z)
         estimated_epsilon = accountant.get_epsilon(t, expected_delta)
         assert pytest.approx(expected_epsilon, abs=0.1) == estimated_epsilon
         estimated_delta = accountant.get_delta(t, expected_epsilon)
