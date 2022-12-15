@@ -13,7 +13,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-from src.examples.docker_basic_example.model import Net
+from examples.docker_basic_example.model import Net
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:

@@ -7,8 +7,8 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
 
-from src.examples.docker_basic_example.model import Net
-from src.utils.config import load_config
+from examples.docker_basic_example.model import Net
+from fl4health.utils.config import load_config
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
