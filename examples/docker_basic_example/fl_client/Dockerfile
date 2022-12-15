@@ -10,6 +10,6 @@ LABEL Maintainer="Vector Institute"
 
 USER root
 
-RUN pip install -r src/examples/docker_basic_example/fl_client/requirements.txt
+RUN pip install -r examples/docker_basic_example/fl_client/requirements.txt
 
-CMD ["src/examples/docker_basic_example/fl_client/entrypoint.sh"]
+CMD ["examples/docker_basic_example/fl_client/entrypoint.sh"]

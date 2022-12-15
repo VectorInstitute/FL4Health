@@ -20,12 +20,12 @@ to install all of the dependencies for this project.
 ## Dataset Partitioning
 
 Before starting the example, one needs to partition the original news classification dataset, found under
-`src/examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
+`examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
 the clients. This is done by running
 ```
 python -m examples.datasets.partition_dataset --original_dataset_path /path/to/news_dataset.json
 --partition_dir /path/to/partition/destination/
---partitioner_config_path src/examples/datasets/news_classification/partitioner_config.json
+--partitioner_config_path examples/datasets/news_classification/partitioner_config.json
 --n_partitions 3
 --overwrite
 ```
@@ -34,7 +34,7 @@ These arguments specify the following
 the beginning of this section
 * `partition_dir`: Path where the dataset partitions should go
 * `partitioner_config_path`: Path to the config file for the partitioner. The default is housed in
-* `src/examples/datasets/news_classification/partitioner_config.json`
+* `examples/datasets/news_classification/partitioner_config.json`
 * `n_partitions`: Number of distinct partitions to break the original dataset into
 * `overwrite`: Specifies whether to overwrite the directory specified. If the directory already exists and overwrite is
 not specified, the partition script with throw an error.

@@ -5,7 +5,7 @@ services: # Define services in multi-container Docker Application
     fl_server: # FL Server container specification
         build:
             context: ../../../
-            dockerfile: src/examples/docker_basic_example/fl_server/Dockerfile
+            dockerfile: examples/docker_basic_example/fl_server/Dockerfile
 
         container_name: fl_server # Name of the container
         ports: # Mapping of local ports to virtual docker ports
@@ -14,7 +14,7 @@ services: # Define services in multi-container Docker Application
     fl_client_1:  # FL Client container specification
         build:
             context: ../../../
-            dockerfile: src/examples/docker_basic_example/fl_client/Dockerfile
+            dockerfile: examples/docker_basic_example/fl_client/Dockerfile
 
         container_name: fl_client_1 # Name of the container
         depends_on: # Container dependencies
@@ -25,7 +25,7 @@ services: # Define services in multi-container Docker Application
     fl_client_2: # FL Client container specification
         build:
             context: ../../../
-            dockerfile: src/examples/docker_basic_example/fl_client/Dockerfile
+            dockerfile: examples/docker_basic_example/fl_client/Dockerfile
 
         container_name: fl_client_2 # Name of the container
         depends_on: # Container dependencies
