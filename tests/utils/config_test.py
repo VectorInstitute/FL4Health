@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pytest import raises
 
-from src.utils.config import InvalidConfigError, check_config, load_config
+from fl4health.utils.config import InvalidConfigError, check_config, load_config
 
 
 def test_load_config() -> None:
