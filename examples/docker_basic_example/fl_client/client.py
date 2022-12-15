@@ -13,7 +13,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-from src.examples.basic_example.model import Net
+from src.examples.docker_basic_example.model import Net
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -91,7 +91,7 @@ def validate(
     # Local client logging.
     log(
         INFO,
-        f"Client Validation Loss: {loss/n_batches}," f"Client Validation Accuracy: {accuracy}",
+        f"Client Validation Loss: {loss/n_batches} Client Validation Accuracy: {accuracy}",
     )
     return loss / n_batches, accuracy
 
@@ -168,4 +168,4 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     client = CifarClient(data_path, DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_numpy_client(server_address="fl_server:8080", client=client)

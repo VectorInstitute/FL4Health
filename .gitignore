@@ -133,6 +133,7 @@ dmypy.json
 
 # vscode
 launch.json
+settings.json
 
 #mac
 .DS_Store

@@ -4,7 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from src.examples.datasets.dataset_partitioners import construct_dataset_partitioner
+from examples.datasets.dataset_partitioners import construct_dataset_partitioner
 
 
 def create_or_overwrite_destination_dir(destination_dir: Path, overwrite: bool) -> None:

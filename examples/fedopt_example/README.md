@@ -23,7 +23,7 @@ Before starting the example, one needs to partition the original news classifica
 `src/examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
 the clients. This is done by running
 ```
-python -m src.examples.datasets.partition_dataset --original_dataset_path /path/to/news_dataset.json
+python -m examples.datasets.partition_dataset --original_dataset_path /path/to/news_dataset.json
 --partition_dir /path/to/partition/destination/
 --partitioner_config_path src/examples/datasets/news_classification/partitioner_config.json
 --n_partitions 3
@@ -43,7 +43,7 @@ not specified, the partition script with throw an error.
 
 The next step is to start the server by running something like
 ```
-python -m src.examples.fedopt_example.server  --config_path /path/to/config.yaml
+python -m examples.fedopt_example.server   --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
@@ -59,7 +59,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the `n_clients`
 clients expected by the server. This is done by simply running (remembering to activate your environment)
 ```
-python -m src.examples.fedopt_example.client --dataset_path <path_to_local_dataset>
+python -m examples.fedopt_example.client --dataset_path <path_to_local_dataset>
 ```
 * `path_to_local_dataset` should correspond to the partition destination provide in running the partition_dataset script.
 After `n_clients` clients have been started federated learning should commence.

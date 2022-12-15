@@ -1,14 +1,14 @@
-import argparse
 from functools import partial
-from typing import Any, Dict, List, Tuple
+from logging import INFO
+from typing import List, Tuple
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
-from flwr.server.strategy import FedAvg
+from flwr.common.logger import log
+from flwr.common.typing import Config, Metrics
 
-from src.examples.basic_example.model import Net
-from src.utils.config import load_config
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
+from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
@@ -32,7 +32,9 @@ def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metri
     return {metric_name: metric_value / total_examples for metric_name, metric_value in aggregated_metrics.items()}
 
 
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+def fit_metrics_aggregation_fn(
+    all_client_metrics: List[Tuple[int, Metrics]],
+) -> Metrics:
     # This function is run by the server to aggregate metrics returned by each clients fit function
     # NOTE: The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
@@ -46,59 +48,80 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
+def construct_config(
+    _: int,
+    local_epochs: int,
+    batch_size: int,
+    noise_multiplier: float,
+    clipping_bound: float,
+) -> Config:
+    # NOTE: a new client is created in each round
+    # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
+    return {
+        "local_epochs": local_epochs,
+        "batch_size": batch_size,
+        "noise_multiplier": noise_multiplier,
+        "clipping_bound": clipping_bound,
+    }
+
+
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    n_server_rounds: int,
+    noise_multiplier: float,
+    clipping_bound: float,
+    server_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "n_server_rounds": n_server_rounds}
+    return construct_config(server_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
 
 
-def get_initial_model_parameters() -> Parameters:
-    # FedAdam requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+def main() -> None:
 
+    NUM_SERVER_ROUNDS = 5
 
-def main(config: Dict[str, Any]) -> None:
+    NUM_CLIENTS = 3
+    CLIENT_SAMPLING = 2.0 / 3.0
+    CLIENT_EPOCHS = 4
+
+    CLIENT_NOISE_MULTIPLIER = 1.0
+    ClIENT_CLIPPING = 5.0
+
+    CLIENT_BATCH_SIZE = 64
+    CLIENT_DATA_SIZES = 50000
+    TOTAL_DATA_SIZE = CLIENT_DATA_SIZES * 3
+
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(
-        fit_config,
-        config["local_epochs"],
-        config["batch_size"],
+    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, CLIENT_NOISE_MULTIPLIER, ClIENT_CLIPPING)
+
+    # ClientManager that performs Poisson type sampling
+    client_manager = PoissonSamplingClientManager()
+
+    # Accountant that computes the privacy through training
+    accountant = FlInstanceLevelAccountant(
+        CLIENT_SAMPLING, CLIENT_NOISE_MULTIPLIER, CLIENT_EPOCHS, [CLIENT_BATCH_SIZE], [CLIENT_DATA_SIZES]
     )
+    target_delta = 1.0 / TOTAL_DATA_SIZE
+    epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
+    log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
-    strategy = FedAvg(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
+    strategy = FedAvgSampling(
+        fraction_fit=CLIENT_SAMPLING,
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=config["n_clients"],
-        on_fit_config_fn=fit_config_fn,
+        min_available_clients=NUM_CLIENTS,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        on_fit_config_fn=fit_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
     )
 
     fl.server.start_server(
         server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+        config=fl.server.ServerConfig(num_rounds=NUM_SERVER_ROUNDS),
         strategy=strategy,
+        client_manager=client_manager,
     )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="FL Server Main")
-    parser.add_argument(
-        "--config_path",
-        action="store",
-        type=str,
-        help="Path to configuration file.",
-        default="config.yaml",
-    )
-    args = parser.parse_args()
-
-    config = load_config(args.config_path)
-
-    main(config)
+    main()
