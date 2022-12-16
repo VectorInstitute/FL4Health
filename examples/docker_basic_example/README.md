@@ -1,7 +1,7 @@
 # Basic Federated Learning Example with Docker
 This example provides a simple implementation of federated learning on the CIFAR dataset using docker. In particular, Docker Compose is used to spin up a federated learning server with 2 clients. Each client has the same "local" dataset. I.e. they each load the complete CIFAR dataset and therefore have the same training and validation sets. The server has some custom metrics aggregation, but is otherwise a vanilla FL implementation using FedAvg as the server side optimization.
 ## Running Example
-In order to run the demo, first ensure that Docker Desktop is running. Instruction to download Docker Desktop can be found [here](https://www.docker.com/products/docker-desktop/). Then from the root this directory, execute the following command:
+In order to run the demo, first ensure that Docker Desktop is running. Instruction to download Docker Desktop can be found [here](https://www.docker.com/products/docker-desktop/). Then from this directory, execute the following command:
 ```
 docker compose up
 ```
