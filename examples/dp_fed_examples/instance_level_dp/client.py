@@ -1,4 +1,4 @@
-import os
+import argparse
 from collections import OrderedDict
 from logging import INFO, WARNING
 from pathlib import Path
@@ -7,7 +7,6 @@ from typing import Dict, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
@@ -16,25 +15,7 @@ from opacus.validators import ModuleValidator
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-
-class Net(nn.Module):
-    def __init__(self) -> None:
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+from examples.models.cnn_model import Net
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -118,13 +99,14 @@ def validate(
 class CifarClient(fl.client.NumPyClient):
     def __init__(
         self,
-        model: nn.Module,
+        data_path: Path,
         device: torch.device,
     ) -> None:
-        self.model = model
+        self.data_path = data_path
         self.device = device
         self.initialized = False
         self.train_loader: DataLoader
+        self.model: nn.Module
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation.
@@ -140,7 +122,7 @@ class CifarClient(fl.client.NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def setup_opacus_objects(self) -> None:
-        self.optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         # Validate that the model layers are compatible with privacy mechanisms in Opacus and try to replace the layers
         # with compatible ones if necessary.
         errors = ModuleValidator.validate(self.model, strict=False)
@@ -158,7 +140,7 @@ class CifarClient(fl.client.NumPyClient):
             data_loader=self.train_loader,
             noise_multiplier=self.noise_multiplier,
             max_grad_norm=self.clipping_bound,
-            clipping="adaptive",
+            clipping="flat",
         )
 
     def setup_client(self, config: Config) -> None:
@@ -167,13 +149,12 @@ class CifarClient(fl.client.NumPyClient):
         self.noise_multiplier = config["noise_multiplier"]
         self.clipping_bound = config["clipping_bound"]
 
-        train_loader, validation_loader, num_examples = load_data(
-            Path(os.path.join(os.path.dirname(os.getcwd()), "examples", "datasets", "cifar_data")), self.batch_size
-        )
+        train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
+        self.model = Net().to(self.device)
         self.initialized = True
         self.setup_opacus_objects()
 
@@ -211,8 +192,12 @@ class CifarClient(fl.client.NumPyClient):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="FL Client Main")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    args = parser.parse_args()
+
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net = Net().to(DEVICE)
-    client = CifarClient(net, DEVICE)
+    data_path = Path(args.dataset_path)
+    client = CifarClient(data_path, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

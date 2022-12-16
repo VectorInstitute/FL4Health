@@ -1,14 +1,25 @@
+import argparse
 from functools import partial
 from logging import INFO
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.typing import Config, Metrics
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Config, Metrics, Parameters
 
+from examples.models.cnn_model import Net
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.utils.config import load_config
+
+
+def get_initial_model_parameters() -> Parameters:
+    # The server-side strategy requires that we provide server side parameter initialization.
+    # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = Net()
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
@@ -75,53 +86,63 @@ def fit_config(
     return construct_config(server_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
 
 
-def main() -> None:
-
-    NUM_SERVER_ROUNDS = 5
-
-    NUM_CLIENTS = 3
-    CLIENT_SAMPLING = 2.0 / 3.0
-    CLIENT_EPOCHS = 4
-
-    CLIENT_NOISE_MULTIPLIER = 1.0
-    ClIENT_CLIPPING = 5.0
-
-    CLIENT_BATCH_SIZE = 64
-    CLIENT_DATA_SIZES = 50000
-    TOTAL_DATA_SIZE = CLIENT_DATA_SIZES * 3
+def main(config: Dict[str, Any]) -> None:
 
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, CLIENT_NOISE_MULTIPLIER, ClIENT_CLIPPING)
+    fit_config_fn = partial(
+        fit_config,
+        config["local_epochs"],
+        config["batch_size"],
+        config["client_noise_multiplier"],
+        config["client_clipping"],
+    )
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
     # Accountant that computes the privacy through training
     accountant = FlInstanceLevelAccountant(
-        CLIENT_SAMPLING, CLIENT_NOISE_MULTIPLIER, CLIENT_EPOCHS, [CLIENT_BATCH_SIZE], [CLIENT_DATA_SIZES]
+        config["client_sampling"],
+        config["client_noise_multiplier"],
+        config["local_epochs"],
+        [config["batch_size"]],
+        [config["client_data_sizes"]],
     )
-    target_delta = 1.0 / TOTAL_DATA_SIZE
-    epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
+    target_delta = 1.0 / config["total_data_size"]
+    epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
     log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = FedAvgSampling(
-        fraction_fit=CLIENT_SAMPLING,
+        fraction_fit=config["client_sampling"],
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=NUM_CLIENTS,
+        min_available_clients=config["n_clients"],
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
         on_evaluate_config_fn=fit_config_fn,
+        # Server side weight initialization
+        initial_parameters=get_initial_model_parameters(),
     )
 
     fl.server.start_server(
         server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=NUM_SERVER_ROUNDS),
+        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
         client_manager=client_manager,
     )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
+    )
+    args = parser.parse_args()
+
+    config = load_config(args.config_path)
+    main(config)

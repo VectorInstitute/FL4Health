@@ -20,12 +20,12 @@ to install all of the dependencies for this project.
 ## Dataset Partitioning
 
 Before starting the example, one needs to partition the original news classification dataset, found under
-`src/examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
+`examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
 the clients. This is done by running
 ```
 python -m examples.datasets.partition_dataset --original_dataset_path /path/to/news_dataset.json
 --partition_dir /path/to/partition/destination/
---partitioner_config_path src/examples/datasets/news_classification/partitioner_config.json
+--partitioner_config_path examples/datasets/news_classification/partitioner_config.json
 --n_partitions 3
 --overwrite
 ```
@@ -34,7 +34,7 @@ These arguments specify the following
 the beginning of this section
 * `partition_dir`: Path where the dataset partitions should go
 * `partitioner_config_path`: Path to the config file for the partitioner. The default is housed in
-* `src/examples/datasets/news_classification/partitioner_config.json`
+* `examples/datasets/news_classification/partitioner_config.json`
 * `n_partitions`: Number of distinct partitions to break the original dataset into
 * `overwrite`: Specifies whether to overwrite the directory specified. If the directory already exists and overwrite is
 not specified, the partition script with throw an error.
@@ -43,16 +43,16 @@ not specified, the partition script with throw an error.
 
 The next step is to start the server by running something like
 ```
-python -m examples.fedopt_example.server  --n_clients 2 --local_epochs 1
---batch_size, 256 --vocab_dimension, 64 --hidden_size 64 --sequence_length 64
+python -m examples.fedopt_example.server   --config_path /path/to/config.yaml
 ```
-from the FL4Health directory. The arguments specify the following
+from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
 * `local_epochs`: number of epochs each client will train for locally
 * `batch_size`: size of the batches each client will train on
 * `vocab_dimension`: embedding dimension of the word embeddings
 * `hidden_size`: hidden size of the LSTM layers
 * `sequence_length`: input sequence length of the LSTM model to be trained
+* `n_server_rounds`: The number of rounds to run FL
 
 ## Starting Clients
 

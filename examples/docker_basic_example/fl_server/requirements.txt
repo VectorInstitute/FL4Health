@@ -1,17 +1,9 @@
-# Requirements file for FL server container
-black
-flake8
 flwr
-isort
+# Requirements file for FL server container
 mypy
-nltk
 numpy
 pandas
-pre-commit
-pytest
-pytest-cov
-sklearn
-toml
+pyyaml
 torch
 torchvision
 types-requests

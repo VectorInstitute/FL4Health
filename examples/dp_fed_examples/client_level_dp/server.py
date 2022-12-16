@@ -1,16 +1,18 @@
+import argparse
 from functools import partial
 from logging import INFO
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
-from examples.dp_fed_examples.client_level_dp.model import Net
+from examples.models.cnn_model import Net
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
+from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters() -> Parameters:
@@ -75,73 +77,59 @@ def fit_config(
     return construct_config(server_round, local_epochs, batch_size, adaptive_clipping)
 
 
-def main() -> None:
-
-    # Server parameters
-    NUM_SERVER_ROUNDS = 20
-    # NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
-    # example due to the small number of clients (3, see below), which, when combined with the clipping implies that
-    # much more noise can kill server side convergence.
-    SERVER_NOISE_MULTIPLIER = 0.01
-    NUM_CLIENTS = 3
-    CLIENT_SAMPLING = 2.0 / NUM_CLIENTS
-    SERVER_LEARNING_RATE = 1.0
-    SERVER_MOMENTUM = 0.2
-
-    # Client training parameters
-    CLIENT_EPOCHS = 1
-    CLIENT_BATCH_SIZE = 128
-
-    # Clipping settings for update and optionally
-    # adaptive clipping
-    ADAPTIVE_CLIPPING = True
-    CLIPPING_BOUND = 0.1
-    CLIPPING_LEARNING_RATE = 0.5
-    # NOTE: The noise multiplier here is just picked for convenience. The recommended heuristic is
-    # expected clients per round/20
-    CLIPPING_BIT_NOISE_MULTIPLIER = 0.5
-    CLIPPING_QUANTILE = 0.5
+def main(config: Dict[str, Any]) -> None:
 
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, CLIENT_EPOCHS, CLIENT_BATCH_SIZE, ADAPTIVE_CLIPPING)
+    fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["adaptive_clipping"])
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
     # Accountant that computes the privacy through training
-    accountant = FlClientLevelAccountantPoissonSampling(CLIENT_SAMPLING, SERVER_NOISE_MULTIPLIER)
-    target_delta = 1.0 / NUM_CLIENTS
-    epsilon = accountant.get_epsilon(NUM_SERVER_ROUNDS, target_delta)
+    accountant = FlClientLevelAccountantPoissonSampling(config["client_sampling"], config["server_noise_multiplier"])
+    target_delta = 1.0 / config["n_clients"]
+    epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
     log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = ClientLevelDPFedAvgM(
-        fraction_fit=CLIENT_SAMPLING,
+        fraction_fit=config["client_sampling"],
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=NUM_CLIENTS,
+        min_available_clients=config["n_clients"],
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_initial_model_parameters(),
-        adaptive_clipping=ADAPTIVE_CLIPPING,
-        server_learning_rate=SERVER_LEARNING_RATE,
-        clipping_learning_rate=CLIPPING_LEARNING_RATE,
-        clipping_quantile=CLIPPING_QUANTILE,
-        initial_clipping_bound=CLIPPING_BOUND,
-        weight_noise_multiplier=SERVER_NOISE_MULTIPLIER,
-        clipping_noise_mutliplier=CLIPPING_BIT_NOISE_MULTIPLIER,
-        beta=SERVER_MOMENTUM,
+        adaptive_clipping=config["adaptive_clipping"],
+        server_learning_rate=config["server_learning_rate"],
+        clipping_learning_rate=config["clipping_learning_rate"],
+        clipping_quantile=config["clipping_quantile"],
+        initial_clipping_bound=config["clipping_bound"],
+        weight_noise_multiplier=config["server_noise_multiplier"],
+        clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
+        beta=config["server_momentum"],
     )
 
     fl.server.start_server(
         server_address="0.0.0.0:8080",
-        config=fl.server.ServerConfig(num_rounds=NUM_SERVER_ROUNDS),
+        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
         client_manager=client_manager,
     )
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
+    )
+    args = parser.parse_args()
+
+    config = load_config(args.config_path)
+    main(config)

@@ -1,4 +1,4 @@
-import os
+import argparse
 from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
@@ -14,7 +14,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-from examples.dp_fed_examples.client_level_dp.model import Net
+from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
 
 
@@ -100,12 +100,12 @@ def validate(
 class CifarClient(NumpyClippingClient):
     def __init__(
         self,
-        model: nn.Module,
+        data_path: Path,
         device: torch.device,
     ) -> None:
         super().__init__()
-        self.model = model
         self.device = device
+        self.data_path = data_path
         self.initialized = False
         self.train_loader: DataLoader
 
@@ -138,13 +138,12 @@ class CifarClient(NumpyClippingClient):
         self.local_epochs = config["local_epochs"]
         self.adaptive_clipping = config["adaptive_clipping"]
 
-        train_loader, validation_loader, num_examples = load_data(
-            Path(os.path.join(os.path.dirname(os.getcwd()), "examples", "datasets", "cifar_data")), self.batch_size
-        )
+        train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
+        self.model = Net().to(self.device)
         self.initialized = True
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -183,8 +182,12 @@ class CifarClient(NumpyClippingClient):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="FL Client Main")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    args = parser.parse_args()
+
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    net = Net().to(DEVICE)
-    client = CifarClient(net, DEVICE)
+    data_path = Path(args.dataset_path)
+    client = CifarClient(data_path, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
