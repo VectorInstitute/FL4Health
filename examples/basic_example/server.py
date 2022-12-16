@@ -7,7 +7,7 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
 
-from examples.basic_example.model import Net
+from examples.models.cnn_model import Net
 from fl4health.utils.config import load_config
 
 
@@ -46,19 +46,19 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
+def get_initial_model_parameters() -> Parameters:
+    # Initializing the model parameters on the server side.
+    # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = Net()
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+
+
 def fit_config(
     local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
 ) -> Config:
     return {"local_epochs": local_epochs, "batch_size": batch_size, "n_server_rounds": n_server_rounds}
-
-
-def get_initial_model_parameters() -> Parameters:
-    # FedAdam requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -69,7 +69,7 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
     )
 
-    # Server performs simple FedAveraging as it's server-side optimization strategy
+    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],

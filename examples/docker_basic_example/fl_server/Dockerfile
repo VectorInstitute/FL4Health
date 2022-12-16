@@ -3,8 +3,8 @@
 ARG PYTHON_VERSION=3.8
 
 FROM python:${PYTHON_VERSION}-slim
-RUN mkdir /src
-COPY src/ src/
+RUN mkdir /fl4health
+COPY . fl4health/
 
 LABEL Maintainer="Vector Institute"
 

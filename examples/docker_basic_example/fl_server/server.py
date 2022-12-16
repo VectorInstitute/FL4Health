@@ -55,7 +55,7 @@ def fit_config(
 
 
 def get_initial_model_parameters() -> Parameters:
-    # FedAdam requires that we provide server side parameter initialization.
+    # Initializing the model parameters on the server side
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = Net()
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])

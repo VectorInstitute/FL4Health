@@ -105,7 +105,7 @@ class CifarClient(fl.client.NumPyClient):
 
         self.data_path = data_path
         self.device = device
-        self.intialized = False
+        self.initialized = False
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation.
@@ -121,12 +121,10 @@ class CifarClient(fl.client.NumPyClient):
         self.model.load_state_dict(state_dict, strict=True)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.intialized:
-            print("yup")
+        if not self.initialized:
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        # TODO: training parameters should be set via the config, passed from the server.
         accuracy = train(self.model, self.train_loader, epochs=config["local_epochs"], device=self.device)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

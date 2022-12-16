@@ -14,13 +14,13 @@ to install all of the dependencies for this project.
 
 The next step is to start the server by running
 ```
-python -m examples.dp_fed_examples.instance_level_dp.server
+python -m examples.dp_fed_examples.instance_level_dp.server --config_path /path/to/config.yaml
 ```
 
 ## Starting Clients
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the clients expected by the server. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.dp_fed_examples.instance_level_dp.client
+python -m examples.dp_fed_examples.instance_level_dp.client --dataset_path /path/to/data
 ```
 After the minimum number of clients have been started federated learning should commence.

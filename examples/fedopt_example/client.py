@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
 from examples.fedopt_example.metrics import ClientMetrics
-from examples.fedopt_example.model import LSTM
+from examples.models.lstm_model import LSTM
 
 
 def train(

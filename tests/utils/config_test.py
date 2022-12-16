@@ -7,7 +7,7 @@ from fl4health.utils.config import InvalidConfigError, check_config, load_config
 
 def test_load_config() -> None:
     """Ensure loaded config is non empty"""
-    config_path = f"{Path(__file__).parent.parent}/examples/basic_example/config.yaml"
+    config_path = f"{Path(__file__).parent}/resources/config.yaml"
     config = load_config(config_path)
     assert len(config.keys()) != 0
 

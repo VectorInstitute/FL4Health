@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, get_local_data, word_tokenize
 from examples.fedopt_example.metrics import Outcome, ServerMetrics
-from examples.fedopt_example.model import LSTM
+from examples.models.lstm_model import LSTM
 from fl4health.utils.config import load_config
 
 
@@ -152,7 +152,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_initial_model_parameters(
-            vocabulary.vocabulary_size, config["vocab_dimension"], config["batch_size"]
+            vocabulary.vocabulary_size, config["vocab_dimension"], config["hidden_size"]
         ),
     )
 
