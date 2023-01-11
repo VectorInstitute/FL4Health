@@ -57,7 +57,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
-        total_samples: int,
+        total_samples: Optional[int] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -248,8 +248,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
                 weights_updates,
                 modified_noise_multiplier,
                 self.clipping_bound,
-                self.total_samples,
                 self.fraction_fit,
+                self.total_samples,
                 self.weighted_averaging,
             )
             self.update_clipping_bound(clipping_bits)
@@ -259,8 +259,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
                 weights_updates,
                 self.weight_noise_multiplier,
                 self.clipping_bound,
-                self.total_samples,
                 self.fraction_fit,
+                self.total_samples,
                 self.weighted_averaging,
             )
 

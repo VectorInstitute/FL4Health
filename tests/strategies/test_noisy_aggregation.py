@@ -29,7 +29,7 @@ def test_gaussian_noisy_aggregation() -> None:
     layers = [
         ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
     ]
-    noised_layers = gaussian_noisy_aggregate(layers, 1.0, 2.0, datapoints_per_client * n_clients, 1.0)
+    noised_layers = gaussian_noisy_aggregate(layers, 1.0, 2.0, 1.0)
     for i in range(n_layers):
         assert noised_layers[i].shape == layer_shape
 
@@ -51,7 +51,8 @@ def test_weighted_gaussian_noisy_aggregation() -> None:
         ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
     ]
     noised_layers = gaussian_noisy_aggregate(
-        layers, 1.0, 2.0, datapoints_per_client * n_clients, 1.0, is_weighted=True
+        layers, 1.0, 2.0, 1.0, datapoints_per_client * n_clients, is_weighted=True
     )
+
     for i in range(n_layers):
         assert noised_layers[i].shape == layer_shape

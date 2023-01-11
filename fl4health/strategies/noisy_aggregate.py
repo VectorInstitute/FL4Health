@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 from flwr.common import NDArray, NDArrays
@@ -15,12 +15,13 @@ def gaussian_noisy_aggregate(
     results: List[Tuple[NDArrays, int]],
     noise_multiplier: float,
     clipping_bound: float,
-    total_samples: int,
     fraction_fit: float,
+    total_samples: Optional[int] = None,
     is_weighted: bool = False,
 ) -> NDArrays:
     """Compute weighted or unweighted average of weights. Apply gaussian noise to the sum of"""
     if is_weighted:
+        assert total_samples is not None
         n_clients = len(results)
         client_model_updates, client_n_points = zip(*results)
 
