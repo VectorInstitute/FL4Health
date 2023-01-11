@@ -24,15 +24,15 @@ def gaussian_noisy_aggregate(
         n_clients = len(results)
         client_model_updates, client_n_points = zip(*results)
 
-        # Calculate client weights as proportion of total samples
-        client_weights = [(n_points / total_samples) for n_points in client_n_points]
-        client_weights_scaled = [weight / fraction_fit for weight in client_weights]  # Scale w_k by 1/fraction_fit
+        # Calculate client coefficients w_k as proportion of total samples
+        client_coefs = [(n_points / total_samples) for n_points in client_n_points]
+        client_coefs_scaled = [coef / fraction_fit for coef in client_coefs]  # Scale w_k by 1/fraction_fit
         client_model_updates = [
-            [layer_update * client_weight for layer_update in client_model_update]
-            for client_model_update, client_weight in zip(client_model_updates, client_weights_scaled)
-        ]
+            [layer_update * client_coef for layer_update in client_model_update]
+            for client_model_update, client_coef in zip(client_model_updates, client_coefs_scaled)
+        ]  # Calculate model updates as linear combination of updates
         updated_clipping_bound = clipping_bound * max(
-            client_weights
+            client_coefs
         )  # Update clipping bound as max(w_k) * clippint bound
         sigma = (noise_multiplier * updated_clipping_bound) / fraction_fit
     else:

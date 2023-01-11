@@ -1,4 +1,5 @@
 import argparse
+import pickle
 from functools import partial
 from logging import INFO
 from typing import Any, Dict, List, Tuple
@@ -8,6 +9,7 @@ from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
+from examples.dp_fed_examples.client_level_dp_weighted.data import Scaler
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
@@ -65,6 +67,7 @@ def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clippi
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
+        "scaler": pickle.dumps(Scaler()),
     }
 
 

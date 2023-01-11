@@ -14,7 +14,7 @@ weighted_averaging: True
 # Client training parameters
 local_epochs: 1
 batch_size: 32
-total_samples: 454
+total_samples: 569
 
 # Clipping settings for update and optionally
 # adaptive clipping

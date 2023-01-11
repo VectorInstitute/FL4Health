@@ -6,34 +6,15 @@ from typing import Dict, Tuple
 
 import flwr as fl
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader
 
+from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.clients.clipping_client import NumpyClippingClient
-
-
-def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    log(INFO, f"Data directory: {str(data_dir)}")
-    data = pd.read_csv(data_dir, index_col=False)
-    features = data.loc[:, data.columns != "label"].values
-    labels = data["label"].values
-    n_samples = data.shape[0]
-    train_samples = int(n_samples * 0.8)
-    train_features, train_labels = features[:train_samples, :], labels[:train_samples]
-    val_features, val_labels = features[train_samples:, :], labels[train_samples:]
-    train_X, train_Y = torch.from_numpy(train_features).float(), torch.from_numpy(train_labels).float()
-    val_X, val_Y = torch.from_numpy(val_features).float(), torch.from_numpy(val_labels).float()
-    train_ds, val_ds = TensorDataset(train_X, train_Y), TensorDataset(val_X, val_Y)
-    train_loader, val_loader = DataLoader(train_ds, batch_size=batch_size), DataLoader(val_ds, batch_size=batch_size)
-
-    num_examples = {"train_set": train_samples, "validation_set": n_samples - train_samples}
-
-    return train_loader, val_loader, num_examples
 
 
 def train(net: nn.Module, train_loader: DataLoader, epochs: int, device: torch.device = torch.device("cpu")) -> float:
@@ -131,8 +112,9 @@ class HospitalClient(NumpyClippingClient):
         self.batch_size = config["batch_size"]
         self.local_epochs = config["local_epochs"]
         self.adaptive_clipping = config["adaptive_clipping"]
+        self.scaler = config["scaler"]
 
-        train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
+        train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size, self.scaler)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
