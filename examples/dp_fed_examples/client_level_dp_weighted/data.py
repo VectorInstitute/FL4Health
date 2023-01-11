@@ -18,14 +18,14 @@ class Scaler:
         return scaled_x
 
 
-def load_data(data_dir: Path, batch_size: int, scaler: bytes) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     data = pd.read_csv(data_dir, index_col=False)
     features = data.loc[:, data.columns != "label"].values
     labels = data["label"].values
     n_samples = data.shape[0]
 
-    train_scaler = pickle.loads(scaler)
-    val_scaler = pickle.loads(scaler)
+    train_scaler = pickle.loads(scaler_bytes)
+    val_scaler = pickle.loads(scaler_bytes)
     train_samples = int(n_samples * 0.8)
     train_features, train_labels = features[:train_samples, :], labels[:train_samples]
     val_features, val_labels = features[train_samples:, :], labels[train_samples:]

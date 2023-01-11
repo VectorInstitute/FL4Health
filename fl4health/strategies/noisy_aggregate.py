@@ -33,7 +33,7 @@ def gaussian_noisy_aggregate(
         ]  # Calculate model updates as linear combination of updates
         updated_clipping_bound = clipping_bound * max(
             client_coefs
-        )  # Update clipping bound as max(w_k) * clippint bound
+        )  # Update clipping bound as max(w_k) * clipping bound
         sigma = (noise_multiplier * updated_clipping_bound) / fraction_fit
     else:
         n_clients = len(results)
