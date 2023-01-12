@@ -20,7 +20,7 @@ from fl4health.utils.config import load_config
 def get_initial_model_parameters() -> Parameters:
     # The server-side strategy requires that we provide server side parameter initialization.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = LogisticRegression()
+    initial_model = LogisticRegression(input_dim=31, output_dim=1)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
