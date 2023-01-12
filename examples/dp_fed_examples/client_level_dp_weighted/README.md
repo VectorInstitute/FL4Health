@@ -2,7 +2,7 @@
 
 This example shows how to implement Differential Privacy into the Federated Learning framework. In this case we focus on *client level* privacy which is a more substantial version of instance level DP, where the participation of an entire client's set of data is protected from training dataset membership inference. This example uses the FedAvgM implementation with weighted averaging suggested in Learning Differentially Private Recurrent Language Models along with the adaptive clipping scheme proposed in Differentially Private Learning with Adaptive Clipping. The example uses an accountant specifically tailered to this approach. The clients are Poisson sampled by default.
 
-The example involves collaboratively learning a logistic regression model accross multiple hospitals to classify breast cancer given 31 features. The dataset is sourced from [kaggle](https://www.kaggle.com/competitions/breast-cancer-classification/overview). A processed federated version of the dataset is available in the repository.
+The example involves collaboratively learning a logistic regression model across multiple hospitals to classify breast cancer given 31 features. The dataset is sourced from [kaggle](https://www.kaggle.com/competitions/breast-cancer-classification/overview). A processed federated version of the dataset is available in the repository.
 
 # Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run

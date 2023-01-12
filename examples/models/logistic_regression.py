@@ -2,7 +2,7 @@ import torch
 
 
 class LogisticRegression(torch.nn.Module):
-    def __init__(self, input_dim: int = 31, output_dim: int = 1) -> None:
+    def __init__(self, input_dim: int, output_dim: int) -> None:
         super(LogisticRegression, self).__init__()
         self.linear = torch.nn.Linear(input_dim, output_dim)
 

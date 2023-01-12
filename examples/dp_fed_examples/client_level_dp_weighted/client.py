@@ -119,7 +119,7 @@ class HospitalClient(NumpyClippingClient):
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
-        self.model = LogisticRegression().to(self.device)
+        self.model = LogisticRegression(input_dim=31, output_dim=1).to(self.device)
         self.initialized = True
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
