@@ -114,7 +114,6 @@ def main(config: Dict[str, Any]) -> None:
         clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_averaging=config["weighted_averaging"],
-        total_samples=config["total_samples"],
     )
 
     fl.server.start_server(

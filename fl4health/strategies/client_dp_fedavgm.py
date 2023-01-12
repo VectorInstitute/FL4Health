@@ -13,6 +13,8 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from flwr.common import (
+    EvaluateIns,
+    FitIns,
     FitRes,
     MetricsAggregationFn,
     NDArrays,
@@ -25,6 +27,7 @@ from flwr.common import (
 from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy
 
+from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 from fl4health.strategies.noisy_aggregate import gaussian_noisy_aggregate, gaussian_noisy_aggregate_clipping_bits
 
@@ -57,7 +60,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
-        total_samples: Optional[int] = None,
+        per_client_example_cap: Optional[int] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -101,8 +104,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             Metrics aggregation function, optional.
         weighted_averaging: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
-        total_samples: int defaults to None
-            The total number of samples across all clients
+        per_client_example_cap: int defaults to None
+            The maximum number samples per client
         adaptive_clipping: bool Defaults to False.
             Determines whether adaptive clipping is used in the client DP clipping. If enabled, the model expects the
             last entry of the parameter list to be a binary value indicating whether or not the batch gradient was
@@ -142,7 +145,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.weighted_averaging = weighted_averaging
-        self.total_samples = total_samples
+        self.per_client_example_cap = per_client_example_cap
         self.adaptive_clipping = adaptive_clipping
         self.server_learning_rate = server_learning_rate
         self.clipping_learning_rate = clipping_learning_rate
@@ -151,6 +154,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
+        self.initialized = False
         self.m_t: Optional[NDArrays] = None
 
     def __repr__(self) -> str:
@@ -225,13 +229,25 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         they are theta_client - theta_server rather than just theta_client
         NOTE: this function packs the clipping bound for clients as the last member of the parameters list
         """
-        # TODO: Implement weighted averaging as part of this strategy from Learning Differentially Private Recurrent
-        # Language Models
 
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
+            return None, {}
+
+        # If first round compute total expected client weight and return 0
+        if not self.initialized:
+            client_example_counts = [fit_res.num_examples for _, fit_res in results]
+            total_samples = sum(client_example_counts)
+            self.per_client_example_cap = (
+                total_samples if self.per_client_example_cap is None else self.per_client_example_cap
+            )
+            self.total_client_weight = sum(
+                [num_examples / self.per_client_example_cap for num_examples in client_example_counts]
+            )
+            self.initialized = True
+
             return None, {}
 
         # Convert results
@@ -249,7 +265,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
                 modified_noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
-                self.total_samples,
+                self.per_client_example_cap,
+                self.total_client_weight,
                 self.weighted_averaging,
             )
             self.update_clipping_bound(clipping_bits)
@@ -260,7 +277,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
                 self.weight_noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
-                self.total_samples,
+                self.per_client_example_cap,
+                self.total_client_weight,
                 self.weighted_averaging,
             )
 
@@ -277,3 +295,45 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         return ndarrays_to_parameters(self.current_weights + [np.array([self.clipping_bound])]), metrics_aggregated
+
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        """Configure the next round of training."""
+        config = {}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+        fit_ins = FitIns(parameters, config)
+
+        # Sample clients
+        if server_round == 0:
+            # Sample all clients in first round to get sample counts
+            clients = client_manager.sample(1.0, self.min_available_clients)
+        else:
+            # Regular round
+            clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
+
+        # Return client/config pairs
+        return [(client, fit_ins) for client in clients]
+
+    def configure_evaluate(
+        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+    ) -> List[Tuple[ClientProxy, EvaluateIns]]:
+        """Configure the next round of evaluation."""
+        # Do not configure federated evaluation if fraction eval is 0.
+        if self.fraction_evaluate == 0.0 or server_round == 0:
+            return []
+
+        # Parameters and config
+        config = {}
+        if self.on_evaluate_config_fn is not None:
+            # Custom evaluation config function provided
+            config = self.on_evaluate_config_fn(server_round)
+        evaluate_ins = EvaluateIns(parameters, config)
+
+        # Sample clients
+        clients = client_manager.sample(self.fraction_evaluate, self.min_available_clients)
+
+        # Return client/config pairs
+        return [(client, evaluate_ins) for client in clients]

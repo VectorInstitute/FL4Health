@@ -10,7 +10,7 @@ class BaseSamplingManager(SimpleClientManager):
 
     def sample(
         self,
-        sample_fraction: int,
+        sample_fraction: float,
         min_num_clients: Optional[int] = None,
         criterion: Optional[Criterion] = None,
     ) -> List[ClientProxy]:
