@@ -13,9 +13,10 @@ class Scaler:
     def __init__(self) -> None:
         self.scaler = MinMaxScaler()
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
-        scaled_x = self.scaler.fit_transform(x)
-        return scaled_x
+    def __call__(self, train_x: np.ndarray, val_x: np.ndarray) -> np.ndarray:
+        scaled_train_x = self.scaler.fit_transform(train_x)
+        scaled_val_x = self.scaler.transform(val_x)
+        return scaled_train_x, scaled_val_x
 
 
 def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -24,12 +25,11 @@ def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> Tuple[Dat
     labels = data["label"].values
     n_samples = data.shape[0]
 
-    train_scaler = pickle.loads(scaler_bytes)
-    val_scaler = pickle.loads(scaler_bytes)
+    scaler = pickle.loads(scaler_bytes)
     train_samples = int(n_samples * 0.8)
     train_features, train_labels = features[:train_samples, :], labels[:train_samples]
     val_features, val_labels = features[train_samples:, :], labels[train_samples:]
-    train_features, val_features = train_scaler(train_features), val_scaler(val_features)
+    train_features, val_features = scaler(train_features, val_features)
     train_X, train_Y = torch.from_numpy(train_features).float(), torch.from_numpy(train_labels).float()
     val_X, val_Y = torch.from_numpy(val_features).float(), torch.from_numpy(val_labels).float()
     train_ds, val_ds = TensorDataset(train_X, train_Y), TensorDataset(val_X, val_Y)
