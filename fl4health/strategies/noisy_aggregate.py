@@ -34,7 +34,7 @@ def gaussian_noisy_aggregate(
     fraction_fit : float, optional
         Fraction of clients sampled each round. Defaults to 1.0.
     total_samples : int, optional
-        The total number of samples across all particpating clients.
+        The total number of samples across all particpating clients. Defaults to None.
     is_weighted : bool
         Whether or not to use weighted FedAvg. Defaults to False.
 
@@ -44,6 +44,9 @@ def gaussian_noisy_aggregate(
         Model update for a given round.
     """
     if is_weighted:
+
+        if total_samples is None:
+            raise ValueError("total samples is not defined and must be when using weighted averaged")
         assert total_samples is not None
         n_clients = len(results)
         client_model_updates, client_n_points = zip(*results)
