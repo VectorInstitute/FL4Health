@@ -28,11 +28,11 @@ def gaussian_noisy_aggregate(
     reults : List[Tuple[NDArrays, int]]
         List of tuples containing the model updates and the number of samples for each client.
     noise_multiplier : float
-        The multiplier on the clipping bound to determine the std of noise applied to updated weights.
+        The multiplier on the clipping bound to determine the std of noise applied to weight updates.
     clipping_bound : float
         The clipping bound applied to client model updates.
     fraction_fit : float, optional
-        Fraction of clients sampled each round. Defaults to 1.0.
+        Fraction of clients sampled each round.
     total_samples : int, optional
         The total number of samples across all particpating clients. Defaults to None.
     is_weighted : bool
