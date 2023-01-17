@@ -1,18 +1,20 @@
 # Server parameters
-n_server_rounds: 20
+n_server_rounds: 25
 
 # NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
 # example due to the small number of clients (3, see below), which, when combined with the clipping implies that
 # much more noise can kill server side convergence.
 server_noise_multiplier: 0.01
 n_clients: 3
-client_sampling_rate: 0.66
+client_sampling_rate: 0.667
 server_learning_rate: 1.0
-server_momentum: 0.2
+server_momentum: 1.0
+weighted_averaging: True
 
 # Client training parameters
 local_epochs: 1
-batch_size: 128
+batch_size: 32
+total_samples: 569
 
 # Clipping settings for update and optionally
 # adaptive clipping

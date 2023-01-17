@@ -9,7 +9,7 @@ from fl4health.privacy.fl_accountants import (
 
 def test_instance_accountant_varying_sizes() -> None:
     # Test whether the Instance Level FL with DP-SGD accountant handles varying client batch sizes and dataset sizes
-    client_sampling = 0.1
+    client_sampling_rate = 0.1
     client_batch_sizes = [200, 100]
     client_data_points = [700, 600]
     server_rounds_list = [640, 288, 54]
@@ -19,7 +19,7 @@ def test_instance_accountant_varying_sizes() -> None:
     noise_multipliers = [4.0, 3.0, 2.0]
     for server_rounds, z, delta, epsilon in zip(server_rounds_list, noise_multipliers, target_deltas, target_epsilons):
         accountant = FlInstanceLevelAccountant(
-            client_sampling, z, epochs_per_server_round, client_batch_sizes, client_data_points
+            client_sampling_rate, z, epochs_per_server_round, client_batch_sizes, client_data_points
         )
         estimated_epsilon = accountant.get_epsilon(server_rounds, delta)
         assert epsilon < estimated_epsilon
@@ -36,7 +36,7 @@ def test_instance_accountant_reproduce_results() -> None:
     # from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
     # NOTE: There is also an ERROR in that thesis where they claim the bounds for Fix sampling without replacement,
     # but use Poisson Sampling in there bound calculations.
-    client_sampling = 0.1
+    client_sampling_rate = 0.1
     client_batch_sizes = [100]
     client_data_points = [600]
     server_rounds_list = [640, 288, 54]
@@ -46,7 +46,7 @@ def test_instance_accountant_reproduce_results() -> None:
     noise_multipliers = [4.0, 3.0, 2.0]
     for server_rounds, z, delta, epsilon in zip(server_rounds_list, noise_multipliers, target_deltas, target_epsilons):
         accountant = FlInstanceLevelAccountant(
-            client_sampling, z, epochs_per_server_round, client_batch_sizes, client_data_points
+            client_sampling_rate, z, epochs_per_server_round, client_batch_sizes, client_data_points
         )
         estimated_epsilon = accountant.get_epsilon(server_rounds, delta)
         assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon

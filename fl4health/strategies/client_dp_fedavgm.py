@@ -57,6 +57,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
+        total_samples: Optional[int] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -100,6 +101,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             Metrics aggregation function, optional.
         weighted_averaging: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
+        total_samples: int defaults to None
+            The total number of samples across all clients
         adaptive_clipping: bool Defaults to False.
             Determines whether adaptive clipping is used in the client DP clipping. If enabled, the model expects the
             last entry of the parameter list to be a binary value indicating whether or not the batch gradient was
@@ -139,7 +142,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.weighted_averaging = weighted_averaging
-        self.adaptive_cliping = adaptive_clipping
+        self.total_samples = total_samples
+        self.adaptive_clipping = adaptive_clipping
         self.server_learning_rate = server_learning_rate
         self.clipping_learning_rate = clipping_learning_rate
         self.clipping_quantile = clipping_quantile
@@ -236,18 +240,28 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         ]
 
         weights_updates, clipping_bits = self.split_model_weights_and_clipping_bits(weights_updates)
-        if self.adaptive_cliping:
+        if self.adaptive_clipping:
             # The noise multiplier need only be modified in the event of using adaptive clipping to account for the
             # extra gradient information used to adapt the clipping threshold.
             modified_noise_multiplier = self.modify_noise_multiplier()
             noised_aggregated_update = gaussian_noisy_aggregate(
-                weights_updates, modified_noise_multiplier, self.clipping_bound
+                weights_updates,
+                modified_noise_multiplier,
+                self.clipping_bound,
+                self.fraction_fit,
+                self.total_samples,
+                self.weighted_averaging,
             )
             self.update_clipping_bound(clipping_bits)
             log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
         else:
             noised_aggregated_update = gaussian_noisy_aggregate(
-                weights_updates, self.weight_noise_multiplier, self.clipping_bound
+                weights_updates,
+                self.weight_noise_multiplier,
+                self.clipping_bound,
+                self.fraction_fit,
+                self.total_samples,
+                self.weighted_averaging,
             )
 
         # momentum calculation

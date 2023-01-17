@@ -1,3 +1,5 @@
+from functools import reduce
+
 import numpy as np
 import pytest
 
@@ -29,7 +31,7 @@ def test_gaussian_noisy_aggregation() -> None:
     layers = [
         ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
     ]
-    noised_layers = gaussian_noisy_aggregate(layers, 1.0, 2.0)
+    noised_layers = gaussian_noisy_aggregate(layers, 1.0, 2.0, 1.0)
     for i in range(n_layers):
         assert noised_layers[i].shape == layer_shape
 
@@ -39,3 +41,63 @@ def test_gaussian_noisy_aggregate_clipping_bits() -> None:
     client_bits = [np.array([1]), np.array([1]), np.array([0]), np.array([1])]
     noised_bit_sum = gaussian_noisy_aggregate_clipping_bits(client_bits, 1.0)
     assert pytest.approx(noised_bit_sum, abs=0.001) == 0.874
+
+
+def test_weighted_gaussian_noisy_aggregation_shape() -> None:
+    np.random.seed(42)
+    layer_shape = (2, 3, 4, 5)
+    n_clients = 2
+    n_layers = 4
+    datapoints_per_client = 10
+    layers = [
+        ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
+    ]
+    noised_layers = gaussian_noisy_aggregate(
+        layers, 1.0, 2.0, 1.0, datapoints_per_client * n_clients, is_weighted=True
+    )
+
+    for i in range(n_layers):
+        assert noised_layers[i].shape == layer_shape
+
+
+def test_weighted_gaussian_noisy_aggregation_value() -> None:
+
+    layer_shape = (4, 4)
+    n_clients = 2
+    n_layers = 2
+    datapoints_per_client = [25, 75]
+    total_datapoints = sum(datapoints_per_client)
+    noise_multiplier = 1.0
+    clipping_bound = 2.0
+    fraction_fit = 1.0
+
+    layers = [
+        ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], n_points)
+        for _, n_points in zip(range(n_clients), datapoints_per_client)
+    ]
+
+    client_1_weights = [lst for lst in layers[0][0]]
+    client_2_weights = [lst for lst in layers[1][0]]
+
+    client_1_coef = datapoints_per_client[0] / total_datapoints
+    client_2_coef = datapoints_per_client[1] / total_datapoints
+    updated_clipping_bound = max(client_1_coef, client_2_coef) * clipping_bound
+    sigma = (noise_multiplier * updated_clipping_bound) / fraction_fit
+
+    np.random.seed(42)
+
+    noised_layers_gt = []
+    for client_1_layer_weights, client_2_layer_weights in zip(client_1_weights, client_2_weights):
+        client_1_layer_weights_ = client_1_coef * client_1_layer_weights
+        client_2_layer_weights_ = client_2_coef * client_2_layer_weights
+        layer_weights = [client_1_layer_weights_, client_2_layer_weights_]
+        updated_layer_weights = add_noise_to_array(reduce(np.add, layer_weights), sigma, n_clients)
+        noised_layers_gt.append(updated_layer_weights)
+
+    np.random.seed(42)
+    noised_layers = gaussian_noisy_aggregate(
+        layers, noise_multiplier, clipping_bound, fraction_fit, total_datapoints, is_weighted=True
+    )
+
+    for noised_layer_gt, noised_layer in zip(noised_layers_gt, noised_layers):
+        assert np.allclose(noised_layer_gt, noised_layer)

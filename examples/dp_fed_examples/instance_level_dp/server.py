@@ -102,7 +102,7 @@ def main(config: Dict[str, Any]) -> None:
 
     # Accountant that computes the privacy through training
     accountant = FlInstanceLevelAccountant(
-        config["client_sampling"],
+        config["client_sampling_rate"],
         config["client_noise_multiplier"],
         config["local_epochs"],
         [config["batch_size"]],
@@ -114,7 +114,7 @@ def main(config: Dict[str, Any]) -> None:
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = FedAvgSampling(
-        fraction_fit=config["client_sampling"],
+        fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,

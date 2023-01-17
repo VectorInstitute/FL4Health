@@ -1,4 +1,5 @@
 import argparse
+import pickle
 from functools import partial
 from logging import INFO
 from typing import Any, Dict, List, Tuple
@@ -8,7 +9,8 @@ from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
-from examples.models.cnn_model import Net
+from examples.dp_fed_examples.client_level_dp_weighted.data import Scaler
+from examples.models.logistic_regression import LogisticRegression
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -18,7 +20,7 @@ from fl4health.utils.config import load_config
 def get_initial_model_parameters() -> Parameters:
     # The server-side strategy requires that we provide server side parameter initialization.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
+    initial_model = LogisticRegression(input_dim=31, output_dim=1)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
@@ -65,6 +67,7 @@ def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clippi
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
+        "scaler": pickle.dumps(Scaler()),
     }
 
 
@@ -112,6 +115,8 @@ def main(config: Dict[str, Any]) -> None:
         weight_noise_multiplier=config["server_noise_multiplier"],
         clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
+        weighted_averaging=config["weighted_averaging"],
+        total_samples=config["total_samples"],
     )
 
     fl.server.start_server(
