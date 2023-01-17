@@ -3,7 +3,7 @@ n_server_rounds: 5
 n_clients: 3
 
 # Client learning settings
-client_sampling: 0.66
+client_sampling_rate: 0.66
 local_epochs: 4
 batch_size: 64
 

@@ -6,7 +6,7 @@ n_server_rounds: 20
 # much more noise can kill server side convergence.
 server_noise_multiplier: 0.01
 n_clients: 3
-client_sampling: 0.66
+client_sampling_rate: 0.66
 server_learning_rate: 1.0
 server_momentum: 0.2
 

@@ -19,7 +19,30 @@ def gaussian_noisy_aggregate(
     total_samples: Optional[int] = None,
     is_weighted: bool = False,
 ) -> NDArrays:
-    """Compute weighted or unweighted average of weights. Apply gaussian noise to the sum of"""
+    """Compute weighted or unweighted average of weights. Apply gaussian noise to the sum of
+
+    Weighted Implementation based on https://arxiv.org/pdf/1710.06963.pdf
+
+    Parameters
+    ----------
+    reults : List[Tuple[NDArrays, int]]
+        List of tuples containing the model updates and the number of samples for each client.
+    noise_multiplier : float
+        The multiplier on the clipping bound to determine the std of noise applied to updated weights.
+    clipping_bound : float
+        The clipping bound applied to client model updates.
+    fraction_fit : float, optional
+        Fraction of clients sampled each round. Defaults to 1.0.
+    total_samples : int, optional
+        The total number of samples across all particpating clients.
+    is_weighted : bool
+        Whether or not to use weighted FedAvg. Defaults to False.
+
+    Returns:
+    --------
+    layer_sums : NDArrays
+        Model update for a given round.
+    """
     if is_weighted:
         assert total_samples is not None
         n_clients = len(results)
@@ -32,9 +55,12 @@ def gaussian_noisy_aggregate(
             [layer_update * client_coef for layer_update in client_model_update]
             for client_model_update, client_coef in zip(client_model_updates, client_coefs_scaled)
         ]  # Calculate model updates as linear combination of updates
-        updated_clipping_bound = clipping_bound * max(
-            client_coefs
-        )  # Update clipping bound as max(w_k) * clipping bound
+
+        # Update clipping bound as max(w_k) * clipping bound
+        # We only require w_k * update is bounded
+        # Refer to the footnote on page 4 in https://arxiv.org/pdf/1710.06963.pdf
+        updated_clipping_bound = clipping_bound * max(client_coefs)
+
         sigma = (noise_multiplier * updated_clipping_bound) / fraction_fit
     else:
         n_clients = len(results)
