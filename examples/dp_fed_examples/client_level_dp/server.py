@@ -86,14 +86,16 @@ def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
 
     # Accountant that computes the privacy through training
-    accountant = FlClientLevelAccountantPoissonSampling(config["client_sampling"], config["server_noise_multiplier"])
+    accountant = FlClientLevelAccountantPoissonSampling(
+        config["client_sampling_rate"], config["server_noise_multiplier"]
+    )
     target_delta = 1.0 / config["n_clients"]
     epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
     log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = ClientLevelDPFedAvgM(
-        fraction_fit=config["client_sampling"],
+        fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,

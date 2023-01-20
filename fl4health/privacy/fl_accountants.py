@@ -19,7 +19,7 @@ class FlInstanceLevelAccountant:
 
     def __init__(
         self,
-        client_sampling: float,
+        client_sampling_rate: float,
         noise_multiplier: float,
         epochs_per_round: int,
         client_batch_sizes: List[int],
@@ -27,7 +27,7 @@ class FlInstanceLevelAccountant:
         moment_orders: Optional[List[float]] = None,
     ) -> None:
         """
-        client_sampling: probability that each client will be included in a round
+        client_sampling_rate: probability that each client will be included in a round
         noise_multiplier: multiplier of noise std. dev. on clipping bound
         epochs_per_round: number of epochs each client will complete per server round
         client_batch_sizes: batch size per client, if a single value it is assumed to be constant across clients
@@ -42,7 +42,7 @@ class FlInstanceLevelAccountant:
 
         client_batch_ratios = self._calculate_batch_ratios(client_batch_sizes, client_dataset_sizes)
         self.sampling_strategies_per_client = [
-            PoissonSampling(client_sampling * client_batch_ratio) for client_batch_ratio in client_batch_ratios
+            PoissonSampling(client_sampling_rate * client_batch_ratio) for client_batch_ratio in client_batch_ratios
         ]
 
         self.accountant = MomentsAccountant(moment_orders)
@@ -102,12 +102,12 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
     def __init__(
         self,
-        client_sampling: Union[float, List[float]],
+        client_sampling_rate: Union[float, List[float]],
         noise_multiplier: Union[float, List[float]],
         moment_orders: Optional[List[float]] = None,
     ) -> None:
         """
-        client_sampling: probability that each client will be included in a round
+        client_sampling_rate: probability that each client will be included in a round
         noise_multiplier: multiplier of noise std. dev. on clipping bound
         NOTE: The above values can be lists, where they are treated as sequences of training with the respective
         parameters
@@ -115,10 +115,10 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         super().__init__(noise_multiplier, moment_orders)
         self.sampling_strategy: Union[SamplingStrategy, List[PoissonSampling]]
 
-        if isinstance(client_sampling, list):
-            self.sampling_strategy = [PoissonSampling(q) for q in client_sampling]
+        if isinstance(client_sampling_rate, list):
+            self.sampling_strategy = [PoissonSampling(q) for q in client_sampling_rate]
         else:
-            self.sampling_strategy = PoissonSampling(client_sampling)
+            self.sampling_strategy = PoissonSampling(client_sampling_rate)
 
     def get_epsilon(self, server_updates: Union[int, List[int]], delta: float) -> float:
         """server_updates: number of central server updates performed"""
