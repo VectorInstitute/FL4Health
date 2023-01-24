@@ -257,8 +257,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             self.per_client_example_cap = (
                 total_samples if self.per_client_example_cap is None else self.per_client_example_cap
             )
-            self.total_client_weight = sum(
-                [num_examples / self.per_client_example_cap for num_examples in client_example_counts]
+            self.total_client_weight = (
+                sum([num_examples / self.per_client_example_cap for num_examples in client_example_counts])
+                if self.total_client_weight is None
+                else self.total_client_weight
             )
             self.initialized = True
 
