@@ -66,7 +66,7 @@ def test_weighted_gaussian_noisy_aggregation_shape() -> None:
         noise_multiplier=1.0,
         clipping_bound=2.0,
         fraction_fit=1.0,
-        per_client_example_cap=total_datapoints,
+        per_client_example_cap=float(total_datapoints),
         total_client_weight=1.0,
         is_weighted=True,
     )
@@ -115,7 +115,7 @@ def test_weighted_gaussian_noisy_aggregation_value() -> None:
         noise_multiplier=1.0,
         clipping_bound=2.0,
         fraction_fit=1.0,
-        per_client_example_cap=total_datapoints,
+        per_client_example_cap=float(total_datapoints),
         total_client_weight=1.0,
         is_weighted=True,
     )
@@ -151,7 +151,7 @@ def test_weighted_gaussian_noisy_aggregation_error() -> None:
             noise_multiplier=1.0,
             clipping_bound=2.0,
             fraction_fit=1.0,
-            per_client_example_cap=100,
+            per_client_example_cap=100.0,
             total_client_weight=None,
             is_weighted=True,
         )

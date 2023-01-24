@@ -60,7 +60,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
-        per_client_example_cap: Optional[int] = None,
+        per_client_example_cap: Optional[float] = None,
         total_client_weight: Optional[float] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
@@ -160,14 +160,15 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
-        # We only need to initialize the server (ie get sample counts to compute client weights)
-        # if we are using weighted fedavg or the total_client_weight and per_client_example_cap is None
-        self.initialized = False
 
-        if self.weighted_averaging is False or (
-            self.per_client_example_cap is not None and self.total_client_weight is not None
-        ):
-            self.initialized = True
+        # per_client_example_cap is used to set total_client_weight
+        # Ensure per_client_example_cap is not None if total_client_weight is not none
+        if self.total_client_weight is not None:
+            assert self.per_client_example_cap is not None
+
+        # We only need to initialize the server (ie get sample counts to compute client weights)
+        # If we are using weighted fedavg or the total_client_weight is None
+        self.initialized = False if (self.weighted_averaging is False or self.total_client_weight is None) else False
 
         self.m_t: Optional[NDArrays] = None
 

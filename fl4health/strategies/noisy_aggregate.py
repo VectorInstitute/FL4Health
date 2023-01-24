@@ -16,7 +16,7 @@ def gaussian_noisy_aggregate(
     noise_multiplier: float,
     clipping_bound: float,
     fraction_fit: float,
-    per_client_example_cap: Optional[int],
+    per_client_example_cap: Optional[float],
     total_client_weight: Optional[float],
     is_weighted: bool = False,
 ) -> NDArrays:
@@ -34,7 +34,7 @@ def gaussian_noisy_aggregate(
         The clipping bound applied to client model updates.
     fraction_fit : float, optional
         Fraction of clients sampled each round.
-    per_client_example_cap : int, optional
+    per_client_example_cap : float, optional
         The maximum number samples per client.
     total_client_weight : float, optional
         The total client weight across samples.
