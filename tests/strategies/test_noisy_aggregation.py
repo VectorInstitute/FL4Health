@@ -122,3 +122,49 @@ def test_weighted_gaussian_noisy_aggregation_value() -> None:
 
     for noised_layer_gt, noised_layer in zip(noised_layers_gt, noised_layers):
         assert np.allclose(noised_layer_gt, noised_layer)
+
+
+def test_weighted_gaussian_noisy_aggregation_error() -> None:
+    np.random.seed(42)
+    layer_shape = (2, 3, 4, 5)
+    n_clients = 2
+    n_layers = 4
+    datapoints_per_client = 10
+    layers = [
+        ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
+    ]
+
+    with pytest.raises(ValueError, match="per_client_example_cap must be defined for weighted fedavg"):
+        noised_layers = gaussian_noisy_aggregate(
+            results=layers,
+            noise_multiplier=1.0,
+            clipping_bound=2.0,
+            fraction_fit=1.0,
+            per_client_example_cap=None,
+            total_client_weight=1.0,
+            is_weighted=True,
+        )
+
+    with pytest.raises(ValueError, match="total_client_weight must be defined for weighted fedavg"):
+        noised_layers = gaussian_noisy_aggregate(
+            results=layers,
+            noise_multiplier=1.0,
+            clipping_bound=2.0,
+            fraction_fit=1.0,
+            per_client_example_cap=100,
+            total_client_weight=None,
+            is_weighted=True,
+        )
+
+    with pytest.raises(
+        ValueError, match="per_client_example_cap and total_client_weight must be defined for weighted fedavg"
+    ):
+        noised_layers = gaussian_noisy_aggregate(  # type: ignore # noqa
+            results=layers,
+            noise_multiplier=1.0,
+            clipping_bound=2.0,
+            fraction_fit=1.0,
+            per_client_example_cap=None,
+            total_client_weight=None,
+            is_weighted=True,
+        )

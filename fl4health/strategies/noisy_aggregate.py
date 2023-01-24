@@ -34,8 +34,10 @@ def gaussian_noisy_aggregate(
         The clipping bound applied to client model updates.
     fraction_fit : float, optional
         Fraction of clients sampled each round.
-    total_samples : int, optional
-        The total number of samples across all particpating clients. Defaults to None.
+    per_client_example_cap : int, optional
+        The maximum number samples per client.
+    total_client_weight : float, optional
+        The total client weight across samples.
     is_weighted : bool
         Whether or not to use weighted FedAvg. Defaults to False.
 
@@ -45,7 +47,12 @@ def gaussian_noisy_aggregate(
         Model update for a given round.
     """
     if is_weighted:
-        assert per_client_example_cap is not None and total_client_weight is not None
+        if per_client_example_cap is None or total_client_weight is None:
+            error_str_1 = "per_client_example_cap" if per_client_example_cap is None else None
+            error_str_2 = "total_client_weight" if total_client_weight is None else None
+            error_str = " and ".join([err for err in [error_str_1, error_str_2] if err is not None])  # type: ignore
+            raise ValueError(f"{error_str} must be defined for weighted fedavg")
+
         n_clients = len(results)
         client_model_updates, client_n_points = zip(*results)
 

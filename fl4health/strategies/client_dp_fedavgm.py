@@ -61,6 +61,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
         per_client_example_cap: Optional[int] = None,
+        total_client_weight: Optional[float] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -104,8 +105,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             Metrics aggregation function, optional.
         weighted_averaging: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
-        per_client_example_cap: int defaults to None
+        per_client_example_cap: Optional[int]. Defaults to None.
             The maximum number samples per client
+        total_client_weight: Optional[float]. Defaults to None.
+            The total weight across clients.
         adaptive_clipping: bool Defaults to False.
             Determines whether adaptive clipping is used in the client DP clipping. If enabled, the model expects the
             last entry of the parameter list to be a binary value indicating whether or not the batch gradient was
@@ -145,7 +148,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.weighted_averaging = weighted_averaging
+        # If per_client_example_cap is None, it will be set as the total samples across clients
         self.per_client_example_cap = per_client_example_cap
+        # If total_client_weight is None, it will be set as sum(sample_count / per_client_example_cap) across clients
+        self.total_client_weight = total_client_weight
         self.adaptive_clipping = adaptive_clipping
         self.server_learning_rate = server_learning_rate
         self.clipping_learning_rate = clipping_learning_rate
@@ -154,7 +160,15 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
+        # We only need to initialize the server (ie get sample counts to compute client weights)
+        # if we are using weighted fedavg or the total_client_weight and per_client_example_cap is None
         self.initialized = False
+
+        if self.weighted_averaging is False or (
+            self.per_client_example_cap is not None and self.total_client_weight is not None
+        ):
+            self.initialized = True
+
         self.m_t: Optional[NDArrays] = None
 
     def __repr__(self) -> str:
@@ -236,7 +250,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         if not self.accept_failures and failures:
             return None, {}
 
-        # If first round compute total expected client weight and return 0
+        # If first round compute total expected client weight and return empty update
         if not self.initialized:
             client_example_counts = [fit_res.num_examples for _, fit_res in results]
             total_samples = sum(client_example_counts)
@@ -307,7 +321,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_ins = FitIns(parameters, config)
 
         # Sample clients
-        if server_round == 0:
+        if self.initialized is False:
             # Sample all clients in first round to get sample counts
             clients = client_manager.sample(1.0, self.min_available_clients)
         else:
@@ -321,8 +335,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """Configure the next round of evaluation."""
-        # Do not configure federated evaluation if fraction eval is 0.
-        if self.fraction_evaluate == 0.0 or server_round == 0:
+        # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
+        if self.fraction_evaluate == 0.0 or self.initialized is False:
             return []
 
         # Parameters and config
