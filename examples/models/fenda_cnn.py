@@ -1,4 +1,4 @@
-from typing import Set
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -26,15 +26,15 @@ class FendaClassifier(FendaClassifierModule):
 class LocalCnn(FendaLocalModule):
     def __init__(self) -> None:
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv1 = nn.Conv2d(1, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
 
@@ -42,17 +42,17 @@ class LocalCnn(FendaLocalModule):
 class GlobalCnn(FendaGlobalModule):
     def __init__(self) -> None:
         super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.conv1 = nn.Conv2d(1, 6, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))
         x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
 
-    def get_layer_names(self) -> Set[str]:
-        return Set(self.state_dict().keys())
+    def get_layer_names(self) -> List[str]:
+        return list(self.state_dict().keys())

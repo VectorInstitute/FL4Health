@@ -34,7 +34,9 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float) -> Config:
+def fit_config(
+    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
+) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
@@ -45,7 +47,13 @@ def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, downsam
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["downsampling_ratio"])
+    fit_config_fn = partial(
+        fit_config,
+        config["local_epochs"],
+        config["batch_size"],
+        config["n_server_rounds"],
+        config["downsampling_ratio"],
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

@@ -29,9 +29,9 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    n_server_rounds: int,
+    current_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "n_server_rounds": n_server_rounds}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
 
 
 def get_initial_model_parameters() -> Parameters:

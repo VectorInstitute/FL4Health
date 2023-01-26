@@ -61,9 +61,9 @@ def fit_config(
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
-    server_round: int,
+    current_round: int,
 ) -> Config:
-    return construct_config(server_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
+    return construct_config(current_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
 
 
 def main(config: Dict[str, Any]) -> None:

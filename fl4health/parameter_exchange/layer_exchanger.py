@@ -1,4 +1,4 @@
-from typing import Optional, Set
+from typing import List, Optional
 
 import torch
 import torch.nn as nn
@@ -8,7 +8,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 
 
 class FixedLayerExchanger(ParameterExchanger):
-    def __init__(self, layers_to_transfer: Set[str]) -> None:
+    def __init__(self, layers_to_transfer: List[str]) -> None:
         self.layers_to_transfer = layers_to_transfer
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:

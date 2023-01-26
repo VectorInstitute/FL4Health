@@ -95,10 +95,10 @@ def fit_config(
     hidden_size: int,
     vocabulary: Vocabulary,
     label_encoder: LabelEncoder,
-    server_round: int,
+    current_round: int,
 ) -> Config:
     return construct_config(
-        server_round,
+        current_round,
         sequence_length,
         local_epochs,
         batch_size,

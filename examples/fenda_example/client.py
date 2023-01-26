@@ -115,7 +115,7 @@ class MnistFendaClient(NumpyFlClient):
 
     def setup_client(self, config: Config) -> None:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        downsample_percentage = self.narrow_config_type(config, "downsample_percentage", float)
+        downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
 
         train_loader, validation_loader, num_examples = load_data(
             self.data_path, batch_size, downsample_percentage, self.minority_numbers
@@ -133,8 +133,6 @@ class MnistFendaClient(NumpyFlClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    args = parser.parse_args()
-
     parser.add_argument(
         "--minority_numbers", default=[], nargs="*", help="MNIST numbers to be in the minority for the current client"
     )

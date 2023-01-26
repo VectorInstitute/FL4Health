@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Set
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -16,7 +16,7 @@ class FendaGlobalModule(nn.Module, ABC):
         super().__init__()
 
     @abstractmethod
-    def get_layer_names(self) -> Set[str]:
+    def get_layer_names(self) -> List[str]:
         raise NotImplementedError
 
 
@@ -56,8 +56,9 @@ class FendaModel(nn.Module):
         self.global_module = global_module
         self.classifier = classifier
 
-    def layers_to_exchange(self) -> Set[str]:
-        return self.global_module.get_layer_names()
+    def layers_to_exchange(self) -> List[str]:
+        # NOTE: that the appending string must match the name of the global module variable
+        return [f"global_module.{layer_name}" for layer_name in self.global_module.get_layer_names()]
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         local_output = self.local_module.forward(input)

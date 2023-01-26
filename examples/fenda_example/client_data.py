@@ -40,7 +40,7 @@ def load_data(
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            transforms.Normalize((0.5), (0.5)),
         ]
     )
     training_set = MNIST(str(data_dir), train=True, download=True, transform=transform)
