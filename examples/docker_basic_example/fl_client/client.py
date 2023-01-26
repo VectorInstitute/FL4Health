@@ -125,11 +125,8 @@ class CifarClient(NumpyFlClient):
         )
 
     def setup_client(self, config: Config) -> None:
-        if isinstance(config["batch_size"], int):
-            batch_size = config["batch_size"]
-        else:
-            raise ValueError("Batch size config type is incompatible")
 
+        batch_size = self.narrow_config_type(config, "batch_size", int)
         train_loader, validation_loader, num_examples = load_data(self.data_path, batch_size)
 
         self.train_loader = train_loader
