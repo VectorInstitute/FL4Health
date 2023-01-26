@@ -15,11 +15,11 @@ def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[i
             if isinstance(metric_value, float):
                 current_metric_value = aggregated_metrics.get(metric_name, 0.0)
                 assert isinstance(current_metric_value, float)
-                aggregated_metrics[metric_name] = current_metric_value + metric_value
+                aggregated_metrics[metric_name] = current_metric_value + num_examples_on_client * metric_value
             elif isinstance(metric_value, int):
                 current_metric_value = aggregated_metrics.get(metric_name, 0)
                 assert isinstance(current_metric_value, int)
-                aggregated_metrics[metric_name] = current_metric_value + metric_value
+                aggregated_metrics[metric_name] = current_metric_value + num_examples_on_client * metric_value
             else:
                 raise ValueError("Metric type is not supported")
     return total_examples, aggregated_metrics
