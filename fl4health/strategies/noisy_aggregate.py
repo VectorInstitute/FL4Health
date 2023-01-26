@@ -49,7 +49,11 @@ def gaussian_noisy_aggregate(
             raise ValueError("total samples is not defined and must be when using weighted averaged")
         assert total_samples is not None
         n_clients = len(results)
-        client_model_updates, client_n_points = zip(*results)
+        client_model_updates: List[NDArrays] = []
+        client_n_points: List[int] = []
+        for weights, n_points in results:
+            client_model_updates.append(weights)
+            client_n_points.append(n_points)
 
         # Calculate client coefficients w_k as proportion of total samples
         client_coefs = [(n_points / total_samples) for n_points in client_n_points]

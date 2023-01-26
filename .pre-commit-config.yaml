@@ -31,9 +31,12 @@ repos:
       - id: isort
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.942
+    rev: v0.991
     hooks:
       - id: mypy
+        name: mypy
+        entry: ./run_mypy.sh
+        language: system
 
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.3.1

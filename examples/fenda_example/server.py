@@ -7,8 +7,9 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
 
-from examples.docker_basic_example.model import Net
+from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.utils.config import load_config
 
 
@@ -26,30 +27,27 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def fit_config(
-    local_epochs: int,
-    batch_size: int,
-    n_server_rounds: int,
-) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "n_server_rounds": n_server_rounds}
-
-
 def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side
+    # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
+    initial_model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+
+
+def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float) -> Config:
+    return {
+        "local_epochs": local_epochs,
+        "batch_size": batch_size,
+        "n_server_rounds": n_server_rounds,
+        "downsampling_ratio": downsampling_ratio,
+    }
 
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(
-        fit_config,
-        config["local_epochs"],
-        config["batch_size"],
-    )
+    fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["downsampling_ratio"])
 
-    # Server performs simple FedAveraging as it's server-side optimization strategy
+    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],

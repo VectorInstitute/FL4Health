@@ -8,28 +8,8 @@ from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
+from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.utils.config import load_config
-
-
-def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
-    aggregated_metrics: Metrics = {}
-    total_examples = 0
-    # Run through all of the metrics
-    for num_examples_on_client, client_metrics in all_client_metrics:
-        total_examples += num_examples_on_client
-        for metric_name, metric_value in client_metrics.items():
-            # Here we assume each metric is normalized by the number of examples on the client. So we scale up to
-            # get the "raw" value
-            if metric_name in aggregated_metrics:
-                aggregated_metrics[metric_name] += num_examples_on_client * metric_value
-            else:
-                aggregated_metrics[metric_name] = num_examples_on_client * metric_value
-    return total_examples, aggregated_metrics
-
-
-def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metrics:
-    # Normalize all metric values by the total count of examples seen.
-    return {metric_name: metric_value / total_examples for metric_name, metric_value in aggregated_metrics.items()}
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:

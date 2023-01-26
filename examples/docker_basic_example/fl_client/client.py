@@ -1,5 +1,4 @@
 import argparse
-from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
@@ -14,6 +13,8 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
 from examples.docker_basic_example.model import Net
+from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -96,36 +97,14 @@ def validate(
     return loss / n_batches, accuracy
 
 
-class CifarClient(fl.client.NumPyClient):
-    def __init__(
-        self,
-        data_path: Path,
-        device: torch.device,
-    ) -> None:
-
-        self.data_path = data_path
-        self.device = device
-        self.initialized = False
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        # Determines which weights are sent back to the server for aggregation.
-        # Currently sending all of them ordered by state_dict keys
-        # NOTE: Order matters, because it is relied upon by set_parameters below
-        return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
-
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server. The state_dict is
-        # reconstituted because parameters is simply a list of bytes
-        params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
-
+class CifarClient(NumpyFlClient):
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
-
         self.set_parameters(parameters, config)
-        accuracy = train(self.model, self.train_loader, epochs=config["local_epochs"], device=self.device)
+
+        local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        accuracy = train(self.model, self.train_loader, epochs=local_epochs, device=self.device)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -146,15 +125,20 @@ class CifarClient(fl.client.NumPyClient):
         )
 
     def setup_client(self, config: Config) -> None:
+        if isinstance(config["batch_size"], int):
+            batch_size = config["batch_size"]
+        else:
+            raise ValueError("Batch size config type is incompatible")
 
-        train_loader, validation_loader, num_examples = load_data(self.data_path, config["batch_size"])
+        train_loader, validation_loader, num_examples = load_data(self.data_path, batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
 
-        model = Net()
-        self.model = model
+        self.model = Net()
+        self.parameter_exchanger = FullParameterExchanger()
+        self.initialized = True
 
 
 if __name__ == "__main__":

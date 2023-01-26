@@ -23,11 +23,13 @@ def test_update_with_momentum() -> None:
     n_layers = 4
     layer_updates = [np.random.rand(2, 3) for _ in range(n_layers)]
     strategy.calculate_update_with_momentum(layer_updates)
+    assert strategy.m_t is not None
     assert np.array_equal(strategy.m_t, layer_updates)
 
     # should be the same since the update is a weighted average using same update
     strategy.calculate_update_with_momentum(layer_updates)
     target = [(1.0 + strategy.beta) * layer for layer in layer_updates]
+    assert strategy.m_t is not None
     assert np.allclose(strategy.m_t, target)
 
     new_layer_updates = [np.random.rand(2, 3) for _ in range(n_layers)]

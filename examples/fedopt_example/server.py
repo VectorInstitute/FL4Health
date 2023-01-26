@@ -34,11 +34,14 @@ def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics
         for metric_name, metric_value in client_metrics.items():
             # If it's an overall count, we accumulate
             if metric_name == "total_preds":
+                assert isinstance(metric_value, int)
                 total_preds += metric_value
             elif metric_name == "true_preds":
+                assert isinstance(metric_value, int)
                 true_preds += metric_value
             # Otherwise it's class related and we handle parsing and aggregation through class functions.
             else:
+                assert isinstance(metric_value, str)
                 client_outcome = Outcome.from_results_dict(metric_name, metric_value)
                 if metric_name in outcome_dict:
                     outcome_dict[metric_name] = Outcome.merge_outcomes(outcome_dict[metric_name], client_outcome)

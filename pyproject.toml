@@ -24,12 +24,3 @@ line-length = 119
 line_length = 119
 profile = "black"
 skip_gitignore = true
-
-[tool.mypy]
-ignore_missing_imports = true
-install_types = true
-pretty = true
-non_interactive = true
-disallow_untyped_defs = true
-no_implicit_optional = true
-check_untyped_defs = true

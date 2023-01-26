@@ -1,28 +1,30 @@
 import argparse
-from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, Metrics, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
 from examples.fedopt_example.metrics import ClientMetrics
 from examples.models.lstm_model import LSTM
+from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 
 def train(
-    model: LSTM,
+    model: nn.Module,
     train_loader: DataLoader,
     epochs: int,
     label_encoder: LabelEncoder,
     weight_matrix: torch.Tensor,
     device: torch.device = torch.device("cpu"),
-) -> Dict[str, Union[float, str]]:
+) -> Metrics:
     """Train the network on the training set."""
     criterion = torch.nn.CrossEntropyLoss(weight=weight_matrix)
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.01, weight_decay=0.001)
@@ -31,6 +33,7 @@ def train(
         n_batches = len(train_loader)
 
         assert train_loader.batch_size is not None
+        assert isinstance(model, LSTM)
         h0, c0 = model.init_hidden(train_loader.batch_size)
         h0 = h0.to(device)
         c0 = c0.to(device)
@@ -63,16 +66,17 @@ def train(
 
 
 def validate(
-    model: LSTM,
+    model: nn.Module,
     validation_loader: DataLoader,
     label_encoder: LabelEncoder,
     device: torch.device = torch.device("cpu"),
-) -> Tuple[float, Dict[str, Union[float, str]]]:
+) -> Tuple[float, Metrics]:
     """Validate the network on the entire validation set."""
     criterion = torch.nn.CrossEntropyLoss()
     loss = 0.0
 
     assert validation_loader.batch_size is not None
+    assert isinstance(model, LSTM)
     h0, c0 = model.init_hidden(validation_loader.batch_size)
     h0 = h0.to(device)
     c0 = c0.to(device)
@@ -98,36 +102,15 @@ def validate(
     return loss / n_batches, epoch_metrics.results
 
 
-class NewsClassifier(fl.client.NumPyClient):
-    def __init__(
-        self,
-        data_path: Path,
-        device: torch.device,
-    ) -> None:
-        self.data_path = data_path
-        self.device = device
-        self.initialized = False
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        # Determines which weights are sent back to the server for aggregation.
-        # Currently sending all of them ordered by state_dict keys
-        # NOTE: Order matters, because it is relied upon by set_parameters below
-        return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
-
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server. The state_dict is
-        # reconstituted because parameters is simply a list of bytes
-        params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
-
+class NewsClassifier(NumpyFlClient):
     def setup_client(self, config: Config) -> None:
-        sequence_length = config["sequence_length"]
-        batch_size = config["batch_size"]
-        vocab_dimension = config["vocab_dimension"]
-        hidden_size = config["hidden_size"]
-        vocabulary = Vocabulary.from_json(config["vocabulary"])
-        label_encoder = LabelEncoder.from_json(config["label_encoder"])
+
+        sequence_length = self.narrow_config_type(config, "sequence_length", int)
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        vocab_dimension = self.narrow_config_type(config, "vocab_dimension", int)
+        hidden_size = self.narrow_config_type(config, "hidden_size", int)
+        vocabulary = Vocabulary.from_json(self.narrow_config_type(config, "vocabulary", str))
+        label_encoder = LabelEncoder.from_json(self.narrow_config_type(config, "label_encoder", str))
 
         train_loader, validation_loader, num_examples, weight_matrix = construct_dataloaders(
             self.data_path, vocabulary, label_encoder, sequence_length, batch_size
@@ -140,6 +123,7 @@ class NewsClassifier(fl.client.NumPyClient):
         self.weight_matrix = weight_matrix
 
         self.setup_model(vocabulary.vocabulary_size, vocab_dimension, hidden_size)
+        self.parameter_exchanger = FullParameterExchanger()
         self.initialized = True
 
     def setup_model(self, vocab_size: int, vocab_dimension: int, hidden_size: int) -> None:
@@ -151,10 +135,12 @@ class NewsClassifier(fl.client.NumPyClient):
         # Once the model is created model weights are initialized from server
         self.set_parameters(parameters, config)
 
+        local_epochs = self.narrow_config_type(config, "local_epochs", int)
+
         fit_metrics = train(
             self.model,
             self.train_loader,
-            config["local_epochs"],
+            local_epochs,
             self.label_encoder,
             self.weight_matrix,
             device=self.device,

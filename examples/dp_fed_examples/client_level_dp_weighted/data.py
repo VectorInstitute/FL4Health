@@ -13,7 +13,7 @@ class Scaler:
     def __init__(self) -> None:
         self.scaler = MinMaxScaler()
 
-    def __call__(self, train_x: np.ndarray, val_x: np.ndarray) -> np.ndarray:
+    def __call__(self, train_x: np.ndarray, val_x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         scaled_train_x = self.scaler.fit_transform(train_x)
         scaled_val_x = self.scaler.transform(val_x)
         return scaled_train_x, scaled_val_x

@@ -1,40 +1,20 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Set, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
 
-from examples.models.cnn_model import Net
+from examples.fenda_example.client_data import load_data
+from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-
-
-def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 (training and validation set)."""
-    log(INFO, f"Data directory: {str(data_dir)}")
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    )
-    training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
-    validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
-    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(validation_set, batch_size=batch_size)
-    num_examples = {
-        "train_set": len(training_set),
-        "validation_set": len(validation_set),
-    }
-    return train_loader, validation_loader, num_examples
+from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 
 
 def train(
@@ -97,12 +77,21 @@ def validate(
     return loss / n_batches, accuracy
 
 
-class CifarClient(NumpyFlClient):
+class MnistFendaClient(NumpyFlClient):
+    def __init__(
+        self,
+        data_path: Path,
+        minority_numbers: Set[int],
+        device: torch.device,
+    ) -> None:
+        super().__init__(data_path, device)
+        self.minority_numbers = minority_numbers
+
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
-        self.set_parameters(parameters, config)
 
+        self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         accuracy = train(self.model, self.train_loader, epochs=local_epochs, device=self.device)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -125,19 +114,20 @@ class CifarClient(NumpyFlClient):
         )
 
     def setup_client(self, config: Config) -> None:
-        if isinstance(config["batch_size"], int):
-            batch_size = config["batch_size"]
-        else:
-            raise ValueError("Batch size config type is incompatible")
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        downsample_percentage = self.narrow_config_type(config, "downsample_percentage", float)
 
-        train_loader, validation_loader, num_examples = load_data(self.data_path, batch_size)
+        train_loader, validation_loader, num_examples = load_data(
+            self.data_path, batch_size, downsample_percentage, self.minority_numbers
+        )
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
 
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
+        self.model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
+        self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
+        self.initialized = True
 
 
 if __name__ == "__main__":
@@ -145,7 +135,13 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
 
+    parser.add_argument(
+        "--minority_numbers", default=[], nargs="*", help="MNIST numbers to be in the minority for the current client"
+    )
+    args = parser.parse_args()
+
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarClient(data_path, DEVICE)
+    minority_numbers = {int(number) for number in args.minority_numbers}
+    client = MnistFendaClient(data_path, minority_numbers, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

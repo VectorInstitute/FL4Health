@@ -18,7 +18,7 @@ class PoissonSamplingClientManager(BaseSamplingManager):
         poisson_mask = poisson_trials.astype(dtype=bool)
         return list(np.array(available_cids)[poisson_mask])
 
-    def sample(
+    def sample_fraction(
         self,
         sample_fraction: float,
         min_num_clients: Optional[int] = None,

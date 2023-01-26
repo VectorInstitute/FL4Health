@@ -1,14 +1,23 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
+import torch
+from flwr.common import Config
 
 from fl4health.clients.clipping_client import NumpyClippingClient
 
 
+class DummyClippingClient(NumpyClippingClient):
+    def setup_client(self, config: Config) -> None:
+        raise NotImplementedError
+
+
 def test_weight_update_and_clipping() -> None:
-    clipping_client = NumpyClippingClient()
+    clipping_client = DummyClippingClient(Path(""), torch.device("cpu"), adaptive_clipping=True)
     clipping_client.clipping_bound = 1.0
     n_layers = 4
-    clipping_client.current_weights = [2.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
+    clipping_client.initial_weights = [2.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
     new_weights = [4.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
     clipped_weight_update, clipping_bit = clipping_client.compute_weight_update_and_clip(new_weights)
 
@@ -18,10 +27,10 @@ def test_weight_update_and_clipping() -> None:
 
 
 def test_clipping_bit_flip() -> None:
-    clipping_client = NumpyClippingClient(adaptive_clipping=True)
+    clipping_client = DummyClippingClient(Path(""), torch.device("cpu"), adaptive_clipping=True)
     clipping_client.clipping_bound = 9.0
     n_layers = 4
-    clipping_client.current_weights = [2.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
+    clipping_client.initial_weights = [2.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
     new_weights = [3.0 * np.ones((2, 3, 3)) for _ in range(n_layers)]
     clipped_weight_update, clipping_bit = clipping_client.compute_weight_update_and_clip(new_weights)
 

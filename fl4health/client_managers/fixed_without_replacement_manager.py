@@ -12,7 +12,7 @@ from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 class FixedSamplingWithoutReplacementClientManager(BaseSamplingManager):
     """Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients"""
 
-    def sample(
+    def sample_fraction(
         self,
         sample_fraction: float,
         # minimum number of clients required to be available
