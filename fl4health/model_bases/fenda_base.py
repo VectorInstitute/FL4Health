@@ -12,17 +12,22 @@ class FendaJoinMode(Enum):
 
 
 class FendaGlobalModule(nn.Module, ABC):
+    def __init__(self) -> None:
+        super().__init__()
+
     @abstractmethod
     def get_layer_names(self) -> Set[str]:
         raise NotImplementedError
 
 
 class FendaLocalModule(nn.Module):
-    pass
+    def __init__(self) -> None:
+        super().__init__()
 
 
 class FendaClassifierModule(nn.Module, ABC):
     def __init__(self, mode: FendaJoinMode) -> None:
+        super().__init__()
         self.mode = mode
 
     @abstractmethod
@@ -46,6 +51,7 @@ class FendaModel(nn.Module):
     def __init__(
         self, local_module: FendaLocalModule, global_module: FendaGlobalModule, classifier: FendaClassifierModule
     ) -> None:
+        super().__init__()
         self.local_module = local_module
         self.global_module = global_module
         self.classifier = classifier
