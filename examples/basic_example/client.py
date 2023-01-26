@@ -138,6 +138,7 @@ class CifarClient(NumpyFlClient):
 
         self.model = Net().to(self.device)
         self.parameter_exchanger = FullParameterExchanger()
+        self.initialized = True
 
 
 if __name__ == "__main__":
