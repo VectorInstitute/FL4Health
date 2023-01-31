@@ -126,6 +126,15 @@ class HospitalClient(NumpyClippingClient):
         # Expectation is that the last entry in the parameters NDArrays is a clipping bound
         if not self.initialized:
             self.setup_client(config)
+
+        if not config["training"]:
+            log(
+                INFO,
+                """First round reserved for solely fetching client sample counts when weighted_averaging is True.
+                Parameters not updated.""",
+            )
+            return (parameters, self.num_examples["train_set"], {})
+
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,

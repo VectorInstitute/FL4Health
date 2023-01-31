@@ -29,7 +29,11 @@ from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
-from fl4health.strategies.noisy_aggregate import gaussian_noisy_aggregate, gaussian_noisy_aggregate_clipping_bits
+from fl4health.strategies.noisy_aggregate import (
+    gaussian_noisy_aggregate_clipping_bits,
+    gaussian_noisy_unweighted_aggregate,
+    gaussian_noisy_weighted_aggregate,
+)
 
 
 class ClientLevelDPFedAvgM(FedAvgSampling):
@@ -61,7 +65,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_averaging: bool = False,
         per_client_example_cap: Optional[float] = None,
-        total_client_weight: Optional[float] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -105,10 +108,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             Metrics aggregation function, optional.
         weighted_averaging: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
-        per_client_example_cap: Optional[int]. Defaults to None.
-            The maximum number samples per client
-        total_client_weight: Optional[float]. Defaults to None.
-            The total weight across clients.
+        per_client_example_cap: Optional[float]. Defaults to None.
+            The maximum number samples per client. hat{w} in https://arxiv.org/pdf/1710.06963.pdf.
         adaptive_clipping: bool Defaults to False.
             Determines whether adaptive clipping is used in the client DP clipping. If enabled, the model expects the
             last entry of the parameter list to be a binary value indicating whether or not the batch gradient was
@@ -150,8 +151,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weighted_averaging = weighted_averaging
         # If per_client_example_cap is None, it will be set as the total samples across clients
         self.per_client_example_cap = per_client_example_cap
-        # If total_client_weight is None, it will be set as sum(sample_count / per_client_example_cap) across clients
-        self.total_client_weight = total_client_weight
         self.adaptive_clipping = adaptive_clipping
         self.server_learning_rate = server_learning_rate
         self.clipping_learning_rate = clipping_learning_rate
@@ -160,15 +159,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
-
-        # per_client_example_cap is used to set total_client_weight
-        # Ensure per_client_example_cap is not None if total_client_weight is not none
-        if self.total_client_weight is not None:
-            assert self.per_client_example_cap is not None
-
-        # We only need to initialize the server (ie get sample counts to compute client weights)
-        # If we are using weighted fedavg or the total_client_weight is None
-        self.initialized = False if (self.weighted_averaging is False or self.total_client_weight is None) else False
 
         self.m_t: Optional[NDArrays] = None
 
@@ -252,18 +242,30 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             return None, {}
 
         # If first round compute total expected client weight and return empty update
-        if not self.initialized:
+        if self.weighted_averaging and server_round == 1:
             client_example_counts = [fit_res.num_examples for _, fit_res in results]
-            total_samples = sum(client_example_counts)
+            total_successful_samples = sum(client_example_counts)
+            avg_samples = total_successful_samples / len(client_example_counts)
+
+            # Total number of clients is length of successes plus length of failures
+            n_clients = len(results) + len(failures)
+
+            # To estimate total_samples we scale avg_samples by the n_total_clients by average samples
+            total_samples = avg_samples * n_clients
+
             self.per_client_example_cap = (
                 total_samples if self.per_client_example_cap is None else self.per_client_example_cap
             )
-            self.total_client_weight = (
-                sum([num_examples / self.per_client_example_cap for num_examples in client_example_counts])
-                if self.total_client_weight is None
-                else self.total_client_weight
+
+            self.total_client_weight = sum(
+                [num_examples / self.per_client_example_cap for num_examples in client_example_counts]
             )
-            self.initialized = True
+
+            log(
+                INFO,
+                """First round reserved for solely fetching client sample counts when weighted_averaging is True.
+                No updates to aggregate.""",
+            )
 
             return None, {}
 
@@ -277,26 +279,24 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             # The noise multiplier need only be modified in the event of using adaptive clipping to account for the
             # extra gradient information used to adapt the clipping threshold.
             modified_noise_multiplier = self.modify_noise_multiplier()
-            noised_aggregated_update = gaussian_noisy_aggregate(
+            self.update_clipping_bound(clipping_bits)
+            log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
+
+        if self.weighted_averaging:
+            assert self.per_client_example_cap is not None
+            noised_aggregated_update = gaussian_noisy_weighted_aggregate(
                 weights_updates,
                 modified_noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
                 self.per_client_example_cap,
                 self.total_client_weight,
-                self.weighted_averaging,
             )
-            self.update_clipping_bound(clipping_bits)
-            log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
         else:
-            noised_aggregated_update = gaussian_noisy_aggregate(
+            noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
                 weights_updates,
-                self.weight_noise_multiplier,
+                modified_noise_multiplier,
                 self.clipping_bound,
-                self.fraction_fit,
-                self.per_client_example_cap,
-                self.total_client_weight,
-                self.weighted_averaging,
             )
 
         # momentum calculation
@@ -319,17 +319,15 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:
+            # Determine if we should train
+            training = not (self.weighted_averaging and server_round == 1)
             # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
+            config = self.on_fit_config_fn(training)
+
         fit_ins = FitIns(parameters, config)
 
         # Sample clients
-        if self.initialized is False:
-            # Sample all clients in first round to get sample counts
-            clients = client_manager.sample(1.0, self.min_available_clients)
-        else:
-            # Regular round
-            clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
+        clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
@@ -339,7 +337,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """Configure the next round of evaluation."""
         # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
-        if self.fraction_evaluate == 0.0 or self.initialized is False:
+        if self.fraction_evaluate == 0.0 or (self.weighted_averaging and server_round == 1):
             return []
 
         # Parameters and config
