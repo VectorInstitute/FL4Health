@@ -327,7 +327,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         fit_ins = FitIns(parameters, config)
 
         # Sample clients
-        clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
+        if self.weighted_averaging and server_round == 1:
+            clients = client_manager.sample_all(self.min_available_clients)
+        else:
+            clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
