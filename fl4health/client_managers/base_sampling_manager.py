@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -16,14 +16,17 @@ class BaseSamplingManager(SimpleClientManager):
     ) -> List[ClientProxy]:
         raise NotImplementedError
 
-    def sample_all(
-        self, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
-    ) -> List[ClientProxy]:
-
+    def wait_for_min_num_clients(self, min_num_clients: Union[int, None]) -> None:
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
         else:
             self.wait_for(1)
+
+    def sample_all(
+        self, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
+    ) -> List[ClientProxy]:
+
+        self.wait_for_min_num_clients(min_num_clients)
 
         available_cids = list(self.clients)
         if criterion is not None:

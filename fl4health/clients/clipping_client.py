@@ -53,8 +53,7 @@ class NumpyClippingClient(NumPyClient):
 
         log(
             INFO,
-            """First round reserved for solely fetching client sample counts when weighted_averaging is True.
-            Parameters not updated.""",
+            """Solely fetching client sample counts. Parameters not updated.""",
         )
 
         return (

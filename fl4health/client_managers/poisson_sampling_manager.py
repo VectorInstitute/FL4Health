@@ -26,12 +26,8 @@ class PoissonSamplingClientManager(BaseSamplingManager):
     ) -> List[ClientProxy]:
         """Poisson Sampling of Flower ClientProxy instances with a probability determine by sample_fraction."""
 
-        # Block until at least num_clients are connected, if specified.
-        if min_num_clients is not None:
-            self.wait_for(min_num_clients)
-        else:
-            # Wait for at least one client to be available
-            self.wait_for(1)
+        self.wait_for_min_num_clients(min_num_clients)
+
         # Sample clients which meet the criterion
         available_cids = list(self.clients)
         if criterion is not None:
