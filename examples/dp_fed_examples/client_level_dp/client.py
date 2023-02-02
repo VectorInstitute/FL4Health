@@ -130,6 +130,7 @@ class CifarClient(NumpyClippingClient):
         # Store the starting parameters without clipping bound before client optimization steps
         self.current_weights = server_model_parameters
 
+        # Expectation is that the last entry in the parameters NDArrays is a clipping bound
         clipping_bound = parameters[-1]
         self.clipping_bound = float(clipping_bound)
 
@@ -147,7 +148,6 @@ class CifarClient(NumpyClippingClient):
         self.initialized = True
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        # Expectation is that the last entry in the parameters NDArrays is a clipping bound
 
         self.set_parameters(parameters, config)
         accuracy = train(
@@ -165,8 +165,6 @@ class CifarClient(NumpyClippingClient):
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-        # Expectation is that the last entry in the parameters NDArrays is a clipping bound (even if it isn't used
-        # for evaluation)
         if not self.initialized:
             self.setup_client(config)
         self.set_parameters(parameters, config)

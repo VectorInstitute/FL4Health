@@ -50,6 +50,13 @@ class NumpyClippingClient(NumPyClient):
 
     def _first_round_fit(self, *args: Any, **kwargs: Any) -> Tuple[List, int, Dict]:
         # To be called on first round when weighted_averaging and adaptive_clipping are true
+
+        log(
+            INFO,
+            """First round reserved for solely fetching client sample counts when weighted_averaging is True.
+            Parameters not updated.""",
+        )
+
         return (
             [],
             self.num_examples["train_set"],
@@ -67,12 +74,11 @@ class NumpyClippingClient(NumPyClient):
             if name == "fit" and self.initialized is False:
                 self.setup_client(args[1])
 
-                # Check if training and adaptive clipping are true
-                weighted_averaging = hasattr(self, "training") and self.training is False
-                adaptive_clipping = hasattr(self, "adaptive_clipping") and self.adaptive_clipping
+                # Check if we should train
+                dont_train = hasattr(self, "training") and self.training is False
 
                 # If true then call _first_round_fit method
-                if weighted_averaging and adaptive_clipping:
+                if dont_train:
                     return object.__getattribute__(self, "_first_round_fit")(*args, **kwargs)
 
             # Else call fit method
