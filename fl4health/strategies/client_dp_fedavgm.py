@@ -243,7 +243,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
 
         # If first round compute total expected client weight and return empty update
         if self.weighted_averaging and server_round == 1:
-            client_example_counts = [fit_res.num_examples for _, fit_res in results]
+            successful_client_example_counts = [fit_res.num_examples for _, fit_res in results]
+            valid_failures = [fail for fail in failures if fail is not BaseException]
+            failed_client_example_counts = [fit_res.num_examples for _, fit_res in valid_failures]  # type: ignore
+            client_example_counts = successful_client_example_counts + failed_client_example_counts
             total_successful_samples = sum(client_example_counts)
             avg_samples = total_successful_samples / len(client_example_counts)
 
