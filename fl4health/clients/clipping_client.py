@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from flwr.client import NumPyClient
 from flwr.common import Config, NDArrays
@@ -47,3 +47,35 @@ class NumpyClippingClient(NumPyClient):
         as the last entry in the NDArrays
         """
         raise NotImplementedError
+
+    def _first_round_fit(self, *args: Any, **kwargs: Any) -> Tuple[List, int, Dict]:
+        # To be called on first round when weighted_averaging and adaptive_clipping are true
+        return (
+            [],
+            self.num_examples["train_set"],
+            {},
+        )
+
+    def __getattribute__(self, name: str) -> Any:
+        # If attribute is not fit, regular __getattribute__ behaviour
+        if name != "fit":
+            return object.__getattribute__(self, name)
+
+        # Wrapper for the fit function only
+        def wrapper(*args: Any, **kwargs: Any) -> Callable:
+            # If client is not initialized, setup client
+            if name == "fit" and self.initialized is False:
+                self.setup_client(args[1])
+
+                # Check if training and adaptive clipping are true
+                weighted_averaging = hasattr(self, "training") and self.training is False
+                adaptive_clipping = hasattr(self, "adaptive_clipping") and self.adaptive_clipping
+
+                # If true then call _first_round_fit method
+                if weighted_averaging and adaptive_clipping:
+                    return object.__getattribute__(self, "_first_round_fit")(*args, **kwargs)
+
+            # Else call fit method
+            return object.__getattribute__(self, "fit")(*args, **kwargs)
+
+        return wrapper

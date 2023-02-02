@@ -113,6 +113,7 @@ class HospitalClient(NumpyClippingClient):
         self.local_epochs = config["local_epochs"]
         self.adaptive_clipping = config["adaptive_clipping"]
         self.scaler_bytes = config["scaler"]
+        self.training = config["training"]
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size, self.scaler_bytes)
 
@@ -124,16 +125,6 @@ class HospitalClient(NumpyClippingClient):
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         # Expectation is that the last entry in the parameters NDArrays is a clipping bound
-        if not self.initialized:
-            self.setup_client(config)
-
-        if not config["training"]:
-            log(
-                INFO,
-                """First round reserved for solely fetching client sample counts when weighted_averaging is True.
-                Parameters not updated.""",
-            )
-            return (parameters, self.num_examples["train_set"], {})
 
         self.set_parameters(parameters, config)
         accuracy = train(

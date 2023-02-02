@@ -148,8 +148,7 @@ class CifarClient(NumpyClippingClient):
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         # Expectation is that the last entry in the parameters NDArrays is a clipping bound
-        if not self.initialized:
-            self.setup_client(config)
+
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,
