@@ -72,8 +72,8 @@ def construct_config(training: bool, local_epochs: int, batch_size: int, adaptiv
     }
 
 
-def fit_config(local_epochs: int, batch_size: int, adaptive_clipping: bool, training: bool) -> Config:
-    return construct_config(training, local_epochs, batch_size, adaptive_clipping)
+def fit_config(local_epochs: int, batch_size: int, adaptive_clipping: bool, server_round: int) -> Config:
+    return construct_config(server_round == 1, local_epochs, batch_size, adaptive_clipping)
 
 
 def main(config: Dict[str, Any]) -> None:
