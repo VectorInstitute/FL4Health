@@ -21,13 +21,7 @@ class FixedSamplingWithoutReplacementClientManager(BaseSamplingManager):
     ) -> List[ClientProxy]:
         """Sample a number of Flower ClientProxy instances."""
 
-        self.wait_for_min_num_clients(min_num_clients)
-
-        # Sample clients which meet the criterion
-        available_cids = list(self.clients)
-        if criterion is not None:
-            available_cids = [cid for cid in available_cids if criterion.select(self.clients[cid])]
-
+        available_cids = self.wait_and_filter(min_num_clients, criterion)
         n_available_cids = len(available_cids)
         num_to_sample = int(sample_fraction * n_available_cids)
         if num_to_sample < 1:

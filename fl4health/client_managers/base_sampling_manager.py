@@ -16,20 +16,22 @@ class BaseSamplingManager(SimpleClientManager):
     ) -> List[ClientProxy]:
         raise NotImplementedError
 
-    def wait_for_min_num_clients(self, min_num_clients: Union[int, None]) -> None:
+    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Optional[Criterion] = None) -> List:
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
         else:
             self.wait_for(1)
 
+        available_cids = list(self.clients)
+        if criterion is not None:
+            available_cids = [cid for cid in available_cids if criterion.select(self.clients[cid])]
+
+        return available_cids
+
     def sample_all(
         self, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
     ) -> List[ClientProxy]:
 
-        self.wait_for_min_num_clients(min_num_clients)
-
-        available_cids = list(self.clients)
-        if criterion is not None:
-            available_cids = [cid for cid in available_cids if criterion.select(self.clients[cid])]
+        available_cids = self.wait_and_filter(min_num_clients, criterion)
 
         return [self.clients[cid] for cid in available_cids]
