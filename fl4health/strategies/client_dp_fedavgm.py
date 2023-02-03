@@ -251,7 +251,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             avg_samples = total_successful_samples / len(client_example_counts)
 
             # Total number of clients is length of successes plus length of failures
-            n_clients = len(results) + len(failures)
+            n_clients = len(client_example_counts)
 
             # To estimate total_samples we scale avg_samples by the n_total_clients by average samples
             total_samples = avg_samples * n_clients
@@ -278,46 +278,31 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         ]
 
         weights_updates, clipping_bits = self.split_model_weights_and_clipping_bits(weights_updates)
+
+        noise_multiplier = self.weight_noise_multiplier
         if self.adaptive_clipping:
             # The noise multiplier need only be modified in the event of using adaptive clipping to account for the
             # extra gradient information used to adapt the clipping threshold.
-            modified_noise_multiplier = self.modify_noise_multiplier()
+            noise_multiplier = self.modify_noise_multiplier()
             self.update_clipping_bound(clipping_bits)
             log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
 
-            if self.weighted_averaging:
-                assert self.per_client_example_cap is not None
-                noised_aggregated_update = gaussian_noisy_weighted_aggregate(
-                    weights_updates,
-                    modified_noise_multiplier,
-                    self.clipping_bound,
-                    self.fraction_fit,
-                    self.per_client_example_cap,
-                    self.total_client_weight,
-                )
-            else:
-                noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
-                    weights_updates,
-                    modified_noise_multiplier,
-                    self.clipping_bound,
-                )
+        if self.weighted_averaging:
+            assert self.per_client_example_cap is not None
+            noised_aggregated_update = gaussian_noisy_weighted_aggregate(
+                weights_updates,
+                noise_multiplier,
+                self.clipping_bound,
+                self.fraction_fit,
+                self.per_client_example_cap,
+                self.total_client_weight,
+            )
         else:
-            if self.weighted_averaging:
-                assert self.per_client_example_cap is not None
-                noised_aggregated_update = gaussian_noisy_weighted_aggregate(
-                    weights_updates,
-                    self.weight_noise_multiplier,
-                    self.clipping_bound,
-                    self.fraction_fit,
-                    self.per_client_example_cap,
-                    self.total_client_weight,
-                )
-            else:
-                noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
-                    weights_updates,
-                    self.weight_noise_multiplier,
-                    self.clipping_bound,
-                )
+            noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
+                weights_updates,
+                noise_multiplier,
+                self.clipping_bound,
+            )
 
         # momentum calculation
         self.calculate_update_with_momentum(noised_aggregated_update)
