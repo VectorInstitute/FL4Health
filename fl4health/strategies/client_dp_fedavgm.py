@@ -285,22 +285,39 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             self.update_clipping_bound(clipping_bits)
             log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
 
-        if self.weighted_averaging:
-            assert self.per_client_example_cap is not None
-            noised_aggregated_update = gaussian_noisy_weighted_aggregate(
-                weights_updates,
-                self.weight_noise_multiplier,
-                self.clipping_bound,
-                self.fraction_fit,
-                self.per_client_example_cap,
-                self.total_client_weight,
-            )
+            if self.weighted_averaging:
+                assert self.per_client_example_cap is not None
+                noised_aggregated_update = gaussian_noisy_weighted_aggregate(
+                    weights_updates,
+                    modified_noise_multiplier,
+                    self.clipping_bound,
+                    self.fraction_fit,
+                    self.per_client_example_cap,
+                    self.total_client_weight,
+                )
+            else:
+                noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
+                    weights_updates,
+                    modified_noise_multiplier,
+                    self.clipping_bound,
+                )
         else:
-            noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
-                weights_updates,
-                modified_noise_multiplier,
-                self.clipping_bound,
-            )
+            if self.weighted_averaging:
+                assert self.per_client_example_cap is not None
+                noised_aggregated_update = gaussian_noisy_weighted_aggregate(
+                    weights_updates,
+                    self.weight_noise_multiplier,
+                    self.clipping_bound,
+                    self.fraction_fit,
+                    self.per_client_example_cap,
+                    self.total_client_weight,
+                )
+            else:
+                noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
+                    weights_updates,
+                    self.weight_noise_multiplier,
+                    self.clipping_bound,
+                )
 
         # momentum calculation
         self.calculate_update_with_momentum(noised_aggregated_update)
