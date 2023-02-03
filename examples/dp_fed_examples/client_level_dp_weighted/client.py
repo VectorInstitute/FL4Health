@@ -114,7 +114,6 @@ class HospitalClient(NumpyClippingClient):
         self.local_epochs = config["local_epochs"]
         self.adaptive_clipping = config["adaptive_clipping"]
         self.scaler_bytes = config["scaler"]
-        self.training = config["training"]
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size, self.scaler_bytes)
 

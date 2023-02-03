@@ -48,7 +48,7 @@ class NumpyClippingClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def _first_round_fit(self, *args: Any, **kwargs: Any) -> Tuple[List, int, Dict]:
+    def _first_round_fit(self, parameters: NDArrays, configs: Config) -> Tuple[List, int, Dict]:
         # To be called on first round when weighted_averaging and adaptive_clipping are true
 
         log(
@@ -57,7 +57,7 @@ class NumpyClippingClient(NumPyClient):
         )
 
         return (
-            [],
+            parameters,
             self.num_examples["train_set"],
             {},
         )
@@ -68,19 +68,19 @@ class NumpyClippingClient(NumPyClient):
             return object.__getattribute__(self, name)
 
         # Wrapper for the fit function only
-        def wrapper(*args: Any, **kwargs: Any) -> Callable:
+        def wrapper(parameters: NDArrays, config: Config) -> Callable:
             # If client is not initialized, setup client
             if name == "fit" and self.initialized is False:
-                self.setup_client(args[1])
+                self.setup_client(config)
 
                 # Check if we should train
-                dont_train = hasattr(self, "training") and self.training is False
+                training = config.get("training", True)
 
                 # If true then call _first_round_fit method
-                if dont_train:
-                    return object.__getattribute__(self, "_first_round_fit")(*args, **kwargs)
+                if training is False:
+                    return object.__getattribute__(self, "_first_round_fit")(parameters, config)
 
             # Else call fit method
-            return object.__getattribute__(self, "fit")(*args, **kwargs)
+            return object.__getattribute__(self, "fit")(parameters, config)
 
         return wrapper

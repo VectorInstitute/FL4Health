@@ -289,7 +289,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             assert self.per_client_example_cap is not None
             noised_aggregated_update = gaussian_noisy_weighted_aggregate(
                 weights_updates,
-                modified_noise_multiplier,
+                self.weight_noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
                 self.per_client_example_cap,
@@ -322,11 +322,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:
-            # Determine if we should train
-            training = not (self.weighted_averaging and server_round == 1)
             # Custom fit config function provided
-            config = self.on_fit_config_fn(training)
+            config = self.on_fit_config_fn(server_round)
 
+        config["training"] = (self.weighted_averaging and server_round == 1) is False
         fit_ins = FitIns(parameters, config)
 
         # Sample clients
