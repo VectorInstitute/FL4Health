@@ -5,8 +5,9 @@ import pytest
 
 from fl4health.strategies.noisy_aggregate import (
     add_noise_to_array,
-    gaussian_noisy_aggregate,
     gaussian_noisy_aggregate_clipping_bits,
+    gaussian_noisy_unweighted_aggregate,
+    gaussian_noisy_weighted_aggregate,
 )
 
 
@@ -31,7 +32,11 @@ def test_gaussian_noisy_aggregation() -> None:
     layers = [
         ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
     ]
-    noised_layers = gaussian_noisy_aggregate(layers, 1.0, 2.0, 1.0)
+    noised_layers = gaussian_noisy_unweighted_aggregate(
+        results=layers,
+        noise_multiplier=1.0,
+        clipping_bound=2.0,
+    )
     for i in range(n_layers):
         assert noised_layers[i].shape == layer_shape
 
@@ -49,11 +54,17 @@ def test_weighted_gaussian_noisy_aggregation_shape() -> None:
     n_clients = 2
     n_layers = 4
     datapoints_per_client = 10
+    total_datapoints = datapoints_per_client * n_clients
     layers = [
         ([(np.random.rand(*layer_shape)) for _ in range(n_layers)], datapoints_per_client) for _ in range(n_clients)
     ]
-    noised_layers = gaussian_noisy_aggregate(
-        layers, 1.0, 2.0, 1.0, datapoints_per_client * n_clients, is_weighted=True
+    noised_layers = gaussian_noisy_weighted_aggregate(
+        results=layers,
+        noise_multiplier=1.0,
+        clipping_bound=2.0,
+        fraction_fit=1.0,
+        per_client_example_cap=float(total_datapoints),
+        total_client_weight=1.0,
     )
 
     for i in range(n_layers):
@@ -95,8 +106,13 @@ def test_weighted_gaussian_noisy_aggregation_value() -> None:
         noised_layers_gt.append(updated_layer_weights)
 
     np.random.seed(42)
-    noised_layers = gaussian_noisy_aggregate(
-        layers, noise_multiplier, clipping_bound, fraction_fit, total_datapoints, is_weighted=True
+    noised_layers = gaussian_noisy_weighted_aggregate(
+        results=layers,
+        noise_multiplier=1.0,
+        clipping_bound=2.0,
+        fraction_fit=1.0,
+        per_client_example_cap=float(total_datapoints),
+        total_client_weight=1.0,
     )
 
     for noised_layer_gt, noised_layer in zip(noised_layers_gt, noised_layers):

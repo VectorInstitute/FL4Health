@@ -89,9 +89,7 @@ class HospitalClient(NumpyClippingClient):
         self.initialized = True
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        # Expectation is that the last entry in the parameters NDArrays is a clipping bound
-        if not self.initialized:
-            self.setup_client(config)
+
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,
@@ -108,8 +106,6 @@ class HospitalClient(NumpyClippingClient):
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-        # Expectation is that the last entry in the parameters NDArrays is a clipping bound (even if it isn't used
-        # for evaluation)
         if not self.initialized:
             self.setup_client(config)
         self.set_parameters(parameters, config)

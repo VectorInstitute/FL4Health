@@ -51,13 +51,8 @@ def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clippi
     }
 
 
-def fit_config(
-    local_epochs: int,
-    batch_size: int,
-    adaptive_clipping: bool,
-    current_round: int,
-) -> Config:
-    return construct_config(current_round, local_epochs, batch_size, adaptive_clipping)
+def fit_config(local_epochs: int, batch_size: int, adaptive_clipping: bool, server_round: int) -> Config:
+    return construct_config(server_round, local_epochs, batch_size, adaptive_clipping)
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -96,7 +91,6 @@ def main(config: Dict[str, Any]) -> None:
         clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_averaging=config["weighted_averaging"],
-        total_samples=config["total_samples"],
     )
 
     fl.server.start_server(
