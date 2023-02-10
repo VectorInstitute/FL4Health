@@ -1,13 +1,11 @@
-from typing import List
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaClassifierModule, FendaGlobalModule, FendaJoinMode, FendaLocalModule
+from fl4health.model_bases.fenda_base import FendaGlobalModule, FendaHeadModule, FendaJoinMode, FendaLocalModule
 
 
-class FendaClassifier(FendaClassifierModule):
+class FendaClassifier(FendaHeadModule):
     def __init__(self, join_mode: FendaJoinMode) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(120 * 2, 84)
@@ -17,7 +15,7 @@ class FendaClassifier(FendaClassifierModule):
         # Assuming tensors are "batch first" so join column-wise
         return torch.concat([local_tensor, global_tensor], dim=1)
 
-    def classifier_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
+    def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))
         x = self.fc2(x)
         return x
@@ -53,6 +51,3 @@ class GlobalCnn(FendaGlobalModule):
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
-
-    def get_layer_names(self) -> List[str]:
-        return list(self.state_dict().keys())

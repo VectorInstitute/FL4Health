@@ -98,6 +98,11 @@ def validate(
 
 
 class CifarClient(NumpyFlClient):
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
+        self.model = Net().to(self.device)
+        self.parameter_exchanger = FullParameterExchanger()
+
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
@@ -125,20 +130,14 @@ class CifarClient(NumpyFlClient):
         )
 
     def setup_client(self, config: Config) -> None:
-        if isinstance(config["batch_size"], int):
-            batch_size = config["batch_size"]
-        else:
-            raise ValueError("Batch size config type is incompatible")
+        super().setup_client(config)
+        batch_size = self.narrow_config_type(config, "batch_size", int)
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
-
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
-        self.initialized = True
 
 
 if __name__ == "__main__":

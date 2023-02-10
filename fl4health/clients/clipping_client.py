@@ -12,11 +12,11 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 
 
 class NumpyClippingClient(NumpyFlClient):
-    def __init__(self, data_path: Path, device: torch.device, adaptive_clipping: bool = False) -> None:
+    def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.clipping_bound: Optional[float] = None
         self.initial_weights: Optional[NDArrays] = None
-        self.adaptive_clipping = adaptive_clipping
+        self.adaptive_clipping: Optional[bool] = None
 
     def clip_and_pack_parameters(self, parameters: NDArrays) -> NDArrays:
         clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(parameters)
@@ -38,6 +38,7 @@ class NumpyClippingClient(NumpyFlClient):
 
     def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
         assert self.clipping_bound is not None
+        assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
         network_frobenius_norm = self.calculate_parameters_norm(parameters)
         log(INFO, f"Update norm: {network_frobenius_norm}, Clipping Bound: {self.clipping_bound}")

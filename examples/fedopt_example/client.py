@@ -52,7 +52,7 @@ def train(
             _, predicted = torch.max(out.data, 1)
 
             # Report some batch loss statistics every so often to track decrease
-            if batch_index % 20 == 0:
+            if batch_index % 100 == 0:
                 log(INFO, f"Batch Index {batch_index} of {n_batches}, Batch loss: {loss.item()}")
             epoch_metrics.update_performance(predicted, labels)
 
@@ -103,8 +103,12 @@ def validate(
 
 
 class NewsClassifier(NumpyFlClient):
-    def setup_client(self, config: Config) -> None:
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
+        self.parameter_exchanger = FullParameterExchanger()
 
+    def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
         sequence_length = self.narrow_config_type(config, "sequence_length", int)
         batch_size = self.narrow_config_type(config, "batch_size", int)
         vocab_dimension = self.narrow_config_type(config, "vocab_dimension", int)
@@ -122,9 +126,8 @@ class NewsClassifier(NumpyFlClient):
         self.label_encoder = label_encoder
         self.weight_matrix = weight_matrix
 
+        # Model requires vocabularly and server settings, should only be setup once
         self.setup_model(vocabulary.vocabulary_size, vocab_dimension, hidden_size)
-        self.parameter_exchanger = FullParameterExchanger()
-        self.initialized = True
 
     def setup_model(self, vocab_size: int, vocab_dimension: int, hidden_size: int) -> None:
         self.model = LSTM(vocab_size, vocab_dimension, hidden_size)

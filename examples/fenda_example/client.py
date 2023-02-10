@@ -86,6 +86,8 @@ class MnistFendaClient(NumpyFlClient):
     ) -> None:
         super().__init__(data_path, device)
         self.minority_numbers = minority_numbers
+        self.model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
+        self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -114,6 +116,7 @@ class MnistFendaClient(NumpyFlClient):
         )
 
     def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
         batch_size = self.narrow_config_type(config, "batch_size", int)
         downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
 
@@ -124,10 +127,6 @@ class MnistFendaClient(NumpyFlClient):
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
-
-        self.model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
-        self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
-        self.initialized = True
 
 
 if __name__ == "__main__":

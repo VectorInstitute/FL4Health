@@ -101,6 +101,8 @@ class CifarClient(NumpyFlClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.train_loader: DataLoader
+        self.model = Net().to(self.device)
+        self.parameter_exchanger = FullParameterExchanger()
 
     def setup_opacus_objects(self) -> None:
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
@@ -125,9 +127,10 @@ class CifarClient(NumpyFlClient):
         )
 
     def setup_client(self, config: Config) -> None:
-
+        super().setup_client(config)
         self.batch_size = self.narrow_config_type(config, "batch_size", int)
         self.local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        # Noise multiplier set by server to achieve instance level DP on client side
         self.noise_multiplier = self.narrow_config_type(config, "noise_multiplier", float)
         self.clipping_bound = self.narrow_config_type(config, "clipping_bound", float)
 
@@ -137,10 +140,7 @@ class CifarClient(NumpyFlClient):
         self.validation_loader = validation_loader
         self.num_examples = num_examples
 
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
-        self.initialized = True
-
+        # Opacus objects require config and should only be setup once
         self.setup_opacus_objects()
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:

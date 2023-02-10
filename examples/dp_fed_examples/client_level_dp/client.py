@@ -97,10 +97,16 @@ def validate(
 
 
 class CifarClient(NumpyClippingClient):
-    def setup_client(self, config: Config) -> None:
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
+        self.model = Net().to(self.device)
+        self.parameter_exchanger = FullParameterExchanger()
 
+    def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
         self.batch_size = self.narrow_config_type(config, "batch_size", int)
         self.local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        # Server explicitly sets the clipping strategy
         self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
@@ -109,12 +115,7 @@ class CifarClient(NumpyClippingClient):
         self.validation_loader = validation_loader
         self.num_examples = num_examples
 
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
-        self.initialized = True
-
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,

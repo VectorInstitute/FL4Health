@@ -23,4 +23,8 @@ Once the server has started and logged "FL starting," the next step, in separate
 ```
 python -m examples.dp_fed_examples.instance_level_dp.client --dataset_path /path/to/data
 ```
+**NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
+the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
+automatically downloaded to the path specified and used in the run.
+
 After the minimum number of clients have been started federated learning should commence.

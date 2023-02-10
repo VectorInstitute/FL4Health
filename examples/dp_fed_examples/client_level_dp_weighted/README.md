@@ -25,4 +25,8 @@ Once the server has started and logged "FL starting," the next step, in separate
 ```
 python -m examples.dp_fed_examples.client_level_dp_weighted.client --dataset_path examples/datasets/breast_cancer_data/hospital_#.csv
 ```
+**NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
+the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
+automatically downloaded to the path specified and used in the run.
+
 After the minimum number of clients have been started federated learning should commence.

@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from pathlib import Path
 from typing import Type, TypeVar
 
@@ -20,9 +19,14 @@ class NumpyFlClient(NumPyClient):
         self.data_path = data_path
         self.device = device
 
-    @abstractmethod
     def setup_client(self, config: Config) -> None:
-        raise NotImplementedError
+        """
+        This method should be used to set up all of the required components for the client through the config passed
+        by the server and need only be done once. The quintessential example is data loaders with a batch size set by
+        the server in the config. The parameter initialized should be set to true when this function is finished.
+        Overriding this class and calling super is the preferred flow.
+        """
+        self.initialized = True
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
