@@ -7,6 +7,7 @@ Paper: https://arxiv.org/abs/1602.05629
 from typing import Callable, Dict, List, Optional, Tuple
 
 from flwr.common import EvaluateIns, FitIns, MetricsAggregationFn, NDArrays, Parameters, Scalar
+from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 
@@ -82,9 +83,15 @@ class FedAvgSampling(FedAvg):
         )
 
     def configure_fit(
-        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """Configure the next round of training."""
+
+        if not isinstance(client_manager, BaseSamplingManager):
+            raise ValueError(
+                f"This class requires a manager of type BaseSamplingManager but was provided {type(client_manager)}"
+            )
+
         config = {}
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
@@ -92,15 +99,21 @@ class FedAvgSampling(FedAvg):
         fit_ins = FitIns(parameters, config)
 
         # Sample clients
-        clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
+        clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
 
     def configure_evaluate(
-        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """Configure the next round of evaluation."""
+
+        if not isinstance(client_manager, BaseSamplingManager):
+            raise ValueError(
+                f"This class requires a manager of type BaseSamplingManager but was provided {type(client_manager)}"
+            )
+
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
             return []
@@ -113,7 +126,7 @@ class FedAvgSampling(FedAvg):
         evaluate_ins = EvaluateIns(parameters, config)
 
         # Sample clients
-        clients = client_manager.sample(self.fraction_evaluate, self.min_available_clients)
+        clients = client_manager.sample_fraction(self.fraction_evaluate, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, evaluate_ins) for client in clients]

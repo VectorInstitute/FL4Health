@@ -1,5 +1,4 @@
 import argparse
-from collections import OrderedDict
 from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, Tuple
@@ -16,6 +15,8 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
 from examples.models.cnn_model import Net
+from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -96,30 +97,12 @@ def validate(
     return loss / n_batches, accuracy
 
 
-class CifarClient(fl.client.NumPyClient):
-    def __init__(
-        self,
-        data_path: Path,
-        device: torch.device,
-    ) -> None:
-        self.data_path = data_path
-        self.device = device
-        self.initialized = False
+class CifarClient(NumpyFlClient):
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
         self.train_loader: DataLoader
-        self.model: nn.Module
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        # Determines which weights are sent back to the server for aggregation.
-        # Currently sending all of them ordered by state_dict keys
-        # NOTE: Order matters, because it is relied upon by set_parameters below
-        return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
-
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server. The state_dict is
-        # reconstituted because parameters is simply a list of bytes
-        params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
+        self.model = Net().to(self.device)
+        self.parameter_exchanger = FullParameterExchanger()
 
     def setup_opacus_objects(self) -> None:
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
@@ -144,18 +127,20 @@ class CifarClient(fl.client.NumPyClient):
         )
 
     def setup_client(self, config: Config) -> None:
-        self.batch_size = config["batch_size"]
-        self.local_epochs = config["local_epochs"]
-        self.noise_multiplier = config["noise_multiplier"]
-        self.clipping_bound = config["clipping_bound"]
+        super().setup_client(config)
+        self.batch_size = self.narrow_config_type(config, "batch_size", int)
+        self.local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        # Noise multiplier set by server to achieve instance level DP on client side
+        self.noise_multiplier = self.narrow_config_type(config, "noise_multiplier", float)
+        self.clipping_bound = self.narrow_config_type(config, "clipping_bound", float)
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
-        self.model = Net().to(self.device)
-        self.initialized = True
+
+        # Opacus objects require config and should only be setup once
         self.setup_opacus_objects()
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:

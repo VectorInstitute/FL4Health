@@ -9,6 +9,7 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
 from examples.models.cnn_model import Net
+from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
@@ -20,27 +21,6 @@ def get_initial_model_parameters() -> Parameters:
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = Net()
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Tuple[int, Metrics]:
-    aggregated_metrics: Metrics = {}
-    total_examples = 0
-    # Run through all of the metrics
-    for num_examples_on_client, client_metrics in all_client_metrics:
-        total_examples += num_examples_on_client
-        for metric_name, metric_value in client_metrics.items():
-            # Here we assume each metric is normalized by the number of examples on the client. So we scale up to
-            # get the "raw" value
-            if metric_name in aggregated_metrics:
-                aggregated_metrics[metric_name] += num_examples_on_client * metric_value
-            else:
-                aggregated_metrics[metric_name] = num_examples_on_client * metric_value
-    return total_examples, aggregated_metrics
-
-
-def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metrics:
-    # Normalize all metric values by the total count of examples seen.
-    return {metric_name: metric_value / total_examples for metric_name, metric_value in aggregated_metrics.items()}
 
 
 def fit_metrics_aggregation_fn(
@@ -81,9 +61,9 @@ def fit_config(
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
-    server_round: int,
+    current_round: int,
 ) -> Config:
-    return construct_config(server_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
+    return construct_config(current_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
 
 
 def main(config: Dict[str, Any]) -> None:

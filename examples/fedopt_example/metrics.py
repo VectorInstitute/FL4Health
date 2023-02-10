@@ -1,7 +1,8 @@
 import json
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import numpy as np
+from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 
 from examples.fedopt_example.client_data import LabelEncoder
@@ -62,8 +63,8 @@ class ServerMetrics:
         self.total_preds = total_preds
         self.outcomes = outcomes
 
-    def compute_metrics(self) -> Dict[str, float]:
-        metrics = {"total_accuracy": self.true_preds / self.total_preds}
+    def compute_metrics(self) -> Metrics:
+        metrics: Metrics = {"total_accuracy": self.true_preds / self.total_preds}
         for outcome in self.outcomes:
             metrics[f"{outcome.class_name}_precision"] = outcome.get_precision()
             metrics[f"{outcome.class_name}_recall"] = outcome.get_recall()
@@ -78,7 +79,7 @@ class ClientMetrics:
         self.classes = label_encoder.classes
         self.outcome_dict = self._initialize_outcomes(self.classes)
         self.label_to_class = label_encoder.label_to_class
-        self.results: Dict[str, Union[float, str]] = {}
+        self.results: Metrics = {}
         self.n_classes = len(self.classes)
 
     def _initialize_outcomes(self, classes: List[str]) -> Dict[str, Outcome]:

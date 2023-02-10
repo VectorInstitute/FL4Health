@@ -1,11 +1,9 @@
 import argparse
-from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
 
 import flwr as fl
-import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -16,6 +14,7 @@ from torchvision.datasets import CIFAR10
 
 from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 
 def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
@@ -98,57 +97,25 @@ def validate(
 
 
 class CifarClient(NumpyClippingClient):
-    def __init__(
-        self,
-        data_path: Path,
-        device: torch.device,
-    ) -> None:
-        super().__init__()
-        self.device = device
-        self.data_path = data_path
-        self.initialized = False
-        self.train_loader: DataLoader
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        # Determines which weights are sent back to the server for aggregation.
-        # Currently sending all of them ordered by state_dict keys
-        # NOTE: Order matters, because it is relied upon by set_parameters below
-        model_weights = [val.cpu().numpy() for _, val in self.model.state_dict().items()]
-        # Clipped the weights and store clipping information in parameters
-        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
-        return clipped_weight_update + [np.array([clipping_bit])]
-
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server. The state_dict is
-        # reconstituted because parameters is simply a list of bytes
-        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
-        server_model_parameters = parameters[:-1]
-        params_dict = zip(self.model.state_dict().keys(), server_model_parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
-
-        # Store the starting parameters without clipping bound before client optimization steps
-        self.current_weights = server_model_parameters
-
-        # Expectation is that the last entry in the parameters NDArrays is a clipping bound
-        clipping_bound = parameters[-1]
-        self.clipping_bound = float(clipping_bound)
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
+        self.model = Net().to(self.device)
+        self.parameter_exchanger = FullParameterExchanger()
 
     def setup_client(self, config: Config) -> None:
-        self.batch_size = config["batch_size"]
-        self.local_epochs = config["local_epochs"]
-        self.adaptive_clipping = config["adaptive_clipping"]
+        super().setup_client(config)
+        self.batch_size = self.narrow_config_type(config, "batch_size", int)
+        self.local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        # Server explicitly sets the clipping strategy
+        self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
 
         train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples
-        self.model = Net().to(self.device)
-        self.initialized = True
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,

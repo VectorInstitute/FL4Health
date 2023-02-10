@@ -79,7 +79,11 @@ def gaussian_noisy_weighted_aggregate(
     """
 
     n_clients = len(results)
-    client_model_updates, client_n_points = zip(*results)
+    client_model_updates: List[NDArrays] = []
+    client_n_points: List[int] = []
+    for weights, n_points in results:
+        client_model_updates.append(weights)
+        client_n_points.append(n_points)
 
     # Calculate coefs (w_k) by taking the minimum of the sample counts divdied by example cap and 1
     client_coefs = [min((n_points / per_client_example_cap, 1.0)) for n_points in client_n_points]

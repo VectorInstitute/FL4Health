@@ -25,6 +25,7 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.common.logger import log
+from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
@@ -244,8 +245,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         # If first round compute total expected client weight and return empty update
         if self.weighted_averaging and server_round == 1:
             successful_client_example_counts = [fit_res.num_examples for _, fit_res in results]
-            valid_failures = [fail for fail in failures if fail is not BaseException]
-            failed_client_example_counts = [fit_res.num_examples for _, fit_res in valid_failures]  # type: ignore
+            valid_failures = [fail for fail in failures if not isinstance(fail, BaseException)]
+            failed_client_example_counts = [fit_res.num_examples for _, fit_res in valid_failures]
             client_example_counts = successful_client_example_counts + failed_client_example_counts
             total_successful_samples = sum(client_example_counts)
             avg_samples = total_successful_samples / len(client_example_counts)
@@ -319,8 +320,11 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         return ndarrays_to_parameters(self.current_weights + [np.array([self.clipping_bound])]), metrics_aggregated
 
     def configure_fit(
-        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
+
+        # This strategy requires the client manager to be of type at least BaseSamplingManager
+        assert isinstance(client_manager, BaseSamplingManager)
         """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:
@@ -334,15 +338,19 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         if self.weighted_averaging and server_round == 1:
             clients = client_manager.sample_all(self.min_available_clients)
         else:
-            clients = client_manager.sample(self.fraction_fit, self.min_available_clients)
+            clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
 
     def configure_evaluate(
-        self, server_round: int, parameters: Parameters, client_manager: BaseSamplingManager
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """Configure the next round of evaluation."""
+
+        # This strategy requires the client manager to be of type at least BaseSamplingManager
+        assert isinstance(client_manager, BaseSamplingManager)
+
         # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
         if self.fraction_evaluate == 0.0 or (self.weighted_averaging and server_round == 1):
             return []
@@ -355,7 +363,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         evaluate_ins = EvaluateIns(parameters, config)
 
         # Sample clients
-        clients = client_manager.sample(self.fraction_evaluate, self.min_available_clients)
+        clients = client_manager.sample_fraction(self.fraction_evaluate, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, evaluate_ins) for client in clients]

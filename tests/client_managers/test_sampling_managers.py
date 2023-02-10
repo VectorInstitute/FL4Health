@@ -28,35 +28,35 @@ class CustomClientProxy(ClientProxy):
         ins: GetPropertiesIns,
         timeout: Optional[float],
     ) -> GetPropertiesRes:
-        """Returns the client's properties."""
+        raise NotImplementedError
 
     def get_parameters(
         self,
         ins: GetParametersIns,
         timeout: Optional[float],
     ) -> GetParametersRes:
-        """Return the current local model parameters."""
+        raise NotImplementedError
 
     def fit(
         self,
         ins: FitIns,
         timeout: Optional[float],
     ) -> FitRes:
-        """Refine the provided weights using the locally held dataset."""
+        raise NotImplementedError
 
     def evaluate(
         self,
         ins: EvaluateIns,
         timeout: Optional[float],
     ) -> EvaluateRes:
-        """Evaluate the provided weights using the locally held dataset."""
+        raise NotImplementedError
 
     def reconnect(
         self,
         ins: ReconnectIns,
         timeout: Optional[float],
     ) -> DisconnectRes:
-        """Disconnect and (optionally) reconnect later."""
+        raise NotImplementedError
 
 
 def test_poisson_sampling_subset() -> None:
@@ -83,7 +83,7 @@ def test_poisson_sampling_when_low_probability(caplog: pytest.LogCaptureFixture)
     ]
     for client_proxy in client_proxies:
         client_manager.register(client_proxy)
-    sample = client_manager.sample(0.01, 2)
+    sample = client_manager.sample_fraction(0.01, 2)
     assert "WARNING  flower:poisson_sampling_manager.py" in caplog.text
     assert len(sample) == 0
 
@@ -106,7 +106,7 @@ def test_fixed_without_replacement_subset() -> None:
     ]
     for client_proxy in client_proxies:
         client_manager.register(client_proxy)
-    sample = client_manager.sample(0.3, 2)
+    sample = client_manager.sample_fraction(0.3, 2)
     assert len(sample) == 3
 
 
@@ -124,6 +124,6 @@ def test_fixed_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -
     ]
     for client_proxy in client_proxies:
         client_manager.register(client_proxy)
-    sample = client_manager.sample(0.01, 2)
+    sample = client_manager.sample_fraction(0.01, 2)
     assert "WARNING  flower:fixed_without_replacement_manager.py" in caplog.text
     assert len(sample) == 0

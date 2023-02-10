@@ -1,17 +1,35 @@
 from logging import INFO
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from flwr.client import NumPyClient
+import numpy as np
+import torch
 from flwr.common import Config, NDArrays
 from flwr.common.logger import log
 from numpy import linalg
 
+from fl4health.clients.numpy_fl_client import NumpyFlClient
 
-class NumpyClippingClient(NumPyClient):
-    def __init__(self, adaptive_clipping: bool = False) -> None:
+
+class NumpyClippingClient(NumpyFlClient):
+    def __init__(self, data_path: Path, device: torch.device) -> None:
+        super().__init__(data_path, device)
         self.clipping_bound: Optional[float] = None
-        self.current_weights: Optional[NDArrays] = None
-        self.adaptive_clipping = adaptive_clipping
+        self.initial_weights: Optional[NDArrays] = None
+        self.adaptive_clipping: Optional[bool] = None
+
+    def clip_and_pack_parameters(self, parameters: NDArrays) -> NDArrays:
+        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(parameters)
+        return clipped_weight_update + [np.array([clipping_bit])]
+
+    def unpack_parameters_with_clipping_bound(self, packed_parameters: NDArrays) -> NDArrays:
+        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
+        server_model_parameters = packed_parameters[:-1]
+        # Store the starting parameters without clipping bound before client optimization steps
+        self.initial_weights = server_model_parameters
+        clipping_bound = packed_parameters[-1]
+        self.clipping_bound = float(clipping_bound)
+        return server_model_parameters
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
@@ -20,6 +38,7 @@ class NumpyClippingClient(NumPyClient):
 
     def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
         assert self.clipping_bound is not None
+        assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
         network_frobenius_norm = self.calculate_parameters_norm(parameters)
         log(INFO, f"Update norm: {network_frobenius_norm}, Clipping Bound: {self.clipping_bound}")
@@ -33,20 +52,29 @@ class NumpyClippingClient(NumPyClient):
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
-        assert self.current_weights is not None
-        weight_update = [
+        assert self.initial_weights is not None
+        weight_update: NDArrays = [
             new_layer_weights - old_layer_weights
-            for old_layer_weights, new_layer_weights in zip(self.current_weights, parameters)
+            for old_layer_weights, new_layer_weights in zip(self.initial_weights, parameters)
         ]
         # return clipped parameters and clipping bit
         return self.clip_parameters(weight_update)
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        This function should perform clipping through compute_weight_update_and_clip and store the clipping bit
+        This function performs clipping through compute_weight_update_and_clip and stores the clipping bit
         as the last entry in the NDArrays
         """
-        raise NotImplementedError
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config)
+        return self.clip_and_pack_parameters(model_weights)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        """
+        This function assumes that the parameters being passed contain model parameters followed by the last entry
+        of the list being the new clipping bound.
+        """
+        server_model_parameters = self.unpack_parameters_with_clipping_bound(parameters)
+        self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
 
     def _first_round_fit(self, parameters: NDArrays, configs: Config) -> Tuple[List, int, Dict]:
         # To be called on first round when weighted_averaging and adaptive_clipping are true
