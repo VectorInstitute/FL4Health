@@ -32,7 +32,7 @@ def subsample_mnist_data(mnist_set: MNIST, minority_digits: Set[int], subsample_
     mnist_set.data = mnist_set.data[selected_indices]
 
 
-def load_data(
+def load_mnist_data(
     data_dir: Path, batch_size: int, downsampling_ratio: float, minority_digits: Set[int]
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load MNIST Dataset (training and validation set)."""

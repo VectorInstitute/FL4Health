@@ -1,0 +1,46 @@
+# APFL Federated Learning Example
+This is example is an illustration of [Adaptive Personalized Federated Learning](https://arxiv.org/pdf/2003.13461.pdf) (APFL). APFL is a popular method for achieving personalization in the federated learning setting which is important in real world application where client distributions are heterogenous. APFL FedAVG by having each client train a local model distinct from the global model that is jointly learned accross clients. A personalized model is generated as a convex combination of the local and global models with a per client mixing parameter that is learned. The local model is updated to minmize the loss of the personalized model on the local data.
+
+In this demo, APFL is applied to the augmented version of the MNIST dataset that is non--IID. A type model on a non-IID subset of the MNIST data. The FL server expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client has a modified version of the MNIST dataset. This modification essentially subsamples certain number from the original training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties of the clients training/validation data. In theory, the models should be able to perform well on their local data while learning from other clients data that has different statistical properties. The subsampling is specified by
+sending a list of integers between 0-9 to the clients when they are run with the argument `--minority_numbers`.
+
+The server has some custom metrics aggregation and using Federated Averaging as its server-side optimization. The
+implementation uses a special type of weight exchange based on named-layer identification.
+
+# Running the Example
+In order to run the example, first ensure you have the virtual env of your choice activated and run
+```
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+to install all of the dependencies for this project.
+
+## Starting Server
+
+The next step is to start the server by running
+```
+python -m examples.fenda_example.server  --config_path /path/to/config.yaml
+```
+from the FL4Health directory. The following arguments must be present in the specified config file:
+* `n_clients`: number of clients the server waits for in order to run the FL training
+* `local_epochs`: number of epochs each client will train for locally
+* `batch_size`: size of the batches each client will train on
+* `n_server_rounds`: The number of rounds to run FL
+* `downsampling_ratio`: The amount of downsampling to perform for minority digits
+
+## Starting Clients
+
+Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
+clients. This is done by simply running (remembering to activate your environment)
+```
+python -m examples.fenda_example.client --dataset_path /path/to/data --minority_numbers <sequence of numbers>
+```
+**NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
+the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
+automatically downloaded to the path specified and used in the run.
+
+The argument `minority_numbers` specifies which digits (0-9) in the MNIST dataset the client will subsample to
+simulate non-IID data between clients. For example `--minority_numbers 1 2 3 4 5` will ensure that the client
+downsamples these digits (using the `downsampling_ratio` specified to the config).
+
+After all three clients have been started, federated learning should commence.

@@ -11,9 +11,9 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
 from examples.datasets.dataset_utils import load_mnist_data
-from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from examples.models.cnn_model import MNISTNet
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.model_bases.apfl_base import APFLCriterion, APFLModule, APFLOptimizer
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 
 
@@ -22,32 +22,39 @@ def train(
     train_loader: DataLoader,
     epochs: int,
     device: torch.device = torch.device("cpu"),
-) -> float:
+) -> Dict[str, Scalar]:
     """Train the network on the training set."""
-    criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    criterion = APFLCriterion(torch.nn.CrossEntropyLoss())
+    optimizer = APFLOptimizer(net, torch.optim.SGD, lr=0.001, momentum=0.9)
+
+    correct = {"global": 0, "local": 0, "personalized": 0.0}
+
     for epoch in range(epochs):
-        correct, total, running_loss = 0, 0, 0.0
+        running_losses = {"global": 0.0, "local": 0.0, "personalized": 0.0}
+        total = 0
         n_batches = len(train_loader)
         for images, labels in train_loader:
             images, labels = images.to(device), labels.to(device)
             optimizer.zero_grad()
-            preds = net(images)
-            loss = criterion(preds, labels)
-            loss.backward()
+            outputs = net(images)
+            losses = criterion(outputs, labels)
+            losses.backward()
             optimizer.step()
-
-            running_loss += loss.item()
-            _, predicted = torch.max(preds.data, 1)
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            running_losses = {key: running_loss + losses[key].item() for key, running_loss in running_losses.items()}
+            preds = {key: torch.max(output.data, 1)[1] for key, output in outputs.items()}
+            correct = {key: count + (preds[key] == labels).sum().item() for key, count in correct.items()}
 
-        accuracy = correct / total
+        running_losses = {key: running_loss / n_batches for key, running_loss in running_losses.items()}
+        accuracy: Dict[str, Scalar] = {f"{key}_accuracy": count / total for key, count in correct.items()}
+
         # Local client logging.
         log(
             INFO,
-            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches}," f"Client Training Accuracy: {accuracy}",
+            f"Epoch: {epoch}, Client Training Loss: {running_losses},"
+            f"Client Training Accuracy: {accuracy}, alpha:{net.alpha}",
         )
+
     return accuracy
 
 
@@ -55,29 +62,36 @@ def validate(
     net: nn.Module,
     validation_loader: DataLoader,
     device: torch.device = torch.device("cpu"),
-) -> Tuple[float, float]:
+) -> Tuple[float, Dict[str, Scalar]]:
     """Validate the network on the entire validation set."""
-    criterion = torch.nn.CrossEntropyLoss()
-    correct, total, loss = 0, 0, 0.0
+    criterion = APFLCriterion(torch.nn.CrossEntropyLoss())
+
+    correct = {"global": 0, "local": 0, "personalized": 0.0}
+    running_losses = {"global": 0.0, "local": 0.0, "personalized": 0.0}
+    total = 0
+    n_batches = len(validation_loader)
     with torch.no_grad():
-        n_batches = len(validation_loader)
         for images, labels in validation_loader:
             images, labels = images.to(device), labels.to(device)
-            preds = net(images)
-            loss += criterion(preds, labels).item()
-            _, predicted = torch.max(preds.data, 1)
+            outputs = net(images)
+            losses = criterion(outputs, labels)
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = correct / total
+            running_losses = {key: running_loss + losses[key].item() for key, running_loss in running_losses.items()}
+            preds = {key: torch.max(output.data, 1)[1] for key, output in outputs.items()}
+            correct = {key: count + (preds[key] == labels).sum().item() for key, count in correct.items()}
+
+    running_losses = {key: running_loss / n_batches for key, running_loss in running_losses.items()}
+    accuracy: Dict[str, Scalar] = {f"{key}_accuracy": count / total for key, count in correct.items()}
+
     # Local client logging.
     log(
         INFO,
-        f"Client Validation Loss: {loss/n_batches}," f"Client Validation Accuracy: {accuracy}",
+        f"Client Validation Loss: {running_losses}," f"Client Validation Accuracy: {accuracy}",
     )
-    return loss / n_batches, accuracy
+    return running_losses["global"], accuracy
 
 
-class MnistFendaClient(NumpyFlClient):
+class MnistAPFLClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
@@ -86,7 +100,7 @@ class MnistFendaClient(NumpyFlClient):
     ) -> None:
         super().__init__(data_path, device)
         self.minority_numbers = minority_numbers
-        self.model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
+        self.model = APFLModule(MNISTNet()).to(self.device)
         self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -101,7 +115,7 @@ class MnistFendaClient(NumpyFlClient):
         return (
             self.get_parameters(config),
             self.num_examples["train_set"],
-            {"accuracy": accuracy},
+            accuracy,
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
@@ -112,7 +126,7 @@ class MnistFendaClient(NumpyFlClient):
         return (
             loss,
             self.num_examples["validation_set"],
-            {"accuracy": accuracy},
+            accuracy,
         )
 
     def setup_client(self, config: Config) -> None:
@@ -140,5 +154,5 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistFendaClient(data_path, minority_numbers, DEVICE)
+    client = MnistAPFLClient(data_path, minority_numbers, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
