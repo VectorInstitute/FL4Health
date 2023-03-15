@@ -1,5 +1,5 @@
 # Parameters that describe server
-n_server_rounds: 50 # The number of rounds to run FL
+n_server_rounds: 25 # The number of rounds to run FL
 
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment

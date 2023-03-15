@@ -1,0 +1,157 @@
+from logging import INFO
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+
+import torch
+from flwr.common.logger import log
+from flwr.common.typing import Config, NDArrays, Scalar
+from torch.nn.modules.loss import _Loss
+from torch.utils.data import DataLoader
+
+from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.utils.metrics import AverageMeter, Metric
+
+
+class APFLClient(NumpyFlClient):
+    def __init__(
+        self,
+        data_path: Path,
+        minority_numbers: Set[int],
+        metrics: List[Metric],
+        device: torch.device,
+    ) -> None:
+        super().__init__(data_path, device)
+        self.minority_numbers = minority_numbers
+        self.metrics = metrics
+        self.model: APFLModule
+        self.train_loader: DataLoader
+        self.val_loader: DataLoader
+        self.num_examples: Dict[str, int]
+        self.criterion: _Loss
+        self.local_optimizer: torch.optim.Optimizer
+        self.global_optimizer: torch.optim.Optimizer
+
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        if not self.initialized:
+            self.setup_client(config)
+
+        self.set_parameters(parameters, config)
+        local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        metrics = self.train(local_epochs)
+        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
+        # calculation results.
+        return (
+            self.get_parameters(config),
+            int(self.num_examples["train_set"]),
+            metrics,
+        )
+
+    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        self.set_parameters(parameters, config)
+        loss, metrics = self.validate()
+        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
+        # calculation results.
+        return (
+            loss,
+            int(self.num_examples["validation_set"]),
+            metrics,
+        )
+
+    def train(
+        self,
+        epochs: int,
+    ) -> Dict[str, Scalar]:
+
+        global_meter = AverageMeter(self.metrics, "global")
+        local_meter = AverageMeter(self.metrics, "local")
+        personal_meter = AverageMeter(self.metrics, "personal")
+
+        for epoch in range(epochs):
+            loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
+            for step, (input, target) in enumerate(self.train_loader):
+                input, target = input.to(self.device), target.to(self.device)
+
+                self.global_optimizer.zero_grad()
+                global_pred = self.model(input, personal=False)["global"]
+                global_loss = self.criterion(global_pred, target)
+                global_loss.backward()
+                self.global_optimizer.step()
+
+                self.global_optimizer.zero_grad()
+                self.local_optimizer.zero_grad()
+
+                pred_dict = self.model(input, personal=True)
+                personal_pred, local_pred = pred_dict["personal"], pred_dict["local"]
+                personal_loss = self.criterion(personal_pred, target)
+                personal_loss.backward()
+                self.local_optimizer.step()
+
+                with torch.no_grad():
+                    local_loss = self.criterion(local_pred, target)
+
+                if epoch == 0 and step == 0:
+                    self.model.update_alpha()
+
+                loss_dict["local"] += local_loss.item()
+                loss_dict["global"] += global_loss.item()
+                loss_dict["personal"] += personal_loss.item()
+
+                global_meter.update(global_pred, target)
+                local_meter.update(local_pred, target)
+                personal_meter.update(personal_pred, target)
+
+            loss_dict = {key: val / len(self.train_loader) for key, val in loss_dict.items()}
+
+        global_metrics = global_meter.compute()
+        local_metrics = local_meter.compute()
+        personal_metrics = personal_meter.compute()
+        metrics = {**global_metrics, **local_metrics, **personal_metrics}
+
+        log(
+            INFO,
+            f"Epoch: {epoch}, Client Training Loss: {loss_dict},"
+            f"Client Training Accuracy: {metrics}, alpha:{self.model.alpha}",
+        )
+
+        return metrics
+
+    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+
+        global_meter = AverageMeter(self.metrics, "global")
+        local_meter = AverageMeter(self.metrics, "local")
+        personal_meter = AverageMeter(self.metrics, "personal")
+        loss_dict = {"global": 0.0, "personal": 0.0, "local": 0.0}
+
+        with torch.no_grad():
+            for input, target in self.val_loader:
+                input, target = input.to(self.device), target.to(self.device)
+
+                global_pred = self.model(input, personal=False)["global"]
+                global_loss = self.criterion(global_pred, target)
+
+                pred_dict = self.model(input, personal=True)
+                personal_pred, local_pred = pred_dict["personal"], pred_dict["local"]
+                personal_loss = self.criterion(personal_pred, target)
+                local_loss = self.criterion(local_pred, target)
+
+                loss_dict["global"] += global_loss.item()
+                loss_dict["personal"] += personal_loss.item()
+                loss_dict["local"] += local_loss.item()
+
+                global_meter.update(global_pred, target)
+                local_meter.update(local_pred, target)
+                personal_meter.update(personal_pred, target)
+
+        loss_dict = {key: val / len(self.val_loader) for key, val in loss_dict.items()}
+        global_metrics = global_meter.compute()
+        local_metrics = local_meter.compute()
+        personal_metrics = personal_meter.compute()
+        metrics = {**global_metrics, **local_metrics, **personal_metrics}
+
+        # Local client logging.
+        log(
+            INFO,
+            f"Client Validation Loss: {loss_dict}," f"Client Validation Accuracy: {metrics}",
+        )
+        return loss_dict["global"], metrics

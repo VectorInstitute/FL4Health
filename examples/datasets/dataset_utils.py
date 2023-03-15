@@ -8,6 +8,8 @@ from flwr.common.logger import log
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 
+torch.manual_seed(0)
+
 
 def get_random_subsample(tensor_to_subsample: torch.Tensor, subsample_size: int) -> torch.Tensor:
     # NOTE: Assumes subsampling on rows
@@ -50,8 +52,7 @@ def load_mnist_data(
 
     train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=batch_size)
-    num_examples = {
-        "train_set": len(training_set),
-        "validation_set": len(validation_set),
-    }
+    train_len: int = int(len(train_loader))
+    validation_len: int = int(len(train_loader))
+    num_examples = {"train_set": train_len, "validation_set": validation_len}
     return train_loader, validation_loader, num_examples

@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
+import torch
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
@@ -11,6 +12,8 @@ from examples.models.cnn_model import MNISTNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.config import load_config
+
+torch.manual_seed(0)
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
