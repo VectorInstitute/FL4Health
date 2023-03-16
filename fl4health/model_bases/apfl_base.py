@@ -36,6 +36,9 @@ class APFLModule(nn.Module):
         return results
 
     def update_alpha(self) -> None:
+        # Updates to mixture parameter follow original implementation
+        # https://github.com/MLOPTPSU/FedTorch/blob
+        # /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L240
         grad_alpha: float = 0.0
         for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
             dif = local_p - global_p

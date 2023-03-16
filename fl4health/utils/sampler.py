@@ -3,7 +3,6 @@ from typing import Any, List, Set
 
 import numpy as np
 import torch
-from flwr.common.logger import log
 
 from fl4health.utils.dataset import BaseDataset
 
@@ -74,7 +73,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         for class_idx in ss_class_idx_list:
             selected_indices_list.extend(class_idx)
 
-        selected_indices = torch.tensor(selected_indices_list).int()
+        selected_indices = selected_indices_list
 
         dataset.targets = dataset.targets[selected_indices]
         dataset.data = dataset.data[selected_indices]

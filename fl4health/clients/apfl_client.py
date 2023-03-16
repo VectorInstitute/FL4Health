@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -17,12 +17,10 @@ class APFLClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
-        minority_numbers: Set[int],
         metrics: List[Metric],
         device: torch.device,
     ) -> None:
         super().__init__(data_path, device)
-        self.minority_numbers = minority_numbers
         self.metrics = metrics
         self.model: APFLModule
         self.train_loader: DataLoader
@@ -70,6 +68,9 @@ class APFLClient(NumpyFlClient):
             local_meter = AverageMeter(self.metrics, "local")
             personal_meter = AverageMeter(self.metrics, "personal")
             for step, (input, target) in enumerate(self.train_loader):
+
+                # Mechanics of training loop follow from original implementation
+                # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
                 input, target = input.to(self.device), target.to(self.device)
 
                 self.global_optimizer.zero_grad()
