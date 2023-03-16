@@ -10,11 +10,12 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
-from examples.datasets.dataset_utils import load_mnist_data
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
+from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
 def train(
@@ -120,9 +121,9 @@ class MnistFendaClient(NumpyFlClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
 
-        train_loader, validation_loader, num_examples = load_mnist_data(
-            self.data_path, batch_size, downsample_percentage, self.minority_numbers
-        )
+        sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)
+
+        train_loader, validation_loader, num_examples = load_mnist_data(self.data_path, batch_size, sampler)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader

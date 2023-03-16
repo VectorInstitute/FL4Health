@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 import flwr as fl
 import torch
@@ -19,11 +19,10 @@ class MnistAPFLClient(APFLClient):
     def __init__(
         self,
         data_path: Path,
-        minority_numbers: Set[int],
         metrics: List[Metric],
         device: torch.device,
     ) -> None:
-        super().__init__(data_path=data_path, minority_numbers=minority_numbers, metrics=metrics, device=device)
+        super().__init__(data_path=data_path, metrics=metrics, device=device)
 
     def setup_client(self, config: Config) -> None:
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -42,15 +41,11 @@ class MnistAPFLClient(APFLClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    parser.add_argument(
-        "--minority_numbers", default=[], nargs="*", help="MNIST numbers to be in the minority for the current client"
-    )
-    # parser.add_argument("--client_number", action="store", type=int, help="The unique id of client: 0 - num_clients")
+
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    minority_numbers = {int(number) for number in args.minority_numbers}
 
-    client = MnistAPFLClient(data_path, minority_numbers, [Accuracy()], DEVICE)
+    client = MnistAPFLClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
