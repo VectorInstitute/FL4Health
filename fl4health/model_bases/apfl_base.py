@@ -11,7 +11,7 @@ class APFLModule(nn.Module):
         self,
         model: nn.Module,
         adaptive_alpha: bool = True,
-        alpha: float = 0.01,
+        alpha: float = 0.5,
         alpha_lr: float = 0.01,
     ) -> None:
         super().__init__()

@@ -63,12 +63,12 @@ class APFLClient(NumpyFlClient):
         epochs: int,
     ) -> Dict[str, Scalar]:
 
-        global_meter = AverageMeter(self.metrics, "global")
-        local_meter = AverageMeter(self.metrics, "local")
-        personal_meter = AverageMeter(self.metrics, "personal")
-
         for epoch in range(epochs):
             loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
+            global_meter = AverageMeter(self.metrics, "global")
+            local_meter = AverageMeter(self.metrics, "local")
+            personal_meter = AverageMeter(self.metrics, "personal")
+
             for step, (input, target) in enumerate(self.train_loader):
                 input, target = input.to(self.device), target.to(self.device)
 
