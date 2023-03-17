@@ -42,7 +42,7 @@ class APFLModule(nn.Module):
         grad_alpha: float = 0.0
         for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
             dif = local_p - global_p
-            grad = self.alpha * local_p.grad + (1.0 - self.alpha) * global_p.grad
+            grad : torch.Tensor = self.alpha * local_p.grad + (1.0 - self.alpha) * global_p.grad
             grad_alpha += dif.flatten().dot(grad.flatten()).detach().numpy()
 
         grad_alpha += 0.02 * self.alpha
