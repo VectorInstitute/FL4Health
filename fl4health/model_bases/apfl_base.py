@@ -41,8 +41,10 @@ class APFLModule(nn.Module):
         # /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L240
         grad_alpha: float = 0.0
         for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
+            local_p.grad : torch.Tensor
+            global_p.grad: torch.Tensor 
             dif = local_p - global_p
-            grad : torch.Tensor = self.alpha * local_p.grad + (1.0 - self.alpha) * global_p.grad
+            grad  = torch.tensor(self.alpha) * local_p.grad + torch.tensor(1.0 - self.alpha) * global_p.grad
             grad_alpha += dif.flatten().dot(grad.flatten()).detach().numpy()
 
         grad_alpha += 0.02 * self.alpha
