@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from typing import Any, List, Set
 
@@ -64,7 +65,13 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         for class_idx in class_idx_list:
             np.random.shuffle(class_idx)
 
-        num_samples_per_class = [int(prob * total_num_samples) for prob in self.probs]
+        num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probs]
+        mul_per_class = [
+            math.ceil(num_samples / len(class_idx))
+            for num_samples, class_idx in zip(num_samples_per_class, class_idx_list)
+        ]
+
+        class_idx_list = [class_idx.tolist() * mul for class_idx, mul in zip(class_idx_list, mul_per_class)]
 
         ss_class_idx_list = [
             class_idx[:num_samples] for num_samples, class_idx in zip(num_samples_per_class, class_idx_list)
@@ -73,7 +80,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         for class_idx in ss_class_idx_list:
             selected_indices_list.extend(class_idx)
 
-        selected_indices = selected_indices_list
+        selected_indices = selected_indices_list[:total_num_samples]
 
         dataset.targets = dataset.targets[selected_indices]
         dataset.data = dataset.data[selected_indices]
