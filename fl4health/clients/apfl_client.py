@@ -13,7 +13,7 @@ from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.metrics import AverageMeter, Metric
 
 
-class APFLClient(NumpyFlClient):
+class ApflClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,

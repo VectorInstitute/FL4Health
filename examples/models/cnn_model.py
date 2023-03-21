@@ -23,7 +23,7 @@ class Net(nn.Module):
         return x
 
 
-class MNISTNet(nn.Module):
+class MnistNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 8, 5)
