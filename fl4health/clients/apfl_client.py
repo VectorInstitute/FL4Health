@@ -91,7 +91,7 @@ class APFLClient(NumpyFlClient):
                 with torch.no_grad():
                     local_loss = self.criterion(local_pred, target)
 
-                if epoch == 0 and step == 0:
+                if epoch == 0 and step == 0 and self.model.adaptive_alpha:
                     self.model.update_alpha()
 
                 loss_dict["local"] += local_loss.item()

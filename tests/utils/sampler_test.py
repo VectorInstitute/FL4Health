@@ -41,6 +41,7 @@ def test_minority_sampler() -> None:
 
 
 def test_dirichlet_sampler() -> None:
+    # Kind of hacky way to ensure sampled label distribution differs from original label distribution
     sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_perc=1.0)
 
     # Training

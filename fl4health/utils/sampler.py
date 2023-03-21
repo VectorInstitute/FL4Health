@@ -65,6 +65,8 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         for class_idx in class_idx_list:
             np.random.shuffle(class_idx)
 
+        # Extend number of samples in classes when the sampled num_samples_per_class
+        # exceeds actual number of samples in the class
         num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probs]
         mul_per_class = [
             math.ceil(num_samples / len(class_idx))
