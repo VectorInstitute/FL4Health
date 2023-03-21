@@ -8,7 +8,7 @@ from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
 
-from examples.models.cnn_model import MNISTNet
+from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.config import load_config
@@ -33,7 +33,7 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = APFLModule(MNISTNet())
+    initial_model = APFLModule(MnistNet())
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 

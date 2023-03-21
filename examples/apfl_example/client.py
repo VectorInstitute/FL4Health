@@ -6,8 +6,8 @@ import flwr as fl
 import torch
 from flwr.common.typing import Config
 
-from examples.models.cnn_model import MNISTNet
-from fl4health.clients.apfl_client import APFLClient
+from examples.models.cnn_model import MnistNet
+from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.load_data import load_mnist_data
@@ -15,7 +15,7 @@ from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistAPFLClient(APFLClient):
+class MnistApflClient(ApflClient):
     def __init__(
         self,
         data_path: Path,
@@ -26,7 +26,7 @@ class MnistAPFLClient(APFLClient):
 
     def setup_client(self, config: Config) -> None:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        self.model: APFLModule = APFLModule(MNISTNet()).to(self.device)
+        self.model: APFLModule = APFLModule(MnistNet()).to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.local_optimizer = torch.optim.Adam(self.model.local_model.parameters(), lr=0.01)
         self.global_optimizer = torch.optim.Adam(self.model.global_model.parameters(), lr=0.01)
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
-    client = MnistAPFLClient(data_path, [Accuracy()], DEVICE)
+    client = MnistApflClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

@@ -7,8 +7,7 @@ of the clients training/validation data. In theory, the models should be able to
 while learning from other clients data that has different statistical properties. The subsampling is specified by
 sending a list of integers between 0-9 to the clients when they are run with the argument `--minority_numbers`.
 
-The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The
-implementation uses a special type of weight exchange based on named-layer identification.
+The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
 
 # Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
