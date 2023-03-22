@@ -66,7 +66,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
 class DirichletLabelBasedSampler(LabelBasedSampler):
     """
-    This class is used to subsample a dataset so the classes of samples are distributed in a non-IID way.
+    class used to subsample a dataset so the classes of samples are distributed in a non-IID way.
     In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
     of samples from each class. The sampler is constructed by passing a beta parameter that determines
     the level of heterogeneity and a sample_percentage that determines the relative size of the modified
@@ -81,31 +81,24 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
         total_num_samples = int(len(dataset) * self.sample_percentage)
-        selected_indices_list: List[int] = []
-        targets = dataset.targets.numpy()
+        targets = dataset.targets
 
-        class_idx_list = [np.where(targets == target)[0] for target in self.unique_labels]
-        for class_idx in class_idx_list:
-            np.random.shuffle(class_idx)
+        class_idx_list = [torch.where(targets == target)[0].float() for target in self.unique_labels]
 
-        # Extend number of samples in classes when the sampled num_samples_per_class
-        # exceeds actual number of samples in the class
         num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probabilities]
-        mul_per_class = [
-            math.ceil(num_samples / len(class_idx))
-            for num_samples, class_idx in zip(num_samples_per_class, class_idx_list)
+
+        # For each class sample the given number of samples from the class specific indices
+        # torch.multinomial is used to uniformly sample indices the size of given number of samples
+        sampled_class_idx_list = [
+            class_idx[torch.multinomial(torch.ones(class_idx.size(0)), num_samples, replacement=True)]
+            for class_idx, num_samples in zip(class_idx_list, num_samples_per_class)
         ]
 
-        class_idx_list = [class_idx.tolist() * mul for class_idx, mul in zip(class_idx_list, mul_per_class)]
+        selected_indices = torch.cat(sampled_class_idx_list, dim=0).long()
 
-        ss_class_idx_list = [
-            class_idx[:num_samples] for num_samples, class_idx in zip(num_samples_per_class, class_idx_list)
-        ]
-
-        for class_idx in ss_class_idx_list:
-            selected_indices_list.extend(class_idx)
-
-        selected_indices = selected_indices_list[:total_num_samples]
+        # Due to precision errors with previous rounding, sum of sample counts
+        # may differ from total_num_samples so we resample to ensure correct count
+        selected_indices = selected_indices[:total_num_samples]
 
         dataset.targets = dataset.targets[selected_indices]
         dataset.data = dataset.data[selected_indices]

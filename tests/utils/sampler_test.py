@@ -42,7 +42,7 @@ def test_minority_sampler() -> None:
 
 def test_dirichlet_sampler() -> None:
     # Kind of hacky way to ensure sampled label distribution differs from original label distribution
-    sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0)
+    sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
     # Training
     ds = MNISTDataset(data_path=Path("examples/datasets/MNIST"), train=True)
