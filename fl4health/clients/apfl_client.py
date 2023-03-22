@@ -120,11 +120,13 @@ class ApflClient(NumpyFlClient):
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
         metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
-
+        train_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
+        train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
         log(
             INFO,
-            f"Epoch: {epoch}, Client Training Loss: {loss_dict},"
-            f"Client Training Accuracy: {metrics}, alpha:{self.model.alpha}",
+            f"Epoch: {epoch} alpha: {self.model.alpha} \n"
+            f"Client Training Losses: {train_loss_string} \n"
+            f"Client Training Metrics: {train_metric_string}",
         )
 
         return metrics
@@ -161,10 +163,11 @@ class ApflClient(NumpyFlClient):
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
         metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
-
-        # Local client logging.
+        val_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
+        val_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
         log(
             INFO,
-            f"Client Validation Loss: {loss_dict}," f"Client Validation Accuracy: {metrics}",
+            "\n" f"Client Validation Losses: {val_loss_string} \n" f"Client validation Metrics: {val_metric_string}",
         )
+
         return loss_dict["global"], metrics

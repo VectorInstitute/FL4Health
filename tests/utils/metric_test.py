@@ -34,4 +34,12 @@ def test_average_meter() -> None:
     for pred, target in zip(preds, targets):
         am.update(pred, target)
 
-    assert am.compute()["_accuracy"] == 0.5
+    assert am.compute()["accuracy"] == 0.5
+
+    am2 = AverageMeter([Accuracy("global_accuracy"), Accuracy("local_accuracy")])
+
+    for pred, target in zip(preds, targets):
+        am2.update(pred, target)
+
+    assert am2.compute()["global_accuracy"] == 0.5
+    assert am2.compute()["local_accuracy"] == 0.5

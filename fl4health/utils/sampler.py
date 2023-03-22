@@ -1,11 +1,13 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, List, Set
+from typing import Any, List, Set, TypeVar
 
 import numpy as np
 import torch
 
 from fl4health.utils.dataset import BaseDataset
+
+T = TypeVar("T")
 
 
 class LabelBasedSampler(ABC):
@@ -32,12 +34,15 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
     the resulting subsampled dataset.
     """
 
-    def __init__(self, unique_labels: List[Any], downsampling_ratio: float, minority_labels: Set[int]) -> None:
+    def __init__(self, unique_labels: List[T], downsampling_ratio: float, minority_labels: Set[T]) -> None:
         super().__init__(unique_labels)
         self.downsampling_ratio = downsampling_ratio
         self.minority_labels = minority_labels
 
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
+        """
+        Returns a new dataset where samples part of minority_labels are downsampled
+        """
         selected_indices_list: List[torch.Tensor] = []
         for label in self.unique_labels:
 
@@ -80,6 +85,9 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         self.sample_percentage = sample_percentage
 
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
+        """
+        Returns a new dataset where samples are selected based on a dirichlet dsitribution over labels
+        """
         total_num_samples = int(len(dataset) * self.sample_percentage)
         targets = dataset.targets
 

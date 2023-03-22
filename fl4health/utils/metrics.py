@@ -11,24 +11,27 @@ class Metric(ABC):
     predictions of a model.
     """
 
+    def __init__(self, name: str):
+        self.name = name
+
     @abstractmethod
     def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
         raise NotImplementedError
 
     def __str__(self) -> str:
-        raise NotImplementedError
+        return self.name
 
 
 class Accuracy(Metric):
+    def __init__(self, name: str = "accuracy"):
+        super().__init__(name)
+
     def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
         assert pred.shape[0] == target.shape[0]
         pred = torch.argmax(pred, 1)
         correct = (pred == target).sum().item()
         accuracy = correct / pred.shape[0]
         return accuracy
-
-    def __str__(self) -> str:
-        return "accuracy"
 
 
 class AverageMeter:
@@ -48,6 +51,9 @@ class AverageMeter:
         self.counts: List = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        Evaluate metrics and store results.
+        """
         metric_values: List[Scalar] = [metric(input, target) for metric in self.metrics]
         self.counts.append(target.size(0))
 
@@ -55,6 +61,9 @@ class AverageMeter:
             self.metric_values_history[i].append(metric_value)
 
     def compute(self) -> Dict[str, Scalar]:
+        """
+        Returns average of each metrics given its historical values and counts
+        """
         total_count = sum(self.counts)
         weights: List[float] = [count / total_count for count in self.counts]
 
@@ -64,7 +73,7 @@ class AverageMeter:
             metric_value_averages.append(avg)
 
         results: Dict[str, Scalar] = {
-            f"{self.name}_{str(metric)}": avg for metric, avg in zip(self.metrics, metric_value_averages)
+            f"{self.name}_{str(metric)}".lstrip("_"): avg for metric, avg in zip(self.metrics, metric_value_averages)
         }
 
         return results
