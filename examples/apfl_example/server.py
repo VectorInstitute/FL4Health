@@ -3,7 +3,6 @@ from functools import partial
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
-import torch
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
@@ -12,8 +11,6 @@ from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.config import load_config
-
-torch.manual_seed(0)
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -37,14 +34,11 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
-) -> Config:
+def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
-        "downsampling_ratio": downsampling_ratio,
     }
 
 
@@ -55,7 +49,6 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["downsampling_ratio"],
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

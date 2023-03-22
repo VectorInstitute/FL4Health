@@ -17,7 +17,7 @@ class Metric(ABC):
 class Accuracy(Metric):
     def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
         assert pred.shape[0] == target.shape[0]
-        pred = torch.max(pred, 1)[1]
+        pred = torch.argmax(pred, 1)
         correct = (pred == target).sum().item()
         accuracy = correct / pred.shape[0]
         return accuracy
@@ -31,24 +31,27 @@ class AverageMeter:
         self.metrics: List[Metric] = metrics
         self.name: str = name
 
-        self.vals: List[List] = [[] for _ in range(len(self.metrics))]
+        self.metric_values_history: List[List[Scalar]] = [[] for _ in range(len(self.metrics))]
         self.counts: List = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        metric_vals: List[Scalar] = [metric(input, target) for metric in self.metrics]
+        metric_values: List[Scalar] = [metric(input, target) for metric in self.metrics]
         self.counts.append(target.size(0))
 
-        for i, metric_val in enumerate(metric_vals):
-            self.vals[i].append(metric_val)
+        for i, metric_value in enumerate(metric_values):
+            self.metric_values_history[i].append(metric_value)
 
     def compute(self) -> Dict[str, Scalar]:
-        weights: List[float] = [count / sum(self.counts) for count in self.counts]
+        total_count = sum(self.counts)
+        weights: List[float] = [count / total_count for count in self.counts]
 
-        avgs = []
-        for lst in self.vals:
-            avg = sum([weight * val for weight, val in zip(weights, lst)])
-            avgs.append(avg)
+        metric_value_averages = []
+        for metric_values in self.metric_values_history:
+            avg = sum([weight * float(val) for weight, val in zip(weights, metric_values)])
+            metric_value_averages.append(avg)
 
-        results: Dict[str, Scalar] = {f"{self.name}_{str(metric)}": avg for metric, avg in zip(self.metrics, avgs)}
+        results: Dict[str, Scalar] = {
+            f"{self.name}_{str(metric)}": avg for metric, avg in zip(self.metrics, metric_value_averages)
+        }
 
         return results

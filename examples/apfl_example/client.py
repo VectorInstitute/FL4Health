@@ -28,9 +28,9 @@ class MnistApflClient(ApflClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         self.model: APFLModule = APFLModule(MnistNet()).to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.local_optimizer = torch.optim.Adam(self.model.local_model.parameters(), lr=0.01)
-        self.global_optimizer = torch.optim.Adam(self.model.global_model.parameters(), lr=0.01)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_perc=0.75)
+        self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)
+        self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=0.01)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
         self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())

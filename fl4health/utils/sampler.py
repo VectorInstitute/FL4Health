@@ -9,8 +9,8 @@ from fl4health.utils.dataset import BaseDataset
 
 
 class LabelBasedSampler(ABC):
-    def __init__(self, unqiue_labels: List[Any]) -> None:
-        self.unique_labels = unqiue_labels
+    def __init__(self, unique_labels: List[Any]) -> None:
+        self.unique_labels = unique_labels
         self.num_classes = len(self.unique_labels)
 
     @abstractmethod
@@ -50,14 +50,13 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
 
 class DirichletLabelBasedSampler(LabelBasedSampler):
-    def __init__(self, unique_labels: List[Any], sample_perc: float = 0.5, beta: float = 100) -> None:
+    def __init__(self, unique_labels: List[Any], sample_percentage: float = 0.5, beta: float = 100) -> None:
         super().__init__(unique_labels)
-        self.beta = beta
-        self.probs = np.random.dirichlet(np.repeat(self.beta, self.num_classes))
-        self.sample_perc = sample_perc
+        self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
+        self.sample_percentage = sample_percentage
 
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
-        total_num_samples = int(len(dataset) * self.sample_perc)
+        total_num_samples = int(len(dataset) * self.sample_percentage)
         selected_indices_list: List[int] = []
         targets = dataset.targets.numpy()
 
@@ -67,7 +66,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         # Extend number of samples in classes when the sampled num_samples_per_class
         # exceeds actual number of samples in the class
-        num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probs]
+        num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probabilities]
         mul_per_class = [
             math.ceil(num_samples / len(class_idx))
             for num_samples, class_idx in zip(num_samples_per_class, class_idx_list)

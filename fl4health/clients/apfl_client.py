@@ -36,24 +36,24 @@ class ApflClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        metrics = self.train(local_epochs)
+        metric_values = self.train(local_epochs)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             self.get_parameters(config),
-            int(self.num_examples["train_set"]),
-            metrics,
+            self.num_examples["train_set"],
+            metric_values,
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         self.set_parameters(parameters, config)
-        loss, metrics = self.validate()
+        loss, metric_values = self.validate()
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             loss,
-            int(self.num_examples["validation_set"]),
-            metrics,
+            self.num_examples["validation_set"],
+            metric_values,
         )
 
     def train(
@@ -107,7 +107,7 @@ class ApflClient(NumpyFlClient):
         global_metrics = global_meter.compute()
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
-        metrics = {**global_metrics, **local_metrics, **personal_metrics}
+        metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
 
         log(
             INFO,
@@ -148,7 +148,7 @@ class ApflClient(NumpyFlClient):
         global_metrics = global_meter.compute()
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
-        metrics = {**global_metrics, **local_metrics, **personal_metrics}
+        metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
 
         # Local client logging.
         log(

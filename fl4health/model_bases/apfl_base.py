@@ -46,7 +46,7 @@ class APFLModule(nn.Module):
             assert local_grad is not None and global_grad is not None
             dif = local_p - global_p
             grad = torch.tensor(self.alpha) * local_grad + torch.tensor(1.0 - self.alpha) * global_grad
-            grad_alpha += dif.flatten().dot(grad.flatten()).detach().numpy()
+            grad_alpha += torch.mul(dif, grad).sum().detach().numpy()
 
         grad_alpha += 0.02 * self.alpha
         alpha = self.alpha - self.alpha_lr * grad_alpha
