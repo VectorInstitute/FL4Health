@@ -30,6 +30,9 @@ class ApflClient(NumpyFlClient):
         self.local_optimizer: torch.optim.Optimizer
         self.global_optimizer: torch.optim.Optimizer
 
+    def is_start_of_local_training(self, epoch: int, step: int) -> bool:
+        return epoch == 0 and step == 0
+
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
@@ -73,17 +76,24 @@ class ApflClient(NumpyFlClient):
                 # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
                 input, target = input.to(self.device), target.to(self.device)
 
+                # Forward pass on global model and update global parameters
                 self.global_optimizer.zero_grad()
                 global_pred = self.model(input, personal=False)["global"]
                 global_loss = self.criterion(global_pred, target)
                 global_loss.backward()
                 self.global_optimizer.step()
 
+                # Make sure gradients are zero prior to foward passes of global and local model
+                # to generate personalized predictions
                 self.global_optimizer.zero_grad()
                 self.local_optimizer.zero_grad()
 
+                # Personal predictions are generated as a convex combination of the output
+                # of local and global models
                 pred_dict = self.model(input, personal=True)
                 personal_pred, local_pred = pred_dict["personal"], pred_dict["local"]
+
+                # Parameters of local model are updated to minimize loss of personalized model
                 personal_loss = self.criterion(personal_pred, target)
                 personal_loss.backward()
                 self.local_optimizer.step()
@@ -91,7 +101,9 @@ class ApflClient(NumpyFlClient):
                 with torch.no_grad():
                     local_loss = self.criterion(local_pred, target)
 
-                if epoch == 0 and step == 0 and self.model.adaptive_alpha:
+                # Only update alpha if it is the first epoch and first step of training
+                # and adaptive alpha is true
+                if self.is_start_of_local_training(epoch, step) and self.model.adaptive_alpha:
                     self.model.update_alpha()
 
                 loss_dict["local"] += local_loss.item()

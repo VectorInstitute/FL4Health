@@ -39,6 +39,8 @@ class APFLModule(nn.Module):
         # Updates to mixture parameter follow original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob
         # /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L240
+
+        # Accumulate gradient of alpha across layers
         grad_alpha: float = 0.0
         for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
             local_grad = local_p.grad
@@ -48,6 +50,10 @@ class APFLModule(nn.Module):
             grad = torch.tensor(self.alpha) * local_grad + torch.tensor(1.0 - self.alpha) * global_grad
             grad_alpha += torch.mul(dif, grad).sum().detach().numpy()
 
+        # This update constant of 0.02 is not referenced in the paper
+        # but is present in the official implementation and other ones I have saw
+        # Not sure its function, just adding a number proportional to alpha to the grad
+        # Leaving in for consistency with official implementation
         grad_alpha += 0.02 * self.alpha
         alpha = self.alpha - self.alpha_lr * grad_alpha
         alpha = np.clip(alpha, 0, 1)

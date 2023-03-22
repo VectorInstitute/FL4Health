@@ -9,6 +9,11 @@ from fl4health.utils.dataset import BaseDataset
 
 
 class LabelBasedSampler(ABC):
+    """
+    This is an abstract class to be extended to create dataset samplers
+    based on the class of samples.
+    """
+
     def __init__(self, unique_labels: List[Any]) -> None:
         self.unique_labels = unique_labels
         self.num_classes = len(self.unique_labels)
@@ -19,6 +24,14 @@ class LabelBasedSampler(ABC):
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):
+    """
+    This class is used to subsample a dataset so the classes are distributed in a non-IID way.
+    In particular, the MinorityLabelBasedSampler explicitly downsamples classes based on the
+    downsampling_ratio and minority_labels args used to construct the object. Subsampling a dataset is
+    accomplished by calling the subsample method and passing a BaseDataset object. This will return
+    the resulting subsampled dataset.
+    """
+
     def __init__(self, unique_labels: List[Any], downsampling_ratio: float, minority_labels: Set[int]) -> None:
         super().__init__(unique_labels)
         self.downsampling_ratio = downsampling_ratio
@@ -27,6 +40,8 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
         selected_indices_list: List[torch.Tensor] = []
         for label in self.unique_labels:
+
+            # Get indices of samples equal to the current label
             indices_of_label = (dataset.targets == label).nonzero()
             if label in self.minority_labels:
                 subsample_size = int(indices_of_label.shape[0] * self.downsampling_ratio)
@@ -50,6 +65,15 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
 
 class DirichletLabelBasedSampler(LabelBasedSampler):
+    """
+    This class is used to subsample a dataset so the classes of samples are distributed in a non-IID way.
+    In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
+    of samples from each class. The sampler is constructed by passing a beta parameter that determines
+    the level of heterogeneity and a sample_percentage that determines the relative size of the modified
+    dataset. Subsampling a dataset is accomplished by calling the subsample method and passing a BaseDataset object.
+    This will return the resulting subsampled dataset.
+    """
+
     def __init__(self, unique_labels: List[Any], sample_percentage: float = 0.5, beta: float = 100) -> None:
         super().__init__(unique_labels)
         self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))

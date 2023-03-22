@@ -6,6 +6,11 @@ from flwr.common.typing import Scalar
 
 
 class Metric(ABC):
+    """
+    Abstact class to be extended to create metric functions used to evaluate the
+    predictions of a model.
+    """
+
     @abstractmethod
     def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
         raise NotImplementedError
@@ -27,6 +32,14 @@ class Accuracy(Metric):
 
 
 class AverageMeter:
+    """
+    class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
+    The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
+    called with predcitions and ground truth labels. The count corresponding to each evaluation is stored to ensure
+    the metrics average is accurate. The compute method is used to return a dictionairy of metrics along with their
+    current values.
+    """
+
     def __init__(self, metrics: List[Metric], name: str = "") -> None:
         self.metrics: List[Metric] = metrics
         self.name: str = name
