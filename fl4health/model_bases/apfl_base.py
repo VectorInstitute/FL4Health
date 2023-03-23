@@ -51,7 +51,7 @@ class APFLModule(nn.Module):
             grad_alpha += torch.mul(dif, grad).sum().detach().numpy()
 
         # This update constant of 0.02 is not referenced in the paper
-        # but is present in the official implementation and other ones I have saw
+        # but is present in the official implementation and other ones I have seen
         # Not sure its function, just adding a number proportional to alpha to the grad
         # Leaving in for consistency with official implementation
         grad_alpha += 0.02 * self.alpha
