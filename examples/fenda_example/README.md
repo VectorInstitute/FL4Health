@@ -1,14 +1,13 @@
 # FENDA Federated Learning Example
 This example provides an example of training a FENDA type model on a non-IID subset of the MNIST data. The FL server
 expects two clients to be spun up (i.e. it will wait until two clients report in before starting training). Each client
-has a modified version of the MNIST dataset. This modification essentially subsamples certain number from the original
+has a modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original
 training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties
 of the clients training/validation data. In theory, the models should be able to perform well on their local data
 while learning from other clients data that has different statistical properties. The subsampling is specified by
 sending a list of integers between 0-9 to the clients when they are run with the argument `--minority_numbers`.
 
-The server has some custom metrics aggregation and using Federated Averaging as its server-side optimization. The
-implementation uses a special type of weight exchange based on named-layer identification.
+The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
 
 # Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
