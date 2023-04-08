@@ -123,7 +123,7 @@ class HospitalClient(NumpyClippingClient):
             {"accuracy": accuracy},
         )
 
-    def get_properties(self, config: Config) -> Dict[str, int]:  # type: ignore
+    def get_properties(self, config: Config) -> Dict[str, Scalar]:
         if not self.initialized:
             self.setup_client(config)
         return {"num_samples": self.num_examples["train_set"]}

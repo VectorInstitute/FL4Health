@@ -33,11 +33,12 @@ class ClientLevelDPWeightedFedAvgServer(Server):
         results, _ = poll_clients(
             client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
         )
-        sample_counts = [result[1].properties["num_samples"] for result in results]
+
+        sample_counts: List[int] = [int(result[1].properties["num_samples"]) for result in results]
 
         # If Client Level DP and Weighted FedAvg, set sample counts to compute client weights
         if isinstance(self.strategy, ClientLevelDPFedAvgM) and self.strategy.weighted_averaging:
-            self.strategy.sample_counts = sample_counts  # type: ignore
+            self.strategy.sample_counts = sample_counts
 
         # Initialize parameters
         log(INFO, "Initializing global parameters")
@@ -97,7 +98,7 @@ class ClientLevelDPWeightedFedAvgServer(Server):
 
 
 def _handle_finished_future_after_poll(
-    future: concurrent.futures.Future,  # type: ignore
+    future: concurrent.futures.Future,
     results: List[Tuple[ClientProxy, GetPropertiesRes]],
     failures: List[Union[Tuple[ClientProxy, GetPropertiesRes], BaseException]],
 ) -> None:
