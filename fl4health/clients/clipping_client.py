@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -75,40 +75,3 @@ class NumpyClippingClient(NumpyFlClient):
         """
         server_model_parameters = self.unpack_parameters_with_clipping_bound(parameters)
         self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
-
-    def _first_round_fit(self, parameters: NDArrays, configs: Config) -> Tuple[List, int, Dict]:
-        # To be called on first round when weighted_averaging and adaptive_clipping are true
-
-        log(
-            INFO,
-            """Solely fetching client sample counts. Parameters not updated.""",
-        )
-
-        return (
-            parameters,
-            self.num_examples["train_set"],
-            {},
-        )
-
-    def __getattribute__(self, name: str) -> Any:
-        # If attribute is not fit, regular __getattribute__ behaviour
-        if name != "fit":
-            return object.__getattribute__(self, name)
-
-        # Wrapper for the fit function only
-        def wrapper(parameters: NDArrays, config: Config) -> Callable:
-            # If client is not initialized, setup client
-            if name == "fit" and self.initialized is False:
-                self.setup_client(config)
-
-                # Check if we should train
-                training = config.get("training", True)
-
-                # If true then call _first_round_fit method
-                if training is False:
-                    return object.__getattribute__(self, "_first_round_fit")(parameters, config)
-
-            # Else call fit method
-            return object.__getattribute__(self, "fit")(parameters, config)
-
-        return wrapper

@@ -92,6 +92,8 @@ class HospitalClient(NumpyClippingClient):
         self.num_examples = num_examples
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        if not self.initialized:
+            self.setup_client(config)
 
         self.set_parameters(parameters, config)
         accuracy = train(
@@ -120,6 +122,11 @@ class HospitalClient(NumpyClippingClient):
             self.num_examples["validation_set"],
             {"accuracy": accuracy},
         )
+
+    def get_properties(self, config: Config) -> Dict[str, int]:  # type: ignore
+        if not self.initialized:
+            self.setup_client(config)
+        return {"num_samples": self.num_examples["train_set"]}
 
 
 if __name__ == "__main__":
