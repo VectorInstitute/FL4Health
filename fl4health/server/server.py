@@ -18,7 +18,7 @@ PollResultsAndFailures = Tuple[
 ]
 
 
-class BaseServer(Server):
+class ClientLevelDPWeightedFedAvgServer(Server):
     def __init__(self, *, client_manager: ClientManager, strategy: ClientLevelDPFedAvgM) -> None:
         super().__init__(client_manager=client_manager, strategy=strategy)
 

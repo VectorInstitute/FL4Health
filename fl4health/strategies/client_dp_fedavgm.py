@@ -320,7 +320,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
 
-        config["training"] = (self.weighted_averaging and server_round == 1) is False
         fit_ins = FitIns(parameters, config)
 
         clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
@@ -340,7 +339,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
 
-        config["training"] = (self.weighted_averaging and server_round == 1) is False
         property_ins = GetPropertiesIns(config)
 
         clients = client_manager.sample_all(min_num_clients=self.min_available_clients)
