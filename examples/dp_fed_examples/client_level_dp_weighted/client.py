@@ -124,6 +124,7 @@ class HospitalClient(NumpyClippingClient):
         )
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        """Initialize client and return properties"""
         if not self.initialized:
             self.setup_client(config)
         return {"num_samples": self.num_examples["train_set"]}

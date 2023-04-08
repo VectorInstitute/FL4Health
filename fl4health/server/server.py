@@ -19,6 +19,11 @@ PollResultsAndFailures = Tuple[
 
 
 class ClientLevelDPWeightedFedAvgServer(Server):
+    """
+    Server to be used in case of Client Level Differential Privacy with weighted Federated Averaging.
+    Modified the fit function to poll clients for sample counts prior to the first round of FL.
+    """
+
     def __init__(self, *, client_manager: ClientManager, strategy: ClientLevelDPFedAvgM) -> None:
         super().__init__(client_manager=client_manager, strategy=strategy)
 
@@ -102,7 +107,7 @@ def _handle_finished_future_after_poll(
     results: List[Tuple[ClientProxy, GetPropertiesRes]],
     failures: List[Union[Tuple[ClientProxy, GetPropertiesRes], BaseException]],
 ) -> None:
-    """Convert finished future into either a result or a failure."""
+    """Convert finished future into either a result or a failure for polling."""
 
     # Check if there was an exception
     failure = future.exception()
@@ -124,6 +129,7 @@ def _handle_finished_future_after_poll(
 
 
 def poll_client(client: ClientProxy, ins: GetPropertiesIns) -> Tuple[ClientProxy, GetPropertiesRes]:
+    """Get Properties of client"""
     property_res: GetPropertiesRes = client.get_properties(ins=ins, timeout=None)
     return client, property_res
 
@@ -133,7 +139,7 @@ def poll_clients(
     max_workers: Optional[int],
     timeout: Optional[float],
 ) -> PollResultsAndFailures:
-    """Refine parameters concurrently on all selected clients."""
+    """Poll clients concurrently on all selected clients."""
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         submitted_fs = {

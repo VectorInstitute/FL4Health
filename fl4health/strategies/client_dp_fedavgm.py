@@ -330,10 +330,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
     def configure_poll(
         self, server_round: int, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
+        """Configure server for polling of clients."""
 
         # This strategy requires the client manager to be of type at least BaseSamplingManager
         assert isinstance(client_manager, BaseSamplingManager)
-        """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
