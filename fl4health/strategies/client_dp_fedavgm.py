@@ -248,7 +248,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         if not self.accept_failures and failures:
             return None, {}
 
-        # If first round compute total expected client weight and return empty update
+        # If first round compute total expected client weight
         if self.weighted_averaging and server_round == 1:
             assert self.sample_counts is not None
 
@@ -353,10 +353,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
 
         # This strategy requires the client manager to be of type at least BaseSamplingManager
         assert isinstance(client_manager, BaseSamplingManager)
-
-        # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
-        if self.fraction_evaluate == 0.0 or (self.weighted_averaging and server_round == 1):
-            return []
 
         # Parameters and config
         config = {}
