@@ -25,6 +25,7 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.common.logger import log
+from flwr.common.typing import GetPropertiesIns
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
@@ -161,6 +162,9 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
 
+        # Weighted averaging requires list of sample counts
+        # to compute client weights. Set by server after polling clients.
+        self.sample_counts: Optional[List[int]] = None
         self.m_t: Optional[NDArrays] = None
 
     def __repr__(self) -> str:
@@ -242,36 +246,19 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         if not self.accept_failures and failures:
             return None, {}
 
-        # If first round compute total expected client weight and return empty update
+        # If first round compute total expected client weight
         if self.weighted_averaging and server_round == 1:
-            successful_client_example_counts = [fit_res.num_examples for _, fit_res in results]
-            valid_failures = [fail for fail in failures if not isinstance(fail, BaseException)]
-            failed_client_example_counts = [fit_res.num_examples for _, fit_res in valid_failures]
-            client_example_counts = successful_client_example_counts + failed_client_example_counts
-            total_successful_samples = sum(client_example_counts)
-            avg_samples = total_successful_samples / len(client_example_counts)
+            assert self.sample_counts is not None
 
-            # Total number of clients is length of successes plus length of failures
-            n_clients = len(client_example_counts)
-
-            # To estimate total_samples we scale avg_samples by the n_total_clients by average samples
-            total_samples = avg_samples * n_clients
+            total_samples = sum(self.sample_counts)
 
             self.per_client_example_cap = (
                 total_samples if self.per_client_example_cap is None else self.per_client_example_cap
             )
 
-            self.total_client_weight = sum(
-                [num_examples / self.per_client_example_cap for num_examples in client_example_counts]
+            self.total_client_weight: float = sum(
+                [sample_count / self.per_client_example_cap for sample_count in self.sample_counts]
             )
-
-            log(
-                INFO,
-                """First round reserved for solely fetching client sample counts when weighted_averaging is True.
-                No updates to aggregate.""",
-            )
-
-            return None, {}
 
         # Convert results
         weights_updates = [
@@ -331,17 +318,31 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             # Custom fit config function provided
             config = self.on_fit_config_fn(server_round)
 
-        config["training"] = (self.weighted_averaging and server_round == 1) is False
         fit_ins = FitIns(parameters, config)
 
-        # Sample clients
-        if self.weighted_averaging and server_round == 1:
-            clients = client_manager.sample_all(self.min_available_clients)
-        else:
-            clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
+        clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
+
+    def configure_poll(
+        self, server_round: int, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
+        """Configure server for polling of clients."""
+
+        # This strategy requires the client manager to be of type at least BaseSamplingManager
+        assert isinstance(client_manager, BaseSamplingManager)
+        config = {}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+
+        property_ins = GetPropertiesIns(config)
+
+        clients = client_manager.sample_all(min_num_clients=self.min_available_clients)
+
+        # Return client/config pairs
+        return [(client, property_ins) for client in clients]
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -352,7 +353,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         assert isinstance(client_manager, BaseSamplingManager)
 
         # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
-        if self.fraction_evaluate == 0.0 or (self.weighted_averaging and server_round == 1):
+        if self.fraction_evaluate == 0.0:
             return []
 
         # Parameters and config

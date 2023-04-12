@@ -1,0 +1,39 @@
+from logging import INFO
+from typing import List, Optional
+
+from flwr.common.logger import log
+from flwr.server.client_manager import ClientManager
+from flwr.server.history import History
+from flwr.server.server import Server
+
+from fl4health.server.polling import poll_clients
+from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
+
+
+class ClientLevelDPWeightedFedAvgServer(Server):
+    """
+    Server to be used in case of Client Level Differential Privacy with weighted Federated Averaging.
+    Modified the fit function to poll clients for sample counts prior to the first round of FL.
+    """
+
+    def __init__(self, *, client_manager: ClientManager, strategy: ClientLevelDPFedAvgM) -> None:
+        super().__init__(client_manager=client_manager, strategy=strategy)
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        """Run federated averaging for a number of rounds."""
+
+        # Poll clients for sample counts
+        log(INFO, "Polling Clients for sample counts")
+        assert isinstance(self.strategy, ClientLevelDPFedAvgM)
+        client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
+        results, _ = poll_clients(
+            client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
+        )
+
+        sample_counts: List[int] = [int(result[1].properties["num_samples"]) for result in results]
+
+        # If Weighted FedAvg, set sample counts to compute client weights
+        if self.strategy.weighted_averaging:
+            self.strategy.sample_counts = sample_counts
+
+        return super().fit(num_rounds=num_rounds, timeout=timeout)
