@@ -162,11 +162,9 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
 
-        if self.weighted_averaging:
-            # Weighted averaging requires list of sample counts
-            # to compute client weights. Set by server after polling clients.
-            self.sample_counts: List[int]
-
+        # Weighted averaging requires list of sample counts
+        # to compute client weights. Set by server after polling clients.
+        self.sample_counts: Optional[List[int]] = None
         self.m_t: Optional[NDArrays] = None
 
     def __repr__(self) -> str:
