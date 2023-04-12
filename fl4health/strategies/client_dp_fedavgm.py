@@ -352,6 +352,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         # This strategy requires the client manager to be of type at least BaseSamplingManager
         assert isinstance(client_manager, BaseSamplingManager)
 
+        # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
+        if self.fraction_evaluate == 0.0:
+            return []
+
         # Parameters and config
         config = {}
         if self.on_evaluate_config_fn is not None:
