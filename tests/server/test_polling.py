@@ -17,7 +17,7 @@ from flwr.common.typing import (
 )
 from flwr.server.client_proxy import ClientProxy
 
-from fl4health.server.server import poll_client, poll_clients
+from fl4health.server.polling import poll_client, poll_clients
 
 
 class CustomClientProxy(ClientProxy):
