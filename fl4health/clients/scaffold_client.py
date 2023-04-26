@@ -59,14 +59,14 @@ class ScaffoldClient(NumpyFlClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        This function packs the parameters and control variartes into a single NDArray
+        Packs the parameters and control variartes into a single NDArray
         """
         model_weights = self.parameter_exchanger.push_parameters(self.model, config)
         return self.pack_parameters(model_weights)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
-        This function assumes that the parameters being passed contain model parameters concatenated with
+        Assumes that the parameters being passed contain model parameters concatenated with
         control variates.
         """
         server_model_weights, server_control_variates = self.unpack_parameters(parameters)
@@ -78,16 +78,28 @@ class ScaffoldClient(NumpyFlClient):
             self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
 
     def pack_parameters(self, model_weights: NDArrays) -> NDArrays:
+        """
+        Extends the parameters list to include both the model weights and updates to the
+        local control variate.
+        """
         assert self.client_control_variates_updates is not None
         assert isinstance(model_weights, List) and isinstance(self.client_control_variates_updates, List)
         return model_weights + self.client_control_variates_updates
 
     def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
+        """
+        Splits the passed parameter list into the model weights and server control variates.
+        """
         split_size = len(parameters) // 2
         weights, control_variates = parameters[:split_size], parameters[split_size:]
         return weights, control_variates
 
     def update_control_variates(self, local_steps: int) -> None:
+        """
+        Updates local control variates along with the corresponding updates
+        according to the option 2 in Equation 4 in https://arxiv.org/pdf/1910.06378.pdf
+        To be called after weights of local model have been updated.
+        """
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
@@ -103,9 +115,10 @@ class ScaffoldClient(NumpyFlClient):
             for client_model_weight, server_model_weight in zip(client_model_weights, self.server_model_weights)
         ]
 
+        # coef = 1 / (K * lr)
         scaling_coeffient = 1 / (local_steps * self.learning_rate_control_variates)
 
-        # c_i = c_i - c + 1/(K*lr) * (x - y_i)
+        # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
             client_control_variate - server_control_variate + scaling_coeffient * delta_model_weight
             for client_control_variate, delta_model_weight, server_control_variate in zip(
@@ -113,6 +126,7 @@ class ScaffoldClient(NumpyFlClient):
             )
         ]
 
+        # c_delta = c_i^plus - c_i
         self.client_control_variates_updates = [
             updated_control_variate - current_control_variate
             for updated_control_variate, current_control_variate in zip(
@@ -120,9 +134,15 @@ class ScaffoldClient(NumpyFlClient):
             )
         ]
 
+        # c_i = c_i^plus
         self.client_control_variates = updated_client_control_variates
 
     def modify_grad(self) -> None:
+        """
+        Modifies the gradient of the local model to correct for client drift.
+        To be called after the gradients have been computed on a batch of data.
+        Updates not applied to params until step is called on optimizer.
+        """
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
 

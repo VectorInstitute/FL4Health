@@ -34,9 +34,9 @@ class Scaffold(FedAvgSampling):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         learning_rate: Optional[float] = 1.0
     ) -> None:
-        """Federated Averaging strategy.
+        """Scaffold Federated Learning strategy.
 
-        Implementation based on https://arxiv.org/abs/1602.05629
+        Implementation based on https://arxiv.org/pdf/1910.06378.pdf
 
         Parameters
         ----------
@@ -138,14 +138,23 @@ class Scaffold(FedAvgSampling):
         return ndarrays_to_parameters(parameters), metrics_aggregated
 
     def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
+        """
+        Split params into model_weights and control_variates.
+        """
         split_size = len(parameters) // 2
         model_weights, control_variates = parameters[:split_size], parameters[split_size:]
         return model_weights, control_variates
 
     def pack_parameters(self, model_weights: NDArrays, control_variates: NDArrays) -> NDArrays:
+        """
+        Extends parameter list to include model weights and server control variates.
+        """
         return model_weights + control_variates
 
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> NDArrays:
+        """
+        Simple unweighted average to aggregate params. Consistent with paper.
+        """
         num_clients = len(results)
 
         weights = [weights for weights, _ in results]
