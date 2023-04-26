@@ -18,15 +18,16 @@ class ScaffoldClient(NumpyFlClient):
     def __init__(self, data_path: Path, metrics: List[Metric], device: torch.device) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.client_control_variates: Union[NDArrays, None] = None
-        self.server_control_variates: Union[NDArrays, None] = None
+        self.client_control_variates: Union[NDArrays, None] = None  # c_i
+        self.client_control_variates_updates = Union[NDArrays, None]  # c_update
+        self.server_control_variates: Union[NDArrays, None] = None  # c
         self.model: nn.Module
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
         self.learning_rate_control_variates: float
-        self.server_model_weights: NDArrays
+        self.server_model_weights: NDArrays  # x
         self.num_examples: Dict[str, int]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -36,6 +37,7 @@ class ScaffoldClient(NumpyFlClient):
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         metric_values = self.train(local_epochs)
+
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -76,91 +78,100 @@ class ScaffoldClient(NumpyFlClient):
             self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
 
     def pack_parameters(self, model_weights: NDArrays) -> NDArrays:
-        assert self.client_control_variates is not None
-        return model_weights + self.client_control_variates
+        assert self.client_control_variates_updates is not None
+        assert isinstance(model_weights, List) and isinstance(self.client_control_variates_updates, List)
+        return model_weights + self.client_control_variates_updates
 
     def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
         split_size = len(parameters) // 2
         weights, control_variates = parameters[:split_size], parameters[split_size:]
         return weights, control_variates
 
-    def update_control_variates(self) -> None:
+    def update_control_variates(self, local_steps: int) -> None:
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
         assert self.learning_rate_control_variates is not None
         assert self.train_loader.batch_size is not None
 
-        delta_control_variates: NDArrays = [
-            client_control_variate - server_control_variate
-            for client_control_variate, server_control_variate in zip(
-                self.client_control_variates, self.server_control_variates
-            )
-        ]
-
+        # y_i
         client_model_weights = [val.numpy() for val in self.model.state_dict().values()]
+
+        # (x - y_i)
         delta_model_weights = [
-            client_model_weight - server_model_weight
+            server_model_weight - client_model_weight
             for client_model_weight, server_model_weight in zip(client_model_weights, self.server_model_weights)
         ]
 
-        scaling_coeffient = 1 / (self.train_loader.batch_size * self.learning_rate_control_variates)
+        scaling_coeffient = 1 / (local_steps * self.learning_rate_control_variates)
 
-        self.client_control_variates = [
-            delta_control_variate + scaling_coeffient * delta_model_weight
-            for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
+        # c_i = c_i - c + 1/(K*lr) * (x - y_i)
+        updated_client_control_variates = [
+            client_control_variate - server_control_variate + scaling_coeffient * delta_model_weight
+            for client_control_variate, delta_model_weight, server_control_variate in zip(
+                self.client_control_variates, delta_model_weights, self.server_control_variates
+            )
         ]
+
+        self.client_control_variates_updates = [
+            updated_control_variate - current_control_variate
+            for updated_control_variate, current_control_variate in zip(
+                updated_client_control_variates, self.client_control_variates
+            )
+        ]
+
+        self.client_control_variates = updated_client_control_variates
 
     def modify_grad(self) -> None:
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
 
-        params = self.model.parameters()
-
-        for param, client_cv, server_cv in zip(params, self.client_control_variates, self.server_control_variates):
-            param.grad = param.grad - client_cv + server_cv
+        for param, client_cv, server_cv in zip(
+            self.model.parameters(), self.client_control_variates, self.server_control_variates
+        ):
+            # g_i(y_i) = g_i(y_i) - c_i + c
+            param.grad.data += torch.from_numpy(server_cv).type(torch.float32) - torch.from_numpy(client_cv).type(
+                torch.float32
+            )
 
     def train(
         self,
-        epochs: int,
+        local_steps: int,
     ) -> Dict[str, Scalar]:
+        self.model.train()
 
-        for epoch in range(epochs):
-            running_loss = 0.0
+        running_loss = 0.0
+        loader = iter(self.train_loader)
+        meter = AverageMeter(self.metrics, "global")
+        for step in range(local_steps - 1):
+            input, target = next(loader)
+            input, target = input.to(self.device), target.to(self.device)
 
-            meter = AverageMeter(self.metrics, "global")
-            for step, (input, target) in enumerate(self.train_loader):
+            # Forward pass on global model and update global parameters
+            self.optimizer.zero_grad()
+            pred = self.model(input)
+            loss = self.criterion(pred, target)
+            loss.backward()
+            self.modify_grad()
+            self.optimizer.step()
 
-                input, target = input.to(self.device), target.to(self.device)
+            running_loss += loss.item()
+            meter.update(pred, target)
 
-                # Forward pass on global model and update global parameters
-                self.optimizer.zero_grad()
-                pred = self.model(input)
-                loss = self.criterion(pred, target)
-                loss.backward()
-                self.modify_grad()
-                self.optimizer.step()
-
-                running_loss += loss.item()
-
-                meter.update(pred, target)
-
-            running_loss = running_loss / len(self.train_loader)
+        running_loss = running_loss / len(self.train_loader)
 
         metrics = meter.compute()
         train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
         log(
             INFO,
-            f"Epoch: {epoch} \n"
-            f"Client Training Losses: {loss} \n"
-            f"Client Training Metrics: {train_metric_string}",
+            f"Client Training Losses: {loss} \n" f"Client Training Metrics: {train_metric_string}",
         )
 
-        self.update_control_variates()
+        self.update_control_variates(local_steps)
         return metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-
+        self.model.eval()
         meter = AverageMeter(self.metrics, "global")
         running_loss = 0.0
         with torch.no_grad():
@@ -168,6 +179,8 @@ class ScaffoldClient(NumpyFlClient):
                 input, target = input.to(self.device), target.to(self.device)
 
                 pred = self.model(input)
+
+                # print(torch.argmax(pred, dim=1), target)
                 loss = self.criterion(pred, target)
 
                 running_loss += loss.item()

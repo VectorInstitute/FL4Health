@@ -1,3 +1,4 @@
+from functools import reduce
 from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -6,7 +7,6 @@ from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.strategy.aggregate import aggregate
 
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
@@ -32,7 +32,7 @@ class Scaffold(FedAvgSampling):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        learning_rate: Optional[float] = 0.01
+        learning_rate: Optional[float] = 1.0
     ) -> None:
         """Federated Averaging strategy.
 
@@ -100,29 +100,28 @@ class Scaffold(FedAvgSampling):
         # Convert results
         updated_params = [(parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results]
 
-        aggregated_params = aggregate(updated_params)
+        # x = 1 / |S| * sum(x_i) and c = 1 / |S| * sum(c_i)
+        aggregated_params = self.aggregate(updated_params)
 
-        weights, control_variates = self.unpack_parameters(aggregated_params)
+        weights, control_variates_update = self.unpack_parameters(aggregated_params)
 
+        # x_update = y_i - x
         delta_weights: NDArrays = [
             updated_weight - current_weight
             for updated_weight, current_weight in zip(weights, self.server_model_weights)
         ]
 
-        self.current_weights = [
+        # x = x + lr * x_update
+        self.server_model_weights = [
             current_weight + self.learning_rate * delta_weight
             for current_weight, delta_weight in zip(self.server_model_weights, delta_weights)
         ]
 
-        delta_control_variates: NDArrays = [
-            updated_control_variate - current_control_variate
-            for updated_control_variate, current_control_variate in zip(control_variates, self.server_control_variates)
-        ]
-
-        self.current_control_variates = [
-            current_control_variate + self.fraction_fit * delta_control_variate
-            for current_control_variate, delta_control_variate in zip(
-                self.server_control_variates, delta_control_variates
+        # c = c + |S| / N * c_update
+        self.server_control_variates = [
+            current_control_variate + self.fraction_fit * control_variate_update
+            for current_control_variate, control_variate_update in zip(
+                self.server_control_variates, control_variates_update
             )
         ]
 
@@ -145,3 +144,13 @@ class Scaffold(FedAvgSampling):
 
     def pack_parameters(self, model_weights: NDArrays, control_variates: NDArrays) -> NDArrays:
         return model_weights + control_variates
+
+    def aggregate(self, results: List[Tuple[NDArrays, int]]) -> NDArrays:
+        num_clients = len(results)
+
+        weights = [weights for weights, _ in results]
+
+        # Compute average weights of each layer
+        weights_prime: NDArrays = [reduce(np.add, layer_updates) / num_clients for layer_updates in zip(*weights)]
+
+        return weights_prime

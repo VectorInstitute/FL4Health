@@ -29,7 +29,7 @@ def load_mnist_data(
     val_ds = sampler.subsample(val_ds)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(val_ds, batch_size=batch_size)
+    validation_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=True)
 
     num_examples = {"train_set": len(train_ds), "validation_set": len(val_ds)}
     return train_loader, validation_loader, num_examples
