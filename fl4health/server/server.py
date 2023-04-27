@@ -30,7 +30,9 @@ class ClientLevelDPWeightedFedAvgServer(Server):
             client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
         )
 
-        sample_counts: List[int] = [int(result[1].properties["num_samples"]) for result in results]
+        sample_counts: List[int] = [
+            int(get_properties_res.properties["num_samples"]) for (_, get_properties_res) in results
+        ]
 
         # If Weighted FedAvg, set sample counts to compute client weights
         if self.strategy.weighted_averaging:

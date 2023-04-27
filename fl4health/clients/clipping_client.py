@@ -15,7 +15,6 @@ class NumpyClippingClient(NumpyFlClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.clipping_bound: Optional[float] = None
-        self.initial_weights: Optional[NDArrays] = None
         self.adaptive_clipping: Optional[bool] = None
 
     def clip_and_pack_parameters(self, parameters: NDArrays) -> NDArrays:
