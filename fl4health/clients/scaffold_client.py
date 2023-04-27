@@ -150,7 +150,7 @@ class ScaffoldClient(NumpyFlClient):
             self.model.parameters(), self.client_control_variates, self.server_control_variates
         ):
             # g_i(y_i) = g_i(y_i) - c_i + c
-            param.grad.data += torch.from_numpy(server_cv).type(torch.float32) - torch.from_numpy(client_cv).type(
+            param.grad += torch.from_numpy(server_cv).type(torch.float32) - torch.from_numpy(client_cv).type(
                 torch.float32
             )
 
