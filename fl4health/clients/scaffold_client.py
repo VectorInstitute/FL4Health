@@ -161,6 +161,7 @@ class ScaffoldClient(NumpyFlClient):
         self.model.train()
 
         running_loss = 0.0
+        # Pass loader to iterator so we can step through  train loader
         loader = iter(self.train_loader)
         meter = AverageMeter(self.metrics, "global")
         for step in range(local_steps - 1):
@@ -172,6 +173,8 @@ class ScaffoldClient(NumpyFlClient):
             pred = self.model(input)
             loss = self.criterion(pred, target)
             loss.backward()
+
+            # modify grad to correct for client drift
             self.modify_grad()
             self.optimizer.step()
 
@@ -197,10 +200,7 @@ class ScaffoldClient(NumpyFlClient):
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
-
                 pred = self.model(input)
-
-                # print(torch.argmax(pred, dim=1), target)
                 loss = self.criterion(pred, target)
 
                 running_loss += loss.item()
