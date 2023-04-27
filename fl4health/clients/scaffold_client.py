@@ -35,8 +35,8 @@ class ScaffoldClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        metric_values = self.train(local_epochs)
+        local_steps = self.narrow_config_type(config, "local_steps", int)
+        metric_values = self.train(local_steps)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

@@ -38,9 +38,9 @@ def get_initial_model_parameters() -> Parameters:
     return parameters
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
-        "local_epochs": local_epochs,
+        "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
     }
@@ -50,7 +50,7 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
+        config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
     )

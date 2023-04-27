@@ -22,13 +22,7 @@ def test_check_config() -> None:
         check_config(config)
 
     # Test incorrect value type
-    config = {"n_clients": 5, "n_server_rounds": 10, "local_epochs": 5, "batch_size": 45.8}  # type: ignore
-
-    with raises(InvalidConfigError):
-        check_config(config)
-
-    # Test invalid value range
-    config = {"n_clients": 5, "n_server_rounds": 10, "local_epochs": -1, "batch_size": 4}
+    config = {"n_clients": 5, "n_server_rounds": 10, "batch_size": 45.8}  # type: ignore
 
     with raises(InvalidConfigError):
         check_config(config)
