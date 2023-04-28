@@ -17,3 +17,12 @@ class TestCNN(nn.Module):
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
+
+
+class LinearTransform(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(2, 3, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)

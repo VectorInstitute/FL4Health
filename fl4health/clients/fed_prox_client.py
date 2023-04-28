@@ -50,7 +50,7 @@ class FedProxClient(NumpyFlClient):
         ]
 
         # network l2 inner product tensor
-        return torch.stack(layer_inner_products).sum()
+        return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
@@ -93,15 +93,15 @@ class FedProxClient(NumpyFlClient):
     ) -> Dict[str, Scalar]:
 
         for epoch in range(epochs):
-            loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
             meter = AverageMeter(self.metrics, "meter")
-            for step, (input, target) in enumerate(self.train_loader):
+            loss_dict = {"vanilla_loss": 0.0, "proximal_loss": 0.0, "total_loss": 0.0}
+            for (input, target) in self.train_loader:
 
                 input, target = input.to(self.device), target.to(self.device)
                 # forward pass on the model
                 preds = self.model(input)
                 vanilla_loss = self.criterion(preds, target)
-                proximal_loss = (self.proximal_weight / 2.0) * self.get_proximal_loss()
+                proximal_loss = self.get_proximal_loss()
                 fed_prox_loss = vanilla_loss + proximal_loss
 
                 self.optimizer.zero_grad()

@@ -77,6 +77,12 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
     the level of heterogeneity and a sample_percentage that determines the relative size of the modified
     dataset. Subsampling a dataset is accomplished by calling the subsample method and passing a BaseDataset object.
     This will return the resulting subsampled dataset.
+
+    NOTE: The range for beta is (0, infinity). The larger the value of beta, the more evenly the multinomial
+    probability of the labels will be. The smaller beta is the more heterogeneous it is.
+
+    np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
+    np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
     """
 
     def __init__(self, unique_labels: List[Any], sample_percentage: float = 0.5, beta: float = 100) -> None:
