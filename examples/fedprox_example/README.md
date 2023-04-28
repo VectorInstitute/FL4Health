@@ -10,7 +10,7 @@ In this demo, FedProx is applied to a modified version of the MNIST dataset that
 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization.
 
-## Running the Example
+### Running the Example
 
 In order to run the example, first ensure you have the virtual env of your choice activated and run
 ```

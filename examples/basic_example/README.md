@@ -5,7 +5,7 @@ Each client has the same "local" dataset. I.e. they each load the complete CIFAR
 training and validation sets. The server has some custom metrics aggregation, but is otherwise a vanilla FL
 implementation using FedAvg as the server side optimization.
 
-# Running the Example
+## Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
 ```
 pip install --upgrade pip
