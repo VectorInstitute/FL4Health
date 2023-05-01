@@ -1,4 +1,4 @@
-# only has to pass for python 3.8
+# only has to pass for python 3.9
 name: Static code checks
 
 on:
@@ -15,10 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v3
         with:
-          python-version: 3.8
+          python-version: 3.9
           cache: 'pip'
       - name: precommit checks
         run: |
