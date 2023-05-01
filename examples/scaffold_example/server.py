@@ -38,11 +38,15 @@ def get_initial_model_parameters() -> Parameters:
     return parameters
 
 
-def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(
+    local_steps: int, batch_size: int, n_server_rounds: int, learning_rate_local: float, current_round: int
+) -> Config:
     return {
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
+        "current_round": current_round,
+        "learning_rate_local": learning_rate_local,
     }
 
 
@@ -53,6 +57,7 @@ def main(config: Dict[str, Any]) -> None:
         config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
+        config["learning_rate_local"],
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

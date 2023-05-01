@@ -26,14 +26,16 @@ class MnistScaffoldClient(ScaffoldClient):
 
     def setup_client(self, config: Config) -> None:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        learning_rate_local = self.narrow_config_type(config, "learning_rate_local", float)
+
+        self.learning_rate_local = learning_rate_local
         self.model: nn.Module = MnistNet()
         self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.1)
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
         self.parameter_exchanger = FullParameterExchanger()
-        self.learning_rate_control_variates = 0.1
         super().setup_client(config)
 
 

@@ -15,19 +15,25 @@ from fl4health.utils.metrics import AverageMeter, Metric
 
 
 class ScaffoldClient(NumpyFlClient):
+    """
+    Federated Learning Client for Scaffold strategy.
+
+    Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
+    """
+
     def __init__(self, data_path: Path, metrics: List[Metric], device: torch.device) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.client_control_variates: Union[NDArrays, None] = None  # c_i
-        self.client_control_variates_updates = Union[NDArrays, None]  # c_update
-        self.server_control_variates: Union[NDArrays, None] = None  # c
+        self.client_control_variates: Union[NDArrays, None] = None  # c_i in paper
+        self.client_control_variates_updates = Union[NDArrays, None]  # delta_c_i in paper
+        self.server_control_variates: Union[NDArrays, None] = None  # c in paper
         self.model: nn.Module
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.criterion: _Loss
-        self.optimizer: torch.optim.Optimizer
-        self.learning_rate_control_variates: float
-        self.server_model_weights: NDArrays  # x
+        self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
+        self.learning_rate_local: float  # eta_l in paper
+        self.server_model_weights: NDArrays  # x in paper
         self.num_examples: Dict[str, int]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -59,7 +65,7 @@ class ScaffoldClient(NumpyFlClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArray
+        Packs the parameters and control variartes into a single NDArrays
         """
         model_weights = self.parameter_exchanger.push_parameters(self.model, config)
         return self.pack_parameters(model_weights)
@@ -74,6 +80,7 @@ class ScaffoldClient(NumpyFlClient):
         self.server_model_weights = server_model_weights
         self.parameter_exchanger.pull_parameters(server_model_weights, self.model, config)
 
+        # If client control variates do not exist, initialize with zeros as per paper
         if self.client_control_variates is None:
             self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
 
@@ -84,6 +91,10 @@ class ScaffoldClient(NumpyFlClient):
         """
         assert self.client_control_variates_updates is not None
         assert isinstance(model_weights, List) and isinstance(self.client_control_variates_updates, List)
+
+        # Weigts and control variates updates sent to server for aggregation
+        # Control variates updates sent because only client has access to previous client control variate
+        # Therefore it can only be computed locally
         return model_weights + self.client_control_variates_updates
 
     def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
@@ -103,7 +114,7 @@ class ScaffoldClient(NumpyFlClient):
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
-        assert self.learning_rate_control_variates is not None
+        assert self.learning_rate_local is not None
         assert self.train_loader.batch_size is not None
 
         # y_i
@@ -115,8 +126,8 @@ class ScaffoldClient(NumpyFlClient):
             for client_model_weight, server_model_weight in zip(client_model_weights, self.server_model_weights)
         ]
 
-        # coef = 1 / (K * lr)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate_control_variates)
+        # coef = 1 / (K * eta_l)
+        scaling_coeffient = 1 / (local_steps * self.learning_rate_local)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
@@ -126,7 +137,7 @@ class ScaffoldClient(NumpyFlClient):
             )
         ]
 
-        # c_delta = c_i^plus - c_i
+        # delta_c_i = c_i^plus - c_i
         self.client_control_variates_updates = [
             updated_control_variate - current_control_variate
             for updated_control_variate, current_control_variate in zip(
@@ -149,7 +160,7 @@ class ScaffoldClient(NumpyFlClient):
         for param, client_cv, server_cv in zip(
             self.model.parameters(), self.client_control_variates, self.server_control_variates
         ):
-            # g_i(y_i) = g_i(y_i) - c_i + c
+            # g_i(y_i) = g_i(y_i) - c_i + c (Algorithm 1 from paper)
             param.grad += torch.from_numpy(server_cv).type(torch.float32) - torch.from_numpy(client_cv).type(
                 torch.float32
             )

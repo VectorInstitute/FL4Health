@@ -26,7 +26,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 
 ## Starting Clients
 
-Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
+Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
 ```
 python -m examples.scaffold_example.client --dataset_path /path/to/data

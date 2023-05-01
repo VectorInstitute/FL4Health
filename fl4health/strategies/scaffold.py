@@ -95,10 +95,11 @@ class Scaffold(FedAvgSampling):
         if not self.accept_failures and failures:
             return None, {}
 
-        # Convert results
+        # Convert results with packed params of model weights and client control variate updates
         updated_params = [(parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results]
 
-        # x = 1 / |S| * sum(x_i) and c = 1 / |S| * sum(c_i)
+        # x = 1 / |S| * sum(x_i) and c = 1 / |S| * sum(delta_c_i)
+        # Aggregation operation over packed params (includes both weights and control variate updates)
         aggregated_params = self.aggregate(updated_params)
 
         weights, control_variates_update = self.unpack_parameters(aggregated_params)
