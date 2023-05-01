@@ -84,7 +84,7 @@ def test_poisson_sampling_when_low_probability(caplog: pytest.LogCaptureFixture)
     for client_proxy in client_proxies:
         client_manager.register(client_proxy)
     sample = client_manager.sample_fraction(0.01, 2)
-    assert "WARNING  flower:poisson_sampling_manager.py" in caplog.text
+    assert "WARNING  flwr:poisson_sampling_manager.py" in caplog.text
     assert len(sample) == 0
 
 
@@ -125,5 +125,5 @@ def test_fixed_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -
     for client_proxy in client_proxies:
         client_manager.register(client_proxy)
     sample = client_manager.sample_fraction(0.01, 2)
-    assert "WARNING  flower:fixed_without_replacement_manager.py" in caplog.text
+    assert "WARNING  flwr:fixed_without_replacement_manager.py" in caplog.text
     assert len(sample) == 0
