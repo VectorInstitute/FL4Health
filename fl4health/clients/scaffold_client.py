@@ -121,29 +121,19 @@ class ScaffoldClient(NumpyFlClient):
         client_model_weights = [val.numpy() for val in self.model.state_dict().values()]
 
         # (x - y_i)
-        delta_model_weights = [
-            server_model_weight - client_model_weight
-            for client_model_weight, server_model_weight in zip(client_model_weights, self.server_model_weights)
-        ]
+        delta_model_weights = self.compute_parameter_delta(self.server_model_weights, client_model_weights)
 
-        # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate_local)
+        # (c_i - c)
+        delta_control_variates = self.compute_parameter_delta(
+            self.client_control_variates, self.server_control_variates
+        )
 
-        # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
-        updated_client_control_variates = [
-            client_control_variate - server_control_variate + scaling_coeffient * delta_model_weight
-            for client_control_variate, delta_model_weight, server_control_variate in zip(
-                self.client_control_variates, delta_model_weights, self.server_control_variates
-            )
-        ]
-
-        # delta_c_i = c_i^plus - c_i
-        self.client_control_variates_updates = [
-            updated_control_variate - current_control_variate
-            for updated_control_variate, current_control_variate in zip(
-                updated_client_control_variates, self.client_control_variates
-            )
-        ]
+        updated_client_control_variates = self.compute_updated_control_variates(
+            local_steps, delta_model_weights, delta_control_variates
+        )
+        self.client_control_variates_updates = self.compute_parameter_delta(
+            updated_client_control_variates, self.client_control_variates
+        )
 
         # c_i = c_i^plus
         self.client_control_variates = updated_client_control_variates
@@ -160,9 +150,36 @@ class ScaffoldClient(NumpyFlClient):
         for param, client_cv, server_cv in zip(
             self.model.parameters(), self.client_control_variates, self.server_control_variates
         ):
+            assert param.grad is not None
             tensor_type = param.grad.dtype
             update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
             param.grad += update
+
+    def compute_parameter_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
+        """
+        Computes elementwise difference of two lists of NDarray
+        where elements in params_2 are subtracted from elements in params_1
+        """
+        parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
+
+        return parameter_delta
+
+    def compute_updated_control_variates(
+        self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
+    ) -> NDArrays:
+        """
+        Computes the updated local control variates according to option 2 in Equation 4 of paper
+        """
+
+        # coef = 1 / (K * eta_l)
+        scaling_coeffient = 1 / (local_steps * self.learning_rate_local)
+
+        # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
+        updated_client_control_variates = [
+            delta_control_variate + scaling_coeffient * delta_model_weight
+            for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
+        ]
+        return updated_client_control_variates
 
     def train(
         self,

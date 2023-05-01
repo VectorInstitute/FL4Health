@@ -38,6 +38,6 @@ def check_config(config: Dict[str, Any]) -> None:
             raise InvalidConfigError(f"{req_key} must be of type {str(val)}")
 
     # Check for invalid integer parameter values
-    for key in ["n_server_rounds", "n_clients"]:
+    for key in ["n_server_rounds", "n_clients", "batch_size"]:
         if config[key] <= 0:
             raise InvalidConfigError(f"{key} must be greater than 0")
