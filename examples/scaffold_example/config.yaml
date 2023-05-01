@@ -7,4 +7,4 @@ local_steps: 10 # The number of local steps (one per batch) to complete for clie
 batch_size: 128 # The batch size for client training
 
 # The local learning rate of the client used for local optimizer and updates to control variates
-learning_rate_local: 0.1
+learning_rate_local: 0.05

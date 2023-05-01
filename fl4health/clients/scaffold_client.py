@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
@@ -24,16 +24,16 @@ class ScaffoldClient(NumpyFlClient):
     def __init__(self, data_path: Path, metrics: List[Metric], device: torch.device) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.client_control_variates: Union[NDArrays, None] = None  # c_i in paper
-        self.client_control_variates_updates = Union[NDArrays, None]  # delta_c_i in paper
-        self.server_control_variates: Union[NDArrays, None] = None  # c in paper
+        self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
+        self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
+        self.server_control_variates: Optional[NDArrays] = None  # c in paper
         self.model: nn.Module
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.criterion: _Loss
         self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
         self.learning_rate_local: float  # eta_l in paper
-        self.server_model_weights: NDArrays  # x in paper
+        self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.num_examples: Dict[str, int]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -90,7 +90,6 @@ class ScaffoldClient(NumpyFlClient):
         local control variate.
         """
         assert self.client_control_variates_updates is not None
-        assert isinstance(model_weights, List) and isinstance(self.client_control_variates_updates, List)
 
         # Weigts and control variates updates sent to server for aggregation
         # Control variates updates sent because only client has access to previous client control variate
@@ -101,6 +100,7 @@ class ScaffoldClient(NumpyFlClient):
         """
         Splits the passed parameter list into the model weights and server control variates.
         """
+        assert len(parameters) % 2 == 0
         split_size = len(parameters) // 2
         weights, control_variates = parameters[:split_size], parameters[split_size:]
         return weights, control_variates
@@ -160,10 +160,9 @@ class ScaffoldClient(NumpyFlClient):
         for param, client_cv, server_cv in zip(
             self.model.parameters(), self.client_control_variates, self.server_control_variates
         ):
-            # g_i(y_i) = g_i(y_i) - c_i + c (Algorithm 1 from paper)
-            param.grad += torch.from_numpy(server_cv).type(torch.float32) - torch.from_numpy(client_cv).type(
-                torch.float32
-            )
+            tensor_type = param.grad.dtype
+            update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
+            param.grad += update
 
     def train(
         self,
@@ -175,7 +174,7 @@ class ScaffoldClient(NumpyFlClient):
         # Pass loader to iterator so we can step through  train loader
         loader = iter(self.train_loader)
         meter = AverageMeter(self.metrics, "global")
-        for step in range(local_steps - 1):
+        for step in range(local_steps):
             input, target = next(loader)
             input, target = input.to(self.device), target.to(self.device)
 

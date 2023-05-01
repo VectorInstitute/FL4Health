@@ -96,10 +96,11 @@ class Scaffold(FedAvgSampling):
             return None, {}
 
         # Convert results with packed params of model weights and client control variate updates
-        updated_params = [(parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results]
+        updated_params = [parameters_to_ndarrays(fit_res.parameters) for _, fit_res in results]
 
         # x = 1 / |S| * sum(x_i) and c = 1 / |S| * sum(delta_c_i)
         # Aggregation operation over packed params (includes both weights and control variate updates)
+
         aggregated_params = self.aggregate(updated_params)
 
         weights, control_variates_update = self.unpack_parameters(aggregated_params)
@@ -140,6 +141,7 @@ class Scaffold(FedAvgSampling):
         """
         Split params into model_weights and control_variates.
         """
+        assert len(parameters) % 2 == 0
         split_size = len(parameters) // 2
         model_weights, control_variates = parameters[:split_size], parameters[split_size:]
         return model_weights, control_variates
@@ -150,15 +152,13 @@ class Scaffold(FedAvgSampling):
         """
         return model_weights + control_variates
 
-    def aggregate(self, results: List[Tuple[NDArrays, int]]) -> NDArrays:
+    def aggregate(self, params: List[NDArrays]) -> NDArrays:
         """
         Simple unweighted average to aggregate params. Consistent with paper.
         """
-        num_clients = len(results)
-
-        weights = [weights for weights, _ in results]
+        num_clients = len(params)
 
         # Compute average weights of each layer
-        weights_prime: NDArrays = [reduce(np.add, layer_updates) / num_clients for layer_updates in zip(*weights)]
+        params_prime: NDArrays = [reduce(np.add, layer_updates) / num_clients for layer_updates in zip(*params)]
 
-        return weights_prime
+        return params_prime
