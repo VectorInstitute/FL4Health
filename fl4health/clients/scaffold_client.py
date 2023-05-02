@@ -121,17 +121,17 @@ class ScaffoldClient(NumpyFlClient):
         client_model_weights = [val.numpy() for val in self.model.state_dict().values()]
 
         # (x - y_i)
-        delta_model_weights = self.compute_parameter_delta(self.server_model_weights, client_model_weights)
+        delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)
 
         # (c_i - c)
-        delta_control_variates = self.compute_parameter_delta(
+        delta_control_variates = self.compute_parameters_delta(
             self.client_control_variates, self.server_control_variates
         )
 
         updated_client_control_variates = self.compute_updated_control_variates(
             local_steps, delta_model_weights, delta_control_variates
         )
-        self.client_control_variates_updates = self.compute_parameter_delta(
+        self.client_control_variates_updates = self.compute_parameters_delta(
             updated_client_control_variates, self.client_control_variates
         )
 
@@ -155,7 +155,7 @@ class ScaffoldClient(NumpyFlClient):
             update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
             param.grad += update
 
-    def compute_parameter_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
+    def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
         Computes elementwise difference of two lists of NDarray
         where elements in params_2 are subtracted from elements in params_1

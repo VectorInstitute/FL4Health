@@ -30,7 +30,7 @@ class Scaffold(FedAvgSampling):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        learning_rate: Optional[float] = 1.0
+        learning_rate: float = 1.0
     ) -> None:
         """Scaffold Federated Learning strategy.
 
@@ -100,30 +100,22 @@ class Scaffold(FedAvgSampling):
 
         # x = 1 / |S| * sum(x_i) and c = 1 / |S| * sum(delta_c_i)
         # Aggregation operation over packed params (includes both weights and control variate updates)
-
         aggregated_params = self.aggregate(updated_params)
 
         weights, control_variates_update = self.unpack_parameters(aggregated_params)
 
         # x_update = y_i - x
-        delta_weights: NDArrays = [
-            updated_weight - current_weight
-            for updated_weight, current_weight in zip(weights, self.server_model_weights)
-        ]
+        delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
 
         # x = x + lr * x_update
-        self.server_model_weights = [
-            current_weight + self.learning_rate * delta_weight
-            for current_weight, delta_weight in zip(self.server_model_weights, delta_weights)
-        ]
+        self.server_model_weights = self.compute_updated_parameters(
+            self.learning_rate, self.server_model_weights, delta_weights
+        )
 
         # c = c + |S| / N * c_update
-        self.server_control_variates = [
-            current_control_variate + self.fraction_fit * control_variate_update
-            for current_control_variate, control_variate_update in zip(
-                self.server_control_variates, control_variates_update
-            )
-        ]
+        self.server_control_variates = self.compute_updated_parameters(
+            self.fraction_fit, self.server_control_variates, control_variates_update
+        )
 
         parameters = self.pack_parameters(self.server_model_weights, self.server_control_variates)
 
@@ -136,6 +128,30 @@ class Scaffold(FedAvgSampling):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         return ndarrays_to_parameters(parameters), metrics_aggregated
+
+    def compute_parameter_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
+        """
+        Computes elementwise difference of two lists of NDarray
+        where elements in params_2 are subtracted from elements in params_1
+        """
+        parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
+
+        return parameter_delta
+
+    def compute_updated_parameters(
+        self, scaling_coefficient: float, original_params: NDArrays, parameter_updates: NDArrays
+    ) -> NDArrays:
+        """
+        Computes updated_params by moving in the direction of parameter_updates
+        with a step proportional the scaling coefficient.
+        """
+
+        updated_parameters = [
+            original_param + scaling_coefficient * update
+            for original_param, update in zip(original_params, parameter_updates)
+        ]
+
+        return updated_parameters
 
     def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
         """
