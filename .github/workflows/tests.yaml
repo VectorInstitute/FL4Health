@@ -1,5 +1,5 @@
 # only has to pass for python 3.9
-name: Static code checks
+name: PyTest Unit Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
       main
 
 jobs:
-  run-code-check:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -20,8 +20,12 @@ jobs:
         with:
           python-version: 3.9
           cache: 'pip'
-      - name: precommit checks
+      # Display the Python version being used
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      - name: Install Requirements
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pre-commit run --all-files
+      - name: Run Tests
+        run: pytest tests/*

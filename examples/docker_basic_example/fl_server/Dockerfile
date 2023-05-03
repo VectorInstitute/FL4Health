@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:latest
 
-ARG PYTHON_VERSION=3.8
+ARG PYTHON_VERSION=3.9
 
 FROM python:${PYTHON_VERSION}-slim
 RUN mkdir /src

@@ -142,3 +142,4 @@ settings.json
 **/datasets/cifar_data/**
 **/datasets/news_classification/partitioned_datasets/**
 **/datasets/mnist_data/**
+**/datasets/MNIST/**
