@@ -58,7 +58,7 @@ class FedProxClient(NumpyFlClient):
         # Set the model weights and initialize the correct weights with the parameter exchanger.
         super().set_parameters(parameters, config)
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
-        # tensors. These are used to form the FexProx loss.
+        # tensors. These are used to form the FedProx loss.
         self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
