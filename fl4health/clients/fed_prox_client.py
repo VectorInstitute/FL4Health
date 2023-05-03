@@ -37,19 +37,21 @@ class FedProxClient(NumpyFlClient):
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
         self.proximal_weight: float = 0.1
+        self.initial_tensors: List[torch.Tensor]
 
     def get_proximal_loss(self) -> torch.Tensor:
-        assert self.initial_tensor is not None
+        assert self.initial_tensors is not None
         # Using state dictionary to ensure the same ordering as exchange
         model_weights = [layer_weights for layer_weights in self.model.parameters()]
-        assert len(self.initial_tensor) == len(model_weights)
+        assert len(self.initial_tensors) == len(model_weights)
 
         layer_inner_products: List[torch.Tensor] = [
-            torch.pow(torch.norm(initial_layer_weights - iteration_layer_weights), 2.0)
-            for initial_layer_weights, iteration_layer_weights in zip(self.initial_tensor, model_weights)
+            torch.pow(torch.linalg.norm(initial_layer_weights - iteration_layer_weights), 2.0)
+            for initial_layer_weights, iteration_layer_weights in zip(self.initial_tensors, model_weights)
         ]
 
         # network l2 inner product tensor
+        # NOTE: Scaling by 1/2 is for consistency with the original fedprox paper.
         return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -57,7 +59,7 @@ class FedProxClient(NumpyFlClient):
         super().set_parameters(parameters, config)
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FexProx loss.
-        self.initial_tensor = [
+        self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
