@@ -59,7 +59,7 @@ class FedProxClient(NumpyFlClient):
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FexProx loss.
         self.initial_weights = [
-            initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
+            initial_layer_weights.detach().clone().numpy() for initial_layer_weights in self.model.parameters()
         ]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:

@@ -51,7 +51,7 @@ class NumpyClippingClient(NumpyFlClient):
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
-        assert self.initial_weights is not None and isinstance(self.initial_weights, NDArrays)
+        assert self.initial_weights is not None
         weight_update: NDArrays = [
             new_layer_weights - old_layer_weights
             for old_layer_weights, new_layer_weights in zip(self.initial_weights, parameters)
