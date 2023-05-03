@@ -72,7 +72,6 @@ def test_weighted_gaussian_noisy_aggregation_shape() -> None:
 
 
 def test_weighted_gaussian_noisy_aggregation_value() -> None:
-
     layer_shape = (4, 4)
     n_clients = 2
     n_layers = 2

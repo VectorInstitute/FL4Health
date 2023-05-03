@@ -45,7 +45,6 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         """
         selected_indices_list: List[torch.Tensor] = []
         for label in self.unique_labels:
-
             # Get indices of samples equal to the current label
             indices_of_label = (dataset.targets == label).nonzero()
             if label in self.minority_labels:

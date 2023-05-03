@@ -63,7 +63,6 @@ class ApflClient(NumpyFlClient):
         self,
         epochs: int,
     ) -> Dict[str, Scalar]:
-
         for epoch in range(epochs):
             loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
 
@@ -71,7 +70,6 @@ class ApflClient(NumpyFlClient):
             local_meter = AverageMeter(self.metrics, "local")
             personal_meter = AverageMeter(self.metrics, "personal")
             for step, (input, target) in enumerate(self.train_loader):
-
                 # Mechanics of training loop follow from original implementation
                 # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
                 input, target = input.to(self.device), target.to(self.device)
@@ -134,7 +132,6 @@ class ApflClient(NumpyFlClient):
         return metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-
         global_meter = AverageMeter(self.metrics, "global")
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")

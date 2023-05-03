@@ -17,7 +17,6 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 
 def train(net: nn.Module, train_loader: DataLoader, epochs: int, device: torch.device = torch.device("cpu")) -> float:
-
     criterion = torch.nn.BCELoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.01, weight_decay=1e-4)
 

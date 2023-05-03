@@ -215,7 +215,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self,
         noised_clipping_bits: float,
     ) -> None:
-
         self.clipping_bound = self.clipping_bound * math.exp(
             -self.clipping_learning_rate * (noised_clipping_bits - self.clipping_quantile)
         )
@@ -309,7 +308,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
-
         # This strategy requires the client manager to be of type at least BaseSamplingManager
         assert isinstance(client_manager, BaseSamplingManager)
         """Configure the next round of training."""

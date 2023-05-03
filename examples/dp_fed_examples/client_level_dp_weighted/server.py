@@ -57,7 +57,6 @@ def fit_config(local_epochs: int, batch_size: int, adaptive_clipping: bool, serv
 
 
 def main(config: Dict[str, Any]) -> None:
-
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["adaptive_clipping"])
 

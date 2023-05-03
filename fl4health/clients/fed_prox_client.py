@@ -37,16 +37,17 @@ class FedProxClient(NumpyFlClient):
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
         self.proximal_weight: float = 0.1
+        self.initial_tensors: List[torch.Tensor]
 
     def get_proximal_loss(self) -> torch.Tensor:
-        assert self.initial_weights is not None
+        assert self.initial_tensors is not None
         # Using state dictionary to ensure the same ordering as exchange
         model_weights = [layer_weights for layer_weights in self.model.parameters()]
-        assert len(self.initial_weights) == len(model_weights)
+        assert len(self.initial_tensors) == len(model_weights)
 
         layer_inner_products: List[torch.Tensor] = [
             torch.pow(torch.linalg.norm(initial_layer_weights - iteration_layer_weights), 2.0)
-            for initial_layer_weights, iteration_layer_weights in zip(self.initial_weights, model_weights)
+            for initial_layer_weights, iteration_layer_weights in zip(self.initial_tensors, model_weights)
         ]
 
         # network l2 inner product tensor
@@ -58,8 +59,8 @@ class FedProxClient(NumpyFlClient):
         super().set_parameters(parameters, config)
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FexProx loss.
-        self.initial_weights = [
-            initial_layer_weights.detach().clone().numpy() for initial_layer_weights in self.model.parameters()
+        self.initial_tensors = [
+            initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -92,12 +93,10 @@ class FedProxClient(NumpyFlClient):
         self,
         epochs: int,
     ) -> Dict[str, Scalar]:
-
         for epoch in range(epochs):
             meter = AverageMeter(self.metrics, "meter")
             loss_dict = {"vanilla_loss": 0.0, "proximal_loss": 0.0, "total_loss": 0.0}
-            for (input, target) in self.train_loader:
-
+            for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 # forward pass on the model
                 preds = self.model(input)
@@ -132,7 +131,6 @@ class FedProxClient(NumpyFlClient):
         return metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-
         meter = AverageMeter(self.metrics, "meter")
         loss_dict = {"vanilla_loss": 0.0, "proximal_loss": 0.0, "total_loss": 0.0}
 
