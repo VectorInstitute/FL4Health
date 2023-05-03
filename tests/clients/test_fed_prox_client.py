@@ -31,11 +31,11 @@ def test_setting_initial_weights() -> None:
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     fed_prox_client.set_parameters(params, config)
 
-    assert fed_prox_client.initial_tensors is not None
+    assert fed_prox_client.initial_weights is not None
     # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)
-    assert len(fed_prox_client.initial_tensors) == 6
+    assert len(fed_prox_client.initial_weights) == 6
     # Make sure that each layer tensor has a non-zero norm
-    for layer_tensor in fed_prox_client.initial_tensors:
+    for layer_tensor in fed_prox_client.initial_weights:
         assert torch.linalg.norm(layer_tensor) > 0.0
 
 

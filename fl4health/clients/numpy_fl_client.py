@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Type, TypeVar
+from typing import List, Optional, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -19,7 +19,7 @@ class NumpyFlClient(NumPyClient):
         self.data_path = data_path
         self.device = device
         # Optional variable to store the weights that the client was initialized with during each round of training
-        self.initial_weights: Optional[NDArrays] = None
+        self.initial_weights: Optional[Union[NDArrays, List[torch.Tensor]]] = None
 
     def setup_client(self, config: Config) -> None:
         """
