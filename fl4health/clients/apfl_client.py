@@ -63,6 +63,7 @@ class ApflClient(NumpyFlClient):
         self,
         epochs: int,
     ) -> Dict[str, Scalar]:
+        self.model.train()
         for epoch in range(epochs):
             loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
 
@@ -132,6 +133,7 @@ class ApflClient(NumpyFlClient):
         return metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+        self.model.eval()
         global_meter = AverageMeter(self.metrics, "global")
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")
