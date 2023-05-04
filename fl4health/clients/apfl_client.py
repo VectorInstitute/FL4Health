@@ -71,7 +71,6 @@ class ApflClient(NumpyFlClient):
             local_meter = AverageMeter(self.metrics, "local")
             personal_meter = AverageMeter(self.metrics, "personal")
             for step, (input, target) in enumerate(self.train_loader):
-
                 # Mechanics of training loop follow from original implementation
                 # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
                 input, target = input.to(self.device), target.to(self.device)
@@ -85,6 +84,8 @@ class ApflClient(NumpyFlClient):
 
                 # Make sure gradients are zero prior to foward passes of global and local model
                 # to generate personalized predictions
+                # NOTE: We zero the global optimizer grads because they are used (after the backward calculation below)
+                # to update the scalar alpha (see update_alpha() where .grad is called.)
                 self.global_optimizer.zero_grad()
                 self.local_optimizer.zero_grad()
 

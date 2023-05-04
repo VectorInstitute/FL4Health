@@ -23,7 +23,6 @@ class APFLModule(nn.Module):
         self.alpha_lr = alpha_lr
 
     def forward(self, input: torch.Tensor, personal: bool) -> Dict[str, torch.Tensor]:
-
         if not personal:
             global_logits = self.global_model(input)
             return {"global": global_logits}

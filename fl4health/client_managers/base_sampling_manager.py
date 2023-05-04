@@ -39,7 +39,6 @@ class BaseSamplingManager(SimpleClientManager):
     def sample_all(
         self, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
     ) -> List[ClientProxy]:
-
         available_cids = self.wait_and_filter(min_num_clients, criterion)
 
         return [self.clients[cid] for cid in available_cids]

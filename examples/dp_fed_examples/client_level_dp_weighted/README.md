@@ -4,7 +4,7 @@ This example shows how to implement Differential Privacy into the Federated Lear
 
 The example involves collaboratively learning a logistic regression model across multiple hospitals to classify breast cancer given 31 features. The dataset is sourced from [kaggle](https://www.kaggle.com/competitions/breast-cancer-classification/overview). A processed federated version of the dataset is available in the repository.
 
-# Running the Example
+## Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
 ```
 pip install --upgrade pip
