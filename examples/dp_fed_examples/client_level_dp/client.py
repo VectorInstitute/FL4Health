@@ -44,6 +44,7 @@ def train(
     device: torch.device = torch.device("cpu"),
 ) -> float:
     """Train the network on the training set."""
+    net.train()
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(net.parameters(), lr=0.0001)
 
@@ -79,6 +80,7 @@ def validate(
     device: torch.device = torch.device("cpu"),
 ) -> Tuple[float, float]:
     """Validate the network on the entire validation set."""
+    net.eval()
     criterion = torch.nn.CrossEntropyLoss()
     correct, total, loss = 0, 0, 0.0
     with torch.no_grad():

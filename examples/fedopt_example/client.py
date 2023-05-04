@@ -26,6 +26,7 @@ def train(
     device: torch.device = torch.device("cpu"),
 ) -> Metrics:
     """Train the network on the training set."""
+    model.train()
     criterion = torch.nn.CrossEntropyLoss(weight=weight_matrix)
     optimizer = torch.optim.AdamW(model.parameters(), lr=0.01, weight_decay=0.001)
     for epoch in range(epochs):
@@ -72,6 +73,7 @@ def validate(
     device: torch.device = torch.device("cpu"),
 ) -> Tuple[float, Metrics]:
     """Validate the network on the entire validation set."""
+    model.eval()
     criterion = torch.nn.CrossEntropyLoss()
     loss = 0.0
 
