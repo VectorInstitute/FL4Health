@@ -136,6 +136,7 @@ class CifarClient(NumpyClippingClient):
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
+
         self.set_parameters(parameters, config)
         loss, accuracy = validate(self.model, self.validation_loader, device=self.device)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics

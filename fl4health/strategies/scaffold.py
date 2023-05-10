@@ -88,7 +88,6 @@ class Scaffold(FedAvgSampling):
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted

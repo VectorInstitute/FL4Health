@@ -58,6 +58,8 @@ def main(config: Dict[str, Any]) -> None:
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
+        # We use the same fit config function, as nothing changes for eval
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(),

@@ -22,7 +22,6 @@ def test_aggregate() -> None:
 
 
 def test_compute_updated_parameters() -> None:
-
     layer_size = 10
     num_layers = 5
     learning_rate = 0.1
