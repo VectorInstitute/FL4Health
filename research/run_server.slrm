@@ -26,7 +26,6 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
 fi
 
 # Process inputs
-
 SERVER_PORT=$1
 CONFIG_PATH=$2
 LOG_DIR=$3
@@ -44,7 +43,7 @@ SERVER_ADDRESS="${SLURMD_NODENAME}:${SERVER_PORT}"
 
 echo "Server Address: ${SERVER_ADDRESS}"
 
-LOG_PATH="${LOG_DIR}/server_log_${JOB_HASH}.out"
+LOG_PATH="${LOG_DIR}/server_log_${JOB_HASH}.log"
 
 echo "Placing logs in: ${LOG_DIR}"
 echo "World size: ${SLURM_NTASKS}"

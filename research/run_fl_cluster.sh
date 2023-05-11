@@ -16,8 +16,15 @@ SERVER_JOB_NAME="fl_server_${SERVER_JOB_HASH}"
 SERVER_OUT_LOGS="server_log_${SERVER_JOB_HASH}.out"
 SERVER_ERROR_LOGS="server_log_${SERVER_JOB_HASH}.err"
 
+echo "Server Port number: ${SERVER_PORT}"
+echo "Config Path: ${SERVER_CONFIG_PATH}"
+echo "Server Log Dir: ${SERVER_LOG_DIR}"
+echo "Client Log Dir: ${CLIENT_LOG_DIR}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Server Job Hash: ${SERVER_JOB_HASH}"
+
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
-  research/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${LOG_DIR} ${VENV_PATH} ${SERVER_JOB_HASH}"
+  research/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} ${SERVER_JOB_HASH}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
 echo "Server Job ID: ${JOB_ID}"
@@ -54,7 +61,7 @@ do
   CLIENT_ERROR_LOGS="client_log_${CLIENT_JOB_HASH}.err"
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
-    research/run_client.slrm ${SERVER_ADDRESS} ${CLIENT_DATA_PATH} ${LOG_DIR} ${VENV_PATH} ${CLIENT_JOB_HASH}"
+    research/run_client.slrm ${SERVER_ADDRESS} ${CLIENT_DATA_PATH} ${CLIENT_LOG_DIR} ${VENV_PATH} ${CLIENT_JOB_HASH}"
 
   sbatch ${SBATCH_COMMAND}
 done
