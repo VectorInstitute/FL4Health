@@ -7,7 +7,7 @@ The scripts in this folder use the client and server scripts from the [FedProx E
 ```
 __An example__
 ```bash
-./research/run_fl_cluster.sh 8111 examples/fedprox_example/config.yaml research/fedprox_cluster/server_logs/ research/fedprox_cluster/client_logs/ /h/demerson/vector_repositories/fl4health_env/
+./research/fedprox_cluster/run_fl_cluster.sh 8111 examples/fedprox_example/config.yaml research/fedprox_cluster/server_logs/ research/fedprox_cluster/client_logs/ /h/demerson/vector_repositories/fl4health_env/
 ```
 
 __Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/demerson/vector_repositories/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.
