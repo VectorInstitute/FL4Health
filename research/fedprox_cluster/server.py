@@ -1,8 +1,10 @@
 import argparse
 from functools import partial
+from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
+from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
@@ -90,5 +92,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
+    log(INFO, f"Server Address: {args.server_address}")
     main(config, args.server_address)

@@ -7,7 +7,7 @@ CLIENT_LOG_DIR=$4
 VENV_PATH=$5
 
 CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data"
-CLIENT_DATA_PATH_SUFFIXES=( "" "" )
+CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
 
 # Start the FL Server and wait until the job starts
 SERVER_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
@@ -43,7 +43,7 @@ SERVER_ADDRESS="${HOST_NAME}:$SERVER_PORT"
 echo "Extracted Server Address: ${SERVER_ADDRESS}"
 
 # Wait until the server is up and waiting for clients on the requested resources
-sleep 10
+sleep 20
 
 # Spin up the clients on each disparate node with the server address
 
