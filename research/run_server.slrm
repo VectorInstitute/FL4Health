@@ -39,7 +39,7 @@ VENV_PATH=$4
 echo "Node Name: ${SLURMD_NODENAME}"
 echo "Server Port number: ${SERVER_PORT}"
 
-SERVER_ADDRESS = "${SLURMD_NODENAME}:${SERVER_PORT}"
+SERVER_ADDRESS="${SLURMD_NODENAME}:${SERVER_PORT}"
 
 echo "Server Address: ${SERVER_ADDRESS}"
 
@@ -52,9 +52,9 @@ NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 echo "GPUs per node: ${NUM_GPUs}"
 
 # Source the environment
-source "${VENV_PATH}/bin/activate"
-ACTIVE_ENV=which python
-echo "Active Environment: ${ACTIVE_ENV}"
+# Source the environment
+source ${VENV_PATH}/bin/activate
+echo "Active Environment: ${which python}"
 
 # nohup python -m research.fedprox_cluster.server --config_path ${CONFIG_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1 &
 
