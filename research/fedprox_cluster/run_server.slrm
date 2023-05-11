@@ -56,6 +56,6 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment"
 which python
 
-python -m example.fedprox_example.server --config_path ${CONFIG_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
+python -m examples.fedprox_example.server --config_path ${CONFIG_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
 
 echo ${SERVER_ADDRESS}
