@@ -52,6 +52,6 @@ source ${VENV_PATH}/bin/activate
 echo "Active Environment"
 which python
 
-# python -m examples.fedprox_example.client --dataset_path ${DATASET_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
+python -m research.fedprox_example.client --dataset_path ${DATASET_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
