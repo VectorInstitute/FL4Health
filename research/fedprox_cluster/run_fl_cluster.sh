@@ -30,7 +30,7 @@ SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --erro
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
 echo "Server Job ID: ${JOB_ID}"
 
-# Wait until the server has started 
+# Wait until the server has started
 SERVER_STATUS="$(squeue --noheader -u ${USER} -j ${JOB_ID} -o %t )"
 while [[ $SERVER_STATUS != "R" ]]
 do
@@ -48,7 +48,7 @@ sleep 20
 
 # Spin up the clients on each disparate node with the server address
 
-for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}"; 
+for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
 do
 
   CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}/${DATA_PATH_SUFFIX}"
