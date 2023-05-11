@@ -42,11 +42,17 @@ class MnistFedProxClient(FedProxClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address for the clients to communicate with the server through",
+        default="",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
     client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client)

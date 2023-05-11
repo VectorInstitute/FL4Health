@@ -41,7 +41,7 @@ def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current
     }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -65,7 +65,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
     )
@@ -80,8 +80,15 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="config.yaml",
     )
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address to be used to communicate with the clients",
+        default="",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config)
+    main(config, args.server_address)
