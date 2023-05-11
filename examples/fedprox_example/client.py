@@ -1,10 +1,12 @@
 import argparse
+from logging import INFO
 from pathlib import Path
 from typing import List
 
 import flwr as fl
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNet
@@ -42,11 +44,19 @@ class MnistFedProxClient(FedProxClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address for the clients to communicate with the server through",
+        default="0.0.0.0:8080",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Server Address: {args.server_address}")
 
     client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client)

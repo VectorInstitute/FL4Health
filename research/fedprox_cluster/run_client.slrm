@@ -39,7 +39,7 @@ echo "Dataset Path: ${DATASET_PATH}"
 echo "Python Venv Path: ${VENV_PATH}"
 echo "Job Hash: ${JOB_HASH}"
 
-LOG_PATH="${LOG_DIR}/client_log_${JOB_HASH}.log"
+LOG_PATH="${LOG_DIR}client_log_${JOB_HASH}.log"
 
 echo "Placing logs in: ${LOG_DIR}"
 echo "World size: ${SLURM_NTASKS}"
@@ -48,10 +48,10 @@ NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
 echo "GPUs per node: ${NUM_GPUs}"
 
 # Source the environment
-source ${VENV_PATH}/bin/activate
+source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
 
-python -m research.fedprox_cluster.client --dataset_path ${DATASET_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
+python -m examples.fedprox_example.client --dataset_path ${DATASET_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
