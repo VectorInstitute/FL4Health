@@ -21,5 +21,5 @@ for (( i=1; i<=${n_clients}; i++ ))
 do
     client_log_path="${client_output_folder}client_${i}.out"
     echo "Client ${i} logging at: ${client_log_path}"
-    python -m examples.fedprox_example.client --dataset_path ${dataset_path} > ${client_log_path} 2>&1 &
+    nohup python -m examples.fedprox_example.client --dataset_path ${dataset_path} > ${client_log_path} 2>&1 &
 done
