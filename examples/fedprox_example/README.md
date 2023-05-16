@@ -10,6 +10,10 @@ In this demo, FedProx is applied to a modified version of the MNIST dataset that
 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization.
 
+### Weights and Biases Reporting
+
+This example is also capable of logging results to your Weights and Biases account by setting `enabled` to `True` in the `config.yaml` under the `reporting_config` section. You'll also need to set the `entity` value to your Weights and Biases entity. Once those two things are set, you should be able to run the example and log the results to W and B directly.
+
 ### Running the Example
 
 In order to run the example, first ensure you have the virtual env of your choice activated and run
