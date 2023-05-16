@@ -18,3 +18,4 @@ torch
 torchvision
 types-requests
 types-setuptools
+wandb

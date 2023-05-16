@@ -5,3 +5,12 @@ n_server_rounds: 15 # The number of rounds to run FL
 n_clients: 3 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client
 batch_size: 128 # The batch size for client training
+
+reporting_config:
+  enabled: True
+  project_name: FL4Health
+  run_name: "FedProx Server"
+  group_name: "FedProx Experiment"
+  entity: "david-emerson"
+  notes: "Testing WB reporting"
+  tags: ["Test", "FedProx"]

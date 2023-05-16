@@ -1,3 +1,5 @@
+import random
+import string
 from pathlib import Path
 from typing import Optional, Type, TypeVar
 
@@ -7,12 +9,14 @@ from flwr.client import NumPyClient
 from flwr.common import Config, NDArrays
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.fl_wanb import ClientWandBReporter
 
 T = TypeVar("T")
 
 
 class NumpyFlClient(NumPyClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
+        self.client_name = self.generate_hash()
         self.model: nn.Module
         self.parameter_exchanger: ParameterExchanger
         self.initialized = False
@@ -20,6 +24,10 @@ class NumpyFlClient(NumPyClient):
         self.device = device
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
+        self.wandb_reporter: Optional[ClientWandBReporter] = None
+
+    def generate_hash(self, length: int = 8) -> str:
+        return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
     def setup_client(self, config: Config) -> None:
         """
@@ -48,3 +56,7 @@ class NumpyFlClient(NumPyClient):
             return config_value
         else:
             raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
+
+    def shutdown_reporter(self) -> None:
+        if self.wandb_reporter:
+            self.wandb_reporter.shutdown_reporter()
