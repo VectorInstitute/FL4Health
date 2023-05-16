@@ -33,7 +33,7 @@ class FlServer(Server):
             self.wandb_reporter.report_metrics(num_rounds, history)
         return history
 
-    def shutdown_reporter(self) -> None:
+    def shutdown(self) -> None:
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()
 

@@ -57,6 +57,6 @@ class NumpyFlClient(NumPyClient):
         else:
             raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
-    def shutdown_reporter(self) -> None:
+    def shutdown(self) -> None:
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()

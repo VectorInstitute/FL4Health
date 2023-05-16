@@ -66,4 +66,5 @@ if __name__ == "__main__":
     client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
-    client.shutdown_reporter()
+    # Shutdown the client gracefully
+    client.shutdown()

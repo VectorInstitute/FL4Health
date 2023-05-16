@@ -67,7 +67,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"]["enabled"],
+        config["reporting_config"].get("enabled", False),
         # Note that run name is not included, it will be set in the clients
         config["reporting_config"].get("project_name", ""),
         config["reporting_config"].get("group_name", ""),
@@ -98,8 +98,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-    # Shutdown the reporter
-    server.shutdown_reporter()
+    # Shutdown the server gracefully
+    server.shutdown()
 
 
 if __name__ == "__main__":
