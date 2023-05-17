@@ -161,6 +161,7 @@ class NewsClassifier(NumpyFlClient):
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
+
         self.set_parameters(parameters, config)
         loss, evaluate_metrics = validate(self.model, self.validation_loader, self.label_encoder, self.device)
         # Result should return the loss, number of examples on client, and a dictionary holding metrics

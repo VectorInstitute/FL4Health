@@ -1,8 +1,10 @@
 import argparse
 from functools import partial
+from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
+from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.strategy import FedAvg
@@ -41,7 +43,7 @@ def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current
     }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -57,13 +59,15 @@ def main(config: Dict[str, Any]) -> None:
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
+        # We use the same fit config function, as nothing changes for eval
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(),
     )
 
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
     )
@@ -78,8 +82,15 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="config.yaml",
     )
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address to be used to communicate with the clients",
+        default="0.0.0.0:8080",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
-    main(config)
+    log(INFO, f"Server Address: {args.server_address}")
+    main(config, args.server_address)

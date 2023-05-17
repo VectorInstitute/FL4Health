@@ -99,6 +99,7 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
+        # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_initial_model_parameters(),

@@ -10,7 +10,6 @@ from fl4health.utils.metrics import Accuracy, Metric
 
 
 def test_compute_parameter_delta() -> None:
-
     layer_size = 10
     num_layers = 5
     params_1: NDArrays = [np.ones((layer_size)) * 5 for _ in range(num_layers)]
@@ -31,7 +30,6 @@ def test_compute_parameter_delta() -> None:
 
 
 def test_compute_updated_control_variate() -> None:
-
     layer_size = 10
     num_layers = 5
     local_steps = 5

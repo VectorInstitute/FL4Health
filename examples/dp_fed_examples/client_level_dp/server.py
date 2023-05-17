@@ -68,6 +68,7 @@ def main(config: Dict[str, Any]) -> None:
     accountant = FlClientLevelAccountantPoissonSampling(
         config["client_sampling_rate"], config["server_noise_multiplier"]
     )
+    # Note that this assumes that the FL round has exactly n_clients participating.
     target_delta = 1.0 / config["n_clients"]
     epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
     log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
@@ -80,6 +81,7 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         on_fit_config_fn=fit_config_fn,
+        # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
         initial_parameters=get_initial_model_parameters(),
