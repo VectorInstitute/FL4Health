@@ -1,6 +1,6 @@
 #!/bin/bash
 
-n_clients=4
+n_clients_to_start=4
 config_path="examples/fedprox_example/config.yaml"
 dataset_path="examples/datasets/mnist_data/"
 server_output_file="examples/fedprox_example/server.out"
@@ -17,7 +17,7 @@ nohup python -m examples.fedprox_example.server --config_path ${config_path} > $
 sleep 20
 
 # Start n number of clients and divert the outputs to their own files
-for (( i=1; i<=${n_clients}; i++ ))
+for (( i=1; i<=${n_clien_clients_to_startnts}; i++ ))
 do
     client_log_path="${client_output_folder}client_${i}.out"
     echo "Client ${i} logging at: ${client_log_path}"
