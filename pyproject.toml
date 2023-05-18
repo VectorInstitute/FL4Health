@@ -45,3 +45,4 @@ line-length = 119
 line_length = 119
 profile = "black"
 skip_gitignore = true
+known_third_party = ["wandb"]
