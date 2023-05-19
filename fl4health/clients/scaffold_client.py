@@ -11,6 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
 from fl4health.utils.metrics import AverageMeter, Metric
 
 
@@ -35,6 +36,7 @@ class ScaffoldClient(NumpyFlClient):
         self.learning_rate_local: float  # eta_l in paper
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.num_examples: Dict[str, int]
+        self.parameter_exchanger: ParameterExchangerWithControlVariates
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -71,14 +73,20 @@ class ScaffoldClient(NumpyFlClient):
         Packs the parameters and control variartes into a single NDArrays
         """
         model_weights = self.parameter_exchanger.push_parameters(self.model, config)
-        return self.pack_parameters(model_weights)
+
+        # Weigts and control variates updates sent to server for aggregation
+        # Control variates updates sent because only client has access to previous client control variate
+        # Therefore it can only be computed locally
+        assert self.client_control_variates_updates is not None
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
+        return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with
         control variates.
         """
-        server_model_weights, server_control_variates = self.unpack_parameters(parameters)
+        server_model_weights, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
         self.server_model_weights = server_model_weights
         self.parameter_exchanger.pull_parameters(server_model_weights, self.model, config)
@@ -86,27 +94,6 @@ class ScaffoldClient(NumpyFlClient):
         # If client control variates do not exist, initialize with zeros as per paper
         if self.client_control_variates is None:
             self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
-
-    def pack_parameters(self, model_weights: NDArrays) -> NDArrays:
-        """
-        Extends the parameters list to include both the model weights and updates to the
-        local control variate.
-        """
-        assert self.client_control_variates_updates is not None
-
-        # Weigts and control variates updates sent to server for aggregation
-        # Control variates updates sent because only client has access to previous client control variate
-        # Therefore it can only be computed locally
-        return model_weights + self.client_control_variates_updates
-
-    def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
-        """
-        Splits the passed parameter list into the model weights and server control variates.
-        """
-        assert len(parameters) % 2 == 0
-        split_size = len(parameters) // 2
-        weights, control_variates = parameters[:split_size], parameters[split_size:]
-        return weights, control_variates
 
     def update_control_variates(self, local_steps: int) -> None:
         """

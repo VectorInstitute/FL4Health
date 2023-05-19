@@ -9,25 +9,27 @@ from flwr.common.logger import log
 from numpy import linalg
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithClippingBit
 
 
 class NumpyClippingClient(NumpyFlClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
+        self.parameter_exchanger: ParameterExchangerWithClippingBit
         self.clipping_bound: Optional[float] = None
         self.adaptive_clipping: Optional[bool] = None
 
     def clip_and_pack_parameters(self, parameters: NDArrays) -> NDArrays:
         clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(parameters)
-        return clipped_weight_update + [np.array([clipping_bit])]
+        packed_params = self.parameter_exchanger.pack_parameters(clipped_weight_update, [np.array(clipping_bit)])
+        return packed_params
 
     def unpack_parameters_with_clipping_bound(self, packed_parameters: NDArrays) -> NDArrays:
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
-        server_model_parameters = packed_parameters[:-1]
+        server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(packed_parameters)
         # Store the starting parameters without clipping bound before client optimization steps
         self.initial_weights = server_model_parameters
-        clipping_bound = packed_parameters[-1]
-        self.clipping_bound = float(clipping_bound)
+        self.clipping_bound = float(clipping_bound[0])
         return server_model_parameters
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
