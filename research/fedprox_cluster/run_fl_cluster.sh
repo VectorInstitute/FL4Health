@@ -7,6 +7,7 @@ CLIENT_LOG_DIR=$4
 VENV_PATH=$5
 
 CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data"
+# Spins up 3 clients, as the list is 3 strings long
 CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
 
 # Start the FL Server and wait until the job starts
