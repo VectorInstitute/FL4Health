@@ -15,10 +15,15 @@
 ###############################################
 # Usage:
 #
-# sbatch path_to_config.yaml folder_for_server_logs/ folder_for_client_logs/ path_to_desired_venv/
+# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm path_to_config.yaml folder_for_server_logs/ \
+#   folder_for_client_logs/ path_to_desired_venv/
 #
 # Example:
-# sbatch research/fedprox_cluster/server_logs/ research/fedprox_cluster/client_logs/ /h/demerson/vector_repositories/fl4health_env/
+# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm \
+#   examples/fedprox_example/config.yaml \
+#   research/fedprox_cluster/server_logs/ \
+#   research/fedprox_cluster/client_logs/ \
+#   /h/demerson/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -88,9 +93,15 @@ do
     CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}${DATA_PATH_SUFFIX}"
     echo "Launching ${CLIENT_NAME}"
 
-    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${i}.out"
-    echo "${CLIENT_NAME} logging at: ${client_log_path}"
+    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
+    echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
     nohup python -m examples.fedprox_example.client --dataset_path ${CLIENT_DATA_PATH} > ${CLIENT_LOG_PATH} 2>&1 &
 
     client_number=$((client_number+1))
 done
+
+echo "FL Processes Running"
+
+wait
+
+echo "Finished FL Processes"
