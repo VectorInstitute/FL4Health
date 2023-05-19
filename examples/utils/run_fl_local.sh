@@ -17,7 +17,7 @@ nohup python -m examples.fedprox_example.server --config_path ${config_path} > $
 sleep 5
 
 # Start n number of clients and divert the outputs to their own files
-for (( i=1; i<=${n_clien_clients_to_startnts}; i++ ))
+for (( i=1; i<=${n_clients_to_start}; i++ ))
 do
     client_log_path="${client_output_folder}client_${i}.out"
     echo "Client ${i} logging at: ${client_log_path}"
