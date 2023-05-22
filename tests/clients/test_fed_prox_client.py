@@ -1,30 +1,16 @@
-from pathlib import Path
-
 import pytest
 import torch
 from flwr.common import Config
 
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.metrics import Accuracy
+from tests.clients.fixtures import get_client  # noqa
 from tests.clients.small_models import LinearTransform, TestCNN
 
 
-class DummyFedProxClient(FedProxClient):
-    def setup_client(self, _: Config) -> None:
-        self.model = TestCNN()
-        self.parameter_exchanger = FullParameterExchanger()
-
-
-class DummyFedProxClientLinear(FedProxClient):
-    def setup_client(self, _: Config) -> None:
-        self.model = LinearTransform()
-        self.parameter_exchanger = FullParameterExchanger()
-
-
-def test_setting_initial_weights() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
+def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClient(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client  # noqa
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -39,9 +25,10 @@ def test_setting_initial_weights() -> None:
         assert torch.linalg.norm(layer_tensor) > 0.0
 
 
-def test_forming_proximal_loss() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
+def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClient(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client  # noqa
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -62,9 +49,10 @@ def test_forming_proximal_loss() -> None:
     )
 
 
-def test_proximal_loss_derivative() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, LinearTransform())])
+def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClientLinear(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client  # noqa
     config: Config = {}
 
     fed_prox_client.setup_client(config)

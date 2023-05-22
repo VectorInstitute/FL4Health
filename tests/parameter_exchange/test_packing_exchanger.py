@@ -1,18 +1,19 @@
 import numpy as np
+import pytest
 from flwr.common.typing import NDArrays
 
 from fl4health.parameter_exchange.packing_exchanger import (
     ParameterExchangerWithClippingBit,
     ParameterExchangerWithControlVariates,
 )
+from tests.parameter_exchange.fixtures import get_ndarrays  # noqa
 
 
-def test_parameter_exchanger_with_control_variates() -> None:
+@pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
+def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> None:  # noqa
     exchanger = ParameterExchangerWithControlVariates()
-    num_layers = 6
-    layer_sizes = [2**i for i in range(num_layers)]
-    model_weights: NDArrays = [np.ones((size,)) for size in layer_sizes]
-    control_variates: NDArrays = [np.ones((size,)) for size in layer_sizes]
+    model_weights = get_ndarrays  # noqa
+    control_variates = get_ndarrays  # noqa
 
     packed_params = exchanger.pack_parameters(model_weights, control_variates)
 
@@ -31,12 +32,10 @@ def test_parameter_exchanger_with_control_variates() -> None:
         assert control_variate.size == unpacked_control_variate.size
 
 
-def test_parameter_exchanger_with_clipping_bits() -> None:
+@pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
+def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:  # noqa
 
-    exchanger = ParameterExchangerWithClippingBit()
-    num_layers = 6
-    layer_sizes = [2**i for i in range(num_layers)]
-    model_weights: NDArrays = [np.ones((size,)) for size in layer_sizes]
+    model_weights = get_ndarrays  # noqa
     clipping_bit = 0
 
     exchanger = ParameterExchangerWithClippingBit()
