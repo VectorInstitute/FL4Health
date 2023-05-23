@@ -13,7 +13,7 @@ def test_compute_parameter_delta(get_client: ScaffoldClient) -> None:  # noqa
     params_1: NDArrays = [np.ones((layer_size)) * 5 for _ in range(num_layers)]
     params_2: NDArrays = [np.zeros((layer_size)) for _ in range(num_layers)]
 
-    client = get_client  # noqa
+    client = get_client
 
     delta_params = client.compute_parameters_delta(params_1, params_2)
 
@@ -31,7 +31,7 @@ def test_compute_updated_control_variate(get_client: ScaffoldClient) -> None:  #
     delta_model_weights: NDArrays = [np.ones((layer_size)) * 3 for _ in range(num_layers)]
     delta_control_variates: NDArrays = [np.ones((layer_size)) * 100 for _ in range(num_layers)]
 
-    client = get_client  # noqa
+    client = get_client
 
     updated_control_variates = client.compute_updated_control_variates(
         local_steps, delta_model_weights, delta_control_variates

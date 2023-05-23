@@ -10,7 +10,7 @@ from tests.clients.small_models import LinearTransform, TestCNN
 @pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
 def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = get_client  # noqa
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -28,7 +28,7 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
 @pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
 def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = get_client  # noqa
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -52,7 +52,7 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
 @pytest.mark.parametrize("type,model", [(FedProxClient, LinearTransform())])
 def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = get_client  # noqa
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
