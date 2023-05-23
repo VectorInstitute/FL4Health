@@ -8,6 +8,7 @@ import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common import Config, NDArrays
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 
@@ -25,6 +26,7 @@ class NumpyFlClient(NumPyClient):
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
         self.wandb_reporter: Optional[ClientWandBReporter] = None
+        self.checkpointer: Optional[TorchCheckpointer] = None
 
     def generate_hash(self, length: int = 8) -> str:
         return "".join(random.choice(string.ascii_lowercase) for i in range(length))
