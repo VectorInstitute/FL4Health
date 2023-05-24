@@ -4,7 +4,7 @@ from flwr.common import Config
 
 from fl4health.clients.fed_prox_client import FedProxClient
 from tests.clients.fixtures import get_client  # noqa
-from tests.clients.small_models import LinearTransform, TestCNN
+from tests.clients.fixtures import LinearTransform, TestCNN
 
 
 @pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
