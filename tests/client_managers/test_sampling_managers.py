@@ -1,65 +1,13 @@
-from typing import Optional
-
 import numpy as np
 import pytest
-from flwr.common import (
-    DisconnectRes,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    GetParametersIns,
-    GetParametersRes,
-    GetPropertiesIns,
-    GetPropertiesRes,
-    ReconnectIns,
-)
-from flwr.server.client_proxy import ClientProxy
 
+from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from tests.client_managers.fixtures import create_and_register_clients_to_manager  # noqa
 
 
-class CustomClientProxy(ClientProxy):
-    """Subclass of ClientProxy."""
-
-    def get_properties(
-        self,
-        ins: GetPropertiesIns,
-        timeout: Optional[float],
-    ) -> GetPropertiesRes:
-        raise NotImplementedError
-
-    def get_parameters(
-        self,
-        ins: GetParametersIns,
-        timeout: Optional[float],
-    ) -> GetParametersRes:
-        raise NotImplementedError
-
-    def fit(
-        self,
-        ins: FitIns,
-        timeout: Optional[float],
-    ) -> FitRes:
-        raise NotImplementedError
-
-    def evaluate(
-        self,
-        ins: EvaluateIns,
-        timeout: Optional[float],
-    ) -> EvaluateRes:
-        raise NotImplementedError
-
-    def reconnect(
-        self,
-        ins: ReconnectIns,
-        timeout: Optional[float],
-    ) -> DisconnectRes:
-        raise NotImplementedError
-
-
-def test_poisson_sampling_subset() -> None:
+def test_poisson_sampling_subset() -> None:  # noqa
     np.random.seed(42)
     client_manager = PoissonSamplingClientManager()
     available_cids = ["c1", "c2", "c3", "c4", "c5", "c6", "c7", "c8", "c9", "c10"]
@@ -69,61 +17,31 @@ def test_poisson_sampling_subset() -> None:
     assert all([a == b for a, b in zip(expected_sublist, sample)])
 
 
-def test_poisson_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.parametrize("client_manager,num_clients", [(PoissonSamplingClientManager(), 7)])
+def test_poisson_sampling_when_low_probability(
+    caplog: pytest.LogCaptureFixture, create_and_register_clients_to_manager: BaseSamplingManager  # noqa
+) -> None:
     np.random.seed(42)
-    client_manager = PoissonSamplingClientManager()
-    client_proxies = [
-        CustomClientProxy("c1"),
-        CustomClientProxy("c2"),
-        CustomClientProxy("c3"),
-        CustomClientProxy("c4"),
-        CustomClientProxy("c5"),
-        CustomClientProxy("c6"),
-        CustomClientProxy("c7"),
-    ]
-    for client_proxy in client_proxies:
-        client_manager.register(client_proxy)
+    client_manager = create_and_register_clients_to_manager
     sample = client_manager.sample_fraction(0.01, 2)
     assert "WARNING  flwr:poisson_sampling_manager.py" in caplog.text
     assert len(sample) == 0
 
 
-def test_fixed_without_replacement_subset() -> None:
+@pytest.mark.parametrize("client_manager,num_clients", [(FixedSamplingWithoutReplacementClientManager(), 11)])
+def test_fixed_without_replacement_subset(create_and_register_clients_to_manager: BaseSamplingManager) -> None:  # noqa
     np.random.seed(42)
-    client_manager = FixedSamplingWithoutReplacementClientManager()
-    client_proxies = [
-        CustomClientProxy("c1"),
-        CustomClientProxy("c2"),
-        CustomClientProxy("c3"),
-        CustomClientProxy("c4"),
-        CustomClientProxy("c5"),
-        CustomClientProxy("c6"),
-        CustomClientProxy("c7"),
-        CustomClientProxy("c8"),
-        CustomClientProxy("c9"),
-        CustomClientProxy("c10"),
-        CustomClientProxy("c11"),
-    ]
-    for client_proxy in client_proxies:
-        client_manager.register(client_proxy)
+    client_manager = create_and_register_clients_to_manager
     sample = client_manager.sample_fraction(0.3, 2)
     assert len(sample) == 3
 
 
-def test_fixed_sampling_when_low_probability(caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.parametrize("client_manager,num_clients", [(FixedSamplingWithoutReplacementClientManager(), 7)])
+def test_fixed_sampling_when_low_probability(
+    caplog: pytest.LogCaptureFixture, create_and_register_clients_to_manager: BaseSamplingManager  # noqa
+) -> None:
     np.random.seed(42)
-    client_manager = FixedSamplingWithoutReplacementClientManager()
-    client_proxies = [
-        CustomClientProxy("c1"),
-        CustomClientProxy("c2"),
-        CustomClientProxy("c3"),
-        CustomClientProxy("c4"),
-        CustomClientProxy("c5"),
-        CustomClientProxy("c6"),
-        CustomClientProxy("c7"),
-    ]
-    for client_proxy in client_proxies:
-        client_manager.register(client_proxy)
+    client_manager = create_and_register_clients_to_manager
     sample = client_manager.sample_fraction(0.01, 2)
     assert "WARNING  flwr:fixed_without_replacement_manager.py" in caplog.text
     assert len(sample) == 0
