@@ -1,0 +1,106 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=4
+#SBATCH --gres=gpu:1
+#SBATCH --mem=16G
+#SBATCH --partition=t4v2
+#SBATCH --qos=high
+#SBATCH --job-name=fl_single
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+
+###############################################
+# Usage:
+#
+# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm path_to_config.yaml folder_for_server_logs/ \
+#   folder_for_client_logs/ path_to_desired_venv/
+#
+# Example:
+# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm \
+#   examples/fedprox_example/config.yaml \
+#   research/fedprox_cluster/server_logs/ \
+#   research/fedprox_cluster/client_logs/ \
+#   /h/demerson/vector_repositories/fl4health_env/
+#
+# Notes:
+# 1) The sbatch command above should be run from the top level directory of the repository.
+# 2) This example runs FedProx. As such the data paths and python launch commands are hardcoded. If you want to change
+# the example you run, you need to explicitly modify the code below.
+# 3) The logging directories need to ALREADY EXIST. The script does not create them.
+###############################################
+
+# Note:
+#	  ntasks: Total number of processes to use across world
+#	  ntasks-per-node: How many processes each node should create
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process Inputs
+
+SERVER_CONFIG_PATH=$1
+SERVER_LOG_DIR=$2
+CLIENT_LOG_DIR=$3
+VENV_PATH=$4
+
+CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data/"
+# Spins up 3 clients, as the list is 3 strings long
+CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
+
+echo "Dataset Base Path: ${CLIENT_DATA_BASE_PATH}"
+echo "Python Venv Path: ${VENV_PATH}"
+
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment:"
+which python
+
+SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
+
+# Start the server, divert the outputs to a server file
+
+echo "Server logging at: ${SERVER_OUTPUT_FILE}"
+echo "Launching Server"
+
+nohup python -m examples.fedprox_example.server --config_path ${SERVER_CONFIG_PATH} > ${SERVER_OUTPUT_FILE} 2>&1 &
+
+# Sleep for 20 seconds to allow the server to come up.
+sleep 20
+
+# Start n number of clients and divert the outputs to their own files
+client_number=0
+for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
+do
+    CLIENT_NAME="client_${client_number}"
+    CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}${DATA_PATH_SUFFIX}"
+    echo "Launching ${CLIENT_NAME}"
+
+    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
+    echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
+    nohup python -m examples.fedprox_example.client --dataset_path ${CLIENT_DATA_PATH} > ${CLIENT_LOG_PATH} 2>&1 &
+
+    client_number=$((client_number+1))
+done
+
+echo "FL Processes Running"
+
+wait
+
+echo "Finished FL Processes"

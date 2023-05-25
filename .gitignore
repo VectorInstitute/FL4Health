@@ -147,6 +147,7 @@ settings.json
 # logs
 
 **/*.out
+**/*.err
 
 # wandb
 
