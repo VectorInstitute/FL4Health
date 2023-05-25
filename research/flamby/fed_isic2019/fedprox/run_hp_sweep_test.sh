@@ -3,30 +3,28 @@
 ###############################################
 # Usage:
 #
-#  ./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
+# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep_test.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
-#   path_to_desired_venv/
 #
 # Example:
-# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
+# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep_test.sh \
 #   research/flamby/fed_isic2019/fedprox/config.yaml \
 #   research/flamby/fed_isic2019/fedprox/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /Users/david/Desktop/FLambyDatasets/fedisic2019/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.
+# 2) VENV should already be activated when running bash
 ###############################################
 
 SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
-VENV_PATH=$4
 
-MU_VALUES=( 0.01 0.1 1.0 )
-LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 1.0 )
+MU_VALUES=( 0.01 0.1 )
+LR_VALUES=( 0.00001 0.0001 )
 
 # Create sweep folder
 SWEEP_DIRECTORY=""${ARTIFACT_DIR}hp_sweep_results""
@@ -42,16 +40,15 @@ do
     EXPERIMENT_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
-    SBATCH_COMMAND="research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
+    ./research/flamby/fed_isic2019/fedprox/run_fold_experiment_test.sh \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \
-      ${VENV_PATH} \
       ${MU_VALUE} \
-      ${LR_VALUE}"
-    echo "Running sbatch command ${SBATCH_COMMAND}"
-    sbatch ${SBATCH_COMMAND}
+      ${LR_VALUE}
+
+    wait
   done
 done
 
-echo Experiments Launched
+echo Experiments Concluded
