@@ -1,6 +1,6 @@
 black
 flake8
-flwr
+flwr==1.4.0
 isort
 mypy
 nltk
