@@ -1,6 +1,9 @@
+import os
+from logging import INFO
 from typing import Any, Dict, List, Optional, Tuple
 
 import wandb
+from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from flwr.server.history import History
 from wandb.wandb_run import Run
@@ -16,6 +19,7 @@ class WandBReporter:
         notes: Optional[str],
         tags: Optional[List],
         config: Dict[str, Any],
+        local_log_directory: str = "./fl_wandb_logs",
     ) -> None:
         # Name of the project underwhich to store all of the logged values
         self.project_name = project_name
@@ -30,7 +34,9 @@ class WandBReporter:
         # Any tags to make searching easier.\
         self.tags = tags
         # Initialize the WandB logger
+        self._maybe_create_local_log_directory(local_log_directory)
         wandb.init(
+            dir=local_log_directory,
             project=self.project_name,
             name=self.run_name,
             group=self.group_name,
@@ -41,6 +47,14 @@ class WandBReporter:
         )
         assert wandb.run is not None
         self.wandb_run: Run = wandb.run
+
+    def _maybe_create_local_log_directory(self, local_log_directory: str) -> None:
+        log_directory_exists = os.path.isdir(local_log_directory)
+        if not log_directory_exists:
+            os.mkdir(local_log_directory)
+            log(INFO, f"Logging directory {local_log_directory} does not exist. Creating it.")
+        else:
+            log(INFO, f"Logging directory {local_log_directory} exists.")
 
     def _log_metrics(self, metric_dict: Dict[str, Any]) -> None:
         self.wandb_run.log(metric_dict)
