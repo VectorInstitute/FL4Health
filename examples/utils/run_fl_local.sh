@@ -13,8 +13,8 @@ echo "Server logging at: ${server_output_file}"
 
 nohup python -m examples.fedprox_example.server --config_path ${config_path} > ${server_output_file} 2>&1 &
 
-# Sleep for 5 seconds to allow the server to come up.
-sleep 5
+# Sleep for 20 seconds to allow the server to come up.
+sleep 20
 
 # Start n number of clients and divert the outputs to their own files
 for (( i=1; i<=${n_clients_to_start}; i++ ))
