@@ -36,6 +36,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         device: torch.device,
         client_number: int,
         checkpoint_stub: str,
+        dataset_dir: str,
         run_name: str = "",
     ) -> None:
         super().__init__(data_path=Path(""), metrics=metrics, device=device)
@@ -47,6 +48,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         self.learning_rate = learning_rate
         self.mu = mu
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        self.dataset_dir = dataset_dir
 
     def compute_class_weights(self, train_dataset: FedIsic2019) -> torch.Tensor:
         weights = [0] * 8
@@ -59,7 +61,9 @@ class FedIsic2019FedProxClient(FedProxClient):
         return class_weights
 
     def construct_train_val_datasets(self) -> Tuple[FedIsic2019, FedIsic2019]:
-        full_train_dataset = FedIsic2019(center=self.client_number, train=True, pooled=False)
+        full_train_dataset = FedIsic2019(
+            center=self.client_number, train=True, pooled=False, data_path=self.dataset_dir
+        )
         # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
         # ignore for now.
         train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2]))  # type: ignore
@@ -114,6 +118,13 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
+        "--dataset_dir",
+        action="store",
+        type=str,
+        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        required=True,
+    )
+    parser.add_argument(
         "--run_name",
         action="store",
         help="Name of the run, model checkpoints will be saved under a subfolder with this name",
@@ -150,6 +161,7 @@ if __name__ == "__main__":
         DEVICE,
         args.client_number,
         args.artifact_dir,
+        args.dataset_dir,
         args.run_name,
     )
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

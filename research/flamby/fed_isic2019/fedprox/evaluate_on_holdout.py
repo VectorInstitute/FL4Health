@@ -63,7 +63,7 @@ def evaluate_model(model: nn.Module, dataset: DataLoader, metrics: Sequence[Metr
     return balanced_accuracy
 
 
-def main(artifact_dir: str) -> None:
+def main(artifact_dir: str, dataset_dir: str) -> None:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
@@ -71,7 +71,7 @@ def main(artifact_dir: str) -> None:
 
     # First we test each clients best model on local test data
     for client_number in range(NUM_CLIENTS):
-        client_test_dataset = FedIsic2019(center=client_number, train=False, pooled=False)
+        client_test_dataset = FedIsic2019(center=client_number, train=False, pooled=False, data_path=dataset_dir)
         test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metric = 0.0
@@ -112,7 +112,15 @@ if __name__ == "__main__":
         help="Path to save model artifacts to be evaluated",
         required=True,
     )
+    parser.add_argument(
+        "--dataset_dir",
+        action="store",
+        type=str,
+        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        required=True,
+    )
     args = parser.parse_args()
 
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
-    main(args.artifact_dir)
+    log(INFO, f"Dataset Directory: {args.dataset_dir}")
+    main(args.artifact_dir, args.dataset_dir)

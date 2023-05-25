@@ -8,23 +8,29 @@
 #SBATCH --mem=16G
 #SBATCH --partition=t4v2
 #SBATCH --qos=high
-#SBATCH --job-name=fl_single
+#SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
 
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/fedprox/run_five_fold_experiment.slrm path_to_config.yaml \
-#   folder_for_artifacts/ \
-#   folder_for_client_logs/ path_to_desired_venv/
+# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
+#   path_to_config.yaml \
+#   path_to_folder_for_artifacts/ \
+#   path_to_folder_for_dataset/ \
+#   path_to_desired_venv/ \
+#   mu_value_for_fedprox_loss \
+#   client_side_learning_rate_value
 #
 # Example:
-# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm \
-#   examples/fedprox_example/config.yaml \
-#   research/fedprox_cluster/server_logs/ \
-#   research/fedprox_cluster/client_logs/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
+#   research/flamby/fed_isic2019/fedprox/config.yaml \
+#   research/flamby/fed_isic2019/fedprox/hp_results/ \
+#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/demerson/vector_repositories/fl4health_env/ \
+#   0.1 \
+#   0.0001
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -53,14 +59,15 @@ fi
 
 SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
-VENV_PATH=$3
-CLIENT_MU=$4
-CLIENT_LR=$5
+DATASET_DIR=$3
+VENV_PATH=$4
+CLIENT_MU=$5
+CLIENT_LR=$6
 
 # Create the artficat directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES = ( "Run1" "Run2" "Run3" "Run4" "Run5" )
+RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -107,6 +114,7 @@ do
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
         nohup python -m research.flamby.fed_isic2019.fedprox.client \
             --artifact_dir ${ARTIFACT_DIR} \
+            --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --mu ${CLIENT_MU} \
