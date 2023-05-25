@@ -1,3 +1,5 @@
+from typing import List
+
 import numpy as np
 import pytest
 from flwr.common.typing import NDArrays
@@ -6,7 +8,12 @@ from fl4health.parameter_exchange.packing_exchanger import (
     ParameterExchangerWithClippingBit,
     ParameterExchangerWithControlVariates,
 )
-from tests.parameter_exchange.fixtures import get_ndarrays  # noqa
+
+
+@pytest.fixture
+def get_ndarrays(layer_sizes: List[List[int]]) -> NDArrays:
+    ndarrays = [np.ones(tuple(size)) for size in layer_sizes]
+    return ndarrays
 
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
