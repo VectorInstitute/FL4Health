@@ -152,3 +152,4 @@ settings.json
 # wandb
 
 **/wandb/**
+**/fl_wandb_logs/**
