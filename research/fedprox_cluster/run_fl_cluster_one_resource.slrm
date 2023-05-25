@@ -59,7 +59,6 @@ CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data/"
 # Spins up 3 clients, as the list is 3 strings long
 CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
 
-# Print the name of the node, this will be the network address
 echo "Dataset Base Path: ${CLIENT_DATA_BASE_PATH}"
 echo "Python Venv Path: ${VENV_PATH}"
 
