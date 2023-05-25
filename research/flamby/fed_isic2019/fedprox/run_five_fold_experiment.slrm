@@ -15,7 +15,8 @@
 ###############################################
 # Usage:
 #
-# sbatch research/fedprox_cluster/run_fl_cluster_one_resource.slrm path_to_config.yaml folder_for_server_logs/ \
+# sbatch research/flamby/fed_isic2019/fedprox/run_five_fold_experiment.slrm path_to_config.yaml \
+#   folder_for_artifacts/ \
 #   folder_for_client_logs/ path_to_desired_venv/
 #
 # Example:
@@ -51,15 +52,16 @@ fi
 # Process Inputs
 
 SERVER_CONFIG_PATH=$1
-SERVER_LOG_DIR=$2
-CLIENT_LOG_DIR=$3
-VENV_PATH=$4
+ARTIFACT_DIR=$2
+VENV_PATH=$3
+CLIENT_MU=$4
+CLIENT_LR=$5
 
-CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data/"
-# Spins up 3 clients, as the list is 3 strings long
-CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
+# Create the artficat directory
+mkdir "${ARTIFACT_DIR}"
 
-echo "Dataset Base Path: ${CLIENT_DATA_BASE_PATH}"
+RUN_NAMES = ( "Run1" "Run2" "Run3" "Run4" "Run5" )
+
 echo "Python Venv Path: ${VENV_PATH}"
 
 echo "World size: ${SLURM_NTASKS}"
@@ -72,35 +74,50 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
-
-# Start the server, divert the outputs to a server file
-
-echo "Server logging at: ${SERVER_OUTPUT_FILE}"
-echo "Launching Server"
-
-nohup python -m examples.fedprox_example.server --config_path ${SERVER_CONFIG_PATH} > ${SERVER_OUTPUT_FILE} 2>&1 &
-
-# Sleep for 20 seconds to allow the server to come up.
-sleep 20
-
-# Start n number of clients and divert the outputs to their own files
-client_number=0
-for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
+for RUN_NAME in "${RUN_NAMES[@]}";
 do
-    CLIENT_NAME="client_${client_number}"
-    CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}${DATA_PATH_SUFFIX}"
-    echo "Launching ${CLIENT_NAME}"
+    # create the run directory
+    RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
+    mkdir "${RUN_DIR}"
 
-    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
-    echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-    nohup python -m examples.fedprox_example.client --dataset_path ${CLIENT_DATA_PATH} > ${CLIENT_LOG_PATH} 2>&1 &
+    SERVER_OUTPUT_FILE="${RUN_DIR}server.out"
 
-    client_number=$((client_number+1))
+    # Start the server, divert the outputs to a server file
+
+    echo "Server logging at: ${SERVER_OUTPUT_FILE}"
+    echo "Launching Server"
+
+    nohup python -m research.flamby.fed_isic2019.fedprox.server \
+        --config_path ${SERVER_CONFIG_PATH} \
+        --artifact_dir ${ARTIFACT_DIR} \
+        --run_name ${RUN_NAME} \
+        > ${SERVER_OUTPUT_FILE} 2>&1 &
+
+    # Sleep for 20 seconds to allow the server to come up.
+    sleep 20
+
+    # Start n number of clients and divert the outputs to their own files
+    n_clients=6
+    for (( c=0; c<${n_clients}; c++ ))
+    do
+        CLIENT_NAME="client_${c}"
+        echo "Launching ${CLIENT_NAME}"
+
+        CLIENT_LOG_PATH="${ARTIFACT_DIR}client_${client_number}.out"
+        echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
+        nohup python -m research.flamby.fed_isic2019.fedprox.client \
+            --artifact_dir ${ARTIFACT_DIR} \
+            --run_name ${RUN_NAME} \
+            --client_number ${c} \
+            --mu ${CLIENT_MU} \
+            --learning_rate ${CLIENT_LR} \
+            > ${CLIENT_LOG_PATH} 2>&1 &
+    done
+
+    echo "FL Processes Running"
+
+    wait
+
+    echo "Finished FL Processes"
+
 done
-
-echo "FL Processes Running"
-
-wait
-
-echo "Finished FL Processes"

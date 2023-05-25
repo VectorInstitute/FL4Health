@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -18,7 +18,7 @@ def test_compute_parameter_delta() -> None:
     path = Path("./")
     device = torch.device("cpu")
     accuracy_metric = Accuracy()
-    metrics: List[Metric] = [accuracy_metric]
+    metrics: Sequence[Metric] = [accuracy_metric]
     client = ScaffoldClient(path, metrics, device)
 
     delta_params = client.compute_parameters_delta(params_1, params_2)
@@ -39,7 +39,7 @@ def test_compute_updated_control_variate() -> None:
     path = Path("./")
     device = torch.device("cpu")
     accuracy_metric = Accuracy()
-    metrics: List[Metric] = [accuracy_metric]
+    metrics: Sequence[Metric] = [accuracy_metric]
     client = ScaffoldClient(path, metrics, device)
     client.learning_rate_local = 0.01
 

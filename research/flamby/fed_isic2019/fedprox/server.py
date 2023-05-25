@@ -1,20 +1,64 @@
 import argparse
+import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import flwr as fl
+import torch.nn as nn
+from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
-from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
+from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common.typing import Config, Metrics, Parameters, Scalar
+from flwr.server.client_manager import ClientManager, SimpleClientManager
+from flwr.server.server import EvaluateResultsAndFailures
+from flwr.server.strategy import FedAvg, Strategy
 
-from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
+
+
+class FedIsic2019FedProxServer(FlServer):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        client_model: nn.Module,
+        strategy: Optional[Strategy] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[BestMetricTorchCheckpointer] = None,
+    ) -> None:
+        self.client_model = client_model
+        # To help with model rehydration
+        self.parameter_exchanger = FullParameterExchanger()
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+
+    def _hydrate_model_for_checkpointing(self) -> None:
+        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
+
+    def _maybe_checkpoint(self, checkpoint_metric: float) -> None:
+        if self.checkpointer:
+            self._hydrate_model_for_checkpointing()
+            self.checkpointer.maybe_checkpoint(self.client_model, checkpoint_metric)
+
+    def evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        # loss_aggregated is the aggregated validation per step loss
+        # aggregated over each client (weighted by num examples)
+        eval_round_results = super().evaluate_round(server_round, timeout)
+        assert eval_round_results is not None
+        loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
+        assert loss_aggregated is not None
+        self._maybe_checkpoint(loss_aggregated)
+
+        return loss_aggregated, metrics_aggregated, (results, failures)
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -31,15 +75,15 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def get_initial_model_parameters() -> Parameters:
+def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MnistNet()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
 def fit_config(
     local_epochs: int,
+    local_steps: int,
     batch_size: int,
     n_server_rounds: int,
     reporting_enabled: bool,
@@ -50,6 +94,7 @@ def fit_config(
 ) -> Config:
     return {
         "local_epochs": local_epochs,
+        "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -60,11 +105,12 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
+        config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
@@ -73,6 +119,14 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["reporting_config"].get("group_name", ""),
         config["reporting_config"].get("entity", ""),
     )
+
+    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    checkpoint_name = "server_best_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+
+    wandb_reporter = ServerWandBReporter.from_config(config)
+    client_manager = SimpleClientManager()
+    client_model = Baseline()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -85,12 +139,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_initial_model_parameters(client_model),
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
-    client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    server = FedIsic2019FedProxServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -103,6 +155,19 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--artifact_dir",
+        action="store",
+        type=str,
+        help="Path to save server artifacts such as logs and model checkpoints",
+        required=True,
+    )
+    parser.add_argument(
+        "--run_name",
+        action="store",
+        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
+        required=True,
+    )
     parser.add_argument(
         "--config_path",
         action="store",
@@ -121,4 +186,4 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address)
+    main(config, args.server_address, args.artifact_dir, args.run_name)

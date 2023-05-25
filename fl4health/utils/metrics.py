@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
 import torch
 from flwr.common.typing import Scalar
@@ -43,8 +43,8 @@ class AverageMeter:
     current values.
     """
 
-    def __init__(self, metrics: List[Metric], name: str = "") -> None:
-        self.metrics: List[Metric] = metrics
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        self.metrics: Sequence[Metric] = metrics
         self.name: str = name
 
         self.metric_values_history: List[List[Scalar]] = [[] for _ in range(len(self.metrics))]
