@@ -141,7 +141,7 @@ def main(artifact_dir: str, dataset_dir: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="FL Server Main")
+    parser = argparse.ArgumentParser(description="Evaluate Holdout Global")
     parser.add_argument(
         "--artifact_dir",
         action="store",
