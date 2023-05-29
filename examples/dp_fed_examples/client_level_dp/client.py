@@ -10,31 +10,13 @@ import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
 
 from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.utils.load_data import load_cifar10_data
 
 
-def load_data(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 (training and validation set)."""
-    log(INFO, f"Data directory: {str(data_dir)}")
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        ]
-    )
-    training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
-    validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
-    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
-    validation_loader = DataLoader(validation_set, batch_size=batch_size)
-    num_examples = {
-        "train_set": len(training_set),
-        "validation_set": len(validation_set),
-    }
-    return train_loader, validation_loader, num_examples
 
 
 def train(
@@ -111,7 +93,7 @@ class CifarClient(NumpyClippingClient):
         # Server explicitly sets the clipping strategy
         self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
 
-        train_loader, validation_loader, num_examples = load_data(self.data_path, self.batch_size)
+        train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, self.batch_size)
 
         self.train_loader = train_loader
         self.validation_loader = validation_loader
