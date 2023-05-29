@@ -303,6 +303,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
+        # Weights plus the clipping bound to be used by the clients
         return ndarrays_to_parameters(self.current_weights + [np.array([self.clipping_bound])]), metrics_aggregated
 
     def configure_fit(

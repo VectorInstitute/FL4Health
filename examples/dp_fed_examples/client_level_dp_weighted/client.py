@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithClippingBit
 
 
 def train(net: nn.Module, train_loader: DataLoader, epochs: int, device: torch.device = torch.device("cpu")) -> float:
@@ -74,7 +74,7 @@ class HospitalClient(NumpyClippingClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.model = LogisticRegression(input_dim=31, output_dim=1).to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = ParameterExchangerWithClippingBit()
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)

@@ -1,30 +1,42 @@
-from pathlib import Path
-
 import pytest
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from flwr.common import Config
 
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.metrics import Accuracy
-from tests.clients.small_models import LinearTransform, TestCNN
+from tests.clients.fixtures import get_client  # noqa
 
 
-class DummyFedProxClient(FedProxClient):
-    def setup_client(self, _: Config) -> None:
-        self.model = TestCNN()
-        self.parameter_exchanger = FullParameterExchanger()
+class SmallCNN(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 4 * 4, 32)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        return x
 
 
-class DummyFedProxClientLinear(FedProxClient):
-    def setup_client(self, _: Config) -> None:
-        self.model = LinearTransform()
-        self.parameter_exchanger = FullParameterExchanger()
+class LinearTransform(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(2, 3, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
 
 
-def test_setting_initial_weights() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
+def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClient(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -39,9 +51,10 @@ def test_setting_initial_weights() -> None:
         assert torch.linalg.norm(layer_tensor) > 0.0
 
 
-def test_forming_proximal_loss() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
+def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClient(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
@@ -62,9 +75,10 @@ def test_forming_proximal_loss() -> None:
     )
 
 
-def test_proximal_loss_derivative() -> None:
+@pytest.mark.parametrize("type,model", [(FedProxClient, LinearTransform())])
+def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
-    fed_prox_client = DummyFedProxClientLinear(Path(""), [Accuracy()], torch.device("cpu"))
+    fed_prox_client = get_client
     config: Config = {}
 
     fed_prox_client.setup_client(config)
