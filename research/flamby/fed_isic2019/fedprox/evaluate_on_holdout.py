@@ -76,32 +76,51 @@ def main(artifact_dir: str, dataset_dir: str) -> None:
     test_results: Dict[str, float] = {}
     metrics = [FedIsic2019Metric()]
 
-    all_local_test_metrics = []
+    all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
+    all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
 
-    # First we test each clients best model on local test data
+    # First we test each client's best model on local test data and the best server model on that same data
+
     for client_number in range(NUM_CLIENTS):
         client_test_dataset = FedIsic2019(center=client_number, train=False, pooled=False, data_path=dataset_dir)
         test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metrics = []
         for run_folder_dir in all_run_folder_dir:
-            model = load_local_model(run_folder_dir, client_number)
-            run_metric = evaluate_model(model, test_loader, metrics, device)
-            log(INFO, f"Client Number {client_number}, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
-            test_metrics.append(run_metric)
-            all_local_test_metrics.append(run_metric)
+            local_model = load_local_model(run_folder_dir, client_number)
+            local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
+            log(
+                INFO,
+                f"Client Number {client_number}, Run folder: {run_folder_dir}: Test Performance: {local_run_metric}",
+            )
+            test_metrics.append(local_run_metric)
+
+            server_model = load_global_model(run_folder_dir)
+            server_run_metric = evaluate_model(server_model, test_loader, metrics, device)
+
+            all_local_test_metrics[run_folder_dir] += local_run_metric / NUM_CLIENTS
+            all_server_test_metrics[run_folder_dir] += server_run_metric / NUM_CLIENTS
 
         avg_test_metric, std_test_metric = get_metric_avg_std(test_metrics)
-        log(INFO, f"Client Number {client_number} Average Test Performance: {avg_test_metric}")
-        log(INFO, f"Client Number {client_number} St. Dev. Test Performance: {std_test_metric}")
-        test_results[f"client_number_{client_number}_local_avg"] = avg_test_metric
-        test_results[f"client_number_{client_number}_local_std"] = std_test_metric
+        log(INFO, f"Client {client_number} Model Average Test Performance on own Data: {avg_test_metric}")
+        log(INFO, f"Client {client_number} Model St. Dev. Test Performance on own Data: {std_test_metric}")
+        test_results[f"client_{client_number}_model_local_avg"] = avg_test_metric
+        test_results[f"client_{client_number}_model_local_std"] = std_test_metric
 
-    all_avg_test_metric, all_std_test_metric = get_metric_avg_std(all_local_test_metrics)
-    test_results["all_local_test_metric_avg"] = all_avg_test_metric
-    test_results["all_local_test_metric_std"] = all_std_test_metric
+    all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_local_test_metrics.values()))
+    test_results["all_local_model_test_metric_avg"] = all_avg_test_metric
+    test_results["all_local_model_test_metric_std"] = all_std_test_metric
+    log(INFO, f"Local Model Average Test Performance Over all clients: {all_avg_test_metric}")
+    log(INFO, f"Local Model  St. Dev. Test Performance Over all clients: {all_std_test_metric}")
+
+    all_server_avg_test_metric, all_server_std_test_metric = get_metric_avg_std(list(all_local_test_metrics.values()))
+    test_results["server_model_test_metric_avg"] = all_server_avg_test_metric
+    test_results["server_model_test_metric_std"] = all_server_std_test_metric
+    log(INFO, f"Server Model Average Test Performance Over all clients: {all_server_avg_test_metric}")
+    log(INFO, f"Server Model  St. Dev. Test Performance Over all clients: {all_server_std_test_metric}")
 
     # Next we test server checkpointed best model on pooled test data
+
     pooled_test_dataset = FedIsic2019(center=0, train=False, pooled=True)
     pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
@@ -112,11 +131,11 @@ def main(artifact_dir: str, dataset_dir: str) -> None:
         log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
         test_metrics.append(run_metric)
 
-    avg_test_metric, std_test_metric = get_metric_avg_std(test_metrics)
-    log(INFO, f"Server Average Test Performance: {avg_test_metric}")
-    log(INFO, f"Server St. Dev. Test Performance: {std_test_metric}")
-    test_results["server_avg"] = avg_test_metric
-    test_results["server_std"] = std_test_metric
+    avg_server_test_metric, std_server_test_metric = get_metric_avg_std(test_metrics)
+    log(INFO, f"Server Average Test Performance: {avg_server_test_metric}")
+    log(INFO, f"Server St. Dev. Test Performance: {std_server_test_metric}")
+    test_results["server_avg_pooled"] = avg_server_test_metric
+    test_results["server_std_pooled"] = std_server_test_metric
 
     write_measurement_results(test_results)
 

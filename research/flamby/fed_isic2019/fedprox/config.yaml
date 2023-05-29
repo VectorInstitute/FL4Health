@@ -3,9 +3,9 @@ n_server_rounds: 3 # The number of rounds to run FL
 
 # Parameters that describe clients
 n_clients: 6 # The number of clients in the FL experiment
-local_epochs: 1 # The number of epochs to complete for client (clients perform max local epochs or local steps)
-batch_size: 64 # The batch size for client training
-local_steps: 10 # The number of local training steps to perform. (clients perform max local epochs or local steps)
+local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)
+batch_size: 64 # The batch size for client training (NOT USED FOR FLAMBY)
+local_steps: 10 # The number of local training steps to perform.
 
 reporting_config:
   enabled: False

@@ -82,9 +82,7 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
 
 
 def fit_config(
-    local_epochs: int,
     local_steps: int,
-    batch_size: int,
     n_server_rounds: int,
     reporting_enabled: bool,
     project_name: str,
@@ -93,9 +91,7 @@ def fit_config(
     current_round: int,
 ) -> Config:
     return {
-        "local_epochs": local_epochs,
         "local_steps": local_steps,
-        "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
         "reporting_enabled": reporting_enabled,
@@ -109,9 +105,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["local_steps"],
-        config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
         # Note that run name is not included, it will be set in the clients
@@ -149,6 +143,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
+
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: {checkpointer.best_metric}")
+
     # Shutdown the server gracefully
     server.shutdown()
 
