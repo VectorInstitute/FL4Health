@@ -24,7 +24,8 @@ class FedIsic2019Metric(Metric):
         super().__init__(name)
 
     def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
-        return metric(target, pred)
+        detached_preds = pred.detach()
+        return metric(target, detached_preds)
 
 
 class FedIsic2019FedProxClient(FedProxClient):
@@ -50,16 +51,6 @@ class FedIsic2019FedProxClient(FedProxClient):
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
         self.dataset_dir = dataset_dir
 
-    def compute_class_weights(self, train_dataset: FedIsic2019) -> torch.Tensor:
-        weights = [0] * 8
-        for x in train_dataset:
-            weights[int(x[1])] += 1
-
-        N = len(train_dataset)
-        class_weights = torch.FloatTensor([N / weights[i] for i in range(8)]).to(self.device)
-        log(INFO, f"Class weights extract from training dataset applied to loss function: {class_weights}")
-        return class_weights
-
     def construct_train_val_datasets(self) -> Tuple[FedIsic2019, FedIsic2019]:
         full_train_dataset = FedIsic2019(
             center=self.client_number, train=True, pooled=False, data_path=self.dataset_dir
@@ -71,14 +62,15 @@ class FedIsic2019FedProxClient(FedProxClient):
 
     def setup_client(self, config: Config) -> None:
         train_dataset, validation_dataset = self.construct_train_val_datasets()
-        class_weights = self.compute_class_weights(train_dataset)
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        self.test_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        self.model: nn.Module = Baseline(alpha=class_weights).to(self.device)
+        self.model: nn.Module = Baseline().to(self.device)
+        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
+        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         # Set the Proximal Loss weight mu

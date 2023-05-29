@@ -110,7 +110,7 @@ do
         CLIENT_NAME="client_${c}"
         echo "Launching ${CLIENT_NAME}"
 
-        CLIENT_LOG_PATH="${ARTIFACT_DIR}client_${client_number}.out"
+        CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
         nohup python -m research.flamby.fed_isic2019.fedprox.client \
             --artifact_dir ${ARTIFACT_DIR} \
