@@ -2,12 +2,12 @@ from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
 
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
+from torchvision.datasets import CIFAR10
 
 from fl4health.utils.dataset import BaseDataset, MNISTDataset
-from torchvision.datasets import CIFAR10
 from fl4health.utils.sampler import LabelBasedSampler
 
 
