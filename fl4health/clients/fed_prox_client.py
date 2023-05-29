@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -38,6 +38,7 @@ class FedProxClient(NumpyFlClient):
         self.optimizer: torch.optim.Optimizer
         self.proximal_weight: float = 0.1
         self.initial_tensors: List[torch.Tensor]
+        self.total_epochs = 0
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
@@ -69,7 +70,8 @@ class FedProxClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        metric_values = self.train(local_epochs)
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        metric_values = self.train(current_server_round, local_epochs)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -83,7 +85,8 @@ class FedProxClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        loss, metric_values = self.validate()
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        loss, metric_values = self.validate(current_server_round)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -92,13 +95,32 @@ class FedProxClient(NumpyFlClient):
             metric_values,
         )
 
+    def _maybe_log_train_metrics(
+        self, server_round: int, losses: Dict[str, float], metrics: Dict[str, Scalar]
+    ) -> None:
+        if self.wandb_reporter:
+            to_log: Dict[str, Any] = {"epoch": self.total_epochs}
+            to_log["server_round"] = server_round
+            to_log.update(losses)
+            to_log.update(metrics)
+            self.wandb_reporter.report_metrics(to_log)
+
+    def _maybe_log_eval_metrics(self, server_round: int, losses: Dict[str, float], metrics: Dict[str, Scalar]) -> None:
+        if self.wandb_reporter:
+            to_log: Dict[str, Any] = {"server_round": server_round}
+            to_log.update(losses)
+            to_log.update(metrics)
+            self.wandb_reporter.report_metrics(to_log)
+
     def train(
         self,
+        current_server_round: int,
         epochs: int,
     ) -> Dict[str, Scalar]:
         for epoch in range(epochs):
-            meter = AverageMeter(self.metrics, "meter")
-            loss_dict = {"vanilla_loss": 0.0, "proximal_loss": 0.0, "total_loss": 0.0}
+            self.total_epochs += 1
+            meter = AverageMeter(self.metrics, "train_meter")
+            loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 # forward pass on the model
@@ -111,31 +133,32 @@ class FedProxClient(NumpyFlClient):
                 fed_prox_loss.backward()
                 self.optimizer.step()
 
-                loss_dict["vanilla_loss"] += vanilla_loss.item()
-                loss_dict["proximal_loss"] += proximal_loss.item()
-                loss_dict["total_loss"] += fed_prox_loss.item()
+                loss_dict["train_vanilla_loss"] += vanilla_loss.item()
+                loss_dict["train_proximal_loss"] += proximal_loss.item()
+                loss_dict["train_total_loss"] += fed_prox_loss.item()
 
                 meter.update(preds, target)
 
             # Average loss per step per loss component
             loss_dict = {key: val / len(self.train_loader) for key, val in loss_dict.items()}
 
-        training_metrics = meter.compute()
-        metrics: Dict[str, Scalar] = {**training_metrics}
-        train_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-        train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            f"Epoch: {epoch}\n"
-            f"Client Training Losses: {train_loss_string} \n"
-            f"Client Training Metrics: {train_metric_string}",
-        )
+            training_metrics = meter.compute()
+            metrics: Dict[str, Scalar] = {**training_metrics}
+            train_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
+            train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
+            log(
+                INFO,
+                f"Epoch: {epoch}\n"
+                f"Client Training Losses: {train_loss_string} \n"
+                f"Client Training Metrics: {train_metric_string}",
+            )
+            self._maybe_log_train_metrics(current_server_round, loss_dict, metrics)
 
         return metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-        meter = AverageMeter(self.metrics, "meter")
-        loss_dict = {"vanilla_loss": 0.0, "proximal_loss": 0.0, "total_loss": 0.0}
+    def validate(self, current_server_round: int) -> Tuple[float, Dict[str, Scalar]]:
+        meter = AverageMeter(self.metrics, "val_meter")
+        loss_dict = {"val_vanilla_loss": 0.0, "val_proximal_loss": 0.0, "val_total_loss": 0.0}
 
         with torch.no_grad():
             for input, target in self.val_loader:
@@ -146,9 +169,9 @@ class FedProxClient(NumpyFlClient):
                 proximal_loss = self.get_proximal_loss()
                 fed_prox_loss = vanilla_loss + proximal_loss
 
-                loss_dict["vanilla_loss"] += vanilla_loss.item()
-                loss_dict["proximal_loss"] += proximal_loss.item()
-                loss_dict["total_loss"] += fed_prox_loss.item()
+                loss_dict["val_vanilla_loss"] += vanilla_loss.item()
+                loss_dict["val_proximal_loss"] += proximal_loss.item()
+                loss_dict["val_total_loss"] += fed_prox_loss.item()
 
                 meter.update(preds, target)
 
@@ -162,5 +185,5 @@ class FedProxClient(NumpyFlClient):
             INFO,
             "\n" f"Client Validation Losses: {val_loss_string} \n" f"Client validation Metrics: {val_metric_string}",
         )
-
-        return loss_dict["total_loss"], metrics
+        self._maybe_log_eval_metrics(current_server_round, loss_dict, metrics)
+        return loss_dict["val_total_loss"], metrics

@@ -33,7 +33,7 @@ LOG_DIR=$3
 VENV_PATH=$4
 JOB_HASH=$5
 
-# Print the name of the node, this will be the network address
+# Print relevant information for the client to connect to the server and run
 echo "Server Address: ${SERVER_ADDRESS}"
 echo "Dataset Path: ${DATASET_PATH}"
 echo "Python Venv Path: ${VENV_PATH}"

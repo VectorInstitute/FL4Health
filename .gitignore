@@ -143,3 +143,13 @@ settings.json
 **/datasets/news_classification/partitioned_datasets/**
 **/datasets/mnist_data/**
 **/datasets/MNIST/**
+
+# logs
+
+**/*.out
+**/*.err
+
+# wandb
+
+**/wandb/**
+**/fl_wandb_logs/**

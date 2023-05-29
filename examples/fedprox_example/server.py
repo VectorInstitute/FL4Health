@@ -7,10 +7,13 @@ import flwr as fl
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
 
 
@@ -35,11 +38,25 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(
+    local_epochs: int,
+    batch_size: int,
+    n_server_rounds: int,
+    reporting_enabled: bool,
+    project_name: str,
+    group_name: str,
+    entity: str,
+    current_round: int,
+) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
+        "current_server_round": current_round,
+        "reporting_enabled": reporting_enabled,
+        "project_name": project_name,
+        "group_name": group_name,
+        "entity": entity,
     }
 
 
@@ -50,6 +67,11 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
+        config["reporting_config"].get("enabled", False),
+        # Note that run name is not included, it will be set in the clients
+        config["reporting_config"].get("project_name", ""),
+        config["reporting_config"].get("group_name", ""),
+        config["reporting_config"].get("entity", ""),
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -66,11 +88,18 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(),
     )
 
+    # Strip out the reporting configuration variables.
+    wandb_reporter = ServerWandBReporter.from_config(config)
+    client_manager = SimpleClientManager()
+    server = FlServer(client_manager, strategy, wandb_reporter)
+
     fl.server.start_server(
+        server=server,
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
+    # Shutdown the server gracefully
+    server.shutdown()
 
 
 if __name__ == "__main__":
