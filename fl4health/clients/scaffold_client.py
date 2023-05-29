@@ -70,11 +70,13 @@ class ScaffoldClient(NumpyFlClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArrays
+        Packs the parameters and control variartes into a single NDArrays to be sent to the server for aggregation
         """
+        assert self.model is not None and self.parameter_exchanger is not None
+
         model_weights = self.parameter_exchanger.push_parameters(self.model, config)
 
-        # Weigts and control variates updates sent to server for aggregation
+        # Weights and control variates updates sent to server for aggregation
         # Control variates updates sent because only client has access to previous client control variate
         # Therefore it can only be computed locally
         assert self.client_control_variates_updates is not None
@@ -84,8 +86,10 @@ class ScaffoldClient(NumpyFlClient):
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with
-        control variates.
+        server control variates. They are unpacked for the clients to use in training
         """
+        assert self.model is not None and self.parameter_exchanger is not None
+
         server_model_weights, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
         self.server_model_weights = server_model_weights

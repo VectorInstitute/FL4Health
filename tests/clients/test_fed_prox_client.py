@@ -8,7 +8,7 @@ from fl4health.clients.fed_prox_client import FedProxClient
 from tests.clients.fixtures import get_client  # noqa
 
 
-class TestCNN(nn.Module):
+class SmallCNN(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
@@ -33,7 +33,7 @@ class LinearTransform(nn.Module):
         return self.linear(x)
 
 
-@pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
 def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
@@ -51,7 +51,7 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
         assert torch.linalg.norm(layer_tensor) > 0.0
 
 
-@pytest.mark.parametrize("type,model", [(FedProxClient, TestCNN())])
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
 def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client

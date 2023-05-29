@@ -2,7 +2,6 @@ from logging import INFO
 from pathlib import Path
 from typing import Optional, Tuple
 
-import numpy as np
 import torch
 from flwr.common import Config, NDArrays
 from flwr.common.logger import log
@@ -18,19 +17,6 @@ class NumpyClippingClient(NumpyFlClient):
         self.parameter_exchanger: ParameterExchangerWithClippingBit
         self.clipping_bound: Optional[float] = None
         self.adaptive_clipping: Optional[bool] = None
-
-    def clip_and_pack_parameters(self, parameters: NDArrays) -> NDArrays:
-        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(parameters)
-        packed_params = self.parameter_exchanger.pack_parameters(clipped_weight_update, [np.array(clipping_bit)])
-        return packed_params
-
-    def unpack_parameters_with_clipping_bound(self, packed_parameters: NDArrays) -> NDArrays:
-        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
-        server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(packed_parameters)
-        # Store the starting parameters without clipping bound before client optimization steps
-        self.initial_weights = server_model_parameters
-        self.clipping_bound = float(clipping_bound[0])
-        return server_model_parameters
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
@@ -66,13 +52,21 @@ class NumpyClippingClient(NumpyFlClient):
         This function performs clipping through compute_weight_update_and_clip and stores the clipping bit
         as the last entry in the NDArrays
         """
+        assert self.model is not None and self.parameter_exchanger is not None
         model_weights = self.parameter_exchanger.push_parameters(self.model, config)
-        return self.clip_and_pack_parameters(model_weights)
+        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
+        return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         This function assumes that the parameters being passed contain model parameters followed by the last entry
         of the list being the new clipping bound.
         """
-        server_model_parameters = self.unpack_parameters_with_clipping_bound(parameters)
+        assert self.model is not None and self.parameter_exchanger is not None
+        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
+        server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
+        # Store the starting parameters without clipping bound before client optimization steps
+        self.initial_weights = server_model_parameters
+        self.clipping_bound = clipping_bound
+        # Inject the server model parameters into the client model
         self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)

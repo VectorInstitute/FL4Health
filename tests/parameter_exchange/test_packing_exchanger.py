@@ -43,11 +43,11 @@ def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> No
 def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:  # noqa
 
     model_weights = get_ndarrays  # noqa
-    clipping_bit = 0
+    clipping_bit = 0.0
 
     exchanger = ParameterExchangerWithClippingBit()
 
-    packed_params = exchanger.pack_parameters(model_weights, [np.array(clipping_bit)])
+    packed_params = exchanger.pack_parameters(model_weights, clipping_bit)
 
     assert len(packed_params) == len(model_weights) + 1
 
@@ -61,4 +61,4 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
     for model_weight, unpacked_model_weight in zip(model_weights, unpacked_model_weights):
         assert model_weight.size == unpacked_model_weight.size
 
-    assert clipping_bit == unpacked_clipping_bit[0]
+    assert clipping_bit == unpacked_clipping_bit
