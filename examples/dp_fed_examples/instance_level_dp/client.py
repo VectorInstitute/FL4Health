@@ -6,7 +6,6 @@ from typing import Dict, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from opacus import PrivacyEngine
@@ -17,8 +16,6 @@ from examples.models.cnn_model import Net
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
-
-
 
 
 def train(

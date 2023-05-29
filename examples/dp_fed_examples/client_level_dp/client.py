@@ -6,7 +6,6 @@ from typing import Dict, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
@@ -15,8 +14,6 @@ from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithClippingBit
 from fl4health.utils.load_data import load_cifar10_data
-
-
 
 
 def train(
