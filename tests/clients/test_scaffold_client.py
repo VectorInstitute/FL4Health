@@ -1,25 +1,19 @@
-from pathlib import Path
-from typing import Sequence
-
 import numpy as np
-import torch
+import pytest
 from flwr.common.typing import NDArrays
 
 from fl4health.clients.scaffold_client import ScaffoldClient
-from fl4health.utils.metrics import Accuracy, Metric
+from tests.clients.fixtures import get_client  # noqa
 
 
-def test_compute_parameter_delta() -> None:
+@pytest.mark.parametrize("type,model", [(ScaffoldClient, None)])
+def test_compute_parameter_delta(get_client: ScaffoldClient) -> None:  # noqa
     layer_size = 10
     num_layers = 5
     params_1: NDArrays = [np.ones((layer_size)) * 5 for _ in range(num_layers)]
     params_2: NDArrays = [np.zeros((layer_size)) for _ in range(num_layers)]
 
-    path = Path("./")
-    device = torch.device("cpu")
-    accuracy_metric = Accuracy()
-    metrics: Sequence[Metric] = [accuracy_metric]
-    client = ScaffoldClient(path, metrics, device)
+    client = get_client
 
     delta_params = client.compute_parameters_delta(params_1, params_2)
 
@@ -29,24 +23,19 @@ def test_compute_parameter_delta() -> None:
         assert (delta_param == correct_delta_param).all()
 
 
-def test_compute_updated_control_variate() -> None:
+@pytest.mark.parametrize("type,model", [(ScaffoldClient, None)])
+def test_compute_updated_control_variate(get_client: ScaffoldClient) -> None:  # noqa
     layer_size = 10
     num_layers = 5
     local_steps = 5
     delta_model_weights: NDArrays = [np.ones((layer_size)) * 3 for _ in range(num_layers)]
     delta_control_variates: NDArrays = [np.ones((layer_size)) * 100 for _ in range(num_layers)]
 
-    path = Path("./")
-    device = torch.device("cpu")
-    accuracy_metric = Accuracy()
-    metrics: Sequence[Metric] = [accuracy_metric]
-    client = ScaffoldClient(path, metrics, device)
-    client.learning_rate_local = 0.01
+    client = get_client
 
     updated_control_variates = client.compute_updated_control_variates(
         local_steps, delta_model_weights, delta_control_variates
     )
-
     correct_updated_control_variates = [
         np.ones_like(delta_model_weight) * 160 for delta_model_weight in delta_model_weights
     ]

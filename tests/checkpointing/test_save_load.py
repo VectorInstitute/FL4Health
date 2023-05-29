@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 import torch
@@ -16,11 +15,14 @@ class LinearTransform(nn.Module):
         return self.linear(x)
 
 
-def test_save_and_load_checkpoint() -> None:
-    checkpoint_dir = f"{Path(__file__). parent}/resources/"
+def test_save_and_load_checkpoint(tmp_path: Path) -> None:
+    # Temporary path to write pkl to, will be cleaned up at the end of the test.
+    checkpoint_dir = tmp_path / "resources/"
+    checkpoint_dir.mkdir()
+
     model_1 = LinearTransform()
     model_2 = LinearTransform()
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, "best_model.pkl", True)
+    checkpointer = BestMetricTorchCheckpointer(str(checkpoint_dir), "best_model.pkl", True)
     checkpointer.maybe_checkpoint(model_1, 0.6)
     checkpointer.maybe_checkpoint(model_2, 0.7)
 
@@ -31,6 +33,3 @@ def test_save_and_load_checkpoint() -> None:
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the second model with better metric
     assert torch.equal(model_2.linear.weight, loaded_model.linear.weight)
-
-    # clean up model artifact after passing
-    os.remove(checkpointer.best_checkpoint_path)

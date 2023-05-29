@@ -9,7 +9,7 @@ from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.scaffold_client import ScaffoldClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -35,7 +35,7 @@ class MnistScaffoldClient(ScaffoldClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = ParameterExchangerWithControlVariates()
         super().setup_client(config)
 
 
