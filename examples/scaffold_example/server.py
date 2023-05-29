@@ -33,6 +33,7 @@ def get_initial_model_parameters() -> Parameters:
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = MnistNet()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
+    # Initializing the control variates to zero, as suggested in scaffold paper
     control_variates = [np.zeros_like(weight) for weight in model_weights]
     parameters = ndarrays_to_parameters(model_weights + control_variates)
     return parameters
