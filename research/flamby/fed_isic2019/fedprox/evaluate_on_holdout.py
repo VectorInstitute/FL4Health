@@ -3,11 +3,12 @@ import os
 from logging import INFO
 from typing import Dict, List, Sequence
 
+import numpy as np
 import torch
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, NUM_CLIENTS, Baseline, FedIsic2019, metric
 from flwr.common.logger import log
-from flwr.common.typing import Scalar
+from flwr.common.typing import Scalar, Tuple
 from torch.utils.data import DataLoader
 
 from fl4health.utils.metrics import AverageMeter, Metric
@@ -46,6 +47,12 @@ def load_global_model(run_folder_dir: str) -> Baseline:
     return model
 
 
+def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
+    mean = np.mean(metrics)
+    std = np.std(metrics, ddof=1)
+    return mean, std
+
+
 def evaluate_model(model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device) -> float:
     model.eval()
     meter = AverageMeter(metrics, "test_meter")
@@ -69,36 +76,47 @@ def main(artifact_dir: str, dataset_dir: str) -> None:
     test_results: Dict[str, float] = {}
     metrics = [FedIsic2019Metric()]
 
+    all_local_test_metrics = []
+
     # First we test each clients best model on local test data
     for client_number in range(NUM_CLIENTS):
         client_test_dataset = FedIsic2019(center=client_number, train=False, pooled=False, data_path=dataset_dir)
         test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-        test_metric = 0.0
+        test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             model = load_local_model(run_folder_dir, client_number)
             run_metric = evaluate_model(model, test_loader, metrics, device)
             log(INFO, f"Client Number {client_number}, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
-            test_metric += run_metric
+            test_metrics.append(run_metric)
+            all_local_test_metrics.append(run_metric)
 
-        avg_test_metric = test_metric / len(all_run_folder_dir)
+        avg_test_metric, std_test_metric = get_metric_avg_std(test_metrics)
         log(INFO, f"Client Number {client_number} Average Test Performance: {avg_test_metric}")
-        test_results[f"client_number_{client_number}_local"] = avg_test_metric
+        log(INFO, f"Client Number {client_number} St. Dev. Test Performance: {std_test_metric}")
+        test_results[f"client_number_{client_number}_local_avg"] = avg_test_metric
+        test_results[f"client_number_{client_number}_local_std"] = std_test_metric
+
+    all_avg_test_metric, all_std_test_metric = get_metric_avg_std(all_local_test_metrics)
+    test_results["all_local_test_metric_avg"] = all_avg_test_metric
+    test_results["all_local_test_metric_std"] = all_std_test_metric
 
     # Next we test server checkpointed best model on pooled test data
     pooled_test_dataset = FedIsic2019(center=0, train=False, pooled=True)
     pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-    test_metric = 0.0
+    test_metrics = []
     for run_folder_dir in all_run_folder_dir:
         model = load_global_model(run_folder_dir)
         run_metric = evaluate_model(model, pooled_test_loader, metrics, device)
         log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
-        test_metric += run_metric
+        test_metrics.append(run_metric)
 
-    avg_test_metric = test_metric / len(all_run_folder_dir)
+    avg_test_metric, std_test_metric = get_metric_avg_std(test_metrics)
     log(INFO, f"Server Average Test Performance: {avg_test_metric}")
-    test_results["server"] = avg_test_metric
+    log(INFO, f"Server St. Dev. Test Performance: {std_test_metric}")
+    test_results["server_avg"] = avg_test_metric
+    test_results["server_std"] = std_test_metric
 
     write_measurement_results(test_results)
 
