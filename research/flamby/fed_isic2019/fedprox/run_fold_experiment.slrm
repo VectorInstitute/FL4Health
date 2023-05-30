@@ -63,6 +63,7 @@ DATASET_DIR=$3
 VENV_PATH=$4
 CLIENT_MU=$5
 CLIENT_LR=$6
+SERVER_ADDRESS=$7
 
 # Create the artficat directory
 mkdir "${ARTIFACT_DIR}"
@@ -98,6 +99,7 @@ do
         --config_path ${SERVER_CONFIG_PATH} \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
+        --server_address ${SERVER_ADDRESS} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -119,6 +121,7 @@ do
             --client_number ${c} \
             --mu ${CLIENT_MU} \
             --learning_rate ${CLIENT_LR} \
+            --server_address ${SERVER_ADDRESS} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

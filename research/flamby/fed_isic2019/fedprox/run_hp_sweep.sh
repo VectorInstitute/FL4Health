@@ -28,6 +28,8 @@ VENV_PATH=$4
 MU_VALUES=( 0.01 0.1 1.0 )
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 1.0 )
 
+SERVER_PORT=8100
+
 # Create sweep folder
 SWEEP_DIRECTORY=""${ARTIFACT_DIR}hp_sweep_results""
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
@@ -42,15 +44,19 @@ do
     EXPERIMENT_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
+    SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
+    echo "Server Address: ${SERVER_ADDRESS}"
     SBATCH_COMMAND="research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \
       ${VENV_PATH} \
       ${MU_VALUE} \
-      ${LR_VALUE}"
+      ${LR_VALUE} \
+      ${SERVER_ADDRESS}"
     echo "Running sbatch command ${SBATCH_COMMAND}"
     sbatch ${SBATCH_COMMAND}
+    ((SERVER_PORT=SERVER_PORT+1))
   done
 done
 
