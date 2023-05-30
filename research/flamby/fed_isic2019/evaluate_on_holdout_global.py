@@ -39,7 +39,8 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str) -> None:
             local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
             log(
                 INFO,
-                f"Client Number {client_number}, Run folder: {run_folder_dir}: Local Model Test Performance: {local_run_metric}",
+                f"Client Number {client_number}, Run folder: {run_folder_dir}: "
+                f"Local Model Test Performance: {local_run_metric}",
             )
             test_metrics.append(local_run_metric)
 
@@ -47,7 +48,8 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str) -> None:
             server_run_metric = evaluate_model(server_model, test_loader, metrics, device)
             log(
                 INFO,
-                f"Client Number {client_number}, Run folder: {run_folder_dir}: Server Model Test Performance: {server_run_metric}",
+                f"Client Number {client_number}, Run folder: {run_folder_dir}: "
+                f"Server Model Test Performance: {server_run_metric}",
             )
 
             all_local_test_metrics[run_folder_dir] += local_run_metric / NUM_CLIENTS
