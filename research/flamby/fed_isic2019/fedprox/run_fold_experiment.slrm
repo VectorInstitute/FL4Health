@@ -3,11 +3,11 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=4
+#SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=16G
-#SBATCH --partition=t4v2
-#SBATCH --qos=high
+#SBATCH --mem=32
+#SBATCH --partition=a40
+#SBATCH --qos=normal
 #SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
