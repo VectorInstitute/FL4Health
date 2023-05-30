@@ -144,7 +144,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: {checkpointer.best_metric}")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
 
     # Shutdown the server gracefully
     server.shutdown()
