@@ -7,7 +7,7 @@ from typing import Dict, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss, FedIsic2019, metric
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss, FedIsic2019
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader, random_split
@@ -17,15 +17,7 @@ from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.metrics import Metric
-
-
-class FedIsic2019Metric(Metric):
-    def __init__(self, name: str = "FedIsic2019_balanced_accuracy"):
-        super().__init__(name)
-
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
-        detached_preds = pred.detach()
-        return metric(target, detached_preds)
+from research.flamby.fed_isic2019.utils import FedIsic2019Metric
 
 
 class FedIsic2019FedProxClient(FedProxClient):
@@ -145,6 +137,8 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
+    log(INFO, f"Learning Rate: {args.learning_rate}")
+    log(INFO, f"FedProx Mu: {args.mu}")
 
     client = FedIsic2019FedProxClient(
         args.learning_rate,

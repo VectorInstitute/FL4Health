@@ -132,7 +132,6 @@ class FedProxClient(NumpyFlClient):
         return metrics, loss_dict
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> FedProxTrainStepOutputs:
-        input, target = input.to(self.device), target.to(self.device)
         # forward pass on the model
         preds = self.model(input)
         vanilla_loss = self.criterion(preds, target)
@@ -165,6 +164,7 @@ class FedProxClient(NumpyFlClient):
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
 
+            input, target = input.to(self.device), target.to(self.device)
             vanilla_loss, proximal_loss, fed_prox_loss, preds = self.train_step(input, target)
 
             loss_dict["train_vanilla_loss"] += vanilla_loss.item()
@@ -191,6 +191,7 @@ class FedProxClient(NumpyFlClient):
             meter = AverageMeter(self.metrics, "train_meter")
             loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
             for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
                 vanilla_loss, proximal_loss, fed_prox_loss, preds = self.train_step(input, target)
 
                 loss_dict["train_vanilla_loss"] += vanilla_loss.item()

@@ -41,7 +41,6 @@ def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> No
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
 def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:  # noqa
-
     model_weights = get_ndarrays  # noqa
     clipping_bit = 0.0
 

@@ -6,14 +6,17 @@ To run this on a particular collection of five runs (i.e. for fixed set of hyper
 ``` bash
 python -m research.flamby.fed_isic2019.fedprox.evaluate_on_holdout_global.py \
     --artifact_dir path/to/runs/to/analyze/ \
-    --dataset_dir path/to/fedisic/datasets/
+    --dataset_dir path/to/fedisic/datasets/ \
+    --eval_write_path path/to/write/eval/results/to.txt
 ```
 
 An example command is
 ``` bash
 python -m research.flamby.fed_isic2019.fedprox.evaluate_on_holdout_global.py \
     --artifact_dir research/flamby/fed_isic2019/fedprox/hp_sweep_results/mu_0.01_lr_0.0001/ \
-    --dataset_dir /Users/david/Desktop/FLambyDatasets/fedisic2019/
+    --dataset_dir /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+    --eval_write_path research/flamby/fed_isic2019/fedprox/test_eval_results.txt
+
 ```
 
 __NOTE__: You must have the correct venv activated for this to run. See the [FLamby readme](/research/flamby/README.md) for guidance.
