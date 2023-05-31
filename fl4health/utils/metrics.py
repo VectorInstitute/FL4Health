@@ -34,7 +34,60 @@ class Accuracy(Metric):
         return accuracy
 
 
-class AverageMeter:
+class Meter(ABC):
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        self.metrics: Sequence[Metric] = metrics
+        self.name: str = name
+
+    @abstractmethod
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        # Update the meter with batch input and target values
+        raise NotImplementedError
+
+    @abstractmethod
+    def compute(self) -> Dict[str, Scalar]:
+        # Compute final metric representations based on the underlying metrics provided to the meter
+        raise NotImplementedError
+
+    def clear(self) -> None:
+        raise NotImplementedError
+
+
+class AccumulationMeter(Meter):
+    """
+    This meter class is used to for metrics that require accumulation of input and target values. That is, they are not
+    compatible with computing via weighted averages.
+    """
+
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        super().__init__(metrics, name)
+        self.accumulated_inputs: List[torch.Tensor] = []
+        self.accumulated_targets: List[torch.Tensor] = []
+
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        self.accumulated_inputs.append(input)
+        self.accumulated_targets.append(target)
+
+    def compute(self) -> Dict[str, Scalar]:
+        metric_values = []
+        stacked_inputs = torch.cat(self.accumulated_inputs)
+        stacked_targets = torch.cat(self.accumulated_targets)
+        for metric in self.metrics:
+            metric_values.append(metric(stacked_inputs, stacked_targets))
+
+        results: Dict[str, Scalar] = {
+            f"{self.name}_{str(metric)}".lstrip("_"): metric_value
+            for metric, metric_value in zip(self.metrics, metric_values)
+        }
+
+        return results
+
+    def clear(self) -> None:
+        self.accumulated_inputs = []
+        self.accumulated_targets = []
+
+
+class AverageMeter(Meter):
     """
     class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
     The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
@@ -44,11 +97,9 @@ class AverageMeter:
     """
 
     def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
-        self.metrics: Sequence[Metric] = metrics
-        self.name: str = name
-
+        super().__init__(metrics, name)
         self.metric_values_history: List[List[Scalar]] = [[] for _ in range(len(self.metrics))]
-        self.counts: List = []
+        self.counts: List[int] = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
         """
@@ -77,3 +128,7 @@ class AverageMeter:
         }
 
         return results
+
+    def clear(self) -> None:
+        self.metric_values_history = [[] for _ in range(len(self.metrics))]
+        self.counts = []

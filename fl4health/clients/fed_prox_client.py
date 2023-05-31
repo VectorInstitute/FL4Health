@@ -10,7 +10,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.utils.metrics import AverageMeter, Metric
+from fl4health.utils.metrics import AverageMeter, Meter, Metric
 
 FedProxTrainStepOutputs = Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
@@ -71,11 +71,13 @@ class FedProxClient(NumpyFlClient):
         if not self.initialized:
             self.setup_client(config)
 
+        meter = AverageMeter(self.metrics, "train_meter")
+
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         # Currently uses training by epoch.
-        metric_values = self.train_by_epochs(current_server_round, local_epochs)
+        metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -112,7 +114,7 @@ class FedProxClient(NumpyFlClient):
     def _handle_reporting(
         self,
         to_log: Dict[str, Any],
-        meter: AverageMeter,
+        meter: Meter,
         loss_dict: Dict[str, float],
         steps_taken: int,
         is_validation: bool = False,
@@ -148,9 +150,9 @@ class FedProxClient(NumpyFlClient):
         self,
         current_server_round: int,
         steps: int,
+        meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
-        meter = AverageMeter(self.metrics, "train_meter")
         loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
         train_iterator = iter(self.train_loader)
 
@@ -183,12 +185,13 @@ class FedProxClient(NumpyFlClient):
         self,
         current_server_round: int,
         epochs: int,
+        meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
 
         for local_epoch in range(epochs):
+            meter.clear()
             self.total_epochs += 1
-            meter = AverageMeter(self.metrics, "train_meter")
             loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)

@@ -16,7 +16,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import Metric
+from fl4health.utils.metrics import AccumulationMeter, Metric
 from research.flamby.fed_isic2019.utils import FedIsic2019Metric
 
 
@@ -79,10 +79,11 @@ class FedIsic2019FedProxClient(FedProxClient):
         if not self.initialized:
             self.setup_client(config)
 
+        meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        metric_values = self.train_by_steps(current_server_round, local_steps)
+        metric_values = self.train_by_steps(current_server_round, local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (

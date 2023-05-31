@@ -9,7 +9,7 @@ from flamby.datasets.fed_isic2019 import Baseline, metric
 from flwr.common.typing import Scalar
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import AverageMeter, Metric
+from fl4health.utils.metrics import AccumulationMeter, Metric
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -55,7 +55,7 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
 
 def evaluate_model(model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device) -> float:
     model.to(device).eval()
-    meter = AverageMeter(metrics, "test_meter")
+    meter = AccumulationMeter(metrics, "test_meter")
 
     with torch.no_grad():
         for input, target in dataset:

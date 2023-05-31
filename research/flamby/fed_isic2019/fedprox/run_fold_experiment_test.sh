@@ -36,7 +36,7 @@ CLIENT_LR=$5
 # Create the artficat directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" "Run2" )
+RUN_NAMES=( "Run1" "Run2" "Run3" )
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -47,7 +47,27 @@ for RUN_NAME in "${RUN_NAMES[@]}";
 do
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
-    mkdir "${RUN_DIR}"
+    echo "Starting Run and logging artifcats at ${RUN_DIR}"
+    if [ -d "${RUN_DIR}" ]
+    then
+        # Directory already exists, we check if the done.out file exists
+        if [ -f "${RUN_DIR}done.out" ]
+        then
+            # Done file already exists so we skip this run
+            echo "Run already completed. Skipping Run."
+            continue
+        else
+            # Done file doesn't exists (assume pre-emption happened)
+            # Delete the partially finised contents and start over
+            echo "Run did not finished correctly. Re-running."
+            rm -r "${RUN_DIR}"
+            mkdir "${RUN_DIR}"
+        fi
+    else
+        # Directory doesn't exist yet, so we create it.
+        echo "Run directory does not exist. Creating it."
+        mkdir "${RUN_DIR}"
+    fi
 
     SERVER_OUTPUT_FILE="${RUN_DIR}server.out"
 
@@ -87,7 +107,8 @@ do
     echo "FL Processes Running"
 
     wait
-
+    # Create a file that verifies that the Run concluded properly
+    touch "${RUN_DIR}done.out"
     echo "Finished FL Processes"
 
 done
