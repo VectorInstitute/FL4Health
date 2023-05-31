@@ -34,6 +34,7 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str) -> None:
         test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metrics = []
+        server_test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             local_model = load_local_model(run_folder_dir, client_number)
             local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
@@ -51,6 +52,7 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str) -> None:
                 f"Client Number {client_number}, Run folder: {run_folder_dir}: "
                 f"Server Model Test Performance: {server_run_metric}",
             )
+            server_test_metrics.append(server_run_metric)
 
             all_local_test_metrics[run_folder_dir] += local_run_metric / NUM_CLIENTS
             all_server_test_metrics[run_folder_dir] += server_run_metric / NUM_CLIENTS
@@ -60,6 +62,12 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str) -> None:
         log(INFO, f"Client {client_number} Model St. Dev. Test Performance on own Data: {std_test_metric}")
         test_results[f"client_{client_number}_model_local_avg"] = avg_test_metric
         test_results[f"client_{client_number}_model_local_std"] = std_test_metric
+
+        avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(server_test_metrics)
+        log(INFO, f"Server model Average Test Performance on Client {client_number} Data: {avg_test_metric}")
+        log(INFO, f"Server model St. Dev. Test Performance on Client {client_number} Data{std_test_metric}")
+        test_results[f"server_model_client_{client_number}_avg"] = avg_server_test_local_metric
+        test_results[f"server_model_client_{client_number}_std"] = std_server_test_local_metric
 
     all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_local_test_metrics.values()))
     test_results["all_local_model_test_metric_avg"] = all_avg_test_metric

@@ -92,6 +92,22 @@ class FedIsic2019FedProxClient(FedProxClient):
             metric_values,
         )
 
+    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        if not self.initialized:
+            self.setup_client(config)
+
+        self.set_parameters(parameters, config)
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        meter = AccumulationMeter(self.metrics, "val_meter")
+        loss, metric_values = self.validate(current_server_round, meter)
+        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
+        # calculation results.
+        return (
+            loss,
+            self.num_examples["validation_set"],
+            metric_values,
+        )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")

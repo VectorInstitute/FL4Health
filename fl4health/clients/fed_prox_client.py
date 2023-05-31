@@ -72,7 +72,6 @@ class FedProxClient(NumpyFlClient):
             self.setup_client(config)
 
         meter = AverageMeter(self.metrics, "train_meter")
-
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
@@ -92,7 +91,8 @@ class FedProxClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        loss, metric_values = self.validate(current_server_round)
+        meter = AverageMeter(self.metrics, "val_meter")
+        loss, metric_values = self.validate(current_server_round, meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -210,9 +210,8 @@ class FedProxClient(NumpyFlClient):
         # Return final training metrics
         return metrics
 
-    def validate(self, current_server_round: int) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        meter = AverageMeter(self.metrics, "val_meter")
         loss_dict = {"val_vanilla_loss": 0.0, "val_proximal_loss": 0.0, "val_total_loss": 0.0}
 
         with torch.no_grad():
