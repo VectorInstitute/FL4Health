@@ -19,7 +19,7 @@ class ParameterExchangerWithControlVariates(ParameterExchangerWithPacking):
         # Ensure that the packed parameters is even as a sanity check. Model paramers and control variates have same
         # size.
         assert len(packed_parameters) % 2 == 0
-        split_size = len(packed_parameters) % 2
+        split_size = len(packed_parameters) // 2
         return packed_parameters[:split_size], packed_parameters[split_size:]
 
 
