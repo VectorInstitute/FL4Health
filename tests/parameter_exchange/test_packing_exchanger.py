@@ -32,6 +32,9 @@ def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> No
 
     unpacked_model_weights, unpacked_control_variates = exchanger.unpack_parameters(packed_params)
 
+    assert len(unpacked_model_weights) == len(model_weights)
+    assert len(unpacked_control_variates) == len(control_variates)
+
     for model_weight, unpacked_model_weight in zip(model_weights, unpacked_model_weights):
         assert model_weight.size == unpacked_model_weight.size
 
