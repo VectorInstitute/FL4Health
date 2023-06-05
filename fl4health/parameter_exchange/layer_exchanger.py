@@ -1,9 +1,10 @@
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config, NDArrays, Scalar
 
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithLayerNames
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 
 
@@ -28,3 +29,22 @@ class FixedLayerExchanger(ParameterExchanger):
         for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
             current_state[layer_name] = torch.tensor(layer_parameters)
         model.load_state_dict(current_state, strict=True)
+
+
+class NormThresholdLayerExchanger(ParameterExchangerWithLayerNames):
+    def filter_layers(self, model: nn.Module, threshold: Scalar) -> Tuple[NDArrays, List[str]]:
+        names = []
+        layers_to_transfer = []
+        for layer_name, layer_param in model.state_dict().items():
+            layer_norm = torch.norm(layer_param)
+            if layer_norm >= threshold:
+                layers_to_transfer.append(layer_param.cpu().numpy())
+                names.append(layer_name)
+
+        return layers_to_transfer, names
+
+    def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
+        assert config is not None
+        threshold = Dict(config)["threshold"]
+        layers_to_transfer, names = self.filter_layers(model, threshold)
+        return self.pack_parameters(layers_to_transfer, names)

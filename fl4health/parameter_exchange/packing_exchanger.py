@@ -1,7 +1,9 @@
-from typing import Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
-from flwr.common.typing import List, NDArrays
+import torch
+import torch.nn as nn
+from flwr.common.typing import Config, List, NDArrays
 
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
@@ -32,7 +34,7 @@ class ParameterExchangerWithClippingBit(ParameterExchangerWithPacking):
         return model_parameters, clipping_bound
 
 
-class ParameterExchangerWithNames(ParameterExchangerWithPacking):
+class ParameterExchangerWithLayerNames(ParameterExchangerWithPacking):
     def pack_parameters(self, model_weights: NDArrays, weights_names: Union[NDArrays, float, List[str]]) -> NDArrays:
         return model_weights + [np.array(weights_names)]
 
@@ -41,3 +43,11 @@ class ParameterExchangerWithNames(ParameterExchangerWithPacking):
         model_parameters = packed_parameters[:split_size]
         param_names = packed_parameters[split_size:][0].tolist()
         return model_parameters, param_names
+
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+        current_state = model.state_dict()
+        # update the correct layers to new parameters
+        layer_params, layer_names = self.unpack_parameters(parameters)
+        for layer_name, layer_param in zip(layer_names, layer_params):
+            current_state[layer_name] = torch.tensor(layer_param)
+        model.load_state_dict(current_state, strict=True)
