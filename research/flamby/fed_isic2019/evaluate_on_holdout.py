@@ -130,14 +130,13 @@ if __name__ == "__main__":
         help="Path to write the evaluation results file",
         required=True,
     )
-    args = parser.parse_args()
     parser.add_argument(
         "--eval_global_model",
         action="store_true",
-        type=str,
         help="boolean to indicate whether to search for and evaluate a server model in addition to client models",
-        required=True,
     )
+
+    args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
     log(INFO, f"Dataset Directory: {args.dataset_dir}")
     log(INFO, f"Eval Write Path: {args.eval_write_path}")
