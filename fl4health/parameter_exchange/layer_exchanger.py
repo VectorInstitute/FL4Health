@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -31,20 +31,49 @@ class FixedLayerExchanger(ParameterExchanger):
         model.load_state_dict(current_state, strict=True)
 
 
-class NormThresholdLayerExchanger(ParameterExchangerWithLayerNames):
-    def filter_layers(self, model: nn.Module, threshold: Scalar) -> Tuple[NDArrays, List[str]]:
-        names = []
-        layers_to_transfer = []
-        for layer_name, layer_param in model.state_dict().items():
-            layer_norm = torch.norm(layer_param)
-            if layer_norm >= threshold:
-                layers_to_transfer.append(layer_param.cpu().numpy())
-                names.append(layer_name)
+class NormDriftLayerExchanger(ParameterExchangerWithLayerNames):
+    def __init__(self, recent_model: nn.Module, threshold: Scalar) -> None:
+        """
+        self.recent_model represents each client's local model at the beginning of each round of training.
+        In this particular layer exchanger, self.recent_model is used to select
+        the parameters that after local training drift away (in l2 norm) from
+        the parameters of self.recent_model beyond a certain threshold.
+        """
+        self.recent_model = recent_model
+        self.threshold = threshold
 
-        return layers_to_transfer, names
+    def filter_layers(self, model: nn.Module) -> Tuple[NDArrays, List[str]]:
+        """
+        Return those layers of model that deviate (in l2 norm) away from corresponding layers of
+        self.recent_model by at least self.threshold.
+        """
+        layer_names = []
+        layers_to_transfer = []
+        for layer_name in model.state_dict():
+            layer_param = model.state_dict()[layer_name]
+            layer_param_past = self.recent_model.state_dict()[layer_name]
+            drift_norm = torch.norm(layer_param - layer_param_past)
+            if drift_norm >= self.threshold:
+                layers_to_transfer.append(layer_param.cpu().numpy())
+                layer_names.append(layer_name)
+        return layers_to_transfer, layer_names
+
+    def update_threshold(self, new_threshold: Scalar) -> None:
+        self.threshold = new_threshold
 
     def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
-        assert config is not None
-        threshold = Dict(config)["threshold"]
-        layers_to_transfer, names = self.filter_layers(model, threshold)
-        return self.pack_parameters(layers_to_transfer, names)
+        layers_to_transfer, layer_names = self.filter_layers(model)
+        return self.pack_parameters(layers_to_transfer, layer_names)
+
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+        # Whenever a client pulls model parameters from the server,
+        # update the self.recent_model by those parameters as well
+        current_state = model.state_dict()
+        new_recent_model_state = self.recent_model.state_dict()
+        # update the correct layers to new parameters
+        layer_params, layer_names = self.unpack_parameters(parameters)
+        for layer_name, layer_param in zip(layer_names, layer_params):
+            current_state[layer_name] = torch.tensor(layer_param)
+            new_recent_model_state[layer_name] = torch.tensor(layer_param)
+        model.load_state_dict(current_state, strict=True)
+        self.recent_model.load_state_dict(new_recent_model_state, strict=True)

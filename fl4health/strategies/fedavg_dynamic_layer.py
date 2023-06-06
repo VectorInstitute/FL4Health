@@ -136,13 +136,16 @@ class FedAvgDynamicLayer(FedAvgSampling):
 
     def pack_parameters(self, model_weights: NDArrays, weights_names: List[str]) -> NDArrays:
         """
-        Extends parameter list to include model weights and server control variates.
+        Extends parameter list to include model weights and their names.
         """
         return model_weights + [np.array(weights_names)]
 
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
-        Simple unweighted average to aggregate params. Consistent with paper.
+        Results consists of the layer weights (and their names) sent by clients
+        who participated in this round of training.
+        Since each client can send an arbitrary subset of layers,
+        the aggregate performs weighted averaging for each layer separately.
         """
         # Calculate the total number of examples used during training
         # and unpack layer weights with their corresponding names

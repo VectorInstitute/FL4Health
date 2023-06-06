@@ -39,6 +39,10 @@ class ParameterExchangerWithLayerNames(ParameterExchangerWithPacking):
         return model_weights + [np.array(weights_names)]
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, List[str]]:
+        """
+        Assumption: packed_parameters is a list containing model parameters followed by an NDArray that contains the
+        corresponding names of those parameters.
+        """
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
         param_names = packed_parameters[split_size:][0].tolist()
