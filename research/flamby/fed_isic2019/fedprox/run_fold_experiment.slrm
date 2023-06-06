@@ -97,7 +97,7 @@ do
             continue
         else
             # Done file doesn't exists (assume pre-emption happened)
-            # Delete the partially finised contents and start over
+            # Delete the partially finished contents and start over
             echo "Run did not finished correctly. Re-running."
             rm -r "${RUN_DIR}"
             mkdir "${RUN_DIR}"

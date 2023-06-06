@@ -154,7 +154,7 @@ if __name__ == "__main__":
     client = CifarClient(data_path, DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
-    # Run further local training after the federated learning has finised
+    # Run further local training after the federated learning has finished
     local_train_accuracy = train(client.model, client.train_loader, 2, client.device)
     # Finally, we evaluate the model
     local_val_loss, local_val_accuracy = validate(client.model, client.validation_loader, client.device)
