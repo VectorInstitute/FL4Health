@@ -84,8 +84,8 @@ class FedAvgDynamicLayer(FedAvgSampling):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
-        self.learning_rate = learning_rate
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+        # self.learning_rate = learning_rate
+        # self.server_model_weights = parameters_to_ndarrays(initial_parameters)
 
     def aggregate_fit(
         self,
