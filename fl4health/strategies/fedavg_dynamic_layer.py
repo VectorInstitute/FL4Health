@@ -36,7 +36,6 @@ class FedAvgDynamicLayer(FedAvgSampling):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        learning_rate: float = 1.0
     ) -> None:
         """
         A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
