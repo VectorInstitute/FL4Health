@@ -85,8 +85,9 @@ class FedAvgDynamicLayer(FedAvgSampling):
                 if name not in names_to_layers:
                     names_to_layers[name] = layer * num_examples
                     total_num_examples[name] = num_examples
-                names_to_layers[name] += layer * num_examples
-                total_num_examples[name] += num_examples
+                else:
+                    names_to_layers[name] += layer * num_examples
+                    total_num_examples[name] += num_examples
 
         name_to_layers_aggregated = {
             name_key: names_to_layers[name_key] / total_num_examples[name_key] for name_key in names_to_layers

@@ -24,15 +24,15 @@ def test_aggregate() -> None:
 
     expected_result = {
         "layer1": (client_train_sizes[0] * np.ones((3, 3)) + client_train_sizes[2] * np.full((3, 3), 3))
-        / total_train_size,
+        / (client_train_sizes[0] + client_train_sizes[2]),
         "layer2": (
             client_train_sizes[0] * np.ones((4, 4))
             + client_train_sizes[1] * np.full((4, 4), 2)
             + client_train_sizes[3] * np.full((4, 4), 4)
         )
-        / total_train_size,
-        "layer3": client_train_sizes[2] / total_train_size * np.full((5, 5), 3),
-        "layer4": client_train_sizes[3] / total_train_size * np.full((6, 6), 4),
+        / (client_train_sizes[0] + client_train_sizes[1] + client_train_sizes[3]),
+        "layer3": np.full((5, 5), 3),
+        "layer4": np.full((6, 6), 4),
     }
 
     assert expected_result.keys() == aggregate_result.keys()
