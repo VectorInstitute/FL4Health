@@ -1,15 +1,8 @@
 from logging import WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import (
-    MetricsAggregationFn,
-    NDArray,
-    NDArrays,
-    Parameters,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.common import NDArray, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
@@ -18,73 +11,10 @@ from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
 class FedAvgDynamicLayer(FedAvgSampling):
-    def __init__(
-        self,
-        *,
-        fraction_fit: float = 1.0,
-        fraction_evaluate: float = 1.0,
-        min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        accept_failures: bool = True,
-        initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-    ) -> None:
-        """
-        A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
-        any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
-
-        Parameters
-        ----------
-        fraction_fit : float, optional
-            Fraction of clients used during training. Defaults to 1.0.
-        fraction_evaluate : float, optional
-            Fraction of clients used during validation. Defaults to 1.0.
-        min_available_clients : int, optional
-            Minimum number of total clients in the system. Defaults to 2.
-        evaluate_fn : Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]]
-            ]
-        ]
-            Optional function used for validation. Defaults to None.
-        on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure training. Defaults to None.
-        on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure validation. Defaults to None.
-        accept_failures : bool, optional
-            Whether or not accept rounds containing failures. Defaults to True.
-        initial_parameters : Parameters
-            Initial global model parameters.
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        learning_rate: Optional[float]
-            Learning rate for server side optimization.
-        """
-        super().__init__(
-            fraction_fit=fraction_fit,
-            fraction_evaluate=fraction_evaluate,
-            min_available_clients=min_available_clients,
-            evaluate_fn=evaluate_fn,
-            on_fit_config_fn=on_fit_config_fn,
-            on_evaluate_config_fn=on_evaluate_config_fn,
-            accept_failures=accept_failures,
-            initial_parameters=initial_parameters,
-            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        )
-        # self.learning_rate = learning_rate
-        # self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+    """
+    A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
+    any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
+    """
 
     def aggregate_fit(
         self,
@@ -146,18 +76,20 @@ class FedAvgDynamicLayer(FedAvgSampling):
         Since each client can send an arbitrary subset of layers,
         the aggregate performs weighted averaging for each layer separately.
         """
-        # Calculate the total number of examples used during training
-        # and unpack layer weights with their corresponding names
-        num_examples_total = sum([num_examples for _, num_examples in results])
+        names_to_layers = {}
+        total_num_examples = {}
 
-        name_to_weights = {}
+        for packed_layers, num_examples in results:
+            layers, names = self.unpack_parameters(packed_layers)
+            for layer, name in zip(layers, names):
+                if name not in names_to_layers:
+                    names_to_layers[name] = layer * num_examples
+                    total_num_examples[name] = num_examples
+                names_to_layers[name] += layer * num_examples
+                total_num_examples[name] += num_examples
 
-        for packed_weights, num_examples in results:
-            weights, names = self.unpack_parameters(packed_weights)
-            for weight, name in zip(weights, names):
-                if name not in name_to_weights:
-                    name_to_weights[name] = weight * num_examples / num_examples_total
-                else:
-                    name_to_weights[name] += weight * num_examples / num_examples_total
+        name_to_layers_aggregated = {
+            name_key: names_to_layers[name_key] / total_num_examples[name_key] for name_key in names_to_layers
+        }
 
-        return name_to_weights
+        return name_to_layers_aggregated
