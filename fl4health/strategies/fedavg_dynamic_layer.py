@@ -1,5 +1,6 @@
+from collections import defaultdict
 from logging import WARNING
-from typing import Dict, List, Optional, Tuple, Union
+from typing import DefaultDict, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from flwr.common import NDArray, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
@@ -76,21 +77,17 @@ class FedAvgDynamicLayer(FedAvgSampling):
         Since each client can send an arbitrary subset of layers,
         the aggregate performs weighted averaging for each layer separately.
         """
-        names_to_layers = {}
-        total_num_examples = {}
+        names_to_layers: DefaultDict[str, List] = defaultdict(list)
+        total_num_examples: DefaultDict[str, int] = defaultdict(int)
 
         for packed_layers, num_examples in results:
             layers, names = self.unpack_parameters(packed_layers)
             for layer, name in zip(layers, names):
-                if name not in names_to_layers:
-                    names_to_layers[name] = layer * num_examples
-                    total_num_examples[name] = num_examples
-                else:
-                    names_to_layers[name] += layer * num_examples
-                    total_num_examples[name] += num_examples
+                names_to_layers[name].append(layer * num_examples)
+                total_num_examples[name] += num_examples
 
         name_to_layers_aggregated = {
-            name_key: names_to_layers[name_key] / total_num_examples[name_key] for name_key in names_to_layers
+            name_key: sum(names_to_layers[name_key]) / total_num_examples[name_key] for name_key in names_to_layers
         }
 
         return name_to_layers_aggregated
