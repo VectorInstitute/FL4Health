@@ -7,8 +7,8 @@ from flamby.datasets.fed_isic2019 import BATCH_SIZE, NUM_CLIENTS, FedIsic2019
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
+from fl4health.utils.metrics import BalancedAccuracy
 from research.flamby.fed_isic2019.utils import (
-    FedIsic2019Metric,
     evaluate_model,
     get_all_run_folders,
     get_metric_avg_std,
@@ -22,7 +22,7 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_global_
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
-    metrics = [FedIsic2019Metric()]
+    metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
@@ -86,7 +86,6 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_global_
         log(INFO, f"Std. Dev. Server Model Test Performance Over all clients: {all_server_std_test_metric}")
 
     if eval_global_model:
-
         # Next we test server checkpointed best model on pooled test data
         pooled_test_dataset = FedIsic2019(center=0, train=False, pooled=True)
         pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)

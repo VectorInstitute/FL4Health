@@ -5,21 +5,12 @@ from typing import Dict, List, Sequence, Tuple
 import numpy as np
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import Baseline, metric
-from flwr.common.typing import Scalar
+from flamby.datasets.fed_isic2019 import Baseline
 from torch.utils.data import DataLoader
 
 from fl4health.utils.metrics import AccumulationMeter, Metric
 
 warnings.filterwarnings("ignore", category=UserWarning)
-
-
-class FedIsic2019Metric(Metric):
-    def __init__(self, name: str = "FedIsic2019_balanced_accuracy"):
-        super().__init__(name)
-
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
-        return metric(target.cpu().detach(), pred.cpu().detach())
 
 
 def get_all_run_folders(artifact_dir: str) -> List[str]:

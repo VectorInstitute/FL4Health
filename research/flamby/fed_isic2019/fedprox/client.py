@@ -16,8 +16,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import AccumulationMeter, Metric
-from research.flamby.fed_isic2019.utils import FedIsic2019Metric
+from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
 class FedIsic2019FedProxClient(FedProxClient):
@@ -160,7 +159,7 @@ if __name__ == "__main__":
     client = FedIsic2019FedProxClient(
         args.learning_rate,
         args.mu,
-        [FedIsic2019Metric()],
+        [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

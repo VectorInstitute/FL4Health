@@ -101,16 +101,6 @@ class FedProxClient(NumpyFlClient):
             metric_values,
         )
 
-    def _maybe_log_metrics(self, to_log: Dict[str, Any], losses: Dict[str, float], metrics: Dict[str, Scalar]) -> None:
-        if self.wandb_reporter:
-            to_log.update(losses)
-            to_log.update(metrics)
-            self.wandb_reporter.report_metrics(to_log)
-
-    def _maybe_checkpoint(self, comparison_metric: float) -> None:
-        if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
-
     def _handle_reporting(
         self,
         to_log: Dict[str, Any],
@@ -130,7 +120,9 @@ class FedProxClient(NumpyFlClient):
             INFO,
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
-        self._maybe_log_metrics(to_log, loss_dict, metrics)
+        to_log.update(loss_dict)
+        to_log.update(metrics)
+        self._maybe_log_metrics(to_log)
         return metrics, loss_dict
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> FedProxTrainStepOutputs:

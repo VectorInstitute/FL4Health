@@ -14,7 +14,7 @@ Install the FL4Health requirements
 cd <fl4health_repository>
 pip install -r requirements.txt
 cd <FLamby_repository>
-pip install -e ".[all_extras]"
+pip install -e ".[all_extra]"
 ```
 
 ### Downloading the Fed ISIC 2019 Dataset

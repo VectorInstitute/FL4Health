@@ -4,19 +4,19 @@ The hyperparameter sweep performs five training runs for each pair of parameters
 
 To run this on a particular collection of five runs (i.e. for fixed set of hyperparameters) the command
 ``` bash
-python -m research.flamby.fed_isic2019.fedprox.evaluate_on_holdout.py \
+python -m research.flamby.fed_isic2019.evaluate_on_holdout \
     --artifact_dir path/to/runs/to/analyze/ \
     --dataset_dir path/to/fedisic/datasets/ \
-    --eval_write_path path/to/write/eval/results/to.txt
+    --eval_write_path path/to/write/eval/results/to.txt \
     --eval_global_model
 ```
 
 An example command is
 ``` bash
-python -m research.flamby.fed_isic2019.fedprox.evaluate_on_holdout.py \
+python -m research.flamby.fed_isic2019.evaluate_on_holdout \
     --artifact_dir research/flamby/fed_isic2019/fedprox/hp_sweep_results/mu_0.01_lr_0.0001/ \
     --dataset_dir /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-    --eval_write_path research/flamby/fed_isic2019/fedprox/test_eval_results.txt
+    --eval_write_path research/flamby/fed_isic2019/fedprox/test_eval_results.txt \
     --eval_global_model
 
 ```

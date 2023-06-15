@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Sequence
 
+import numpy as np
 import torch
 from flwr.common.typing import Scalar
+from sklearn import metrics
 
 
 class Metric(ABC):
@@ -15,7 +17,7 @@ class Metric(ABC):
         self.name = name
 
     @abstractmethod
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         raise NotImplementedError
 
     def __str__(self) -> str:
@@ -26,12 +28,25 @@ class Accuracy(Metric):
     def __init__(self, name: str = "accuracy"):
         super().__init__(name)
 
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
-        assert pred.shape[0] == target.shape[0]
-        pred = torch.argmax(pred, 1)
-        correct = (pred == target).sum().item()
-        accuracy = correct / pred.shape[0]
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        preds = torch.argmax(logits, 1)
+        correct = (preds == target).sum().item()
+        accuracy = correct / preds.shape[0]
         return accuracy
+
+
+class BalancedAccuracy(Metric):
+    def __init__(self, name: str = "balanced_accuracy"):
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        target = target.cpu().detach()
+        logits = logits.cpu().detach()
+        y_true = target.reshape(-1)
+        preds = np.argmax(logits, axis=1)
+        return metrics.balanced_accuracy_score(y_true, preds)
 
 
 class Meter(ABC):
