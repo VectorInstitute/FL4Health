@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import reduce
 from logging import WARNING
 from typing import DefaultDict, Dict, List, Optional, Tuple, Union
 
@@ -77,7 +78,7 @@ class FedAvgDynamicLayer(FedAvgSampling):
         Since each client can send an arbitrary subset of layers,
         the aggregate performs weighted averaging for each layer separately.
         """
-        names_to_layers: DefaultDict[str, List] = defaultdict(list)
+        names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_examples: DefaultDict[str, int] = defaultdict(int)
 
         for packed_layers, num_examples in results:
@@ -87,7 +88,8 @@ class FedAvgDynamicLayer(FedAvgSampling):
                 total_num_examples[name] += num_examples
 
         name_to_layers_aggregated = {
-            name_key: sum(names_to_layers[name_key]) / total_num_examples[name_key] for name_key in names_to_layers
+            name_key: reduce(np.add, names_to_layers[name_key]) / total_num_examples[name_key]
+            for name_key in names_to_layers
         }
 
         return name_to_layers_aggregated
