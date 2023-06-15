@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import List
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -22,7 +22,7 @@ class MnistFedProxClient(FedProxClient):
     def __init__(
         self,
         data_path: Path,
-        metrics: List[Metric],
+        metrics: Sequence[Metric],
         device: torch.device,
     ) -> None:
         super().__init__(data_path=data_path, metrics=metrics, device=device)

@@ -88,7 +88,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(),
     )
 
-    # Strip out the reporting configuration variables.
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
     server = FlServer(client_manager, strategy, wandb_reporter)

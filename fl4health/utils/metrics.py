@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Sequence
 
+import numpy as np
 import torch
 from flwr.common.typing import Scalar
+from sklearn import metrics
 
 
 class Metric(ABC):
@@ -15,7 +17,7 @@ class Metric(ABC):
         self.name = name
 
     @abstractmethod
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         raise NotImplementedError
 
     def __str__(self) -> str:
@@ -26,15 +28,81 @@ class Accuracy(Metric):
     def __init__(self, name: str = "accuracy"):
         super().__init__(name)
 
-    def __call__(self, pred: torch.Tensor, target: torch.Tensor) -> Scalar:
-        assert pred.shape[0] == target.shape[0]
-        pred = torch.argmax(pred, 1)
-        correct = (pred == target).sum().item()
-        accuracy = correct / pred.shape[0]
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        preds = torch.argmax(logits, 1)
+        correct = (preds == target).sum().item()
+        accuracy = correct / preds.shape[0]
         return accuracy
 
 
-class AverageMeter:
+class BalancedAccuracy(Metric):
+    def __init__(self, name: str = "balanced_accuracy"):
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        target = target.cpu().detach()
+        logits = logits.cpu().detach()
+        y_true = target.reshape(-1)
+        preds = np.argmax(logits, axis=1)
+        return metrics.balanced_accuracy_score(y_true, preds)
+
+
+class Meter(ABC):
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        self.metrics: Sequence[Metric] = metrics
+        self.name: str = name
+
+    @abstractmethod
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        # Update the meter with batch input and target values
+        raise NotImplementedError
+
+    @abstractmethod
+    def compute(self) -> Dict[str, Scalar]:
+        # Compute final metric representations based on the underlying metrics provided to the meter
+        raise NotImplementedError
+
+    def clear(self) -> None:
+        raise NotImplementedError
+
+
+class AccumulationMeter(Meter):
+    """
+    This meter class is used to for metrics that require accumulation of input and target values. That is, they are not
+    compatible with computing via weighted averages.
+    """
+
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        super().__init__(metrics, name)
+        self.accumulated_inputs: List[torch.Tensor] = []
+        self.accumulated_targets: List[torch.Tensor] = []
+
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        self.accumulated_inputs.append(input)
+        self.accumulated_targets.append(target)
+
+    def compute(self) -> Dict[str, Scalar]:
+        metric_values = []
+        stacked_inputs = torch.cat(self.accumulated_inputs)
+        stacked_targets = torch.cat(self.accumulated_targets)
+        for metric in self.metrics:
+            metric_values.append(metric(stacked_inputs, stacked_targets))
+
+        results: Dict[str, Scalar] = {
+            f"{self.name}_{str(metric)}".lstrip("_"): metric_value
+            for metric, metric_value in zip(self.metrics, metric_values)
+        }
+
+        return results
+
+    def clear(self) -> None:
+        self.accumulated_inputs = []
+        self.accumulated_targets = []
+
+
+class AverageMeter(Meter):
     """
     class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
     The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
@@ -43,12 +111,10 @@ class AverageMeter:
     current values.
     """
 
-    def __init__(self, metrics: List[Metric], name: str = "") -> None:
-        self.metrics: List[Metric] = metrics
-        self.name: str = name
-
+    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
+        super().__init__(metrics, name)
         self.metric_values_history: List[List[Scalar]] = [[] for _ in range(len(self.metrics))]
-        self.counts: List = []
+        self.counts: List[int] = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
         """
@@ -77,3 +143,7 @@ class AverageMeter:
         }
 
         return results
+
+    def clear(self) -> None:
+        self.metric_values_history = [[] for _ in range(len(self.metrics))]
+        self.counts = []

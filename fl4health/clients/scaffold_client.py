@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -22,7 +22,7 @@ class ScaffoldClient(NumpyFlClient):
     Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
     """
 
-    def __init__(self, data_path: Path, metrics: List[Metric], device: torch.device) -> None:
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper

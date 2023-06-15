@@ -50,12 +50,12 @@ class BestMetricTorchCheckpointer(TorchCheckpointer):
     def maybe_checkpoint(self, model: nn.Module, comparison_metric: Optional[float] = None) -> None:
         assert comparison_metric is not None
         if self._should_checkpoint(comparison_metric):
-            self.best_metric = comparison_metric
             log(
                 INFO,
                 f"Checkpointing the model: Current metric ({comparison_metric}) "
                 f"{self.comparison_str} Best metric ({self.best_metric})",
             )
+            self.best_metric = comparison_metric
             torch.save(model, self.best_checkpoint_path)
         else:
             log(

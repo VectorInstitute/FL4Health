@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -17,7 +17,7 @@ class ApflClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
-        metrics: List[Metric],
+        metrics: Sequence[Metric],
         device: torch.device,
     ) -> None:
         super().__init__(data_path, device)

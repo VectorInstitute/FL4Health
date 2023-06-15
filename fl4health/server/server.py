@@ -7,6 +7,7 @@ from flwr.server.history import History
 from flwr.server.server import Server
 from flwr.server.strategy import Strategy
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -22,9 +23,11 @@ class FlServer(Server):
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
+        self.checkpointer = checkpointer
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         history = super().fit(num_rounds, timeout)

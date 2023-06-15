@@ -153,3 +153,7 @@ settings.json
 
 **/wandb/**
 **/fl_wandb_logs/**
+
+# model artifacts
+
+**/*.pkl
