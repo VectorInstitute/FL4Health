@@ -6,6 +6,7 @@ import torch
 from flwr.common.typing import Scalar
 from sklearn import metrics
 
+
 class Metric(ABC):
     """
     Abstact class to be extended to create metric functions used to evaluate the
@@ -58,9 +59,9 @@ class ROC_AUC(Metric):
         prob = prob.cpu().detach()
         target = target.cpu().detach()
         y_true = target.reshape(-1)
-        return metrics.roc_auc_score(y_true, prob, average = 'weighted', multi_class='ovr')
+        return metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
 
-   
+
 class F1(Metric):
     def __init__(self, name: str = "F1 score"):
         super().__init__(name)
@@ -71,10 +72,9 @@ class F1(Metric):
         logits = logits.cpu().detach()
         y_true = target.reshape(-1)
         preds = np.argmax(logits, axis=1)
-        return metrics.f1_score(y_true, preds, average = 'weighted')
+        return metrics.f1_score(y_true, preds, average="weighted")
 
-        
-  
+
 class Meter(ABC):
     def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
         self.metrics: Sequence[Metric] = metrics

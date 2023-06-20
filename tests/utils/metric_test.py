@@ -1,8 +1,7 @@
 import pytest
-import unittest
 import torch
 
-from fl4health.utils.metrics import AccumulationMeter, Accuracy, AverageMeter, BalancedAccuracy, ROC_AUC, F1
+from fl4health.utils.metrics import F1, ROC_AUC, AccumulationMeter, Accuracy, AverageMeter, BalancedAccuracy
 
 
 def test_accuracy_metric() -> None:
@@ -128,7 +127,7 @@ def test_accumulation_meter() -> None:
 
 
 def test_ROC_AUC_metric() -> None:
-    
+
     metric = ROC_AUC()
 
     logits1 = torch.Tensor(
@@ -144,7 +143,7 @@ def test_ROC_AUC_metric() -> None:
     target1 = torch.Tensor([0, 1, 2, 0, 1, 2])
 
     assert metric(logits1, target1) == 0.75
-    
+
     logits2 = torch.Tensor(
         [
             [0.75, 0.20, 0.05],
@@ -159,7 +158,7 @@ def test_ROC_AUC_metric() -> None:
 
 
 def test_F1_metric() -> None:
-    
+
     metric = F1()
 
     logits1 = torch.Tensor(
@@ -171,7 +170,6 @@ def test_F1_metric() -> None:
             [0.5, 3.0, 1.5],
         ]
     )
-    target1 = torch.Tensor([0, 0, 2, 0,2])
+    target1 = torch.Tensor([0, 0, 2, 0, 2])
 
     assert metric(logits1, target1) == 0.68
-    

@@ -34,7 +34,7 @@ def main(hp_sweep_dir: str) -> None:
         for run_folder in run_folders:
             run_loss = get_weighted_loss_from_server_log(run_folder)
             hp_losses.append(run_loss)
-        current_avg_loss = np.mean(hp_losses)
+        current_avg_loss = float(np.mean(hp_losses))
         if best_avg_loss is None or current_avg_loss <= best_avg_loss:
             log(INFO, f"Current Loss: {current_avg_loss} is lower than Best Loss: {best_avg_loss}")
             log(INFO, f"Best Folder: {hp_folder}, Previous Best: {best_folder}")
