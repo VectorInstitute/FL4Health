@@ -29,7 +29,7 @@ class MnistScaffoldClient(ScaffoldClient):
         learning_rate_local = self.narrow_config_type(config, "learning_rate_local", float)
 
         self.learning_rate_local = learning_rate_local
-        self.model: nn.Module = MnistNet()
+        self.model: nn.Module = MnistNet().to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
