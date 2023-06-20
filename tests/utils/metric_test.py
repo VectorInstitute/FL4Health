@@ -1,7 +1,8 @@
 import pytest
+import unittest
 import torch
 
-from fl4health.utils.metrics import AccumulationMeter, Accuracy, AverageMeter, BalancedAccuracy
+from fl4health.utils.metrics import AccumulationMeter, Accuracy, AverageMeter, BalancedAccuracy, ROC_AUC, F1
 
 
 def test_accuracy_metric() -> None:
@@ -124,3 +125,53 @@ def test_accumulation_meter() -> None:
     # Accumulating the batches together results in recalls of (1.0, 1/5, 5/7) for 0, 1, 2 classes, these are then
     # averaged over the number of classes giving the correct balanced accuracy for the whole
     assert pytest.approx(acc_m_balanced_accuracy, abs=0.00001) == (1.0 + 1.0 / 5.0 + 5.0 / 7.0) / 3.0
+
+
+def test_ROC_AUC_metric() -> None:
+    
+    metric = ROC_AUC()
+
+    logits1 = torch.Tensor(
+        [
+            [3, 1, 2],
+            [0.88, 0.06, 0.06],
+            [0.1, 0.3, 1.2],
+            [0.9, 0.3, 0.1],
+            [3, 10, 2],
+            [1.5, 0.5, 0.5],
+        ]
+    )
+    target1 = torch.Tensor([0, 1, 2, 0, 1, 2])
+
+    assert metric(logits1, target1) == 0.75
+    
+    logits2 = torch.Tensor(
+        [
+            [0.75, 0.20, 0.05],
+            [0.08, 0.86, 0.06],
+            [0.1, 0.1, 0.8],
+        ]
+    )
+    target2 = torch.Tensor([0, 0, 2])
+    # It should raise ValueError since AUC ROC score is not defined in this case.
+    with pytest.raises(ValueError):
+        metric(logits2, target2)
+
+
+def test_F1_metric() -> None:
+    
+    metric = F1()
+
+    logits1 = torch.Tensor(
+        [
+            [3, 1, 2],
+            [0.88, 0.06, 0.06],
+            [0.1, 0.3, 1.2],
+            [0.9, 0.3, 1.1],
+            [0.5, 3.0, 1.5],
+        ]
+    )
+    target1 = torch.Tensor([0, 0, 2, 0,2])
+
+    assert metric(logits1, target1) == 0.68
+    
