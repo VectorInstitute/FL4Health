@@ -74,7 +74,7 @@ class ScaffoldClient(NumpyFlClient):
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
         # Weights and control variates updates sent to server for aggregation
         # Control variates updates sent because only client has access to previous client control variate

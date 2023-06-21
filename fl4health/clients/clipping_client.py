@@ -53,7 +53,7 @@ class NumpyClippingClient(NumpyFlClient):
         as the last entry in the NDArrays
         """
         assert self.model is not None and self.parameter_exchanger is not None
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
         clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
         return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
 

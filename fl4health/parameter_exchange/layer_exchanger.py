@@ -20,7 +20,9 @@ class FixedLayerExchanger(ParameterExchanger):
             if layer_name in self.layers_to_transfer
         ]
 
-    def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
+    def push_parameters(
+        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+    ) -> NDArrays:
         return self.apply_layer_filter(model)
 
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
@@ -60,7 +62,9 @@ class NormDriftLayerExchanger(ParameterExchangerWithLayerNames):
                 layer_names.append(layer_name)
         return layers_to_transfer, layer_names
 
-    def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
+    def push_parameters(
+        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+    ) -> NDArrays:
         layers_to_transfer, layer_names = self.filter_layers(model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
