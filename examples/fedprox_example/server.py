@@ -108,7 +108,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="config.yaml",
+        default="examples/fedprox_example/config.yaml",
     )
     parser.add_argument(
         "--server_address",

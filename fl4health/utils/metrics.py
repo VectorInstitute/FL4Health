@@ -49,6 +49,32 @@ class BalancedAccuracy(Metric):
         return metrics.balanced_accuracy_score(y_true, preds)
 
 
+class ROC_AUC(Metric):
+    def __init__(self, name: str = "ROC_AUC score"):
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        prob = torch.nn.functional.softmax(logits, dim=1)
+        prob = prob.cpu().detach()
+        target = target.cpu().detach()
+        y_true = target.reshape(-1)
+        return metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
+
+
+class F1(Metric):
+    def __init__(self, name: str = "F1 score"):
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        assert logits.shape[0] == target.shape[0]
+        target = target.cpu().detach()
+        logits = logits.cpu().detach()
+        y_true = target.reshape(-1)
+        preds = np.argmax(logits, axis=1)
+        return metrics.f1_score(y_true, preds, average="weighted")
+
+
 class Meter(ABC):
     def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
         self.metrics: Sequence[Metric] = metrics

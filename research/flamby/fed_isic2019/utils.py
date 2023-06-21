@@ -39,8 +39,8 @@ def load_global_model(run_folder_dir: str) -> Baseline:
 
 
 def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
-    mean = np.mean(metrics)
-    std = np.std(metrics, ddof=1)
+    mean = float(np.mean(metrics))
+    std = float(np.std(metrics, ddof=1))
     return mean, std
 
 

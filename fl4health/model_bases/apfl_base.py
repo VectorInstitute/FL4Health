@@ -47,7 +47,7 @@ class APFLModule(nn.Module):
             assert local_grad is not None and global_grad is not None
             dif = local_p - global_p
             grad = torch.tensor(self.alpha) * local_grad + torch.tensor(1.0 - self.alpha) * global_grad
-            grad_alpha += torch.mul(dif, grad).sum().detach().numpy()
+            grad_alpha += torch.mul(dif, grad).sum().detach().cpu().numpy()
 
         # This update constant of 0.02 is not referenced in the paper
         # but is present in the official implementation and other ones I have seen
