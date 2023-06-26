@@ -4,10 +4,11 @@ import numpy as np
 import pytest
 from flwr.common.typing import NDArrays
 
-from fl4health.parameter_exchange.packing_exchanger import (
-    ParameterExchangerWithClippingBit,
-    ParameterExchangerWithControlVariates,
-    ParameterExchangerWithLayerNames,
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import (
+    ParameterPackerWithClippingBit,
+    ParameterPackerWithControlVariates,
+    ParameterPackerWithLayerNames,
 )
 
 
@@ -19,7 +20,7 @@ def get_ndarrays(layer_sizes: List[List[int]]) -> NDArrays:
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
 def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> None:  # noqa
-    exchanger = ParameterExchangerWithControlVariates()
+    exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
     model_weights = get_ndarrays  # noqa
     control_variates = get_ndarrays  # noqa
 
@@ -48,7 +49,7 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
     model_weights = get_ndarrays  # noqa
     clipping_bit = 0.0
 
-    exchanger = ParameterExchangerWithClippingBit()
+    exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
 
     packed_params = exchanger.pack_parameters(model_weights, clipping_bit)
 
@@ -68,14 +69,14 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
 
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
-def test_parameter_exchanger_with_layer_names(get_ndarrays: NDArrays) -> None:  # noqa
+def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # noqa
 
     model_weights = get_ndarrays  # noqa
     weights_names = ["layer1", "layer2", "layer3", "layer4", "layer5", "layer6"]
 
-    exchanger = ParameterExchangerWithLayerNames()
+    packer = ParameterPackerWithLayerNames()
 
-    packed_params = exchanger.pack_parameters(model_weights, weights_names)
+    packed_params = packer.pack_parameters(model_weights, weights_names)
 
     assert len(packed_params) == len(model_weights) + 1
 
@@ -84,7 +85,7 @@ def test_parameter_exchanger_with_layer_names(get_ndarrays: NDArrays) -> None:  
     for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
         assert packed_param.size == correct_packed_param.size
 
-    unpacked_model_weights, unpacked_weights_names = exchanger.unpack_parameters(packed_params)
+    unpacked_model_weights, unpacked_weights_names = packer.unpack_parameters(packed_params)
 
     for model_weight, unpacked_model_weight in zip(model_weights, unpacked_model_weights):
         assert model_weight.size == unpacked_model_weight.size

@@ -50,9 +50,9 @@ def test_norm_drift_layer_exchange() -> None:
 
     threshold = 2
 
-    exchanger = NormDriftLayerExchanger(initial_model, threshold)
+    exchanger = NormDriftLayerExchanger(threshold)
 
-    layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange)
+    layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layers_to_exchange) == 1
     assert len(layer_names) == 1

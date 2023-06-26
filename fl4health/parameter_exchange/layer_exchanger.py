@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays, Scalar
 
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithLayerNames
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 
 
 class FixedLayerExchanger(ParameterExchanger):
@@ -33,25 +34,25 @@ class FixedLayerExchanger(ParameterExchanger):
         model.load_state_dict(current_state, strict=True)
 
 
-class NormDriftLayerExchanger(ParameterExchangerWithLayerNames):
-    def __init__(self, initial_model: nn.Module, threshold: Scalar) -> None:
+class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
+    def __init__(self, threshold: Scalar) -> None:
         """
         self.initial_model represents each client's local model at the beginning of each round of training.
         In this particular layer exchanger, self.initial_model is used to select
         the parameters that after local training drift away (in l2 norm) from
         the parameters of self.initial_model beyond a certain threshold.
         """
-        self.initial_model = initial_model
+        self.parameter_packer = ParameterPackerWithLayerNames()
         self.threshold = threshold
 
-    def filter_layers(self, model: nn.Module) -> Tuple[NDArrays, List[str]]:
+    def filter_layers(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
         """
         Return those layers of model that deviate (in l2 norm) away from corresponding layers of
         self.initial_model by at least self.threshold.
         """
         layer_names = []
         layers_to_transfer = []
-        initial_model_states = self.initial_model.state_dict()
+        initial_model_states = initial_model.state_dict()
         model_states = model.state_dict()
         for layer_name in model_states:
             layer_param = model_states[layer_name]
@@ -65,12 +66,14 @@ class NormDriftLayerExchanger(ParameterExchangerWithLayerNames):
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
-        layers_to_transfer, layer_names = self.filter_layers(model)
+        assert initial_model is not None
+        layers_to_transfer, layer_names = self.filter_layers(model, initial_model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
-        # After updating each client model with the aggregated parameters sent by the server,
-        # self.initial_model is also updated to the same parameters,
-        # but it doesn't participate in the next round of training
-        super().pull_parameters(parameters, model, config)
-        self.initial_model.load_state_dict(model.state_dict())
+        current_state = model.state_dict()
+        # update the correct layers to new parameters
+        layer_params, layer_names = self.unpack_parameters(parameters)
+        for layer_name, layer_param in zip(layer_names, layer_params):
+            current_state[layer_name] = torch.tensor(layer_param)
+        model.load_state_dict(current_state, strict=True)

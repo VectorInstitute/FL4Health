@@ -8,13 +8,13 @@ from flwr.common.logger import log
 from numpy import linalg
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithClippingBit
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 
 
 class NumpyClippingClient(NumpyFlClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
-        self.parameter_exchanger: ParameterExchangerWithClippingBit
+        self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.clipping_bound: Optional[float] = None
         self.adaptive_clipping: Optional[bool] = None
 
