@@ -17,7 +17,7 @@ class ParameterPacker(ABC, Generic[T]):
         raise NotImplementedError
 
 
-class ParameterPackerWithControlVariates(ParameterPacker):
+class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: NDArrays) -> NDArrays:
         assert not isinstance(additional_parameters, float)
         return model_weights + additional_parameters
@@ -30,7 +30,7 @@ class ParameterPackerWithControlVariates(ParameterPacker):
         return packed_parameters[:split_size], packed_parameters[split_size:]
 
 
-class ParameterPackerWithClippingBit(ParameterPacker):
+class ParameterPackerWithClippingBit(ParameterPacker[float]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: float) -> NDArrays:
         return model_weights + [np.array(additional_parameters)]
 
@@ -42,7 +42,7 @@ class ParameterPackerWithClippingBit(ParameterPacker):
         return model_parameters, clipping_bound
 
 
-class ParameterPackerWithLayerNames(ParameterPacker):
+class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
     def pack_parameters(self, model_weights: NDArrays, weights_names: List[str]) -> NDArrays:
         return model_weights + [np.array(weights_names)]
 
