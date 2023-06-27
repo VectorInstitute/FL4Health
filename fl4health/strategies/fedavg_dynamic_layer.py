@@ -1,14 +1,22 @@
 from collections import defaultdict
 from functools import reduce
 from logging import WARNING
-from typing import DefaultDict, Dict, List, Optional, Tuple, Union
+from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import NDArray, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import (
+    MetricsAggregationFn,
+    NDArray,
+    NDArrays,
+    Parameters,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
 
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
@@ -17,6 +25,39 @@ class FedAvgDynamicLayer(FedAvgSampling):
     A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
     any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
     """
+
+    def __init__(
+        self,
+        *,
+        fraction_fit: float = 1.0,
+        fraction_evaluate: float = 1.0,
+        min_available_clients: int = 2,
+        evaluate_fn: Optional[
+            Callable[
+                [int, NDArrays, Dict[str, Scalar]],
+                Optional[Tuple[float, Dict[str, Scalar]]],
+            ]
+        ] = None,
+        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        accept_failures: bool = True,
+        initial_parameters: Optional[Parameters] = None,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+    ) -> None:
+        super().__init__(
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_available_clients=min_available_clients,
+            evaluate_fn=evaluate_fn,
+            on_fit_config_fn=on_fit_config_fn,
+            on_evaluate_config_fn=on_evaluate_config_fn,
+            accept_failures=accept_failures,
+            initial_parameters=initial_parameters,
+            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+        )
+        self.parameter_packer = ParameterPackerWithLayerNames()
 
     def aggregate_fit(
         self,
@@ -44,7 +85,7 @@ class FedAvgDynamicLayer(FedAvgSampling):
             weights_names.append(name)
             weights.append(aggregated_params[name])
 
-        parameters = self.pack_parameters(weights, weights_names)
+        parameters = self.parameter_packer.pack_parameters(weights, weights_names)
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -55,21 +96,6 @@ class FedAvgDynamicLayer(FedAvgSampling):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         return ndarrays_to_parameters(parameters), metrics_aggregated
-
-    def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, List[str]]:
-        """
-        Split params into model_weights and weights_names.
-        """
-        split_size = len(parameters) - 1
-        model_parameters = parameters[:split_size]
-        param_names = parameters[split_size:][0].tolist()
-        return model_parameters, param_names
-
-    def pack_parameters(self, model_weights: NDArrays, weights_names: List[str]) -> NDArrays:
-        """
-        Extends parameter list to include model weights and their names.
-        """
-        return model_weights + [np.array(weights_names)]
 
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
@@ -82,7 +108,7 @@ class FedAvgDynamicLayer(FedAvgSampling):
         total_num_examples: DefaultDict[str, int] = defaultdict(int)
 
         for packed_layers, num_examples in results:
-            layers, names = self.unpack_parameters(packed_layers)
+            layers, names = self.parameter_packer.unpack_parameters(packed_layers)
             for layer, name in zip(layers, names):
                 names_to_layers[name].append(layer * num_examples)
                 total_num_examples[name] += num_examples
