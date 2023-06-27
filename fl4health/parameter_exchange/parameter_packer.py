@@ -19,7 +19,6 @@ class ParameterPacker(ABC, Generic[T]):
 
 class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: NDArrays) -> NDArrays:
-        assert not isinstance(additional_parameters, float)
         return model_weights + additional_parameters
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
