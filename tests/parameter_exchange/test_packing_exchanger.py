@@ -69,7 +69,6 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
 def test_parameter_exchanger_with_layer_names(get_ndarrays: NDArrays) -> None:  # noqa
-
     model_weights = get_ndarrays  # noqa
     weights_names = ["layer1", "layer2", "layer3", "layer4", "layer5", "layer6"]
 

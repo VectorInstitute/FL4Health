@@ -12,17 +12,18 @@ from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
 from flwr.server.client_manager import ClientManager, SimpleClientManager
 from flwr.server.server import EvaluateResultsAndFailures
-from flwr.server.strategy import FedAvg, Strategy
+from flwr.server.strategy import Strategy
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FlServer
+from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 
 
-class FedIsic2019FedProxServer(FlServer):
+class FedIsic2019ScaffoldServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -33,11 +34,13 @@ class FedIsic2019FedProxServer(FlServer):
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = ParameterExchangerWithControlVariates()
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
-        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        packed_parameters = parameters_to_ndarrays(self.parameters)
+        # Don't need the control variates for checkpointing.
+        model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
 
     def _maybe_checkpoint(self, checkpoint_metric: float) -> None:
@@ -77,7 +80,9 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
+    model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
+    parameters = ndarrays_to_parameters(model_weights)
+    return parameters
 
 
 def fit_config(
@@ -100,7 +105,9 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(
+    config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
+) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -122,9 +129,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     client_model = Baseline()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
+    strategy = Scaffold(
+        fraction_fit=1.0,
+        fraction_evaluate=1.0,
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
@@ -133,9 +140,10 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        learning_rate=server_learning_rate,
     )
 
-    server = FedIsic2019FedProxServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
+    server = FedIsic2019ScaffoldServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -178,8 +186,16 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--server_learning_rate",
+        action="store",
+        type=float,
+        help="Learning rate for server side",
+        required=True,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    log(INFO, f"Server Learning Rate: {args.server_learning_rate}")
+    main(config, args.server_address, args.artifact_dir, args.run_name, args.server_learning_rate)

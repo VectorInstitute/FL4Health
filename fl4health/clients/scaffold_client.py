@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
-from fl4health.utils.metrics import AverageMeter, Metric
+from fl4health.utils.metrics import AverageMeter, Meter, Metric
 
 
 class ScaffoldClient(NumpyFlClient):
@@ -44,7 +44,8 @@ class ScaffoldClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train(local_steps)
+        meter = AverageMeter(self.metrics, "global")
+        metric_values = self.train(local_steps, meter)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -59,7 +60,8 @@ class ScaffoldClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        loss, metric_values = self.validate()
+        meter = AverageMeter(self.metrics, "global")
+        loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -178,15 +180,23 @@ class ScaffoldClient(NumpyFlClient):
     def train(
         self,
         local_steps: int,
+        meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
 
         running_loss = 0.0
-        # Pass loader to iterator so we can step through  train loader
-        loader = iter(self.train_loader)
-        meter = AverageMeter(self.metrics, "global")
-        for step in range(local_steps):
-            input, target = next(loader)
+        # Pass loader to iterator so we can step through train loader
+        train_iterator = iter(self.train_loader)
+
+        for _ in range(local_steps):
+            try:
+                input, target = next(train_iterator)
+            except StopIteration:
+                # StopIteration is thrown if dataset ends
+                # reinitialize data loader
+                train_iterator = iter(self.train_loader)
+                input, target = next(train_iterator)
+
             input, target = input.to(self.device), target.to(self.device)
 
             # Forward pass on global model and update global parameters
@@ -202,21 +212,20 @@ class ScaffoldClient(NumpyFlClient):
             running_loss += loss.item()
             meter.update(pred, target)
 
-        running_loss = running_loss / len(self.train_loader)
+        running_loss = running_loss / local_steps
 
         metrics = meter.compute()
         train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
         log(
             INFO,
-            f"Client Training Losses: {loss} \n" f"Client Training Metrics: {train_metric_string}",
+            f"Client Training Losses: {running_loss} \n" f"Client Training Metrics: {train_metric_string}",
         )
 
         self.update_control_variates(local_steps)
         return metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        meter = AverageMeter(self.metrics, "global")
         running_loss = 0.0
         with torch.no_grad():
             for input, target in self.val_loader:
@@ -234,5 +243,5 @@ class ScaffoldClient(NumpyFlClient):
             INFO,
             "\n" f"Client Validation Losses: {running_loss} \n" f"Client validation Metrics: {val_metric_string}",
         )
-
+        self._maybe_checkpoint(running_loss)
         return running_loss, metrics

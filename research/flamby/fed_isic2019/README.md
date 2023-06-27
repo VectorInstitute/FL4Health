@@ -11,7 +11,7 @@ python -m research.flamby.fed_isic2019.evaluate_on_holdout \
     --eval_global_model
 ```
 
-An example command is
+An example command for the fedprox approach is:
 ``` bash
 python -m research.flamby.fed_isic2019.evaluate_on_holdout \
     --artifact_dir research/flamby/fed_isic2019/fedprox/hp_sweep_results/mu_0.01_lr_0.0001/ \

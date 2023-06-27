@@ -22,7 +22,7 @@ from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
 
 
-class FedIsic2019FedProxServer(FlServer):
+class FedIsic2019FedAvgServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -135,7 +135,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         initial_parameters=get_initial_model_parameters(client_model),
     )
 
-    server = FedIsic2019FedProxServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
+    server = FedIsic2019FedAvgServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
 
     fl.server.start_server(
         server=server,
