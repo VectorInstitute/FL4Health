@@ -37,10 +37,8 @@ class FixedLayerExchanger(ParameterExchanger):
 class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
     def __init__(self, threshold: Scalar) -> None:
         """
-        self.initial_model represents each client's local model at the beginning of each round of training.
-        In this particular layer exchanger, self.initial_model is used to select
-        the parameters that after local training drift away (in l2 norm) from
-        the parameters of self.initial_model beyond a certain threshold.
+        This exchanger selects those parameters that at the end of each training round, drift away (in l2 norm)
+        from their initial values (at the beginning of the same round) by more than self.threshold.
         """
         self.parameter_packer = ParameterPackerWithLayerNames()
         self.threshold = threshold
@@ -54,8 +52,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
         layers_to_transfer = []
         initial_model_states = initial_model.state_dict()
         model_states = model.state_dict()
-        for layer_name in model_states:
-            layer_param = model_states[layer_name]
+        for layer_name, layer_param in model_states.items():
             layer_param_past = initial_model_states[layer_name]
             drift_norm = torch.norm(layer_param - layer_param_past)
             if drift_norm >= self.threshold:
