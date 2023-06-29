@@ -177,17 +177,25 @@ class ScaffoldClient(NumpyFlClient):
         ]
         return updated_client_control_variates
 
+    def _handle_logging(self, loss: float, metrics_dict: Dict[str, Scalar], is_validation: bool = False) -> None:
+        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
+        metric_prefix = "Validation" if is_validation else "Training"
+        log(
+            INFO,
+            f"Client {metric_prefix} Loss: {loss} \n" f"Client {metric_prefix} Metrics: {metric_string}",
+        )
+
     def train(
         self,
         local_steps: int,
         meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
-
         running_loss = 0.0
+        meter.clear()
+
         # Pass loader to iterator so we can step through train loader
         train_iterator = iter(self.train_loader)
-
         for _ in range(local_steps):
             try:
                 input, target = next(train_iterator)
@@ -215,18 +223,14 @@ class ScaffoldClient(NumpyFlClient):
         running_loss = running_loss / local_steps
 
         metrics = meter.compute()
-        train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            f"Client Training Losses: {running_loss} \n" f"Client Training Metrics: {train_metric_string}",
-        )
-
+        self._handle_logging(running_loss, metrics)
         self.update_control_variates(local_steps)
         return metrics
 
     def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
         running_loss = 0.0
+        meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
@@ -238,10 +242,6 @@ class ScaffoldClient(NumpyFlClient):
 
         running_loss = running_loss / len(self.val_loader)
         metrics = meter.compute()
-        val_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            "\n" f"Client Validation Losses: {running_loss} \n" f"Client validation Metrics: {val_metric_string}",
-        )
+        self._handle_logging(running_loss, metrics, is_validation=True)
         self._maybe_checkpoint(running_loss)
         return running_loss, metrics

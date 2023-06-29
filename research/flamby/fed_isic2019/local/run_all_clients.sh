@@ -3,16 +3,14 @@
 ###############################################
 # Usage:
 #
-#  ./research/flamby/fed_isic2019/fedavg/run_hp_sweep.sh \
-#   path_to_config.yaml \
+#  ./research/flamby/fed_isic2019/local/run_all_clients.sh \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# ./research/flamby/fed_isic2019/fedavg/run_hp_sweep.sh \
-#   research/flamby/fed_isic2019/fedavg/config.yaml \
-#   research/flamby/fed_isic2019/fedavg/ \
+# ./research/flamby/fed_isic2019/local/run_all_clients.sh \
+#   research/flamby/fed_isic2019/local/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -20,40 +18,32 @@
 # 1) The bash command above should be run from the top level directory of the repository.
 ###############################################
 
-SERVER_CONFIG_PATH=$1
-ARTIFACT_DIR=$2
-DATASET_DIR=$3
-VENV_PATH=$4
+ARTIFACT_DIR=$1
+DATASET_DIR=$2
+VENV_PATH=$3
 
-# FedISIC LR Hyperparmeters from paper
-LR_VALUES=( 0.001 0.00316228 0.01 0.0316228 0.1 0.316228 )
-
-SERVER_PORT=8100
+# FedIsic has a total of 6 clients
+CLIENT_NUMBERS=( 0 1 2 3 4 5 )
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}client_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
-for LR_VALUE in "${LR_VALUES[@]}";
+for CLIENT_NUMBER in "${CLIENT_NUMBERS[@]}";
 do
-  EXPERIMENT_NAME="lr_${LR_VALUE}"
+  EXPERIMENT_NAME="client_${CLIENT_NUMBER}"
   echo "Beginning Experiment ${EXPERIMENT_NAME}"
   EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
   echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
   mkdir "${EXPERIMENT_DIRECTORY}"
-  SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
-  echo "Server Address: ${SERVER_ADDRESS}"
-  SBATCH_COMMAND="research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
-    ${SERVER_CONFIG_PATH} \
+  SBATCH_COMMAND="research/flamby/fed_isic2019/local/run_fold_experiment.slrm \
     ${EXPERIMENT_DIRECTORY} \
     ${DATASET_DIR} \
     ${VENV_PATH} \
-    ${LR_VALUE} \
-    ${SERVER_ADDRESS}"
+    ${CLIENT_NUMBER}"
   echo "Running sbatch command ${SBATCH_COMMAND}"
   sbatch ${SBATCH_COMMAND}
-  ((SERVER_PORT=SERVER_PORT+1))
 done
 
 echo Experiments Launched

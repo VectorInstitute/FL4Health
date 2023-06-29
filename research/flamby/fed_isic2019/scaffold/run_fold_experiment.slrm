@@ -67,7 +67,7 @@ SERVER_LR=$5
 CLIENT_LR=$6
 SERVER_ADDRESS=$7
 
-# Create the artficat directory
+# Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )

@@ -146,6 +146,7 @@ class FedProxClient(NumpyFlClient):
     ) -> Dict[str, Scalar]:
         self.model.train()
         loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
+        meter.clear()
         train_iterator = iter(self.train_loader)
 
         for _ in range(steps):
@@ -205,6 +206,7 @@ class FedProxClient(NumpyFlClient):
     def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
         loss_dict = {"val_vanilla_loss": 0.0, "val_proximal_loss": 0.0, "val_total_loss": 0.0}
+        meter.clear()
 
         with torch.no_grad():
             for input, target in self.val_loader:

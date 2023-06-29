@@ -8,36 +8,28 @@
 #SBATCH --mem=32G
 #SBATCH --partition=a40
 #SBATCH --qos=normal
-#SBATCH --job-name=fl_five_fold_exp
+#SBATCH --job-name=central_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
 
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
-#   path_to_config.yaml \
+# sbatch research/flamby/fed_isic2019/central/run_fold_experiment.slrm \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
-#   path_to_desired_venv/ \
-#   mu_value_for_fedprox_loss \
-#   client_side_learning_rate_value \
-#   server_address
+#   path_to_desired_venv/
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/fedprox/config.yaml \
-#   research/flamby/fed_isic2019/fedprox/hp_results/ \
+# sbatch research/flamby/fed_isic2019/central/run_fold_experiment.slrm \
+#   research/flamby/fed_isic2019/central/results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
-#   0.1 \
-#   0.0001 \
-#   0.0.0.0:8080
+#   /h/demerson/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs FedProx. As such the data paths and python launch commands are hardcoded. If you want to change
-# the example you run, you need to explicitly modify the code below.
+# 2) This example runs centralized dataset training. As such the data paths and python launch commands are hardcoded.
+# If you want to change the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################
 
@@ -59,13 +51,9 @@ fi
 
 # Process Inputs
 
-SERVER_CONFIG_PATH=$1
-ARTIFACT_DIR=$2
-DATASET_DIR=$3
-VENV_PATH=$4
-CLIENT_MU=$5
-CLIENT_LR=$6
-SERVER_ADDRESS=$7
+ARTIFACT_DIR=$1
+DATASET_DIR=$2
+VENV_PATH=$3
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -110,49 +98,25 @@ do
         mkdir "${RUN_DIR}"
     fi
 
-    SERVER_OUTPUT_FILE="${RUN_DIR}server.out"
+    OUTPUT_FILE="${RUN_DIR}central.out"
 
-    # Start the server, divert the outputs to a server file
+    # Start the Trainer, divert the outputs to a trainer file
 
-    echo "Server logging at: ${SERVER_OUTPUT_FILE}"
-    echo "Launching Server"
+    echo "Trainer logging at: ${OUTPUT_FILE}"
+    echo "Launching Trainer"
 
-    nohup python -m research.flamby.fed_isic2019.fedprox.server \
-        --config_path ${SERVER_CONFIG_PATH} \
+    nohup python -m research.flamby.fed_isic2019.central.train \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
-        --server_address ${SERVER_ADDRESS} \
-        > ${SERVER_OUTPUT_FILE} 2>&1 &
+        --dataset_dir ${DATASET_DIR} \
+        > ${OUTPUT_FILE} 2>&1 &
 
-    # Sleep for 20 seconds to allow the server to come up.
-    sleep 20
-
-    # Start n number of clients and divert the outputs to their own files
-    n_clients=6
-    for (( c=0; c<${n_clients}; c++ ))
-    do
-        CLIENT_NAME="client_${c}"
-        echo "Launching ${CLIENT_NAME}"
-
-        CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
-        echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.fedprox.client \
-            --artifact_dir ${ARTIFACT_DIR} \
-            --dataset_dir ${DATASET_DIR} \
-            --run_name ${RUN_NAME} \
-            --client_number ${c} \
-            --mu ${CLIENT_MU} \
-            --learning_rate ${CLIENT_LR} \
-            --server_address ${SERVER_ADDRESS} \
-            > ${CLIENT_LOG_PATH} 2>&1 &
-    done
-
-    echo "FL Processes Running"
+    echo "Centralized Training Running"
 
     wait
 
     # Create a file that verifies that the Run concluded properly
     touch "${RUN_DIR}done.out"
-    echo "Finished FL Processes"
+    echo "Finished Centralized Training Processes"
 
 done

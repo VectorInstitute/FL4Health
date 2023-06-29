@@ -32,7 +32,7 @@ LR_VALUES=( 0.001 0.00316228 0.01 0.0316228 0.1 0.316228 )
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY=""${ARTIFACT_DIR}hp_sweep_results""
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
@@ -42,7 +42,7 @@ do
   do
     EXPERIMENT_NAME="alpha_lr_${ALPHA_LR_VALUE}_lr_${LR_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results/${EXPERIMENT_NAME}/"
+    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"

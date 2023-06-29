@@ -64,7 +64,7 @@ VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
 
-# Create the artficat directory
+# Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )

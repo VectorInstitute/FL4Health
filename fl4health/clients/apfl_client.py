@@ -80,14 +80,17 @@ class ApflClient(NumpyFlClient):
             metric_values,
         )
 
-    def _handle_logging(self, loss_dict: Dict[str, float], metrics_dict: Dict[str, Scalar]) -> None:
-        train_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-        train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
+    def _handle_logging(
+        self, loss_dict: Dict[str, float], metrics_dict: Dict[str, Scalar], is_validation: bool = False
+    ) -> None:
+        loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
+        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
+        metric_prefix = "Validation" if is_validation else "Training"
         log(
             INFO,
             f"alpha: {self.model.alpha} \n"
-            f"Client Training Losses: {train_loss_string} \n"
-            f"Client Training Metrics: {train_metric_string}",
+            f"Client {metric_prefix} Losses: {loss_string} \n"
+            f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ApflTrainStepOutputs:
@@ -129,6 +132,10 @@ class ApflClient(NumpyFlClient):
     ) -> Dict[str, Scalar]:
         self.model.train()
         loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
+        global_meter.clear()
+        local_meter.clear()
+        personal_meter.clear()
+
         train_iterator = iter(self.train_loader)
 
         for step in range(steps):
@@ -175,6 +182,9 @@ class ApflClient(NumpyFlClient):
         self.model.train()
         for epoch in range(epochs):
             loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
+            global_meter.clear()
+            local_meter.clear()
+            personal_meter.clear()
 
             for step, (input, target) in enumerate(self.train_loader):
                 # Mechanics of training loop follow from original implementation
@@ -212,6 +222,9 @@ class ApflClient(NumpyFlClient):
     ) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
         loss_dict = {"global": 0.0, "personal": 0.0, "local": 0.0}
+        global_meter.clear()
+        local_meter.clear()
+        personal_meter.clear()
 
         with torch.no_grad():
             for input, target in self.val_loader:
@@ -238,11 +251,6 @@ class ApflClient(NumpyFlClient):
         local_metrics = local_meter.compute()
         personal_metrics = personal_meter.compute()
         metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
-        val_loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-        val_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            "\n" f"Client Validation Losses: {val_loss_string} \n" f"Client validation Metrics: {val_metric_string}",
-        )
+        self._handle_logging(loss_dict, metrics, is_validation=True)
         self._maybe_checkpoint(loss_dict["personal"])
         return loss_dict["global"], metrics

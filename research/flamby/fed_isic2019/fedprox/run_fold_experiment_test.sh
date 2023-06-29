@@ -33,7 +33,7 @@ DATASET_DIR=$3
 CLIENT_MU=$4
 CLIENT_LR=$5
 
-# Create the artficat directory
+# Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" )
