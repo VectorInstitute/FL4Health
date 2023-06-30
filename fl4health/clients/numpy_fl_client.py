@@ -52,7 +52,7 @@ class NumpyFlClient(NumPyClient):
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
         # determine parameters sent
         assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config)
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
