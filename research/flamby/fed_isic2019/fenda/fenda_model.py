@@ -28,7 +28,7 @@ class FendaClassifier(FendaHeadModule):
     def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
-        self.fc1 = nn.Linear(stack_output_dimension*2, 64)
+        self.fc1 = nn.Linear(stack_output_dimension * 2, 64)
         self.fc2 = nn.Linear(64, 8)
         self.dropout = nn.Dropout(0.2)
 
