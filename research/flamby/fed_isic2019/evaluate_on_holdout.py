@@ -38,7 +38,6 @@ def main(
         local_test_metrics = []
         server_test_metrics = []
         for run_folder_dir in all_run_folder_dir:
-
             if eval_local_models:
                 local_model = load_local_model(run_folder_dir, client_number)
                 local_run_metric = evaluate_model(local_model, test_loader, metrics, device)

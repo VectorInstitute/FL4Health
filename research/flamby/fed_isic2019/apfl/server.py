@@ -7,8 +7,9 @@ import flwr as fl
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Metrics, Parameters, Scalar
 from flwr.server.client_manager import ClientManager, SimpleClientManager
+from flwr.server.server import EvaluateResultsAndFailures
 from flwr.server.strategy import FedAvg, Strategy
 from torchinfo import summary
 
@@ -30,6 +31,37 @@ class FedIsic2019APFLServer(FlServer):
         # APFL doesn't train a "server" model. Rather, each client trains a client specific model with some globally
         # shared weights. So we don't checkpoint a global model
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer=None)
+        self.best_aggregated_loss: Optional[float] = None
+
+    def evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        # loss_aggregated is the aggregated validation per step loss
+        # aggregated over each client (weighted by num examples)
+        eval_round_results = super().evaluate_round(server_round, timeout)
+        assert eval_round_results is not None
+        loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
+        assert loss_aggregated is not None
+
+        if self.best_aggregated_loss:
+            if self.best_aggregated_loss >= loss_aggregated:
+                log(
+                    INFO,
+                    f"Best Aggregated Loss: {self.best_aggregated_loss} is larger than current aggregated loss: {loss_aggregated}",
+                )
+                self.best_aggregated_loss = loss_aggregated
+            else:
+                log(
+                    INFO,
+                    f"Best Aggregated Loss: {self.best_aggregated_loss} is smaller than current aggregated loss: {loss_aggregated}",
+                )
+        else:
+            log(INFO, f"Saving Best Aggregated Loss: {loss_aggregated} as it is currently None")
+            self.best_aggregated_loss = loss_aggregated
+
+        return loss_aggregated, metrics_aggregated, (results, failures)
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -118,6 +150,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     log(INFO, "Training Complete")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{server.best_aggregated_loss}")
 
     # Shutdown the server gracefully
     server.shutdown()

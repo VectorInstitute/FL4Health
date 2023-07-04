@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
-#SBATCH --partition=a40
+#SBATCH --partition=t4v2
 #SBATCH --qos=normal
 #SBATCH --job-name=local_five_fold_exp
 #SBATCH --output=%j_%x.out
