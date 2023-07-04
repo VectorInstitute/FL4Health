@@ -25,10 +25,10 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
 
 
 class FendaClassifier(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode) -> None:
+    def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
-        self.fc1 = nn.Linear(1280, 64)
+        self.fc1 = nn.Linear(stack_output_dimension*2, 64)
         self.fc2 = nn.Linear(64, 8)
         self.dropout = nn.Dropout(0.2)
 
@@ -40,7 +40,6 @@ class FendaClassifier(FendaHeadModule):
 
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = self.fc1(x)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
@@ -96,7 +95,7 @@ class GlobalEfficientNet(FendaGlobalModule):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: int = 14):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
@@ -124,5 +123,5 @@ class FedIsic2019FendaModel(FendaModel):
     def __init__(self) -> None:
         local_module = LocalEfficientNet()
         global_module = GlobalEfficientNet()
-        model_head = FendaClassifier(FendaJoinMode.CONCATENATE)
+        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

@@ -17,7 +17,7 @@ class APFLEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: int = 14):
         super().__init__()
         self.base_model = Baseline()
         # Freeze layers to reduce trainable parameters.

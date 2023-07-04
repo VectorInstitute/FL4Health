@@ -253,4 +253,4 @@ class ApflClient(NumpyFlClient):
         metrics: Dict[str, Scalar] = {**global_metrics, **local_metrics, **personal_metrics}
         self._handle_logging(loss_dict, metrics, is_validation=True)
         self._maybe_checkpoint(loss_dict["personal"])
-        return loss_dict["global"], metrics
+        return loss_dict["personal"], metrics
