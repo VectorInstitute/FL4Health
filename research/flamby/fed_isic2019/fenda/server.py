@@ -48,13 +48,15 @@ class FedIsic2019FendaServer(FlServer):
             if self.best_aggregated_loss >= loss_aggregated:
                 log(
                     INFO,
-                    f"Best Aggregated Loss: {self.best_aggregated_loss} is larger than current aggregated loss: {loss_aggregated}",
+                    f"Best Aggregated Loss: {self.best_aggregated_loss} "
+                    f"is larger than current aggregated loss: {loss_aggregated}",
                 )
                 self.best_aggregated_loss = loss_aggregated
             else:
                 log(
                     INFO,
-                    f"Best Aggregated Loss: {self.best_aggregated_loss} is smaller than current aggregated loss: {loss_aggregated}",
+                    f"Best Aggregated Loss: {self.best_aggregated_loss} "
+                    f"is smaller than current aggregated loss: {loss_aggregated}",
                 )
         else:
             log(INFO, f"Saving Best Aggregated Loss: {loss_aggregated} as it is currently None")
