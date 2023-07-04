@@ -69,8 +69,16 @@ def main(
 
         if eval_global_model:
             avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(server_test_metrics)
-            log(INFO, f"Server model Average Test Performance on Client {client_number} Data: {avg_test_metric}")
-            log(INFO, f"Server model St. Dev. Test Performance on Client {client_number} Data: {std_test_metric}")
+            log(
+                INFO,
+                f"Server model Average Test Performance on Client {client_number} "
+                f"Data: {avg_server_test_local_metric}",
+            )
+            log(
+                INFO,
+                f"Server model St. Dev. Test Performance on Client {client_number} "
+                f"Data: {std_server_test_local_metric}",
+            )
             test_results[f"server_model_client_{client_number}_avg"] = avg_server_test_local_metric
             test_results[f"server_model_client_{client_number}_std"] = std_server_test_local_metric
 
