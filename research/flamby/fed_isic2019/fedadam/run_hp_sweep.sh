@@ -28,7 +28,7 @@ VENV_PATH=$4
 # FedISIC Server LR Hyperparmeters from paper are not suitable for AdamW
 SERVER_LR_VALUES=( 0.0001 0.001 0.01 0.1 1 )
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
-LR_VALUES=( 0.0001 0.0001 0.001 0.01 0.1 )
+LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
 SERVER_PORT=8100
 
