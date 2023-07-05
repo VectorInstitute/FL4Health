@@ -27,14 +27,12 @@ def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -
 def load_local_model(run_folder_dir: str, client_number: int) -> Baseline:
     model_checkpoint_path = os.path.join(run_folder_dir, f"client_{client_number}_best_model.pkl")
     model = torch.load(model_checkpoint_path)
-    assert isinstance(model, Baseline)
     return model
 
 
 def load_global_model(run_folder_dir: str) -> Baseline:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
     model = torch.load(model_checkpoint_path)
-    assert isinstance(model, Baseline)
     return model
 
 
