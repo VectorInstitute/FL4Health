@@ -58,7 +58,6 @@ def main(config: Dict[str, Any]) -> None:
         config["learning_rate_local"],
     )
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = Scaffold(
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,

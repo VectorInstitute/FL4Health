@@ -104,7 +104,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     client_manager = SimpleClientManager()
     client_model = FedIsic2019FendaModel()
-    model_stats = summary(client_model)
+    model_stats = summary(client_model, verbose=0)
     log(INFO, "\nFENDA MODEL STATS:")
     log(INFO, "===========================================================================")
     log(INFO, f"Total Parameters: {model_stats.total_params}")
