@@ -63,6 +63,9 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
                 layer_names.append(layer_name)
         return layers_to_transfer, layer_names
 
+    def set_threshold(self, new_threshold: Scalar) -> None:
+        self.threshold = new_threshold
+
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
