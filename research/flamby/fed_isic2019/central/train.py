@@ -156,4 +156,5 @@ if __name__ == "__main__":
     metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
+    # Central and local models in FLamby for FedISic are trained for 20 epochs
     trainer.train_by_epochs(20, train_meter, val_meter)
