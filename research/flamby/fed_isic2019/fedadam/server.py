@@ -107,7 +107,6 @@ def main(
     client_manager = SimpleClientManager()
     client_model = Baseline()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
