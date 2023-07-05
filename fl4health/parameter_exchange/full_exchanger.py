@@ -9,7 +9,9 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 
 
 class FullParameterExchanger(ParameterExchanger):
-    def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
+    def push_parameters(
+        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+    ) -> NDArrays:
         # Sending all of parameters ordered by state_dict keys
         # NOTE: Order matters, because it is relied upon by pull_parameters below
         return [val.cpu().numpy() for _, val in model.state_dict().items()]

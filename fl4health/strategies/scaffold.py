@@ -8,6 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
 
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
@@ -81,6 +82,7 @@ class Scaffold(FedAvgSampling):
         self.learning_rate = learning_rate
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
         self.server_control_variates = [np.zeros_like(arr) for arr in self.server_model_weights]
+        self.parameter_packer = ParameterPackerWithControlVariates()
 
     def aggregate_fit(
         self,
@@ -101,7 +103,7 @@ class Scaffold(FedAvgSampling):
         # Aggregation operation over packed params (includes both weights and control variate updates)
         aggregated_params = self.aggregate(updated_params)
 
-        weights, control_variates_update = self.unpack_parameters(aggregated_params)
+        weights, control_variates_update = self.parameter_packer.unpack_parameters(aggregated_params)
 
         # x_update = y_i - x
         delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
@@ -116,7 +118,7 @@ class Scaffold(FedAvgSampling):
             self.fraction_fit, self.server_control_variates, control_variates_update
         )
 
-        parameters = self.pack_parameters(self.server_model_weights, self.server_control_variates)
+        parameters = self.parameter_packer.pack_parameters(self.server_model_weights, self.server_control_variates)
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -151,21 +153,6 @@ class Scaffold(FedAvgSampling):
         ]
 
         return updated_parameters
-
-    def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
-        """
-        Split params into model_weights and control_variates.
-        """
-        assert len(parameters) % 2 == 0
-        split_size = len(parameters) // 2
-        model_weights, control_variates = parameters[:split_size], parameters[split_size:]
-        return model_weights, control_variates
-
-    def pack_parameters(self, model_weights: NDArrays, control_variates: NDArrays) -> NDArrays:
-        """
-        Extends parameter list to include model weights and server control variates.
-        """
-        return model_weights + control_variates
 
     def aggregate(self, params: List[NDArrays]) -> NDArrays:
         """

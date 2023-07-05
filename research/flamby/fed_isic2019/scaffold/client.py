@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader, random_split
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.scaffold_client import ScaffoldClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
@@ -64,7 +65,7 @@ class FedIsic2019ScaffoldClient(ScaffoldClient):
         # make sense mathematically.
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
-        self.parameter_exchanger = ParameterExchangerWithControlVariates()
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
 
         super().setup_client(config)
 

@@ -7,7 +7,9 @@ from flwr.common.typing import Config, NDArrays
 
 class ParameterExchanger(ABC):
     @abstractmethod
-    def push_parameters(self, model: nn.Module, config: Optional[Config] = None) -> NDArrays:
+    def push_parameters(
+        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+    ) -> NDArrays:
         raise NotImplementedError
 
     @abstractmethod

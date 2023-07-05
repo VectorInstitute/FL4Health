@@ -11,7 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.utils.metrics import AverageMeter, Meter, Metric
 
 
@@ -36,7 +36,7 @@ class ScaffoldClient(NumpyFlClient):
         self.learning_rate_local: float  # eta_l in paper
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.num_examples: Dict[str, int]
-        self.parameter_exchanger: ParameterExchangerWithControlVariates
+        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -78,7 +78,7 @@ class ScaffoldClient(NumpyFlClient):
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
         # Weights and control variates updates sent to server for aggregation
         # Control variates updates sent because only client has access to previous client control variate

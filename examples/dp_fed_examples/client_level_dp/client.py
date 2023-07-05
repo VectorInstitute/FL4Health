@@ -12,7 +12,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithClippingBit
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
 from fl4health.utils.load_data import load_cifar10_data
 
 
@@ -81,7 +82,7 @@ class CifarClient(NumpyClippingClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.model = Net().to(self.device)
-        self.parameter_exchanger = ParameterExchangerWithClippingBit()
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)

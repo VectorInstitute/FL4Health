@@ -16,7 +16,8 @@ from flwr.server.strategy import Strategy
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.server.server import FlServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
@@ -32,7 +33,7 @@ class FedIsic2019ScaffoldServer(FlServer):
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
-        self.parameter_exchanger = ParameterExchangerWithControlVariates()
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
