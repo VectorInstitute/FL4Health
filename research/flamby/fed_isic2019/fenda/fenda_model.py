@@ -97,7 +97,7 @@ class GlobalEfficientNet(FendaGlobalModule):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 14):
+    def __init__(self, frozen_blocks: int = 13):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
