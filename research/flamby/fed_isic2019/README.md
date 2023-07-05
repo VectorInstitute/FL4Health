@@ -32,6 +32,6 @@ There are two different evaluation modes with slightly different aims:
 * `--eval_local_models` tells the evaluation script to search for local models for each client. It looks for models named `client_{client_number}_best_model.pkl` for each client number and evaluates them on their client's specific data.
 * `--eval_global_model` tells the evaluation script to search for a server-side global model. It looks for a model named `server_best_model.pkl`. The script evaluates the model across all clients data, both individually and pooled.
 
-FL approaches with both global and local models are: FedProx, FedAvg, FedAdam, Scaffold (include both `--eval_local_models`, `--eval_global_model`). FL approaches with only local models are FENDA and APFL (include only `--eval_local_models`).
+FL approaches with both global and local models (local due to checkpointing) are: FedProx, FedAvg, FedAdam, Scaffold (include both `--eval_local_models`, `--eval_global_model`). FL approaches with only local models are FENDA and APFL (include only `--eval_local_models`).
 
 There are two special situations for evaluation, centralized and local model training (non-FL approaches). Both result in a single server-side model (include only `--eval_global_model`)

@@ -15,7 +15,6 @@ from torch.utils.data import DataLoader, random_split
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
 
@@ -65,9 +64,6 @@ class FedIsic2019FendaClient(BasicClient):
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
         self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
-
-        # Setup W and B reporter
-        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 
@@ -144,7 +140,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")

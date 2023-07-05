@@ -11,13 +11,13 @@ class APFLEfficientNet(nn.Module):
     Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his
     [pytorch reimplementation of EfficientNets]
     (https://github.com/lukemelas/EfficientNet-PyTorch).
-    APFL unifies the logits through a convex combination of the local and global model versions, so maintain the
-    original structure of efficient net
-    We freeze a subset of the layers in order to make sure that FENDA is not training twice as many parameters as the
+    APFL unifies the logits through a convex combination of the local and global model versions, so we maintain the
+    original structure of efficient net and simply interpolate the outputs.
+    We freeze a subset of the layers in order to make sure that APFL is not training twice as many parameters as the
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 14):
+    def __init__(self, frozen_blocks: int = 13):
         super().__init__()
         self.base_model = Baseline()
         # Freeze layers to reduce trainable parameters.

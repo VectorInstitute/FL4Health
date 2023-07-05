@@ -3,7 +3,7 @@
 To run the hyperparameter sweep you simply run the command
 
 ```bash
-./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
+./research/flamby/fed_isic2019/apfl/run_hp_sweep.sh \
    path_to_config.yaml \
    path_to_folder_for_artifacts/ \
    path_to_folder_for_dataset/ \
@@ -14,11 +14,11 @@ from the top level directory of the repository
 
 An example is something like
 ``` bash
-./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
-   research/flamby/fed_isic2019/fedprox/config.yaml \
-   research/flamby/fed_isic2019/fedprox/ \
+./research/flamby/fed_isic2019/apfl/run_hp_sweep.sh \
+   research/flamby/fed_isic2019/apfl/config.yaml \
+   research/flamby/fed_isic2019/apfl/ \
    /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```
 
-In order to manipulate the grid search being conducted, you need to chanage the parameters for `mu` and `lr`, the FedProx penalty weight and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.
+In order to manipulate the grid search being conducted, you need to chanage the parameters for `alpha` and `lr`, the apfl interpolation value and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.

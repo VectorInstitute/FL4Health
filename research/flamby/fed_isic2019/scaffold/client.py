@@ -15,7 +15,6 @@ from torch.utils.data import DataLoader, random_split
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
-from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
@@ -61,12 +60,11 @@ class FedIsic2019ScaffoldClient(ScaffoldClient):
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
+        # Note that, unlike the other approaches, SCAFFOLD requires a vanilla SGD optimizer for the corrections to
+        # make sense mathematically.
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
         self.parameter_exchanger = ParameterExchangerWithControlVariates()
-
-        # Setup W and B reporter
-        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 
@@ -143,7 +141,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")

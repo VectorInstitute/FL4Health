@@ -44,6 +44,7 @@ class ScaffoldClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
+        # Default SCAFFOLD uses an average meter
         meter = AverageMeter(self.metrics, "global")
         metric_values = self.train(local_steps, meter)
 
@@ -60,6 +61,7 @@ class ScaffoldClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
+        # Default SCAFFOLD uses an average meter
         meter = AverageMeter(self.metrics, "global")
         loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics

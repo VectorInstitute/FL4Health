@@ -14,7 +14,6 @@ from flwr.server.strategy import FedAvg, Strategy
 from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
-from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
@@ -25,11 +24,10 @@ class FedIsic2019FendaServer(FlServer):
         self,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
     ) -> None:
         # FENDA doesn't train a "server" model. Rather, each client trains a client specific model with some globally
         # shared weights. So we don't checkpoint a global model
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer=None)
+        super().__init__(client_manager, strategy, checkpointer=None)
         self.best_aggregated_loss: Optional[float] = None
 
     def evaluate_round(
@@ -87,20 +85,12 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
 def fit_config(
     local_steps: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
 ) -> Config:
     return {
         "local_steps": local_steps,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
@@ -110,23 +100,17 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["local_steps"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
     client_model = FedIsic2019FendaModel()
     model_stats = summary(client_model)
-    log(INFO, "FENDA MODEL STATS:")
+    log(INFO, "\nFENDA MODEL STATS:")
     log(INFO, "===========================================================================")
     log(INFO, f"Total Parameters: {model_stats.total_params}")
     log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
     log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
-    log(INFO, "===========================================================================\n\n")
+    log(INFO, "===========================================================================\n")
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -142,7 +126,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(client_model),
     )
 
-    server = FedIsic2019FendaServer(client_manager, strategy, wandb_reporter)
+    server = FedIsic2019FendaServer(client_manager, strategy)
 
     fl.server.start_server(
         server=server,

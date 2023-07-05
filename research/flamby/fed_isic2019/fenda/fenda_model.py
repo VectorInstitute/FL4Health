@@ -15,6 +15,8 @@ from fl4health.model_bases.fenda_base import (
 
 
 def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = False) -> EfficientNet:
+    # There is a bug in the EfficientNet implementation if you want to strip off the top layer of the network, but
+    # still load the pre-trained weights. So we do it ourselves here.
     model = EfficientNet.from_name(model_name, include_top=include_top)
     state_dict = model_zoo.load_url(url_map[model_name])
     state_dict.pop("_fc.weight")

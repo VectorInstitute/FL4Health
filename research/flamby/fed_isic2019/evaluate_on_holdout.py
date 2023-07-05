@@ -21,7 +21,7 @@ from research.flamby.fed_isic2019.utils import (
 def main(
     artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_local_models: bool, eval_global_model: bool
 ) -> None:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
     metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]

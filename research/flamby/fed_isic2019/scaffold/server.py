@@ -17,7 +17,6 @@ from flwr.server.strategy import Strategy
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
-from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FlServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
@@ -29,13 +28,12 @@ class FedIsic2019ScaffoldServer(FlServer):
         client_manager: ClientManager,
         client_model: nn.Module,
         strategy: Optional[Strategy] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[BestMetricTorchCheckpointer] = None,
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
         self.parameter_exchanger = ParameterExchangerWithControlVariates()
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
         packed_parameters = parameters_to_ndarrays(self.parameters)
@@ -88,20 +86,12 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
 def fit_config(
     local_steps: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
 ) -> Config:
     return {
         "local_steps": local_steps,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
@@ -113,22 +103,15 @@ def main(
         fit_config,
         config["local_steps"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
     )
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
     client_model = Baseline()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = Scaffold(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
@@ -143,7 +126,7 @@ def main(
         learning_rate=server_learning_rate,
     )
 
-    server = FedIsic2019ScaffoldServer(client_manager, client_model, strategy, wandb_reporter, checkpointer)
+    server = FedIsic2019ScaffoldServer(client_manager, client_model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

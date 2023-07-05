@@ -50,6 +50,7 @@ class ApflClient(NumpyFlClient):
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
 
+        # Default APFL uses an average meter
         global_meter = AverageMeter(self.metrics, "global")
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")
@@ -68,6 +69,7 @@ class ApflClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
+        # Default APFL uses an average meter
         global_meter = AverageMeter(self.metrics, "global")
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")
