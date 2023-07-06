@@ -25,7 +25,7 @@ echo "Python Venv Path: ${VENV_PATH}"
 echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
-  research/fedprox_cluster/run_server_cpu.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} \
+  research/fedprox_cluster/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} \
   ${SERVER_JOB_HASH}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
@@ -63,7 +63,7 @@ do
   CLIENT_ERROR_LOGS="client_log_${CLIENT_JOB_HASH}.err"
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
-    research/fedprox_cluster/run_client_cpu.slrm ${SERVER_ADDRESS} ${CLIENT_DATA_PATH} ${CLIENT_LOG_DIR} ${VENV_PATH} \
+    research/fedprox_cluster/run_client.slrm ${SERVER_ADDRESS} ${CLIENT_DATA_PATH} ${CLIENT_LOG_DIR} ${VENV_PATH} \
     ${CLIENT_JOB_HASH}"
 
   sbatch ${SBATCH_COMMAND}
