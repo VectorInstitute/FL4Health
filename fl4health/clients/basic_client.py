@@ -46,8 +46,8 @@ class BasicClient(NumpyFlClient):
         meter = AverageMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        # Currently uses training by epoch.
-        metric_values = self.train_by_steps(local_steps, meter)
+        # By default uses training by epoch.
+        metric_values = self.train_by_epochs(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -79,6 +79,37 @@ class BasicClient(NumpyFlClient):
             f"Client {metric_prefix} Loss: {loss} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        # forward pass on the model
+        preds = self.model(input)
+        loss = self.criterion(preds, target)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        return loss, preds
+
+    def train_by_epochs(self, epochs: int, meter: Meter) -> Dict[str, Scalar]:
+        self.model.train()
+
+        for local_epoch in range(epochs):
+            running_loss = 0.0
+            meter.clear()
+            for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
+                loss, preds = self.train_step(input, target)
+
+                running_loss += loss.item()
+                meter.update(preds, target)
+
+            metrics = meter.compute()
+            running_loss = running_loss / len(self.train_loader)
+            log(INFO, f"Local Epoch: {local_epoch}")
+            self._handle_logging(running_loss, metrics)
+
+        # Return final training metrics
+        return metrics
+
     def train_by_steps(
         self,
         steps: int,
@@ -99,12 +130,7 @@ class BasicClient(NumpyFlClient):
                 input, target = next(train_iterator)
 
             input, target = input.to(self.device), target.to(self.device)
-            preds = self.model(input)
-            loss = self.criterion(preds, target)
-
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+            loss, preds = self.train_step(input, target)
 
             running_loss += loss.item()
             meter.update(preds, target)
