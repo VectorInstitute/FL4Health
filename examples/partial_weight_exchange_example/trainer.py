@@ -3,6 +3,8 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 from transformers.modeling_outputs import SequenceClassifierOutput, SequenceClassifierOutputWithPast
+from flwr.common.logger import log
+from logging import INFO
 
 
 def calcuate_accuracy(preds: torch.Tensor, targets: torch.Tensor) -> int:
@@ -53,9 +55,17 @@ def infer(
             if n_batches % 300 == 0:
                 batches_to_complete = max_batches if max_batches is not None else len(dataloader)
                 print(f"Completed {n_batches} of {batches_to_complete}...")
+
+    accuracy = n_correct * 100 / n_total
+    val_loss = total_loss / n_batches
+    log(
+        INFO,
+        f"Client Validation Loss: {val_loss}," f"Client Validation Accuracy: {accuracy}",
+    )
+    
     # Return the accuracy over the entire validation set
     # and the average loss per batch (to match training loss calculaiton)
-    return n_correct * 100 / n_total, total_loss / n_batches
+    return accuracy, val_loss
 
 
 def train(
@@ -81,6 +91,7 @@ def train(
         total_steps_loss = 0.0
         n_correct = 0
         n_total = 0
+        n_batches = 0
 
         for batch_number, batch in enumerate(train_dataloader):
             if total_training_steps > n_training_steps:
@@ -117,9 +128,14 @@ def train(
             optimizer.step()
 
             total_training_steps += 1
+            n_batches += 1
 
         epoch_loss = total_epoch_loss / total_training_steps
 
         print(f"Training Loss Epoch: {epoch_loss}")
+        log(
+            INFO,
+            f"Epoch: {epoch_number}, Client Training Loss: {epoch_loss/n_batches}," f"Client Training Accuracy: {n_correct / n_total}",
+        )
 
     return n_correct / n_total
