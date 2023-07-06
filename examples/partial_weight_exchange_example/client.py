@@ -1,27 +1,26 @@
 import argparse
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
-from logging import INFO
-
 
 import flwr as fl
 import torch
 import torch.multiprocessing as mp
 import torch.nn as nn
-from custom_dataloaders import setup_datasets
-from flwr.common.typing import Config, NDArrays, Scalar
 from flwr.common.logger import log
-from torch.utils.data import DataLoader, Dataset
-from trainer import infer, train
+from flwr.common.typing import Config, NDArrays, Scalar
+from torch.utils.data import DataLoader, Subset
 from transformers import RobertaForSequenceClassification, RobertaTokenizer
 
+from examples.partial_weight_exchange_example.custom_dataloaders import setup_datasets
+from examples.partial_weight_exchange_example.trainer import infer, train
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
 
 
 class TransformerPartialExchangeClient(NumpyFlClient):
-    def __init__(self, data_path: Path, device: torch.device, model: nn.Module, datasets: Dict[str, Dataset]) -> None:
+    def __init__(self, data_path: Path, device: torch.device, model: nn.Module, datasets: Dict[str, Subset]) -> None:
         super().__init__(data_path, device)
         self.model = model.to(self.device)
         self.initial_model = copy.deepcopy(self.model).to(device)

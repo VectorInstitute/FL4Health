@@ -1,10 +1,10 @@
+from logging import INFO
 from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-from transformers.modeling_outputs import SequenceClassifierOutput, SequenceClassifierOutputWithPast
 from flwr.common.logger import log
-from logging import INFO
+from transformers.modeling_outputs import SequenceClassifierOutput, SequenceClassifierOutputWithPast
 
 
 def calcuate_accuracy(preds: torch.Tensor, targets: torch.Tensor) -> int:
@@ -16,7 +16,7 @@ def infer(
     model: nn.Module,
     loss_function: torch.nn.Module,
     dataloader: torch.utils.data.DataLoader,
-    device: str,
+    device: torch.device,
     max_batches: Optional[int] = None,
 ) -> Tuple[float, float]:
     model.to(device)
@@ -62,7 +62,7 @@ def infer(
         INFO,
         f"Client Validation Loss: {val_loss}," f"Client Validation Accuracy: {accuracy}",
     )
-    
+
     # Return the accuracy over the entire validation set
     # and the average loss per batch (to match training loss calculaiton)
     return accuracy, val_loss
@@ -73,7 +73,7 @@ def train(
     train_dataloader: torch.utils.data.DataLoader,
     val_dataloader: torch.utils.data.DataLoader,
     loss_func: nn.Module,
-    device: str,
+    device: torch.device,
     n_epochs: int = 1,
     n_training_steps: int = 300,
 ) -> float:
@@ -135,7 +135,8 @@ def train(
         print(f"Training Loss Epoch: {epoch_loss}")
         log(
             INFO,
-            f"Epoch: {epoch_number}, Client Training Loss: {epoch_loss/n_batches}," f"Client Training Accuracy: {n_correct / n_total}",
+            f"Epoch: {epoch_number}, Client Training Loss: {epoch_loss/n_batches},"
+            f"Client Training Accuracy: {n_correct / n_total}",
         )
 
     return n_correct / n_total
