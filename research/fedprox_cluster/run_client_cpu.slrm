@@ -1,0 +1,57 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:0
+#SBATCH --mem=32G
+#SBATCH --partition=cpu
+#SBATCH --qos=high
+
+# Note:
+#	  ntasks: Total number of processes to use across world
+#	  ntasks-per-node: How many processes each node should create
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process inputs
+
+SERVER_ADDRESS=$1
+DATASET_PATH=$2
+LOG_DIR=$3
+VENV_PATH=$4
+JOB_HASH=$5
+
+# Print relevant information for the client to connect to the server and run
+echo "Server Address: ${SERVER_ADDRESS}"
+echo "Dataset Path: ${DATASET_PATH}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Job Hash: ${JOB_HASH}"
+
+LOG_PATH="${LOG_DIR}client_log_${JOB_HASH}.log"
+
+echo "Placing logs in: ${LOG_DIR}"
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment:"
+which python
+
+echo "Server Address used by Client: ${SERVER_ADDRESS}"
+
+python -m examples.fedprox_example.client --dataset_path ${DATASET_PATH} --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
