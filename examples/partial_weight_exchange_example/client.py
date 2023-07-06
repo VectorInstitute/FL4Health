@@ -2,6 +2,8 @@ import argparse
 import copy
 from pathlib import Path
 from typing import Dict, Tuple
+from logging import INFO
+
 
 import flwr as fl
 import torch
@@ -9,10 +11,10 @@ import torch.multiprocessing as mp
 import torch.nn as nn
 from custom_dataloaders import setup_datasets
 from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.logger import log
 from torch.utils.data import DataLoader, Dataset
 from trainer import infer, train
 from transformers import RobertaForSequenceClassification, RobertaTokenizer
-
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
@@ -91,6 +93,13 @@ class TransformerPartialExchangeClient(NumpyFlClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset", default=".")
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address for the clients to communicate with the server through",
+        default="0.0.0.0:8080",
+    )
     args = parser.parse_args()
 
     roberta_tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
@@ -103,6 +112,9 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
+    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Server Address: {args.server_address}")
+
     mp.set_start_method("spawn", force=True)
     processes = []
 
@@ -110,7 +122,7 @@ if __name__ == "__main__":
         datasets = {"train": train_set, "val": val_set, "test": test_set}
         client = TransformerPartialExchangeClient(data_path, DEVICE, roberta_classifier_model, datasets)
         p = mp.Process(
-            target=fl.client.start_numpy_client, kwargs={"server_address": "0.0.0.0:8080", "client": client}
+            target=fl.client.start_numpy_client, kwargs={"server_address": args.server_address, "client": client}
         )
         p.start()
         processes.append(p)
