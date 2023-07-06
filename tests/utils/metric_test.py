@@ -127,7 +127,6 @@ def test_accumulation_meter() -> None:
 
 
 def test_ROC_AUC_metric() -> None:
-
     metric = ROC_AUC()
 
     logits1 = torch.Tensor(
@@ -158,7 +157,6 @@ def test_ROC_AUC_metric() -> None:
 
 
 def test_F1_metric() -> None:
-
     metric = F1()
 
     logits1 = torch.Tensor(
