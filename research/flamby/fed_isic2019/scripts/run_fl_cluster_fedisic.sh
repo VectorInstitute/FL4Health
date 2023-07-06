@@ -62,7 +62,7 @@ do
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
     research/flamby/fed_isic2019/scripts/run_fedisic_client_cpu.slrm ${SERVER_ADDRESS} ${ARTIFACT_DIR} \
-    ${DATASET_DIR} ${VENV_PATH} ${CLIENT_JOB_HASH} ${c}" 
+    ${DATASET_DIR} ${VENV_PATH} ${CLIENT_JOB_HASH} ${c}"
 
   sbatch ${SBATCH_COMMAND}
 done

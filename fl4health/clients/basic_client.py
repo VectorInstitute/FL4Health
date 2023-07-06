@@ -45,9 +45,9 @@ class BasicClient(NumpyFlClient):
 
         meter = AverageMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
-        local_steps = self.narrow_config_type(config, "local_steps", int)
+        local_epochs = self.narrow_config_type(config, "local_epochs", int)
         # By default uses training by epoch.
-        metric_values = self.train_by_epochs(local_steps, meter)
+        metric_values = self.train_by_epochs(local_epochs, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
