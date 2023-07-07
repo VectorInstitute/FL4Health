@@ -34,8 +34,17 @@ def test_apfl_layer_exchange() -> None:
     parameters_to_exchange = parameter_exchanger.push_parameters(model)
     # 4 layers are expected, as weight and bias are separate for conv1 and fc1
     assert len(parameters_to_exchange) == 4
-    for index, global_params in enumerate(model.global_model.state_dict().values()):
-        assert np.array_equal(parameters_to_exchange[index], global_params.cpu().numpy())
+    model_state_dict = model.state_dict()
+    for layer_name, layer_parameters in zip(apfl_layers_to_exchange, parameters_to_exchange):
+        assert np.array_equal(layer_parameters, model_state_dict[layer_name])
+
+    # Insert the weights back into another model
+    model_2 = APFLModule(ToyModel())
+    parameter_exchanger.pull_parameters(parameters_to_exchange, model_2)
+    for layer_name, layer_parameters in model_2.state_dict().items():
+        if layer_name in apfl_layers_to_exchange:
+            assert np.array_equal(layer_parameters, model_state_dict[layer_name])
+
     input = torch.ones((3, 1, 10, 10))
     # APFL returns a dictionary of tensors. In the case of personal predictions, it produces a convex combination of
     # the dual toy model outputs, which have dimension 3 under the key personal and a prediction from the local model

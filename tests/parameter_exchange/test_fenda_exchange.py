@@ -68,8 +68,17 @@ def test_fenda_join_and_layer_exchange() -> None:
     parameters_to_exchange = parameter_exchanger.push_parameters(model)
     # 4 layers are expected, as weight and bias are separate for conv1 and fc1
     assert len(parameters_to_exchange) == 4
-    for index, global_params in enumerate(model.global_module.state_dict().values()):
-        assert np.array_equal(parameters_to_exchange[index], global_params.cpu().numpy())
+    model_state_dict = model.state_dict()
+    for layer_name, layer_parameters in zip(fenda_layers_to_exchange, parameters_to_exchange):
+        assert np.array_equal(layer_parameters, model_state_dict[layer_name])
+
+    # Insert the weights back into another model
+    model_2 = FendaModel(LocalFendaTest(), GlobalFendaTest(), FendaTestClassifier(6, FendaJoinMode.CONCATENATE))
+    parameter_exchanger.pull_parameters(parameters_to_exchange, model_2)
+    for layer_name, layer_parameters in model_2.state_dict().items():
+        if layer_name in fenda_layers_to_exchange:
+            assert np.array_equal(layer_parameters, model_state_dict[layer_name])
+
     input = torch.ones((3, 1, 10, 10))
     # Test that concatenation produces the right output dimension
     output_shape = model(input).shape

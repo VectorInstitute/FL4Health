@@ -15,11 +15,8 @@ class FixedLayerExchanger(ParameterExchanger):
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
         # NOTE: Filtering layers only works if each client exchanges exactly the same layers
-        return [
-            layer_parameters.cpu().numpy()
-            for layer_name, layer_parameters in model.state_dict().items()
-            if layer_name in self.layers_to_transfer
-        ]
+        model_state_dict = model.state_dict()
+        return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
