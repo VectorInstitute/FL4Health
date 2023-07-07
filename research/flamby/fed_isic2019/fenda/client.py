@@ -11,6 +11,7 @@ from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLo
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader, random_split
+from torchinfo import summary
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -73,6 +74,13 @@ class FedIsic2019FendaClient(BasicClient):
 
         meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
+        model_stats = summary(self.model, verbose=0)
+        log(INFO, "\nFENDA MODEL STATS:")
+        log(INFO, "===========================================================================")
+        log(INFO, f"Total Parameters: {model_stats.total_params}")
+        log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
+        log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
+        log(INFO, "===========================================================================\n")
         local_steps = self.narrow_config_type(config, "local_steps", int)
         metric_values = self.train_by_steps(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
