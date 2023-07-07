@@ -1,25 +1,23 @@
 import argparse
-import os
 from logging import INFO
-from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss, FedIsic2019
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
-from torch.utils.data import DataLoader, random_split
+from flwr.common.typing import Config
+from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
+from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
+from research.flamby.flamby_clients.flamby_apfl_client import FlambyApflClient
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-class FedIsic2019ApflClient(ApflClient):
+class FedIsic2019ApflClient(FlambyApflClient):
     def __init__(
         self,
         learning_rate: float,
@@ -31,28 +29,13 @@ class FedIsic2019ApflClient(ApflClient):
         dataset_dir: str,
         run_name: str = "",
     ) -> None:
-        super().__init__(data_path=Path(""), metrics=metrics, device=device)
         assert 0 <= client_number < NUM_CLIENTS
-        self.client_number = client_number
-        log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-        checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-        checkpoint_name = f"client_{self.client_number}_best_model.pkl"
-        self.learning_rate = learning_rate
-        self.alpha_learning_rate = alpha_learning_rate
-        self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
-        self.dataset_dir = dataset_dir
-
-    def construct_train_val_datasets(self) -> Tuple[FedIsic2019, FedIsic2019]:
-        full_train_dataset = FedIsic2019(
-            center=self.client_number, train=True, pooled=False, data_path=self.dataset_dir
+        super().__init__(
+            learning_rate, alpha_learning_rate, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name
         )
-        # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
-        # ignore for now.
-        train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2]))  # type: ignore
-        return train_dataset, validation_dataset
 
     def setup_client(self, config: Config) -> None:
-        train_dataset, validation_dataset = self.construct_train_val_datasets()
+        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(self.client_number, self.dataset_dir)
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -70,41 +53,6 @@ class FedIsic2019ApflClient(ApflClient):
         self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
 
         super().setup_client(config)
-
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-
-        global_meter = AccumulationMeter(self.metrics, "train_global")
-        local_meter = AccumulationMeter(self.metrics, "train_local")
-        personal_meter = AccumulationMeter(self.metrics, "train_personal")
-        self.set_parameters(parameters, config)
-        local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train_by_steps(local_steps, global_meter, local_meter, personal_meter)
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_examples["train_set"],
-            metric_values,
-        )
-
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-
-        self.set_parameters(parameters, config)
-        global_meter = AccumulationMeter(self.metrics, "val_global")
-        local_meter = AccumulationMeter(self.metrics, "val_local")
-        personal_meter = AccumulationMeter(self.metrics, "val_personal")
-        loss, metric_values = self.validate(global_meter, local_meter, personal_meter)
-        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            loss,
-            self.num_examples["validation_set"],
-            metric_values,
-        )
 
 
 if __name__ == "__main__":
