@@ -34,6 +34,7 @@ class ScaffoldClient(NumpyFlClient):
         self.criterion: _Loss
         self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
         self.learning_rate_local: float  # eta_l in paper
+        self.server_model_state: Optional[NDArrays] = None  # model state from server
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.num_examples: Dict[str, int]
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
@@ -94,14 +95,17 @@ class ScaffoldClient(NumpyFlClient):
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
-        server_model_weights, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
+        server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
-        self.server_model_weights = server_model_weights
-        self.parameter_exchanger.pull_parameters(server_model_weights, self.model, config)
+        self.server_model_state = server_model_state
+        self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
+        self.server_model_weights = [
+            model_params.detach().numpy() for model_params in self.model.parameters() if model_params.requires_grad
+        ]
 
         # If client control variates do not exist, initialize with zeros as per paper
         if self.client_control_variates is None:
-            self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
+            self.client_control_variates = [np.zeros_like(weight) for weight in self.server_control_variates]
 
     def update_control_variates(self, local_steps: int) -> None:
         """
@@ -116,7 +120,7 @@ class ScaffoldClient(NumpyFlClient):
         assert self.train_loader.batch_size is not None
 
         # y_i
-        client_model_weights = [val.numpy() for val in self.model.state_dict().values()]
+        client_model_weights = [val.detach().numpy() for val in self.model.parameters() if val.requires_grad]
 
         # (x - y_i)
         delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)
@@ -145,12 +149,18 @@ class ScaffoldClient(NumpyFlClient):
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
 
+        model_params_with_grad = [
+            model_params for model_params in self.model.parameters() if model_params.requires_grad
+        ]
+
         for param, client_cv, server_cv in zip(
-            self.model.parameters(), self.client_control_variates, self.server_control_variates
+            model_params_with_grad, self.client_control_variates, self.server_control_variates
         ):
             assert param.grad is not None
             tensor_type = param.grad.dtype
-            update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
+            server_cv_tensor = torch.from_numpy(server_cv).type(tensor_type)
+            client_cv_tensor = torch.from_numpy(client_cv).type(tensor_type)
+            update = server_cv_tensor.to(self.device) - client_cv_tensor.to(self.device)
             param.grad += update
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
