@@ -28,12 +28,12 @@ class APFLEfficientNet(nn.Module):
         # we iterate throught the blocks freezing the specified number up to 15 (all of them)
 
         # Freeze the first two layers
-        self.base_model._modules["_conv_stem"].requires_grad_(False)
-        self.base_model._modules["_bn0"].requires_grad_(False)
+        self.base_model._modules["base_model"]._modules["_conv_stem"].requires_grad_(False)
+        self.base_model._modules["base_model"]._modules["_bn0"].requires_grad_(False)
         # Now we iterate through the block modules and freeze a certain number of them.
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
-            self.base_model._modules["_blocks"][block_index].requires_grad_(False)
+            self.base_model._modules["base_model"]._modules["_blocks"][block_index].requires_grad_(False)
         return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
