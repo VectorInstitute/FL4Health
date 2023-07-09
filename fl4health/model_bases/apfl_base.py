@@ -39,9 +39,17 @@ class APFLModule(nn.Module):
         # https://github.com/MLOPTPSU/FedTorch/blob
         # /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L240
 
+        # Need to filter out frozen parameters, as they have no grad object
+        local_parameters = [
+            local_params for local_params in self.local_model.parameters() if local_params.requires_grad
+        ]
+        global_parameters = [
+            global_params for global_params in self.local_model.parameters() if global_params.requires_grad
+        ]
+
         # Accumulate gradient of alpha across layers
         grad_alpha: float = 0.0
-        for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
+        for local_p, global_p in zip(local_parameters, global_parameters):
             local_grad = local_p.grad
             global_grad = global_p.grad
             assert local_grad is not None and global_grad is not None

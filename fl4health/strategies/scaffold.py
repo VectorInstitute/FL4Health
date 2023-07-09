@@ -31,7 +31,8 @@ class Scaffold(FedAvgSampling):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        learning_rate: float = 1.0
+        learning_rate: float = 1.0,
+        initial_control_variates: Parameters,
     ) -> None:
         """Scaffold Federated Learning strategy.
 
@@ -67,6 +68,9 @@ class Scaffold(FedAvgSampling):
         learning_rate: Optional[float]
             Learning rate for server side optimization.
         """
+        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+        self.server_control_variates = parameters_to_ndarrays(initial_control_variates)
+        initial_parameters.tensors.extend(initial_control_variates.tensors)
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -80,9 +84,7 @@ class Scaffold(FedAvgSampling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.learning_rate = learning_rate
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        self.server_control_variates = [np.zeros_like(arr) for arr in self.server_model_weights]
-        self.parameter_packer = ParameterPackerWithControlVariates()
+        self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))
 
     def aggregate_fit(
         self,
