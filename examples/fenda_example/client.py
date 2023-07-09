@@ -38,8 +38,11 @@ class MnistFendaClient(BasicClient):
         train_loader, validation_loader, num_examples = load_mnist_data(self.data_path, batch_size, sampler)
 
         self.train_loader = train_loader
-        self.validation_loader = validation_loader
+        self.val_loader = validation_loader
         self.num_examples = num_examples
+
+        self.criterion = torch.nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
 
 if __name__ == "__main__":
