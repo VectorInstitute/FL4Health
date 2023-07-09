@@ -21,7 +21,8 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     if type == ScaffoldClient:
         client = ScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.learning_rate_local = 0.01
-        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(model.state_dict()) if model else 0
+        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())

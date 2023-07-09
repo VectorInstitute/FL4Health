@@ -20,10 +20,10 @@ def get_ndarrays(layer_sizes: List[List[int]]) -> NDArrays:
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
 def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> None:  # noqa
-    exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
     model_weights = get_ndarrays  # noqa
     control_variates = get_ndarrays  # noqa
 
+    exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(len(model_weights)))
     packed_params = exchanger.pack_parameters(model_weights, control_variates)
 
     assert len(packed_params) == len(model_weights) + len(control_variates)

@@ -59,8 +59,7 @@ class FendaModel(nn.Module):
         self.model_head = model_head
 
     def layers_to_exchange(self) -> List[str]:
-        # NOTE: that the prepending string must match the name of the global module variable
-        return [f"global_module.{layer_name}" for layer_name in self.global_module.get_layer_names()]
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         local_output = self.local_module.forward(input)

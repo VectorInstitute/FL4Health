@@ -5,6 +5,7 @@ from logging import INFO
 from typing import Any, Dict, List, Optional, Tuple
 
 import flwr as fl
+import numpy as np
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
@@ -34,7 +35,8 @@ class FedIsic2019ScaffoldServer(FlServer):
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(self.client_model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
@@ -85,6 +87,14 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     return parameters
 
 
+def get_initial_model_information(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
+    # Initializing the model parameters on the server side.
+    model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
+    # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+    control_variates = [np.zeros_like(val.data) for val in client_model.parameters() if val.requires_grad]
+    return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
+
+
 def fit_config(
     local_steps: int,
     n_server_rounds: int,
@@ -114,6 +124,8 @@ def main(
     client_manager = FixedSamplingWithoutReplacementClientManager()
     client_model = Baseline()
 
+    initial_parameters, initial_control_variates = get_initial_model_information(client_model)
+
     strategy = Scaffold(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
@@ -124,8 +136,9 @@ def main(
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=initial_parameters,
         learning_rate=server_learning_rate,
+        initial_control_variates=initial_control_variates,
     )
 
     server = FedIsic2019ScaffoldServer(client_manager, client_model, strategy, checkpointer)
