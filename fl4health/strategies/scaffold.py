@@ -3,7 +3,14 @@ from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import (
+    MetricsAggregationFn,
+    NDArrays,
+    Parameters,
+    ndarray_to_bytes,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
@@ -67,6 +74,11 @@ class Scaffold(FedAvgSampling):
         learning_rate: Optional[float]
             Learning rate for server side optimization.
         """
+        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+        # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+        initial_control_variates = [np.zeros_like(arr) for arr in self.server_model_weights]
+        self.server_control_variates = initial_control_variates
+        initial_parameters.tensors.extend([ndarray_to_bytes(ndarray) for ndarray in initial_control_variates])
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -80,8 +92,6 @@ class Scaffold(FedAvgSampling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.learning_rate = learning_rate
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        self.server_control_variates = [np.zeros_like(arr) for arr in self.server_model_weights]
         self.parameter_packer = ParameterPackerWithControlVariates()
 
     def aggregate_fit(

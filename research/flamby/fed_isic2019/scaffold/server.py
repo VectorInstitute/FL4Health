@@ -10,12 +10,13 @@ from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
-from flwr.server.client_manager import ClientManager, SimpleClientManager
+from flwr.server.client_manager import ClientManager
 from flwr.server.server import EvaluateResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.server.server import FlServer
@@ -110,7 +111,7 @@ def main(
     checkpoint_name = "server_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
-    client_manager = SimpleClientManager()
+    client_manager = FixedSamplingWithoutReplacementClientManager()
     client_model = Baseline()
 
     strategy = Scaffold(
