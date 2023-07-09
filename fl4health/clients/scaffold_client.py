@@ -146,7 +146,9 @@ class ScaffoldClient(NumpyFlClient):
         ):
             assert param.grad is not None
             tensor_type = param.grad.dtype
-            update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
+            server_cv_tensor = torch.from_numpy(server_cv).type(tensor_type)
+            client_cv_tensor = torch.from_numpy(client_cv).type(tensor_type)
+            update = server_cv_tensor.to(self.device) - client_cv_tensor.to(self.device)
             param.grad += update
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
