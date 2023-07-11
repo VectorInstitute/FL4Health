@@ -18,13 +18,11 @@ class FedAdamEfficientNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.model = Baseline()
-        # Freeze layers to reduce trainable parameters.
         self.modify_batch_normalization_layers()
 
     def modify_batch_normalization_layers(self) -> None:
-        # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
-
+        # Iterate through all named modules of the model and, if we encounter a batch normalization layer, we set
+        # track_running_stats to false instead of true.
         for name, module in self.model.named_modules():
             if isinstance(module, nn.BatchNorm2d):
                 log(INFO, f"Modifying Batch Normalization Layer: {name}")
