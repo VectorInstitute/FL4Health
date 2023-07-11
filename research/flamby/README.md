@@ -54,7 +54,7 @@ For more discussion of this process, see [FLamby documentation](https://owkin.gi
 
 ### Getting a GPU to debug/launch experiments from
 
-The following command will reserve an A40 on the cluster in order to debug experiments and launch hyperparameter sweeps. Note that it is not necessary to use an interactive A40 for the later.
+The following command will reserve an A40 on the cluster in order to debug experiments and launch hyperparameter sweeps. Note that it is not necessary to use an interactive A40 for the latter.
 
 ```bash
 srun --gres=gpu:1 -c 8 --mem 16G -p a40 --pty bash
