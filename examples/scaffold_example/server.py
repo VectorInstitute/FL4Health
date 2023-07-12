@@ -33,7 +33,7 @@ def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = MnistNetWithBnAndFrozen()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+    # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in initial_model.parameters() if val.requires_grad]
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
