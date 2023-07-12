@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from flwr.common.typing import Config
 
-from examples.models.cnn_model import MnistNet
+from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -30,13 +30,14 @@ class MnistScaffoldClient(ScaffoldClient):
         learning_rate_local = self.narrow_config_type(config, "learning_rate_local", float)
 
         self.learning_rate_local = learning_rate_local
-        self.model: nn.Module = MnistNet().to(self.device)
+        self.model: nn.Module = MnistNetWithBnAndFrozen().to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(self.model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         super().setup_client(config)
 
 
