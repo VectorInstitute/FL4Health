@@ -15,7 +15,7 @@
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
+# sbatch research/flamby/fed_heart_disease/fedavg/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
@@ -24,10 +24,10 @@
 #   server_address
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/fedavg/config.yaml \
-#   research/flamby/fed_isic2019/fedavg/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# sbatch research/flamby/fed_heart_disease/fedavg/run_fold_experiment.slrm \
+#   research/flamby/fed_heart_disease/fedavg/config.yaml \
+#   research/flamby/fed_heart_disease/fedavg/hp_results/ \
+#   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.0.0.0:8080
@@ -114,7 +114,7 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_isic2019.fedavg.server \
+    nohup python -m research.flamby.fed_heart_disease.fedavg.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
@@ -125,7 +125,7 @@ do
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=6
+    n_clients=4
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -133,7 +133,7 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.fedavg.client \
+        nohup python -m research.flamby.fed_heart_disease.fedavg.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \

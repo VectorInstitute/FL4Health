@@ -3,17 +3,17 @@
 ###############################################
 # Usage:
 #
-#  ./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
+#  ./research/flamby/fed_heart_disease/fedprox/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep.sh \
-#   research/flamby/fed_isic2019/fedprox/config.yaml \
-#   research/flamby/fed_isic2019/fedprox/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# ./research/flamby/fed_heart_disease/fedprox/run_hp_sweep.sh \
+#   research/flamby/fed_heart_disease/fedprox/config.yaml \
+#   research/flamby/fed_heart_disease/fedprox/ \
+#   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
 # Notes:
@@ -25,9 +25,9 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-MU_VALUES=( 0.001 0.01 0.1 1.0 )
-# FedISIC LR Hyperparmeters from paper are not suitable for AdamW
-LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
+MU_VALUES=( 0.01 0.1 1.0 )
+# FedHeartDisease LR Hyperparmeters from paper are not suitable for AdamW
+LR_VALUES=( 0.001 0.0001 )
 
 SERVER_PORT=8100
 
@@ -47,7 +47,7 @@ do
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
     echo "Server Address: ${SERVER_ADDRESS}"
-    SBATCH_COMMAND="research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
+    SBATCH_COMMAND="research/flamby/fed_heart_disease/fedprox/run_fold_experiment.slrm \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \

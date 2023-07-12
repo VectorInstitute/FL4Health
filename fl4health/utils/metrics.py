@@ -29,11 +29,16 @@ class Accuracy(Metric):
         super().__init__(name)
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # assuming batch first
         assert logits.shape[0] == target.shape[0]
-        preds = torch.argmax(logits, 1)
-        correct = (preds == target).sum().item()
-        accuracy = correct / preds.shape[0]
-        return accuracy
+        # Single value output
+        if len(logits.shape) == 1 or logits.shape[1] == 1:
+            preds = logits
+        else:
+            preds = torch.argmax(logits, 1)
+        target = target.cpu().detach()
+        preds = preds.cpu().detach()
+        return metrics.accuracy_score(target, preds)
 
 
 class BalancedAccuracy(Metric):
@@ -41,6 +46,7 @@ class BalancedAccuracy(Metric):
         super().__init__(name)
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # assuming batch first
         assert logits.shape[0] == target.shape[0]
         target = target.cpu().detach()
         logits = logits.cpu().detach()

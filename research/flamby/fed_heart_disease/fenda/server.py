@@ -10,7 +10,7 @@ from flwr.server.strategy import FedAvg
 from torchinfo import summary
 
 from fl4health.utils.config import load_config
-from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
+from research.flamby.fed_heart_disease.fenda.fenda_model import FedHeartDiseaseFendaModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
@@ -29,7 +29,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    client_model = FedIsic2019FendaModel()
+    client_model = FedHeartDiseaseFendaModel()
 
     model_stats = summary(client_model, verbose=0)
     log(INFO, "\nFENDA MODEL STATS:")

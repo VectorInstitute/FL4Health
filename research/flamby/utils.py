@@ -101,3 +101,22 @@ def evaluate_fed_isic_model(
     balanced_accuracy = computed_metrics["test_meter_FedIsic2019_balanced_accuracy"]
     assert isinstance(balanced_accuracy, float)
     return balanced_accuracy
+
+
+def evaluate_fed_heart_disease_model(
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device
+) -> float:
+    model.to(device).eval()
+    meter = AccumulationMeter(metrics, "test_meter")
+
+    with torch.no_grad():
+        for input, target in dataset:
+            input, target = input.to(device), target.to(device)
+            preds = model(input)
+            meter.update(preds, target)
+
+    computed_metrics = meter.compute()
+    assert "test_meter_FedHeartDisease_accuracy" in computed_metrics
+    accuracy = computed_metrics["test_meter_FedHeartDisease_accuracy"]
+    assert isinstance(accuracy, float)
+    return accuracy

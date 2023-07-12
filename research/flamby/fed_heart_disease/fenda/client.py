@@ -5,19 +5,19 @@ from typing import Sequence
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.metrics import BalancedAccuracy, Metric
-from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
+from fl4health.utils.metrics import Accuracy, Metric
+from research.flamby.fed_heart_disease.fenda.fenda_model import FedHeartDiseaseFendaModel
 from research.flamby.flamby_clients.flamby_fedopt_client import FlambyFedOptClient
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedIsic2019FendaClient(FlambyFedOptClient):
+class FedHeartDiseaseFendaClient(FlambyFedOptClient):
     def __init__(
         self,
         learning_rate: float,
@@ -32,14 +32,16 @@ class FedIsic2019FendaClient(FlambyFedOptClient):
         super().__init__(learning_rate, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name)
 
     def setup_client(self, config: Config) -> None:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(self.client_number, self.dataset_dir)
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
+            self.client_number, self.dataset_dir
+        )
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        self.model: nn.Module = FedIsic2019FendaModel().to(self.device)
+        self.model: nn.Module = FedHeartDiseaseFendaModel().to(self.device)
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
@@ -63,7 +65,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(
@@ -83,7 +85,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
         required=True,
     )
     parser.add_argument(
@@ -96,9 +98,9 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
 
-    client = FedIsic2019FendaClient(
+    client = FedHeartDiseaseFendaClient(
         args.learning_rate,
-        [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_balanced_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

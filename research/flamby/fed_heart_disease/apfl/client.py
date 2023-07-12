@@ -4,20 +4,19 @@ from typing import Sequence
 
 import flwr as fl
 import torch
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.metrics import BalancedAccuracy, Metric
-from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
+from fl4health.utils.metrics import Accuracy, Metric
 from research.flamby.flamby_clients.flamby_apfl_client import FlambyApflClient
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedIsic2019ApflClient(FlambyApflClient):
+class FedHeartDiseaseApflClient(FlambyApflClient):
     def __init__(
         self,
         learning_rate: float,
@@ -35,7 +34,9 @@ class FedIsic2019ApflClient(FlambyApflClient):
         )
 
     def setup_client(self, config: Config) -> None:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(self.client_number, self.dataset_dir)
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
+            self.client_number, self.dataset_dir
+        )
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -46,7 +47,7 @@ class FedIsic2019ApflClient(FlambyApflClient):
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
 
-        self.model: APFLModule = APFLModule(APFLEfficientNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
+        self.model: APFLModule = APFLModule(Baseline(), alpha_lr=self.alpha_learning_rate).to(self.device)
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)
 
@@ -68,7 +69,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(
@@ -88,7 +89,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
         required=True,
     )
     parser.add_argument(
@@ -105,10 +106,10 @@ if __name__ == "__main__":
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Alpha Learning Rate: {args.alpha_learning_rate}")
 
-    client = FedIsic2019ApflClient(
+    client = FedHeartDiseaseApflClient(
         args.learning_rate,
         args.alpha_learning_rate,
-        [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_balanced_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

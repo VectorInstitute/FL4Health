@@ -3,13 +3,13 @@ from logging import INFO
 from typing import Dict
 
 import torch
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, NUM_CLIENTS, FedIsic2019
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, NUM_CLIENTS, FedHeartDisease
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BalancedAccuracy
+from fl4health.utils.metrics import Accuracy
 from research.flamby.utils import (
-    evaluate_fed_isic_model,
+    evaluate_fed_heart_disease_model,
     get_all_run_folders,
     get_metric_avg_std,
     load_global_model,
@@ -24,7 +24,7 @@ def main(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
-    metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]
+    metrics = [Accuracy("FedHeardDisease_accuracy")]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
@@ -32,7 +32,7 @@ def main(
     # First we test each client's best model on local test data and the best server model on that same data
 
     for client_number in range(NUM_CLIENTS):
-        client_test_dataset = FedIsic2019(center=client_number, train=False, pooled=False, data_path=dataset_dir)
+        client_test_dataset = FedHeartDisease(center=client_number, train=False, pooled=False, data_path=dataset_dir)
         test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         local_test_metrics = []
@@ -40,7 +40,7 @@ def main(
         for run_folder_dir in all_run_folder_dir:
             if eval_local_models:
                 local_model = load_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_fed_isic_model(local_model, test_loader, metrics, device)
+                local_run_metric = evaluate_fed_heart_disease_model(local_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -51,7 +51,7 @@ def main(
 
             if eval_global_model:
                 server_model = load_global_model(run_folder_dir)
-                server_run_metric = evaluate_fed_isic_model(server_model, test_loader, metrics, device)
+                server_run_metric = evaluate_fed_heart_disease_model(server_model, test_loader, metrics, device)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -100,13 +100,13 @@ def main(
 
     if eval_global_model:
         # Next we test server checkpointed best model on pooled test data
-        pooled_test_dataset = FedIsic2019(center=0, train=False, pooled=True)
+        pooled_test_dataset = FedHeartDisease(center=0, train=False, pooled=True)
         pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             model = load_global_model(run_folder_dir)
-            run_metric = evaluate_fed_isic_model(model, pooled_test_loader, metrics, device)
+            run_metric = evaluate_fed_heart_disease_model(model, pooled_test_loader, metrics, device)
             log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
             test_metrics.append(run_metric)
 
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(

@@ -11,7 +11,7 @@ from torchinfo import summary
 
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.config import load_config
-from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
+from research.flamby.fed_heart_disease.apfl.apfl_model import APFLEfficientNet
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,

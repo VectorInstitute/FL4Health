@@ -15,16 +15,16 @@
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/local/run_fold_experiment.slrm \
+# sbatch research/flamby/fed_heart_disease/local/run_fold_experiment.slrm \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_number
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/local/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/local/results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# sbatch research/flamby/fed_heart_disease/local/run_fold_experiment.slrm \
+#   research/flamby/fed_heart_disease/local/results/ \
+#   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   3
 #
@@ -108,7 +108,7 @@ do
     echo "Trainer logging at: ${OUTPUT_FILE}"
     echo "Launching Trainer"
 
-    nohup python -m research.flamby.fed_isic2019.local.train \
+    nohup python -m research.flamby.fed_heart_disease.local.train \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --dataset_dir ${DATASET_DIR} \

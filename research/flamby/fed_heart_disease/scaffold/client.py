@@ -5,19 +5,19 @@ from typing import Sequence
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.metrics import BalancedAccuracy, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 from research.flamby.flamby_clients.flamby_scaffold_client import FlambyScaffoldClient
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedIsic2019ScaffoldClient(FlambyScaffoldClient):
+class FedHeartDiseaseScaffoldClient(FlambyScaffoldClient):
     def __init__(
         self,
         learning_rate: float,
@@ -32,7 +32,9 @@ class FedIsic2019ScaffoldClient(FlambyScaffoldClient):
         super().__init__(learning_rate, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name)
 
     def setup_client(self, config: Config) -> None:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(self.client_number, self.dataset_dir)
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
+            self.client_number, self.dataset_dir
+        )
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -47,7 +49,8 @@ class FedIsic2019ScaffoldClient(FlambyScaffoldClient):
         # make sense mathematically.
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(self.model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
         super().setup_client(config)
 
@@ -65,7 +68,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(
@@ -85,7 +88,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
         required=True,
     )
     parser.add_argument(
@@ -98,9 +101,9 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
 
-    client = FedIsic2019ScaffoldClient(
+    client = FedHeartDiseaseScaffoldClient(
         args.learning_rate,
-        [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_balanced_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,
