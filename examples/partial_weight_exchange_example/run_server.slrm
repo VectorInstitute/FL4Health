@@ -5,9 +5,9 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=16G
-#SBATCH --partition=t4v2
-#SBATCH --qos=high
+#SBATCH --mem=32G
+#SBATCH --partition=a40
+#SBATCH --qos=normal
 
 # Note:
 #	  ntasks: Total number of processes to use across world

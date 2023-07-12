@@ -1,12 +1,13 @@
 import math
-from typing import List, Tuple, Union
+from typing import Tuple, Union
 
 import datasets
-import numpy as np
 import torch
 from datasets import load_dataset
-from torch.utils.data import Subset
+from torch.utils.data import Dataset, Subset
 from transformers import PreTrainedTokenizer, PreTrainedTokenizerFast
+
+from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 def make_train_val_datasets(dataset: datasets.Dataset, split_ratio: float) -> Tuple[Subset, Subset]:
@@ -19,11 +20,13 @@ def make_train_val_datasets(dataset: datasets.Dataset, split_ratio: float) -> Tu
     return result[0], result[1]
 
 
-def split_client_data(dataset: datasets.Dataset, num_clients: int, seed: int = 42) -> List[Subset]:
-    ratios = np.random.dirichlet(np.ones(num_clients), 1)
-    ratios = ratios.reshape(ratios.shape[1])
-    generator = torch.Generator().manual_seed(seed)
-    return torch.utils.data.random_split(dataset, ratios.tolist(), generator=generator)
+# def split_client_data(dataset: datasets.Dataset, num_clients: int, seed: int = 42) -> List[Subset]:
+#     ratios = np.random.dirichlet(np.ones(num_clients), 1)
+#     ratios = ratios.reshape(ratios.shape[1])
+#     ratios = ratios.tolist()
+#     ratios[0] = 1 - sum(ratios[1:])
+#     generator = torch.Generator().manual_seed(seed)
+#     return torch.utils.data.random_split(dataset, ratios, generator=generator)
 
 
 def setup_datasets(
@@ -31,7 +34,7 @@ def setup_datasets(
     tokenizer: Union[PreTrainedTokenizer, PreTrainedTokenizerFast],
     dataset_name: str,
     num_clients: int,
-) -> Tuple[List[Subset], List[Subset], List[Subset]]:
+) -> Tuple[Dataset, Dataset, Dataset]:
     dataset_dict = load_dataset(dataset_name)
     assert isinstance(dataset_dict, datasets.DatasetDict)
 
@@ -56,8 +59,14 @@ def setup_datasets(
     test_dataset_total = tokenized_dataset_dict["test"]
     test_dataset_total.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
 
-    train_datasets = split_client_data(train_dataset_total, num_clients)
-    val_datasets = split_client_data(val_dataset_total, num_clients)
-    test_datasets = split_client_data(test_dataset_total, num_clients)
+    sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
 
-    return train_datasets, val_datasets, test_datasets
+    # train_datasets = split_client_data(train_dataset_total, num_clients)
+    # val_datasets = split_client_data(val_dataset_total, num_clients)
+    # test_datasets = split_client_data(test_dataset_total, num_clients)
+
+    train_dataset = sampler.subsample(train_dataset_total)
+    val_dataset = sampler.subsample(val_dataset_total)
+    test_dataset = sampler.subsample(test_dataset_total)
+
+    return train_dataset, val_dataset, test_dataset

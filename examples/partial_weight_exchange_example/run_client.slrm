@@ -5,9 +5,9 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=16G
-#SBATCH --partition=t4v2
-#SBATCH --qos=high
+#SBATCH --mem=32G
+#SBATCH --partition=a40
+#SBATCH --qos=normal
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -28,9 +28,10 @@ fi
 # Process inputs
 
 SERVER_ADDRESS=$1
-LOG_DIR=$2
-VENV_PATH=$3
-JOB_HASH=$4
+PERCENTAGE=$2
+LOG_DIR=$3
+VENV_PATH=$4
+JOB_HASH=$5
 
 # Print relevant information for the client to connect to the server and run
 echo "Server Address: ${SERVER_ADDRESS}"
@@ -52,4 +53,4 @@ which python
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
 
-python -m examples.partial_weight_exchange_example.client --server_address ${SERVER_ADDRESS} > ${LOG_PATH} 2>&1
+python -m examples.partial_weight_exchange_example.client --server_address ${SERVER_ADDRESS} --percentage ${PERCENTAGE} > ${LOG_PATH} 2>&1

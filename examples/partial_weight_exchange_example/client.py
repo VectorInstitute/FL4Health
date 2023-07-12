@@ -6,11 +6,10 @@ from typing import Dict, Tuple
 
 import flwr as fl
 import torch
-import torch.multiprocessing as mp
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Dataset
 from transformers import RobertaForSequenceClassification, RobertaTokenizer
 
 from examples.partial_weight_exchange_example.custom_dataloaders import setup_datasets
@@ -20,11 +19,13 @@ from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
 
 
 class TransformerPartialExchangeClient(NumpyFlClient):
-    def __init__(self, data_path: Path, device: torch.device, model: nn.Module, datasets: Dict[str, Subset]) -> None:
+    def __init__(
+        self, data_path: Path, device: torch.device, model: nn.Module, datasets: Dict[str, Dataset], percentage: float
+    ) -> None:
         super().__init__(data_path, device)
         self.model = model.to(self.device)
         self.initial_model = copy.deepcopy(self.model).to(device)
-        self.parameter_exchanger = NormDriftLayerExchanger(1)
+        self.parameter_exchanger = NormDriftLayerExchanger(75, percentage=percentage)
         self.datasets = datasets
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -99,12 +100,13 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument("--percentage", action="store", type=float, default=0.1)
     args = parser.parse_args()
 
     roberta_tokenizer = RobertaTokenizer.from_pretrained("roberta-base")
     roberta_classifier_model = RobertaForSequenceClassification.from_pretrained("roberta-base", num_labels=4)
 
-    train_datasets, val_datasets, test_datasets = setup_datasets(
+    train_set, val_set, test_set = setup_datasets(
         train_split_ratio=0.9, tokenizer=roberta_tokenizer, dataset_name="ag_news", num_clients=2
     )
 
@@ -114,18 +116,25 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    mp.set_start_method("spawn", force=True)
-    processes = []
+    # mp.set_start_method("spawn", force=True)
+    # processes = []
 
-    for train_set, val_set, test_set in zip(train_datasets, val_datasets, test_datasets):
-        datasets = {"train": train_set, "val": val_set, "test": test_set}
-        client = TransformerPartialExchangeClient(data_path, DEVICE, roberta_classifier_model, datasets)
-        p = mp.Process(
-            target=fl.client.start_numpy_client, kwargs={"server_address": args.server_address, "client": client}
-        )
-        p.start()
-        processes.append(p)
-        print("Process started")
+    # for train_set, val_set, test_set in zip(train_datasets, val_datasets, test_datasets):
+    #     datasets = {"train": train_set, "val": val_set, "test": test_set}
+    #     client = TransformerPartialExchangeClient(data_path, DEVICE, roberta_classifier_model, datasets)
+    #     p = mp.Process(
+    #         target=fl.client.start_numpy_client, kwargs={"server_address": args.server_address, "client": client}
+    #     )
+    #     p.start()
+    #     processes.append(p)
+    #     print("Process started")
 
-    for p in processes:
-        p.join()
+    # for p in processes:
+    #     p.join()
+
+    # train_set = train_datasets[0]
+    # val_set = val_datasets[0]
+    # test_set = test_datasets[0]
+    datasets = {"train": train_set, "val": val_set, "test": test_set}
+    client = TransformerPartialExchangeClient(data_path, DEVICE, roberta_classifier_model, datasets, args.percentage)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client)

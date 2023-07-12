@@ -1,14 +1,15 @@
 #!/bin/bash
 
 SERVER_PORT=$1
-SERVER_CONFIG_PATH=$2
-SERVER_LOG_DIR=$3
-CLIENT_LOG_DIR=$4
-VENV_PATH=$5
+PERCENTAGE=$2
+SERVER_CONFIG_PATH=$3
+SERVER_LOG_DIR=$4
+CLIENT_LOG_DIR=$5
+VENV_PATH=$6
 
 CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data"
 # Spins up 3 clients, as the list is 3 strings long
-CLIENT_DATA_PATH_SUFFIXES=( "" "" "" )
+CLIENT_DATA_PATH_SUFFIXES=( "" "" "" "" "" )
 
 # Start the FL Server and wait until the job starts
 SERVER_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
@@ -21,11 +22,12 @@ echo "Server Port number: ${SERVER_PORT}"
 echo "Config Path: ${SERVER_CONFIG_PATH}"
 echo "Server Log Dir: ${SERVER_LOG_DIR}"
 echo "Client Log Dir: ${CLIENT_LOG_DIR}"
+echo "Client Exchange Percentage: ${PERCENTAGE}"
 echo "Python Venv Path: ${VENV_PATH}"
 echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
-  research/fedprox_cluster/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} \
+  examples/partial_weight_exchange_example/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} \
   ${SERVER_JOB_HASH}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
@@ -63,7 +65,7 @@ do
   CLIENT_ERROR_LOGS="client_log_${CLIENT_JOB_HASH}.err"
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
-    examples/partial_weight_exchange_example/run_client.slrm ${SERVER_ADDRESS} ${CLIENT_LOG_DIR} ${VENV_PATH} \
+    examples/partial_weight_exchange_example/run_client.slrm ${SERVER_ADDRESS} ${PERCENTAGE} ${CLIENT_LOG_DIR} ${VENV_PATH} \
     ${CLIENT_JOB_HASH}"
 
   sbatch ${SBATCH_COMMAND}
