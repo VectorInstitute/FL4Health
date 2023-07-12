@@ -47,7 +47,8 @@ class FedIsic2019ScaffoldClient(FlambyScaffoldClient):
         # make sense mathematically.
         self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(self.model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
         super().setup_client(config)
 

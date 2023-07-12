@@ -5,13 +5,14 @@ from typing import Sequence
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.metrics import BalancedAccuracy, Metric
+from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 from research.flamby.flamby_clients.flamby_fedopt_client import FlambyFedOptClient
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
@@ -38,7 +39,7 @@ class FedIsic2019FedAdamClient(FlambyFedOptClient):
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        self.model: nn.Module = Baseline().to(self.device)
+        self.model: nn.Module = FedAdamEfficientNet().to(self.device)
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()

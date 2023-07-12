@@ -23,7 +23,8 @@ class ScaffoldServer(FlServer):
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates())
+        model_size = len(self.client_model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:

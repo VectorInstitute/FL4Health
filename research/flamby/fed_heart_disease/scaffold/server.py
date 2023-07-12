@@ -17,7 +17,7 @@ from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
     fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
+    get_initial_model_info_with_control_variates,
 )
 
 
@@ -38,6 +38,8 @@ def main(
     client_manager = SimpleClientManager()
     client_model = Baseline()
 
+    initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(client_model)
+
     strategy = Scaffold(
         fraction_fit=1.0,
         fraction_evaluate=1.0,
@@ -48,7 +50,8 @@ def main(
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=initial_parameters,
+        initial_control_variates=initial_control_variates,
         learning_rate=server_learning_rate,
     )
 

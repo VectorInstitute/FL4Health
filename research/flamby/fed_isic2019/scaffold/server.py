@@ -7,9 +7,9 @@ from typing import Any, Dict
 import flwr as fl
 from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
-from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.scaffold_server import ScaffoldServer
@@ -17,7 +17,7 @@ from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
     fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
+    get_initial_model_info_with_control_variates,
 )
 
 
@@ -35,8 +35,10 @@ def main(
     checkpoint_name = "server_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
-    client_manager = SimpleClientManager()
+    client_manager = FixedSamplingWithoutReplacementClientManager()
     client_model = Baseline()
+
+    initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(client_model)
 
     strategy = Scaffold(
         fraction_fit=1.0,
@@ -48,8 +50,9 @@ def main(
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=initial_parameters,
         learning_rate=server_learning_rate,
+        initial_control_variates=initial_control_variates,
     )
 
     server = ScaffoldServer(client_manager, client_model, strategy, checkpointer)

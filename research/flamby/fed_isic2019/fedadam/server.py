@@ -5,13 +5,13 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
-from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
+from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 from research.flamby.flamby_servers.flamby_server import FlambyServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
@@ -36,7 +36,7 @@ def main(
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    client_model = Baseline()
+    client_model = FedAdamEfficientNet()
 
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],
