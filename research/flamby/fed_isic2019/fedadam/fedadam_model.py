@@ -27,6 +27,15 @@ class FedAdamEfficientNet(nn.Module):
             if isinstance(module, nn.BatchNorm2d):
                 log(INFO, f"Modifying Batch Normalization Layer: {name}")
                 module.track_running_stats = False
+                # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant
+                # variable to none, otherwise the layer still tries to apply the stale variables during evaluation
+                # leading to eventual NaNs again.
+                module.running_mean = None
+                module.running_var = None
+                module.num_batches_tracked = None
+                module.register_buffer("running_mean", None)
+                module.register_buffer("running_var", None)
+                module.register_buffer("num_batches_tracked", None)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.model(x)
