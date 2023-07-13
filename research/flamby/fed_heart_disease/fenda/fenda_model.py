@@ -2,13 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import (
-    FendaGlobalModule,
-    FendaHeadModule,
-    FendaJoinMode,
-    FendaLocalModule,
-    FendaModel,
-)
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
 
 class FendaClassifier(FendaHeadModule):
@@ -30,7 +24,7 @@ class FendaClassifier(FendaHeadModule):
         return x
 
 
-class LocalLogistic(FendaLocalModule):
+class LocalLogistic(nn.Module):
     """Local FENDA module"""
 
     def __init__(self, input_dim: int = 13):
@@ -43,7 +37,7 @@ class LocalLogistic(FendaLocalModule):
         return x
 
 
-class GlobalLogistic(FendaGlobalModule):
+class GlobalLogistic(nn.Module):
     """Global FENDA module"""
 
     def __init__(self, input_dim: int = 13) -> None:
