@@ -105,7 +105,7 @@ if __name__ == "__main__":
     client = FedHeartDiseaseFedProxClient(
         args.learning_rate,
         args.mu,
-        [Accuracy("FedHeartDisease_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

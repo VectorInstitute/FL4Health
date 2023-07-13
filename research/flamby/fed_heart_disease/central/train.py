@@ -74,7 +74,7 @@ if __name__ == "__main__":
         args.dataset_dir,
         args.run_name,
     )
-    metrics = [Accuracy("FedHeartDisease_balanced_accuracy")]
+    metrics = [Accuracy("FedHeartDisease_accuracy")]
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for Fed Heart Disease are trained for 20 epochs

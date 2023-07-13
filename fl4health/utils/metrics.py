@@ -31,9 +31,9 @@ class Accuracy(Metric):
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         # assuming batch first
         assert logits.shape[0] == target.shape[0]
-        # Single value output
+        # Single value output, assume binary logits
         if len(logits.shape) == 1 or logits.shape[1] == 1:
-            preds = logits
+            preds = (logits > 0.5).int()
         else:
             preds = torch.argmax(logits, 1)
         target = target.cpu().detach()
