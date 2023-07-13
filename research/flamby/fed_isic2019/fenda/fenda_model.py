@@ -5,13 +5,7 @@ from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
 from torch.utils import model_zoo
 
-from fl4health.model_bases.fenda_base import (
-    FendaGlobalModule,
-    FendaHeadModule,
-    FendaJoinMode,
-    FendaLocalModule,
-    FendaModel,
-)
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
 
 def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = False) -> EfficientNet:
@@ -47,7 +41,7 @@ class FendaClassifier(FendaHeadModule):
         return x
 
 
-class LocalEfficientNet(FendaLocalModule):
+class LocalEfficientNet(nn.Module):
     """Local FENDA module
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
@@ -84,7 +78,7 @@ class LocalEfficientNet(FendaLocalModule):
         return x
 
 
-class GlobalEfficientNet(FendaGlobalModule):
+class GlobalEfficientNet(nn.Module):
     """Global FENDA module
     We use the EfficientNets architecture that many participants in the ISIC
     competition have identified to work best.
