@@ -3,13 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import (
-    FendaGlobalModule,
-    FendaHeadModule,
-    FendaJoinMode,
-    FendaLocalModule,
-    FendaModel,
-)
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 
 
@@ -27,7 +21,7 @@ class FendaTestClassifier(FendaHeadModule):
         return x
 
 
-class LocalFendaTest(FendaLocalModule):
+class LocalFendaTest(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 2, 2)
@@ -41,7 +35,7 @@ class LocalFendaTest(FendaLocalModule):
         return x
 
 
-class GlobalFendaTest(FendaGlobalModule):
+class GlobalFendaTest(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 2, 2)
