@@ -13,16 +13,15 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader, random_split
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
-class FedIsic2019FedProxClient(FedProxClient):
+class FedIsic2019FedAdamClient(BasicClient):
     def __init__(
         self,
         learning_rate: float,
-        mu: float,
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
@@ -37,7 +36,6 @@ class FedIsic2019FedProxClient(FedProxClient):
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         checkpoint_name = f"client_{self.client_number}_best_model.pkl"
         self.learning_rate = learning_rate
-        self.mu = mu
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
         self.dataset_dir = dataset_dir
 
@@ -63,8 +61,6 @@ class FedIsic2019FedProxClient(FedProxClient):
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        # Set the Proximal Loss weight mu
-        self.proximal_weight = self.mu
 
         self.parameter_exchanger = FullParameterExchanger()
 
@@ -77,8 +73,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        metric_values = self.train_by_steps(current_server_round, local_steps, meter)
+        metric_values = self.train_by_steps(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -92,9 +87,8 @@ class FedIsic2019FedProxClient(FedProxClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
         meter = AccumulationMeter(self.metrics, "val_meter")
-        loss, metric_values = self.validate(current_server_round, meter)
+        loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -140,7 +134,6 @@ if __name__ == "__main__":
         help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
         required=True,
     )
-    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
@@ -150,11 +143,9 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"FedProx Mu: {args.mu}")
 
-    client = FedIsic2019FedProxClient(
+    client = FedIsic2019FedAdamClient(
         args.learning_rate,
-        args.mu,
         [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         DEVICE,
         args.client_number,

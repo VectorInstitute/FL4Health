@@ -12,7 +12,7 @@ from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
 from flwr.server.client_manager import ClientManager, SimpleClientManager
 from flwr.server.server import EvaluateResultsAndFailures
-from flwr.server.strategy import FedAvg, Strategy
+from flwr.server.strategy import FedAdam, Strategy
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
@@ -21,7 +21,7 @@ from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
 
 
-class FedIsic2019FedProxServer(FlServer):
+class FedIsic2019FedAdamServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -90,7 +90,9 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(
+    config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
+) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -105,8 +107,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     client_manager = SimpleClientManager()
     client_model = Baseline()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedAdam(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -117,9 +118,10 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        eta=server_learning_rate,
     )
 
-    server = FedIsic2019FedProxServer(client_manager, client_model, strategy, checkpointer)
+    server = FedIsic2019FedAdamServer(client_manager, client_model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -162,8 +164,16 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--server_learning_rate",
+        action="store",
+        type=float,
+        help="Learning rate for server side",
+        required=True,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    log(INFO, f"Server Learning Rate: {args.server_learning_rate}")
+    main(config, args.server_address, args.artifact_dir, args.run_name, args.server_learning_rate)

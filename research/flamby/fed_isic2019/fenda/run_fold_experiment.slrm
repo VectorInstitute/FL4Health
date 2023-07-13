@@ -15,28 +15,26 @@
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
+# sbatch research/flamby/fed_isic2019/fenda/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
-#   mu_value_for_fedprox_loss \
 #   client_side_learning_rate_value \
 #   server_address
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/fedprox/config.yaml \
-#   research/flamby/fed_isic2019/fedprox/hp_results/ \
+# sbatch research/flamby/fed_isic2019/fenda/run_fold_experiment.slrm \
+#   research/flamby/fed_isic2019/fenda/config.yaml \
+#   research/flamby/fed_isic2019/fenda/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
-#   0.1 \
 #   0.0001 \
 #   0.0.0.0:8080
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs FedProx. As such the data paths and python launch commands are hardcoded. If you want to change
+# 2) This example runs FENDA. As such the data paths and python launch commands are hardcoded. If you want to change
 # the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################
@@ -63,9 +61,8 @@ SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
-CLIENT_MU=$5
-CLIENT_LR=$6
-SERVER_ADDRESS=$7
+CLIENT_LR=$5
+SERVER_ADDRESS=$6
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -117,10 +114,8 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_isic2019.fedprox.server \
+    nohup python -m research.flamby.fed_isic2019.fenda.server \
         --config_path ${SERVER_CONFIG_PATH} \
-        --artifact_dir ${ARTIFACT_DIR} \
-        --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
@@ -136,12 +131,11 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.fedprox.client \
+        nohup python -m research.flamby.fed_isic2019.fenda.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
-            --mu ${CLIENT_MU} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             > ${CLIENT_LOG_PATH} 2>&1 &

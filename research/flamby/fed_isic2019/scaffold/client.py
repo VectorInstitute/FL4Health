@@ -13,16 +13,16 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader, random_split
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.clients.scaffold_client import ScaffoldClient
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
-class FedIsic2019FedProxClient(FedProxClient):
+class FedIsic2019ScaffoldClient(ScaffoldClient):
     def __init__(
         self,
         learning_rate: float,
-        mu: float,
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
@@ -36,8 +36,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         checkpoint_name = f"client_{self.client_number}_best_model.pkl"
-        self.learning_rate = learning_rate
-        self.mu = mu
+        self.learning_rate_local = learning_rate
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
         self.dataset_dir = dataset_dir
 
@@ -62,11 +61,12 @@ class FedIsic2019FedProxClient(FedProxClient):
         # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        # Set the Proximal Loss weight mu
-        self.proximal_weight = self.mu
+        # Note that, unlike the other approaches, SCAFFOLD requires a vanilla SGD optimizer for the corrections to
+        # make sense mathematically.
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
-        self.parameter_exchanger = FullParameterExchanger()
+        model_size = len(self.model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
         super().setup_client(config)
 
@@ -77,8 +77,7 @@ class FedIsic2019FedProxClient(FedProxClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        metric_values = self.train_by_steps(current_server_round, local_steps, meter)
+        metric_values = self.train(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -92,9 +91,8 @@ class FedIsic2019FedProxClient(FedProxClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
         meter = AccumulationMeter(self.metrics, "val_meter")
-        loss, metric_values = self.validate(current_server_round, meter)
+        loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -140,7 +138,6 @@ if __name__ == "__main__":
         help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
         required=True,
     )
-    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
@@ -150,11 +147,9 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"FedProx Mu: {args.mu}")
 
-    client = FedIsic2019FedProxClient(
+    client = FedIsic2019ScaffoldClient(
         args.learning_rate,
-        args.mu,
         [BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         DEVICE,
         args.client_number,
