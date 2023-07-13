@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaGlobalModule, FendaHeadModule, FendaJoinMode, FendaLocalModule
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode
 
 
 class FendaClassifier(FendaHeadModule):
@@ -21,7 +21,7 @@ class FendaClassifier(FendaHeadModule):
         return x
 
 
-class LocalCnn(FendaLocalModule):
+class LocalCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
@@ -37,7 +37,7 @@ class LocalCnn(FendaLocalModule):
         return x
 
 
-class GlobalCnn(FendaGlobalModule):
+class GlobalCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
