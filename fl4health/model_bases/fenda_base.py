@@ -11,22 +11,6 @@ class FendaJoinMode(Enum):
     SUM = "SUM"
 
 
-class FendaGlobalModule(nn.Module, ABC):
-    def __init__(self) -> None:
-        super().__init__()
-
-    def get_layer_names(self) -> List[str]:
-        # This function supplies the names of the layers to be exchanged with the central server during FL training
-        # NOTE: By default, global FENDA modules will return all layer names to be exchanged. This behavior can be
-        # modified by overriding this function
-        return list(self.state_dict().keys())
-
-
-class FendaLocalModule(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-
-
 class FendaHeadModule(nn.Module, ABC):
     def __init__(self, mode: FendaJoinMode) -> None:
         super().__init__()
@@ -50,9 +34,7 @@ class FendaHeadModule(nn.Module, ABC):
 
 
 class FendaModel(nn.Module):
-    def __init__(
-        self, local_module: FendaLocalModule, global_module: FendaGlobalModule, model_head: FendaHeadModule
-    ) -> None:
+    def __init__(self, local_module: nn.Module, global_module: nn.Module, model_head: FendaHeadModule) -> None:
         super().__init__()
         self.local_module = local_module
         self.global_module = global_module
