@@ -44,7 +44,7 @@ class APFLModule(nn.Module):
             local_params for local_params in self.local_model.parameters() if local_params.requires_grad
         ]
         global_parameters = [
-            global_params for global_params in self.local_model.parameters() if global_params.requires_grad
+            global_params for global_params in self.global_model.parameters() if global_params.requires_grad
         ]
 
         # Accumulate gradient of alpha across layers
