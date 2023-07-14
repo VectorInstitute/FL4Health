@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import flwr as fl
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
@@ -19,6 +18,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
+from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 
 
 class FedIsic2019FedAdamServer(FlServer):
@@ -105,7 +105,7 @@ def main(
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    client_model = Baseline()
+    client_model = FedAdamEfficientNet()
 
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],
