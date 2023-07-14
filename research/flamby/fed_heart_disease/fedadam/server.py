@@ -9,6 +9,7 @@ from flamby.datasets.fed_heart_disease import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
+from torchinfo import summary
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
@@ -37,6 +38,14 @@ def main(
 
     client_manager = SimpleClientManager()
     client_model = Baseline()
+
+    model_stats = summary(client_model, verbose=0)
+    log(INFO, "Client Model Stats:")
+    log(INFO, "===========================================================================")
+    log(INFO, f"Total Parameters: {model_stats.total_params}")
+    log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
+    log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
+    log(INFO, "===========================================================================\n")
 
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],

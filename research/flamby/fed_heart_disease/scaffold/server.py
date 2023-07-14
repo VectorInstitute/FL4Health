@@ -7,6 +7,7 @@ from typing import Any, Dict
 import flwr as fl
 from flamby.datasets.fed_heart_disease import Baseline
 from flwr.common.logger import log
+from torchinfo import summary
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
@@ -37,6 +38,14 @@ def main(
 
     client_manager = FixedSamplingWithoutReplacementClientManager()
     client_model = Baseline()
+
+    model_stats = summary(client_model, verbose=0)
+    log(INFO, "Client Model Stats:")
+    log(INFO, "===========================================================================")
+    log(INFO, f"Total Parameters: {model_stats.total_params}")
+    log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
+    log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
+    log(INFO, "===========================================================================\n")
 
     initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(client_model)
 
