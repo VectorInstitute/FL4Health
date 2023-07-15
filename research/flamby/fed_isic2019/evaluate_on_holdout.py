@@ -19,7 +19,12 @@ from research.flamby.utils import (
 
 
 def main(
-    artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_local_models: bool, eval_global_model: bool, is_apfl: bool
+    artifact_dir: str,
+    dataset_dir: str,
+    eval_write_path: str,
+    eval_local_models: bool,
+    eval_global_model: bool,
+    is_apfl: bool,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
@@ -106,7 +111,7 @@ def main(
         test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             model = load_global_model(run_folder_dir)
-            run_metric = evaluate_fed_isic_model(model, pooled_test_loader, metrics, device)
+            run_metric = evaluate_fed_isic_model(model, pooled_test_loader, metrics, device, is_apfl)
             log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
             test_metrics.append(run_metric)
 
@@ -168,4 +173,11 @@ if __name__ == "__main__":
     log(INFO, f"Is APFL Run: {args.is_apfl}")
 
     assert args.eval_local_models or args.eval_global_model
-    main(args.artifact_dir, args.dataset_dir, args.eval_write_path, args.eval_local_models, args.eval_global_model, args.is_apfl)
+    main(
+        args.artifact_dir,
+        args.dataset_dir,
+        args.eval_write_path,
+        args.eval_local_models,
+        args.eval_global_model,
+        args.is_apfl,
+    )
