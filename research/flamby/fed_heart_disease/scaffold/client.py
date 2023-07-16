@@ -42,8 +42,7 @@ class FedHeartDiseaseScaffoldClient(FlambyScaffoldClient):
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
         self.model: nn.Module = Baseline().to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
+
         self.criterion = BaselineLoss()
         # Note that, unlike the other approaches, SCAFFOLD requires a vanilla SGD optimizer for the corrections to
         # make sense mathematically.
@@ -103,7 +102,7 @@ if __name__ == "__main__":
 
     client = FedHeartDiseaseScaffoldClient(
         args.learning_rate,
-        [Accuracy("FedHeartDisease_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

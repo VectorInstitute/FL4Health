@@ -42,8 +42,7 @@ class FedHeartDiseaseFedProxClient(FlambyFedProxClient):
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
         self.model: nn.Module = Baseline().to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
+
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         # Set the Proximal Loss weight mu
@@ -105,7 +104,7 @@ if __name__ == "__main__":
     client = FedHeartDiseaseFedProxClient(
         args.learning_rate,
         args.mu,
-        [Accuracy("FedHeartDisease_balanced_accuracy")],
+        [Accuracy("FedHeartDisease_accuracy")],
         DEVICE,
         args.client_number,
         args.artifact_dir,

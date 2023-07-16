@@ -85,7 +85,7 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
 
 
 def evaluate_fed_isic_model(
-    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
     model.to(device).eval()
     meter = AccumulationMeter(metrics, "test_meter")
@@ -93,7 +93,10 @@ def evaluate_fed_isic_model(
     with torch.no_grad():
         for input, target in dataset:
             input, target = input.to(device), target.to(device)
-            preds = model(input)
+            if is_apfl:
+                preds = model(input, personal=True)["personal"]
+            else:
+                preds = model(input)
             meter.update(preds, target)
 
     computed_metrics = meter.compute()
@@ -104,7 +107,7 @@ def evaluate_fed_isic_model(
 
 
 def evaluate_fed_heart_disease_model(
-    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
     model.to(device).eval()
     meter = AccumulationMeter(metrics, "test_meter")
@@ -112,7 +115,10 @@ def evaluate_fed_heart_disease_model(
     with torch.no_grad():
         for input, target in dataset:
             input, target = input.to(device), target.to(device)
-            preds = model(input)
+            if is_apfl:
+                preds = model(input, personal=True)["personal"]
+            else:
+                preds = model(input)
             meter.update(preds, target)
 
     computed_metrics = meter.compute()

@@ -7,6 +7,7 @@ import torch.nn as nn
 from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, Baseline, BaselineLoss, FedHeartDisease
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, random_split
+from torchinfo import summary
 
 from fl4health.utils.metrics import AccumulationMeter, Accuracy
 from research.flamby.single_node_trainer import SingleNodeTrainer
@@ -28,8 +29,15 @@ class FedHeartDiseaseCentralizedTrainer(SingleNodeTrainer):
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.model: nn.Module = Baseline().to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
+
+        model_stats = summary(self.model, verbose=0)
+        log(INFO, "Client Model Stats:")
+        log(INFO, "===========================================================================")
+        log(INFO, f"Total Parameters: {model_stats.total_params}")
+        log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
+        log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
+        log(INFO, "===========================================================================\n")
+
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)
 
@@ -74,7 +82,7 @@ if __name__ == "__main__":
         args.dataset_dir,
         args.run_name,
     )
-    metrics = [Accuracy("FedHeartDisease_balanced_accuracy")]
+    metrics = [Accuracy("FedHeartDisease_accuracy")]
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for Fed Heart Disease are trained for 20 epochs

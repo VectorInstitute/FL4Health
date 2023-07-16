@@ -3,10 +3,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:0
 #SBATCH --mem=32G
-#SBATCH --partition=t4v2
+#SBATCH --partition=cpu
 #SBATCH --qos=normal
 #SBATCH --job-name=central_five_fold_exp
 #SBATCH --output=%j_%x.out

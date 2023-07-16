@@ -13,6 +13,6 @@ class FedHeartDiseaseLargeBaseline(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.fc1(x)
         x = self.dropout(x)
-        x = F.relu(self.fc1(x))
+        x = F.relu(x)
         x = self.fc2(x)
         return torch.sigmoid(x)

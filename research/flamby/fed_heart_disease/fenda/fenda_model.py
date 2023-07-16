@@ -2,13 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import (
-    FendaGlobalModule,
-    FendaHeadModule,
-    FendaJoinMode,
-    FendaLocalModule,
-    FendaModel,
-)
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
 
 class FendaClassifier(FendaHeadModule):
@@ -16,7 +10,7 @@ class FendaClassifier(FendaHeadModule):
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
         self.fc1 = nn.Linear(stack_output_dimension * 2, 1)
-        self.dropout = nn.Dropout(0.2)
+        self.dropout = nn.Dropout(0.3)
 
     def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         local_tensor = local_tensor.flatten(start_dim=1)
@@ -27,10 +21,11 @@ class FendaClassifier(FendaHeadModule):
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
         x = self.fc1(x)
+        x = torch.sigmoid(x)
         return x
 
 
-class LocalLogistic(FendaLocalModule):
+class LocalLogistic(nn.Module):
     """Local FENDA module"""
 
     def __init__(self, input_dim: int = 13):
@@ -43,7 +38,7 @@ class LocalLogistic(FendaLocalModule):
         return x
 
 
-class GlobalLogistic(FendaGlobalModule):
+class GlobalLogistic(nn.Module):
     """Global FENDA module"""
 
     def __init__(self, input_dim: int = 13) -> None:
