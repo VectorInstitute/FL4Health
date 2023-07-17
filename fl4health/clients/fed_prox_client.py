@@ -77,7 +77,6 @@ class FedProxClient(NumpyFlClient):
                 self.proximal_weight += self.proximal_weight_change_value
 
 
-
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
         super().set_parameters(parameters, config)
