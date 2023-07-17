@@ -37,7 +37,7 @@ class MnistFedProxClient(FedProxClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
 
         # Set the Proximal Loss weight mu
-        self.adaptive_proximal_weight = False
+        self.adaptive_proximal_weight = True
         if self.adaptive_proximal_weight is True:
             self.proximal_weight_patience = 5
             self.proximal_weight_change_value = 0.1
