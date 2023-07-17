@@ -91,6 +91,14 @@ fed_isic_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List[str]]]] 
             ["std_local_model_avg_across_clients"],
         ),
     ),
+    (
+        "apfl_eval_performance.txt",
+        "APFL",
+        (
+            ["avg_local_model_avg_across_clients"],
+            ["std_local_model_avg_across_clients"],
+        ),
+    ),
 ]
 
 # File name mapped to tuples of name appearing on the graph, keys for the mean, and keys for the std dev

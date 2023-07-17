@@ -158,6 +158,19 @@ fed_isic_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_5_model_local_avg",
         ],
     ),
+    (
+        "apfl_eval_performance.txt",
+        "APFL",
+        "apfl",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+            "client_4_model_local_avg",
+            "client_5_model_local_avg",
+        ],
+    ),
 ]
 
 # File name mapped to tuples of name appearing on the graph, variable name for array
