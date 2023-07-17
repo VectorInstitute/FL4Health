@@ -61,7 +61,7 @@ if __name__ == "__main__":
         "--experiment_name",
         action="store",
         type=str,
-        help="Name of the experiment type that is being analyzed. The options are fed_isic, fed_heart_disease, fed_ixi",
+        help="Name of the experiment type that is being analyzed. Options are: fed_isic, fed_heart_disease, fed_ixi",
         required=True,
     )
     args = parser.parse_args()
