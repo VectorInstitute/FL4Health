@@ -15,7 +15,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
-from fl4health.utils.sampler import DirichletLabelBasedSampler
+from fl4health.utils.sampler import DirichletLabelBasedSampler,MinorityLabelBasedSampler
 
 
 class MnistFedProxClient(FedProxClient):
@@ -33,9 +33,21 @@ class MnistFedProxClient(FedProxClient):
         self.model: nn.Module = MnistNet().to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
-        # Set the Proximal Loss weight mu
-        self.proximal_weight = 0.1
+        
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
+
+        # Set the Proximal Loss weight mu
+        self.adaptive_proximal_weight = False
+        if self.adaptive_proximal_weight is True:
+            self.proximal_weight_patience = 5
+            self.proximal_weight_change_value = 0.1
+            # If sampler is generating non iid data, then set the proximal weight to 0
+            if isinstance(sampler, DirichletLabelBasedSampler) or isinstance(sampler, MinorityLabelBasedSampler):
+                self.proximal_weight = 0.0
+            else:
+                self.proximal_weight = 1.0
+        else:        
+            self.proximal_weight = 0.1
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
         self.parameter_exchanger = FullParameterExchanger()
