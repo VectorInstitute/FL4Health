@@ -457,7 +457,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     (
         "apfl_eval_performance_big_model.txt",
         "APFL",
-        "fenda",
+        "apfl",
         [
             "client_0_model_local_avg",
             "client_1_model_local_avg",
