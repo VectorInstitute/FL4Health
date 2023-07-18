@@ -160,8 +160,8 @@ fed_isic_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedadam_eval_performance.txt",
-        "FedAvg_L",
-        "fedavg_local",
+        "FedAdam_L",
+        "fedadam_local",
         [
             "client_0_model_local_avg",
             "client_1_model_local_avg",
