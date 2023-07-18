@@ -185,38 +185,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List
         ),
     ),
     (
-        "client_4_eval_performance_small_model.txt",
-        "Local 4_S",
-        (
-            ["avg_server_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients"],
-        ),
-    ),
-    (
-        "client_4_eval_performance_big_model.txt",
-        "Local 4_L",
-        (
-            ["avg_server_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients"],
-        ),
-    ),
-    (
-        "client_5_eval_performance_small_model.txt",
-        "Local 5_S",
-        (
-            ["avg_server_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients"],
-        ),
-    ),
-    (
-        "client_5_eval_performance_big_model.txt",
-        "Local 5_L",
-        (
-            ["avg_server_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients"],
-        ),
-    ),
-    (
         "fedprox_eval_performance_small_model.txt",
         "FedProx_S",
         (
