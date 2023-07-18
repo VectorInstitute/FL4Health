@@ -210,8 +210,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -223,8 +221,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -236,8 +232,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -249,8 +243,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -262,8 +254,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -275,8 +265,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -288,8 +276,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -301,8 +287,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -314,8 +298,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -327,8 +309,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -340,8 +320,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -353,8 +331,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
     (
@@ -366,8 +342,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -379,8 +353,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
     (
@@ -392,8 +364,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -405,8 +375,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
     (
@@ -418,8 +386,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "server_model_client_1_avg",
             "server_model_client_2_avg",
             "server_model_client_3_avg",
-            "server_model_client_4_avg",
-            "server_model_client_5_avg",
         ],
     ),
     (
@@ -431,8 +397,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
     (
@@ -444,8 +408,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
     (
@@ -457,8 +419,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
             "client_1_model_local_avg",
             "client_2_model_local_avg",
             "client_3_model_local_avg",
-            "client_4_model_local_avg",
-            "client_5_model_local_avg",
         ],
     ),
 ]
