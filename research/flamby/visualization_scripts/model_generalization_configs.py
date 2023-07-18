@@ -146,6 +146,32 @@ fed_isic_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
         ],
     ),
     (
+        "fedadam_eval_performance.txt",
+        "FedAdam",
+        "fedadam",
+        [
+            "server_model_client_0_avg",
+            "server_model_client_1_avg",
+            "server_model_client_2_avg",
+            "server_model_client_3_avg",
+            "server_model_client_4_avg",
+            "server_model_client_5_avg",
+        ],
+    ),
+    (
+        "fedadam_eval_performance.txt",
+        "FedAvg_L",
+        "fedavg_local",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+            "client_4_model_local_avg",
+            "client_5_model_local_avg",
+        ],
+    ),
+    (
         "fenda_eval_performance_001.txt",
         "FENDA",
         "fenda",
