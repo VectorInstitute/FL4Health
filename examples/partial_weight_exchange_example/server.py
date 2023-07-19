@@ -8,7 +8,7 @@ import numpy as np
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
-from transformers import RobertaForSequenceClassification
+from torchtext.models import XLMR_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
@@ -30,10 +30,10 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def get_initial_model_parameters() -> Parameters:
+def get_initial_model_parameters(num_classes: int, input_dimension: int) -> Parameters:
     # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = RobertaForSequenceClassification.from_pretrained("roberta-base", num_labels=4)
+    classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
+    initial_model = XLMR_BASE_ENCODER.get_model(head=classifier_head)
     names = []
     params = []
     for key, val in initial_model.state_dict().items():
@@ -69,7 +69,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_initial_model_parameters(config["num_classes"], config["input_dimension"]),
     )
 
     client_manager = PoissonSamplingClientManager()
