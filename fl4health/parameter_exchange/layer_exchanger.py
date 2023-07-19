@@ -36,7 +36,7 @@ class FixedLayerExchanger(ParameterExchanger):
 
 
 class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
-    def __init__(self, threshold: Scalar, percentage: float = 0.1) -> None:
+    def __init__(self, threshold: Scalar, exchange_percentage: float = 0.1) -> None:
         """
         self.initial_model represents each client's local model at the beginning of each round of training.
         In this particular layer exchanger, self.initial_model is used to select
@@ -45,7 +45,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
         """
         self.parameter_packer = ParameterPackerWithLayerNames()
         self.threshold = threshold
-        self.percentage = percentage
+        self.exchange_percentage = exchange_percentage
 
     def filter_layers(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
         """
@@ -70,7 +70,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
 
     def set_percentage(self, new_percentage: float) -> None:
         assert 0 < new_percentage <= 1
-        self.percentage = new_percentage
+        self.exchange_percentage = new_percentage
 
     def filter_layers_by_percentage(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
         names_to_norm_drift = {}
@@ -83,7 +83,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
             names_to_norm_drift[layer_name] = drift_norm
 
         total_param_num = len(names_to_norm_drift.keys())
-        num_param_exchange = int(math.ceil(total_param_num * self.percentage))
+        num_param_exchange = int(math.ceil(total_param_num * self.exchange_percentage))
         param_to_exchange_names = sorted(names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x])[
             : (num_param_exchange + 1)
         ]
