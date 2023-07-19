@@ -1,15 +1,16 @@
 #!/bin/bash
 
 SERVER_PORT=$1
-PERCENTAGE=$2
-SERVER_CONFIG_PATH=$3
-SERVER_LOG_DIR=$4
-CLIENT_LOG_DIR=$5
-VENV_PATH=$6
+SERVER_CONFIG_PATH=$2
+SERVER_LOG_DIR=$3
+CLIENT_LOG_DIR=$4
+VENV_PATH=$5
+NUM_CLIENTS=$6
+PERCENTAGE=$7
 
-CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data"
-# Spins up 3 clients, as the list is 3 strings long
-CLIENT_DATA_PATH_SUFFIXES=( "" "" "" "" "" )
+
+CLIENT_DATA_BASE_PATH="examples/datasets/"
+
 
 # Start the FL Server and wait until the job starts
 SERVER_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
@@ -28,7 +29,7 @@ echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
   examples/partial_weight_exchange_example/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} \
-  ${SERVER_JOB_HASH}"
+  ${SERVER_JOB_HASH} ${PERCENTAGE}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
 echo "Server Job ID: ${JOB_ID}"
@@ -51,11 +52,8 @@ sleep 20
 
 # Spin up the clients on each disparate node with the server address
 
-for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
+for CLIENT_NUM in $(seq 1 $(NUM_CLIENTS));
 do
-
-  CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}/${DATA_PATH_SUFFIX}"
-
   CLIENT_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
   CLIENT_JOB_NAME="fl_client_${CLIENT_JOB_HASH}"
 

@@ -31,6 +31,7 @@ CONFIG_PATH=$2
 LOG_DIR=$3
 VENV_PATH=$4
 JOB_HASH=$5
+PERCENTAGE=$6
 
 # Print the name of the node, this will be the network address
 echo "Node Name: ${SLURMD_NODENAME}"
@@ -43,9 +44,13 @@ SERVER_ADDRESS="${SLURMD_NODENAME}:${SERVER_PORT}"
 
 echo "Server Address: ${SERVER_ADDRESS}"
 
-LOG_PATH="${LOG_DIR}server_log_${JOB_HASH}.log"
+LOG_DIR_FINAL="${LOG_DIR}_${PERCENTAGE}"
 
-echo "Placing logs in: ${LOG_DIR}"
+mkdir -p ${LOG_DIR_FINAL}
+
+LOG_PATH="${LOG_DIR_FINAL}server_log_${JOB_HASH}.log"
+
+echo "Placing logs in: ${LOG_DIR_FINAL}"
 echo "World size: ${SLURM_NTASKS}"
 echo "Number of nodes: ${SLURM_NNODES}"
 NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)

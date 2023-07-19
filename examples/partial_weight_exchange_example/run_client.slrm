@@ -38,9 +38,13 @@ echo "Server Address: ${SERVER_ADDRESS}"
 echo "Python Venv Path: ${VENV_PATH}"
 echo "Job Hash: ${JOB_HASH}"
 
-LOG_PATH="${LOG_DIR}client_log_${JOB_HASH}.log"
+LOG_DIR_FINAL="${LOG_DIR}_${PERCENTAGE}"
 
-echo "Placing logs in: ${LOG_DIR}"
+mkdir -p ${LOG_DIR_FINAL}
+
+LOG_PATH="${LOG_DIR_FINAL}client_log_${JOB_HASH}.log"
+
+echo "Placing logs in: ${LOG_DIR_FINAL}"
 echo "World size: ${SLURM_NTASKS}"
 echo "Number of nodes: ${SLURM_NNODES}"
 NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
