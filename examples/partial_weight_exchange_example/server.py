@@ -8,7 +8,7 @@ import numpy as np
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
-from torchtext.models import XLMR_BASE_ENCODER, RobertaClassificationHead
+from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
@@ -33,7 +33,7 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def get_initial_model_parameters(num_classes: int, input_dimension: int) -> Parameters:
     # Initializing the model parameters on the server side.
     classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
-    initial_model = XLMR_BASE_ENCODER.get_model(head=classifier_head)
+    initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
     names = []
     params = []
     for key, val in initial_model.state_dict().items():

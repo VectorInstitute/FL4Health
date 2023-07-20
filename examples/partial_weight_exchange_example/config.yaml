@@ -9,4 +9,4 @@ batch_size: 8 # The batch size for client training
 num_classes: 4 # number of classes in the classification task
 input_dimension: 768
 
-sequence_length: 128 # the length of tokenized sequences
+sequence_length: 256 # the length of tokenized sequences

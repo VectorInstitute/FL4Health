@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torchtext.models import XLMR_BASE_ENCODER, RobertaClassificationHead
+from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
 from examples.partial_weight_exchange_example.trainer import test, train, validate
@@ -72,7 +72,7 @@ class TransformerPartialExchangeClient(NumpyFlClient):
 
     def setup_model(self, num_classes: int, input_dimension: int) -> None:
         classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
-        self.model = XLMR_BASE_ENCODER.get_model(head=classifier_head)
+        self.model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
         self.model.to(self.device)
         self.initial_model = copy.deepcopy(self.model).to(self.device)
 

@@ -3,18 +3,16 @@ from typing import Any, Dict, List, Tuple, Union
 
 import torch
 import torchtext.transforms as T
-from torch.hub import load_state_dict_from_url
 from torch.utils.data import DataLoader, Dataset, IterableDataset, random_split
 from torchdata.datapipes.iter import IterableWrapper
 from torchtext.datasets import AG_NEWS
 from torchtext.functional import to_tensor
+from torchtext.models import ROBERTA_BASE_ENCODER
 
 from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 PAD = 1
-BOS = 0
-EOS = 2
 
 
 class ListDataset(Dataset):
@@ -47,16 +45,10 @@ def construct_dataloaders(
     batch_size: int,
     max_seq_len: int,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
-    xlmr_vocab_path = r"https://download.pytorch.org/models/text/xlmr.vocab.pt"
-    xlmr_spm_model_path = r"https://download.pytorch.org/models/text/xlmr.sentencepiece.bpe.model"
 
-    text_transform = T.Sequential(
-        T.SentencePieceTokenizer(xlmr_spm_model_path),
-        T.VocabTransform(load_state_dict_from_url(xlmr_vocab_path)),
-        T.Truncate(max_seq_len - 2),
-        T.AddToken(token=BOS, begin=True),
-        T.AddToken(token=EOS, begin=False),
-    )
+    assert max_seq_len >= 256
+
+    text_transform = ROBERTA_BASE_ENCODER.transform()
 
     def apply_transform(x: Tuple[int, str]) -> Tuple[Union[List[int], List[List[int]]], int]:
         return text_transform(x[1]), x[0]
