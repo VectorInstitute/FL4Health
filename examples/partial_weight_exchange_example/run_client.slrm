@@ -38,7 +38,7 @@ echo "Server Address: ${SERVER_ADDRESS}"
 echo "Python Venv Path: ${VENV_PATH}"
 echo "Job Hash: ${JOB_HASH}"
 
-LOG_DIR_FINAL="${LOG_DIR}_${PERCENTAGE}"
+LOG_DIR_FINAL="${LOG_DIR}_${PERCENTAGE}/"
 
 mkdir -p ${LOG_DIR_FINAL}
 

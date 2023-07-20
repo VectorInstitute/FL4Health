@@ -42,12 +42,46 @@ def get_initial_model_parameters(num_classes: int, input_dimension: int) -> Para
     return ndarrays_to_parameters(params + [np.array(names)])
 
 
+def construct_config(
+    _: int,
+    local_epochs: int,
+    batch_size: int,
+    input_dimension: int,
+    num_classes: int,
+    sequence_length: int,
+) -> Config:
+    return {
+        "local_epochs": local_epochs,
+        "batch_size": batch_size,
+        "input_dimension": input_dimension,
+        "num_classes": num_classes,
+        "sequence_length": sequence_length,
+    }
+
+
 def fit_config(
     local_epochs: int,
     batch_size: int,
+    input_dimension: int,
+    num_classes: int,
+    sequence_length: int,
     current_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
+    return construct_config(current_round, local_epochs, batch_size, input_dimension, num_classes, sequence_length)
+
+
+def eval_config(
+    local_epochs: int,
+    batch_size: int,
+    input_dimension: int,
+    num_classes: int,
+    sequence_length: int,
+    n_server_rounds: int,
+    current_round: int,
+) -> Config:
+    config = construct_config(current_round, local_epochs, batch_size, input_dimension, num_classes, sequence_length)
+    config["testing"] = n_server_rounds == current_round
+    return config
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:
@@ -56,17 +90,28 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["local_epochs"],
         config["batch_size"],
+        config["input_dimension"],
+        config["num_classes"],
+        config["sequence_length"],
+    )
+
+    eval_config_fn = partial(
+        eval_config,
+        config["local_epochs"],
+        config["batch_size"],
+        config["input_dimension"],
+        config["num_classes"],
+        config["sequence_length"],
+        config["n_server_rounds"],
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgDynamicLayer(
-        # min_fit_clients=config["n_clients"],
-        # min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
-        on_evaluate_config_fn=fit_config_fn,
+        on_evaluate_config_fn=eval_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(config["num_classes"], config["input_dimension"]),
@@ -79,6 +124,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
         strategy=strategy,
         client_manager=client_manager,
+        grpc_max_message_length=1600000000,
     )
 
 

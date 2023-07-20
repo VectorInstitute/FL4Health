@@ -103,4 +103,6 @@ def construct_dataloaders(
     val_loader = DataLoader(ag_val_dataset, batch_size=batch_size)
     test_loader = DataLoader(ag_test_dataset, batch_size=batch_size)
 
+    num_examples["test_set"] = len(test_loader) * batch_size
+
     return train_loader, val_loader, test_loader, num_examples

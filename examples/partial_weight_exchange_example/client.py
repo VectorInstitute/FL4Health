@@ -12,7 +12,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torchtext.models import XLMR_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
-from examples.partial_weight_exchange_example.trainer import evaluate, train
+from examples.partial_weight_exchange_example.trainer import test, train, validate
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
 
@@ -48,14 +48,27 @@ class TransformerPartialExchangeClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        loss, accuracy = evaluate(self.model, self.validation_loader, nn.CrossEntropyLoss(), device=self.device)
-        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            loss,
-            self.num_examples["validation_set"],
-            {"accuracy": accuracy},
-        )
+        testing = self.narrow_config_type(config, "testing", bool)
+        num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
+
+        if not testing:
+            loss, accuracy = validate(self.model, self.validation_loader, nn.CrossEntropyLoss(), device=self.device)
+            # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
+            # calculation results.
+            return (
+                loss,
+                self.num_examples["validation_set"],
+                {"accuracy": accuracy},
+            )
+        else:
+            loss, accuracy, f1_score = test(
+                self.model, self.test_loader, nn.CrossEntropyLoss(), device=self.device, num_classes=num_classes
+            )
+            return (
+                loss,
+                self.num_examples["test_set"],
+                {"accuracy": accuracy, "f1_score": f1_score},
+            )
 
     def setup_model(self, num_classes: int, input_dimension: int) -> None:
         classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
@@ -71,6 +84,9 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         input_dimension = self.narrow_config_type(config, "input_dimension", int)
 
         self.setup_model(num_classes, input_dimension)
+
+        # print(f'max sequence length: {sequence_length}')
+        # print(f'config received from server: {config}')
 
         train_loader, val_loader, test_loader, num_examples = construct_dataloaders(
             self.data_path, batch_size, sequence_length
@@ -118,4 +134,4 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     client = TransformerPartialExchangeClient(data_path, DEVICE, args.percentage)
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)

@@ -52,7 +52,7 @@ sleep 20
 
 # Spin up the clients on each disparate node with the server address
 
-for CLIENT_NUM in $(seq 1 $(NUM_CLIENTS));
+for CLIENT_NUM in $(seq 1 ${NUM_CLIENTS});
 do
   CLIENT_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
   CLIENT_JOB_NAME="fl_client_${CLIENT_JOB_HASH}"

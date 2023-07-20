@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
+from torcheval.metrics.functional import multiclass_f1_score
 
 
 def train(
@@ -49,7 +50,7 @@ def train(
     return n_correct / n_total
 
 
-def evaluate(
+def validate(
     model: nn.Module, val_loader: DataLoader, loss_func: nn.Module, device: torch.device
 ) -> Tuple[float, float]:
     model.to(device)
@@ -80,3 +81,49 @@ def evaluate(
         f"Client Validation Loss: {val_loss}," f"Client Validation Accuracy: {accuracy}",
     )
     return val_loss, accuracy
+
+
+def test(
+    model: nn.Module, test_loader: DataLoader, loss_func: nn.Module, device: torch.device, num_classes: int
+) -> Tuple[float, float, float]:
+    model.to(device)
+    model.eval()
+
+    n_total = 0
+    n_correct = 0
+    n_batches = 0
+    total_loss = 0.0
+
+    all_predictions = []
+    all_targets = []
+
+    for inputs, targets in test_loader:
+        inputs = inputs.to(device)
+        targets = targets.to(device)
+
+        outputs = model(inputs)
+        preds = torch.argmax(outputs, dim=1)
+
+        loss = loss_func(outputs, targets)
+
+        all_predictions.append(preds)
+        all_targets.append(targets)
+
+        total_loss += loss
+        n_total += targets.size(0)
+        n_correct += int((preds == targets).sum().item())
+        n_batches += 1
+
+    test_loss = total_loss / n_batches
+    accuracy = n_correct / n_total
+    f1_score = multiclass_f1_score(
+        torch.cat(all_predictions), torch.cat(all_targets), num_classes=num_classes, average="macro"
+    )
+
+    log(
+        INFO,
+        f"Client Test Loss: {test_loss}," f"Client Test Accuracy: {accuracy}",
+        f"Client Test f1 score: {float(f1_score)}",
+    )
+
+    return test_loss, accuracy, float(f1_score)
