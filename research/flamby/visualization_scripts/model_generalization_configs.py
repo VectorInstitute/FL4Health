@@ -338,52 +338,8 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
         ],
     ),
     (
-        "fedprox_eval_performance_small_model.txt",
-        "FedProx_SS",
-        "fedproxss",
-        [
-            "server_model_client_0_avg",
-            "server_model_client_1_avg",
-            "server_model_client_2_avg",
-            "server_model_client_3_avg",
-        ],
-    ),
-    (
-        "fedprox_eval_performance_small_model.txt",
-        "FedProx_LS",
-        "fedprox_locals",
-        [
-            "client_0_model_local_avg",
-            "client_1_model_local_avg",
-            "client_2_model_local_avg",
-            "client_3_model_local_avg",
-        ],
-    ),
-    (
-        "fedprox_eval_performance_big_model.txt",
-        "FedProx_SL",
-        "fedproxl",
-        [
-            "server_model_client_0_avg",
-            "server_model_client_1_avg",
-            "server_model_client_2_avg",
-            "server_model_client_3_avg",
-        ],
-    ),
-    (
-        "fedprox_eval_performance_big_model.txt",
-        "FedProx_LL",
-        "fedprox_locall",
-        [
-            "client_0_model_local_avg",
-            "client_1_model_local_avg",
-            "client_2_model_local_avg",
-            "client_3_model_local_avg",
-        ],
-    ),
-    (
         "fedavg_eval_performance_small_model.txt",
-        "FedAvg_SS",
+        "FedAvg_{SS}",
         "fedavgs",
         [
             "server_model_client_0_avg",
@@ -394,7 +350,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedavg_eval_performance_small_model.txt",
-        "FedAvg_LS",
+        "FedAvg_{LS}",
         "fedavg_locals",
         [
             "client_0_model_local_avg",
@@ -405,7 +361,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedavg_eval_performance_big_model.txt",
-        "FedAvg_SL",
+        "FedAvg_{SL}",
         "fedavgl",
         [
             "server_model_client_0_avg",
@@ -416,7 +372,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedavg_eval_performance_big_model.txt",
-        "FedAvg_LL",
+        "FedAvg_{LL}",
         "fedavg_locall",
         [
             "client_0_model_local_avg",
@@ -427,7 +383,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedadam_eval_performance_small_model.txt",
-        "FedAdam_SS",
+        "FedAdam_{SS}",
         "fedadams",
         [
             "server_model_client_0_avg",
@@ -438,7 +394,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedadam_eval_performance_small_model.txt",
-        "FedAdam_LS",
+        "FedAdam_{LS}",
         "fedadam_locals",
         [
             "client_0_model_local_avg",
@@ -449,7 +405,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedadam_eval_performance_big_model.txt",
-        "FedAdam_SL",
+        "FedAdam_{SL}",
         "fedadaml",
         [
             "server_model_client_0_avg",
@@ -460,8 +416,96 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
     ),
     (
         "fedadam_eval_performance_big_model.txt",
-        "FedAdam_LL",
+        "FedAdam_{LL}",
         "fedadam_locall",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+        ],
+    ),
+    (
+        "fedprox_eval_performance_small_model.txt",
+        "FedProx_{SS}",
+        "fedproxss",
+        [
+            "server_model_client_0_avg",
+            "server_model_client_1_avg",
+            "server_model_client_2_avg",
+            "server_model_client_3_avg",
+        ],
+    ),
+    (
+        "fedprox_eval_performance_small_model.txt",
+        "FedProx_{LS}",
+        "fedprox_locals",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+        ],
+    ),
+    (
+        "fedprox_eval_performance_big_model.txt",
+        "FedProx_{SL}",
+        "fedproxl",
+        [
+            "server_model_client_0_avg",
+            "server_model_client_1_avg",
+            "server_model_client_2_avg",
+            "server_model_client_3_avg",
+        ],
+    ),
+    (
+        "fedprox_eval_performance_big_model.txt",
+        "FedProx_{LL}",
+        "fedprox_locall",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+        ],
+    ),
+    (
+        "scaffold_eval_performance_small_model.txt",
+        "SCAFFOLD_{SS}",
+        "scaffoldss",
+        [
+            "server_model_client_0_avg",
+            "server_model_client_1_avg",
+            "server_model_client_2_avg",
+            "server_model_client_3_avg",
+        ],
+    ),
+    (
+        "scaffold_eval_performance_small_model.txt",
+        "SCAFFOLD_{LS}",
+        "scaffold_locals",
+        [
+            "client_0_model_local_avg",
+            "client_1_model_local_avg",
+            "client_2_model_local_avg",
+            "client_3_model_local_avg",
+        ],
+    ),
+    (
+        "scaffold_eval_performance_big_model.txt",
+        "SCAFFOLD_{SL}",
+        "scaffoldl",
+        [
+            "server_model_client_0_avg",
+            "server_model_client_1_avg",
+            "server_model_client_2_avg",
+            "server_model_client_3_avg",
+        ],
+    ),
+    (
+        "scaffold_eval_performance_big_model.txt",
+        "SCAFFOLD_{LL}",
+        "scaffold_locall",
         [
             "client_0_model_local_avg",
             "client_1_model_local_avg",

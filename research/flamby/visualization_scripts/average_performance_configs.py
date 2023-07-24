@@ -193,22 +193,6 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List
         ),
     ),
     (
-        "fedprox_eval_performance_small_model.txt",
-        "FedProx_S",
-        (
-            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
-        ),
-    ),
-    (
-        "fedprox_eval_performance_big_model.txt",
-        "FedProx_L",
-        (
-            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
-        ),
-    ),
-    (
         "fedavg_eval_performance_small_model.txt",
         "FedAvg_S",
         (
@@ -235,6 +219,22 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List
     (
         "fedadam_eval_performance_big_model.txt",
         "FedAdam_L",
+        (
+            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
+            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
+        ),
+    ),
+    (
+        "fedprox_eval_performance_small_model.txt",
+        "FedProx_S",
+        (
+            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
+            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
+        ),
+    ),
+    (
+        "fedprox_eval_performance_big_model.txt",
+        "FedProx_L",
         (
             ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
             ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
