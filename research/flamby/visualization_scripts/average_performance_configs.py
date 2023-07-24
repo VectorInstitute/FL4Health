@@ -60,14 +60,6 @@ fed_isic_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List[str]]]] 
         ),
     ),
     (
-        "fedprox_eval_performance.txt",
-        "FedProx",
-        (
-            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
-            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
-        ),
-    ),
-    (
         "fedavg_eval_performance.txt",
         "FedAvg",
         (
@@ -78,6 +70,22 @@ fed_isic_file_names_to_info: List[Tuple[str, str, Tuple[List[str], List[str]]]] 
     (
         "fedadam_eval_performance.txt",
         "FedAdam",
+        (
+            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
+            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
+        ),
+    ),
+    (
+        "fedprox_eval_performance.txt",
+        "FedProx",
+        (
+            ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
+            ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
+        ),
+    ),
+    (
+        "scaffold_eval_performance.txt",
+        "SCAFFOLD",
         (
             ["avg_server_model_avg_across_clients", "avg_local_model_avg_across_clients"],
             ["std_server_model_avg_across_clients", "std_local_model_avg_across_clients"],
