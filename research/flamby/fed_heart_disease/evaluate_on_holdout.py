@@ -163,7 +163,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--is_apfl",
         action="store_true",
-        help="boolean to indicate whether to search for and evaluate a local models in addition to the server model",
+        help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
     )
 
     args = parser.parse_args()
