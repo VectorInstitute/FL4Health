@@ -58,8 +58,8 @@ def construct_dataloaders(
     data_list = list(ag_datapipe)
 
     # AG_NEWS does not have a validation set, so we split the training set
-    train_size = int(0.9 * len(data_list))
-    val_size = len(data_list) - train_size
+    train_size = int(0.95 * len(data_list))
+    val_size = int(len(data_list) - train_size)
 
     num_examples = {"train_set": train_size, "validation_set": val_size}
 
@@ -88,13 +88,13 @@ def construct_dataloaders(
     ag_test_dataset = TextClassificationDataset(ag_test_datapipe, max_seq_len, PAD)
 
     # Perform Dirchlet sampling on the training set
-    sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=0.75, beta=1)
+    sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=0.6, beta=0.25)
     ag_train_dataset = sampler.subsample(ag_train_dataset_full)
 
-    train_loader = DataLoader(ag_train_dataset, batch_size=batch_size)
-    val_loader = DataLoader(ag_val_dataset, batch_size=batch_size)
-    test_loader = DataLoader(ag_test_dataset, batch_size=batch_size)
+    train_loader = DataLoader(ag_train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(ag_val_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(ag_test_dataset, batch_size=batch_size, shuffle=True)
 
-    num_examples["test_set"] = len(test_loader) * batch_size
+    num_examples["test_set"] = int(len(test_loader) * batch_size)
 
     return train_loader, val_loader, test_loader, num_examples

@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -53,77 +53,77 @@ def train(
 def validate(
     model: nn.Module, val_loader: DataLoader, loss_func: nn.Module, device: torch.device
 ) -> Tuple[float, float]:
-    model.to(device)
     model.eval()
+    with torch.no_grad():
 
-    n_total = 0
-    n_correct = 0
-    n_batches = 0
-    total_loss = 0.0
+        n_total = 0
+        n_correct = 0
+        n_batches = 0
+        total_loss = 0.0
 
-    for inputs, targets in val_loader:
-        inputs = inputs.to(device)
-        targets = targets.to(device)
+        for inputs, targets in val_loader:
+            inputs = inputs.to(device)
+            targets = targets.to(device)
 
-        outputs = model(inputs)
-        preds = torch.argmax(outputs, dim=1)
-        loss = loss_func(outputs, targets)
+            outputs = model(inputs)
+            preds = torch.argmax(outputs, dim=1)
+            loss = loss_func(outputs, targets)
 
-        total_loss += loss
-        n_total += targets.size(0)
-        n_correct += int((preds == targets).sum().item())
-        n_batches += 1
+            total_loss += loss.item()
+            n_total += targets.size(0)
+            n_correct += int((preds == targets).sum().item())
+            n_batches += 1
 
-    val_loss = total_loss / n_batches
-    accuracy = n_correct / n_total
-    log(
-        INFO,
-        f"Client Validation Loss: {val_loss}," f"Client Validation Accuracy: {accuracy}",
-    )
-    return val_loss, accuracy
+        val_loss = total_loss / n_batches
+        accuracy = n_correct / n_total
+        log(
+            INFO,
+            f"Client Validation Loss: {val_loss}," f"Client Validation Accuracy: {accuracy}",
+        )
+        return val_loss, accuracy
 
 
 def test(
     model: nn.Module, test_loader: DataLoader, loss_func: nn.Module, device: torch.device, num_classes: int
-) -> Tuple[float, float, float]:
-    model.to(device)
+) -> Tuple[float, float, List[float]]:
     model.eval()
+    with torch.no_grad():
 
-    n_total = 0
-    n_correct = 0
-    n_batches = 0
-    total_loss = 0.0
+        n_total = 0
+        n_correct = 0
+        n_batches = 0
+        total_loss = 0.0
 
-    all_predictions = []
-    all_targets = []
+        all_predictions = []
+        all_targets = []
 
-    for inputs, targets in test_loader:
-        inputs = inputs.to(device)
-        targets = targets.to(device)
+        for inputs, targets in test_loader:
+            inputs = inputs.to(device)
+            targets = targets.to(device)
 
-        outputs = model(inputs)
-        preds = torch.argmax(outputs, dim=1)
+            outputs = model(inputs)
+            preds = torch.argmax(outputs, dim=1)
 
-        loss = loss_func(outputs, targets)
+            loss = loss_func(outputs, targets)
 
-        all_predictions.append(preds)
-        all_targets.append(targets)
+            all_predictions.append(preds)
+            all_targets.append(targets)
 
-        total_loss += loss
-        n_total += targets.size(0)
-        n_correct += int((preds == targets).sum().item())
-        n_batches += 1
+            total_loss += loss.item()
+            n_total += targets.size(0)
+            n_correct += int((preds == targets).sum().item())
+            n_batches += 1
 
-    test_loss = total_loss / n_batches
-    accuracy = n_correct / n_total
-    f1_score = multiclass_f1_score(
-        torch.cat(all_predictions), torch.cat(all_targets), num_classes=num_classes, average="macro"
-    )
+        test_loss = total_loss / n_batches
+        accuracy = n_correct / n_total
+        f1_score = multiclass_f1_score(
+            torch.cat(all_predictions), torch.cat(all_targets), num_classes=num_classes, average=None
+        )
 
-    log(
-        INFO,
-        f"Client Test Loss: {test_loss}," f"Client Test Accuracy: {accuracy}",
-        f"Client Test f1 score: {float(f1_score)}",
-    )
+        log(
+            INFO,
+            f"Client Test Loss: {test_loss},"
+            f"Client Test Accuracy: {accuracy}, Client Test f1 score: {f1_score.tolist()}",
+        )
 
-    return test_loss, accuracy, float(f1_score)
+        return test_loss, accuracy, f1_score.tolist()

@@ -64,11 +64,10 @@ class TransformerPartialExchangeClient(NumpyFlClient):
             loss, accuracy, f1_score = test(
                 self.model, self.test_loader, nn.CrossEntropyLoss(), device=self.device, num_classes=num_classes
             )
-            return (
-                loss,
-                self.num_examples["test_set"],
-                {"accuracy": accuracy, "f1_score": f1_score},
-            )
+
+            test_res_dict: Dict[str, Scalar] = {f"class {c} f1_score": f1_score[c] for c in range(len(f1_score))}
+            test_res_dict["accuracy"] = accuracy
+            return (loss, self.num_examples["test_set"], test_res_dict)
 
     def setup_model(self, num_classes: int, input_dimension: int) -> None:
         classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)

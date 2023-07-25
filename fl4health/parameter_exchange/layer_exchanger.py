@@ -36,7 +36,13 @@ class FixedLayerExchanger(ParameterExchanger):
 
 
 class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
-    def __init__(self, threshold: Scalar, exchange_percentage: float = 0.1) -> None:
+    def __init__(
+        self,
+        threshold: Scalar,
+        exchange_percentage: float = 0.1,
+        filter_by_percentage: bool = True,
+        normalize: bool = True,
+    ) -> None:
         """
         self.initial_model represents each client's local model at the beginning of each round of training.
         In this particular layer exchanger, self.initial_model is used to select
@@ -46,8 +52,10 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
         self.parameter_packer = ParameterPackerWithLayerNames()
         self.threshold = threshold
         self.exchange_percentage = exchange_percentage
+        self.filter_by_percentage = filter_by_percentage
+        self.normalize = normalize
 
-    def filter_layers(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
+    def filter_layers_by_threshold(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
         """
         Return those layers of model that deviate (in l2 norm) away from corresponding layers of
         self.initial_model by at least self.threshold.
@@ -59,7 +67,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
         for layer_name in model_states:
             layer_param = model_states[layer_name]
             layer_param_past = initial_model_states[layer_name]
-            drift_norm = torch.norm((layer_param - layer_param_past).float())
+            drift_norm = torch.linalg.norm((layer_param - layer_param_past).float())
             if drift_norm >= self.threshold:
                 layers_to_transfer.append(layer_param.cpu().numpy())
                 layer_names.append(layer_name)
@@ -79,7 +87,7 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
 
         for layer_name, layer_param in model_states.items():
             layer_param_past = initial_model_states[layer_name]
-            drift_norm = torch.norm((layer_param - layer_param_past).float())
+            drift_norm = torch.linalg.norm((layer_param - layer_param_past).float())
             names_to_norm_drift[layer_name] = drift_norm
 
         total_param_num = len(names_to_norm_drift.keys())
@@ -87,7 +95,6 @@ class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
         param_to_exchange_names = sorted(names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x])[
             : (num_param_exchange + 1)
         ]
-        print(param_to_exchange_names)
         return [model_states[name].cpu().numpy() for name in param_to_exchange_names], param_to_exchange_names
 
     def push_parameters(
