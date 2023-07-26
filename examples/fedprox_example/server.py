@@ -13,8 +13,9 @@ from flwr.server.strategy import FedAvg
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.reporting.fl_wanb import ServerWandBReporter
-from fl4health.server.server import FlServer
+from fl4health.server.server import FedProxServer
 from fl4health.utils.config import load_config
+from fl4health.strategies.fedavg_with_extra_variables import FedAvgWithExtraVariables
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -42,6 +43,8 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
+    adaptive_proximal_weight: bool,
+    heterogenous_clients: bool,
     reporting_enabled: bool,
     project_name: str,
     group_name: str,
@@ -52,6 +55,8 @@ def fit_config(
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
+        "adaptive_proximal_weight": adaptive_proximal_weight,
+        "heterogenous_clients": heterogenous_clients,
         "current_server_round": current_round,
         "reporting_enabled": reporting_enabled,
         "project_name": project_name,
@@ -67,6 +72,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
+        config["adaptive_proximal_weight"],
+        config["heterogenous_clients"],
         config["reporting_config"].get("enabled", False),
         # Note that run name is not included, it will be set in the clients
         config["reporting_config"].get("project_name", ""),
@@ -75,7 +82,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedAvgWithExtraVariables(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -90,7 +97,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    server = FedProxServer(client_manager, strategy, wandb_reporter,
+                           adaptive_proximal_weight= config["adaptive_proximal_weight"],
+                           heterogenous_clients = config["heterogenous_clients"])
 
     fl.server.start_server(
         server=server,

@@ -41,6 +41,22 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
         model_parameters = packed_parameters[:split_size]
         clipping_bound = float(packed_parameters[split_size:][0])
         return model_parameters, clipping_bound
+    
+class ParameterPackerWithExtraVariables(ParameterPacker[List[float]]):
+    def __init__(self, size_of_model_params: int) -> None:
+        # Note model params exchanged and control variates can be different sizes, for example, when layers are frozen
+        # or the state dictionary contains things like Batch Normalization layers.
+        self.size_of_model_params = size_of_model_params
+        super().__init__()
+
+    def pack_parameters(self, model_weights: NDArrays, additional_parameters: List[float]) -> NDArrays:
+        return model_weights + [np.array(additional_parameters)]
+
+    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, float]:
+        # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
+        model_parameters = packed_parameters[:self.size_of_model_params]
+        variables = packed_parameters[self.size_of_model_params:][0].tolist()
+        return model_parameters, variables
 
 
 class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):

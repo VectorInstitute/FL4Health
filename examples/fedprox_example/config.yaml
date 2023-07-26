@@ -1,5 +1,7 @@
 # Parameters that describe server
 n_server_rounds: 15 # The number of rounds to run FL
+adaptive_proximal_weight: True # Whether to use adaptive proximal weight or not
+heterogenous_clients: False # If clients data is non iid data
 
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment

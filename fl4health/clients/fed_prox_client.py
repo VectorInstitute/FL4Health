@@ -38,15 +38,10 @@ class FedProxClient(NumpyFlClient):
         # loss. That is, the FedProx loss becomes criterion + \mu \Vert w - w^t \Vert ^2
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
-        self.adaptive_proximal_weight: bool = False
         self.proximal_weight: float = 0.1
-        self.proximal_weight_patience: int = 5
-        self.proximal_weight_change_value: float = 0.1
         self.initial_tensors: List[torch.Tensor]
-        self.proximal_weight_patience_counter = 0
         self.total_epochs = 0
         self.total_steps = 0
-        self.previous_loss = float("inf")
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
@@ -63,18 +58,6 @@ class FedProxClient(NumpyFlClient):
         # NOTE: Scaling by 1/2 is for consistency with the original fedprox paper.
         return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
-    def _maybe_update_proximal_weight_param(self, previous_loss: float, loss: float) -> None:
-        if self.adaptive_proximal_weight:
-            if loss <= previous_loss:
-                self.proximal_weight_patience_counter += 1
-                if self.proximal_weight_patience_counter == self.proximal_weight_patience:
-                    self.proximal_weight -= self.proximal_weight_change_value
-                    if self.proximal_weight < 0.0:
-                        self.proximal_weight = 0.0
-                    self.proximal_weight_patience_counter = 0
-
-            else:
-                self.proximal_weight += self.proximal_weight_change_value
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
@@ -94,11 +77,8 @@ class FedProxClient(NumpyFlClient):
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         # Currently uses training by epoch.
-        metric_values, total_loss = self.train_by_epochs(current_server_round, local_epochs, meter)
+        metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
 
-        # Update the proximal weight parameter if adaptive proximal weight is enabled.
-        self._maybe_update_proximal_weight_param(self.previous_loss, total_loss)
-        self.previous_loss = total_loss
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -202,7 +182,7 @@ class FedProxClient(NumpyFlClient):
         current_server_round: int,
         epochs: int,
         meter: Meter,
-    ) -> Tuple[Dict[str, Scalar], float]:
+    ) -> Dict[str, Scalar]:
         self.model.train()
 
         for local_epoch in range(epochs):
@@ -221,10 +201,10 @@ class FedProxClient(NumpyFlClient):
 
             log(INFO, f"Local Epoch: {local_epoch}")
             custom_log: Dict[str, Any] = {"epoch": self.total_epochs, "server_round": current_server_round}
-            metrics, loss_dict = self._handle_reporting(custom_log, meter, loss_dict, len(self.train_loader))
+            metrics, _ = self._handle_reporting(custom_log, meter, loss_dict, len(self.train_loader))
 
         # Return final training metrics
-        return metrics, loss_dict["train_total_loss"]
+        return metrics
 
     def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()

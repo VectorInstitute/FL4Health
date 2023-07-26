@@ -1,16 +1,22 @@
 from logging import INFO
 from typing import List, Optional
+from logging import DEBUG, INFO
+from typing import Dict, List, Optional, Tuple
+from flwr.common import (
+    Scalar,
+)
 
 from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
-from flwr.server.server import Server
+from flwr.server.server import Server, EvaluateResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
+from fl4health.strategies.fedavg_with_extra_variables import FedAvgWithExtraVariables
 
 
 class FlServer(Server):
@@ -70,3 +76,67 @@ class ClientLevelDPWeightedFedAvgServer(Server):
             self.strategy.sample_counts = sample_counts
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
+
+class FedProxServer(FlServer):
+    """
+    Base Server for the library to facilitate strapping additional/userful machinery to the base flwr server.
+    """
+
+    def __init__(
+        self,
+        *,
+        strategy: FedAvgWithExtraVariables,
+        adaptive_proximal_weight: bool = True,
+        heterogenous_clients: bool = True,
+        proximal_weight: float = 0.1,
+
+    ) -> None:
+        super().__init__(strategy=strategy)
+        self.adaptive_proximal_weight = adaptive_proximal_weight 
+        self.heterogenous_clients = heterogenous_clients 
+        self.proximal_weight = proximal_weight
+        self.proximal_weight_patience_counter = 0
+        self.previous_loss = float("inf")
+        
+        if self.adaptive_proximal_weight:
+            self.proximal_weight_patience = 5
+            self.proximal_weight_delta = 0.1
+            # Following the setup in Appendix C3.3 of the FedProx paper:
+            # Set the proximal weight to 0 if sampler is generating non iid data
+            if self.heterogenous_clients:
+                self.proximal_weight = 0.0
+            else:
+                self.proximal_weight = 1.0
+
+    def evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[
+        Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]
+    ]:
+        """Validate current global model on a number of clients."""
+
+        loss_aggregated, metrics_aggregated, (results, failures) = super().evaluate_round(server_round, timeout)
+        
+        # Update the proximal weight parameter if adaptive proximal weight is enabled.
+        self._maybe_update_proximal_weight_param(self.previous_loss, loss_aggregated)
+        self.previous_loss = loss_aggregated
+        self.strategy.set_variables(self.proximal_weight)
+        print(loss_aggregated,self.proximal_weight)
+
+        return loss_aggregated, metrics_aggregated, (results, failures)
+    
+
+    def _maybe_update_proximal_weight_param(self, previous_loss: float, loss: float) -> None:
+
+        if self.adaptive_proximal_weight:
+            if loss <= previous_loss:
+                self.proximal_weight_patience_counter += 1
+                if self.proximal_weight_patience_counter == self.proximal_weight_patience:
+                    self.proximal_weight -= self.proximal_weight_delta
+                    self.proximal_weight = max(0.0, self.proximal_weight)
+                    self.proximal_weight_patience_counter = 0
+
+            else:
+                self.proximal_weight += self.proximal_weight_delta
