@@ -10,6 +10,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
+from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.utils.metrics import AverageMeter, Meter, Metric
@@ -119,7 +120,6 @@ class ScaffoldClient(NumpyFlClient):
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
         assert self.learning_rate_local is not None
-        assert self.train_loader.batch_size is not None
 
         # y_i
         client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
@@ -259,3 +259,9 @@ class ScaffoldClient(NumpyFlClient):
         self._handle_logging(running_loss, metrics, is_validation=True)
         self._maybe_checkpoint(running_loss)
         return running_loss, metrics
+
+
+class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
+        ScaffoldClient.__init__(self, data_path, metrics, device)
+        InstanceLevelPrivacyClient.__init__(self, data_path, device)
