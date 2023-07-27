@@ -44,6 +44,8 @@ def construct_dataloaders(
     path: Path,
     batch_size: int,
     max_seq_len: int,
+    sample_percentage: float,
+    beta: float,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
 
     assert max_seq_len >= 256
@@ -88,7 +90,7 @@ def construct_dataloaders(
     ag_test_dataset = TextClassificationDataset(ag_test_datapipe, max_seq_len, PAD)
 
     # Perform Dirchlet sampling on the training set
-    sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=0.6, beta=0.25)
+    sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=sample_percentage, beta=beta)
     ag_train_dataset = sampler.subsample(ag_train_dataset_full)
 
     train_loader = DataLoader(ag_train_dataset, batch_size=batch_size, shuffle=True)

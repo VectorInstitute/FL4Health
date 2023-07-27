@@ -18,9 +18,13 @@ from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
 
 
 class TransformerPartialExchangeClient(NumpyFlClient):
-    def __init__(self, data_path: Path, device: torch.device, exchange_percentage: float) -> None:
+    def __init__(
+        self, data_path: Path, device: torch.device, exchange_percentage: float, norm_threshold: float
+    ) -> None:
         super().__init__(data_path, device)
-        self.parameter_exchanger = NormDriftLayerExchanger(75, exchange_percentage=exchange_percentage)
+        self.parameter_exchanger: NormDriftLayerExchanger = NormDriftLayerExchanger(
+            norm_threshold=norm_threshold, exchange_percentage=exchange_percentage
+        )
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -69,8 +73,8 @@ class TransformerPartialExchangeClient(NumpyFlClient):
             test_res_dict["accuracy"] = accuracy
             return (loss, self.num_examples["test_set"], test_res_dict)
 
-    def setup_model(self, num_classes: int, input_dimension: int) -> None:
-        classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
+    def setup_model(self, num_classes: int) -> None:
+        classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
         self.model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
         self.model.to(self.device)
         self.initial_model = copy.deepcopy(self.model).to(self.device)
@@ -80,15 +84,18 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sequence_length = self.narrow_config_type(config, "sequence_length", int)
         num_classes = self.narrow_config_type(config, "num_classes", int)
-        input_dimension = self.narrow_config_type(config, "input_dimension", int)
+        normalize = self.narrow_config_type(config, "normalize", bool)
+        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
+        sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
+        beta = self.narrow_config_type(config, "beta", float)
 
-        self.setup_model(num_classes, input_dimension)
+        self.parameter_exchanger.set_normalization_mode(normalize)
+        self.parameter_exchanger.set_filter_mode(filter_by_percentage)
 
-        # print(f'max sequence length: {sequence_length}')
-        # print(f'config received from server: {config}')
+        self.setup_model(num_classes)
 
         train_loader, val_loader, test_loader, num_examples = construct_dataloaders(
-            self.data_path, batch_size, sequence_length
+            self.data_path, batch_size, sequence_length, sample_percentage, beta
         )
 
         self.train_loader = train_loader
@@ -122,7 +129,8 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
-    parser.add_argument("--percentage", action="store", type=float, default=0.1)
+    parser.add_argument("--exchange_percentage", action="store", type=float, default=0.1)
+    parser.add_argument("--norm_threshold", action="store", type=float, default=24.5)
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -132,5 +140,5 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = TransformerPartialExchangeClient(data_path, DEVICE, args.percentage)
+    client = TransformerPartialExchangeClient(data_path, DEVICE, args.percentage, args.norm_threshold)
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)

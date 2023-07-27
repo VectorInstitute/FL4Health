@@ -7,6 +7,11 @@ local_epochs: 1 # The number of epochs to complete for client
 batch_size: 4 # The batch size for client training
 
 num_classes: 4 # number of classes in the classification task
-input_dimension: 768
 
 sequence_length: 256 # the length of tokenized sequences
+
+normalize: False
+filter_by_percentage: True
+
+sample_percentage: 0.75
+beta: 0.5

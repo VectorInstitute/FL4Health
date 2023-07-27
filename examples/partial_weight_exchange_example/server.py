@@ -30,9 +30,9 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def get_initial_model_parameters(num_classes: int, input_dimension: int) -> Parameters:
+def get_initial_model_parameters(num_classes: int) -> Parameters:
     # Initializing the model parameters on the server side.
-    classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=input_dimension)
+    classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
     initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
     names = []
     params = []
@@ -42,44 +42,68 @@ def get_initial_model_parameters(num_classes: int, input_dimension: int) -> Para
     return ndarrays_to_parameters(params + [np.array(names)])
 
 
-def construct_config(
+def construct_fit_config(
     _: int,
     local_epochs: int,
     batch_size: int,
-    input_dimension: int,
     num_classes: int,
     sequence_length: int,
+    normalize: bool,
+    filter_by_percentage: bool,
+    sample_percentage: float,
+    beta: float,
 ) -> Config:
+    assert 0 < sample_percentage <= 1
+    assert 0 < beta
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
-        "input_dimension": input_dimension,
         "num_classes": num_classes,
         "sequence_length": sequence_length,
+        "normalize": normalize,
+        "filter_by_percentage": filter_by_percentage,
+        "sample_percentage": sample_percentage,
+        "beta": beta,
     }
+
+
+def construct_eval_config(
+    _: int,
+    num_classes: int,
+) -> Config:
+    return {"num_classes": num_classes}
 
 
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    input_dimension: int,
     num_classes: int,
     sequence_length: int,
+    normalize: bool,
+    filter_by_percentage: bool,
+    sample_percentage: float,
+    beta: float,
     current_round: int,
 ) -> Config:
-    return construct_config(current_round, local_epochs, batch_size, input_dimension, num_classes, sequence_length)
+    return construct_fit_config(
+        current_round,
+        local_epochs,
+        batch_size,
+        num_classes,
+        sequence_length,
+        normalize,
+        filter_by_percentage,
+        sample_percentage,
+        beta,
+    )
 
 
 def eval_config(
-    local_epochs: int,
-    batch_size: int,
-    input_dimension: int,
     num_classes: int,
-    sequence_length: int,
     n_server_rounds: int,
     current_round: int,
 ) -> Config:
-    config = construct_config(current_round, local_epochs, batch_size, input_dimension, num_classes, sequence_length)
+    config = construct_eval_config(current_round, num_classes)
     config["testing"] = n_server_rounds == current_round
     return config
 
@@ -90,18 +114,17 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        config["input_dimension"],
         config["num_classes"],
         config["sequence_length"],
+        config["normalize"],
+        config["filter_by_percentage"],
+        config["sample_percentage"],
+        config["beta"],
     )
 
     eval_config_fn = partial(
         eval_config,
-        config["local_epochs"],
-        config["batch_size"],
-        config["input_dimension"],
         config["num_classes"],
-        config["sequence_length"],
         config["n_server_rounds"],
     )
 
@@ -110,11 +133,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
-        # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=eval_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(config["num_classes"], config["input_dimension"]),
+        initial_parameters=get_initial_model_parameters(config["num_classes"]),
     )
 
     client_manager = PoissonSamplingClientManager()
