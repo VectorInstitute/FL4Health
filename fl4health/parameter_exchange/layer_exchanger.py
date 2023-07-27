@@ -35,7 +35,7 @@ class FixedLayerExchanger(ParameterExchanger):
         model.load_state_dict(current_state, strict=True)
 
 
-class NormDriftLayerExchanger(ParameterExchangerWithPacking[List[str]]):
+class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
     def __init__(
         self,
         norm_threshold: float,

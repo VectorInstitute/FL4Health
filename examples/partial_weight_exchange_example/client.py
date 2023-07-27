@@ -14,7 +14,7 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
 from examples.partial_weight_exchange_example.trainer import test, train, validate
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.layer_exchanger import NormDriftLayerExchanger
+from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
 
 
 class TransformerPartialExchangeClient(NumpyFlClient):
@@ -22,7 +22,7 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         self, data_path: Path, device: torch.device, exchange_percentage: float, norm_threshold: float
     ) -> None:
         super().__init__(data_path, device)
-        self.parameter_exchanger: NormDriftLayerExchanger = NormDriftLayerExchanger(
+        self.parameter_exchanger: NormDriftParameterExchanger = NormDriftParameterExchanger(
             norm_threshold=norm_threshold, exchange_percentage=exchange_percentage
         )
 

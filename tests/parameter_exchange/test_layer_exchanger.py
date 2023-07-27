@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftLayerExchanger
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftParameterExchanger
 
 
 class LinearModel(nn.Module):
@@ -49,8 +49,11 @@ def test_norm_drift_layer_exchange() -> None:
     nn.init.constant_(model_to_exchange.fc1.weight, 1)
 
     threshold = 2
+    percentage = 0.1
 
-    exchanger = NormDriftLayerExchanger(threshold)
+    exchanger = NormDriftParameterExchanger(threshold, percentage)
+    exchanger.set_filter_mode(False)
+    exchanger.set_normalization_mode(False)
 
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
