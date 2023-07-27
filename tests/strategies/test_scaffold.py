@@ -10,7 +10,8 @@ def test_aggregate() -> None:
     num_clients = 3
     ndarrays: NDArrays = [np.ones((layer_size)) for _ in range(num_layers)]
     params: Parameters = ndarrays_to_parameters(ndarrays)
-    strat = Scaffold(initial_parameters=params)
+    variates: Parameters = ndarrays_to_parameters([np.zeros_like(variate) for variate in ndarrays])
+    strat = Scaffold(initial_parameters=params, initial_control_variates=variates)
 
     client_ndarrays = [[ndarray * (client_num + 1) for ndarray in ndarrays] for client_num in range(num_clients)]
     new_ndarrays = strat.aggregate(client_ndarrays)
@@ -27,7 +28,8 @@ def test_compute_updated_parameters() -> None:
     learning_rate = 0.1
     ndarrays: NDArrays = [np.ones((layer_size)) for _ in range(num_layers)]
     params: Parameters = ndarrays_to_parameters(ndarrays)
-    strat = Scaffold(initial_parameters=params)
+    variates: Parameters = ndarrays_to_parameters([np.zeros_like(variate) for variate in ndarrays])
+    strat = Scaffold(initial_parameters=params, initial_control_variates=variates)
 
     original_params: NDArrays = [np.ones((layer_size)) * 3 for _ in range(num_layers)]
     param_updates: NDArrays = [np.ones((layer_size)) * 10 for _ in range(num_layers)]

@@ -39,15 +39,23 @@ class APFLModule(nn.Module):
         # https://github.com/MLOPTPSU/FedTorch/blob
         # /ab8068dbc96804a5c1a8b898fd115175cfebfe75/fedtorch/comms/utils/flow_utils.py#L240
 
+        # Need to filter out frozen parameters, as they have no grad object
+        local_parameters = [
+            local_params for local_params in self.local_model.parameters() if local_params.requires_grad
+        ]
+        global_parameters = [
+            global_params for global_params in self.global_model.parameters() if global_params.requires_grad
+        ]
+
         # Accumulate gradient of alpha across layers
         grad_alpha: float = 0.0
-        for local_p, global_p in zip(self.local_model.parameters(), self.global_model.parameters()):
+        for local_p, global_p in zip(local_parameters, global_parameters):
             local_grad = local_p.grad
             global_grad = global_p.grad
             assert local_grad is not None and global_grad is not None
             dif = local_p - global_p
             grad = torch.tensor(self.alpha) * local_grad + torch.tensor(1.0 - self.alpha) * global_grad
-            grad_alpha += torch.mul(dif, grad).sum().detach().numpy()
+            grad_alpha += torch.mul(dif, grad).sum().detach().cpu().numpy()
 
         # This update constant of 0.02 is not referenced in the paper
         # but is present in the official implementation and other ones I have seen

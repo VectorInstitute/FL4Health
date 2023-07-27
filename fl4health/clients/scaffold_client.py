@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.utils.metrics import AverageMeter, Metric
+from fl4health.utils.metrics import AverageMeter, Meter, Metric
 
 
 class ScaffoldClient(NumpyFlClient):
@@ -34,6 +34,7 @@ class ScaffoldClient(NumpyFlClient):
         self.criterion: _Loss
         self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
         self.learning_rate_local: float  # eta_l in paper
+        self.server_model_state: Optional[NDArrays] = None  # model state from server
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.num_examples: Dict[str, int]
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
@@ -44,7 +45,9 @@ class ScaffoldClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train(local_steps)
+        # Default SCAFFOLD uses an average meter
+        meter = AverageMeter(self.metrics, "global")
+        metric_values = self.train(local_steps, meter)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -59,7 +62,9 @@ class ScaffoldClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        loss, metric_values = self.validate()
+        # Default SCAFFOLD uses an average meter
+        meter = AverageMeter(self.metrics, "global")
+        loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -90,14 +95,19 @@ class ScaffoldClient(NumpyFlClient):
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
-        server_model_weights, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
+        server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
-        self.server_model_weights = server_model_weights
-        self.parameter_exchanger.pull_parameters(server_model_weights, self.model, config)
+        self.server_model_state = server_model_state
+        self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
+        self.server_model_weights = [
+            model_params.cpu().detach().numpy()
+            for model_params in self.model.parameters()
+            if model_params.requires_grad
+        ]
 
         # If client control variates do not exist, initialize with zeros as per paper
         if self.client_control_variates is None:
-            self.client_control_variates = [np.zeros_like(weight) for weight in self.server_model_weights]
+            self.client_control_variates = [np.zeros_like(weight) for weight in self.server_control_variates]
 
     def update_control_variates(self, local_steps: int) -> None:
         """
@@ -112,7 +122,7 @@ class ScaffoldClient(NumpyFlClient):
         assert self.train_loader.batch_size is not None
 
         # y_i
-        client_model_weights = [val.numpy() for val in self.model.state_dict().values()]
+        client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
 
         # (x - y_i)
         delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)
@@ -141,12 +151,18 @@ class ScaffoldClient(NumpyFlClient):
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
 
+        model_params_with_grad = [
+            model_params for model_params in self.model.parameters() if model_params.requires_grad
+        ]
+
         for param, client_cv, server_cv in zip(
-            self.model.parameters(), self.client_control_variates, self.server_control_variates
+            model_params_with_grad, self.client_control_variates, self.server_control_variates
         ):
             assert param.grad is not None
             tensor_type = param.grad.dtype
-            update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
+            server_cv_tensor = torch.from_numpy(server_cv).type(tensor_type)
+            client_cv_tensor = torch.from_numpy(client_cv).type(tensor_type)
+            update = server_cv_tensor.to(self.device) - client_cv_tensor.to(self.device)
             param.grad += update
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
@@ -175,18 +191,34 @@ class ScaffoldClient(NumpyFlClient):
         ]
         return updated_client_control_variates
 
+    def _handle_logging(self, loss: float, metrics_dict: Dict[str, Scalar], is_validation: bool = False) -> None:
+        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
+        metric_prefix = "Validation" if is_validation else "Training"
+        log(
+            INFO,
+            f"Client {metric_prefix} Loss: {loss} \n" f"Client {metric_prefix} Metrics: {metric_string}",
+        )
+
     def train(
         self,
         local_steps: int,
+        meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
-
         running_loss = 0.0
-        # Pass loader to iterator so we can step through  train loader
-        loader = iter(self.train_loader)
-        meter = AverageMeter(self.metrics, "global")
-        for step in range(local_steps):
-            input, target = next(loader)
+        meter.clear()
+
+        # Pass loader to iterator so we can step through train loader
+        train_iterator = iter(self.train_loader)
+        for _ in range(local_steps):
+            try:
+                input, target = next(train_iterator)
+            except StopIteration:
+                # StopIteration is thrown if dataset ends
+                # reinitialize data loader
+                train_iterator = iter(self.train_loader)
+                input, target = next(train_iterator)
+
             input, target = input.to(self.device), target.to(self.device)
 
             # Forward pass on global model and update global parameters
@@ -202,22 +234,17 @@ class ScaffoldClient(NumpyFlClient):
             running_loss += loss.item()
             meter.update(pred, target)
 
-        running_loss = running_loss / len(self.train_loader)
+        running_loss = running_loss / local_steps
 
         metrics = meter.compute()
-        train_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            f"Client Training Losses: {loss} \n" f"Client Training Metrics: {train_metric_string}",
-        )
-
+        self._handle_logging(running_loss, metrics)
         self.update_control_variates(local_steps)
         return metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        meter = AverageMeter(self.metrics, "global")
         running_loss = 0.0
+        meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
@@ -229,10 +256,6 @@ class ScaffoldClient(NumpyFlClient):
 
         running_loss = running_loss / len(self.val_loader)
         metrics = meter.compute()
-        val_metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics.items()])
-        log(
-            INFO,
-            "\n" f"Client Validation Losses: {running_loss} \n" f"Client validation Metrics: {val_metric_string}",
-        )
-
+        self._handle_logging(running_loss, metrics, is_validation=True)
+        self._maybe_checkpoint(running_loss)
         return running_loss, metrics

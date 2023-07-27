@@ -21,7 +21,8 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   mu_value_for_fedprox_loss \
-#   client_side_learning_rate_value
+#   client_side_learning_rate_value \
+#   server_address
 #
 # Example:
 # sbatch research/flamby/fed_isic2019/fedprox/run_fold_experiment.slrm \
@@ -30,7 +31,8 @@
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.1 \
-#   0.0001
+#   0.0001 \
+#   0.0.0.0:8080
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -65,7 +67,7 @@ CLIENT_MU=$5
 CLIENT_LR=$6
 SERVER_ADDRESS=$7
 
-# Create the artficat directory
+# Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )

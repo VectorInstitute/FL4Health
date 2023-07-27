@@ -1,4 +1,4 @@
-# APFL Federated Learning Example
+# SCAFFOLD Federated Learning Example
 This is an example of [Stochastic Controlled Averaging for Federated Learning](https://arxiv.org/pdf/1910.06378.pdf)(SCAFFOLD). SCAFFOLD is a popular method for federated learning in situations where data across clients is heterogenous (non-iid). In these cases, FedAvg suffers from client drift resulting in unstable and slow
 convergence. To surmount this, SCAFFOLD uses control variates to correct for client drift during local updates. This is shown to decrease the number of communication rounds required when compared to other approaches to Federated Learning such as FedAvg.
 

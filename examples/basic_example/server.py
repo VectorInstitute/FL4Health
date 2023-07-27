@@ -77,7 +77,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="config.yaml",
+        default="examples/basic_example/config.yaml",
     )
     args = parser.parse_args()
 

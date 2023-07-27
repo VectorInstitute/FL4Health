@@ -25,13 +25,14 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-MU_VALUES=( 0.01 0.1 1.0 )
-LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 1.0 )
+MU_VALUES=( 0.001 0.01 0.1 1.0 )
+# FedISIC LR Hyperparmeters from paper are not suitable for AdamW
+LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY=""${ARTIFACT_DIR}hp_sweep_results""
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
@@ -41,7 +42,7 @@ do
   do
     EXPERIMENT_NAME="mu_${MU_VALUE}_lr_${LR_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results/${EXPERIMENT_NAME}/"
+    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"

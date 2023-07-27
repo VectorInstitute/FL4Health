@@ -18,15 +18,17 @@ class ParameterPacker(ABC, Generic[T]):
 
 
 class ParameterPackerWithControlVariates(ParameterPacker[NDArrays]):
+    def __init__(self, size_of_model_params: int) -> None:
+        # Note model params exchanged and control variates can be different sizes, for example, when layers are frozen
+        # or the state dictionary contains things like Batch Normalization layers.
+        self.size_of_model_params = size_of_model_params
+        super().__init__()
+
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: NDArrays) -> NDArrays:
         return model_weights + additional_parameters
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, NDArrays]:
-        # Ensure that the packed parameters is even as a sanity check. Model paramers and control variates have same
-        # size.
-        assert len(packed_parameters) % 2 == 0
-        split_size = len(packed_parameters) // 2
-        return packed_parameters[:split_size], packed_parameters[split_size:]
+        return packed_parameters[: self.size_of_model_params], packed_parameters[self.size_of_model_params :]
 
 
 class ParameterPackerWithClippingBit(ParameterPacker[float]):

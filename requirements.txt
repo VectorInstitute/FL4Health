@@ -17,6 +17,7 @@ toml
 torch
 torchdata
 torcheval
+torchinfo
 torchtext
 torchvision
 types-requests

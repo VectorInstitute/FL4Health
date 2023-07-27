@@ -6,7 +6,7 @@ import flwr as fl
 import torch
 from flwr.common.typing import Config
 
-from examples.models.cnn_model import MnistNet
+from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -26,7 +26,7 @@ class MnistApflClient(ApflClient):
 
     def setup_client(self, config: Config) -> None:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        self.model: APFLModule = APFLModule(MnistNet()).to(self.device)
+        self.model: APFLModule = APFLModule(MnistNetWithBnAndFrozen()).to(self.device)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=0.01)

@@ -16,11 +16,8 @@ class FixedLayerExchanger(ParameterExchanger):
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
         # NOTE: Filtering layers only works if each client exchanges exactly the same layers
-        return [
-            layer_parameters.cpu().numpy()
-            for layer_name, layer_parameters in model.state_dict().items()
-            if layer_name in self.layers_to_transfer
-        ]
+        model_state_dict = model.state_dict()
+        return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
@@ -44,10 +41,8 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         filter_by_percentage: bool = True,
     ) -> None:
         """
-        self.initial_model represents each client's local model at the beginning of each round of training.
-        In this particular layer exchanger, self.initial_model is used to select
-        the parameters that after local training drift away (in l2 norm) from
-        the parameters of self.initial_model beyond a certain threshold.
+        This exchanger selects those parameters that at the end of each training round, drift away (in l2 norm)
+        from their initial values (at the beginning of the same round) by more than self.threshold.
         """
         self.parameter_packer = ParameterPackerWithLayerNames()
         assert 0 < exchange_percentage <= 1
@@ -79,8 +74,7 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         layers_to_transfer = []
         initial_model_states = initial_model.state_dict()
         model_states = model.state_dict()
-        for layer_name in model_states:
-            layer_param = model_states[layer_name]
+        for layer_name, layer_param in model_states.items():
             layer_param_past = initial_model_states[layer_name]
             drift_norm = self._calculate_drift_norm(layer_param, layer_param_past)
             if drift_norm >= self.threshold:

@@ -18,8 +18,10 @@ from research.flamby.fed_isic2019.utils import (
 )
 
 
-def main(artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_global_model: bool) -> None:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+def main(
+    artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_local_models: bool, eval_global_model: bool
+) -> None:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
     metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]
@@ -36,15 +38,16 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_global_
         local_test_metrics = []
         server_test_metrics = []
         for run_folder_dir in all_run_folder_dir:
-            local_model = load_local_model(run_folder_dir, client_number)
-            local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
-            log(
-                INFO,
-                f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                f"Local Model Test Performance: {local_run_metric}",
-            )
-            local_test_metrics.append(local_run_metric)
-            all_local_test_metrics[run_folder_dir] += local_run_metric / NUM_CLIENTS
+            if eval_local_models:
+                local_model = load_local_model(run_folder_dir, client_number)
+                local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
+                log(
+                    INFO,
+                    f"Client Number {client_number}, Run folder: {run_folder_dir}: "
+                    f"Local Model Test Performance: {local_run_metric}",
+                )
+                local_test_metrics.append(local_run_metric)
+                all_local_test_metrics[run_folder_dir] += local_run_metric / NUM_CLIENTS
 
             if eval_global_model:
                 server_model = load_global_model(run_folder_dir)
@@ -57,24 +60,34 @@ def main(artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_global_
                 server_test_metrics.append(server_run_metric)
                 all_server_test_metrics[run_folder_dir] += server_run_metric / NUM_CLIENTS
 
-        avg_test_metric, std_test_metric = get_metric_avg_std(local_test_metrics)
-        log(INFO, f"Client {client_number} Model Average Test Performance on own Data: {avg_test_metric}")
-        log(INFO, f"Client {client_number} Model St. Dev. Test Performance on own Data: {std_test_metric}")
-        test_results[f"client_{client_number}_model_local_avg"] = avg_test_metric
-        test_results[f"client_{client_number}_model_local_std"] = std_test_metric
+        if eval_local_models:
+            avg_test_metric, std_test_metric = get_metric_avg_std(local_test_metrics)
+            log(INFO, f"Client {client_number} Model Average Test Performance on own Data: {avg_test_metric}")
+            log(INFO, f"Client {client_number} Model St. Dev. Test Performance on own Data: {std_test_metric}")
+            test_results[f"client_{client_number}_model_local_avg"] = avg_test_metric
+            test_results[f"client_{client_number}_model_local_std"] = std_test_metric
 
         if eval_global_model:
             avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(server_test_metrics)
-            log(INFO, f"Server model Average Test Performance on Client {client_number} Data: {avg_test_metric}")
-            log(INFO, f"Server model St. Dev. Test Performance on Client {client_number} Data: {std_test_metric}")
+            log(
+                INFO,
+                f"Server model Average Test Performance on Client {client_number} "
+                f"Data: {avg_server_test_local_metric}",
+            )
+            log(
+                INFO,
+                f"Server model St. Dev. Test Performance on Client {client_number} "
+                f"Data: {std_server_test_local_metric}",
+            )
             test_results[f"server_model_client_{client_number}_avg"] = avg_server_test_local_metric
             test_results[f"server_model_client_{client_number}_std"] = std_server_test_local_metric
 
-    all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_local_test_metrics.values()))
-    test_results["avg_local_model_avg_across_clients"] = all_avg_test_metric
-    test_results["std_local_model_avg_across_clients"] = all_std_test_metric
-    log(INFO, f"Avg Local Model Test Performance Over all clients: {all_avg_test_metric}")
-    log(INFO, f"Std. Dev. Local Model Test Performance Over all clients: {all_std_test_metric}")
+    if eval_local_models:
+        all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_local_test_metrics.values()))
+        test_results["avg_local_model_avg_across_clients"] = all_avg_test_metric
+        test_results["std_local_model_avg_across_clients"] = all_std_test_metric
+        log(INFO, f"Avg Local Model Test Performance Over all clients: {all_avg_test_metric}")
+        log(INFO, f"Std. Dev. Local Model Test Performance Over all clients: {all_std_test_metric}")
 
     if eval_global_model:
         all_server_avg_test_metric, all_server_std_test_metric = get_metric_avg_std(
@@ -134,10 +147,18 @@ if __name__ == "__main__":
         action="store_true",
         help="boolean to indicate whether to search for and evaluate a server model in addition to client models",
     )
+    parser.add_argument(
+        "--eval_local_models",
+        action="store_true",
+        help="boolean to indicate whether to search for and evaluate a local models in addition to the server model",
+    )
 
     args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
     log(INFO, f"Dataset Directory: {args.dataset_dir}")
     log(INFO, f"Eval Write Path: {args.eval_write_path}")
+    log(INFO, f"Run Local Models: {args.eval_local_models}")
     log(INFO, f"Run Global Model: {args.eval_global_model}")
-    main(args.artifact_dir, args.dataset_dir, args.eval_write_path, args.eval_global_model)
+
+    assert args.eval_local_models or args.eval_global_model
+    main(args.artifact_dir, args.dataset_dir, args.eval_write_path, args.eval_local_models, args.eval_global_model)

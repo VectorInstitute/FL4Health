@@ -27,7 +27,7 @@ MU_VALUES=( 0.01 0.1 )
 LR_VALUES=( 0.00001 0.0001 )
 
 # Create sweep folder
-SWEEP_DIRECTORY=""${ARTIFACT_DIR}hp_sweep_results""
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
@@ -37,7 +37,7 @@ do
   do
     EXPERIMENT_NAME="mu_${MU_VALUE}_lr_${LR_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results/${EXPERIMENT_NAME}/"
+    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
     ./research/flamby/fed_isic2019/fedprox/run_fold_experiment_test.sh \
