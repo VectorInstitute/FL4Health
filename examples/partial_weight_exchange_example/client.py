@@ -140,5 +140,5 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = TransformerPartialExchangeClient(data_path, DEVICE, args.percentage, args.norm_threshold)
+    client = TransformerPartialExchangeClient(data_path, DEVICE, args.exchange_percentage, args.norm_threshold)
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)
