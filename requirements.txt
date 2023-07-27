@@ -16,6 +16,7 @@ tensorflow-privacy
 toml
 torch
 torchdata
+torcheval
 torchtext
 torchvision
 types-requests
