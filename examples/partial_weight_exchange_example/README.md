@@ -38,7 +38,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `normalize`: specifies whether division by the parameter's dimension is performed when computing its drift norm.
 * `filter_by_percentage`: each client takes in an "--exchange-percentage" argument and a "--norm-threshold" argument, where each one corresponds to a mechanism for selecting the parameters to be exchanged between the server and clients. The argument `filter_by_percentage` toggles between these two modes.
 
-More precisely, "--exchange-percentage" has value $p$, where $p$ is between 0 and 1. If `filter_by_percentage` is true, then in every training round, the top ceil($p &sdot N$) parametes with the largest drift norms will be exchanged, where $N$ is the total number of parameters.
+More precisely, "--exchange-percentage" has value $p$, where $p$ is between 0 and 1. If `filter_by_percentage` is true, then in every training round, the top ceil($p \cdot N$) parametes with the largest drift norms will be exchanged, where $N$ is the total number of parameters.
 
 Alternatively, "--norm-threshold" is a positive real number $t$, and if `filter_by_percentage` is false, then every parameter with drift norm larger than $t$ will be exchanged.
 
