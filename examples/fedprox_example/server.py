@@ -32,11 +32,13 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def get_initial_model_parameters() -> Parameters:
+def get_initial_model_information(proximal_weight) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = MnistNet()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
+    additional_variables = [proximal_weight]
+    return ndarrays_to_parameters(model_weights),ndarrays_to_parameters(additional_variables)
 
 
 def fit_config(
@@ -81,6 +83,18 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["reporting_config"].get("entity", ""),
     )
 
+    # Following the setup in Appendix C3.3 of the FedProx paper:
+    # Set the proximal weight to 0 if sampler is generating non iid data
+    if config["adaptive_proximal_weight"]:
+        if config["heterogenous_clients"]:
+            proximal_weight = 0.0
+        else:
+            proximal_weight = 1.0
+    else:
+        proximal_weight = 0.05
+
+    initial_parameters, initial_extra_variables = get_initial_model_information(proximal_weight = proximal_weight)
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithExtraVariables(
         min_fit_clients=config["n_clients"],
@@ -92,14 +106,14 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters = initial_parameters,
+        initial_extra_variables = initial_extra_variables,
     )
 
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
     server = FedProxServer(client_manager, strategy, wandb_reporter,
-                           adaptive_proximal_weight= config["adaptive_proximal_weight"],
-                           heterogenous_clients = config["heterogenous_clients"])
+                           adaptive_proximal_weight= config["adaptive_proximal_weight"])
 
     fl.server.start_server(
         server=server,

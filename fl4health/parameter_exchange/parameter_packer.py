@@ -50,12 +50,12 @@ class ParameterPackerWithExtraVariables(ParameterPacker[List[float]]):
         super().__init__()
 
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: List[float]) -> NDArrays:
-        return model_weights + [np.array(additional_parameters)]
+        return model_weights + additional_parameters
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, float]:
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         model_parameters = packed_parameters[:self.size_of_model_params]
-        variables = packed_parameters[self.size_of_model_params:][0].tolist()
+        variables = packed_parameters[self.size_of_model_params:]
         return model_parameters, variables
 
 

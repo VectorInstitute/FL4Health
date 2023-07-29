@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.utils.metrics import AverageMeter, Meter, Metric
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 
 FedProxTrainStepOutputs = Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
@@ -38,6 +39,7 @@ class FedProxClient(NumpyFlClient):
         # loss. That is, the FedProx loss becomes criterion + \mu \Vert w - w^t \Vert ^2
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
+        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
         self.proximal_weight: float = 0.1
         self.initial_tensors: List[torch.Tensor]
         self.total_epochs = 0
@@ -60,13 +62,22 @@ class FedProxClient(NumpyFlClient):
 
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the model weights and initialize the correct weights with the parameter exchanger.
-        super().set_parameters(parameters, config)
+        """
+        Assumes that the parameters being passed contain model parameters concatenated with
+        proximal weight control variates. They are unpacked for the clients to use in training
+        """
+        assert self.model is not None and self.parameter_exchanger is not None
+
+        server_model_state, server_extra_variables = self.parameter_exchanger.unpack_parameters(parameters)
+        self.proximal_weight = server_extra_variables[0]
+        self.server_model_state = server_model_state
+        self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FedProx loss.
         self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
+
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:

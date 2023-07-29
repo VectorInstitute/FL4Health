@@ -84,29 +84,26 @@ class FedProxServer(FlServer):
 
     def __init__(
         self,
-        *,
-        strategy: FedAvgWithExtraVariables,
+        client_manager: ClientManager,
+        strategy: FedAvgWithExtraVariables = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
         adaptive_proximal_weight: bool = True,
-        heterogenous_clients: bool = True,
-        proximal_weight: float = 0.1,
-
     ) -> None:
-        super().__init__(strategy=strategy)
+        super().__init__(client_manager = client_manager,
+                         strategy=strategy,
+                         wandb_reporter = wandb_reporter,
+                         checkpointer = checkpointer)
         self.adaptive_proximal_weight = adaptive_proximal_weight 
-        self.heterogenous_clients = heterogenous_clients 
-        self.proximal_weight = proximal_weight
+
+        self.proximal_weight = strategy.server_extra_variables[0]
         self.proximal_weight_patience_counter = 0
         self.previous_loss = float("inf")
         
         if self.adaptive_proximal_weight:
             self.proximal_weight_patience = 5
             self.proximal_weight_delta = 0.1
-            # Following the setup in Appendix C3.3 of the FedProx paper:
-            # Set the proximal weight to 0 if sampler is generating non iid data
-            if self.heterogenous_clients:
-                self.proximal_weight = 0.0
-            else:
-                self.proximal_weight = 1.0
+
 
     def evaluate_round(
         self,
@@ -122,8 +119,7 @@ class FedProxServer(FlServer):
         # Update the proximal weight parameter if adaptive proximal weight is enabled.
         self._maybe_update_proximal_weight_param(self.previous_loss, loss_aggregated)
         self.previous_loss = loss_aggregated
-        self.strategy.set_variables(self.proximal_weight)
-        print(loss_aggregated,self.proximal_weight)
+        self.strategy.set_variable([self.proximal_weight])
 
         return loss_aggregated, metrics_aggregated, (results, failures)
     
@@ -137,6 +133,6 @@ class FedProxServer(FlServer):
                     self.proximal_weight -= self.proximal_weight_delta
                     self.proximal_weight = max(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
-
+                print('The mu update to', self.proximal_weight)
             else:
                 self.proximal_weight += self.proximal_weight_delta

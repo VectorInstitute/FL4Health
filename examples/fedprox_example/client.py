@@ -11,7 +11,8 @@ from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithExtraVariables
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
@@ -37,7 +38,8 @@ class MnistFedProxClient(FedProxClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
-        self.parameter_exchanger = FullParameterExchanger()
+        model_size = len(self.model.state_dict())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithExtraVariables(model_size))
 
         # Setup W and B reporter
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
