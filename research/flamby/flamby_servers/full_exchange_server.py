@@ -6,12 +6,11 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from research.flamby.flamby_servers.flamby_server import FlambyServer
 
 
-class ScaffoldServer(FlambyServer):
+class FullExchangeServer(FlambyServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -19,13 +18,11 @@ class ScaffoldServer(FlambyServer):
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[BestMetricTorchCheckpointer] = None,
     ) -> None:
-        super().__init__(client_manager, client_model, strategy, checkpointer=checkpointer)
+        self.client_model = client_model
         # To help with model rehydration
-        model_size = len(self.client_model.state_dict())
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        self.parameter_exchanger = FullParameterExchanger()
+        super().__init__(client_manager, client_model, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
-        packed_parameters = parameters_to_ndarrays(self.parameters)
-        # Don't need the control variates for checkpointing.
-        model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
+        model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)

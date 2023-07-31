@@ -11,6 +11,14 @@ from fl4health.server.server import FlServer
 
 
 class PersonalServer(FlServer):
+    """
+    The PersonalServer class is used for FL approaches that only have a sense of a PERSONAL model that is checkpointed
+    and valid only on the client size of the FL training framework. FL approaches like APFL and FENDA fall under this
+    category. Each client will have its own model that is specific to its own training. Personal models may have
+    shared components but the full model is specific to each client. This is distinct from the FlambyServer class
+    which has a sense of a GLOBAL model checkpointed on the server-side that is shared by all clients.
+    """
+
     def __init__(
         self,
         client_manager: ClientManager,
