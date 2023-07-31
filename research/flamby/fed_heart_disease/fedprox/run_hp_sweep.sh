@@ -3,28 +3,33 @@
 ###############################################
 # Usage:
 #
-# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep_test.sh \
+#  ./research/flamby/fed_heart_disease/fedprox/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
+#   path_to_desired_venv/
 #
 # Example:
-# ./research/flamby/fed_isic2019/fedprox/run_hp_sweep_test.sh \
-#   research/flamby/fed_isic2019/fedprox/config.yaml \
-#   research/flamby/fed_isic2019/fedprox/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/
+# ./research/flamby/fed_heart_disease/fedprox/run_hp_sweep.sh \
+#   research/flamby/fed_heart_disease/fedprox/config.yaml \
+#   research/flamby/fed_heart_disease/fedprox/ \
+#   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
+#   /h/demerson/vector_repositories/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.
-# 2) VENV should already be activated when running bash
 ###############################################
 
 SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
+VENV_PATH=$4
 
-MU_VALUES=( 0.01 0.1 )
-LR_VALUES=( 0.00001 0.0001 )
+MU_VALUES=( 0.01 0.1 1.0 )
+# FedHeartDisease LR Hyperparmeters from paper are not suitable for AdamW
+LR_VALUES=( 0.001 0.0001 )
+
+SERVER_PORT=8100
 
 # Create sweep folder
 SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
@@ -40,15 +45,20 @@ do
     EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
-    ./research/flamby/fed_isic2019/fedprox/run_fold_experiment_test.sh \
+    SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
+    echo "Server Address: ${SERVER_ADDRESS}"
+    SBATCH_COMMAND="research/flamby/fed_heart_disease/fedprox/run_fold_experiment.slrm \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \
+      ${VENV_PATH} \
       ${MU_VALUE} \
-      ${LR_VALUE}
-
-    wait
+      ${LR_VALUE} \
+      ${SERVER_ADDRESS}"
+    echo "Running sbatch command ${SBATCH_COMMAND}"
+    sbatch ${SBATCH_COMMAND}
+    ((SERVER_PORT=SERVER_PORT+1))
   done
 done
 
-echo Experiments Concluded
+echo Experiments Launched
