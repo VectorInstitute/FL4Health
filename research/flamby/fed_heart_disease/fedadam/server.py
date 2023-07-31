@@ -13,7 +13,7 @@ from torchinfo import summary
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
-from research.flamby.flamby_servers.flamby_server import FlambyServer
+from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
@@ -61,7 +61,7 @@ def main(
         eta=server_learning_rate,
     )
 
-    server = FlambyServer(client_manager, client_model, strategy, checkpointer)
+    server = FullExchangeServer(client_manager, client_model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

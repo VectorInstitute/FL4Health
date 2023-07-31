@@ -4,6 +4,14 @@ import torch.nn.functional as F
 
 
 class FedHeartDiseaseLargeApfl(nn.Module):
+    """
+    This represents the model used by the APFL experiments leveraging a "large" model with equivalent DOF to the FENDA
+    model implementation. In the current experimental setup for APFL, the FLamby Baseline model is used, which has a
+    smaller number of trainable parameters. This setup corresponds to the "small" model APFL experiments. To use the
+    model here, one need only replace instances of Baseline() with FedHeartDiseaseLargeApfl(), along with including
+    the proper imports.
+    """
+
     def __init__(self, input_dim: int = 13) -> None:
         super().__init__()
         self.fc1 = torch.nn.Linear(input_dim, 5)

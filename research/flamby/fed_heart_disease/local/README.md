@@ -22,3 +22,11 @@ An example is something like
    /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```
+
+### Large Model Experiments
+
+The default setup for these experiments is "small" models using the Baseline() model implemented by FLamby. This "small" model is simply a logistic regression model with a very small number of trainable parameters. To run experiments with the "large" model, which incorporates an equivalent number of trainable parameters to the FENDA model implementation. To use the large model, one need only replace instances of Baseline() with FedHeartDiseaseLargeBaseline(), along with including the proper imports in the experimental code. The large model is implemented here:
+
+```
+research/flamby/fed_heart_disease/large_baseline.py
+```
