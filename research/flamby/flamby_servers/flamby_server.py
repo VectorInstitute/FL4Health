@@ -1,7 +1,6 @@
 from typing import Dict, Optional, Tuple
 
 import torch.nn as nn
-from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.server import EvaluateResultsAndFailures
@@ -29,10 +28,6 @@ class FlambyServer(FlServer):
     ) -> None:
         self.client_model = client_model
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
-
-    def _hydrate_model_for_checkpointing(self) -> None:
-        model_ndarrays = parameters_to_ndarrays(self.parameters)
-        self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
 
     def _maybe_checkpoint(self, checkpoint_metric: float) -> None:
         if self.checkpointer:
