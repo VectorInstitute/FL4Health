@@ -1,8 +1,11 @@
+from logging import INFO
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
+from flwr.common.logger import log
 from torch.utils import model_zoo
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
@@ -54,11 +57,30 @@ class LocalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
         self.freeze_layers(frozen_blocks)
+        if turn_off_bn_tracking:
+            self.modify_batch_normalization_layers()
+
+    def modify_batch_normalization_layers(self) -> None:
+        # Iterate through all named modules of the model and, if we encounter a batch normalization layer, we set
+        # track_running_stats to false instead of true.
+        for name, module in self.base_model.named_modules():
+            if isinstance(module, nn.BatchNorm2d):
+                log(INFO, f"Modifying Batch Normalization Layer: {name}")
+                module.track_running_stats = False
+                # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant
+                # variable to none, otherwise the layer still tries to apply the stale variables during evaluation
+                # leading to eventual NaNs again.
+                module.running_mean = None
+                module.running_var = None
+                module.num_batches_tracked = None
+                module.register_buffer("running_mean", None)
+                module.register_buffer("running_var", None)
+                module.register_buffer("num_batches_tracked", None)
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
@@ -91,11 +113,30 @@ class GlobalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
         self.freeze_layers(frozen_blocks)
+        if turn_off_bn_tracking:
+            self.modify_batch_normalization_layers()
+
+    def modify_batch_normalization_layers(self) -> None:
+        # Iterate through all named modules of the model and, if we encounter a batch normalization layer, we set
+        # track_running_stats to false instead of true.
+        for name, module in self.base_model.named_modules():
+            if isinstance(module, nn.BatchNorm2d):
+                log(INFO, f"Modifying Batch Normalization Layer: {name}")
+                module.track_running_stats = False
+                # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant
+                # variable to none, otherwise the layer still tries to apply the stale variables during evaluation
+                # leading to eventual NaNs again.
+                module.running_mean = None
+                module.running_var = None
+                module.num_batches_tracked = None
+                module.register_buffer("running_mean", None)
+                module.register_buffer("running_var", None)
+                module.register_buffer("num_batches_tracked", None)
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
@@ -116,8 +157,8 @@ class GlobalEfficientNet(nn.Module):
 
 
 class FedIsic2019FendaModel(FendaModel):
-    def __init__(self) -> None:
-        local_module = LocalEfficientNet()
-        global_module = GlobalEfficientNet()
+    def __init__(self, turn_off_bn_tracking: bool = False) -> None:
+        local_module = LocalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
+        global_module = GlobalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
         model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

@@ -30,7 +30,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    client_model = APFLModule(APFLEfficientNet())
+    client_model = APFLModule(APFLEfficientNet(turn_off_bn_tracking=True))
 
     model_stats = summary(client_model, verbose=0)
     log(INFO, "\nAPFL MODEL STATS:")

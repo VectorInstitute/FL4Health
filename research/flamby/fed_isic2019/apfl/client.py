@@ -46,7 +46,9 @@ class FedIsic2019ApflClient(FlambyApflClient):
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
 
-        self.model: APFLModule = APFLModule(APFLEfficientNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
+        self.model: APFLModule = APFLModule(
+            APFLEfficientNet(turn_off_bn_tracking=True), alpha_lr=self.alpha_learning_rate
+        ).to(self.device)
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)
 
