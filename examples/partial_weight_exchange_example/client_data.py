@@ -27,12 +27,20 @@ class ListDataset(Dataset):
 
 
 class TextClassificationDataset(BaseDataset):
+    """
+    The Purpose of this class is twofold:
+    1. Unify the length of all input sequences.
+    2. Reformat the dataset so we can perform Dirichlet subsampling.
+    """
+
     def __init__(self, batched_text_dataset: IterableDataset, max_seq_len: int, padding_value: int) -> None:
         data = []
         targets = []
         pad_transform = T.PadTransform(max_length=max_seq_len, pad_value=padding_value)
         for batch in iter(batched_text_dataset):
             data.append(pad_transform(to_tensor(batch["text"], padding_value=padding_value)))
+            # the labels of AG_News start from 1 rather than 0, so we subtract 1 from all labels in
+            # order to use the cross entropy loss.
             targets.append(torch.tensor(batch["label"]) - 1)
         self.data = torch.cat(data, dim=0)
         self.targets = torch.cat(targets, dim=0)
@@ -48,10 +56,19 @@ def construct_dataloaders(
     beta: float,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
 
-    assert max_seq_len >= 256
+    # 256 is the default truncation length used by
+    # torchtext's pre-processing pipeline of RoBERTa, and 512 is the maximum
+    # sequence length to the RoBERTa-base encoder.
+    assert 512 >= max_seq_len >= 256
 
+    # text_transform performs the following steps:
+    # 1. Tokenize the sentences using a pre-trained GPT2BPETokenizer.
+    # 2. Map the tokenized sentences to RoBERTa's pretrained vocabulary.
+    # 3. Truncate the sequences so they have lengths that are at most 256.
+    # 4. Add the beginning of sentence and end of sentence tokens.
     text_transform = ROBERTA_BASE_ENCODER.transform()
 
+    # This function simply applies text_transform to every data point.
     def apply_transform(x: Tuple[int, str]) -> Tuple[Union[List[int], List[List[int]]], int]:
         return text_transform(x[1]), x[0]
 

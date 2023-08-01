@@ -114,6 +114,7 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         # parameters are set
         assert self.model is not None and self.parameter_exchanger is not None
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        # this second pull stores the values of the model parameters at the beginning of each training round.
         self.parameter_exchanger.pull_parameters(parameters, self.initial_model, config)
 
 
@@ -133,7 +134,7 @@ if __name__ == "__main__":
     parser.add_argument("--norm_threshold", action="store", type=float, default=24.5)
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     data_path = Path(args.dataset_path)
 
@@ -141,4 +142,5 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     client = TransformerPartialExchangeClient(data_path, DEVICE, args.exchange_percentage, args.norm_threshold)
+    # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)

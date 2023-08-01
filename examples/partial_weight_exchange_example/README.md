@@ -2,11 +2,11 @@
 This example leverages the partial weight exchange system, where instead of exchanging the entire model between the server and clients in every training round,
 only certain parameters are exchanged, and weighted averaging is performed in a per-parameter fashion on the server side.
 
-In each training round, the parameters to be sent for exchange are selected based their "drift norm" in that training round, which is defined as the l2-norm of the difference between their values at the end of that training round and their initial values at the beginning of the same training round. More details about the algorithm and some experiment results using this example are included in "Partial_Weight_Exchange_in_Federated_Learning.pdf".
+In each training round, the parameters to be exchanged with the server are selected based their "drift norm" in that training round, which is defined as the l2-norm of the difference between their values at the end of that training round and their initial values at the beginning of the same training round.
 
 You can customize how parameters are selected and how many parameters to exchange, but more on this later.
 
-This example uses a pre-trained RoBERTa-base encoder to perform text classification on the AG News dataset in a federated setting, where each client performs a Dirichlet
+This example fine-tunes a pre-trained RoBERTa-base encoder to perform text classification on the AG News dataset in a federated setting, where each client performs a Dirichlet
 sampling on its training set so we get heterogeneous data distributions across clients.
 
 ## Running the Example
@@ -34,9 +34,9 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `local_epochs`: number of epochs each client will train for locally.
 * `batch_size`: size of the batches each client will train on.
 * `num_classes`: number of classes in the classification task.
-* `sequence_length`: input sequence length to Roberta Encoder, must be at least 256 and at most 514.
+* `sequence_length`: input sequence length to RoBERTa Encoder, must be at least 256 and at most 512.
 * `normalize`: specifies whether division by the parameter's dimension is performed when computing its drift norm.
-* `filter_by_percentage`: each client takes in an "--exchange-percentage" argument and a "--norm-threshold" argument, where each one corresponds to a mechanism for selecting the parameters to be exchanged between the server and clients. The argument `filter_by_percentage` toggles between these two modes.
+* `filter_by_percentage`: each client takes in an "--exchange_percentage" argument and a "--norm_threshold" argument, where each one corresponds to a mechanism for selecting the parameters to be exchanged between the server and clients. The argument `filter_by_percentage` toggles between these two modes.
 
 More precisely, "--exchange-percentage" has value $p$, where $p$ is between 0 and 1. If `filter_by_percentage` is true, then in every training round, the top ceil($p \cdot N$) parametes with the largest drift norms will be exchanged, where $N$ is the total number of parameters.
 

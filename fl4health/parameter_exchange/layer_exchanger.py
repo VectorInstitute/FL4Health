@@ -62,7 +62,7 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         t_diff = (t1 - t2).float()
         drift_norm = torch.linalg.norm(t_diff)
         if self.normalize:
-            drift_norm /= len(torch.flatten(t_diff))
+            drift_norm /= torch.numel(t_diff)
         return drift_norm.item()
 
     def filter_layers_by_threshold(self, model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
