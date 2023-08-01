@@ -14,7 +14,7 @@ from examples.models.logistic_regression import LogisticRegression
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
-from fl4health.server.server import ClientLevelDPWeightedFedAvgServer
+from fl4health.server.client_level_dp_weighted_fed_avg_server import ClientLevelDPWeightedFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
 

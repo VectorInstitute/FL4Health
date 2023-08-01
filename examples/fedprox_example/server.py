@@ -13,7 +13,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.reporting.fl_wanb import ServerWandBReporter
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 

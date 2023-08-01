@@ -15,7 +15,7 @@ from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.model_bases.apfl_base import APFLModule
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
 

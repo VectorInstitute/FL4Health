@@ -17,7 +17,7 @@ from flwr.server.strategy import FedAvg, Strategy
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 

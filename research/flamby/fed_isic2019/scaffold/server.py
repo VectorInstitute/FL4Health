@@ -20,7 +20,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 

@@ -14,7 +14,7 @@ from flwr.server.strategy import FedAvg, Strategy
 from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
 
