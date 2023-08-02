@@ -50,6 +50,8 @@ def construct_fit_config(
     sequence_length: int,
     normalize: bool,
     filter_by_percentage: bool,
+    norm_threshold: float,
+    exchange_percentage: float,
     sample_percentage: float,
     beta: float,
 ) -> Config:
@@ -62,6 +64,8 @@ def construct_fit_config(
         "sequence_length": sequence_length,
         "normalize": normalize,
         "filter_by_percentage": filter_by_percentage,
+        "norm_threshold": norm_threshold,
+        "exchange_percentage": exchange_percentage,
         "sample_percentage": sample_percentage,
         "beta": beta,
     }
@@ -81,6 +85,8 @@ def fit_config(
     sequence_length: int,
     normalize: bool,
     filter_by_percentage: bool,
+    norm_threshold: float,
+    exchange_percentage: float,
     sample_percentage: float,
     beta: float,
     current_round: int,
@@ -93,6 +99,8 @@ def fit_config(
         sequence_length,
         normalize,
         filter_by_percentage,
+        norm_threshold,
+        exchange_percentage,
         sample_percentage,
         beta,
     )
@@ -118,6 +126,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["sequence_length"],
         config["normalize"],
         config["filter_by_percentage"],
+        config["norm_threshold"],
+        config["exchange_percentage"],
         config["sample_percentage"],
         config["beta"],
     )

@@ -2,50 +2,40 @@ import argparse
 import copy
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch.nn.modules.loss import _Loss
+from torch.utils.data import DataLoader
+from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
-from examples.partial_weight_exchange_example.trainer import test, train, validate
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
+from fl4health.utils.metrics import Accuracy, AverageMeter, Metric
 
 
-class TransformerPartialExchangeClient(NumpyFlClient):
+class TransformerPartialExchangeClient(BasicClient):
     def __init__(
-        self, data_path: Path, device: torch.device, exchange_percentage: float, norm_threshold: float
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
     ) -> None:
-        super().__init__(data_path, device)
-        self.parameter_exchanger: NormDriftParameterExchanger = NormDriftParameterExchanger(
-            norm_threshold=norm_threshold, exchange_percentage=exchange_percentage
-        )
-
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-        self.set_parameters(parameters, config)
-
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        accuracy = train(
-            self.model,
-            self.train_loader,
-            nn.CrossEntropyLoss(),
-            n_epochs=local_epochs,
-            device=self.device,
-        )
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_examples["train_set"],
-            {"accuracy": accuracy},
-        )
+        super().__init__(data_path, metrics, device)
+        self.model: nn.Module
+        self.initial_model: nn.Module
+        self.train_loader: DataLoader
+        self.val_loader: DataLoader
+        self.test_loader: DataLoader
+        self.criterion: _Loss
+        self.optimizer: torch.optim.Optimizer
+        self.parameter_exchanger: NormDriftParameterExchanger
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -56,20 +46,18 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
 
         if not testing:
-            loss, accuracy = validate(self.model, self.validation_loader, nn.CrossEntropyLoss(), device=self.device)
+            meter = AverageMeter(self.metrics, "val_meter")
+            loss, metric_values = self.validate(meter)
             # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
             # calculation results.
             return (
                 loss,
                 self.num_examples["validation_set"],
-                {"accuracy": accuracy},
+                metric_values,
             )
         else:
-            loss, accuracy, f1_score = test(
-                self.model, self.test_loader, nn.CrossEntropyLoss(), device=self.device, num_classes=num_classes
-            )
-
-            test_res_dict: Dict[str, Scalar] = {f"class {c} f1_score": f1_score[c] for c in range(len(f1_score))}
+            loss, accuracy, f1_scores = self.test(num_classes=num_classes)
+            test_res_dict: Dict[str, Scalar] = {f"class {c} f1_score": f1_scores[c] for c in range(len(f1_scores))}
             test_res_dict["accuracy"] = accuracy
             return (loss, self.num_examples["test_set"], test_res_dict)
 
@@ -86,11 +74,14 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         num_classes = self.narrow_config_type(config, "num_classes", int)
         normalize = self.narrow_config_type(config, "normalize", bool)
         filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
+        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
+        exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
         sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
         beta = self.narrow_config_type(config, "beta", float)
 
-        self.parameter_exchanger.set_normalization_mode(normalize)
-        self.parameter_exchanger.set_filter_mode(filter_by_percentage)
+        self.parameter_exchanger = NormDriftParameterExchanger(
+            norm_threshold, exchange_percentage, normalize, filter_by_percentage
+        )
 
         self.setup_model(num_classes)
 
@@ -102,6 +93,8 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         self.validation_loader = val_loader
         self.test_loader = test_loader
         self.num_examples = num_examples
+        self.criterion = torch.nn.CrossEntropyLoss()
+        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
@@ -114,8 +107,58 @@ class TransformerPartialExchangeClient(NumpyFlClient):
         # parameters are set
         assert self.model is not None and self.parameter_exchanger is not None
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        # this second pull stores the values of the model parameters at the beginning of each training round.
-        self.parameter_exchanger.pull_parameters(parameters, self.initial_model, config)
+        # stores the values of the model parameters at the beginning of each training round.
+        self._align_model_parameters(self.initial_model, self.model)
+
+    def _align_model_parameters(self, initial_model: nn.Module, target_model: nn.Module) -> None:
+        target_model_states = target_model.state_dict()
+        initial_model_states = initial_model.state_dict()
+        for param_name, param in target_model_states.items():
+            initial_model_states[param_name] = param
+        initial_model.load_state_dict(initial_model_states, strict=True)
+
+    def test(self, num_classes: int) -> Tuple[float, float, List[float]]:
+        self.model.eval()
+        with torch.no_grad():
+            n_total = 0
+            n_correct = 0
+            n_batches = 0
+            total_loss = 0.0
+
+            preds_lst = []
+            targets_lst = []
+
+            for inputs, targets in self.test_loader:
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+
+                outputs = self.model(inputs)
+                preds = torch.argmax(outputs, dim=1)
+
+                loss = self.criterion(outputs, targets)
+
+                preds_lst.append(preds)
+                targets_lst.append(targets)
+
+                total_loss += loss.item()
+                n_total += targets.size(0)
+                n_correct += int((preds == targets).sum().item())
+                n_batches += 1
+
+            test_loss = total_loss / n_batches
+            accuracy = n_correct / n_total
+
+            f1_score = multiclass_f1_score(
+                torch.cat(preds_lst), torch.cat(targets_lst), num_classes=num_classes, average=None
+            )
+
+            log(
+                INFO,
+                f"Client Test Loss: {test_loss},"
+                f"Client Test Accuracy: {accuracy}, Client Test f1 score: {f1_score.tolist()}",
+            )
+
+            return test_loss, accuracy, f1_score.tolist()
 
 
 if __name__ == "__main__":
@@ -141,6 +184,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = TransformerPartialExchangeClient(data_path, DEVICE, args.exchange_percentage, args.norm_threshold)
+    client = TransformerPartialExchangeClient(data_path, [Accuracy("accuracy")], DEVICE)
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)

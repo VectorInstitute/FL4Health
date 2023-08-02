@@ -57,4 +57,4 @@ which python
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
 
-python -m examples.partial_weight_exchange_example.client --server_address ${SERVER_ADDRESS} --exchange_percentage ${PERCENTAGE} > ${LOG_PATH} 2>&1
+python -m examples.partial_weight_exchange_example.client > ${LOG_PATH} 2>&1
