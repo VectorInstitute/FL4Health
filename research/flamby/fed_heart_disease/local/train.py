@@ -4,7 +4,14 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, Baseline, BaselineLoss, FedHeartDisease
+from flamby.datasets.fed_heart_disease import (
+    BATCH_SIZE,
+    LR,
+    NUM_EPOCHS_POOLED,
+    Baseline,
+    BaselineLoss,
+    FedHeartDisease,
+)
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, random_split
 from torchinfo import summary
@@ -33,7 +40,7 @@ class FedHeartDiseaseLocalTrainer(SingleNodeTrainer):
         self.model: nn.Module = Baseline().to(self.device)
 
         model_stats = summary(self.model, verbose=0)
-        log(INFO, "Client Model Stats:")
+        log(INFO, "Model Stats:")
         log(INFO, "===========================================================================")
         log(INFO, f"Total Parameters: {model_stats.total_params}")
         log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
@@ -98,4 +105,4 @@ if __name__ == "__main__":
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for FedHeartDisease are trained for 50 epochs
-    trainer.train_by_epochs(50, train_meter, val_meter)
+    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_meter, val_meter)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -22,6 +22,31 @@ class Metric(ABC):
 
     def __str__(self) -> str:
         return self.name
+
+
+class BinarySoftDiceCoefficient(Metric):
+    def __init__(
+        self,
+        name: str = "BinarySoftDiceCoefficient",
+        epsilon: float = 1.0e-7,
+        spatial_dimensions: Tuple[int, ...] = (2, 3, 4),
+    ):
+        # Correction term on the DICE denominator calculation
+        self.epsilon = epsilon
+        # The spatial dimensions of the image within the prediction tensors. The default assumes that the images are 3D
+        # and have shape batch_size, channel, spatial, spatial, spatial
+        self.spatial_dimensions = spatial_dimensions
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # Assuming the logits are to be mapped to binary
+        y_pred = (logits > 0.5).int()
+        intersection = (y_pred * target).sum(dim=self.spatial_dimensions)
+        union = (0.5 * (y_pred + target)).sum(dim=self.spatial_dimensions)
+        dice = intersection / (union + self.epsilon)
+        # If both inputs are empty the dice coefficient should be equal 1
+        dice[union == 0] = 1
+        return torch.mean(dice).float()
 
 
 class Accuracy(Metric):

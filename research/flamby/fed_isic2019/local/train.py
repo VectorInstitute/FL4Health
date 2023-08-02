@@ -4,7 +4,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, Baseline, BaselineLoss, FedIsic2019
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss, FedIsic2019
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, random_split
 
@@ -90,4 +90,4 @@ if __name__ == "__main__":
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for FedISic are trained for 20 epochs
-    trainer.train_by_epochs(20, train_meter, val_meter)
+    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_meter, val_meter)

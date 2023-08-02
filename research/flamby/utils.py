@@ -1,14 +1,16 @@
 import os
 import warnings
+from logging import INFO
 from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import Baseline
+from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from torch.utils.data import DataLoader
+from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.utils.metrics import AccumulationMeter, Metric
@@ -66,13 +68,13 @@ def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -
             f.write(f"{key}: {metric_vaue}\n")
 
 
-def load_local_model(run_folder_dir: str, client_number: int) -> Baseline:
+def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"client_{client_number}_best_model.pkl")
     model = torch.load(model_checkpoint_path)
     return model
 
 
-def load_global_model(run_folder_dir: str) -> Baseline:
+def load_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
     model = torch.load(model_checkpoint_path)
     return model
@@ -84,9 +86,9 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
     return mean, std
 
 
-def evaluate_fed_isic_model(
+def run_model_on_dataset(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
-) -> float:
+) -> AccumulationMeter:
     model.to(device).eval()
     meter = AccumulationMeter(metrics, "test_meter")
 
@@ -98,7 +100,13 @@ def evaluate_fed_isic_model(
             else:
                 preds = model(input)
             meter.update(preds, target)
+    return meter
 
+
+def evaluate_fed_isic_model(
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
+) -> float:
+    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
     assert "test_meter_FedIsic2019_balanced_accuracy" in computed_metrics
     balanced_accuracy = computed_metrics["test_meter_FedIsic2019_balanced_accuracy"]
@@ -109,20 +117,31 @@ def evaluate_fed_isic_model(
 def evaluate_fed_heart_disease_model(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
-    model.to(device).eval()
-    meter = AccumulationMeter(metrics, "test_meter")
-
-    with torch.no_grad():
-        for input, target in dataset:
-            input, target = input.to(device), target.to(device)
-            if is_apfl:
-                preds = model(input, personal=True)["personal"]
-            else:
-                preds = model(input)
-            meter.update(preds, target)
+    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
 
     computed_metrics = meter.compute()
     assert "test_meter_FedHeartDisease_accuracy" in computed_metrics
     accuracy = computed_metrics["test_meter_FedHeartDisease_accuracy"]
     assert isinstance(accuracy, float)
     return accuracy
+
+
+def evaluate_fed_ixi_model(
+    model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
+) -> float:
+    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
+    computed_metrics = meter.compute()
+    assert "test_meter_FedIXI_dice" in computed_metrics
+    dice = computed_metrics["test_meter_FedIXI_dice"]
+    assert isinstance(dice, float)
+    return dice
+
+
+def summarize_model_info(model: nn.Module) -> None:
+    model_stats = summary(model, verbose=0)
+    log(INFO, "Model Stats:")
+    log(INFO, "===========================================================================")
+    log(INFO, f"Total Parameters: {model_stats.total_params}")
+    log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
+    log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
+    log(INFO, "===========================================================================\n")
