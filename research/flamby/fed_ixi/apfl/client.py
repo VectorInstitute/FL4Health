@@ -44,9 +44,7 @@ class FedIxiApflClient(FlambyApflClient):
 
         self.criterion = BaselineLoss()
 
-        self.model: APFLModule = APFLModule(APFLUNet(turn_off_bn_tracking=True), alpha_lr=self.alpha_learning_rate).to(
-            self.device
-        )
+        self.model: APFLModule = APFLModule(APFLUNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)
 

@@ -1,119 +1,85 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from efficientnet_pytorch import EfficientNet
-from efficientnet_pytorch.utils import url_map
-from torch.utils import model_zoo
+from flamby.datasets.fed_ixi.model import ConvolutionalBlock
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
+from research.flamby.fed_ixi.fenda.fenda_feature_extractor import FendaFeatureExtactor
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
-def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = False) -> EfficientNet:
-    # There is a bug in the EfficientNet implementation if you want to strip off the top layer of the network, but
-    # still load the pre-trained weights. So we do it ourselves here.
-    model = EfficientNet.from_name(model_name, include_top=include_top)
-    state_dict = model_zoo.load_url(url_map[model_name])
-    state_dict.pop("_fc.weight")
-    state_dict.pop("_fc.bias")
-    model.load_state_dict(state_dict, strict=False)
-    model._change_in_channels(in_channels)
-    return model
-
-
 class FendaClassifier(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
+    def __init__(
+        self, join_mode: FendaJoinMode, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0
+    ) -> None:
         super().__init__(join_mode)
-        # Two layer DNN as a classifier head
-        self.fc1 = nn.Linear(stack_output_dimension * 2, 64)
-        self.fc2 = nn.Linear(64, 8)
-        self.dropout = nn.Dropout(0.2)
+
+        # We're doing 3D segmentation, so hardcode
+        dimensions = 3
+        # Binary segmentation so out_classes = 2
+        out_classes = 2
+
+        # Which dimension are the channels for the tensor inputs.
+        self.CHANNELS_DIMENSION = 1
+
+        # Monte Carlo dropout
+        self.monte_carlo_layer = None
+        if monte_carlo_dropout:
+            dropout_class = getattr(nn, "Dropout{}d".format(dimensions))
+            self.monte_carlo_layer = dropout_class(p=monte_carlo_dropout)
+
+        # Classifier
+        # Standard UNet concatenates the channels from the first conv layer (residual connection) and the upsampled
+        # embeddings from the full-forward process of the U-Net.
+        single_stack_in_channels = 2 * out_channels_first_layer
+        # For a FENDA feature extractor, we take the outputs of the global and local stacks and we concatenate them
+        # along the channels. So if each has in_channel dimension of 4, the classifier actually processes 8 channels
+        self.classifier = ConvolutionalBlock(
+            dimensions,
+            in_channels=2 * single_stack_in_channels,
+            out_channels=out_classes,
+            kernel_size=1,
+            activation=None,
+        )
 
     def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
-        local_tensor = local_tensor.flatten(start_dim=1)
-        global_tensor = global_tensor.flatten(start_dim=1)
-        # Assuming tensors are "batch first" so join column-wise
-        return torch.concat([local_tensor, global_tensor], dim=1)
+        # Assuming tensors are "batch first", we concatenate along the channel dimension
+        return torch.concat([local_tensor, global_tensor], dim=self.CHANNELS_DIMENSION)
 
     def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
-        x = self.dropout(input_tensor)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.monte_carlo_layer(input_tensor) if self.monte_carlo_layer is not None else input_tensor
+        x = self.classifier(x)
+        x = F.softmax(x, dim=self.CHANNELS_DIMENSION)
         return x
 
 
-class LocalEfficientNet(nn.Module):
-    """Local FENDA module
-    We use the EfficientNets architecture that many participants in the ISIC
-    competition have identified to work best.
-    See here the [reference paper](https://arxiv.org/abs/1905.11946)
-    Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his
-    [pytorch reimplementation of EfficientNets]
-    (https://github.com/lukemelas/EfficientNet-PyTorch).
-    When loading the EfficientNet-B0 model, we strip off the FC layer to use the model as a feature extractor.
-    We freeze a subset of the layers in order to make sure that FENDA is not training twice as many parameters as the
-    other approaches.
+class LocalUNetFeatureExtractor(nn.Module):
+    """
+    Local FENDA module: We use a UNet with the classifier head stripped off to extract a set of features on which each
+    pixel of the image is classified.
     """
 
-    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        # include_top ensures that we just use feature extraction in the forward pass
-        self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
-
-    def freeze_layers(self, frozen_blocks: int) -> None:
-        # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
-
-        # Freeze the first two layers
-        self.base_model._modules["_conv_stem"].requires_grad_(False)
-        self.base_model._modules["_bn0"].requires_grad_(False)
-        # Now we iterate through the block modules and freeze a certain number of them.
-        frozen_blocks = min(frozen_blocks, 15)
-        for block_index in range(frozen_blocks):
-            self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
         return x
 
 
-class GlobalEfficientNet(nn.Module):
-    """Global FENDA module
-    We use the EfficientNets architecture that many participants in the ISIC
-    competition have identified to work best.
-    See here the [reference paper](https://arxiv.org/abs/1905.11946)
-    Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his
-    [pytorch reimplementation of EfficientNets]
-    (https://github.com/lukemelas/EfficientNet-PyTorch).
-    When loading the EfficientNet-B0 model, we strip off the FC layer to use the model as a feature extractor.
-    We freeze a subset of the layers in order to make sure that FENDA is not training twice as many parameters as the
-    other approaches.
+class GlobalUNetFeatureExtractor(nn.Module):
+    """Global FENDA module: We use a UNet with the classifier head stripped off to extract a set of features on which each
+    pixel of the image is classified.
     """
 
-    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        # include_top ensures that we just use feature extraction in the forward pass
-        self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
-
-    def freeze_layers(self, frozen_blocks: int) -> None:
-        # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
-
-        # Freeze the first two layers
-        self.base_model._modules["_conv_stem"].requires_grad_(False)
-        self.base_model._modules["_bn0"].requires_grad_(False)
-        # Now we iterate through the block modules and freeze a certain number of them.
-        frozen_blocks = min(frozen_blocks, 15)
-        for block_index in range(frozen_blocks):
-            self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
@@ -121,8 +87,12 @@ class GlobalEfficientNet(nn.Module):
 
 
 class FedIxiFendaModel(FendaModel):
-    def __init__(self, turn_off_bn_tracking: bool = False) -> None:
-        local_module = LocalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
-        global_module = GlobalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
-        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
+    def __init__(
+        self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8, monte_carlo_dropout: float = 0.0
+    ) -> None:
+        # FedIXI out_channels_first_layer = 8 is the Baseline model default. So we use it here. The monte carlo dropout
+        # is also set to 0 by default for FedIXI
+        local_module = LocalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
+        global_module = GlobalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
+        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, out_channels_first_layer, monte_carlo_dropout)
         super().__init__(local_module, global_module, model_head)

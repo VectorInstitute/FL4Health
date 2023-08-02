@@ -39,7 +39,7 @@ class FedIxiFendaClient(FlambyFedOptClient):
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        self.model: nn.Module = FedIxiFendaModel(turn_off_bn_tracking=True).to(self.device)
+        self.model: nn.Module = FedIxiFendaModel().to(self.device)
 
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
