@@ -42,8 +42,6 @@ class FedIxiApflClient(FlambyApflClient):
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
 
         self.model: APFLModule = APFLModule(APFLUNet(turn_off_bn_tracking=True), alpha_lr=self.alpha_learning_rate).to(

@@ -7,10 +7,10 @@ import torch.nn as nn
 from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss, FedIXITiny
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, random_split
-from torchinfo import summary
 
 from fl4health.utils.metrics import AccumulationMeter, BinarySoftDiceCoefficient
 from research.flamby.single_node_trainer import SingleNodeTrainer
+from research.flamby.utils import summarize_model_info
 
 
 class FedIxiCentralizedTrainer(SingleNodeTrainer):
@@ -28,18 +28,12 @@ class FedIxiCentralizedTrainer(SingleNodeTrainer):
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
-        self.model: nn.Module = Baseline().to(self.device)
+        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
+        # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
+        # and APFL
+        self.model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
+        summarize_model_info(self.model)
 
-        model_stats = summary(self.model, verbose=0)
-        log(INFO, "Model Stats:")
-        log(INFO, "===========================================================================")
-        log(INFO, f"Total Parameters: {model_stats.total_params}")
-        log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
-        log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
-        log(INFO, "===========================================================================\n")
-
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)
 

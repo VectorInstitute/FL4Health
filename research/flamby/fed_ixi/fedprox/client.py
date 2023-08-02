@@ -39,9 +39,11 @@ class FedIxiFedProxClient(FlambyFedProxClient):
 
         self.num_examples = {"train_set": len(train_dataset), "validation_set": len(validation_dataset)}
 
-        self.model: nn.Module = Baseline().to(self.device)
-        # NOTE: The class weights specified by alpha in this baseline loss are precomputed based on the weights of
-        # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
+        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
+        # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
+        # and APFL
+        self.model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
+
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         # Set the Proximal Loss weight mu

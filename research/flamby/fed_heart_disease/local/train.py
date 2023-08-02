@@ -14,10 +14,10 @@ from flamby.datasets.fed_heart_disease import (
 )
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, random_split
-from torchinfo import summary
 
 from fl4health.utils.metrics import AccumulationMeter, Accuracy
 from research.flamby.single_node_trainer import SingleNodeTrainer
+from research.flamby.utils import summarize_model_info
 
 
 class FedHeartDiseaseLocalTrainer(SingleNodeTrainer):
@@ -38,14 +38,7 @@ class FedHeartDiseaseLocalTrainer(SingleNodeTrainer):
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.model: nn.Module = Baseline().to(self.device)
-
-        model_stats = summary(self.model, verbose=0)
-        log(INFO, "Model Stats:")
-        log(INFO, "===========================================================================")
-        log(INFO, f"Total Parameters: {model_stats.total_params}")
-        log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
-        log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
-        log(INFO, "===========================================================================\n")
+        summarize_model_info(self.model)
 
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)

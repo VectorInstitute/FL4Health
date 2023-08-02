@@ -35,7 +35,11 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    client_model = Baseline()
+
+    # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
+    # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
+    # and APFL
+    client_model = Baseline(out_channels_first_layer=12)
     summarize_model_info(client_model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

@@ -37,7 +37,11 @@ def main(
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = FixedSamplingWithoutReplacementClientManager()
-    client_model = Baseline()
+
+    # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
+    # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
+    # and APFL
+    client_model = Baseline(out_channels_first_layer=12)
     summarize_model_info(client_model)
 
     initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(client_model)
