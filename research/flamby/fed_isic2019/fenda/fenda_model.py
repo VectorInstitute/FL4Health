@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -55,11 +57,12 @@ class LocalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        if frozen_blocks:
+            self.freeze_layers(frozen_blocks)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -74,7 +77,6 @@ class LocalEfficientNet(nn.Module):
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
@@ -94,11 +96,12 @@ class GlobalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13, turn_off_bn_tracking: bool = False):
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        if frozen_blocks:
+            self.freeze_layers(frozen_blocks)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -113,7 +116,6 @@ class GlobalEfficientNet(nn.Module):
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
@@ -121,8 +123,8 @@ class GlobalEfficientNet(nn.Module):
 
 
 class FedIsic2019FendaModel(FendaModel):
-    def __init__(self, turn_off_bn_tracking: bool = False) -> None:
-        local_module = LocalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
-        global_module = GlobalEfficientNet(turn_off_bn_tracking=turn_off_bn_tracking)
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False) -> None:
+        local_module = LocalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
+        global_module = GlobalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

@@ -30,7 +30,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    client_model = APFLModule(APFLEfficientNet(turn_off_bn_tracking=True))
+    client_model = APFLModule(APFLEfficientNet(frozen_blocks=None, turn_off_bn_tracking=False))
     summarize_model_info(client_model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
