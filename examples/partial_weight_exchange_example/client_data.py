@@ -80,8 +80,6 @@ def construct_dataloaders(
     train_size = int(0.95 * len(data_list))
     val_size = int(len(data_list) - train_size)
 
-    num_examples = {"train_set": train_size, "validation_set": val_size}
-
     train_list_dataset, val_list_dataset = random_split(ListDataset(data_list), [train_size, val_size])
 
     ag_train_datapipe = IterableWrapper(train_list_dataset)
@@ -110,10 +108,14 @@ def construct_dataloaders(
     sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=sample_percentage, beta=beta)
     ag_train_dataset = sampler.subsample(ag_train_dataset_full)
 
+    num_examples = {
+        "train_set": len(ag_train_dataset),
+        "validation_set": len(ag_val_dataset),
+        "test_set": len(ag_test_dataset),
+    }
+
     train_loader = DataLoader(ag_train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(ag_val_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(ag_test_dataset, batch_size=batch_size, shuffle=True)
-
-    num_examples["test_set"] = int(len(test_loader) * batch_size)
 
     return train_loader, val_loader, test_loader, num_examples
