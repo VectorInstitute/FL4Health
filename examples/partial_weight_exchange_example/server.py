@@ -168,7 +168,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["n_server_rounds"],
     )
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
+    # Since clients can send different tensors to the server, we perform weighted averaging separately on each tensor.
     strategy = FedAvgDynamicLayer(
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],

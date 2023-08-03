@@ -58,3 +58,26 @@ After `n_clients` clients have been started federated learning should commence.
 
 ### Running this example on Vector's clusters
 The slurm and bash scripts `run_client.slrm`, `run_server.slrm`, and `run_fl_cluster.sh` are used to run this example on Vector's clusters.
+
+* `run_server.slrm` is responsible for starting the server.
+* `run_client.slrm` is responsible for starting a client based on the server's address.
+* `run_fl_cluster.sh` is responsible for conducting Federated Learning by leveraging the previous two scripts. This is the only script you need to run.
+
+An example usage would be running a command (from the FL4Health directory) such as
+
+```
+sh
+./examples/partial_weight_exchange_example/run_fl_cluster.sh 8082 examples/partial_weight_exchange_example/config.yaml examples/partial_weight_exchange_example/server_logs examples/partial_weight_exchange_example/client_logs /h/yuchongz/flenv/ 5 0.4
+```
+
+where:
+
+* 8082 is the server's address.
+* examples/partial_weight_exchange_example/config.yaml is the path to the config file.
+* examples/partial_weight_exchange_example/server_logs is the path to the server's logs.
+* examples/partial_weight_exchange_example/client_logs is the "base path" to the clients' logs. The script appends "_0.4" to the end of this base path produce the actual path to the logs of the clients.
+* /h/yuchongz/flenv/ is the path to the virtual environment.
+* 5 is the number of clients.
+* 0.4 is the exchange percentage.
+
+Note: the exchange percentage here is only used for creating the path to the clients' logs. The actual exchange percentage used in the experiments is specified in `config.yaml`. You should ensure they are the same.
