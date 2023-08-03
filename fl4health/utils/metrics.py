@@ -46,7 +46,7 @@ class BinarySoftDiceCoefficient(Metric):
         dice = intersection / (union + self.epsilon)
         # If both inputs are empty the dice coefficient should be equal 1
         dice[union == 0] = 1
-        return torch.mean(dice).float()
+        return torch.mean(dice).item()
 
 
 class Accuracy(Metric):

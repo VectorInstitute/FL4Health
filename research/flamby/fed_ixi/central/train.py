@@ -78,7 +78,7 @@ if __name__ == "__main__":
         args.dataset_dir,
         args.run_name,
     )
-    metrics = [BinarySoftDiceCoefficient("FedIXI_balanced_accuracy")]
+    metrics = [BinarySoftDiceCoefficient("FedIXI_dice")]
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for FedIX are trained for 10 epochs
