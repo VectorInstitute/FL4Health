@@ -42,7 +42,7 @@ def get_initial_model_parameters(num_classes: int) -> Parameters:
     return ndarrays_to_parameters(params + [np.array(names)])
 
 
-def construct_fit_config(
+def construct_config(
     _: int,
     local_epochs: int,
     batch_size: int,
@@ -91,7 +91,7 @@ def fit_config(
     beta: float,
     current_round: int,
 ) -> Config:
-    return construct_fit_config(
+    return construct_config(
         current_round,
         local_epochs,
         batch_size,
@@ -107,11 +107,32 @@ def fit_config(
 
 
 def eval_config(
+    local_epochs: int,
+    batch_size: int,
     num_classes: int,
+    sequence_length: int,
+    normalize: bool,
+    filter_by_percentage: bool,
+    norm_threshold: float,
+    exchange_percentage: float,
+    sample_percentage: float,
+    beta: float,
     n_server_rounds: int,
     current_round: int,
 ) -> Config:
-    config = construct_eval_config(current_round, num_classes)
+    config = construct_config(
+        current_round,
+        local_epochs,
+        batch_size,
+        num_classes,
+        sequence_length,
+        normalize,
+        filter_by_percentage,
+        norm_threshold,
+        exchange_percentage,
+        sample_percentage,
+        beta,
+    )
     config["testing"] = n_server_rounds == current_round
     return config
 
@@ -134,7 +155,16 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     eval_config_fn = partial(
         eval_config,
+        config["local_epochs"],
+        config["batch_size"],
         config["num_classes"],
+        config["sequence_length"],
+        config["normalize"],
+        config["filter_by_percentage"],
+        config["norm_threshold"],
+        config["exchange_percentage"],
+        config["sample_percentage"],
+        config["beta"],
         config["n_server_rounds"],
     )
 

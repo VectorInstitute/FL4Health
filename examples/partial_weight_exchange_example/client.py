@@ -90,7 +90,7 @@ class TransformerPartialExchangeClient(BasicClient):
         )
 
         self.train_loader = train_loader
-        self.validation_loader = val_loader
+        self.val_loader = val_loader
         self.test_loader = test_loader
         self.num_examples = num_examples
         self.criterion = torch.nn.CrossEntropyLoss()
