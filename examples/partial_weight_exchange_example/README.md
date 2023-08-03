@@ -38,7 +38,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `normalize`: specifies whether division by the tensor's dimension is performed when computing its drift norm.
 * `filter_by_percentage`: each client takes in an "--exchange_percentage" argument and a "--norm_threshold" argument, where each one corresponds to a mechanism for selecting the tensors to be exchanged between the server and clients. The argument `filter_by_percentage` toggles between these two modes.
 
-More precisely, "--exchange-percentage" has value $p$, where $p$ is between 0 and 1. If `filter_by_percentage` is true, then in every training round, the top ceil($p \cdot N$) parametes with the largest drift norms will be exchanged, where $N$ is the total number of tensors.
+More precisely, "--exchange-percentage" has value $p$, where $p$ is between 0 and 1. If `filter_by_percentage` is true, then in every training round, the top ceil($p \cdot N$) tensors with the largest drift norms will be exchanged, where $N$ is the total number of tensors.
 
 Alternatively, "--norm-threshold" is a positive real number $t$, and if `filter_by_percentage` is false, then every tensor with drift norm larger than $t$ will be exchanged.
 
