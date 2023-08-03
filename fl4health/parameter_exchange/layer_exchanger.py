@@ -102,7 +102,7 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         total_param_num = len(names_to_norm_drift.keys())
         num_param_exchange = int(math.ceil(total_param_num * self.exchange_percentage))
         param_to_exchange_names = sorted(names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x])[
-            : (num_param_exchange + 1)
+            :(num_param_exchange)
         ]
         return [model_states[name].cpu().numpy() for name in param_to_exchange_names], param_to_exchange_names
 
