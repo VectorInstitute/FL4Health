@@ -185,5 +185,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     client = TransformerPartialExchangeClient(data_path, [Accuracy("accuracy")], DEVICE)
-    # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients
+    # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
+    # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
+    # of larger messages would still be blocked.
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)

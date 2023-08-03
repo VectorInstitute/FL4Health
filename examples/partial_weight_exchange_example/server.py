@@ -181,6 +181,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     client_manager = PoissonSamplingClientManager()
 
+    # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     fl.server.start_server(
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
