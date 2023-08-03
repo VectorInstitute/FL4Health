@@ -9,9 +9,6 @@ NUM_CLIENTS=$6
 PERCENTAGE=$7
 
 
-CLIENT_DATA_BASE_PATH="examples/datasets/"
-
-
 # Start the FL Server and wait until the job starts
 SERVER_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
 SERVER_JOB_NAME="fl_server_${SERVER_JOB_HASH}"
