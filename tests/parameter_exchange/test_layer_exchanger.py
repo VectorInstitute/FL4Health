@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftLayerExchanger
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftParameterExchanger
 
 
 class LinearModel(nn.Module):
@@ -19,6 +19,7 @@ class ToyConvNet(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(8, 16, 5, bias=False)
         self.fc1 = nn.Linear(16 * 4 * 4, 120, bias=False)
+        self.fc2 = nn.Linear(120, 64, bias=False)
 
 
 def test_layer_parameter_exchange() -> None:
@@ -43,16 +44,36 @@ def test_norm_drift_layer_exchange() -> None:
     nn.init.constant_(initial_model.conv1.weight, 0)
     nn.init.constant_(initial_model.conv2.weight, 0)
     nn.init.constant_(initial_model.fc1.weight, 0)
+    nn.init.constant_(initial_model.fc2.weight, 0)
 
     nn.init.constant_(model_to_exchange.conv1.weight, 1 / 20000)
     nn.init.constant_(model_to_exchange.conv2.weight, 1 / 20000)
     nn.init.constant_(model_to_exchange.fc1.weight, 1)
+    nn.init.constant_(model_to_exchange.fc2.weight, 2)
 
     threshold = 2
+    percentage = 0.5
 
-    exchanger = NormDriftLayerExchanger(threshold)
+    exchanger = NormDriftParameterExchanger(threshold, percentage, False, False)
 
+    # Test NormDriftParameterExchanger.filter_by_threshold(),
+    # assuming we do not normalize by the number of parameters
+    # when calculating a tensor's drift norm.
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
-    assert len(layers_to_exchange) == 1
-    assert len(layer_names) == 1
+    assert len(layers_to_exchange) == 2
+    assert len(layer_names) == 2
+
+    # Normalize when calculating drift norm.
+    exchanger.set_normalization_mode(True)
+    layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
+    layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
+    assert len(layers_to_exchange) == 0
+    assert len(layer_names) == 0
+
+    # Test NormDriftParameterExchanger.filter_by_percentage().
+    exchanger.set_filter_mode(True)
+    layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
+    layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
+    assert len(layer_names) == 2
+    assert len(layers_to_exchange) == 2

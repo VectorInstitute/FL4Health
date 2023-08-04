@@ -15,7 +15,10 @@ scikit-learn
 tensorflow-privacy
 toml
 torch
+torchdata
+torcheval
 torchinfo
+torchtext
 torchvision
 types-requests
 types-setuptools
