@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
@@ -28,13 +27,8 @@ class TransformerPartialExchangeClient(BasicClient):
         device: torch.device,
     ) -> None:
         super().__init__(data_path, metrics, device)
-        self.model: nn.Module
         self.initial_model: nn.Module
-        self.train_loader: DataLoader
-        self.val_loader: DataLoader
         self.test_loader: DataLoader
-        self.criterion: _Loss
-        self.optimizer: torch.optim.Optimizer
         self.parameter_exchanger: NormDriftParameterExchanger
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
