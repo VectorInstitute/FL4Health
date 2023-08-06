@@ -18,6 +18,15 @@ def test_accuracy_metric() -> None:
     assert accuracy2 == 0.75
 
 
+def test_binary_accuracy() -> None:
+    accuracy_metric = Accuracy()
+
+    pred1 = torch.Tensor([0, 1, 1, 0, 1])
+    target1 = torch.Tensor([0, 0, 1, 1, 1])
+    accuracy1 = accuracy_metric(pred1, target1)
+    assert accuracy1 == 3.0 / 5.0
+
+
 def test_average_meter() -> None:
     am = AverageMeter([Accuracy()])
 

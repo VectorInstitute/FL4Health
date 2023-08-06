@@ -8,8 +8,8 @@ from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
 from fl4health.utils.metrics import BalancedAccuracy
-from research.flamby.fed_isic2019.utils import (
-    evaluate_model,
+from research.flamby.utils import (
+    evaluate_fed_isic_model,
     get_all_run_folders,
     get_metric_avg_std,
     load_global_model,
@@ -19,7 +19,12 @@ from research.flamby.fed_isic2019.utils import (
 
 
 def main(
-    artifact_dir: str, dataset_dir: str, eval_write_path: str, eval_local_models: bool, eval_global_model: bool
+    artifact_dir: str,
+    dataset_dir: str,
+    eval_write_path: str,
+    eval_local_models: bool,
+    eval_global_model: bool,
+    is_apfl: bool,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
@@ -40,7 +45,7 @@ def main(
         for run_folder_dir in all_run_folder_dir:
             if eval_local_models:
                 local_model = load_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_model(local_model, test_loader, metrics, device)
+                local_run_metric = evaluate_fed_isic_model(local_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -51,7 +56,7 @@ def main(
 
             if eval_global_model:
                 server_model = load_global_model(run_folder_dir)
-                server_run_metric = evaluate_model(server_model, test_loader, metrics, device)
+                server_run_metric = evaluate_fed_isic_model(server_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -106,7 +111,7 @@ def main(
         test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             model = load_global_model(run_folder_dir)
-            run_metric = evaluate_model(model, pooled_test_loader, metrics, device)
+            run_metric = evaluate_fed_isic_model(model, pooled_test_loader, metrics, device, is_apfl)
             log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
             test_metrics.append(run_metric)
 
@@ -153,12 +158,26 @@ if __name__ == "__main__":
         help="boolean to indicate whether to search for and evaluate a local models in addition to the server model",
     )
 
+    parser.add_argument(
+        "--is_apfl",
+        action="store_true",
+        help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
+    )
+
     args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
     log(INFO, f"Dataset Directory: {args.dataset_dir}")
     log(INFO, f"Eval Write Path: {args.eval_write_path}")
     log(INFO, f"Run Local Models: {args.eval_local_models}")
     log(INFO, f"Run Global Model: {args.eval_global_model}")
+    log(INFO, f"Is APFL Run: {args.is_apfl}")
 
     assert args.eval_local_models or args.eval_global_model
-    main(args.artifact_dir, args.dataset_dir, args.eval_write_path, args.eval_local_models, args.eval_global_model)
+    main(
+        args.artifact_dir,
+        args.dataset_dir,
+        args.eval_write_path,
+        args.eval_local_models,
+        args.eval_global_model,
+        args.is_apfl,
+    )
