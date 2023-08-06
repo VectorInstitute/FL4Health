@@ -133,7 +133,7 @@ class FedProxServer(FlServer):
                     self.proximal_weight -= self.proximal_weight_delta
                     self.proximal_weight = np.maximum(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
-                    log(INFO, f"Proximal weight is decrease to {self.proximal_weight}")
+                    log(INFO, f"Proximal weight is decreased to {self.proximal_weight}")
             else:
                 self.proximal_weight += self.proximal_weight_delta
                 log(INFO, f"Proximal weight is increased to {self.proximal_weight}")
