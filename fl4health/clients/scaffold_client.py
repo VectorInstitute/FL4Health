@@ -100,7 +100,9 @@ class ScaffoldClient(NumpyFlClient):
         self.server_model_state = server_model_state
         self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
         self.server_model_weights = [
-            model_params.detach().numpy() for model_params in self.model.parameters() if model_params.requires_grad
+            model_params.cpu().detach().numpy()
+            for model_params in self.model.parameters()
+            if model_params.requires_grad
         ]
 
         # If client control variates do not exist, initialize with zeros as per paper
@@ -120,7 +122,7 @@ class ScaffoldClient(NumpyFlClient):
         assert self.train_loader.batch_size is not None
 
         # y_i
-        client_model_weights = [val.detach().numpy() for val in self.model.parameters() if val.requires_grad]
+        client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
 
         # (x - y_i)
         delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)

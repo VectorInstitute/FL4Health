@@ -21,6 +21,9 @@ torch = "^1.12.1"
 [tool.poetry.group.dev.dependencies]
 nltk = "^3.8.1"
 torchvision = "^0.14.1"
+torchtext = "0.14.1"
+torchdata = "0.5.1"
+torcheval = "^0.0.6"
 
 [tool.poetry.group.codestyle.dependencies]
 black = "^22.12.0"
