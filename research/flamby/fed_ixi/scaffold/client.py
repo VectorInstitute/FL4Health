@@ -42,7 +42,7 @@ class FedIxiScaffoldClient(FlambyScaffoldClient):
         # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
         # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
         # and APFL
-        self.model: nn.Module = Baseline(out_channels_first_layer=12)
+        self.model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
 
         self.criterion = BaselineLoss()
         # Note that, unlike the other approaches, SCAFFOLD requires a vanilla SGD optimizer for the corrections to
