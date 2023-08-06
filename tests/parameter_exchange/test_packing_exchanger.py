@@ -98,7 +98,7 @@ def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # n
 def test_parameter_packer_with_extra_variables(get_ndarrays: NDArrays) -> None:  # noqa
     model_weights = get_ndarrays  # noqa
     extra_variables = {}
-    extra_variables["var1"] = get_ndarrays
+    extra_variables["var1"] = [np.array(0.0)]
 
     packer = ParameterPackerWithExtraVariables(len(model_weights))
 
