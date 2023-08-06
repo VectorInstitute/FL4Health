@@ -38,8 +38,9 @@ class MnistFedProxClient(FedProxClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
 
         self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
-        model_size = len(self.model.state_dict())
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithExtraVariables(model_size))
+        self.parameter_exchanger = ParameterExchangerWithPacking(
+            ParameterPackerWithExtraVariables(len(self.model.state_dict()))
+        )
 
         # Setup W and B reporter
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)

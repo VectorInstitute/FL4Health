@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader, random_split
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithExtraVariables
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
 
 
@@ -66,7 +67,9 @@ class FedIsic2019FedProxClient(FedProxClient):
         # Set the Proximal Loss weight mu
         self.proximal_weight = self.mu
 
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = ParameterExchangerWithPacking(
+            ParameterPackerWithExtraVariables(len(self.model.state_dict()))
+        )
 
         super().setup_client(config)
 

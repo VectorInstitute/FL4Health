@@ -4,18 +4,18 @@ from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
+import numpy as np
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FedProxServer
-from fl4health.utils.config import load_config
 from fl4health.strategies.fedavg_with_extra_variables import FedAvgWithExtraVariables
+from fl4health.utils.config import load_config
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -32,13 +32,15 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def get_initial_model_information(proximal_weight) -> Parameters:
+def get_initial_model_information(proximal_weight: float) -> Tuple[Parameters, Dict[str, Parameters]]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = MnistNet()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    additional_variables = [proximal_weight]
-    return ndarrays_to_parameters(model_weights),ndarrays_to_parameters(additional_variables)
+    # Add proximal weight as additional variable to pack in parameter exchanger
+    additional_variables = {}
+    additional_variables["proximal_weight"] = ndarrays_to_parameters([np.array(proximal_weight)])
+    return ndarrays_to_parameters(model_weights), additional_variables
 
 
 def fit_config(
@@ -93,7 +95,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     else:
         proximal_weight = 0.05
 
-    initial_parameters, initial_extra_variables = get_initial_model_information(proximal_weight = proximal_weight)
+    initial_parameters, initial_extra_variables = get_initial_model_information(proximal_weight=proximal_weight)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithExtraVariables(
@@ -106,14 +108,15 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters = initial_parameters,
-        initial_extra_variables = initial_extra_variables,
+        initial_parameters=initial_parameters,
+        initial_extra_variables=initial_extra_variables,
     )
 
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FedProxServer(client_manager, strategy, wandb_reporter,
-                           adaptive_proximal_weight= config["adaptive_proximal_weight"])
+    server = FedProxServer(
+        client_manager, strategy, wandb_reporter, adaptive_proximal_weight=config["adaptive_proximal_weight"]
+    )
 
     fl.server.start_server(
         server=server,

@@ -8,6 +8,7 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
+    ParameterPackerWithExtraVariables,
     ParameterPackerWithLayerNames,
 )
 
@@ -91,3 +92,33 @@ def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # n
 
     assert weights_names == unpacked_weights_names
     assert len(weights_names) == len(model_weights)
+
+
+@pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
+def test_parameter_packer_with_extra_variables(get_ndarrays: NDArrays) -> None:  # noqa
+    model_weights = get_ndarrays  # noqa
+    extra_variables = {}
+    extra_variables["var1"] = get_ndarrays
+
+    packer = ParameterPackerWithExtraVariables(len(model_weights))
+
+    packed_params = packer.pack_parameters(model_weights, extra_variables)
+
+    assert len(packed_params) == len(model_weights) + 1 + sum(
+        [len(extra_variable) for extra_variable in extra_variables.values()]
+    )
+
+    correct_packed_params = model_weights + [np.array(list(extra_variables.keys()))]
+    for _, values in extra_variables.items():
+        correct_packed_params = correct_packed_params + values
+
+    for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
+        assert packed_param.size == correct_packed_param.size
+
+    unpacked_model_weights, unpacked_extra_variables = packer.unpack_parameters(packed_params)
+
+    for model_weight, unpacked_model_weight in zip(model_weights, unpacked_model_weights):
+        assert model_weight.size == unpacked_model_weight.size
+
+    assert extra_variables == unpacked_extra_variables
+    assert len(extra_variables) == len(unpacked_extra_variables)

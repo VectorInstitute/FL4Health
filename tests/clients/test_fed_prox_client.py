@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import torch
 import torch.nn as nn
@@ -65,8 +66,15 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
+    perturbed_proximal_weight = 1.0
+    additional_variables = {}
+    additional_variables["proximal_weight"] = [perturbed_proximal_weight]
+    perturbed_params += [np.array(list(additional_variables.keys()))]
+    for _, values in additional_variables.items():
+        perturbed_params += np.array(values)
+
     # Circumventing the set_parameters function to update the model weights
-    fed_prox_client.parameter_exchanger.pull_parameters(perturbed_params, fed_prox_client.model, config)
+    fed_prox_client.set_parameters(perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
 
@@ -86,8 +94,15 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.set_parameters(params, config)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
+    perturbed_proximal_weight = 1.0
+    additional_variables = {}
+    additional_variables["proximal_weight"] = [perturbed_proximal_weight]
+    perturbed_params += [np.array(list(additional_variables.keys()))]
+    for _, values in additional_variables.items():
+        perturbed_params += np.array(values)
+
     # Circumventing the set_parameters function to update the model weights
-    fed_prox_client.parameter_exchanger.pull_parameters(perturbed_params, fed_prox_client.model, config)
+    fed_prox_client.set_parameters(perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
     proximal_loss.backward()
@@ -100,3 +115,30 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.testing.assert_close(
         linear_gradient, torch.tensor([[0.01, 0.01], [0.01, 0.01], [0.01, 0.01]]), atol=0.0001, rtol=1.0
     )
+
+
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
+def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
+    torch.manual_seed(42)
+    fed_prox_client = get_client
+    config: Config = {}
+
+    fed_prox_client.setup_client(config)
+    params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
+    fed_prox_client.set_parameters(params, config)
+
+    # We've taken no training steps so the proximal loss should be 0.0
+    assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
+
+    perturbed_params = [layer_weights + 0.1 for layer_weights in params]
+    perturbed_proximal_weight = 1.0
+    additional_variables = {}
+    additional_variables["proximal_weight"] = [perturbed_proximal_weight]
+    perturbed_params += [np.array(list(additional_variables.keys()))]
+    for _, values in additional_variables.items():
+        perturbed_params += np.array(values)
+
+    # Circumventing the set_parameters function to update the model weights
+    fed_prox_client.set_parameters(perturbed_params, config)
+
+    assert fed_prox_client.proximal_weight == perturbed_proximal_weight

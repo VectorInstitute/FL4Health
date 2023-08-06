@@ -10,8 +10,8 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.utils.metrics import AverageMeter, Meter, Metric
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.utils.metrics import AverageMeter, Meter, Metric
 
 FedProxTrainStepOutputs = Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
@@ -39,9 +39,9 @@ class FedProxClient(NumpyFlClient):
         # loss. That is, the FedProx loss becomes criterion + \mu \Vert w - w^t \Vert ^2
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
-        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
-        self.proximal_weight: float = 0.1
+        self.parameter_exchanger: ParameterExchangerWithPacking[Dict[str, NDArrays]]
         self.initial_tensors: List[torch.Tensor]
+        self.proximal_weight: float = 0.0
         self.total_epochs = 0
         self.total_steps = 0
 
@@ -60,24 +60,26 @@ class FedProxClient(NumpyFlClient):
         # NOTE: Scaling by 1/2 is for consistency with the original fedprox paper.
         return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
-
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with
-        proximal weight control variates. They are unpacked for the clients to use in training
+        proximal weight control variates. They are unpacked for the clients to use in training.
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
         server_model_state, server_extra_variables = self.parameter_exchanger.unpack_parameters(parameters)
-        self.proximal_weight = server_extra_variables[0]
+
+        # Setting the proximal weight
+        for key, value in server_extra_variables.items():
+            setattr(self, key, value[0])
         self.server_model_state = server_model_state
         self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
+
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FedProx loss.
         self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
-
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -89,7 +91,6 @@ class FedProxClient(NumpyFlClient):
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         # Currently uses training by epoch.
         metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
-
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
