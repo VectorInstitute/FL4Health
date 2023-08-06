@@ -10,11 +10,11 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithExtraVariables
-from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy, Metric
+from fl4health.utils.metrics import BalancedAccuracy, Metric
+from research.flamby.flamby_clients.flamby_fedprox_client import FlambyFedProxClient
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
 class FedIsic2019FedProxClient(FlambyFedProxClient):
