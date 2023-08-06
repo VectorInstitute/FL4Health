@@ -114,7 +114,7 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.set_parameters(packed_params, config)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
-    perturbed_proximal_weight = 1.0
+    perturbed_proximal_weight = 0.0
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(perturbed_proximal_weight)]
     packed_perturbed_params = perturbed_params + [np.array(list(additional_variables.keys()))]
