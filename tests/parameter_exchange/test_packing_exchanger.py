@@ -104,7 +104,7 @@ def test_parameter_packer_with_extra_variables(get_ndarrays: NDArrays) -> None: 
 
     packed_params = packer.pack_parameters(model_weights, extra_variables)
 
-    assert len(packed_params) == len(model_weights) + 1 + sum(
+    assert len(packed_params) == len(model_weights) + 2 + sum(
         [len(extra_variable) for extra_variable in extra_variables.values()]
     )
 
