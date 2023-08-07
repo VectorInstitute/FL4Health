@@ -98,7 +98,6 @@ class ApflClient(NumpyFlClient):
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ApflTrainStepOutputs:
         # Mechanics of training loop follow from original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
-        input, target = input.to(self.device), target.to(self.device)
 
         # Forward pass on global model and update global parameters
         self.global_optimizer.zero_grad()
@@ -149,8 +148,7 @@ class ApflClient(NumpyFlClient):
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
 
-            # Mechanics of training loop follow from original implementation
-            # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
+            input, target = input.to(self.device), target.to(self.device)
             local_loss, global_loss, personal_loss, local_preds, global_preds, personal_preds = self.train_step(
                 input, target
             )
@@ -189,8 +187,7 @@ class ApflClient(NumpyFlClient):
             personal_meter.clear()
 
             for step, (input, target) in enumerate(self.train_loader):
-                # Mechanics of training loop follow from original implementation
-                # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
+                input, target = input.to(self.device), target.to(self.device)
                 local_loss, global_loss, personal_loss, local_preds, global_preds, personal_preds = self.train_step(
                     input, target
                 )
