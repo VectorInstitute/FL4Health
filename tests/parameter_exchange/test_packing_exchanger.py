@@ -109,8 +109,11 @@ def test_parameter_packer_with_extra_variables(get_ndarrays: NDArrays) -> None: 
     )
 
     correct_packed_params = model_weights + [np.array(list(extra_variables.keys()))]
+    len_each = []
     for _, values in extra_variables.items():
         correct_packed_params = correct_packed_params + values
+        len_each.append(len(values))
+    correct_packed_params += [np.array(len_each)]
 
     for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
         assert packed_param.size == correct_packed_param.size

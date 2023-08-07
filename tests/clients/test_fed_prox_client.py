@@ -46,8 +46,11 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(proximal_weight)]
     packed_params = params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_params += values
+        len_each.append(len(values))
+    packed_params += [np.array(len_each)]
 
     # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_params, config)
@@ -72,8 +75,11 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(proximal_weight)]
     packed_params = params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_params += values
+        len_each.append(len(values))
+    packed_params += [np.array(len_each)]
     fed_prox_client.set_parameters(packed_params, config)
 
     # We've taken no training steps so the proximal loss should be 0.0
@@ -84,8 +90,11 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(perturbed_proximal_weight)]
     packed_perturbed_params = perturbed_params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_perturbed_params += values
+        len_each.append(len(values))
+    packed_perturbed_params += [np.array(len_each)]
 
     # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
@@ -109,8 +118,11 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(proximal_weight)]
     packed_params = params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_params += values
+        len_each.append(len(values))
+    packed_params += [np.array(len_each)]
     fed_prox_client.set_parameters(packed_params, config)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
@@ -118,8 +130,11 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(perturbed_proximal_weight)]
     packed_perturbed_params = perturbed_params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_perturbed_params += values
+        len_each.append(len(values))
+    packed_perturbed_params += [np.array(len_each)]
 
     # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
@@ -149,8 +164,11 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(proximal_weight)]
     packed_params = params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_params += values
+        len_each.append(len(values))
+    packed_params += [np.array(len_each)]
     fed_prox_client.set_parameters(packed_params, config)
 
     # We've taken no training steps so the proximal loss should be 0.0
@@ -161,8 +179,11 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     additional_variables = {}
     additional_variables["proximal_weight"] = [np.array(perturbed_proximal_weight)]
     packed_perturbed_params = perturbed_params + [np.array(list(additional_variables.keys()))]
+    len_each = []
     for _, values in additional_variables.items():
         packed_perturbed_params += values
+        len_each.append(len(values))
+    packed_perturbed_params += [np.array(len_each)]
 
     # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
