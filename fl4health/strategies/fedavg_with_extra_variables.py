@@ -44,10 +44,12 @@ class FedAvgWithExtraVariables(FedAvg):
         initial_parameters.tensors.extend(
             ndarrays_to_parameters([np.array(list(initial_extra_variables.keys()))]).tensors
         )
-
+        len_each = []
         for key, value in initial_extra_variables.items():
             self.server_extra_variables[key] = parameters_to_ndarrays(value)
             initial_parameters.tensors.extend(value.tensors)
+            len_each.append(len(self.server_extra_variables[key]))
+        initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(len_each)]).tensors)
 
         super().__init__(
             fraction_fit=fraction_fit,
