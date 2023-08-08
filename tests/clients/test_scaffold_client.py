@@ -2,11 +2,12 @@ import numpy as np
 import pytest
 from flwr.common.typing import NDArrays
 
+from examples.models.cnn_model import Net
 from fl4health.clients.scaffold_client import ScaffoldClient
 from tests.clients.fixtures import get_client  # noqa
 
 
-@pytest.mark.parametrize("type,model", [(ScaffoldClient, None)])
+@pytest.mark.parametrize("type,model", [(ScaffoldClient, Net())])
 def test_compute_parameter_delta(get_client: ScaffoldClient) -> None:  # noqa
     layer_size = 10
     num_layers = 5
@@ -23,7 +24,7 @@ def test_compute_parameter_delta(get_client: ScaffoldClient) -> None:  # noqa
         assert (delta_param == correct_delta_param).all()
 
 
-@pytest.mark.parametrize("type,model", [(ScaffoldClient, None)])
+@pytest.mark.parametrize("type,model", [(ScaffoldClient, Net())])
 def test_compute_updated_control_variate(get_client: ScaffoldClient) -> None:  # noqa
     layer_size = 10
     num_layers = 5
