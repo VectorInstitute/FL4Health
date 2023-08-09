@@ -1,9 +1,12 @@
 import numpy as np
 import pytest
 from flwr.common.typing import NDArrays
+from opacus.grad_sample.grad_sample_module import GradSampleModule
+from opacus.optimizers.optimizer import DPOptimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
-from fl4health.clients.scaffold_client import ScaffoldClient
+from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from tests.clients.fixtures import get_client  # noqa
 
 
@@ -45,3 +48,17 @@ def test_compute_updated_control_variate(get_client: ScaffoldClient) -> None:  #
         updated_control_variates, correct_updated_control_variates
     ):
         assert (updated_control_variate == correct_updated_control_variate).all()
+
+
+@pytest.mark.parametrize("type,model", [(DPScaffoldClient, Net())])
+def test_dp_scaffold_client(get_client: DPScaffoldClient) -> None:  # noqa
+    client: DPScaffoldClient = get_client
+    client.setup_opacus_objects()
+
+    assert isinstance(client.model, GradSampleModule)
+    assert isinstance(client.optimizer, DPOptimizer)
+    assert isinstance(client.train_loader, DataLoader)
+
+    assert hasattr(client, "client_control_variates")
+    assert hasattr(client, "server_control_variates")
+    assert hasattr(client, "client_control_variates_updates")

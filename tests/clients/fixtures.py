@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.clients.scaffold_client import ScaffoldClient
+from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithClippingBit,
@@ -31,6 +31,10 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
     elif type == InstanceLevelPrivacyClient:
         client = InstanceLevelPrivacyClient(data_path=Path(""), device=torch.device("cpu"))
+        client.noise_multiplier = 1.0
+        client.clipping_bound = 5.0
+    elif type == DPScaffoldClient:
+        client = DPScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     else:
