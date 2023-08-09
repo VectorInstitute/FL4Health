@@ -10,7 +10,6 @@ from flwr.server.strategy import FedAvg
 from torchinfo import summary
 
 from fl4health.model_bases.apfl_base import APFLModule
-from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
 from research.flamby.flamby_servers.personal_server import PersonalServer

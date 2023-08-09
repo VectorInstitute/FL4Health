@@ -10,8 +10,6 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer

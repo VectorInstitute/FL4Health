@@ -11,8 +11,6 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
