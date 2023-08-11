@@ -191,7 +191,7 @@ def test_F1_metric() -> None:
     assert metric(logits1, target1) == 0.68
 
 
-def test_binary_soft_dice_coefficient() -> None:
+def test_binary_soft_dice_coefficient_default_threshold() -> None:
     # Test with the default spatial and epsilon values
     metric = BinarySoftDiceCoefficient()
     all_ones_targets = torch.ones((10, 1, 10, 10, 10))
@@ -228,3 +228,26 @@ def test_binary_soft_dice_coefficient() -> None:
     # Dice should be (100)/(100 + 0.1) and 0 for the two channels
     # Mean over the 10 examples is equivalent to 0.5*(100)/(100 + 0.1)
     pytest.approx(dice_coefficient, abs=0.001) == 0.5 * (100) / (100 + 0.1)
+
+
+def test_binary_soft_dice_coefficient_alt_threshold() -> None:
+    # Change the threshold to 0.1
+    metric = BinarySoftDiceCoefficient(logits_threshold=0.1)
+    all_ones_targets = torch.ones((10, 1, 10, 10, 10))
+    all_ones_logits = torch.ones((10, 1, 10, 10, 10))
+    dice_of_one = metric(all_ones_logits, all_ones_targets)
+    pytest.approx(dice_of_one, abs=0.001) == 1.0
+
+    # Test with 0.25 in all entries, but with a lower threshold for classification as 1
+    all_one_quarter_logits = 0.25 * torch.ones((10, 1, 10, 10, 10))
+    dice_of_one = metric(all_one_quarter_logits, all_ones_targets)
+    pytest.approx(dice_of_one, abs=0.001) == 1.0
+
+    # Test with a none threshold to ensure that the continous dice coefficient is calculated
+    metric = BinarySoftDiceCoefficient(logits_threshold=None)
+    all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
+    continuous_dice = metric(all_one_tenth_logits, all_ones_targets)
+    intersection = 100
+    union = 0.5 * 1.1 * 1000
+    dice_target = intersection / (union + 1e-7)
+    pytest.approx(continuous_dice, abs=0.001) == dice_target
