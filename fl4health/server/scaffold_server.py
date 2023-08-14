@@ -41,6 +41,8 @@ class ScaffoldServer(FlServer):
         self.parameters = self._get_initial_parameters(timeout=timeout)
 
         # If warm_start, run routine to initialize control variates without updating global model
+        # control variates are initialized as average local gradient over training steps
+        # while the model weights remain unchanged (until the FL rounds start)
         if self.warm_start:
             client_instructions = self.strategy.configure_fit_all(
                 server_round=0, parameters=self.parameters, client_manager=self._client_manager
@@ -64,12 +66,17 @@ class ScaffoldServer(FlServer):
                 updated_params = [parameters_to_ndarrays(fit_res.parameters) for _, fit_res in results]
                 aggregated_params = self.strategy.aggregate(updated_params)
 
+                # drop the updated weights as the warm start strictly updates control variates
+                # and leaves model weights unchanged
                 _, control_variates_update = self.strategy.parameter_packer.unpack_parameters(aggregated_params)
                 server_control_variates = self.strategy.compute_updated_control_variates(control_variates_update)
 
+                # Get initial weights from original parameters
                 initial_weights, _ = self.strategy.parameter_packer.unpack_parameters(
                     parameters_to_ndarrays(self.parameters)
                 )
+
+                # Get new parameters by combining original weights with server control variates from warm start`
                 self.parameters = ndarrays_to_parameters(
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
