@@ -76,7 +76,7 @@ def main(config: Dict[str, Any]) -> None:
 
     initial_parameters, initial_control_variates = get_initial_model_information()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
+    # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
     strategy = Scaffold(
         fraction_fit=config["client_sampling_rate"],
         min_available_clients=config["n_clients"],

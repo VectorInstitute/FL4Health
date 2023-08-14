@@ -1,5 +1,5 @@
 import timeit
-from logging import DEBUG, INFO
+from logging import DEBUG, ERROR, INFO
 from typing import Optional
 
 from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
@@ -15,13 +15,17 @@ from fl4health.strategies.scaffold import Scaffold
 
 
 class ScaffoldServer(FlServer):
+    """
+    Custom FL Server for scaffold algorithm to handle warm initialization of control variates.
+    """
+
     def __init__(
         self,
         client_manager: ClientManager,
         strategy: Optional[Scaffold] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warm_start: bool = False,
+        warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
     ) -> None:
         super().__init__(
             client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
@@ -42,37 +46,33 @@ class ScaffoldServer(FlServer):
                 server_round=0, parameters=self.parameters, client_manager=self._client_manager
             )
             if not client_instructions:
-                log(INFO, "Warm Start: no clients selected, cancel", 1)
-                return history
+                log(ERROR, "Warm Start initialization failed: no clients selected", 1)
+            else:
+                log(
+                    DEBUG,
+                    f"Warm start: strategy sampled {len(client_instructions)} \
+                    clients (out of {self._client_manager.num_available()})",
+                )
 
-            log(
-                DEBUG,
-                "Warm start: strategy sampled %s clients (out of %s)",
-                len(client_instructions),
-                self._client_manager.num_available(),
-            )
+                results, failures = fit_clients(client_instructions, self.max_workers, timeout)
 
-            results, failures = fit_clients(client_instructions, self.max_workers, timeout)
+                log(
+                    DEBUG,
+                    f"Warm Start: received {len(results)} results and {len(failures)} failures",
+                )
 
-            log(
-                DEBUG,
-                "Warm Start: received %s results and %s failures",
-                len(results),
-                len(failures),
-            )
+                updated_params = [parameters_to_ndarrays(fit_res.parameters) for _, fit_res in results]
+                aggregated_params = self.strategy.aggregate(updated_params)
 
-            updated_params = [parameters_to_ndarrays(fit_res.parameters) for _, fit_res in results]
-            aggregated_params = self.strategy.aggregate(updated_params)
+                _, control_variates_update = self.strategy.parameter_packer.unpack_parameters(aggregated_params)
+                server_control_variates = self.strategy.compute_updated_control_variates(control_variates_update)
 
-            _, control_variates_update = self.strategy.parameter_packer.unpack_parameters(aggregated_params)
-            server_control_variates = self.strategy.compute_updated_control_variates(control_variates_update)
-
-            initial_weights, _ = self.strategy.parameter_packer.unpack_parameters(
-                parameters_to_ndarrays(self.parameters)
-            )
-            self.parameters = ndarrays_to_parameters(
-                self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
-            )
+                initial_weights, _ = self.strategy.parameter_packer.unpack_parameters(
+                    parameters_to_ndarrays(self.parameters)
+                )
+                self.parameters = ndarrays_to_parameters(
+                    self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
+                )
 
         res = self.strategy.evaluate(0, parameters=self.parameters)
         if res is not None:

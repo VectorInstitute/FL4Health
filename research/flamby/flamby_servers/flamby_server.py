@@ -7,7 +7,7 @@ from flwr.server.server import EvaluateResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.server.server import FlServer
+from fl4health.server.base_server import FlServer
 
 
 class FlambyServer(FlServer):
