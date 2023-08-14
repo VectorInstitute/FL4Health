@@ -1,6 +1,10 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
+
+from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 class APFLEfficientNet(nn.Module):
@@ -17,11 +21,14 @@ class APFLEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         self.base_model = Baseline()
         # Freeze layers to reduce trainable parameters.
-        self.freeze_layers(frozen_blocks)
+        if frozen_blocks:
+            self.freeze_layers(frozen_blocks)
+        if turn_off_bn_tracking:
+            shutoff_batch_norm_tracking(self.base_model)
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
@@ -34,7 +41,6 @@ class APFLEfficientNet(nn.Module):
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
             self.base_model._modules["base_model"]._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)

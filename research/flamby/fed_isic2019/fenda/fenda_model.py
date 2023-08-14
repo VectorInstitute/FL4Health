@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,6 +8,7 @@ from efficientnet_pytorch.utils import url_map
 from torch.utils import model_zoo
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
+from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = False) -> EfficientNet:
@@ -54,11 +57,14 @@ class LocalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        if frozen_blocks:
+            self.freeze_layers(frozen_blocks)
+        if turn_off_bn_tracking:
+            shutoff_batch_norm_tracking(self.base_model)
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
@@ -71,7 +77,6 @@ class LocalEfficientNet(nn.Module):
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
@@ -91,11 +96,14 @@ class GlobalEfficientNet(nn.Module):
     other approaches.
     """
 
-    def __init__(self, frozen_blocks: int = 13):
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):
         super().__init__()
         # include_top ensures that we just use feature extraction in the forward pass
         self.base_model = from_pretrained("efficientnet-b0", include_top=False)
-        self.freeze_layers(frozen_blocks)
+        if frozen_blocks:
+            self.freeze_layers(frozen_blocks)
+        if turn_off_bn_tracking:
+            shutoff_batch_norm_tracking(self.base_model)
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
@@ -108,7 +116,6 @@ class GlobalEfficientNet(nn.Module):
         frozen_blocks = min(frozen_blocks, 15)
         for block_index in range(frozen_blocks):
             self.base_model._modules["_blocks"][block_index].requires_grad_(False)
-        return
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
@@ -116,8 +123,8 @@ class GlobalEfficientNet(nn.Module):
 
 
 class FedIsic2019FendaModel(FendaModel):
-    def __init__(self) -> None:
-        local_module = LocalEfficientNet()
-        global_module = GlobalEfficientNet()
+    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False) -> None:
+        local_module = LocalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
+        global_module = GlobalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

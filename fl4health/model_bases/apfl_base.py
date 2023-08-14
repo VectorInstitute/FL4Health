@@ -1,7 +1,6 @@
 import copy
 from typing import Dict, List
 
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -55,7 +54,7 @@ class APFLModule(nn.Module):
             assert local_grad is not None and global_grad is not None
             dif = local_p - global_p
             grad = torch.tensor(self.alpha) * local_grad + torch.tensor(1.0 - self.alpha) * global_grad
-            grad_alpha += torch.mul(dif, grad).sum().detach().cpu().numpy()
+            grad_alpha += torch.mul(dif, grad).sum().detach().cpu().numpy().item()
 
         # This update constant of 0.02 is not referenced in the paper
         # but is present in the official implementation and other ones I have seen
@@ -63,7 +62,8 @@ class APFLModule(nn.Module):
         # Leaving in for consistency with official implementation
         grad_alpha += 0.02 * self.alpha
         alpha = self.alpha - self.alpha_lr * grad_alpha
-        alpha = np.clip(alpha, 0, 1)
+        # Clip alpha to be between [0, 1]
+        alpha = max(min(alpha, 1), 0)
         self.alpha = alpha
 
     def layers_to_exchange(self) -> List[str]:

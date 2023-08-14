@@ -8,7 +8,6 @@ from flamby.datasets.fed_heart_disease import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
-from torchinfo import summary
 
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.utils.config import load_config
@@ -18,6 +17,7 @@ from research.flamby.utils import (
     fit_config,
     fit_metrics_aggregation_fn,
     get_initial_model_parameters,
+    summarize_model_info,
 )
 
 
@@ -31,14 +31,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     client_manager = SimpleClientManager()
     client_model = APFLModule(Baseline())
-
-    model_stats = summary(client_model, verbose=0)
-    log(INFO, "\nAPFL MODEL STATS:")
-    log(INFO, "===========================================================================")
-    log(INFO, f"Total Parameters: {model_stats.total_params}")
-    log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
-    log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
-    log(INFO, "===========================================================================\n")
+    summarize_model_info(client_model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
