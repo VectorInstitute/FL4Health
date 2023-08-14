@@ -1,14 +1,14 @@
 import argparse
 from logging import INFO
-from typing import Tuple
 
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss, FedIsic2019
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss
 from flwr.common.logger import log
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 
 from fl4health.utils.metrics import AccumulationMeter, BalancedAccuracy
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 
 
@@ -22,7 +22,9 @@ class FedIsic2019CentralizedTrainer(SingleNodeTrainer):
     ) -> None:
         super().__init__(device, checkpoint_stub, dataset_dir, run_name)
 
-        train_dataset, validation_dataset = self.construct_train_val_datasets()
+        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
+            client_number=0, dataset_dir=dataset_dir, pooled=True
+        )
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
@@ -32,13 +34,6 @@ class FedIsic2019CentralizedTrainer(SingleNodeTrainer):
         # the pool dataset. This is a bit of cheating but FLamby does it in their paper.
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)
-
-    def construct_train_val_datasets(self) -> Tuple[FedIsic2019, FedIsic2019]:
-        full_train_dataset = FedIsic2019(center=0, train=True, pooled=True, data_path=self.dataset_dir)
-        # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
-        # ignore for now.
-        train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2]))  # type: ignore
-        return train_dataset, validation_dataset
 
 
 if __name__ == "__main__":
