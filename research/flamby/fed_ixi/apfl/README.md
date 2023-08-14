@@ -21,4 +21,4 @@ An example is something like
    /h/demerson/vector_repositories/fl4health_env/
 ```
 
-In order to manipulate the grid search being conducted, you need to chanage the parameters for `alpha` and `lr`, the apfl interpolation value and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.
+In order to manipulate the grid search being conducted, you need to change the parameters for `alpha` and `lr`, the apfl interpolation value and the learning rate, respectively, in the `run_hp_sweep.sh` script directly.
