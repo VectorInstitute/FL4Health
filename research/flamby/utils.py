@@ -86,7 +86,7 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
     return mean, std
 
 
-def run_model_on_dataset(
+def evaluate_model_on_dataset(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> AccumulationMeter:
     model.to(device).eval()
@@ -106,7 +106,7 @@ def run_model_on_dataset(
 def evaluate_fed_isic_model(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
-    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
+    meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
     assert "test_meter_FedIsic2019_balanced_accuracy" in computed_metrics
     balanced_accuracy = computed_metrics["test_meter_FedIsic2019_balanced_accuracy"]
@@ -117,7 +117,7 @@ def evaluate_fed_isic_model(
 def evaluate_fed_heart_disease_model(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
-    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
+    meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
 
     computed_metrics = meter.compute()
     assert "test_meter_FedHeartDisease_accuracy" in computed_metrics
@@ -129,7 +129,7 @@ def evaluate_fed_heart_disease_model(
 def evaluate_fed_ixi_model(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
 ) -> float:
-    meter = run_model_on_dataset(model, dataset, metrics, device, is_apfl)
+    meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
     assert "test_meter_FedIXI_dice" in computed_metrics
     dice = computed_metrics["test_meter_FedIXI_dice"]
