@@ -32,12 +32,14 @@ class ScaffoldServer(FlServer):
         )
         self.warm_start = warm_start
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
-        """Run Scaffold algorithm for a number of rounds."""
-
+    def initialize_paramameters(self, timeout: Optional[float]) -> None:
+        """
+        Initialize parameters (models weights and control variates) of the server.
+        If warm_start is True, control variates are initialized as the
+        the average local gradient (while model weights remain unchanged)
+        """
         assert isinstance(self.strategy, Scaffold)
 
-        history = History()
         self.parameters = self._get_initial_parameters(timeout=timeout)
 
         # If warm_start, run routine to initialize control variates without updating global model
@@ -80,6 +82,16 @@ class ScaffoldServer(FlServer):
                 self.parameters = ndarrays_to_parameters(
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        """Run Scaffold algorithm for a number of rounds."""
+
+        assert isinstance(self.strategy, Scaffold)
+
+        # Initialize parameters attribute
+        self.initialize_paramameters(timeout=timeout)
+
+        history = History()
 
         res = self.strategy.evaluate(0, parameters=self.parameters)
         if res is not None:
