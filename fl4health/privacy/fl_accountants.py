@@ -57,7 +57,7 @@ class FlInstanceLevelAccountant:
         """server_updates: number of central server updates performed"""
         epsilons = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
-            # Round up because privacy loss is monotic wrt total_updates
+            # Round up because privacy loss is monotonic wrt total_updates
             total_updates = ceil(server_updates * self.epochs_per_round * num_batch)
             epsilon = self.accountant.get_epsilon(sampling_strategy, self.noise_multiplier, total_updates, delta)
             epsilons.append(epsilon)
@@ -67,7 +67,7 @@ class FlInstanceLevelAccountant:
         """server_updates: number of central server updates performed"""
         deltas = []
         for num_batch, sampling_strategy in zip(self.num_batches_per_client, self.sampling_strategies_per_client):
-            # Round up because privacy loss is monotic wrt total_updates
+            # Round up because privacy loss is monotonic wrt total_updates
             total_updates = ceil(server_updates * self.epochs_per_round * num_batch)
             delta = self.accountant.get_delta(sampling_strategy, self.noise_multiplier, total_updates, epsilon)
             deltas.append(delta)

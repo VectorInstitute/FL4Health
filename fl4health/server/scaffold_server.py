@@ -78,7 +78,7 @@ class ScaffoldServer(FlServer):
                     parameters_to_ndarrays(self.parameters)
                 )
 
-                # Get new parameters by combining original weights with server control variates from warm start`
+                # Get new parameters by combining original weights with server control variates from warm start``
                 self.parameters = ndarrays_to_parameters(
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
