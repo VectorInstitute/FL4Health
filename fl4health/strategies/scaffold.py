@@ -3,11 +3,20 @@ from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import (
+    FitIns,
+    MetricsAggregationFn,
+    NDArrays,
+    Parameters,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
+from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
+from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
@@ -107,18 +116,8 @@ class Scaffold(FedAvgSampling):
 
         weights, control_variates_update = self.parameter_packer.unpack_parameters(aggregated_params)
 
-        # x_update = y_i - x
-        delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
-
-        # x = x + lr * x_update
-        self.server_model_weights = self.compute_updated_parameters(
-            self.learning_rate, self.server_model_weights, delta_weights
-        )
-
-        # c = c + |S| / N * c_update
-        self.server_control_variates = self.compute_updated_parameters(
-            self.fraction_fit, self.server_control_variates, control_variates_update
-        )
+        self.server_model_weights = self.compute_updated_weights(weights)
+        self.server_control_variates = self.compute_updated_control_variates(control_variates_update)
 
         parameters = self.parameter_packer.pack_parameters(self.server_model_weights, self.server_control_variates)
 
@@ -166,3 +165,40 @@ class Scaffold(FedAvgSampling):
         params_prime: NDArrays = [reduce(np.add, layer_updates) / num_clients for layer_updates in zip(*params)]
 
         return params_prime
+
+    def configure_fit_all(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        # This strategy requires the client manager to be of type at least BaseSamplingManager
+        assert isinstance(client_manager, BaseSamplingManager)
+        """Configure the next round of training."""
+        config = {}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+
+        fit_ins = FitIns(parameters, config)
+
+        clients = client_manager.sample_all(self.min_available_clients)
+
+        # Return client/config pairs
+        return [(client, fit_ins) for client in clients]
+
+    def compute_updated_weights(self, weights: NDArrays) -> NDArrays:
+        # x_update = y_i - x
+        delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
+
+        # x = x + lr * x_update
+        server_model_weights = self.compute_updated_parameters(
+            self.learning_rate, self.server_model_weights, delta_weights
+        )
+
+        return server_model_weights
+
+    def compute_updated_control_variates(self, control_variates_update: NDArrays) -> NDArrays:
+        # c = c + |S| / N * c_update
+        server_control_variates = self.compute_updated_parameters(
+            self.fraction_fit, self.server_control_variates, control_variates_update
+        )
+
+        return server_control_variates

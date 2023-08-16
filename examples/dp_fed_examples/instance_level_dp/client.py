@@ -1,5 +1,5 @@
 import argparse
-from logging import INFO, WARNING
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -8,12 +8,10 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from opacus import PrivacyEngine
-from opacus.validators import ModuleValidator
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
 
@@ -79,34 +77,12 @@ def validate(
     return loss / n_batches, accuracy
 
 
-class CifarClient(NumpyFlClient):
+class CifarClient(InstanceLevelPrivacyClient):
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
         self.train_loader: DataLoader
         self.model = Net().to(self.device)
         self.parameter_exchanger = FullParameterExchanger()
-
-    def setup_opacus_objects(self) -> None:
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-        # Validate that the model layers are compatible with privacy mechanisms in Opacus and try to replace the layers
-        # with compatible ones if necessary.
-        errors = ModuleValidator.validate(self.model, strict=False)
-        if len(errors) != 0:
-            for error in errors:
-                log(WARNING, f"Opacus error: {error}")
-            self.model = ModuleValidator.fix(self.model)
-
-        # Create DP training objects
-        privacy_engine = PrivacyEngine()
-        # NOTE: that Opacus make private is NOT idempotent
-        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
-            module=self.model,
-            optimizer=self.optimizer,
-            data_loader=self.train_loader,
-            noise_multiplier=self.noise_multiplier,
-            max_grad_norm=self.clipping_bound,
-            clipping="flat",
-        )
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
@@ -118,6 +94,7 @@ class CifarClient(NumpyFlClient):
 
         train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, self.batch_size)
 
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         self.train_loader = train_loader
         self.validation_loader = validation_loader
         self.num_examples = num_examples

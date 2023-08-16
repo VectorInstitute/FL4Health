@@ -39,3 +39,41 @@ def test_compute_updated_parameters() -> None:
 
     for updated_param, correct_updated_param in zip(updated_params, correct_updated_params):
         assert (updated_param == correct_updated_param).all()
+
+
+def test_compute_updated_weights() -> None:
+    layer_size = (100, 10)
+    num_layers = 10
+    learning_rate = 0.25
+
+    init_server_weights: NDArrays = [np.ones(layer_size) * 6.0 for _ in range(num_layers)]
+    init_params = ndarrays_to_parameters(init_server_weights)
+
+    init_variates: Parameters = ndarrays_to_parameters([np.zeros_like(weights) for weights in init_server_weights])
+    strat = Scaffold(
+        initial_parameters=init_params, initial_control_variates=init_variates, learning_rate=learning_rate
+    )
+    new_server_weights: NDArrays = [np.ones_like(weights) * 46.0 for weights in init_server_weights]
+    updated_weights = strat.compute_updated_weights(new_server_weights)
+
+    correct_updated_weights = [np.ones_like(weights) * 16.0 for weights in init_server_weights]
+
+    for updated_weight, correct_updated_weight in zip(updated_weights, correct_updated_weights):
+        assert (updated_weight == correct_updated_weight).all()
+
+
+def test_compute_updated_control_variates() -> None:
+    layer_size = (20, 10)
+    num_layers = 5
+
+    init_server_weights: NDArrays = [np.ones(layer_size) for _ in range(num_layers)]
+    init_params = ndarrays_to_parameters(init_server_weights)
+
+    init_variates: Parameters = ndarrays_to_parameters([np.zeros_like(weights) for weights in init_server_weights])
+    strat = Scaffold(initial_parameters=init_params, initial_control_variates=init_variates, fraction_fit=0.5)
+    control_variate_updates: NDArrays = [np.ones_like(weights) * 20.0 for weights in init_server_weights]
+    server_control_variates = strat.compute_updated_control_variates(control_variate_updates)
+    correct_server_control_variates = [np.ones_like(weights) * 10.0 for weights in init_server_weights]
+
+    for control_variates, correct_control_variates in zip(server_control_variates, correct_server_control_variates):
+        assert (control_variates == correct_control_variates).all()
