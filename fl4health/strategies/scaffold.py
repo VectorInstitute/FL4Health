@@ -202,3 +202,8 @@ class Scaffold(FedAvgSampling):
         )
 
         return server_control_variates
+
+    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
+        """Initialize global model parameters."""
+        initial_parameters = self.initial_parameters
+        return initial_parameters
