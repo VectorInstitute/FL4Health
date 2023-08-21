@@ -1,9 +1,11 @@
 from logging import WARNING
 from pathlib import Path
+from typing import Dict
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.typing import Config, Scalar
 from opacus import PrivacyEngine
 from opacus.validators import ModuleValidator
 from torch.utils.data import DataLoader
@@ -20,6 +22,7 @@ class InstanceLevelPrivacyClient(NumpyFlClient):
         self.optimizer: torch.optim.Optimizer
         self.noise_multiplier: float
         self.clipping_bound: float
+        self.num_examples: Dict[str, int]
 
     def setup_opacus_objects(self) -> None:
         # Validate that the model layers are compatible with privacy mechanisms in Opacus and try to replace the layers
@@ -41,3 +44,12 @@ class InstanceLevelPrivacyClient(NumpyFlClient):
             max_grad_norm=self.clipping_bound,
             clipping="flat",
         )
+
+    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        """
+        Return properties of client.
+        First initializes the client because this is called prior to the first
+        federated learning round.
+        """
+        self.setup_client(config)
+        return {"num_samples": self.num_examples["train_set"]}

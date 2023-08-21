@@ -1,18 +1,16 @@
 import argparse
 from functools import partial
-from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
-from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
+from fl4health.strategies.instance_level_dp_fedavg import InstanceLevelDPFedAvgSampling
 from fl4health.utils.config import load_config
 
 
@@ -79,20 +77,8 @@ def main(config: Dict[str, Any]) -> None:
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
-    # Accountant that computes the privacy through training
-    accountant = FlInstanceLevelAccountant(
-        config["client_sampling_rate"],
-        config["client_noise_multiplier"],
-        config["local_epochs"],
-        [config["batch_size"]],
-        [config["client_data_sizes"]],
-    )
-    target_delta = 1.0 / config["total_data_size"]
-    epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
-    log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
-
-    # Server performs simple FedAveraging as it's server-side optimization strategy
-    strategy = FedAvgSampling(
+    # Server performs simple FedAveraging with Instance Level Differential Privacy
+    strategy = InstanceLevelDPFedAvgSampling(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
@@ -105,11 +91,19 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_initial_model_parameters(),
     )
 
+    server = InstanceLevelDPServer(
+        client_manager=client_manager,
+        strategy=strategy,
+        noise_multiplier=config["client_noise_multiplier"],
+        local_epochs=config["local_epochs"],
+        batch_size=config["batch_size"],
+        num_server_rounds=config["n_server_rounds"],
+    )
+
     fl.server.start_server(
+        server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
-        client_manager=client_manager,
     )
 
 
