@@ -39,7 +39,7 @@ class FlambyScaffoldClient(ScaffoldClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train_by_steps(local_steps, meter)
+        metric_values = self.train(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (

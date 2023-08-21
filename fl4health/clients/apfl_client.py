@@ -55,7 +55,7 @@ class ApflClient(NumpyFlClient):
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")
         # By default the APFL client trains by epochs
-        metric_values = self.train_by_epochs(local_epochs, global_meter, local_meter, personal_meter)
+        metric_values = self.train_by_epoch(local_epochs, global_meter, local_meter, personal_meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -176,7 +176,7 @@ class ApflClient(NumpyFlClient):
         # return final training metrics
         return metrics
 
-    def train_by_epochs(
+    def train_by_epoch(
         self, epochs: int, global_meter: Meter, local_meter: Meter, personal_meter: Meter
     ) -> Dict[str, Scalar]:
         self.model.train()
