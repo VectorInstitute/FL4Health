@@ -262,6 +262,12 @@ class ScaffoldClient(NumpyFlClient):
 
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+    """
+    Federated Learning client for Instance Level Differentially Private Scaffold strategy
+
+    Implemented as specified in https://arxiv.org/abs/2111.09278
+    """
+
     def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
         ScaffoldClient.__init__(self, data_path, metrics, device)
         InstanceLevelPrivacyClient.__init__(self, data_path, device)

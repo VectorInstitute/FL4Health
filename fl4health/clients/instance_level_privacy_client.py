@@ -14,6 +14,10 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 
 
 class InstanceLevelPrivacyClient(NumpyFlClient):
+    """
+    Client for Instance Differentially Private Federated Averaging
+    """
+
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
 

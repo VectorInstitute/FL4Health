@@ -10,6 +10,10 @@ from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
 class InstanceLevelDPFedAvgSampling(FedAvgSampling):
+    """
+    Instance Level Differentially Private Federated Averaging Strategy
+    """
+
     def __init__(
         self,
         *,

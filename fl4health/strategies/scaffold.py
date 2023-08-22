@@ -23,6 +23,10 @@ from fl4health.strategies.instance_level_dp_fedavg import InstanceLevelDPFedAvgS
 
 
 class Scaffold(FedAvgSampling):
+    """
+    Strategy for Scaffold algorithm as specified in https://arxiv.org/abs/1910.06378
+    """
+
     def __init__(
         self,
         *,
@@ -206,6 +210,11 @@ class Scaffold(FedAvgSampling):
 
 
 class DPScaffold(Scaffold, InstanceLevelDPFedAvgSampling):
+    """
+    Strategy for Instance Level Differentially Private Scaffold algorithm
+    as specified in https://arxiv.org/abs/2111.09278
+    """
+
     def __init__(
         self,
         *,

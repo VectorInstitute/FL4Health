@@ -74,6 +74,9 @@ class InstanceLevelDPServer(FlServer):
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
+        """
+        Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
+        """
         assert isinstance(self.strategy, InstanceLevelDPFedAvgSampling)
         total_samples = sum(sample_counts)
         samples_per_client = total_samples / len(sample_counts)

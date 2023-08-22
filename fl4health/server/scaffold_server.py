@@ -16,7 +16,8 @@ from fl4health.strategies.scaffold import DPScaffold, Scaffold
 
 class ScaffoldServer(FlServer):
     """
-    Custom FL Server for scaffold algorithm to handle warm initialization of control variates.
+    Custom FL Server for scaffold algorithm to handle warm initialization of control variates
+    as specified in https://arxiv.org/abs/1910.06378
     """
 
     def __init__(
@@ -87,9 +88,8 @@ class ScaffoldServer(FlServer):
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
 
-                # Set updated initial parameters in strategy because they are deleted on every
-                # self._get_initial_parameters call (there will be another one in parent fit method)
-
+        # Set updated initial parameters in strategy because they are deleted on every
+        # self._get_initial_parameters call (there will be another one in parent fit method)
         self.strategy.initial_parameters = self.parameters
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
@@ -97,13 +97,18 @@ class ScaffoldServer(FlServer):
 
         assert isinstance(self.strategy, Scaffold)
 
-        # Initialize parameters attribute
+        # Initialize parameters attribute (specifc to the Scaffold algo)
         self.initialize_paramameters(timeout=timeout)
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
 
 class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
+    """
+    Custom FL Server for Instance Level Differentially Private Scaffold algorithm
+    as specified in https://arxiv.org/abs/2111.09278
+    """
+
     def __init__(
         self,
         client_manager: ClientManager,
@@ -140,8 +145,13 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         )
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        """
+        Run DP Scaffold algorithm for the specified number of rounds.
+        """
         assert isinstance(self.strategy, DPScaffold)
 
+        # Initialize parameters attribute (specifc to the Scaffold algo)
         self.initialize_paramameters(timeout=timeout)
 
+        # Now that we initialized the parameters for scaffold, call instance level privacy fit
         return InstanceLevelDPServer.fit(self, num_rounds=num_rounds, timeout=timeout)
