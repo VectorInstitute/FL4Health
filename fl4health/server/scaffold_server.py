@@ -82,6 +82,11 @@ class ScaffoldServer(FlServer):
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
 
+                # Set updated initial parameters in strategy because they are deleted on every
+                # self._get_initial_parameters call (there will be another one in parent fit method)
+
+        self.strategy.initial_parameters = self.parameters
+
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run Scaffold algorithm for a number of rounds."""
 
