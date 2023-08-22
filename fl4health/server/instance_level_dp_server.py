@@ -40,6 +40,7 @@ class InstanceLevelDPServer(FlServer):
             checkpointer=checkpointer,
         )
 
+        # Ensure that one of local_epochs and local_steps is passed (and not both)
         assert (
             isinstance(local_epochs, int)
             or isinstance(local_steps, int)
@@ -47,6 +48,8 @@ class InstanceLevelDPServer(FlServer):
         )
         self.local_steps = local_steps
         self.local_epochs = local_epochs
+
+        # Whether or not we have to convert local_steps to local_epochs
         self.convert_steps_to_epochs = True if self.local_epochs is None else False
         self.noise_multiplier = noise_multiplier
         self.local_epochs = local_epochs
@@ -78,10 +81,12 @@ class InstanceLevelDPServer(FlServer):
         Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
         """
         assert isinstance(self.strategy, InstanceLevelDPFedAvgSampling)
+
         total_samples = sum(sample_counts)
-        samples_per_client = total_samples / len(sample_counts)
 
         if self.convert_steps_to_epochs:
+            # Compute average number of samples per client so we can estimate local_epochs
+            samples_per_client = total_samples / len(sample_counts)
             assert isinstance(self.local_steps, int)
             local_epochs = ceil((self.local_steps * self.batch_size) / samples_per_client)
 
