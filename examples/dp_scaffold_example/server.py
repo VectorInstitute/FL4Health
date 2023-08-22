@@ -1,20 +1,17 @@
 import argparse
 from functools import partial
-from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 import numpy as np
-from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
-from fl4health.server.scaffold_server import ScaffoldServer
-from fl4health.strategies.scaffold import Scaffold
+from fl4health.server.scaffold_server import DPScaffoldServer
+from fl4health.strategies.scaffold import DPScaffold
 from fl4health.utils.config import load_config
 
 
@@ -77,7 +74,7 @@ def main(config: Dict[str, Any]) -> None:
     initial_parameters, initial_control_variates = get_initial_model_information()
 
     # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
-    strategy = Scaffold(
+    strategy = DPScaffold(
         fraction_fit=config["client_sampling_rate"],
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
@@ -91,23 +88,15 @@ def main(config: Dict[str, Any]) -> None:
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
-    server = ScaffoldServer(client_manager=client_manager, strategy=strategy, warm_start=True)
-
-    # Convert from steps to epochs in order to computer privacy loss
-    epochs = config["local_steps"] * config["batch_size"] / config["client_data_sizes"]
-
-    # Accountant that computes the privacy through training
-    accountant = FlInstanceLevelAccountant(
-        config["client_sampling_rate"],
-        config["client_noise_multiplier"],
-        epochs,
-        [config["batch_size"]],
-        [config["client_data_sizes"]],
+    server = DPScaffoldServer(
+        client_manager=client_manager,
+        noise_multiplier=config["client_noise_multiplier"],
+        batch_size=config["batch_size"],
+        local_steps=config["local_steps"],
+        num_server_rounds=config["n_server_rounds"],
+        strategy=strategy,
+        warm_start=True,
     )
-
-    target_delta = 1.0 / config["total_data_size"]
-    epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
-    log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
 
     fl.server.start_server(
         server=server,

@@ -10,7 +10,8 @@ from flwr.server.server import fit_clients
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.scaffold import Scaffold
+from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
+from fl4health.strategies.scaffold import DPScaffold, Scaffold
 
 
 class ScaffoldServer(FlServer):
@@ -21,13 +22,17 @@ class ScaffoldServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        strategy: Optional[Scaffold] = None,
+        strategy: Scaffold,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
     ) -> None:
-        super().__init__(
-            client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
+        FlServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
         )
         self.warm_start = warm_start
 
@@ -96,3 +101,47 @@ class ScaffoldServer(FlServer):
         self.initialize_paramameters(timeout=timeout)
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
+
+
+class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        noise_multiplier: int,
+        batch_size: int,
+        num_server_rounds: int,
+        strategy: DPScaffold,
+        local_epochs: Optional[int] = None,
+        local_steps: Optional[int] = None,
+        delta: Optional[float] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        warm_start: bool = False,
+    ) -> None:
+
+        ScaffoldServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
+            warm_start=warm_start,
+        )
+        InstanceLevelDPServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            noise_multiplier=noise_multiplier,
+            local_epochs=local_epochs,
+            local_steps=local_steps,
+            batch_size=batch_size,
+            delta=delta,
+            num_server_rounds=num_server_rounds,
+        )
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        assert isinstance(self.strategy, DPScaffold)
+
+        self.initialize_paramameters(timeout=timeout)
+
+        return InstanceLevelDPServer.fit(self, num_rounds=num_rounds, timeout=timeout)
