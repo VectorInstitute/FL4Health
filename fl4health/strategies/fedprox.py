@@ -106,7 +106,7 @@ class FedProx(FedAvg):
         # Aggregate train loss
         train_losses_aggregated = np.mean(train_losses)
 
-        self._maybe_update_proximal_weight_param(self.previous_loss, float(train_losses_aggregated))
+        self._maybe_update_proximal_weight_param(float(train_losses_aggregated))
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -120,12 +120,12 @@ class FedProx(FedAvg):
 
         return ndarrays_to_parameters(parameters), metrics_aggregated
 
-    def _maybe_update_proximal_weight_param(self, previous_loss: float, loss: float) -> None:
+    def _maybe_update_proximal_weight_param(self, loss: float) -> None:
 
         """Update proximal weight parameter if adaptive_proximal_weight is set to True"""
 
         if self.adaptive_proximal_weight:
-            if loss <= previous_loss:
+            if loss <= self.previous_loss:
                 self.proximal_weight_patience_counter += 1
                 if self.proximal_weight_patience_counter == self.proximal_weight_patience:
                     self.proximal_weight -= self.proximal_weight_delta
@@ -135,4 +135,5 @@ class FedProx(FedAvg):
             else:
                 self.proximal_weight += self.proximal_weight_delta
                 log(INFO, f"Proximal weight is increased to {self.proximal_weight}")
+        self.previous_loss = loss
         return None
