@@ -10,9 +10,12 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
+from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.utils.metrics import AverageMeter, Meter, Metric
+
+ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
 
 class ScaffoldClient(NumpyFlClient):
@@ -47,7 +50,9 @@ class ScaffoldClient(NumpyFlClient):
         local_steps = self.narrow_config_type(config, "local_steps", int)
         # Default SCAFFOLD uses an average meter
         meter = AverageMeter(self.metrics, "global")
-        metric_values = self.train(local_steps, meter)
+
+        # Scaffold is train by steps by default
+        metric_values = self.train_by_steps(local_steps, meter)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -119,7 +124,6 @@ class ScaffoldClient(NumpyFlClient):
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
         assert self.learning_rate_local is not None
-        assert self.train_loader.batch_size is not None
 
         # y_i
         client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
@@ -199,7 +203,21 @@ class ScaffoldClient(NumpyFlClient):
             f"Client {metric_prefix} Loss: {loss} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train(
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ScaffoldTrainStepOutput:
+
+        # Forward pass on global model and update global parameters
+        self.optimizer.zero_grad()
+        pred = self.model(input)
+        loss = self.criterion(pred, target)
+        loss.backward()
+
+        # modify grad to correct for client drift
+        self.modify_grad()
+        self.optimizer.step()
+
+        return loss, pred
+
+    def train_by_steps(
         self,
         local_steps: int,
         meter: Meter,
@@ -220,16 +238,7 @@ class ScaffoldClient(NumpyFlClient):
                 input, target = next(train_iterator)
 
             input, target = input.to(self.device), target.to(self.device)
-
-            # Forward pass on global model and update global parameters
-            self.optimizer.zero_grad()
-            pred = self.model(input)
-            loss = self.criterion(pred, target)
-            loss.backward()
-
-            # modify grad to correct for client drift
-            self.modify_grad()
-            self.optimizer.step()
+            loss, pred = self.train_step(input, target)
 
             running_loss += loss.item()
             meter.update(pred, target)
@@ -240,6 +249,31 @@ class ScaffoldClient(NumpyFlClient):
         self._handle_logging(running_loss, metrics)
         self.update_control_variates(local_steps)
         return metrics
+
+    def train_by_epochs(self, epochs: int, meter: Meter) -> Dict[str, Scalar]:
+        self.model.train()
+
+        for _ in range(epochs):
+            meter.clear()
+            running_loss = 0.0
+            for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
+                loss, pred = self.train_step(input, target)
+
+                running_loss += loss.item()
+                meter.update(pred, target)
+
+            metrics = meter.compute()
+            running_loss = running_loss / len(self.train_loader)
+
+        # Equation to update control variates requires the number of local_steps
+        local_steps = len(self.train_loader) * epochs
+        self.update_control_variates(local_steps)
+
+        log(INFO, f"Performed {epochs} Epochs of Local training")
+        self._handle_logging(running_loss, metrics)
+
+        return metrics  # return final training metrics
 
     def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
@@ -259,3 +293,9 @@ class ScaffoldClient(NumpyFlClient):
         self._handle_logging(running_loss, metrics, is_validation=True)
         self._maybe_checkpoint(running_loss)
         return running_loss, metrics
+
+
+class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
+        ScaffoldClient.__init__(self, data_path, metrics, device)
+        InstanceLevelPrivacyClient.__init__(self, data_path, device)

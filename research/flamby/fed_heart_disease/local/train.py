@@ -1,16 +1,16 @@
 import argparse
 from logging import INFO
-from typing import Tuple
 
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, Baseline, BaselineLoss, FedHeartDisease
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Baseline, BaselineLoss
 from flwr.common.logger import log
-from torch.utils.data import DataLoader, random_split
-from torchinfo import summary
+from torch.utils.data import DataLoader
 
 from fl4health.utils.metrics import AccumulationMeter, Accuracy
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
+from research.flamby.utils import summarize_model_info
 
 
 class FedHeartDiseaseLocalTrainer(SingleNodeTrainer):
@@ -24,33 +24,16 @@ class FedHeartDiseaseLocalTrainer(SingleNodeTrainer):
     ) -> None:
         super().__init__(device, checkpoint_stub, dataset_dir, run_name)
         self.client_number = client_number
-
-        train_dataset, validation_dataset = self.construct_train_val_datasets()
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(client_number, dataset_dir)
 
         self.train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
         self.val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         self.model: nn.Module = Baseline().to(self.device)
-
-        model_stats = summary(self.model, verbose=0)
-        log(INFO, "Client Model Stats:")
-        log(INFO, "===========================================================================")
-        log(INFO, f"Total Parameters: {model_stats.total_params}")
-        log(INFO, f"Trainable Parameters: {model_stats.trainable_params}")
-        log(INFO, f"Frozen Parameters: {model_stats.total_params - model_stats.trainable_params}")
-        log(INFO, "===========================================================================\n")
+        summarize_model_info(self.model)
 
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=LR)
-
-    def construct_train_val_datasets(self) -> Tuple[FedHeartDisease, FedHeartDisease]:
-        full_train_dataset = FedHeartDisease(
-            center=self.client_number, train=True, pooled=False, data_path=self.dataset_dir
-        )
-        # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
-        # ignore for now.
-        train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2]))  # type: ignore
-        return train_dataset, validation_dataset
 
 
 if __name__ == "__main__":
@@ -98,4 +81,4 @@ if __name__ == "__main__":
     train_meter = AccumulationMeter(metrics, "train_meter")
     val_meter = AccumulationMeter(metrics, "val_meter")
     # Central and local models in FLamby for FedHeartDisease are trained for 50 epochs
-    trainer.train_by_epochs(50, train_meter, val_meter)
+    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_meter, val_meter)

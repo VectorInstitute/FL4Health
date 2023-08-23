@@ -55,7 +55,7 @@ class ApflClient(NumpyFlClient):
         local_meter = AverageMeter(self.metrics, "local")
         personal_meter = AverageMeter(self.metrics, "personal")
         # By default the APFL client trains by epochs
-        metric_values = self.train_by_epoch(local_epochs, global_meter, local_meter, personal_meter)
+        metric_values = self.train_by_epochs(local_epochs, global_meter, local_meter, personal_meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -98,7 +98,6 @@ class ApflClient(NumpyFlClient):
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ApflTrainStepOutputs:
         # Mechanics of training loop follow from original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
-        input, target = input.to(self.device), target.to(self.device)
 
         # Forward pass on global model and update global parameters
         self.global_optimizer.zero_grad()
@@ -149,8 +148,7 @@ class ApflClient(NumpyFlClient):
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
 
-            # Mechanics of training loop follow from original implementation
-            # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
+            input, target = input.to(self.device), target.to(self.device)
             local_loss, global_loss, personal_loss, local_preds, global_preds, personal_preds = self.train_step(
                 input, target
             )
@@ -178,7 +176,7 @@ class ApflClient(NumpyFlClient):
         # return final training metrics
         return metrics
 
-    def train_by_epoch(
+    def train_by_epochs(
         self, epochs: int, global_meter: Meter, local_meter: Meter, personal_meter: Meter
     ) -> Dict[str, Scalar]:
         self.model.train()
@@ -189,8 +187,7 @@ class ApflClient(NumpyFlClient):
             personal_meter.clear()
 
             for step, (input, target) in enumerate(self.train_loader):
-                # Mechanics of training loop follow from original implementation
-                # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
+                input, target = input.to(self.device), target.to(self.device)
                 local_loss, global_loss, personal_loss, local_preds, global_preds, personal_preds = self.train_step(
                     input, target
                 )

@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Sequence
+from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
-from flwr.common.typing import Scalar
+from flwr.common.typing import Optional, Scalar
 from sklearn import metrics
 
 
@@ -22,6 +22,39 @@ class Metric(ABC):
 
     def __str__(self) -> str:
         return self.name
+
+
+class BinarySoftDiceCoefficient(Metric):
+    def __init__(
+        self,
+        name: str = "BinarySoftDiceCoefficient",
+        epsilon: float = 1.0e-7,
+        spatial_dimensions: Tuple[int, ...] = (2, 3, 4),
+        logits_threshold: Optional[float] = 0.5,
+    ):
+        # Correction term on the DICE denominator calculation
+        self.epsilon = epsilon
+        # The spatial dimensions of the image within the prediction tensors. The default assumes that the images are 3D
+        # and have shape batch_size, channel, spatial, spatial, spatial
+        self.spatial_dimensions = spatial_dimensions
+        # This is a threshold value where values above are classified as 1 and those below are mapped to 0. If the
+        # threshod is None, then no thresholding is performed and a continuous or "soft" DICE coeff. is computed
+        self.logits_threshold = logits_threshold
+        super().__init__(name)
+
+    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+        # Assuming the logits are to be mapped to binary. Note that this assumes the logits have already been
+        # constrained to [0, 1]. The metric still functions if not, but results will be unpredictable.
+        if self.logits_threshold:
+            y_pred = (logits > self.logits_threshold).int()
+        else:
+            y_pred = logits
+        intersection = (y_pred * target).sum(dim=self.spatial_dimensions)
+        union = (0.5 * (y_pred + target)).sum(dim=self.spatial_dimensions)
+        dice = intersection / (union + self.epsilon)
+        # If both inputs are empty the dice coefficient should be equal 1
+        dice[union == 0] = 1
+        return torch.mean(dice).item()
 
 
 class Accuracy(Metric):
