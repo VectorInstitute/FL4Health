@@ -11,7 +11,7 @@ from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.scaffold_server import DPScaffoldServer
-from fl4health.strategies.scaffold import DPScaffold
+from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 
 
@@ -74,7 +74,7 @@ def main(config: Dict[str, Any]) -> None:
     initial_parameters, initial_control_variates = get_initial_model_information()
 
     # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
-    strategy = DPScaffold(
+    strategy = Scaffold(
         fraction_fit=config["client_sampling_rate"],
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,

@@ -11,7 +11,7 @@ from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.polling import poll_clients
-from fl4health.strategies.instance_level_dp_fedavg import InstanceLevelDPFedAvgSampling
+from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
 class InstanceLevelDPServer(FlServer):
@@ -26,7 +26,7 @@ class InstanceLevelDPServer(FlServer):
         noise_multiplier: int,
         batch_size: int,
         num_server_rounds: int,
-        strategy: InstanceLevelDPFedAvgSampling,
+        strategy: FedAvgSampling,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
@@ -62,7 +62,7 @@ class InstanceLevelDPServer(FlServer):
 
         # Poll clients for sample counts
         log(INFO, "Polling Clients for sample counts")
-        assert isinstance(self.strategy, InstanceLevelDPFedAvgSampling)
+        assert isinstance(self.strategy, FedAvgSampling)
         client_instructions = self.strategy.configure_poll(server_round=0, client_manager=self._client_manager)
         results, _ = poll_clients(
             client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
@@ -80,7 +80,7 @@ class InstanceLevelDPServer(FlServer):
         """
         Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
         """
-        assert isinstance(self.strategy, InstanceLevelDPFedAvgSampling)
+        assert isinstance(self.strategy, FedAvgSampling)
 
         total_samples = sum(sample_counts)
 
@@ -88,12 +88,14 @@ class InstanceLevelDPServer(FlServer):
             # Compute average number of samples per client so we can estimate local_epochs
             samples_per_client = total_samples / len(sample_counts)
             assert isinstance(self.local_steps, int)
-            local_epochs = ceil((self.local_steps * self.batch_size) / samples_per_client)
+            self.local_epochs = ceil((self.local_steps * self.batch_size) / samples_per_client)
+
+        assert isinstance(self.local_epochs, int)
 
         self.accountant = FlInstanceLevelAccountant(
             client_sampling_rate=self.strategy.fraction_fit,
             noise_multiplier=self.noise_multiplier,
-            epochs_per_round=local_epochs,
+            epochs_per_round=self.local_epochs,
             client_batch_sizes=[self.batch_size for _ in range(len(sample_counts))],
             client_dataset_sizes=sample_counts,
         )

@@ -10,7 +10,7 @@ from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
-from fl4health.strategies.instance_level_dp_fedavg import InstanceLevelDPFedAvgSampling
+from fl4health.strategies.fedavg_sampling import FedAvgSampling
 from fl4health.utils.config import load_config
 
 
@@ -78,7 +78,7 @@ def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
 
     # Server performs simple FedAveraging with Instance Level Differential Privacy
-    strategy = InstanceLevelDPFedAvgSampling(
+    strategy = FedAvgSampling(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],

@@ -11,7 +11,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
-from fl4health.strategies.scaffold import DPScaffold, Scaffold
+from fl4health.strategies.scaffold import Scaffold
 
 
 class ScaffoldServer(FlServer):
@@ -115,7 +115,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         noise_multiplier: int,
         batch_size: int,
         num_server_rounds: int,
-        strategy: DPScaffold,
+        strategy: Scaffold,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
@@ -148,7 +148,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         """
         Run DP Scaffold algorithm for the specified number of rounds.
         """
-        assert isinstance(self.strategy, DPScaffold)
+        assert isinstance(self.strategy, Scaffold)
 
         # Initialize parameters attribute (specifc to the Scaffold algo)
         self.initialize_paramameters(timeout=timeout)

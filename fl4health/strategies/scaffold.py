@@ -19,7 +19,6 @@ from flwr.server.client_proxy import ClientProxy
 from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
-from fl4health.strategies.instance_level_dp_fedavg import InstanceLevelDPFedAvgSampling
 
 
 class Scaffold(FedAvgSampling):
@@ -207,47 +206,3 @@ class Scaffold(FedAvgSampling):
         )
 
         return server_control_variates
-
-
-class DPScaffold(Scaffold, InstanceLevelDPFedAvgSampling):
-    """
-    Strategy for Instance Level Differentially Private Scaffold algorithm
-    as specified in https://arxiv.org/abs/2111.09278
-    """
-
-    def __init__(
-        self,
-        *,
-        fraction_fit: float = 1.0,
-        fraction_evaluate: float = 1.0,
-        min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        accept_failures: bool = True,
-        initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        learning_rate: float = 1.0,
-        initial_control_variates: Parameters,
-    ) -> None:
-        Scaffold.__init__(
-            self,
-            fraction_fit=fraction_fit,
-            fraction_evaluate=fraction_evaluate,
-            min_available_clients=min_available_clients,
-            evaluate_fn=evaluate_fn,
-            on_fit_config_fn=on_fit_config_fn,
-            on_evaluate_config_fn=on_evaluate_config_fn,
-            accept_failures=accept_failures,
-            initial_parameters=initial_parameters,
-            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-            learning_rate=learning_rate,
-            initial_control_variates=initial_control_variates,
-        )
