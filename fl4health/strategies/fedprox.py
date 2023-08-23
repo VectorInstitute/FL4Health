@@ -127,7 +127,7 @@ class FedProx(FedAvg):
         if self.adaptive_proximal_weight:
             if loss <= self.previous_loss:
                 self.proximal_weight_patience_counter += 1
-                if self.proximal_weight_patience_counter == self.proximal_weight_patience - 1:
+                if self.proximal_weight_patience_counter == self.proximal_weight_patience:
                     self.proximal_weight -= self.proximal_weight_delta
                     self.proximal_weight = np.maximum(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
