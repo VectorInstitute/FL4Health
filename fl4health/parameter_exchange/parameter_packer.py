@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Generic, Tuple, TypeVar
+from typing import Generic, Tuple, TypeVar
 
 import numpy as np
 from flwr.common.typing import List, NDArrays
@@ -41,37 +41,6 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
         model_parameters = packed_parameters[:split_size]
         clipping_bound = float(packed_parameters[split_size:][0])
         return model_parameters, clipping_bound
-
-
-class ParameterPackerWithExtraVariables(ParameterPacker[Dict[str, NDArrays]]):
-    def __init__(self, size_of_model_params: int) -> None:
-        self.size_of_model_params = size_of_model_params
-        super().__init__()
-
-    def pack_parameters(self, model_weights: NDArrays, additional_variables: Dict[str, NDArrays]) -> NDArrays:
-        packer = model_weights + [np.array(list(additional_variables.keys()))]
-        len_each = []
-        for _, values in additional_variables.items():
-            packer = packer + values
-            len_each.append(len(values))
-        packer += [np.array(len_each)]
-        return packer
-
-    def unpack_parameters(self, packed_variables: NDArrays) -> Tuple[NDArrays, Dict[str, NDArrays]]:
-        """
-        Assumption: packed_parameters is a list containing model parameters followed by Dict[str, NDArrays] where
-        the keys are the name of packed variables and the values are the packed variables themselves as NDArrays.
-        """
-        model_parameters = packed_variables[: self.size_of_model_params]
-        keys = packed_variables[self.size_of_model_params].tolist()
-        len_each = packed_variables[-1]
-        variables = {}
-        start_i = self.size_of_model_params + 1
-        buffer = 0
-        for i, key in enumerate(keys):
-            variables[key] = packed_variables[start_i + buffer : start_i + buffer + len_each[i]]
-            buffer += len_each[i]
-        return model_parameters, variables
 
 
 class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):

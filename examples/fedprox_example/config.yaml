@@ -1,7 +1,12 @@
 # Parameters that describe server
 n_server_rounds: 15 # The number of rounds to run FL
+
+# Following the setup in Appendix C3.3 of the FedProx paper for adaptive proximal weight,
+# set the proximal weight to 0 if sampler is generating non iid data
 adaptive_proximal_weight: True # Whether to use adaptive proximal weight or not
-heterogenous_clients: True # If clients data is non iid data
+proximal_weight : 0.0 # Initial proximal weight
+proximal_weight_delta : 0.1 # The amount by which to increase or decrease the proximal weight, if adaptive_proximal_weight is True
+proximal_weight_patience : 5 # The number of rounds to wait before increasing or decreasing the proximal weight, if adaptive_proximal_weight is True
 
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment

@@ -9,8 +9,8 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
+    ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
-    ParameterPackerWithExtraVariables,
 )
 from fl4health.utils.metrics import Accuracy
 
@@ -26,7 +26,7 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         model_size = len(model.state_dict()) if model else 0
-        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithExtraVariables(model_size))
+        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
     else:
         raise ValueError(f"{str(type)} is not a valid cient type")
 

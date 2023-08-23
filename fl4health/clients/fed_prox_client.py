@@ -39,11 +39,12 @@ class FedProxClient(NumpyFlClient):
         # loss. That is, the FedProx loss becomes criterion + \mu \Vert w - w^t \Vert ^2
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
-        self.parameter_exchanger: ParameterExchangerWithPacking[Dict[str, NDArrays]]
+        self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.initial_tensors: List[torch.Tensor]
         self.proximal_weight: float = 0.0
         self.total_epochs = 0
         self.total_steps = 0
+        self.current_loss: float = 0.0
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
@@ -60,18 +61,30 @@ class FedProxClient(NumpyFlClient):
         # NOTE: Scaling by 1/2 is for consistency with the original fedprox paper.
         return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
         """
-        Assumes that the parameters being passed contain model parameters concatenated with
-        proximal weight control variates. They are unpacked for the clients to use in training.
+        Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
-        server_model_state, server_extra_variables = self.parameter_exchanger.unpack_parameters(parameters)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-        # Setting the proximal weight
-        for key, value in server_extra_variables.items():
-            setattr(self, key, value[0])
+        # Weights and training loss sent to server for aggregation
+        # Training loss sent because server will decide to increase or decrease the proximal weight
+        # Therefore it can only be computed locally
+        assert self.current_loss is not None
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
+        return packed_params
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        """
+        Assumes that the parameters being passed contain model parameters concatenated with
+        proximal weight. They are unpacked for the clients to use in training.
+        """
+        assert self.model is not None and self.parameter_exchanger is not None
+
+        server_model_state, self.proximal_weight = self.parameter_exchanger.unpack_parameters(parameters)
+
         self.server_model_state = server_model_state
         self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
 
@@ -90,7 +103,7 @@ class FedProxClient(NumpyFlClient):
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         # Currently uses training by epoch.
-        metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
+        self.current_loss, metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -158,7 +171,7 @@ class FedProxClient(NumpyFlClient):
         current_server_round: int,
         steps: int,
         meter: Meter,
-    ) -> Dict[str, Scalar]:
+    ) -> Tuple[float, Dict[str, Scalar]]:
         self.model.train()
         loss_dict = {"train_vanilla_loss": 0.0, "train_proximal_loss": 0.0, "train_total_loss": 0.0}
         meter.clear()
@@ -184,17 +197,17 @@ class FedProxClient(NumpyFlClient):
             meter.update(preds, target)
 
         custom_log: Dict[str, Any] = {"step": self.total_steps, "server_round": current_server_round}
-        metrics, _ = self._handle_reporting(custom_log, meter, loss_dict, steps)
+        metrics, train_loss = self._handle_reporting(custom_log, meter, loss_dict, steps)
 
         # return final training metrics
-        return metrics
+        return train_loss["train_vanilla_loss"], metrics
 
     def train_by_epochs(
         self,
         current_server_round: int,
         epochs: int,
         meter: Meter,
-    ) -> Dict[str, Scalar]:
+    ) -> Tuple[float, Dict[str, Scalar]]:
         self.model.train()
 
         for local_epoch in range(epochs):
@@ -213,10 +226,10 @@ class FedProxClient(NumpyFlClient):
 
             log(INFO, f"Local Epoch: {local_epoch}")
             custom_log: Dict[str, Any] = {"epoch": self.total_epochs, "server_round": current_server_round}
-            metrics, _ = self._handle_reporting(custom_log, meter, loss_dict, len(self.train_loader))
+            metrics, train_loss = self._handle_reporting(custom_log, meter, loss_dict, len(self.train_loader))
 
         # Return final training metrics
-        return metrics
+        return train_loss["train_vanilla_loss"], metrics
 
     def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()

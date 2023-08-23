@@ -42,7 +42,7 @@ class FlambyFedProxClient(FedProxClient):
         self.set_parameters(parameters, config)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train_by_steps(current_server_round, local_steps, meter)
+        self.current_loss, metric_values = self.train_by_steps(current_server_round, local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
