@@ -10,7 +10,6 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
-from fl4health.server.polling import poll_clients
 from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
@@ -60,18 +59,8 @@ class InstanceLevelDPServer(FlServer):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
 
-        # Poll clients for sample counts
-        log(INFO, "Polling Clients for sample counts")
         assert isinstance(self.strategy, FedAvgSampling)
-        client_instructions = self.strategy.configure_poll(server_round=0, client_manager=self._client_manager)
-        results, _ = poll_clients(
-            client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
-        )
-
-        sample_counts: List[int] = [
-            int(get_properties_res.properties["num_samples"]) for (_, get_properties_res) in results
-        ]
-
+        sample_counts = self.poll_clients_for_sample_counts(timeout)
         self.setup_privacy_accountant(sample_counts)
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)

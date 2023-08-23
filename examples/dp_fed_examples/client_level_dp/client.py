@@ -98,6 +98,9 @@ class CifarClient(NumpyClippingClient):
         self.num_examples = num_examples
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        if self.initialized is False:
+            self.setup_client(config)
+
         self.set_parameters(parameters, config)
         accuracy = train(
             self.model,
