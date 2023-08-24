@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Metrics, Parameters
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.client_level_dp_weighted_fed_avg_server import ClientLevelDPWeightedFedAvgServer
+from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
 
@@ -84,7 +84,7 @@ def main(config: Dict[str, Any]) -> None:
         beta=config["server_momentum"],
         weighted_averaging=config["weighted_averaging"],
     )
-    server = ClientLevelDPWeightedFedAvgServer(
+    server = ClientLevelDPFedAvgServer(
         client_manager=client_manager,
         strategy=strategy,
         server_noise_multiplier=config["server_noise_multiplier"],

@@ -12,10 +12,9 @@ from fl4health.server.base_server import FlServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
 
-class ClientLevelDPWeightedFedAvgServer(FlServer):
+class ClientLevelDPFedAvgServer(FlServer):
     """
-    Server to be used in case of Client Level Differential Privacy with weighted Federated Averaging.
-    Modified the fit function to poll clients for sample counts prior to the first round of FL.
+    Server to be used in case of Client Level Differential Privacy with Federated Averaging.
     """
 
     def __init__(
