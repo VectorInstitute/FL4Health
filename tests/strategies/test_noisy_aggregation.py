@@ -47,6 +47,11 @@ def test_gaussian_noisy_aggregate_clipping_bits() -> None:
     noised_bit_sum = gaussian_noisy_aggregate_clipping_bits(client_bits, 1.0)
     assert pytest.approx(noised_bit_sum, abs=0.001) == 0.874
 
+    # Ensure invalid shape of clipping bits throws assertion error
+    invalid_client_bits = [np.array([1]), np.array([1]), np.array([0]), np.array([1])]
+    with pytest.raises(AssertionError):
+        _ = gaussian_noisy_aggregate_clipping_bits(invalid_client_bits, 1.0)
+
 
 def test_weighted_gaussian_noisy_aggregation_shape() -> None:
     np.random.seed(42)
