@@ -1,4 +1,5 @@
 from logging import INFO
+from math import ceil
 from typing import List, Optional
 
 from flwr.common.logger import log
@@ -6,7 +7,13 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.privacy.fl_accountants import (
+    ClientLevelAccountant,
+    FlClientLevelAccountantFixedSamplingNoReplacement,
+    FlClientLevelAccountantPoissonSampling,
+)
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -30,6 +37,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         super().__init__(
             client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
         )
+        self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier
         self.num_server_rounds = num_server_rounds
         self.delta = delta
@@ -52,13 +60,21 @@ class ClientLevelDPFedAvgServer(FlServer):
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 
-        self.accountant = FlClientLevelAccountantPoissonSampling(
-            client_sampling_rate=self.strategy.fraction_fit, noise_multiplier=self.server_noise_multiplier
-        )
-
         num_clients = len(sample_counts)
-        print(num_clients, "heyeeyeyeyey")
+        num_clients_sampled = ceil(len(sample_counts) * self.strategy.fraction_fit)
         target_delta = self.delta if self.delta is not None else 1 / num_clients
+
+        if isinstance(self._client_manager, PoissonSamplingClientManager):
+            self.accountant = FlClientLevelAccountantPoissonSampling(
+                client_sampling_rate=self.strategy.fraction_fit, noise_multiplier=self.server_noise_multiplier
+            )
+        else:
+            assert isinstance(self._client_manager, FixedSamplingWithoutReplacementClientManager)
+            self.accountant = FlClientLevelAccountantFixedSamplingNoReplacement(
+                n_total_clients=num_clients,
+                n_clients_sampled=num_clients_sampled,
+                noise_multiplier=self.server_noise_multiplier,
+            )
 
         # Note that this assumes that the FL round has exactly n_clients participating.
         epsilon = self.accountant.get_epsilon(self.num_server_rounds, target_delta)

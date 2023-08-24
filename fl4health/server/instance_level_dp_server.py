@@ -45,6 +45,8 @@ class InstanceLevelDPServer(FlServer):
             or isinstance(local_steps, int)
             and not (isinstance(local_epochs, int) and isinstance(local_steps, int))
         )
+
+        self.accountant: FlInstanceLevelAccountant
         self.local_steps = local_steps
         self.local_epochs = local_epochs
 
