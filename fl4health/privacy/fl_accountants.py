@@ -135,7 +135,8 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
 class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
     """
-    This accountant should be used when applying FL with Poisson client sampling and measuring client-level privacy
+    This accountant should be used when applying FL with Fixed Sampling
+    with No Replacement and measuring client-level privacy
     """
 
     def __init__(
