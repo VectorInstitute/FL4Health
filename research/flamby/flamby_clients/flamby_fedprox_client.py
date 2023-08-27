@@ -16,7 +16,6 @@ class FlambyFedProxClient(FedProxClient):
     def __init__(
         self,
         learning_rate: float,
-        mu: float,
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
@@ -30,7 +29,6 @@ class FlambyFedProxClient(FedProxClient):
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         checkpoint_name = f"client_{self.client_number}_best_model.pkl"
         self.learning_rate = learning_rate
-        self.mu = mu
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
         self.dataset_dir = dataset_dir
 

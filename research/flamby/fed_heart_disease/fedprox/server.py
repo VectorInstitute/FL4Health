@@ -8,11 +8,11 @@ import flwr as fl
 from flamby.datasets.fed_heart_disease import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
-from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
+from research.flamby.flamby_servers.fedprox_server import FedproxServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
@@ -39,7 +39,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     summarize_model_info(client_model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedProx(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -50,9 +50,13 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        adaptive_proximal_weight=config["adaptive_proximal_weight"],
+        proximal_weight=config["proximal_weight"],
+        proximal_weight_delta=config["proximal_weight_delta"],
+        proximal_weight_patience=config["proximal_weight_patience"],
     )
 
-    server = FullExchangeServer(client_manager, client_model, strategy, checkpointer)
+    server = FedproxServer(client_manager, client_model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

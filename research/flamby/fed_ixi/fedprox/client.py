@@ -21,7 +21,6 @@ class FedIxiFedProxClient(FlambyFedProxClient):
     def __init__(
         self,
         learning_rate: float,
-        mu: float,
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
@@ -30,7 +29,7 @@ class FedIxiFedProxClient(FlambyFedProxClient):
         run_name: str = "",
     ) -> None:
         assert 0 <= client_number < NUM_CLIENTS
-        super().__init__(learning_rate, mu, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name)
+        super().__init__(learning_rate, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name)
 
     def setup_client(self, config: Config) -> None:
         train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(self.client_number, self.dataset_dir)
@@ -47,8 +46,6 @@ class FedIxiFedProxClient(FlambyFedProxClient):
 
         self.criterion = BaselineLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        # Set the Proximal Loss weight mu
-        self.proximal_weight = self.mu
 
         self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
 
@@ -91,7 +88,6 @@ if __name__ == "__main__":
         help="Number of the client for dataset loading (should be 0-2 for FedIXI)",
         required=True,
     )
-    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
@@ -101,11 +97,9 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"FedProx Mu: {args.mu}")
 
     client = FedIxiFedProxClient(
         args.learning_rate,
-        args.mu,
         [BinarySoftDiceCoefficient("FedIXI_dice")],
         DEVICE,
         args.client_number,
