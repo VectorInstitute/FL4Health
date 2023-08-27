@@ -44,7 +44,6 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
 
-    # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_params, config)
 
     assert fed_prox_client.initial_tensors is not None
@@ -76,7 +75,6 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
@@ -104,7 +102,6 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
@@ -141,7 +138,6 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    # Circumventing the set_parameters function to update the model weights
     fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     assert fed_prox_client.proximal_weight == perturbed_proximal_weight

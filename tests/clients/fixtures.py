@@ -11,8 +11,8 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
-    ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
+    ParameterPackerWithProximalWeight,
 )
 from fl4health.utils.metrics import Accuracy
 
@@ -28,8 +28,7 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-        model_size = len(model.state_dict()) if model else 0
-        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
+        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithProximalWeight())
     elif type == InstanceLevelPrivacyClient:
         client = InstanceLevelPrivacyClient(data_path=Path(""), device=torch.device("cpu"))
         client.noise_multiplier = 1.0
@@ -39,7 +38,7 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     else:
-        raise ValueError(f"{str(type)} is not a valid cient type")
+        raise ValueError(f"{str(type)} is not a valid client type")
 
     client.model = model
     client.optimizer = torch.optim.SGD(client.model.parameters(), lr=0.0001)  # type: ignore

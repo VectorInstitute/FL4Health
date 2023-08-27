@@ -9,13 +9,13 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 from flwr.server.strategy.aggregate import aggregate
 
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithProximalWeight
 
 
 class FedProx(FedAvg):
     """
     A generalization of the fedavg strategy for fedprox
-    Additional to the model weights, the server also recivers the training loss from the clients,
+    Additional to the model weights, the server also receives the training loss from the clients,
     and updates the proximal weight parameter, accordingly.
     Aggregation strategy for weights is the same as in FedAvg.
     """
@@ -73,7 +73,7 @@ class FedProx(FedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
-        self.parameter_packer = ParameterPackerWithClippingBit()
+        self.parameter_packer = ParameterPackerWithProximalWeight()
 
     def aggregate_fit(
         self,
@@ -90,20 +90,20 @@ class FedProx(FedAvg):
             return None, {}
 
         # Convert results with packed params of model weights and training loss
-        updated_weights, train_losses = zip(
-            *[
-                (self.parameter_packer.unpack_parameters(parameters_to_ndarrays(fit_res.parameters)))
-                for _, fit_res in results
-            ]
-        )
-        weights_results = [
-            (updated_weight, fit_res.num_examples) for updated_weight, (_, fit_res) in zip(updated_weights, results)
-        ]
+        weights_and_counts = []
+        train_losses = []
+        for _, fit_res in results:
+            sample_count = fit_res.num_examples
+            updated_weights, train_loss = self.parameter_packer.unpack_parameters(
+                parameters_to_ndarrays(fit_res.parameters)
+            )
+            weights_and_counts.append((updated_weights, sample_count))
+            train_losses.append(train_loss)
 
         # Aggregate model weights using fedavg aggregation strategy
-        weights_aggregated = aggregate(weights_results)
+        weights_aggregated = aggregate(weights_and_counts)
 
-        # Aggregate train loss
+        # Aggregate train loss using unweighted average
         train_losses_aggregated = np.mean(train_losses)
 
         self._maybe_update_proximal_weight_param(float(train_losses_aggregated))
@@ -129,11 +129,12 @@ class FedProx(FedAvg):
                 self.proximal_weight_patience_counter += 1
                 if self.proximal_weight_patience_counter == self.proximal_weight_patience:
                     self.proximal_weight -= self.proximal_weight_delta
-                    self.proximal_weight = np.maximum(0.0, self.proximal_weight)
+                    self.proximal_weight = max(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
                     log(INFO, f"Proximal weight is decreased to {self.proximal_weight}")
             else:
                 self.proximal_weight += self.proximal_weight_delta
+                self.proximal_weight_patience_counter = 0
                 log(INFO, f"Proximal weight is increased to {self.proximal_weight}")
         self.previous_loss = loss
         return None

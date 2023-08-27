@@ -41,10 +41,10 @@ class FedProxClient(NumpyFlClient):
         self.optimizer: torch.optim.Optimizer
         self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.initial_tensors: List[torch.Tensor]
-        self.proximal_weight: float = 0.0
+        self.proximal_weight: float
+        self.current_loss: float
         self.total_epochs = 0
         self.total_steps = 0
-        self.current_loss: float = 0.0
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
