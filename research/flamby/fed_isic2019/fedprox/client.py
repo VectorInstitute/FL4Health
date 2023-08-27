@@ -11,7 +11,7 @@ from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithProximalWeight
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.flamby_clients.flamby_fedprox_client import FlambyFedProxClient
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
@@ -48,7 +48,7 @@ class FedIsic2019FedProxClient(FlambyFedProxClient):
         # Set the Proximal Loss weight mu
         self.proximal_weight = self.mu
 
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithProximalWeight())
+        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
 
         super().setup_client(config)
 

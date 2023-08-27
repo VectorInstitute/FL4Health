@@ -43,7 +43,7 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
         return model_parameters, clipping_bound
 
 
-class ParameterPackerWithProximalWeight(ParameterPacker[float]):
+class ParameterPackerFedProx(ParameterPacker[float]):
     def pack_parameters(self, model_weights: NDArrays, additional_parameters: float) -> NDArrays:
         return model_weights + [np.array(additional_parameters)]
 
@@ -51,8 +51,8 @@ class ParameterPackerWithProximalWeight(ParameterPacker[float]):
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
-        clipping_bound = float(packed_parameters[split_size:][0])
-        return model_parameters, clipping_bound
+        extra_fedprox_variable = float(packed_parameters[split_size:][0])
+        return model_parameters, extra_fedprox_variable
 
 
 class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):

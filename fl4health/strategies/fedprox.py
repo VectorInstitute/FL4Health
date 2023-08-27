@@ -9,7 +9,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 from flwr.server.strategy.aggregate import aggregate
 
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithProximalWeight
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 
 
 class FedProx(FedAvg):
@@ -73,7 +73,7 @@ class FedProx(FedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
-        self.parameter_packer = ParameterPackerWithProximalWeight()
+        self.parameter_packer = ParameterPackerFedProx()
 
     def aggregate_fit(
         self,
