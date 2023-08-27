@@ -19,6 +19,7 @@ def test_maybe_update_proximal_weight_param_increase() -> None:
     strat._maybe_update_proximal_weight_param(new_loss)
 
     assert strat.proximal_weight == initial_proximal_weight + strat.proximal_weight_delta
+    assert strat.proximal_weight_patience_counter == 0
 
 
 def test_maybe_update_proximal_weight_param_decrease() -> None:
