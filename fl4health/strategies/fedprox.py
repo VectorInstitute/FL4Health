@@ -39,7 +39,7 @@ class FedProx(FedAvg):
         accept_failures: bool = True,
         initial_parameters: Parameters,
         proximal_weight: float,
-        adaptive_proximal_weight: bool = True,
+        adaptive_proximal_weight: bool = False,
         proximal_weight_delta: float = 0.1,
         proximal_weight_patience: int = 5,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,

@@ -3,9 +3,6 @@ n_server_rounds: 15 # The number of rounds to run FL
 
 adaptive_proximal_weight: False # Whether to use adaptive proximal weight or not
 proximal_weight : 0.1 # Initial proximal weight
-proximal_weight_delta : 0.1 # The amount by which to increase or decrease the proximal weight, if adaptive_proximal_weight is True
-proximal_weight_patience : 5 # The number of rounds to wait before increasing or decreasing the proximal weight, if adaptive_proximal_weight is True
-
 
 # Parameters that describe clients
 n_clients: 4 # The number of clients in the FL experiment
