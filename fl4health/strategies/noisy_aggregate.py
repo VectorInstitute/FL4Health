@@ -111,6 +111,6 @@ def gaussian_noisy_weighted_aggregate(
 def gaussian_noisy_aggregate_clipping_bits(bits: NDArrays, noise_std_dev: float) -> float:
     n_clients = len(bits)
     bit_sum = reduce(np.add, bits)
-    assert bit_sum.shape == (1,)
+    assert bit_sum.shape == ()
     noised_bit_sum = add_noise_to_array(bit_sum, noise_std_dev, n_clients)
     return float(noised_bit_sum)

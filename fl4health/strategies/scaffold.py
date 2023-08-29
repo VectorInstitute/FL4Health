@@ -22,6 +22,10 @@ from fl4health.strategies.fedavg_sampling import FedAvgSampling
 
 
 class Scaffold(FedAvgSampling):
+    """
+    Strategy for Scaffold algorithm as specified in https://arxiv.org/abs/1910.06378
+    """
+
     def __init__(
         self,
         *,

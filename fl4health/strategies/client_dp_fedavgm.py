@@ -25,7 +25,6 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.common.logger import log
-from flwr.common.typing import GetPropertiesIns
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
@@ -323,25 +322,6 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
-
-    def configure_poll(
-        self, server_round: int, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
-        """Configure server for polling of clients."""
-
-        # This strategy requires the client manager to be of type at least BaseSamplingManager
-        assert isinstance(client_manager, BaseSamplingManager)
-        config = {}
-        if self.on_fit_config_fn is not None:
-            # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
-
-        property_ins = GetPropertiesIns(config)
-
-        clients = client_manager.sample_all(min_num_clients=self.min_available_clients)
-
-        # Return client/config pairs
-        return [(client, property_ins) for client in clients]
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager

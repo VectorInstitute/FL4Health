@@ -41,7 +41,7 @@ def test_update_with_momentum() -> None:
 
 def test_calculate_clipping_update() -> None:
     np.random.seed(42)
-    clipping_bits = [np.array([4.23])]
+    clipping_bits = [np.array(4.23)]
     strategy.update_clipping_bound(clipping_bits)
     assert pytest.approx(strategy.clipping_bound, abs=0.00001) == 0.00447446
 

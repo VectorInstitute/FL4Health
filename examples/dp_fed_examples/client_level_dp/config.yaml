@@ -9,6 +9,7 @@ n_clients: 3
 client_sampling_rate: 0.66
 server_learning_rate: 1.0
 server_momentum: 0.2
+weighted_averaging: False
 
 # Client training parameters
 local_epochs: 1

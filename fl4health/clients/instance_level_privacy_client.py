@@ -1,5 +1,6 @@
 from logging import WARNING
 from pathlib import Path
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -12,6 +13,10 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 
 
 class InstanceLevelPrivacyClient(NumpyFlClient):
+    """
+    Client for Instance Differentially Private Federated Averaging
+    """
+
     def __init__(self, data_path: Path, device: torch.device) -> None:
         super().__init__(data_path, device)
 
@@ -20,6 +25,7 @@ class InstanceLevelPrivacyClient(NumpyFlClient):
         self.optimizer: torch.optim.Optimizer
         self.noise_multiplier: float
         self.clipping_bound: float
+        self.num_examples: Dict[str, int]
 
     def setup_opacus_objects(self) -> None:
         # Validate that the model layers are compatible with privacy mechanisms in Opacus and try to replace the layers

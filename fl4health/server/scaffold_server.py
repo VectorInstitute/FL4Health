@@ -1,5 +1,4 @@
-import timeit
-from logging import DEBUG, ERROR, INFO
+from logging import DEBUG, ERROR
 from typing import Optional
 
 from flwr.common import ndarrays_to_parameters, parameters_to_ndarrays
@@ -11,24 +10,30 @@ from flwr.server.server import fit_clients
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
+from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
 from fl4health.strategies.scaffold import Scaffold
 
 
 class ScaffoldServer(FlServer):
     """
-    Custom FL Server for scaffold algorithm to handle warm initialization of control variates.
+    Custom FL Server for scaffold algorithm to handle warm initialization of control variates
+    as specified in https://arxiv.org/abs/1910.06378
     """
 
     def __init__(
         self,
         client_manager: ClientManager,
-        strategy: Optional[Scaffold] = None,
+        strategy: Scaffold,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
     ) -> None:
-        super().__init__(
-            client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
+        FlServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
         )
         self.warm_start = warm_start
 
@@ -83,65 +88,70 @@ class ScaffoldServer(FlServer):
                     self.strategy.parameter_packer.pack_parameters(initial_weights, server_control_variates)
                 )
 
+        # Set updated initial parameters in strategy because they are deleted on every
+        # self._get_initial_parameters call (there will be another one in parent fit method)
+        self.strategy.initial_parameters = self.parameters
+
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run Scaffold algorithm for a number of rounds."""
 
         assert isinstance(self.strategy, Scaffold)
 
-        # Initialize parameters attribute
+        # Initialize parameters attribute (specifc to the Scaffold algo)
         self.initialize_paramameters(timeout=timeout)
 
-        history = History()
+        return super().fit(num_rounds=num_rounds, timeout=timeout)
 
-        res = self.strategy.evaluate(0, parameters=self.parameters)
-        if res is not None:
-            log(
-                INFO,
-                "initial parameters (loss, other metrics): %s, %s",
-                res[0],
-                res[1],
-            )
-            history.add_loss_centralized(server_round=0, loss=res[0])
-            history.add_metrics_centralized(server_round=0, metrics=res[1])
 
-        # Run federated learning for num_rounds
-        log(INFO, "FL starting")
-        start_time = timeit.default_timer()
+class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
+    """
+    Custom FL Server for Instance Level Differentially Private Scaffold algorithm
+    as specified in https://arxiv.org/abs/2111.09278
+    """
 
-        for current_round in range(1, num_rounds + 1):
-            # Train model and replace previous global model
-            res_fit = self.fit_round(server_round=current_round, timeout=timeout)
-            if res_fit:
-                parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
-                if parameters_prime:
-                    self.parameters = parameters_prime
-                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        noise_multiplier: int,
+        batch_size: int,
+        num_server_rounds: int,
+        strategy: Scaffold,
+        local_epochs: Optional[int] = None,
+        local_steps: Optional[int] = None,
+        delta: Optional[float] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        warm_start: bool = False,
+    ) -> None:
 
-            # Evaluate model using strategy implementation
-            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
-            if res_cen is not None:
-                loss_cen, metrics_cen = res_cen
-                log(
-                    INFO,
-                    "fit progress: (%s, %s, %s, %s)",
-                    current_round,
-                    loss_cen,
-                    metrics_cen,
-                    timeit.default_timer() - start_time,
-                )
-                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-                history.add_metrics_centralized(server_round=current_round, metrics=metrics_cen)
+        ScaffoldServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
+            warm_start=warm_start,
+        )
+        InstanceLevelDPServer.__init__(
+            self,
+            client_manager=client_manager,
+            strategy=strategy,
+            noise_multiplier=noise_multiplier,
+            local_epochs=local_epochs,
+            local_steps=local_steps,
+            batch_size=batch_size,
+            delta=delta,
+            num_server_rounds=num_server_rounds,
+        )
 
-            # Evaluate model on a sample of available clients
-            res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
-            if res_fed:
-                loss_fed, evaluate_metrics_fed, _ = res_fed
-                if loss_fed:
-                    history.add_loss_distributed(server_round=current_round, loss=loss_fed)
-                    history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        """
+        Run DP Scaffold algorithm for the specified number of rounds.
+        """
+        assert isinstance(self.strategy, Scaffold)
 
-        # Bookkeeping
-        end_time = timeit.default_timer()
-        elapsed = end_time - start_time
-        log(INFO, "FL finished in %s", elapsed)
-        return history
+        # Initialize parameters attribute (specifc to the Scaffold algo)
+        self.initialize_paramameters(timeout=timeout)
+
+        # Now that we initialized the parameters for scaffold, call instance level privacy fit
+        return InstanceLevelDPServer.fit(self, num_rounds=num_rounds, timeout=timeout)

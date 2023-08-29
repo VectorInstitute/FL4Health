@@ -1,11 +1,9 @@
 import argparse
 import pickle
 from functools import partial
-from logging import INFO
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
-from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
 
@@ -13,8 +11,7 @@ from examples.dp_fed_examples.client_level_dp_weighted.data import Scaler
 from examples.models.logistic_regression import LogisticRegression
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.privacy.fl_accountants import FlClientLevelAccountantPoissonSampling
-from fl4health.server.client_level_dp_weighted_fed_avg_server import ClientLevelDPWeightedFedAvgServer
+from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
 
@@ -63,15 +60,7 @@ def main(config: Dict[str, Any]) -> None:
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
-    # Accountant that computes the privacy through training
-    accountant = FlClientLevelAccountantPoissonSampling(
-        config["client_sampling_rate"], config["server_noise_multiplier"]
-    )
-    target_delta = 1.0 / config["n_clients"]
-    epsilon = accountant.get_epsilon(config["n_server_rounds"], target_delta)
-    log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
-
-    # Server performs simple FedAveraging as it's server-side optimization strategy
+    # Server performs simple weighted FedAveraging with client level differential privacy
     strategy = ClientLevelDPFedAvgM(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
@@ -94,7 +83,12 @@ def main(config: Dict[str, Any]) -> None:
         weighted_averaging=config["weighted_averaging"],
     )
 
-    server = ClientLevelDPWeightedFedAvgServer(client_manager=client_manager, strategy=strategy)
+    server = ClientLevelDPFedAvgServer(
+        client_manager=client_manager,
+        strategy=strategy,
+        num_server_rounds=config["n_server_rounds"],
+        server_noise_multiplier=config["server_noise_multiplier"],
+    )
     fl.server.start_server(
         server=server,
         server_address="0.0.0.0:8080",

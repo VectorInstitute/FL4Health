@@ -7,7 +7,7 @@ from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
 def generate_clipping_bits(n_bits: int, clipping_bound: float, mean: float, std_dev: float) -> NDArrays:
     np.random.seed(42)
-    generated_grad_values = np.random.normal(mean, std_dev, size=(n_bits, 1))
+    generated_grad_values = np.random.normal(mean, std_dev, size=(n_bits))
     boolean_np_array = (np.exp(generated_grad_values) < clipping_bound).astype(int)
     return [np.array(e) for e in boolean_np_array.tolist()]
 
