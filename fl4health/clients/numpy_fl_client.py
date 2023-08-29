@@ -81,4 +81,4 @@ class NumpyFlClient(NumPyClient):
         federated learning round.
         """
         self.setup_client(config)
-        return {"num_samples": self.num_examples["train_set"]}
+        return {"num_train_samples": self.num_examples["train_set"]}

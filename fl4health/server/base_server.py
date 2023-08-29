@@ -51,7 +51,7 @@ class FlServer(Server):
         )
 
         sample_counts: List[int] = [
-            int(get_properties_res.properties["num_samples"]) for (_, get_properties_res) in results
+            int(get_properties_res.properties["num_train_samples"]) for (_, get_properties_res) in results
         ]
 
         return sample_counts

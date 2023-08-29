@@ -124,15 +124,6 @@ class HospitalClient(NumpyClippingClient):
             {"accuracy": accuracy},
         )
 
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
-        """
-        Return properties of client.
-        First initializes the client because this is called prior to the first
-        federated learning round.
-        """
-        self.setup_client(config)
-        return {"num_samples": self.num_examples["train_set"]}
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")

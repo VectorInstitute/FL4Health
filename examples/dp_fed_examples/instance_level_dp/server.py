@@ -78,6 +78,7 @@ def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
 
     # Server performs simple FedAveraging with Instance Level Differential Privacy
+    # Must be FedAvg sampling to ensure privacy loss is computed correctly
     strategy = FedAvgSampling(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds

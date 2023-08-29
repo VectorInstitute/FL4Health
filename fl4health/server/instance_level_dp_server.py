@@ -40,12 +40,7 @@ class InstanceLevelDPServer(FlServer):
         )
 
         # Ensure that one of local_epochs and local_steps is passed (and not both)
-        assert (
-            isinstance(local_epochs, int)
-            or isinstance(local_steps, int)
-            and not (isinstance(local_epochs, int) and isinstance(local_steps, int))
-        )
-
+        assert isinstance(local_epochs, int) ^ isinstance(local_steps, int)
         self.accountant: FlInstanceLevelAccountant
         self.local_steps = local_steps
         self.local_epochs = local_epochs
@@ -53,7 +48,6 @@ class InstanceLevelDPServer(FlServer):
         # Whether or not we have to convert local_steps to local_epochs
         self.convert_steps_to_epochs = True if self.local_epochs is None else False
         self.noise_multiplier = noise_multiplier
-        self.local_epochs = local_epochs
         self.batch_size = batch_size
         self.num_server_rounds = num_server_rounds
         self.delta = delta
@@ -77,9 +71,9 @@ class InstanceLevelDPServer(FlServer):
 
         if self.convert_steps_to_epochs:
             # Compute average number of samples per client so we can estimate local_epochs
-            samples_per_client = total_samples / len(sample_counts)
             assert isinstance(self.local_steps, int)
-            self.local_epochs = ceil((self.local_steps * self.batch_size) / samples_per_client)
+            epochs_per_client = [ceil(self.local_steps * self.batch_size / count) for count in sample_counts]
+            self.local_epochs = max(epochs_per_client)
 
         assert isinstance(self.local_epochs, int)
 
@@ -87,7 +81,7 @@ class InstanceLevelDPServer(FlServer):
             client_sampling_rate=self.strategy.fraction_fit,
             noise_multiplier=self.noise_multiplier,
             epochs_per_round=self.local_epochs,
-            client_batch_sizes=[self.batch_size for _ in range(len(sample_counts))],
+            client_batch_sizes=[self.batch_size] * len(sample_counts),
             client_dataset_sizes=sample_counts,
         )
 

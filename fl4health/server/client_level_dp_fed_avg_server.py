@@ -61,7 +61,6 @@ class ClientLevelDPFedAvgServer(FlServer):
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 
         num_clients = len(sample_counts)
-        num_clients_sampled = ceil(len(sample_counts) * self.strategy.fraction_fit)
         target_delta = self.delta if self.delta is not None else 1 / num_clients
 
         if isinstance(self._client_manager, PoissonSamplingClientManager):
@@ -70,6 +69,7 @@ class ClientLevelDPFedAvgServer(FlServer):
             )
         else:
             assert isinstance(self._client_manager, FixedSamplingWithoutReplacementClientManager)
+            num_clients_sampled = ceil(len(sample_counts) * self.strategy.fraction_fit)
             self.accountant = FlClientLevelAccountantFixedSamplingNoReplacement(
                 n_total_clients=num_clients,
                 n_clients_sampled=num_clients_sampled,

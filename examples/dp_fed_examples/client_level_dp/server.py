@@ -62,7 +62,7 @@ def main(config: Dict[str, Any]) -> None:
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
-    # Server performs simple FedAveraging as it's server-side optimization strategy
+    # Server performs unweighted FedAveraging with client level differential privacy
     strategy = ClientLevelDPFedAvgM(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
