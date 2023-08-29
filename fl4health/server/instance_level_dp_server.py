@@ -70,8 +70,10 @@ class InstanceLevelDPServer(FlServer):
         total_samples = sum(sample_counts)
 
         if self.convert_steps_to_epochs:
-            # Compute average number of samples per client so we can estimate local_epochs
+            # Compute the ceiling of number of local epochs per clients and take max as local epochs
+            # Ensures we do not underestimate the privacy loss
             assert isinstance(self.local_steps, int)
+
             epochs_per_client = [ceil(self.local_steps * self.batch_size / count) for count in sample_counts]
             self.local_epochs = max(epochs_per_client)
 
