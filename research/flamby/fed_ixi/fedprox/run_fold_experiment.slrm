@@ -30,6 +30,7 @@
 #   research/flamby/fed_ixi/fedprox/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
+#   0.1 \
 #   0.0001 \
 #   0.0.0.0:8080
 #
@@ -62,8 +63,9 @@ SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
-CLIENT_LR=$5
-SERVER_ADDRESS=$6
+CLIENT_MU=$5
+CLIENT_LR=$6
+SERVER_ADDRESS=$7
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -120,6 +122,7 @@ do
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
+        --mu ${CLIENT_MU} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.

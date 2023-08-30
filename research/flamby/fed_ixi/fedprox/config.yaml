@@ -1,9 +1,6 @@
 # Parameters that describe server
 n_server_rounds: 10 # The number of rounds to run FL
 
-adaptive_proximal_weight: False # Whether to use adaptive proximal weight or not
-proximal_weight : 0.1 # Initial proximal weight
-
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)

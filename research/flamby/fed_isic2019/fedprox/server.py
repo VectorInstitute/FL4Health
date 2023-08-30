@@ -21,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -48,10 +48,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
-        proximal_weight_delta=config["proximal_weight_delta"],
-        proximal_weight_patience=config["proximal_weight_patience"],
+        proximal_weight=mu,
     )
 
     server = FedproxServer(client_manager, client_model, strategy, checkpointer)
@@ -97,8 +94,9 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    main(config, args.server_address, args.mu, args.artifact_dir, args.run_name)
