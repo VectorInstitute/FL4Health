@@ -204,7 +204,6 @@ class ScaffoldClient(NumpyFlClient):
         )
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ScaffoldTrainStepOutput:
-
         # Forward pass on global model and update global parameters
         self.optimizer.zero_grad()
         pred = self.model(input)

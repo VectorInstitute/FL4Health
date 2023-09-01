@@ -17,10 +17,10 @@ from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
-class FedAvgDynamicLayer(FedAvgSampling):
+class FedAvgDynamicLayer(BasicFedAvg):
     """
     A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
     any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
@@ -44,6 +44,8 @@ class FedAvgDynamicLayer(FedAvgSampling):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_aggregation: bool = True,
+        weighted_losses: bool = True,
     ) -> None:
         super().__init__(
             fraction_fit=fraction_fit,
@@ -56,6 +58,8 @@ class FedAvgDynamicLayer(FedAvgSampling):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=weighted_aggregation,
+            weighted_losses=weighted_losses,
         )
         self.parameter_packer = ParameterPackerWithLayerNames()
 
@@ -99,6 +103,16 @@ class FedAvgDynamicLayer(FedAvgSampling):
 
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
+        Aggregate the different layers across clients that have contributed to a layer. This aggregation may be
+        weighted or unweighted.
+        """
+        if self.weighted_aggregation:
+            return self.weighted_aggregate(results)
+        else:
+            return self.unweighted_aggregate(results)
+
+    def weighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
+        """
         Results consists of the layer weights (and their names) sent by clients
         who participated in this round of training.
         Since each client can send an arbitrary subset of layers,
@@ -115,6 +129,29 @@ class FedAvgDynamicLayer(FedAvgSampling):
 
         name_to_layers_aggregated = {
             name_key: reduce(np.add, names_to_layers[name_key]) / total_num_examples[name_key]
+            for name_key in names_to_layers
+        }
+
+        return name_to_layers_aggregated
+
+    def unweighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
+        """
+        Results consists of the layer weights (and their names) sent by clients
+        who participated in this round of training.
+        Since each client can send an arbitrary subset of layers,
+        the aggregate performs uniform averaging for each layer separately.
+        """
+        names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
+        total_num_clients: DefaultDict[str, int] = defaultdict(int)
+
+        for packed_layers, _ in results:
+            layers, names = self.parameter_packer.unpack_parameters(packed_layers)
+            for layer, name in zip(layers, names):
+                names_to_layers[name].append(layer)
+                total_num_clients[name] += 1
+
+        name_to_layers_aggregated = {
+            name_key: reduce(np.add, names_to_layers[name_key]) / total_num_clients[name_key]
             for name_key in names_to_layers
         }
 

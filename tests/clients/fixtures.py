@@ -19,7 +19,6 @@ from fl4health.utils.metrics import Accuracy
 
 @pytest.fixture
 def get_client(type: type, model: nn.Module) -> NumpyFlClient:
-
     client: NumpyFlClient
     if type == ScaffoldClient:
         client = ScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))

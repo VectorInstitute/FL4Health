@@ -6,10 +6,10 @@ from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 
-from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
 
-class PoissonSamplingClientManager(BaseSamplingManager):
+class PoissonSamplingClientManager(BaseFractionSamplingManager):
     """Overrides the Simple Client Manager to Provide Poisson Sampling for Clients rather than
     fixed without replacement sampling"""
 
