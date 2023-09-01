@@ -1,15 +1,18 @@
 import random
 import string
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Optional, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common import Config, NDArrays, Scalar
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 
@@ -24,8 +27,12 @@ class NumpyFlClient(NumPyClient):
         self.initialized = False
         self.data_path = data_path
         self.device = device
+
         self.train_loader: DataLoader
-        self.num_examples: Dict[str, int]
+        self.val_loader: DataLoader
+        self.criterion: _Loss
+        self.num_train_examples: int
+        self.num_val_examples: int
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
         self.wandb_reporter: Optional[ClientWandBReporter] = None
@@ -44,12 +51,54 @@ class NumpyFlClient(NumPyClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        This method should be used to set up all of the required components for the client through the config passed
-        by the server and need only be done once. The quintessential example is data loaders with a batch size set by
-        the server in the config. The parameter initialized should be set to true when this function is finished.
-        Overriding this class and calling super is the preferred flow.
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
+        self.model = self.get_model(config)
+        train_loader, val_loader = self.get_data_loaders(config)
+        self.train_loader = train_loader
+        self.val_loader = val_loader
+
+        num_train_samples = len(self.train_loader.dataset)  # type: ignore
+        num_val_samples = len(self.val_loader.dataset)  # type: ignore
+        self.num_train_samples = num_train_samples
+        self.num_val_samples = num_val_samples
+
+        self.optimizer = self.get_optimizer(self.model, config)
+        self.parameter_exchanger = self.get_parameter_exchanger(config)
+        self.criterion = self.get_criterion(config)
+
         self.initialized = True
+
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+        """
+        User defined method that returns a PyTorch Train DataLoader
+        and optionally a PyTorch Validation DataLoader
+        """
+        raise NotImplementedError
+
+    def get_criterion(self, config: Config) -> _Loss:
+        """
+        Method that the user defines returning the criterion
+        """
+        raise NotImplementedError
+
+    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
+        """
+        Method to be defined by user that returns the PyTorch optimizer used to train models locally
+        """
+        raise NotImplementedError
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        """
+        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
+        """
+        return FullParameterExchanger()
+
+    def get_model(self, config: Config) -> nn.Module:
+        """
+        User defined method that Returns PyTorch model
+        """
+        raise NotImplementedError
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
@@ -76,9 +125,6 @@ class NumpyFlClient(NumPyClient):
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
-        Return properties of client.
-        First initializes the client because this is called prior to the first
-        federated learning round.
+        Return properties (train and validation dataset sample counts) of client.
         """
-        self.setup_client(config)
-        return {"num_train_samples": self.num_examples["train_set"]}
+        return {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples}

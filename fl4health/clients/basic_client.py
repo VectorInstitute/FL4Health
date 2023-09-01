@@ -52,7 +52,7 @@ class BasicClient(NumpyFlClient):
         # calculation results.
         return (
             self.get_parameters(config),
-            self.num_examples["train_set"],
+            self.num_train_samples,
             metric_values,
         )
 
@@ -67,7 +67,7 @@ class BasicClient(NumpyFlClient):
         # calculation results.
         return (
             loss,
-            self.num_examples["validation_set"],
+            self.num_val_samples,
             metric_values,
         )
 
