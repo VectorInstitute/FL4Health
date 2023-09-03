@@ -1,63 +1,10 @@
-from typing import Optional
-
 import numpy as np
 import pytest
-from flwr.common import (
-    DisconnectRes,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    GetParametersIns,
-    GetParametersRes,
-    GetPropertiesIns,
-    GetPropertiesRes,
-    ReconnectIns,
-)
-from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-
-
-class CustomClientProxy(ClientProxy):
-    """Subclass of ClientProxy."""
-
-    def get_properties(
-        self,
-        ins: GetPropertiesIns,
-        timeout: Optional[float],
-    ) -> GetPropertiesRes:
-        raise NotImplementedError
-
-    def get_parameters(
-        self,
-        ins: GetParametersIns,
-        timeout: Optional[float],
-    ) -> GetParametersRes:
-        raise NotImplementedError
-
-    def fit(
-        self,
-        ins: FitIns,
-        timeout: Optional[float],
-    ) -> FitRes:
-        raise NotImplementedError
-
-    def evaluate(
-        self,
-        ins: EvaluateIns,
-        timeout: Optional[float],
-    ) -> EvaluateRes:
-        raise NotImplementedError
-
-    def reconnect(
-        self,
-        ins: ReconnectIns,
-        timeout: Optional[float],
-    ) -> DisconnectRes:
-        raise NotImplementedError
+from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
 @pytest.fixture
