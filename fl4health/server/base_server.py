@@ -42,7 +42,7 @@ class FlServer(Server):
 
     def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
-        # the StrategyWithPolling ABC andimplement a configure_poll function
+        # the StrategyWithPolling ABC and implement a configure_poll function
         log(INFO, "Polling Clients for sample counts")
         assert isinstance(self.strategy, StrategyWithPolling)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
