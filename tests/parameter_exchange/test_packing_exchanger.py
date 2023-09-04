@@ -6,6 +6,7 @@ from flwr.common.typing import NDArrays
 
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
+    ParameterPackerFedProx,
     ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
     ParameterPackerWithLayerNames,
@@ -66,6 +67,30 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
         assert model_weight.size == unpacked_model_weight.size
 
     assert clipping_bit == unpacked_clipping_bit
+
+
+@pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
+def test_parameter_exchanger_FedProx(get_ndarrays: NDArrays) -> None:  # noqa
+    model_weights = get_ndarrays  # noqa
+    extra_fedprox_variable = 0.0
+
+    exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
+
+    packed_params = exchanger.pack_parameters(model_weights, extra_fedprox_variable)
+
+    assert len(packed_params) == len(model_weights) + 1
+
+    correct_packed_params = model_weights + [np.array(extra_fedprox_variable)]
+
+    for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
+        assert packed_param.size == correct_packed_param.size
+
+    unpacked_model_weights, unpacked_extra_fedprox_variable = exchanger.unpack_parameters(packed_params)
+
+    for model_weight, unpacked_model_weight in zip(model_weights, unpacked_model_weights):
+        assert model_weight.size == unpacked_model_weight.size
+
+    assert extra_fedprox_variable == unpacked_extra_fedprox_variable
 
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
