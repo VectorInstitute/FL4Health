@@ -122,6 +122,7 @@ do
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
+        --mu ${CLIENT_MU} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -141,7 +142,6 @@ do
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
-            --mu ${CLIENT_MU} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             > ${CLIENT_LOG_PATH} 2>&1 &
