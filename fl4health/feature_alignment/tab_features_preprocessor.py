@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from flwr.common.typing import NDArray
 from sklearn.compose import ColumnTransformer
@@ -34,4 +33,4 @@ class TabularFeaturesPreprocessor:
         )
 
     def align_features(self, df: pd.DataFrame) -> NDArray:
-        return np.array(self.column_transformer.fit_transform(df))
+        return self.column_transformer.fit_transform(df)
