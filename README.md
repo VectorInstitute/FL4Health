@@ -118,7 +118,7 @@ __NOTE__: The contents of the research folder is not packed with the FL4Health l
 
 All tests for the library are housed in the tests folder. These are run using `pytest`, see [Running Tests](#running-tests) below. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are are fixed.
 
-If you use VSCode for development, you can setup the tests with the testing integration so that you can run debugging and other IDK features. Setup will vary depending on your VSCode environment, but in your .vscode folder your `settings.json` might look something like
+If you use VSCode for development, you can setup the tests with the testing integration so that you can run debugging and other IDE features. Setup will vary depending on your VSCode environment, but in your .vscode folder your `settings.json` might look something like
 
 ``` JSON
 {
@@ -135,7 +135,7 @@ If you use VSCode for development, you can setup the tests with the testing inte
         "."
     ]
 }
-``````
+```
 
 __NOTE__: The contents of the tests folder is not packed with the FL4Health library on release to PyPi
 
