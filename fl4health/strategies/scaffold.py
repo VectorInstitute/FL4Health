@@ -44,7 +44,7 @@ class Scaffold(BasicFedAvg):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        weighted_losses: bool = True,
+        weighted_eval_losses: bool = True,
         learning_rate: float = 1.0,
         initial_control_variates: Parameters,
     ) -> None:
@@ -79,8 +79,8 @@ class Scaffold(BasicFedAvg):
             Metrics aggregation function, optional.
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
             Metrics aggregation function, optional.
-                weighted_losses: bool, Optional
-        Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
+        weighted_eval_losses: bool, Optional
+            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
             average. FedAvg default is weighted average of the losses by client dataset counts.
         learning_rate: Optional[float]
             Learning rate for server side optimization.
@@ -102,7 +102,7 @@ class Scaffold(BasicFedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
             weighted_aggregation=False,
-            weighted_losses=weighted_losses,
+            weighted_eval_losses=weighted_eval_losses,
         )
         self.learning_rate = learning_rate
         self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))

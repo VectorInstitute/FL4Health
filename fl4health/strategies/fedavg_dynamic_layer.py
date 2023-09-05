@@ -45,7 +45,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_aggregation: bool = True,
-        weighted_losses: bool = True,
+        weighted_eval_losses: bool = True,
     ) -> None:
         super().__init__(
             fraction_fit=fraction_fit,
@@ -59,7 +59,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
             weighted_aggregation=weighted_aggregation,
-            weighted_losses=weighted_losses,
+            weighted_eval_losses=weighted_eval_losses,
         )
         self.parameter_packer = ParameterPackerWithLayerNames()
 

@@ -70,7 +70,7 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
 
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
-def test_parameter_exchanger_FedProx(get_ndarrays: NDArrays) -> None:  # noqa
+def test_parameter_exchanger_fedprox(get_ndarrays: NDArrays) -> None:  # noqa
     model_weights = get_ndarrays  # noqa
     extra_fedprox_variable = 0.0
 

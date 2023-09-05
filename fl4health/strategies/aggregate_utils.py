@@ -25,8 +25,4 @@ def aggregate_losses(results: List[Tuple[int, float]], weighted: bool = True) ->
     if weighted:
         return weighted_loss_avg(results)
     else:
-        # Number of client losses to average
-        num_clients = len(results)
-        # Weighting each loss uniformly by number of losses. Sum produces uniform average.
-        weighted_losses = [(1 / num_clients) * loss for _, loss in results]
-        return sum(weighted_losses)
+        return np.mean([loss for _, loss in results])

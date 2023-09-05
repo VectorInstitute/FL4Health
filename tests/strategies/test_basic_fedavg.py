@@ -54,13 +54,13 @@ weighted_strategy = BasicFedAvg(
     fraction_evaluate=0.8,
     fraction_fit=0.8,
     weighted_aggregation=True,
-    weighted_losses=True,
+    weighted_eval_losses=True,
 )
 unweighted_strategy = BasicFedAvg(
     evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
     fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
     weighted_aggregation=False,
-    weighted_losses=False,
+    weighted_eval_losses=False,
 )
 
 

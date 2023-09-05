@@ -41,6 +41,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         *,
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
+        min_fit_clients: int = 2,
+        min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: Optional[
             Callable[
@@ -55,7 +57,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_aggregation: bool = True,
-        weighted_losses: bool = True,
+        weighted_eval_losses: bool = True,
     ) -> None:
         """Federated Averaging strategy.
 
@@ -64,9 +66,17 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         Parameters
         ----------
         fraction_fit : float, optional
-            Fraction of clients used during training. Defaults to 1.0.
+            Fraction of clients used during training. In case `min_fit_clients`
+            is larger than `fraction_fit * available_clients`, `min_fit_clients`
+            will still be sampled. Defaults to 1.0.
         fraction_evaluate : float, optional
-            Fraction of clients used during validation. Defaults to 1.0.
+            Fraction of clients used during validation. In case `min_evaluate_clients`
+            is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
+            will still be sampled. Defaults to 1.0.
+        min_fit_clients : int, optional
+            Minimum number of clients used during training. Defaults to 2.
+        min_evaluate_clients : int, optional
+            Minimum number of clients used during validation. Defaults to 2.
         min_available_clients : int, optional
             Minimum number of total clients in the system. Defaults to 2.
         evaluate_fn : Optional[
@@ -91,13 +101,15 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         weighted_aggregation: bool, Optional.
             Defaults to True, determines whether parameter aggregation is a linearly weighted average or a uniform
             average. FedAvg default is weighted average by client dataset counts.
-        weighted_losses: bool, Optional
+        weighted_eval_losses: bool, Optional
             Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
             average. FedAvg default is weighted average of the losses by client dataset counts.
         """
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             evaluate_fn=evaluate_fn,
             on_fit_config_fn=on_fit_config_fn,
@@ -108,7 +120,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         )
         self.weighted_aggregation = weighted_aggregation
-        self.weighted_losses = weighted_losses
+        self.weighted_eval_losses = weighted_eval_losses
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -228,7 +240,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         # Get losses and number of examples from the evaluation results.
         loss_results = [(evaluate_res.num_examples, evaluate_res.loss) for _, evaluate_res in results]
         # Then aggregate the losses
-        loss_aggregated = aggregate_losses(loss_results, self.weighted_losses)
+        loss_aggregated = aggregate_losses(loss_results, self.weighted_eval_losses)
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}

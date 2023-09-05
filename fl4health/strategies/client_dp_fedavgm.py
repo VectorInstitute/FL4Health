@@ -65,7 +65,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_aggregation: bool = False,
-        weighted_losses: bool = True,
+        weighted_eval_losses: bool = True,
         per_client_example_cap: Optional[float] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
@@ -110,7 +110,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             Metrics aggregation function, optional.
         weighted_aggregation: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
-        weighted_losses: bool, Optional
+        weighted_eval_losses: bool, Optional
             Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
             average. FedAvg default is weighted average of the losses by client dataset counts.
         per_client_example_cap: Optional[float]. Defaults to None.
@@ -153,7 +153,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
             weighted_aggregation=weighted_aggregation,
-            weighted_losses=weighted_losses,
+            weighted_eval_losses=weighted_eval_losses,
         )
         # If per_client_example_cap is None, it will be set as the total samples across clients
         self.per_client_example_cap = per_client_example_cap
