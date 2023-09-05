@@ -7,7 +7,7 @@ license = "Apache-2.0"
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License"
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 
