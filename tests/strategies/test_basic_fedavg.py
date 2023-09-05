@@ -13,6 +13,7 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.server.client_manager import SimpleClientManager
+from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.strategies.basic_fedavg import BasicFedAvg
@@ -32,7 +33,7 @@ client0_res = constructed_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
 client1_res = constructed_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
 client2_res = constructed_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
 client3_res = constructed_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
-clients_res = [
+clients_res: List[Tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -76,6 +77,7 @@ def test_aggregate_fit() -> None:
     # Second layer weighted aggregate should be all 25/8
     weighted_target_2 = np.ones((4, 4)) * (25.0 / 8.0)
 
+    assert parameters is not None
     aggregated_ndarrays = parameters_to_ndarrays(parameters)
     assert np.allclose(weighted_target_1, aggregated_ndarrays[0])
     assert np.allclose(weighted_target_2, aggregated_ndarrays[1])
@@ -88,6 +90,7 @@ def test_aggregate_fit() -> None:
     # Second layer unweighted aggregate should be all 5/2
     unweighted_target_2 = np.ones((4, 4)) * (5.0 / 2.0)
 
+    assert parameters is not None
     aggregated_ndarrays = parameters_to_ndarrays(parameters)
     assert np.allclose(unweighted_target_1, aggregated_ndarrays[0])
     assert np.allclose(unweighted_target_2, aggregated_ndarrays[1])
@@ -101,7 +104,7 @@ client0_eval_res = constructed_evaluate_res(1.0, 0.1, 50)
 client1_eval_res = constructed_evaluate_res(1.0, 0.2, 50)
 client2_eval_res = constructed_evaluate_res(3.0, 0.3, 100)
 client3_eval_res = constructed_evaluate_res(4.0, 0.4, 200)
-clients_eval_res = [
+clients_eval_res: List[Tuple[ClientProxy, EvaluateRes]] = [
     (CustomClientProxy("c0"), client0_eval_res),
     (CustomClientProxy("c1"), client1_eval_res),
     (CustomClientProxy("c2"), client2_eval_res),
