@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.1.6"
+version = "0.1.7"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
-license = "MIT"
+license = "Apache-2.0"
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 

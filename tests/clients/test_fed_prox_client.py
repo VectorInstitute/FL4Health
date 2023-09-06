@@ -40,7 +40,10 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     config: Config = {}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
-    fed_prox_client.set_parameters(params, config)
+    proximal_weight = 0.0
+    packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
+
+    fed_prox_client.set_parameters(packed_params, config)
 
     assert fed_prox_client.initial_tensors is not None
     # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)
@@ -57,14 +60,20 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     config: Config = {}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
-    fed_prox_client.set_parameters(params, config)
+    proximal_weight = 0.0
+    packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
+    fed_prox_client.set_parameters(packed_params, config)
 
     # We've taken no training steps so the proximal loss should be 0.0
     assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
-    # Circumventing the set_parameters function to update the model weights
-    fed_prox_client.parameter_exchanger.pull_parameters(perturbed_params, fed_prox_client.model, config)
+    perturbed_proximal_weight = 0.0
+    packed_perturbed_params = fed_prox_client.parameter_exchanger.pack_parameters(
+        perturbed_params, perturbed_proximal_weight
+    )
+
+    fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
 
@@ -80,11 +89,17 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     config: Config = {}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
-    fed_prox_client.set_parameters(params, config)
+    proximal_weight = 0.0
+    packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
+    fed_prox_client.set_parameters(packed_params, config)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
-    # Circumventing the set_parameters function to update the model weights
-    fed_prox_client.parameter_exchanger.pull_parameters(perturbed_params, fed_prox_client.model, config)
+    perturbed_proximal_weight = 1.0
+    packed_perturbed_params = fed_prox_client.parameter_exchanger.pack_parameters(
+        perturbed_params, perturbed_proximal_weight
+    )
+
+    fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
     proximal_loss.backward()
@@ -97,3 +112,28 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.testing.assert_close(
         linear_gradient, torch.tensor([[0.01, 0.01], [0.01, 0.01], [0.01, 0.01]]), atol=0.0001, rtol=1.0
     )
+
+
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCNN())])
+def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
+    torch.manual_seed(42)
+    fed_prox_client = get_client
+    config: Config = {}
+
+    params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
+    proximal_weight = 0.0
+    packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
+    fed_prox_client.set_parameters(packed_params, config)
+
+    # We've taken no training steps so the proximal loss should be 0.0
+    assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
+
+    perturbed_params = [layer_weights + 0.1 for layer_weights in params]
+    perturbed_proximal_weight = 1.0
+    packed_perturbed_params = fed_prox_client.parameter_exchanger.pack_parameters(
+        perturbed_params, perturbed_proximal_weight
+    )
+
+    fed_prox_client.set_parameters(packed_perturbed_params, config)
+
+    assert fed_prox_client.proximal_weight == perturbed_proximal_weight

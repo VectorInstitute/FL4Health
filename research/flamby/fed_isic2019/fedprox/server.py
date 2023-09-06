@@ -8,11 +8,11 @@ import flwr as fl
 from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
-from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
+from research.flamby.flamby_servers.fedprox_server import FedproxServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
@@ -21,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -37,7 +37,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     client_model = Baseline()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedProx(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -48,9 +48,10 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        proximal_weight=mu,
     )
 
-    server = FullExchangeServer(client_manager, client_model, strategy, checkpointer)
+    server = FedproxServer(client_manager, client_model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -93,8 +94,9 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    main(config, args.server_address, args.mu, args.artifact_dir, args.run_name)
