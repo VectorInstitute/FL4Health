@@ -1,5 +1,5 @@
 import math
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn
@@ -9,10 +9,56 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 
+T = TypeVar("T", bound=nn.Module)
+
 
 class FixedLayerExchanger(ParameterExchanger):
     def __init__(self, layers_to_transfer: List[str]) -> None:
         self.layers_to_transfer = layers_to_transfer
+
+    def apply_layer_filter(self, model: nn.Module) -> NDArrays:
+        # NOTE: Filtering layers only works if each client exchanges exactly the same layers
+        model_state_dict = model.state_dict()
+        return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
+
+    def push_parameters(
+        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+    ) -> NDArrays:
+        return self.apply_layer_filter(model)
+
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+        current_state = model.state_dict()
+        # update the correct layers to new parameters
+        for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
+            current_state[layer_name] = torch.tensor(layer_parameters)
+        model.load_state_dict(current_state, strict=True)
+
+
+class LayerExchangerWithExclusions(ParameterExchanger):
+    """
+    This class implements exchanging all model layers except those matching a specified set of types. The constructor
+    is provided with model in order to extract the proper layers to be exchanged based on the exclusion criteria
+    """
+
+    def __init__(self, model: nn.Module, module_exclusions: Set[Type[T]]) -> None:
+        self.module_exclusions = module_exclusions
+        self.modules_to_filter: Set[str] = {
+            # Note: Remove duplicate needs to be false in case modules have been tied together with shared objects.
+            name
+            for name, module in model.named_modules(remove_duplicate=False)
+            if self.should_module_be_excluded(module) and name
+        }
+        # Needs to be an ordered collection to facilitate exchange consistency between server and client
+        self.layers_to_transfer: List[str] = self.get_layers_to_transfer(model)
+
+    def should_module_be_excluded(self, module: Type[T]) -> bool:
+        return type(module) in self.module_exclusions
+
+    def should_layer_be_excluded(self, layer_name: str) -> bool:
+        return any([layer_name.startswith(module_to_filter) for module_to_filter in self.modules_to_filter])
+
+    def get_layers_to_transfer(self, model: nn.Module) -> List[str]:
+        return [name for name in model.state_dict().keys() if not self.should_layer_be_excluded(name)]
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
         # NOTE: Filtering layers only works if each client exchanges exactly the same layers
