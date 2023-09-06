@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
@@ -11,7 +12,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
@@ -21,7 +22,8 @@ def get_initial_model_information() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
+    parameter_exchanger = LayerExchangerWithExclusions(initial_model, {nn.BatchNorm2d})
+    model_weights = parameter_exchanger.push_parameters(initial_model)
     return ndarrays_to_parameters(model_weights)
 
 
@@ -66,9 +68,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         weighted_eval_losses=True,
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    server = FlServer(client_manager, strategy)
 
     fl.server.start_server(
         server=server,

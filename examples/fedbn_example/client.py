@@ -12,7 +12,6 @@ from flwr.common.typing import Config
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
-from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -41,9 +40,6 @@ class MnistFedBNClient(BasicClient):
         # All that we need to do on the client side to apply the FedBN approach is to use the
         # LayerExchangerWithExclusions and specify that we want to exclude the BatchNorm layers of our model
         self.parameter_exchanger = LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
-
-        # Setup W and B reporter
-        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 

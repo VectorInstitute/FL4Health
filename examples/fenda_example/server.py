@@ -10,6 +10,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.config import load_config
 
 
@@ -17,7 +18,9 @@ def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+    parameter_exchanger = FixedLayerExchanger(initial_model.layers_to_exchange())
+    model_weights = parameter_exchanger.push_parameters(initial_model)
+    return ndarrays_to_parameters(model_weights)
 
 
 def fit_config(
