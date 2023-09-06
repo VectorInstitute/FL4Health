@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config, NDArrays, Scalar
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -26,18 +27,19 @@ class FedProxClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         use_wandb_reporter: bool = False,
-        use_checkpointer: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        proximal_weight: float = 0.1,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             use_wandb_reporter=use_wandb_reporter,
-            use_checkpointer=use_checkpointer,
+            checkpointer=checkpointer,
         )
-        self.proximal_weight: float = 0.1
+        self.proximal_weight = proximal_weight
         self.initial_tensors: List[torch.Tensor]
-        self.current_vanilla_loss: float
+        self.current_loss: float
         self.parameter_exchanger: ParameterExchangerWithPacking
 
     def get_proximal_loss(self) -> torch.Tensor:
@@ -66,7 +68,7 @@ class FedProxClient(BasicClient):
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the proximal weight
         # Therefore it can only be computed locally
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_vanilla_loss)
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
         return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -98,9 +100,13 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def update_after_train(self) -> None:
-        assert self.current_losses is not None
-        self.current_vanilla_loss = self.current_losses["vanilla_loss"]
+    def update_after_train(self, losses: Dict[str, Scalar]) -> None:
+        loss = losses["loss"]
+        assert isinstance(loss, float)
+        self.current_loss = loss
+
+    def get_additional_loss(self) -> Optional[torch.Tensor]:
+        return self.get_proximal_loss()
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

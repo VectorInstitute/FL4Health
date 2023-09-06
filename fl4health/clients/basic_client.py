@@ -9,6 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -29,7 +30,7 @@ class BasicClient(NumpyFlClient):
         metrics: Sequence[Metric],
         device: torch.device,
         use_wandb_reporter: bool = False,
-        use_checkpointer: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
@@ -45,7 +46,7 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples: int
 
         self.use_wandb_reporter = use_wandb_reporter
-        self.use_checkpointer = use_checkpointer
+        self.checkpointer = checkpointer
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
@@ -105,27 +106,17 @@ class BasicClient(NumpyFlClient):
 
         self.current_meter.update(preds, target)
 
-    def init_losses(self) -> None:
-        self.current_losses = None
-
-    def init_meter(self) -> None:
-        self.current_meter
-
     def compute_metrics(self) -> Dict[str, Scalar]:
         assert self.current_meter is not None
         metrics = self.current_meter.compute()
+        self.current_meter.clear()
         return metrics
 
     def compute_losses(self, step: int) -> Dict[str, Scalar]:
         assert self.current_losses is not None
         losses: Dict[str, Scalar] = {key: val / step for key, val in self.current_losses.items()}
+        self.current_losses = None
         return losses
-
-    def update_after_step(self, step: int) -> None:
-        pass
-
-    def update_after_train(self) -> None:
-        pass
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> None:
         """
@@ -137,9 +128,13 @@ class BasicClient(NumpyFlClient):
         # Call user defined methods to get predictions and compute loss
         preds = self.predict(input)
         loss, loss_dict = self.compute_loss(preds, target)
-
-        # Loss dict only has total loss else total_loss plus other subcomponents of the loss returned in loss_dict
-        loss_dict = {"total_loss": loss, **loss_dict} if loss_dict is not None else {"total_loss": loss}
+        loss_dict.update({"loss": loss})
+        regularization_loss = self.get_additional_loss()
+        if regularization_loss is not None:
+            combined_loss = loss + regularization_loss
+            additional_loss_dict = {"regularization_loss": regularization_loss, "combined_loss": combined_loss}
+            loss_dict.update(additional_loss_dict)
+            loss = combined_loss
 
         # Update losses and metrics
         self.update_losses(loss_dict)
@@ -158,7 +153,12 @@ class BasicClient(NumpyFlClient):
             preds = self.predict(input)
             loss, loss_dict = self.compute_loss(preds, target)
 
-        loss_dict = {"total_loss": loss, **loss_dict} if loss_dict is not None else {"total_loss": loss}
+        loss_dict.update({"loss": loss})
+        additional_loss = self.get_additional_loss()
+        if additional_loss is not None:
+            combined_loss = loss + additional_loss
+            additional_loss_dict = {"additional_loss": additional_loss, "combined_loss": combined_loss}
+            loss_dict.update(additional_loss_dict)
 
         self.update_losses(loss_dict)
         self.update_meter(preds, target)
@@ -167,8 +167,6 @@ class BasicClient(NumpyFlClient):
         self.model.train()
 
         for local_epoch in range(epochs):
-            self.init_losses()
-            self.init_meter()
             for step, (input, target) in enumerate(self.train_loader):
                 input, target = input.to(self.device), target.to(self.device)
                 self.train_step(input, target)
@@ -182,7 +180,7 @@ class BasicClient(NumpyFlClient):
             log(INFO, f"Local Epoch: {local_epoch}")
             self._handle_logging(losses, metrics)
 
-        self.update_after_train()
+        self.update_after_train(losses)
         # Return final training metrics
         return metrics
 
@@ -192,8 +190,6 @@ class BasicClient(NumpyFlClient):
     ) -> Dict[str, Scalar]:
         self.model.train()
         train_iterator = iter(self.train_loader)
-        self.init_losses()
-        self.init_meter()
 
         for step in range(steps):
             try:
@@ -213,7 +209,7 @@ class BasicClient(NumpyFlClient):
         metrics = self.compute_metrics()
         self._handle_logging(losses, metrics)
 
-        self.update_after_train()
+        self.update_after_train(losses)
         return metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
@@ -227,7 +223,7 @@ class BasicClient(NumpyFlClient):
         losses = self.compute_losses(len(self.val_loader))
         metrics = self.compute_metrics()
         self._handle_logging(losses, metrics, is_validation=True)
-        total_loss = losses["total_loss"]
+        total_loss = losses["loss"] if "combined_loss" not in losses.keys() else losses["combined_loss"]
         assert isinstance(total_loss, float)
         self._maybe_checkpoint(total_loss)
         return total_loss, metrics
@@ -273,9 +269,7 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def compute_loss(
-        self, preds: torch.Tensor, target: torch.Tensor
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Method that the user defines returning loss and optionally a dictionairy with
         """
@@ -298,3 +292,12 @@ class BasicClient(NumpyFlClient):
         User defined method to get predictions given input
         """
         raise NotImplementedError
+
+    def update_after_step(self, step: int) -> None:
+        pass
+
+    def update_after_train(self, losses: Dict[str, Scalar]) -> None:
+        pass
+
+    def get_additional_loss(self) -> Optional[torch.Tensor]:
+        pass

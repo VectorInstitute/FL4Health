@@ -12,6 +12,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
@@ -25,14 +26,14 @@ class MnistFedProxClient(FedProxClient):
         metrics: Sequence[Metric],
         device: torch.device,
         use_wandb_reporter: bool = True,
-        use_checkpointer: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             use_wandb_reporter=use_wandb_reporter,
-            use_checkpointer=use_checkpointer,
+            checkpointer=checkpointer,
         )
         log(INFO, f"Client Name: {self.client_name}")
 
@@ -53,13 +54,9 @@ class MnistFedProxClient(FedProxClient):
         preds = self.model(input)
         return preds
 
-    def compute_loss(
-        self, preds: torch.Tensor, target: torch.Tensor
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
-        vanilla_loss = torch.nn.functional.cross_entropy(preds, target)
-        proximal_loss = self.get_proximal_loss()
-        total_loss = vanilla_loss + proximal_loss
-        return total_loss, {"vanilla_loss": vanilla_loss, "proximal_loss": proximal_loss}
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        loss = torch.nn.functional.cross_entropy(preds, target)
+        return loss, {}
 
 
 if __name__ == "__main__":

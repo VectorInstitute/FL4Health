@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -24,10 +24,8 @@ class CifarClient(BasicClient):
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def compute_loss(
-        self, preds: torch.Tensor, target: torch.Tensor
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
-        return torch.nn.functional.cross_entropy(preds, target), None
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        return torch.nn.functional.cross_entropy(preds, target), {}
 
     def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
         optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
