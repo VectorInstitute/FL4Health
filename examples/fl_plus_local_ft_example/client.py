@@ -10,7 +10,7 @@ from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy, AverageMeter, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 
 
 class CifarClient(BasicClient):
@@ -45,7 +45,6 @@ if __name__ == "__main__":
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
     # Run further local training after the federated learning has finished
-    meter = AverageMeter(metrics, "train_meter")
-    client.train_by_epochs(2, meter)
+    client.train_by_epochs(2)
     # Finally, we evaluate the model
-    client.validate(meter)
+    client.validate()

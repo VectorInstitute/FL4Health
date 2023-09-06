@@ -16,7 +16,7 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
-from fl4health.utils.metrics import Accuracy, AverageMeter, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 
 
 class TransformerPartialExchangeClient(BasicClient):
@@ -40,8 +40,7 @@ class TransformerPartialExchangeClient(BasicClient):
         num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
 
         if not testing:
-            meter = AverageMeter(self.metrics, "val_meter")
-            loss, metric_values = self.validate(meter)
+            loss, metric_values = self.validate()
             # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
             # calculation results.
             return (

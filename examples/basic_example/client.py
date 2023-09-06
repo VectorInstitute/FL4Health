@@ -1,12 +1,11 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
-from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -25,8 +24,10 @@ class CifarClient(BasicClient):
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_criterion(self, config: Config) -> _Loss:
-        return torch.nn.CrossEntropyLoss()
+    def compute_loss(
+        self, preds: torch.Tensor, target: torch.Tensor
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+        return torch.nn.functional.cross_entropy(preds, target), None
 
     def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
         optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
@@ -34,6 +35,10 @@ class CifarClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         return Net()
+
+    def predict(self, input: torch.Tensor) -> torch.Tensor:
+        preds = self.model(input)
+        return preds
 
 
 if __name__ == "__main__":

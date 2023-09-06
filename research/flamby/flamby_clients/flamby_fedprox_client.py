@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.utils.metrics import AccumulationMeter, Metric
+from fl4health.utils.metrics import Metric
 
 
 class FlambyFedProxClient(FedProxClient):
@@ -38,16 +38,14 @@ class FlambyFedProxClient(FedProxClient):
         if not self.initialized:
             self.setup_client(config)
 
-        meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train_by_steps(current_server_round, local_steps, meter)
+        metric_values = self.train_by_steps(local_steps)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             self.get_parameters(config),
-            self.num_examples["train_set"],
+            self.num_train_samples,
             metric_values,
         )
 
@@ -56,13 +54,11 @@ class FlambyFedProxClient(FedProxClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        meter = AccumulationMeter(self.metrics, "val_meter")
-        loss, metric_values = self.validate(current_server_round, meter)
+        loss, metric_values = self.validate()
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             loss,
-            self.num_examples["validation_set"],
+            self.num_val_samples,
             metric_values,
         )
