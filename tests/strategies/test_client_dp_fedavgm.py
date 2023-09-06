@@ -1,8 +1,12 @@
+from typing import List, Tuple
+
 import numpy as np
 import pytest
-from flwr.common import Parameters
+from flwr.common import Code, FitRes, NDArrays, Parameters, Status, ndarrays_to_parameters
+from flwr.server.client_proxy import ClientProxy
 
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
+from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 strategy = ClientLevelDPFedAvgM(
     initial_parameters=Parameters([], ""),
@@ -12,6 +16,27 @@ strategy = ClientLevelDPFedAvgM(
     weight_noise_multiplier=2.0,
     clipping_noise_mutliplier=5.0,
 )
+
+
+def construct_fit_res(parameters: NDArrays, metric: float, num_examples: int) -> FitRes:
+    return FitRes(
+        status=Status(Code.OK, ""),
+        parameters=ndarrays_to_parameters(parameters),
+        num_examples=num_examples,
+        metrics={"metric": metric},
+    )
+
+
+client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
+client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
+client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
+client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
+clients_res: List[Tuple[ClientProxy, FitRes]] = [
+    (CustomClientProxy("c0"), client0_res),
+    (CustomClientProxy("c1"), client1_res),
+    (CustomClientProxy("c2"), client2_res),
+    (CustomClientProxy("c3"), client3_res),
+]
 
 
 def test_modify_noise_multiplier() -> None:
@@ -50,24 +75,35 @@ def test_calculate_clipping_update() -> None:
     assert pytest.approx(strategy.clipping_bound, abs=0.00001) == 0.000979264
 
 
-def test_split_model_weights_and_clipping_bits() -> None:
+def test_unpacking_weights_and_clipping_bits() -> None:
     np.random.seed(42)
     n_layers = 4
     n_clients = 3
     n_client_datapoints = 10
-    weight_results = [
-        (
+    fit_res_results: List[FitRes] = [
+        construct_fit_res(
             [np.random.rand(2, 3) for _ in range(n_layers)] + [np.random.binomial(1, 0.5, 1).astype(float)],
+            0.1,
             n_client_datapoints,
         )
         for _ in range(n_clients)
     ]
-    weights_only, clip_bits_only = strategy.split_model_weights_and_clipping_bits(weight_results)
+    results: List[Tuple[ClientProxy, FitRes]] = list(
+        zip(
+            [CustomClientProxy("c0"), CustomClientProxy("c1"), CustomClientProxy("c2"), CustomClientProxy("c3")],
+            fit_res_results,
+        )
+    )
+    weights_and_counts, clip_bits_only = strategy.split_model_weights_and_clipping_bits(results)
+
     assert np.array_equal(clip_bits_only, [np.array([0]), np.array([0]), np.array([1])])
-    for i in range(n_layers):
-        layer_list = weight_results[0][0]
-        assert np.array_equal(weights_only[0][0][i], layer_list[i])
 
     for i in range(n_layers):
-        layer_list = weight_results[2][0]
-        assert np.array_equal(weights_only[2][0][i], layer_list[i])
+        layer_list = weights_and_counts[0][0]
+        assert np.array_equal(weights_and_counts[0][0][i], layer_list[i])
+
+    for i in range(n_layers):
+        layer_list = weights_and_counts[2][0]
+        assert np.array_equal(weights_and_counts[2][0][i], layer_list[i])
+
+    strategy.update_clipping_bound(clip_bits_only)
