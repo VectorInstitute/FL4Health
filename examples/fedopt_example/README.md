@@ -9,6 +9,8 @@ Therefore, the server must provide a unified vocabulary and label encoding schem
 The example also begins to separate out data loader construction and metrics calculations from the client and server
 code in order to begin abstracting such components.
 
+_NOTE_: This take a fair bit of time to run on CPU
+
 ## Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
 ```
