@@ -96,7 +96,7 @@ def test_unpacking_weights_and_clipping_bits() -> None:
     )
     weights_and_counts, clip_bits_only = strategy.split_model_weights_and_clipping_bits(results)
 
-    assert np.array_equal(clip_bits_only, [np.array([0]), np.array([0]), np.array([1])])
+    assert np.array_equal(clip_bits_only, [np.array(0), np.array(0), np.array(1)])
 
     for i in range(n_layers):
         layer_list = weights_and_counts[0][0]
