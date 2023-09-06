@@ -20,7 +20,7 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
-def constructed_fit_res(parameters: NDArrays, metric: float, num_examples: int) -> FitRes:
+def construct_fit_res(parameters: NDArrays, metric: float, num_examples: int) -> FitRes:
     return FitRes(
         status=Status(Code.OK, ""),
         parameters=ndarrays_to_parameters(parameters),
@@ -29,10 +29,10 @@ def constructed_fit_res(parameters: NDArrays, metric: float, num_examples: int) 
     )
 
 
-client0_res = constructed_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
-client1_res = constructed_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
-client2_res = constructed_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
-client3_res = constructed_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
+client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
+client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
+client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
+client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
 clients_res: List[Tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
@@ -96,14 +96,14 @@ def test_aggregate_fit() -> None:
     assert np.allclose(unweighted_target_2, aggregated_ndarrays[1])
 
 
-def constructed_evaluate_res(loss: float, metric: float, num_examples: int) -> EvaluateRes:
+def construct_evaluate_res(loss: float, metric: float, num_examples: int) -> EvaluateRes:
     return EvaluateRes(status=Status(Code.OK, ""), num_examples=num_examples, loss=loss, metrics={"metric": metric})
 
 
-client0_eval_res = constructed_evaluate_res(1.0, 0.1, 50)
-client1_eval_res = constructed_evaluate_res(1.0, 0.2, 50)
-client2_eval_res = constructed_evaluate_res(3.0, 0.3, 100)
-client3_eval_res = constructed_evaluate_res(4.0, 0.4, 200)
+client0_eval_res = construct_evaluate_res(1.0, 0.1, 50)
+client1_eval_res = construct_evaluate_res(1.0, 0.2, 50)
+client2_eval_res = construct_evaluate_res(3.0, 0.3, 100)
+client3_eval_res = construct_evaluate_res(4.0, 0.4, 200)
 clients_eval_res: List[Tuple[ClientProxy, EvaluateRes]] = [
     (CustomClientProxy("c0"), client0_eval_res),
     (CustomClientProxy("c1"), client1_eval_res),
