@@ -38,7 +38,7 @@ class FlambyFedOptClient(BasicClient):
 
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
-        metric_values = self.train_by_steps(local_steps)
+        _, metric_values = self.train_by_steps(local_steps, 0)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (

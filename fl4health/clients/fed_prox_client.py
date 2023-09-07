@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -26,6 +26,7 @@ class FedProxClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        meter_type: str = "average",
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
         proximal_weight: float = 0.1,
@@ -34,12 +35,12 @@ class FedProxClient(BasicClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
+            meter_type=meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
         self.proximal_weight = proximal_weight
         self.initial_tensors: List[torch.Tensor]
-        self.current_loss: float
         self.parameter_exchanger: ParameterExchangerWithPacking
 
     def get_proximal_loss(self) -> torch.Tensor:
@@ -68,7 +69,8 @@ class FedProxClient(BasicClient):
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the proximal weight
         # Therefore it can only be computed locally
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
+        assert self.current_losses is not None and isinstance(self.current_losses["loss"], float)
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_losses["loss"])
         return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -100,13 +102,45 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def update_after_train(self, losses: Dict[str, Scalar]) -> None:
-        loss = losses["loss"]
-        assert isinstance(loss, float)
-        self.current_loss = loss
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
+        """
+        # Clear gradients from optimizer if they exist
+        self.optimizer.zero_grad()
 
-    def get_additional_loss(self) -> Optional[torch.Tensor]:
-        return self.get_proximal_loss()
+        # Call user defined methods to get predictions and compute loss
+        preds = self.predict(input)
+
+        # Compute Loss and Add in Proximal Loss
+        loss, loss_dict = self.compute_loss(preds, target)
+        proximal_loss = self.get_proximal_loss()
+        total_loss = loss + proximal_loss
+        loss_dict.update({"loss": loss, "proximal_loss": proximal_loss, "total_loss": total_loss})
+
+        # Update losses and metrics
+        self.update_losses(loss_dict)
+        self.update_meter(preds, target)
+
+        # Compute backward pass and update paramters with optimizer
+        total_loss.backward()
+        self.optimizer.step()
+
+    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        Given input and target, compute loss, update loss and metrics
+        """
+
+        with torch.no_grad():
+            preds = self.predict(input)
+            loss, loss_dict = self.compute_loss(preds, target)
+
+        proximal_loss = self.get_proximal_loss()
+        total_loss = loss + proximal_loss
+        loss_dict.update({"loss": loss, "proximal_loss": proximal_loss, "total_loss": total_loss})
+
+        self.update_losses(loss_dict)
+        self.update_meter(preds, target)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

@@ -14,7 +14,7 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import AverageMeter, Meter, Metric
+from fl4health.utils.metrics import AccumulationMeter, AverageMeter, Meter, Metric
 
 
 class BasicClient(NumpyFlClient):
@@ -29,6 +29,7 @@ class BasicClient(NumpyFlClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        meter_type: str = "average",
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -36,6 +37,12 @@ class BasicClient(NumpyFlClient):
         self.metrics = metrics
         self.current_losses: Optional[Dict[str, float]] = None
         self.current_meter: Optional[Meter] = None
+        self.use_wandb_reporter = use_wandb_reporter
+        self.checkpointer = checkpointer
+        self.meter_type = meter_type
+
+        # Make sure meter type is one of average or accumulation
+        assert (self.meter_type == "average") ^ (self.meter_type == "accumulation")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -45,36 +52,41 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples: int
         self.num_val_samples: int
 
-        self.use_wandb_reporter = use_wandb_reporter
-        self.checkpointer = checkpointer
-
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
         super().set_parameters(parameters, config)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
 
-        if "local_epochs" in config.keys() ^ "local_steps" in config.keys():
-            raise ValueError("Config must contain local_epochs or local_steps key")
+        if not ("local_epochs" in list(config.keys())) ^ ("local_steps" in list(config.keys())):
+            raise ValueError("Config must contain one of local_epochs or local_steps key")
+
+        if not ("current_server_round" in list(config.keys())):
+            raise ValueError("Config must contain current_server_round key")
 
         if not self.initialized:
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
 
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
         if "local_epochs" in config.keys():
             local_epochs = self.narrow_config_type(config, "local_epochs", int)
-            metric_values = self.train_by_epochs(local_epochs)
+            losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
         else:
             local_steps = self.narrow_config_type(config, "local_steps", int)
-            metric_values = self.train_by_steps(local_steps)
+            losses, metrics = self.train_by_steps(local_steps, current_server_round)
+
+        losses_float: Dict[str, float] = {key: float(val) for key, val in losses.items()}
+        # Store current losses
+        self.current_losses = losses_float
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
             self.get_parameters(config),
             self.num_train_samples,
-            metric_values,
+            metrics,
         )
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
@@ -111,7 +123,10 @@ class BasicClient(NumpyFlClient):
 
     def update_meter(self, preds: torch.Tensor, target: torch.Tensor) -> None:
         if self.current_meter is None:
-            self.current_meter = AverageMeter(self.metrics)
+            if self.meter_type == "average":
+                self.current_meter = AverageMeter(self.metrics)
+            else:
+                self.current_meter = AccumulationMeter(self.metrics)
 
         self.current_meter.update(preds, target)
 
@@ -138,12 +153,6 @@ class BasicClient(NumpyFlClient):
         preds = self.predict(input)
         loss, loss_dict = self.compute_loss(preds, target)
         loss_dict.update({"loss": loss})
-        regularization_loss = self.get_additional_loss()
-        if regularization_loss is not None:
-            combined_loss = loss + regularization_loss
-            additional_loss_dict = {"regularization_loss": regularization_loss, "combined_loss": combined_loss}
-            loss_dict.update(additional_loss_dict)
-            loss = combined_loss
 
         # Update losses and metrics
         self.update_losses(loss_dict)
@@ -163,16 +172,11 @@ class BasicClient(NumpyFlClient):
             loss, loss_dict = self.compute_loss(preds, target)
 
         loss_dict.update({"loss": loss})
-        additional_loss = self.get_additional_loss()
-        if additional_loss is not None:
-            combined_loss = loss + additional_loss
-            additional_loss_dict = {"additional_loss": additional_loss, "combined_loss": combined_loss}
-            loss_dict.update(additional_loss_dict)
 
         self.update_losses(loss_dict)
         self.update_meter(preds, target)
 
-    def train_by_epochs(self, epochs: int) -> Dict[str, Scalar]:
+    def train_by_epochs(self, epochs: int, current_server_round: int) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
         self.model.train()
 
         for local_epoch in range(epochs):
@@ -186,17 +190,13 @@ class BasicClient(NumpyFlClient):
             metrics = self.compute_metrics()
             losses = self.compute_losses(len(self.train_loader))
 
-            log(INFO, f"Local Epoch: {local_epoch}")
+            log(INFO, f"Local Epoch: {local_epoch} \t Server Round: {current_server_round}")
             self._handle_logging(losses, metrics)
 
-        self.update_after_train(losses)
         # Return final training metrics
-        return metrics
+        return losses, metrics
 
-    def train_by_steps(
-        self,
-        steps: int,
-    ) -> Dict[str, Scalar]:
+    def train_by_steps(self, steps: int, current_server_round: int) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
         self.model.train()
         train_iterator = iter(self.train_loader)
 
@@ -216,10 +216,10 @@ class BasicClient(NumpyFlClient):
 
         losses = self.compute_losses(steps)
         metrics = self.compute_metrics()
+        log(INFO, f"Server Round: {current_server_round}")
         self._handle_logging(losses, metrics)
 
-        self.update_after_train(losses)
-        return metrics
+        return losses, metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
@@ -232,10 +232,9 @@ class BasicClient(NumpyFlClient):
         losses = self.compute_losses(len(self.val_loader))
         metrics = self.compute_metrics()
         self._handle_logging(losses, metrics, is_validation=True)
-        total_loss = losses["loss"] if "combined_loss" not in losses.keys() else losses["combined_loss"]
-        assert isinstance(total_loss, float)
-        self._maybe_checkpoint(total_loss)
-        return total_loss, metrics
+        assert isinstance(losses["loss"], float)
+        self._maybe_checkpoint(losses["loss"])
+        return losses["loss"], metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
@@ -248,7 +247,7 @@ class BasicClient(NumpyFlClient):
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
         self.model = self.get_model(config)
-        train_loader, val_loader = self.get_data_loaders(config)
+        train_loader, val_loader = self.get_data_loaders(config, self.data_path)
         self.train_loader = train_loader
         self.val_loader = val_loader
 
@@ -271,7 +270,7 @@ class BasicClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader
@@ -303,10 +302,4 @@ class BasicClient(NumpyFlClient):
         raise NotImplementedError
 
     def update_after_step(self, step: int) -> None:
-        pass
-
-    def update_after_train(self, losses: Dict[str, Scalar]) -> None:
-        pass
-
-    def get_additional_loss(self) -> Optional[torch.Tensor]:
         pass

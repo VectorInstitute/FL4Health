@@ -37,10 +37,10 @@ class MnistFedProxClient(FedProxClient):
         )
         log(INFO, f"Client Name: {self.client_name}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        train_loader, val_loader, _ = load_mnist_data(data_path, batch_size, sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:

@@ -36,9 +36,9 @@ def get_initial_model_parameters() -> Parameters:
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    current_round: int,
+    current_server_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_server_round}
 
 
 def main(config: Dict[str, Any]) -> None:

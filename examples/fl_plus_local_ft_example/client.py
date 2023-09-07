@@ -45,6 +45,6 @@ if __name__ == "__main__":
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
     # Run further local training after the federated learning has finished
-    client.train_by_epochs(2)
+    client.train_by_epochs(2, 0)
     # Finally, we evaluate the model
     client.validate()
