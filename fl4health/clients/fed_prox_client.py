@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
@@ -142,5 +143,5 @@ class FedProxClient(BasicClient):
         self.update_losses(loss_dict)
         self.update_meter(preds, target)
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

@@ -42,6 +42,7 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
+        "current_server_round": current_round,
     }
 
 

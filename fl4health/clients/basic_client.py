@@ -257,14 +257,14 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples = num_val_samples
 
         self.optimizer = self.get_optimizer(self.model, config)
-        self.parameter_exchanger = self.get_parameter_exchanger(config)
+        self.parameter_exchanger = self.get_parameter_exchanger(config, self.model)
 
         if self.use_wandb_reporter:
             self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
         """
         Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
         """
