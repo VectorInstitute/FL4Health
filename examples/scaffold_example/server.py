@@ -46,7 +46,7 @@ def fit_config(
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
-        "current_round": current_round,
+        "current_server_round": current_round,
         "learning_rate_local": learning_rate_local,
     }
 

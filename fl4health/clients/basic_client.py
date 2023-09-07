@@ -72,14 +72,19 @@ class BasicClient(NumpyFlClient):
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         if "local_epochs" in config.keys():
             local_epochs = self.narrow_config_type(config, "local_epochs", int)
+            local_steps = local_epochs * len(self.train_loader)
             losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
         else:
             local_steps = self.narrow_config_type(config, "local_steps", int)
             losses, metrics = self.train_by_steps(local_steps, current_server_round)
 
         losses_float: Dict[str, float] = {key: float(val) for key, val in losses.items()}
-        # Store current losses
+
+        # Store current losses (Used by FedProx Client)
         self.current_losses = losses_float
+
+        # Update model after train round (Used by Scaffold and DP-Scaffold Client)
+        self.update_after_train(local_steps)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -152,9 +157,9 @@ class BasicClient(NumpyFlClient):
         # Call user defined methods to get predictions and compute loss
         preds = self.predict(input)
         loss, loss_dict = self.compute_loss(preds, target)
-        loss_dict.update({"loss": loss})
 
         # Update losses and metrics
+        loss_dict.update({"loss": loss})
         self.update_losses(loss_dict)
         self.update_meter(preds, target)
 
@@ -184,9 +189,6 @@ class BasicClient(NumpyFlClient):
                 input, target = input.to(self.device), target.to(self.device)
                 self.train_step(input, target)
 
-                absolute_step = local_epoch * len(self.train_loader) + step
-                self.update_after_step(absolute_step)
-
             metrics = self.compute_metrics()
             losses = self.compute_losses(len(self.train_loader))
 
@@ -211,8 +213,6 @@ class BasicClient(NumpyFlClient):
 
             input, target = input.to(self.device), target.to(self.device)
             self.train_step(input, target)
-
-            self.update_after_step(step)
 
         losses = self.compute_losses(steps)
         metrics = self.compute_metrics()
@@ -301,5 +301,5 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def update_after_step(self, step: int) -> None:
+    def update_after_train(self, local_steps: int) -> None:
         pass

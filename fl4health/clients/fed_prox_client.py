@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
 import torch
 import torch.nn as nn
@@ -11,8 +11,6 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.metrics import Metric
-
-FedProxTrainStepOutputs = Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]
 
 
 class FedProxClient(BasicClient):
