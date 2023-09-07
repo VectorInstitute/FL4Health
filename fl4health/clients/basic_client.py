@@ -53,13 +53,22 @@ class BasicClient(NumpyFlClient):
         super().set_parameters(parameters, config)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+
+        if "local_epochs" in config.keys() ^ "local_steps" in config.keys():
+            raise ValueError("Config must contain local_epochs or local_steps key")
+
         if not self.initialized:
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        # By default uses training by epoch.
-        metric_values = self.train_by_epochs(local_epochs)
+
+        if "local_epochs" in config.keys():
+            local_epochs = self.narrow_config_type(config, "local_epochs", int)
+            metric_values = self.train_by_epochs(local_epochs)
+        else:
+            local_steps = self.narrow_config_type(config, "local_steps", int)
+            metric_values = self.train_by_steps(local_steps)
+
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
