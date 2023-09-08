@@ -224,4 +224,12 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             checkpointer=checkpointer,
         )
 
-        InstanceLevelPrivacyClient.__init__(self, data_path, device)
+        InstanceLevelPrivacyClient.__init__(
+            self,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            meter_type=meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )

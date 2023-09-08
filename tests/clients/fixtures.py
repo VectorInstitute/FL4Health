@@ -29,7 +29,7 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
     elif type == InstanceLevelPrivacyClient:
-        client = InstanceLevelPrivacyClient(data_path=Path(""), device=torch.device("cpu"))
+        client = InstanceLevelPrivacyClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     elif type == DPScaffoldClient:

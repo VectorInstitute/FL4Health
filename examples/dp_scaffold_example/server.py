@@ -52,7 +52,7 @@ def fit_config(
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
-        "current_round": current_round,
+        "current_server_round": current_round,
         "learning_rate_local": learning_rate_local,
         "clipping_bound": clipping_bound,
         "noise_multiplier": noise_multiplier,
@@ -67,8 +67,8 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
         config["n_server_rounds"],
         config["learning_rate_local"],
-        config["client_noise_multiplier"],
-        config["client_clipping"],
+        config["noise_multiplier"],
+        config["clipping_bound"],
     )
 
     initial_parameters, initial_control_variates = get_initial_model_information()
@@ -90,7 +90,7 @@ def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
     server = DPScaffoldServer(
         client_manager=client_manager,
-        noise_multiplier=config["client_noise_multiplier"],
+        noise_multiplier=config["noise_multiplier"],
         batch_size=config["batch_size"],
         local_steps=config["local_steps"],
         num_server_rounds=config["n_server_rounds"],

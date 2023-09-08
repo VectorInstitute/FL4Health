@@ -240,6 +240,9 @@ class BasicClient(NumpyFlClient):
         """
         Return properties (train and validation dataset sample counts) of client.
         """
+        if not self.initialized:
+            self.setup_client(config)
+
         return {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples}
 
     def setup_client(self, config: Config) -> None:

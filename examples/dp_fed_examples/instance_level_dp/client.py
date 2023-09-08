@@ -1,139 +1,63 @@
 import argparse
-from logging import INFO
+import warnings
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
+from fl4health.utils.metrics import Accuracy, Metric
 
-
-def train(
-    net: nn.Module,
-    train_loader: DataLoader,
-    optimizer: torch.optim.Optimizer,
-    epochs: int,
-    device: torch.device = torch.device("cpu"),
-) -> float:
-    """Train the network on the training set."""
-    net.train()
-
-    criterion = torch.nn.CrossEntropyLoss()
-
-    for epoch in range(epochs):
-        correct, total, running_loss = 0, 0, 0.0
-        n_batches = len(train_loader)
-        for images, labels in train_loader:
-            images, labels = images.to(device), labels.to(device)
-            optimizer.zero_grad()
-            preds = net(images)
-            loss = criterion(preds, labels)
-            loss.backward()
-            optimizer.step()
-
-            running_loss += loss.item()
-            _, predicted = torch.max(preds.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-        accuracy = correct / total
-        # Local client logging.
-        log(
-            INFO,
-            f"Epoch: {epoch}, Client Training Loss: {running_loss/n_batches}," f"Client Training Accuracy: {accuracy}",
-        )
-    return accuracy
-
-
-def validate(
-    net: nn.Module,
-    validation_loader: DataLoader,
-    device: torch.device = torch.device("cpu"),
-) -> Tuple[float, float]:
-    """Validate the network on the entire validation set."""
-    net.eval()
-    criterion = torch.nn.CrossEntropyLoss()
-    correct, total, loss = 0, 0, 0.0
-    with torch.no_grad():
-        n_batches = len(validation_loader)
-        for images, labels in validation_loader:
-            images, labels = images.to(device), labels.to(device)
-            preds = net(images)
-            loss += criterion(preds, labels).item()
-            _, predicted = torch.max(preds.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    accuracy = correct / total
-    # Local client logging.
-    log(INFO, f"Client Validation Loss: {loss/n_batches}, Client Validation Accuracy: {accuracy}")
-    return loss / n_batches, accuracy
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class CifarClient(InstanceLevelPrivacyClient):
-    def __init__(self, data_path: Path, device: torch.device) -> None:
-        super().__init__(data_path, device)
-        self.train_loader: DataLoader
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
-
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
-        self.batch_size = self.narrow_config_type(config, "batch_size", int)
-        self.local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        # Noise multiplier set by server to achieve instance level DP on client side
-        self.noise_multiplier = self.narrow_config_type(config, "noise_multiplier", float)
-        self.clipping_bound = self.narrow_config_type(config, "clipping_bound", float)
-
-        train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, self.batch_size)
-
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-        self.train_loader = train_loader
-        self.validation_loader = validation_loader
-        self.num_examples = num_examples
-
-        # Opacus objects require config and should only be setup once
-        self.setup_opacus_objects()
-
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-        self.set_parameters(parameters, config)
-        accuracy = train(
-            self.model,
-            self.train_loader,
-            self.optimizer,
-            self.local_epochs,
-            self.device,
-        )
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_examples["train_set"],
-            {"accuracy": accuracy},
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        meter_type: str = "average",
+        use_wandb_reporter: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            meter_type=meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
         )
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
+    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        train_loader, val_loader, _ = load_cifar10_data(data_path, batch_size)
+        return train_loader, val_loader
 
-        self.set_parameters(parameters, config)
-        loss, accuracy = validate(self.model, self.validation_loader, device=self.device)
-        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            loss,
-            self.num_examples["validation_set"],
-            {"accuracy": accuracy},
-        )
+    def get_model(self, config: Config) -> nn.Module:
+        model = Net().to(self.device)
+        return model
+
+    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+        return optimizer
+
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        loss = torch.nn.functional.cross_entropy(preds, target)
+        return loss, {}
+
+    def predict(self, input: torch.Tensor) -> torch.Tensor:
+        preds = self.model(input)
+        return preds
 
 
 if __name__ == "__main__":
@@ -142,7 +66,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load model and data
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarClient(data_path, DEVICE)
+    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+
+    client.shutdown()
