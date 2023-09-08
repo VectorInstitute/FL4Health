@@ -35,13 +35,13 @@ class CifarClient(NumpyClippingClient):
             checkpointer=checkpointer,
         )
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_cifar10_data(data_path, batch_size)
+        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=0.0001)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.0001)
         return optimizer
 
     def get_model(self, config: Config) -> nn.Module:

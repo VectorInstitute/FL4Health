@@ -3,7 +3,6 @@ from typing import Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
@@ -187,8 +186,8 @@ class ScaffoldClient(BasicClient):
         self.modify_grad()
         self.optimizer.step()
 
-    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
-        model_size = len(model.state_dict())
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        model_size = len(self.model.state_dict())
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 

@@ -19,16 +19,16 @@ class CifarClient(BasicClient):
     def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
         super().__init__(data_path, metrics, device)
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_cifar10_data(data_path, batch_size)
+        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         return torch.nn.functional.cross_entropy(preds, target), {}
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
         return optimizer
 
     def get_model(self, config: Config) -> nn.Module:

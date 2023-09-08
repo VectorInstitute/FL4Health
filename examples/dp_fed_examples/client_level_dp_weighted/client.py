@@ -39,14 +39,14 @@ class HospitalClient(NumpyClippingClient):
         model = LogisticRegression(input_dim=31, output_dim=1).to(self.device)
         return model
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         scaler_bytes = self.narrow_config_type(config, "scaler", bytes)
-        train_loader, val_loader, _ = load_data(data_path, batch_size, scaler_bytes)
+        train_loader, val_loader, _ = load_data(self.data_path, batch_size, scaler_bytes)
         return train_loader, val_loader
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(model.parameters(), lr=0.01, weight_decay=1e-4)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.01, weight_decay=1e-4)
         return optimizer
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:

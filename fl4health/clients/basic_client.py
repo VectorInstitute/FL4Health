@@ -276,7 +276,7 @@ class BasicClient(NumpyFlClient):
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
         self.model = self.get_model(config)
-        train_loader, val_loader = self.get_data_loaders(config, self.data_path)
+        train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
 
@@ -285,21 +285,21 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples = num_train_samples
         self.num_val_samples = num_val_samples
 
-        self.optimizer = self.get_optimizer(self.model, config)
-        self.parameter_exchanger = self.get_parameter_exchanger(config, self.model)
+        self.optimizer = self.get_optimizer(config)
+        self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         if self.use_wandb_reporter:
             self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 
-    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
         Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
         """
         return FullParameterExchanger()
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader
@@ -312,7 +312,7 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
+    def get_optimizer(self, config: Config) -> Optimizer:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
         """

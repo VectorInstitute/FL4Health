@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional, Sequence
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
@@ -32,6 +31,6 @@ class FendaClient(BasicClient):
             checkpointer=checkpointer,
         )
 
-    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
-        assert isinstance(model, FendaModel)
-        return FixedLayerExchanger(model.layers_to_exchange())
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert isinstance(self.model, FendaModel)
+        return FixedLayerExchanger(self.model.layers_to_exchange())

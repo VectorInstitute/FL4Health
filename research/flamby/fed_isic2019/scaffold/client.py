@@ -45,7 +45,7 @@ class FedIsic2019ScaffoldClient(ScaffoldClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -57,8 +57,8 @@ class FedIsic2019ScaffoldClient(ScaffoldClient):
         model: nn.Module = Baseline().to(self.device)
         return model
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(model.parameters(), lr=self.learning_rate_local)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
         return optimizer
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:

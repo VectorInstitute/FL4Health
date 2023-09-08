@@ -41,14 +41,14 @@ class MnistDPScaffoldClient(DPScaffoldClient):
             checkpointer=checkpointer,
         )
 
-    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=1.0)
-        train_loader, val_loader, _ = load_mnist_data(data_path, batch_size, sampler)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
-    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(model.parameters(), lr=self.learning_rate_local)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
         return optimizer
 
     def get_model(self, config: Config) -> nn.Module:

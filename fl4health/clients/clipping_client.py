@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 import torch
-import torch.nn as nn
 from flwr.common import NDArrays
 from flwr.common.logger import log
 from flwr.common.typing import Config
@@ -97,7 +96,7 @@ class NumpyClippingClient(BasicClient):
         # Inject the server model parameters into the client model
         self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
 
-    def get_parameter_exchanger(self, config: Config, model: nn.Module) -> ParameterExchanger:
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
         return parameter_exchanger
 
