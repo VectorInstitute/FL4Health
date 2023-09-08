@@ -14,12 +14,11 @@ weighted_averaging: True
 # Client training parameters
 local_epochs: 1
 batch_size: 32
-total_samples: 569
 
 # Clipping settings for update and optionally
 # adaptive clipping
 adaptive_clipping: True
-clipping_bound: 0.1
+clipping_bound: 1.0
 clipping_learning_rate: 0.5
 # NOTE: The noise multiplier here is just picked for convenience. The recommended heuristic is
 # expected clients per round/20
