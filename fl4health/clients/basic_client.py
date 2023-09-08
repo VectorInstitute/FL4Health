@@ -19,9 +19,8 @@ from fl4health.utils.metrics import AccumulationMeter, AverageMeter, Meter, Metr
 
 class BasicClient(NumpyFlClient):
     """
-    This client implements a very basic flow where training is done by a specified number of steps and validation
-    occurs over the full validation set. There are no special client side optimization changes, just the standard
-    optimization flow.
+    Base FL Client with functionality to train, evaluate, log, report and checkpoint.
+    User is only
     """
 
     def __init__(
@@ -120,6 +119,10 @@ class BasicClient(NumpyFlClient):
         )
 
     def update_losses(self, loss_dict: Dict[str, torch.Tensor]) -> None:
+        """
+        Update current_losses attribute with new losses in loss_dict.
+        If current_losses is None, initialize with keys of loss_dict and values 0
+        """
         if self.current_losses is None:
             self.current_losses = {key: 0.0 for key in loss_dict.keys()}
 
@@ -127,6 +130,10 @@ class BasicClient(NumpyFlClient):
         self.current_losses = {key: val + float_loss_dict[key] for key, val in self.current_losses.items()}
 
     def update_meter(self, preds: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        Update meter with predictions and targets.
+        If no meter exists, meter is initialized based on the clients meter_type prior to updating.
+        """
         if self.current_meter is None:
             if self.meter_type == "average":
                 self.current_meter = AverageMeter(self.metrics)
@@ -138,12 +145,16 @@ class BasicClient(NumpyFlClient):
     def compute_metrics(self) -> Dict[str, Scalar]:
         assert self.current_meter is not None
         metrics = self.current_meter.compute()
+
+        # Clear meter after computing metrics so we start fresh next time
         self.current_meter.clear()
         return metrics
 
     def compute_losses(self, step: int) -> Dict[str, Scalar]:
         assert self.current_losses is not None
         losses: Dict[str, Scalar] = {key: val / step for key, val in self.current_losses.items()}
+
+        # Clear losses after computing metric so we start fresh next time
         self.current_losses = None
         return losses
 
@@ -172,37 +183,48 @@ class BasicClient(NumpyFlClient):
         Given input and target, compute loss, update loss and metrics
         """
 
+        # Get preds and compute loss
         with torch.no_grad():
             preds = self.predict(input)
             loss, loss_dict = self.compute_loss(preds, target)
 
+        # Updates losses and metrics
         loss_dict.update({"loss": loss})
-
         self.update_losses(loss_dict)
         self.update_meter(preds, target)
 
-    def train_by_epochs(self, epochs: int, current_server_round: int) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
+    def train_by_epochs(
+        self, epochs: int, current_round: Optional[int] = None
+    ) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
         self.model.train()
 
         for local_epoch in range(epochs):
-            for step, (input, target) in enumerate(self.train_loader):
+            for _, (input, target) in enumerate(self.train_loader):
                 input, target = input.to(self.device), target.to(self.device)
                 self.train_step(input, target)
 
             metrics = self.compute_metrics()
             losses = self.compute_losses(len(self.train_loader))
 
-            log(INFO, f"Local Epoch: {local_epoch} \t Server Round: {current_server_round}")
+            log_string = (
+                f"Local Epoch: {local_epoch} \t Server Round: {current_round}"
+                if current_round is not None
+                else f"Local Epoch: {local_epoch}"
+            )
+
+            log(INFO, log_string)
             self._handle_logging(losses, metrics)
 
         # Return final training metrics
         return losses, metrics
 
-    def train_by_steps(self, steps: int, current_server_round: int) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
+    def train_by_steps(
+        self, steps: int, current_round: Optional[int] = None
+    ) -> Tuple[Dict[str, Scalar], Dict[str, Scalar]]:
         self.model.train()
         train_iterator = iter(self.train_loader)
 
-        for step in range(steps):
+        for _ in range(steps):
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -216,7 +238,9 @@ class BasicClient(NumpyFlClient):
 
         losses = self.compute_losses(steps)
         metrics = self.compute_metrics()
-        log(INFO, f"Server Round: {current_server_round}")
+
+        if current_round is not None:
+            log(INFO, f"Server Round: {current_round}")
         self._handle_logging(losses, metrics)
 
         return losses, metrics
@@ -233,6 +257,8 @@ class BasicClient(NumpyFlClient):
         metrics = self.compute_metrics()
         self._handle_logging(losses, metrics, is_validation=True)
         assert isinstance(losses["loss"], float)
+
+        # Checkpoint based on loss which is output of user defined compute_loss method
         self._maybe_checkpoint(losses["loss"])
         return losses["loss"], metrics
 

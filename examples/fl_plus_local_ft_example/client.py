@@ -1,36 +1,60 @@
 import argparse
 from pathlib import Path
-from typing import Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy, Metric
 
 
 class CifarClient(BasicClient):
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
-        super().__init__(data_path, metrics, device)
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        meter_type: str = "average",
+        use_wandb_reporter: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            meter_type=meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def get_data_loaders(self, config: Config, data_path: Path) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        train_loader, val_loader, _ = load_cifar10_data(data_path, batch_size)
+        return train_loader, val_loader
 
-        train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, batch_size)
+    def get_model(self, config: Config) -> nn.Module:
+        model = Net().to(self.device)
+        return model
 
-        self.train_loader = train_loader
-        self.val_loader = validation_loader
-        self.num_examples = num_examples
+    def get_optimizer(self, model: nn.Module, config: Config) -> Optimizer:
+        optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+        return optimizer
 
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        loss = torch.nn.functional.cross_entropy(preds, target)
+        return loss, {}
+
+    def predict(self, input: torch.Tensor) -> torch.Tensor:
+        preds = self.model(input)
+        return preds
 
 
 if __name__ == "__main__":
@@ -45,6 +69,6 @@ if __name__ == "__main__":
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
     # Run further local training after the federated learning has finished
-    client.train_by_epochs(2, 0)
+    client.train_by_epochs(2)
     # Finally, we evaluate the model
     client.validate()

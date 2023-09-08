@@ -18,6 +18,11 @@ from fl4health.utils.metrics import Metric
 
 
 class NumpyClippingClient(BasicClient):
+    """
+    Client that clips and noises client weight updates prior to being sent to the server.
+    Used to obtain Client Level Differenital Privacy in FL setting.
+    """
+
     def __init__(
         self,
         data_path: Path,
