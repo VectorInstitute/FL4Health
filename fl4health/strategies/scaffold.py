@@ -16,12 +16,12 @@ from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
-from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
-class Scaffold(FedAvgSampling):
+class Scaffold(BasicFedAvg):
     """
     Strategy for Scaffold algorithm as specified in https://arxiv.org/abs/1910.06378
     """
@@ -44,6 +44,7 @@ class Scaffold(FedAvgSampling):
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_eval_losses: bool = True,
         learning_rate: float = 1.0,
         initial_control_variates: Parameters,
     ) -> None:
@@ -78,8 +79,13 @@ class Scaffold(FedAvgSampling):
             Metrics aggregation function, optional.
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
             Metrics aggregation function, optional.
+        weighted_eval_losses: bool, Optional
+            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
+            average. FedAvg default is weighted average of the losses by client dataset counts.
         learning_rate: Optional[float]
             Learning rate for server side optimization.
+        initial_control_variates: Parameters.
+            This is the initial set of control variates to use for the scaffold strategy.
         """
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
         self.server_control_variates = parameters_to_ndarrays(initial_control_variates)
@@ -95,6 +101,8 @@ class Scaffold(FedAvgSampling):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=False,
+            weighted_eval_losses=weighted_eval_losses,
         )
         self.learning_rate = learning_rate
         self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))
@@ -173,8 +181,8 @@ class Scaffold(FedAvgSampling):
     def configure_fit_all(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
-        # This strategy requires the client manager to be of type at least BaseSamplingManager
-        assert isinstance(client_manager, BaseSamplingManager)
+        # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
+        assert isinstance(client_manager, BaseFractionSamplingManager)
         """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:

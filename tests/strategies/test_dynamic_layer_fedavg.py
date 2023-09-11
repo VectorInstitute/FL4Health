@@ -19,7 +19,7 @@ def test_aggregate() -> None:
     params: Parameters = ndarrays_to_parameters(ndarrays)
     strategy = FedAvgDynamicLayer(initial_parameters=params)
 
-    aggregate_input = [(res, size) for res, size in zip(clients_res, client_train_sizes)]
+    aggregate_input = list(zip(clients_res, client_train_sizes))
     aggregate_result = strategy.aggregate(aggregate_input)
 
     expected_result = {

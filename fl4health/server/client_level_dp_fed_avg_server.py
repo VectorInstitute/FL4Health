@@ -7,7 +7,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import (
     ClientLevelAccountant,
@@ -50,7 +50,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         sample_counts = self.poll_clients_for_sample_counts(timeout)
 
         # If Weighted FedAvg, set sample counts to compute client weights
-        if self.strategy.weighted_averaging:
+        if self.strategy.weighted_aggregation:
             self.strategy.sample_counts = sample_counts
 
         self.setup_privacy_accountant(sample_counts)
@@ -68,7 +68,7 @@ class ClientLevelDPFedAvgServer(FlServer):
                 client_sampling_rate=self.strategy.fraction_fit, noise_multiplier=self.server_noise_multiplier
             )
         else:
-            assert isinstance(self._client_manager, FixedSamplingWithoutReplacementClientManager)
+            assert isinstance(self._client_manager, FixedSamplingByFractionClientManager)
             num_clients_sampled = ceil(len(sample_counts) * self.strategy.fraction_fit)
             self.accountant = FlClientLevelAccountantFixedSamplingNoReplacement(
                 n_total_clients=num_clients,

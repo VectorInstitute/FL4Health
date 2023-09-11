@@ -123,7 +123,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,
     ) -> None:
-
         ScaffoldServer.__init__(
             self,
             client_manager=client_manager,
