@@ -81,6 +81,7 @@ class InstanceLevelDPServer(FlServer):
             self.local_epochs = max(epochs_per_client)
 
         assert isinstance(self.local_epochs, int)
+        assert isinstance(self.strategy, BasicFedAvg)
 
         self.accountant = FlInstanceLevelAccountant(
             client_sampling_rate=self.strategy.fraction_fit,
