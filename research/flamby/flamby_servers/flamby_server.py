@@ -29,9 +29,6 @@ class FlambyServer(FlServer):
         self.client_model = client_model
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
-    def _hydrate_model_for_checkpointing(self) -> nn.Module:
-        raise NotImplementedError()
-
     def evaluate_round(
         self,
         server_round: int,
