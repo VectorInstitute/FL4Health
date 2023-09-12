@@ -189,10 +189,16 @@ class FedProx(BasicFedAvg):
                     self.proximal_weight -= self.proximal_weight_delta
                     self.proximal_weight = max(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
+                    log(INFO, f"Aggregate training loss has dropped {self.proximal_weight_patience} rounds in a row")
                     log(INFO, f"Proximal weight is decreased to {self.proximal_weight}")
             else:
                 self.proximal_weight += self.proximal_weight_delta
                 self.proximal_weight_patience_counter = 0
-                log(INFO, f"Proximal weight is increased to {self.proximal_weight}")
+                log(
+                    INFO,
+                    f"Aggregate training loss increased this round: Current loss {loss}, "
+                    f"Previous loss: {self.previous_loss}",
+                )
+                log(INFO, f"Proximal weight is increased by {self.proximal_weight_delta} to {self.proximal_weight}")
         self.previous_loss = loss
         return None

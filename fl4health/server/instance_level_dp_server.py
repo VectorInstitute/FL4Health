@@ -68,7 +68,7 @@ class InstanceLevelDPServer(FlServer):
         Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
         """
         # Ensures that we're using a fraction sampler of the
-        assert isinstance(self.client_manager, PoissonSamplingClientManager)
+        assert isinstance(self._client_manager, PoissonSamplingClientManager)
 
         total_samples = sum(sample_counts)
 
@@ -81,6 +81,7 @@ class InstanceLevelDPServer(FlServer):
             self.local_epochs = max(epochs_per_client)
 
         assert isinstance(self.local_epochs, int)
+        assert isinstance(self.strategy, BasicFedAvg)
 
         self.accountant = FlInstanceLevelAccountant(
             client_sampling_rate=self.strategy.fraction_fit,

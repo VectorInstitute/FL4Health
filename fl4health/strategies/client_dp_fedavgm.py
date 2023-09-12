@@ -29,6 +29,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.noisy_aggregate import (
     gaussian_noisy_aggregate_clipping_bits,
@@ -166,6 +167,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
 
+        # Parameter Packer to handle packing and unpacking parameters with clipping bit
+        self.parameter_packer = ParameterPackerWithClippingBit()
+
         # Weighted averaging requires list of sample counts
         # to compute client weights. Set by server after polling clients.
         self.sample_counts: Optional[List[int]] = None
@@ -186,17 +190,19 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         return pow(sqrt_argument, -0.5)
 
     def split_model_weights_and_clipping_bits(
-        self, weight_results: List[Tuple[NDArrays, int]]
+        self, results: List[Tuple[ClientProxy, FitRes]]
     ) -> Tuple[List[Tuple[NDArrays, int]], NDArrays]:
-        # Clipping bits are packed with the model weights as the last entry in the NDArrays list. We split model
-        # weights from these and return both
-        client_clipping_bits = []
-        client_model_weights = []
-        for client_weights, client_n_datapoints in weight_results:
-            client_model_weights.append((client_weights[:-1], client_n_datapoints))
-            client_clipping_bits.append(client_weights[-1])
+        weights_and_counts: List[Tuple[NDArrays, int]] = []
+        clipping_bits: NDArrays = []
+        for _, fit_res in results:
+            sample_count = fit_res.num_examples
+            updated_weights, clipping_bit = self.parameter_packer.unpack_parameters(
+                parameters_to_ndarrays(fit_res.parameters)
+            )
+            weights_and_counts.append((updated_weights, sample_count))
+            clipping_bits.append(np.array(clipping_bit))
 
-        return client_model_weights, client_clipping_bits
+        return weights_and_counts, clipping_bits
 
     def calculate_update_with_momentum(self, weights_update: NDArrays) -> None:
         if not self.m_t:
@@ -263,12 +269,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 [sample_count / self.per_client_example_cap for sample_count in self.sample_counts]
             )
 
-        # Convert results
-        weights_updates = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
-        ]
-
-        weights_updates, clipping_bits = self.split_model_weights_and_clipping_bits(weights_updates)
+        # Convert results with packed params of model weights and clipping bits
+        weights_and_counts, clipping_bits = self.split_model_weights_and_clipping_bits(results)
 
         noise_multiplier = self.weight_noise_multiplier
         if self.adaptive_clipping:
@@ -281,7 +283,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         if self.weighted_aggregation:
             assert self.per_client_example_cap is not None
             noised_aggregated_update = gaussian_noisy_weighted_aggregate(
-                weights_updates,
+                weights_and_counts,
                 noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
@@ -290,7 +292,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             )
         else:
             noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
-                weights_updates,
+                weights_and_counts,
                 noise_multiplier,
                 self.clipping_bound,
             )
@@ -308,7 +310,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         # Weights plus the clipping bound to be used by the clients
-        return ndarrays_to_parameters(self.current_weights + [np.array([self.clipping_bound])]), metrics_aggregated
+        packed_ndarrays = self.parameter_packer.pack_parameters(self.current_weights, self.clipping_bound)
+        return ndarrays_to_parameters(packed_ndarrays), metrics_aggregated
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager

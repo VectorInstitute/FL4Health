@@ -3,23 +3,7 @@ import torch
 import torch.nn as nn
 
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftParameterExchanger
-
-
-class LinearModel(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.independent_layer = nn.Linear(4, 4, bias=False)
-        self.shared_layer = nn.Linear(3, 3, bias=False)
-
-
-class ToyConvNet(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.conv1 = nn.Conv2d(1, 8, 5, bias=False)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(8, 16, 5, bias=False)
-        self.fc1 = nn.Linear(16 * 4 * 4, 120, bias=False)
-        self.fc2 = nn.Linear(120, 64, bias=False)
+from tests.test_utils.models_for_test import LinearModel, ToyConvNet
 
 
 def test_layer_parameter_exchange() -> None:

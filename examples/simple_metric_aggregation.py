@@ -32,3 +32,17 @@ def normalize_metrics(total_examples: int, aggregated_metrics: Metrics) -> Metri
         if isinstance(metric_value, float) or isinstance(metric_value, int):
             normalized_metrics[metric_name] = metric_value / total_examples
     return normalized_metrics
+
+
+def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+    # This function is run by the server to aggregate metrics returned by each clients fit function
+    # NOTE: The first value of the tuple is number of examples for FedAvg
+    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
+    return normalize_metrics(total_examples, aggregated_metrics)
+
+
+def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
+    # This function is run by the server to aggregate metrics returned by each clients evaluate function
+    # NOTE: The first value of the tuple is number of examples for FedAvg
+    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
+    return normalize_metrics(total_examples, aggregated_metrics)
