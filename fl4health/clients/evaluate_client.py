@@ -54,6 +54,7 @@ class EvaluateClient(NumPyClient):
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
 
     def load_local_model_checkpoint(self) -> None:
+        assert self.model_checkpoint_path is not None
         log(INFO, f"Loading model checkpoint at: {self.model_checkpoint_path.__str__()}")
         self.local_model = torch.load(self.model_checkpoint_path)
 
@@ -137,16 +138,19 @@ class EvaluateClient(NumPyClient):
         return running_loss, metrics
 
     def validate(self, global_meter: Optional[Meter], local_meter: Optional[Meter]) -> Tuple[float, Dict[str, Scalar]]:
-        local_loss, local_metrics = (
-            self.validate_on_model(self.local_model, local_meter, is_global=False)
-            if self.local_model
-            else (None, None)
-        )
-        global_loss, global_metrics = (
-            self.validate_on_model(self.global_model, global_meter, is_global=True)
-            if self.global_model
-            else (None, None)
-        )
+        local_loss: Optional[float] = None
+        local_metrics: Optional[Dict[str, Scalar]] = None
+
+        global_loss: Optional[float] = None
+        global_metrics: Optional[Dict[str, Scalar]] = None
+
+        if self.local_model and local_meter:
+            log(INFO, "Performing evaluation on local model")
+            local_loss, local_metrics = self.validate_on_model(self.local_model, local_meter, is_global=False)
+
+        if self.global_model and global_meter:
+            log(INFO, "Performing evaluation on global model")
+            global_loss, global_metrics = self.validate_on_model(self.global_model, global_meter, is_global=True)
 
         # Store the losses in the metrics, since we can't return more than one loss.
         metrics = EvaluateClient.merge_metrics(global_metrics, local_metrics)

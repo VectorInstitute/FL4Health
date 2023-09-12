@@ -46,9 +46,8 @@ class EvaluateServer(Server):
         accept_failures: bool = True,
         min_available_clients: int = 1,
     ) -> None:
-        super().__init__(client_manager=client_manager)
         # We aren't aggregating model weights, so setting the strategy to be none.
-        self.strategy = None
+        super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path
         # Load model parameters if checkpoint provided, otherwise leave as empty params
         if model_checkpoint_path:
@@ -60,6 +59,7 @@ class EvaluateServer(Server):
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
+        assert self.model_checkpoint_path
         log(INFO, f"Loading model checkpoint at: {self.model_checkpoint_path.__str__()}")
         model = torch.load(self.model_checkpoint_path)
         # Extracting all parameters from the model to be sent to the clients
