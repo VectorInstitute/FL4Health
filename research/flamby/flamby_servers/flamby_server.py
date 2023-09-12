@@ -29,13 +29,8 @@ class FlambyServer(FlServer):
         self.client_model = client_model
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
-    def _hydrate_model_for_checkpointing(self) -> None:
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
         raise NotImplementedError()
-
-    def _maybe_checkpoint(self, checkpoint_metric: float) -> None:
-        if self.checkpointer:
-            self._hydrate_model_for_checkpointing()
-            self.checkpointer.maybe_checkpoint(self.client_model, checkpoint_metric)
 
     def evaluate_round(
         self,
@@ -48,6 +43,6 @@ class FlambyServer(FlServer):
         assert eval_round_results is not None
         loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
         assert loss_aggregated is not None
-        self._maybe_checkpoint(loss_aggregated)
+        self._maybe_checkpoint(loss_aggregated, server_round)
 
         return loss_aggregated, metrics_aggregated, (results, failures)

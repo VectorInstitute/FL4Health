@@ -23,6 +23,7 @@ class FullExchangeServer(FlambyServer):
         self.parameter_exchanger = FullParameterExchanger()
         super().__init__(client_manager, client_model, strategy, checkpointer=checkpointer)
 
-    def _hydrate_model_for_checkpointing(self) -> None:
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
+        return self.client_model

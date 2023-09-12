@@ -1,23 +1,14 @@
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-
-
-class LinearTransform(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.linear = nn.Linear(2, 3, bias=False)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.linear(x)
+from tests.test_utils.models_for_test import LinearTransform
 
 
 def test_save_and_load_checkpoint(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
-    checkpoint_dir = tmp_path / "resources/"
+    checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
 
     model_1 = LinearTransform()

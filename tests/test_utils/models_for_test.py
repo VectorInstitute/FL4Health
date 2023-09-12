@@ -24,6 +24,15 @@ class ToyConvNet(nn.Module):
             self.bn1 = nn.BatchNorm1d(10)
 
 
+class LinearTransform(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.linear = nn.Linear(2, 3, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
+
+
 class UNet3D(nn.Module):
     """
     https://pypi.org/project/unet/0.7.7/

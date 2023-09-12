@@ -23,8 +23,9 @@ class FedproxServer(FlambyServer):
         # To help with model rehydration
         self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
 
-    def _hydrate_model_for_checkpointing(self) -> None:
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
         packed_parameters = parameters_to_ndarrays(self.parameters)
         # Don't need the extra fedprox variable for checkpointing.
         model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
+        return self.client_model

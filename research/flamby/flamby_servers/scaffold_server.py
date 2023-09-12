@@ -24,8 +24,9 @@ class ScaffoldServer(FlambyServer):
         model_size = len(self.client_model.state_dict())
         self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
 
-    def _hydrate_model_for_checkpointing(self) -> None:
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
         packed_parameters = parameters_to_ndarrays(self.parameters)
         # Don't need the control variates for checkpointing.
         model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
+        return self.client_model
