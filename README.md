@@ -199,6 +199,6 @@ where the path is the relative one from the root directory. If you're using VSCo
 
 Reference to cite when you use FL4Health in a project or a research paper:
 ```
-D.B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
+D.B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
 
 ```
