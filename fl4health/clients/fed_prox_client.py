@@ -67,8 +67,8 @@ class FedProxClient(BasicClient):
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the proximal weight
         # Therefore it can only be computed locally
-        assert self.current_losses is not None and isinstance(self.current_losses["loss"], float)
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_losses["loss"])
+        assert self.current_loss is not None
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
         return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
