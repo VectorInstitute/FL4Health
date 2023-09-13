@@ -1,12 +1,13 @@
 import argparse
 import warnings
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -49,11 +50,8 @@ class CifarClient(InstanceLevelPrivacyClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        return torch.nn.functional.cross_entropy(preds, target), {}
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":

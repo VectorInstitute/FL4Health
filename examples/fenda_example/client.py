@@ -1,12 +1,12 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Sequence, Set, Tuple
+from typing import Sequence, Set, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
-from torch.optim import Optimizer
+from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
@@ -41,14 +41,8 @@ class MnistFendaClient(FendaClient):
         )
         return model
 
-    def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        return torch.nn.functional.cross_entropy(preds, target), {}
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":
@@ -64,3 +58,4 @@ if __name__ == "__main__":
     minority_numbers = {int(number) for number in args.minority_numbers}
     client = MnistFendaClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

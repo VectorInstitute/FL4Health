@@ -1,11 +1,12 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -42,16 +43,14 @@ class HospitalClient(NumpyClippingClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         scaler_bytes = self.narrow_config_type(config, "scaler", bytes)
         train_loader, val_loader, _ = load_data(self.data_path, batch_size, scaler_bytes)
+        print(len(train_loader), len(val_loader))
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.01, weight_decay=1e-4)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        return torch.nn.functional.binary_cross_entropy(preds, target), {}
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.BCELoss()
 
 
 if __name__ == "__main__":
@@ -64,3 +63,4 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     client = HospitalClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -100,45 +100,11 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
-        """
-        # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
-
-        # Call user defined methods to get predictions and compute loss
-        preds = self.predict(input)
-
-        # Compute Loss and Add in Proximal Loss
-        loss, loss_dict = self.compute_loss(preds, target)
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
-        loss_dict.update({"loss": loss, "proximal_loss": proximal_loss, "total_loss": total_loss})
-
-        # Update losses and metrics
-        self.update_losses(loss_dict)
-        self.update_meter(preds, target)
-
-        # Compute backward pass and update paramters with optimizer
-        total_loss.backward()
-        self.optimizer.step()
-
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Given input and target, compute loss, update loss and metrics
-        """
-
-        with torch.no_grad():
-            preds = self.predict(input)
-            loss, loss_dict = self.compute_loss(preds, target)
-
-        proximal_loss = self.get_proximal_loss()
-        total_loss = loss + proximal_loss
-        loss_dict.update({"loss": loss, "proximal_loss": proximal_loss, "total_loss": total_loss})
-
-        self.update_losses(loss_dict)
-        self.update_meter(preds, target)
+        return loss, {"proximal_loss": proximal_loss, "total_loss": total_loss}
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

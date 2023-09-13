@@ -1,13 +1,14 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Optional, Sequence
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, Tuple
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -49,11 +50,8 @@ class MnistFedProxClient(FedProxClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.01)
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
-
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        return torch.nn.functional.cross_entropy(preds, target), {}
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":

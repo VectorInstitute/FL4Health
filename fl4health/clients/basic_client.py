@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -163,7 +164,7 @@ class BasicClient(NumpyFlClient):
         return metrics
 
     def compute_losses(self, step: int) -> Dict[str, Scalar]:
-        assert self.current_losses is not None
+        assert self.current_losses is not None and step > 0
         losses: Dict[str, Scalar] = {key: val / step for key, val in self.current_losses.items()}
 
         # Clear losses after computing metric so we start fresh next time
@@ -298,6 +299,7 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples = num_val_samples
 
         self.optimizer = self.get_optimizer(config)
+        self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         if self.use_wandb_reporter:
@@ -311,6 +313,20 @@ class BasicClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
+    def predict(self, input: torch.Tensor) -> torch.Tensor:
+        """
+        Return predictions when given input. User can override for more complex logic.
+        """
+        return self.model(input)
+
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        """
+        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
+        loss components if you wish to train the total loss as well as sub losses if they exist.
+        """
+        loss = self.criterion(preds, target)
+        return loss, {}
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
         User defined method that returns a PyTorch Train DataLoader
@@ -318,9 +334,9 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def get_criterion(self, config: Config) -> _Loss:
         """
-        Method that the user defines returning loss and optionally a dictionairy with
+        User defined method that returns PyTorch loss to train model.
         """
         raise NotImplementedError
 
@@ -333,12 +349,6 @@ class BasicClient(NumpyFlClient):
     def get_model(self, config: Config) -> nn.Module:
         """
         User defined method that Returns PyTorch model
-        """
-        raise NotImplementedError
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        """
-        User defined method to get predictions given input
         """
         raise NotImplementedError
 

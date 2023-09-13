@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -10,6 +10,7 @@ import torch.nn as nn
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -60,13 +61,8 @@ class FedIsic2019FedProxClient(FedProxClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        criterion = BaselineLoss()
-        loss = criterion(preds, target)
-        return loss
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
+    def get_criterion(self, config: Config) -> _Loss:
+        return BaselineLoss()
 
 
 if __name__ == "__main__":

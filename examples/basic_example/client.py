@@ -1,11 +1,12 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
@@ -24,17 +25,14 @@ class CifarClient(BasicClient):
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        return torch.nn.functional.cross_entropy(preds, target), {}
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
         return Net().to(self.device)
-
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        return self.model(input)
 
 
 if __name__ == "__main__":
@@ -46,3 +44,4 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()
