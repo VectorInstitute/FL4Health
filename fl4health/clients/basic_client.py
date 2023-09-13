@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -55,26 +55,41 @@ class BasicClient(NumpyFlClient):
         # Set the model weights and initialize the correct weights with the parameter exchanger.
         super().set_parameters(parameters, config)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-
-        if not ("local_epochs" in list(config.keys())) ^ ("local_steps" in list(config.keys())):
-            raise ValueError("Config must contain one of local_epochs or local_steps key")
-
-        if not ("current_server_round" in list(config.keys())):
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
+        """
+        Method to ensure the required keys are present in config and extracts the values.
+        """
+        if "current_server_round" not in config:
             raise ValueError("Config must contain current_server_round key")
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+
+        if ("local_epochs" in config) and ("local_steps" in config):
+            raise ValueError("Config must contain one of local_epochs or local_steps key but not both")
+        elif "local_epochs" in config:
+            local_epochs = self.narrow_config_type(config, "local_epochs", int)
+            local_steps = None
+        elif "local_steps" in config:
+            local_steps = self.narrow_config_type(config, "local_steps", int)
+            local_epochs = None
+        else:
+            raise ValueError("Config must contain one of local_epochs or local_steps key but not both")
+
+        # Either local epochs or local steps is none based on what key is passed in the config
+        return local_epochs, local_steps, current_server_round
+
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        local_epochs, local_steps, current_server_round = self.process_config(config)
 
         if not self.initialized:
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
 
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        if "local_epochs" in config.keys():
-            local_epochs = self.narrow_config_type(config, "local_epochs", int)
-            local_steps = local_epochs * len(self.train_loader)
+        if local_epochs is not None:
             losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            local_steps = self.num_train_samples * local_epochs  # total steps over training round
         else:
-            local_steps = self.narrow_config_type(config, "local_steps", int)
+            assert isinstance(local_steps, int)
             losses, metrics = self.train_by_steps(local_steps, current_server_round)
 
         losses_float: Dict[str, float] = {key: float(val) for key, val in losses.items()}
