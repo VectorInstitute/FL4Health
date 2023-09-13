@@ -48,20 +48,16 @@ class MnistDPScaffoldClient(DPScaffoldClient):
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
-        return optimizer
+        return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
 
     def get_model(self, config: Config) -> nn.Module:
-        model = MnistNet().to(self.device)
-        return model
+        return MnistNet().to(self.device)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        loss = torch.nn.functional.cross_entropy(preds, target)
-        return loss, {}
+        return torch.nn.functional.cross_entropy(preds, target), {}
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        preds = self.model(input)
-        return preds
+        return self.model(input)
 
 
 if __name__ == "__main__":

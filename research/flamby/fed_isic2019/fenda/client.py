@@ -59,8 +59,7 @@ class FedIsic2019FendaClient(FendaClient):
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return optimizer
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         criterion = BaselineLoss()
@@ -68,8 +67,7 @@ class FedIsic2019FendaClient(FendaClient):
         return loss
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        preds = self.model(input)
-        return preds
+        return self.model(input)
 
 
 if __name__ == "__main__":

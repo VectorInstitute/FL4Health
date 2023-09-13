@@ -41,20 +41,16 @@ class CifarClient(NumpyClippingClient):
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.0001)
-        return optimizer
+        return torch.optim.AdamW(self.model.parameters(), lr=0.0001)
 
     def get_model(self, config: Config) -> nn.Module:
-        model = Net().to(self.device)
-        return model
+        return Net().to(self.device)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        loss = torch.nn.functional.cross_entropy(preds, target)
-        return loss, {}
+        return torch.nn.functional.cross_entropy(preds, target), {}
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        preds = self.model(input)
-        return preds
+        return self.model(input)
 
 
 if __name__ == "__main__":

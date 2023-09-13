@@ -28,15 +28,13 @@ class CifarClient(BasicClient):
         return torch.nn.functional.cross_entropy(preds, target), {}
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-        return optimizer
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        return Net()
+        return Net().to(self.device)
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        preds = self.model(input)
-        return preds
+        return self.model(input)
 
 
 if __name__ == "__main__":

@@ -41,16 +41,13 @@ class CifarClient(BasicClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model = Net().to(self.device)
-        return model
+        return Net().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
-        return optimizer
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        loss = torch.nn.functional.cross_entropy(preds, target)
-        return loss, {}
+        return torch.nn.functional.cross_entropy(preds, target), {}
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
         preds = self.model(input)
