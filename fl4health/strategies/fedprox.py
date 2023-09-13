@@ -6,13 +6,13 @@ from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.strategy import FedAvg
-from flwr.server.strategy.aggregate import aggregate
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
+from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
-class FedProx(FedAvg):
+class FedProx(BasicFedAvg):
     """
     A generalization of the fedavg strategy for fedprox
     Additional to the model weights, the server also receives the training loss from the clients,
@@ -38,13 +38,70 @@ class FedProx(FedAvg):
         on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         proximal_weight: float,
         adaptive_proximal_weight: bool = False,
         proximal_weight_delta: float = 0.1,
         proximal_weight_patience: int = 5,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_aggregation: bool = True,
+        weighted_eval_losses: bool = True,
+        weighted_train_losses: bool = False,
     ) -> None:
+        """FedProx Strategy with Optional Adaptivity.
+
+        Implementation based on https://arxiv.org/abs/1602.05629
+
+        Parameters
+        ----------
+        fraction_fit : float, optional
+            Fraction of clients used during training. Defaults to 1.0.
+        fraction_evaluate : float, optional
+            Fraction of clients used during validation. Defaults to 1.0.
+        min_available_clients : int, optional
+            Minimum number of total clients in the system. Defaults to 2.
+        evaluate_fn : Optional[
+            Callable[
+                [int, NDArrays, Dict[str, Scalar]],
+                Optional[Tuple[float, Dict[str, Scalar]]]
+            ]
+        ]
+            Optional function used for validation. Defaults to None.
+        on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
+            Function used to configure training. Defaults to None.
+        on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
+            Function used to configure validation. Defaults to None.
+        accept_failures : bool, optional
+            Whether or not accept rounds containing failures. Defaults to True.
+        initial_parameters : Parameters, optional
+            Initial global model parameters.
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn]
+            Metrics aggregation function, optional.
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
+            Metrics aggregation function, optional.
+        proximal_weight: float
+            Initial proximal weight (mu). If adaptivity is false, then this is the constant weight used
+            for all clients
+        adaptive_proximal_weight: Optional[bool]
+            Defaults to False, determines whether the value of mu is adaptively modified by the server based on
+            aggregated train loss.
+        proximal_weight_delta: Optional[float]
+            Defaults to 0.1. This is the amount by which the server changes the value of mu based on the modification
+            criteria. Only applicable if adaptivity is on.
+        proximal_weight_patience: Optional[int],
+            Defaults to 5. This is the number of rounds a server must see decreasing aggregated train loss before
+            reducing the value of mu. Only applicable if adaptivity is on.
+        weighted_aggregation: bool, Optional.
+            Defaults to True, determines whether parameter aggregation is a linearly weighted average or a uniform
+            average. FedAvg default is weighted average by client dataset counts.
+        weighted_eval_losses: bool, Optional
+            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
+            average. FedAvg default is weighted average of the losses by client dataset counts.
+        weighted_train_losses: Optional[bool]
+            Defaults to False, determines whether the training losses from the clients should be aggregated using a
+            weighted or unweighted average. These aggregated losses are used to adjust the proximal weight in the
+            adaptive setting.
+        """
 
         self.proximal_weight = proximal_weight
         self.adaptive_proximal_weight = adaptive_proximal_weight
@@ -72,8 +129,11 @@ class FedProx(FedAvg):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=weighted_aggregation,
+            weighted_eval_losses=weighted_eval_losses,
         )
         self.parameter_packer = ParameterPackerFedProx()
+        self.weighted_train_losses = weighted_train_losses
 
     def aggregate_fit(
         self,
@@ -81,7 +141,6 @@ class FedProx(FedAvg):
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-
         """Aggregate fit results using weighted average."""
         if not results:
             return None, {}
@@ -90,21 +149,21 @@ class FedProx(FedAvg):
             return None, {}
 
         # Convert results with packed params of model weights and training loss
-        weights_and_counts = []
-        train_losses = []
+        weights_and_counts: List[Tuple[NDArrays, int]] = []
+        train_losses_and_counts: List[Tuple[int, float]] = []
         for _, fit_res in results:
             sample_count = fit_res.num_examples
             updated_weights, train_loss = self.parameter_packer.unpack_parameters(
                 parameters_to_ndarrays(fit_res.parameters)
             )
             weights_and_counts.append((updated_weights, sample_count))
-            train_losses.append(train_loss)
+            train_losses_and_counts.append((sample_count, train_loss))
 
-        # Aggregate model weights using fedavg aggregation strategy
-        weights_aggregated = aggregate(weights_and_counts)
+        # Aggregate them in a weighted or unweighted fashion based on settings.
+        weights_aggregated = aggregate_results(weights_and_counts, self.weighted_aggregation)
 
-        # Aggregate train loss using unweighted average
-        train_losses_aggregated = np.mean(train_losses)
+        # Aggregate train loss
+        train_losses_aggregated = aggregate_losses(train_losses_and_counts, self.weighted_train_losses)
 
         self._maybe_update_proximal_weight_param(float(train_losses_aggregated))
 
@@ -121,7 +180,6 @@ class FedProx(FedAvg):
         return ndarrays_to_parameters(parameters), metrics_aggregated
 
     def _maybe_update_proximal_weight_param(self, loss: float) -> None:
-
         """Update proximal weight parameter if adaptive_proximal_weight is set to True"""
 
         if self.adaptive_proximal_weight:
@@ -131,10 +189,16 @@ class FedProx(FedAvg):
                     self.proximal_weight -= self.proximal_weight_delta
                     self.proximal_weight = max(0.0, self.proximal_weight)
                     self.proximal_weight_patience_counter = 0
+                    log(INFO, f"Aggregate training loss has dropped {self.proximal_weight_patience} rounds in a row")
                     log(INFO, f"Proximal weight is decreased to {self.proximal_weight}")
             else:
                 self.proximal_weight += self.proximal_weight_delta
                 self.proximal_weight_patience_counter = 0
-                log(INFO, f"Proximal weight is increased to {self.proximal_weight}")
+                log(
+                    INFO,
+                    f"Aggregate training loss increased this round: Current loss {loss}, "
+                    f"Previous loss: {self.previous_loss}",
+                )
+                log(INFO, f"Proximal weight is increased by {self.proximal_weight_delta} to {self.proximal_weight}")
         self.previous_loss = loss
         return None

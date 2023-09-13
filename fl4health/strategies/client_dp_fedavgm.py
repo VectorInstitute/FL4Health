@@ -28,8 +28,9 @@ from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
-from fl4health.client_managers.base_sampling_manager import BaseSamplingManager
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.noisy_aggregate import (
     gaussian_noisy_aggregate_clipping_bits,
     gaussian_noisy_unweighted_aggregate,
@@ -37,7 +38,7 @@ from fl4health.strategies.noisy_aggregate import (
 )
 
 
-class ClientLevelDPFedAvgM(FedAvgSampling):
+class ClientLevelDPFedAvgM(BasicFedAvg):
     """
     Performs Federated Averaging with Momentum while performing the required server side update noising required
     for client level differential privacy. If enabled, it performs adaptive clipping rather than fixed threshold
@@ -64,7 +65,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        weighted_averaging: bool = False,
+        weighted_aggregation: bool = False,
+        weighted_eval_losses: bool = True,
         per_client_example_cap: Optional[float] = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
@@ -107,8 +109,11 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             Metrics aggregation function, optional.
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
             Metrics aggregation function, optional.
-        weighted_averaging: bool Defaults to False
+        weighted_aggregation: bool Defaults to False
             Determines whether the FedAvg update is weighted by client dataset size or unweighted
+        weighted_eval_losses: bool, Optional
+            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
+            average. FedAvg default is weighted average of the losses by client dataset counts.
         per_client_example_cap: Optional[float]. Defaults to None.
             The maximum number samples per client. hat{w} in https://arxiv.org/pdf/1710.06963.pdf.
         adaptive_clipping: bool Defaults to False.
@@ -148,8 +153,9 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=weighted_aggregation,
+            weighted_eval_losses=weighted_eval_losses,
         )
-        self.weighted_averaging = weighted_averaging
         # If per_client_example_cap is None, it will be set as the total samples across clients
         self.per_client_example_cap = per_client_example_cap
         self.adaptive_clipping = adaptive_clipping
@@ -160,6 +166,9 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         self.weight_noise_multiplier = weight_noise_multiplier
         self.clipping_noise_mutliplier = clipping_noise_mutliplier
         self.beta = beta
+
+        # Parameter Packer to handle packing and unpacking parameters with clipping bit
+        self.parameter_packer = ParameterPackerWithClippingBit()
 
         # Weighted averaging requires list of sample counts
         # to compute client weights. Set by server after polling clients.
@@ -181,17 +190,19 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
         return pow(sqrt_argument, -0.5)
 
     def split_model_weights_and_clipping_bits(
-        self, weight_results: List[Tuple[NDArrays, int]]
+        self, results: List[Tuple[ClientProxy, FitRes]]
     ) -> Tuple[List[Tuple[NDArrays, int]], NDArrays]:
-        # Clipping bits are packed with the model weights as the last entry in the NDArrays list. We split model
-        # weights from these and return both
-        client_clipping_bits = []
-        client_model_weights = []
-        for client_weights, client_n_datapoints in weight_results:
-            client_model_weights.append((client_weights[:-1], client_n_datapoints))
-            client_clipping_bits.append(client_weights[-1])
+        weights_and_counts: List[Tuple[NDArrays, int]] = []
+        clipping_bits: NDArrays = []
+        for _, fit_res in results:
+            sample_count = fit_res.num_examples
+            updated_weights, clipping_bit = self.parameter_packer.unpack_parameters(
+                parameters_to_ndarrays(fit_res.parameters)
+            )
+            weights_and_counts.append((updated_weights, sample_count))
+            clipping_bits.append(np.array(clipping_bit))
 
-        return client_model_weights, client_clipping_bits
+        return weights_and_counts, clipping_bits
 
     def calculate_update_with_momentum(self, weights_update: NDArrays) -> None:
         if not self.m_t:
@@ -245,7 +256,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             return None, {}
 
         # If first round compute total expected client weight
-        if self.weighted_averaging and server_round == 1:
+        if self.weighted_aggregation and server_round == 1:
             assert self.sample_counts is not None
 
             total_samples = sum(self.sample_counts)
@@ -258,12 +269,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
                 [sample_count / self.per_client_example_cap for sample_count in self.sample_counts]
             )
 
-        # Convert results
-        weights_updates = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
-        ]
-
-        weights_updates, clipping_bits = self.split_model_weights_and_clipping_bits(weights_updates)
+        # Convert results with packed params of model weights and clipping bits
+        weights_and_counts, clipping_bits = self.split_model_weights_and_clipping_bits(results)
 
         noise_multiplier = self.weight_noise_multiplier
         if self.adaptive_clipping:
@@ -273,10 +280,10 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             self.update_clipping_bound(clipping_bits)
             log(INFO, f"New Clipping Bound is: {self.clipping_bound}")
 
-        if self.weighted_averaging:
+        if self.weighted_aggregation:
             assert self.per_client_example_cap is not None
             noised_aggregated_update = gaussian_noisy_weighted_aggregate(
-                weights_updates,
+                weights_and_counts,
                 noise_multiplier,
                 self.clipping_bound,
                 self.fraction_fit,
@@ -285,7 +292,7 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             )
         else:
             noised_aggregated_update = gaussian_noisy_unweighted_aggregate(
-                weights_updates,
+                weights_and_counts,
                 noise_multiplier,
                 self.clipping_bound,
             )
@@ -303,13 +310,14 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         # Weights plus the clipping bound to be used by the clients
-        return ndarrays_to_parameters(self.current_weights + [np.array([self.clipping_bound])]), metrics_aggregated
+        packed_ndarrays = self.parameter_packer.pack_parameters(self.current_weights, self.clipping_bound)
+        return ndarrays_to_parameters(packed_ndarrays), metrics_aggregated
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
-        # This strategy requires the client manager to be of type at least BaseSamplingManager
-        assert isinstance(client_manager, BaseSamplingManager)
+        # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
+        assert isinstance(client_manager, BaseFractionSamplingManager)
         """Configure the next round of training."""
         config = {}
         if self.on_fit_config_fn is not None:
@@ -328,8 +336,8 @@ class ClientLevelDPFedAvgM(FedAvgSampling):
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """Configure the next round of evaluation."""
 
-        # This strategy requires the client manager to be of type at least BaseSamplingManager
-        assert isinstance(client_manager, BaseSamplingManager)
+        # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
+        assert isinstance(client_manager, BaseFractionSamplingManager)
 
         # Do not configure federated evaluation if fraction eval is 0 or server is not initialized
         if self.fraction_evaluate == 0.0:

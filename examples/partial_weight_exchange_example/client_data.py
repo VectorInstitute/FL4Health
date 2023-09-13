@@ -55,7 +55,6 @@ def construct_dataloaders(
     sample_percentage: float,
     beta: float,
 ) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
-
     # 256 is the default truncation length used by
     # torchtext's pre-processing pipeline of RoBERTa, and 512 is the maximum
     # sequence length to the RoBERTa-base encoder.
@@ -114,8 +113,8 @@ def construct_dataloaders(
         "test_set": len(ag_test_dataset),
     }
 
-    train_loader = DataLoader(ag_train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(ag_val_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(ag_test_dataset, batch_size=batch_size, shuffle=True)
+    train_loader: DataLoader = DataLoader(ag_train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader: DataLoader = DataLoader(ag_val_dataset, batch_size=batch_size, shuffle=True)
+    test_loader: DataLoader = DataLoader(ag_test_dataset, batch_size=batch_size, shuffle=True)
 
     return train_loader, val_loader, test_loader, num_examples

@@ -1,13 +1,13 @@
 import argparse
 from functools import partial
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -19,22 +19,6 @@ def get_initial_model_parameters() -> Parameters:
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = Net()
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def fit_metrics_aggregation_fn(
-    all_client_metrics: List[Tuple[int, Metrics]],
-) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
 
 
 def construct_config(current_round: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
@@ -83,7 +67,7 @@ def main(config: Dict[str, Any]) -> None:
         weight_noise_multiplier=config["server_noise_multiplier"],
         clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
-        weighted_averaging=config["weighted_averaging"],
+        weighted_aggregation=config["weighted_averaging"],
     )
     server = ClientLevelDPFedAvgServer(
         client_manager=client_manager,

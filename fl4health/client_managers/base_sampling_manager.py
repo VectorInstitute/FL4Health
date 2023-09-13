@@ -5,7 +5,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
 
 
-class BaseSamplingManager(SimpleClientManager):
+class BaseFractionSamplingManager(SimpleClientManager):
     """Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients"""
 
     def sample(

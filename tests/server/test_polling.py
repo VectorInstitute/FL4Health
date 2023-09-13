@@ -1,68 +1,10 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
-from flwr.common.typing import (
-    Code,
-    Config,
-    DisconnectRes,
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
-    FitRes,
-    GetParametersIns,
-    GetParametersRes,
-    GetPropertiesIns,
-    GetPropertiesRes,
-    ReconnectIns,
-    Status,
-)
+from flwr.common.typing import Config, GetPropertiesIns
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.server.polling import poll_client, poll_clients
-
-
-class CustomClientProxy(ClientProxy):
-    """Subclass of ClientProxy."""
-
-    def __init__(self, cid: str, num_samples: int = 1):
-        super().__init__(cid)
-        self.properties = {"num_samples": num_samples}
-
-    def get_properties(
-        self,
-        ins: GetPropertiesIns,
-        timeout: Optional[float],
-    ) -> GetPropertiesRes:
-        status: Status = Status(code=Code["OK"], message="Test")
-        res = GetPropertiesRes(status=status, properties=self.properties)
-        return res
-
-    def get_parameters(
-        self,
-        ins: GetParametersIns,
-        timeout: Optional[float],
-    ) -> GetParametersRes:
-        raise NotImplementedError
-
-    def fit(
-        self,
-        ins: FitIns,
-        timeout: Optional[float],
-    ) -> FitRes:
-        raise NotImplementedError
-
-    def evaluate(
-        self,
-        ins: EvaluateIns,
-        timeout: Optional[float],
-    ) -> EvaluateRes:
-        raise NotImplementedError
-
-    def reconnect(
-        self,
-        ins: ReconnectIns,
-        timeout: Optional[float],
-    ) -> DisconnectRes:
-        raise NotImplementedError
+from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
 def test_poll_client() -> None:
@@ -83,7 +25,7 @@ def test_poll_clients() -> None:
     ins = GetPropertiesIns(config=config)
     clients_instructions: List[Tuple[ClientProxy, GetPropertiesIns]] = [(client, ins) for client in clients]
 
-    results, failures = poll_clients(client_instructions=clients_instructions, max_workers=None, timeout=None)
+    results, _ = poll_clients(client_instructions=clients_instructions, max_workers=None, timeout=None)
 
     property_results = [result[1] for result in results]
 

@@ -1,16 +1,16 @@
 import argparse
 from functools import partial
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
 
@@ -19,22 +19,6 @@ def get_initial_model_parameters() -> Parameters:
     # Currently uses the Pytorch default initialization for the model parameters.
     initial_model = Net()
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def fit_metrics_aggregation_fn(
-    all_client_metrics: List[Tuple[int, Metrics]],
-) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
 
 
 def construct_config(
@@ -80,7 +64,7 @@ def main(config: Dict[str, Any]) -> None:
 
     # Server performs simple FedAveraging with Instance Level Differential Privacy
     # Must be FedAvg sampling to ensure privacy loss is computed correctly
-    strategy = FedAvgSampling(
+    strategy = BasicFedAvg(
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],

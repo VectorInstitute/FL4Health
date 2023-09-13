@@ -7,10 +7,12 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.fedavg_sampling import FedAvgSampling
+from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 
 class InstanceLevelDPServer(FlServer):
@@ -25,7 +27,7 @@ class InstanceLevelDPServer(FlServer):
         noise_multiplier: int,
         batch_size: int,
         num_server_rounds: int,
-        strategy: FedAvgSampling,
+        strategy: BasicFedAvg,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
@@ -55,7 +57,7 @@ class InstanceLevelDPServer(FlServer):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
 
-        assert isinstance(self.strategy, FedAvgSampling)
+        assert isinstance(self.strategy, StrategyWithPolling)
         sample_counts = self.poll_clients_for_sample_counts(timeout)
         self.setup_privacy_accountant(sample_counts)
 
@@ -65,7 +67,8 @@ class InstanceLevelDPServer(FlServer):
         """
         Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
         """
-        assert isinstance(self.strategy, FedAvgSampling)
+        # Ensures that we're using a fraction sampler of the
+        assert isinstance(self._client_manager, PoissonSamplingClientManager)
 
         total_samples = sum(sample_counts)
 
@@ -78,6 +81,7 @@ class InstanceLevelDPServer(FlServer):
             self.local_epochs = max(epochs_per_client)
 
         assert isinstance(self.local_epochs, int)
+        assert isinstance(self.strategy, BasicFedAvg)
 
         self.accountant = FlInstanceLevelAccountant(
             client_sampling_rate=self.strategy.fraction_fit,
