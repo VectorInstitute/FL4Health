@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -99,6 +99,35 @@ class FedProxClient(BasicClient):
         self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
+
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        local_epochs, local_steps, current_server_round = self.process_config(config)
+
+        if not self.initialized:
+            self.setup_client(config)
+
+        self.set_parameters(parameters, config)
+
+        if local_epochs is not None:
+            losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            local_steps = self.num_train_samples * local_epochs  # total steps over training round
+        else:
+            assert isinstance(local_steps, int)
+            losses, metrics = self.train_by_steps(local_steps, current_server_round)
+
+        # Store current losses (Used by FedProx Client)
+        self.current_loss = losses["loss"]
+
+        # Update model after train round (Used by Scaffold and DP-Scaffold Client)
+        self.update_after_train(local_steps)
+
+        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
+        # calculation results.
+        return (
+            self.get_parameters(config),
+            self.num_train_samples,
+            metrics,
+        )
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         loss = self.criterion(preds, target)

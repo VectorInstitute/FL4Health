@@ -88,14 +88,11 @@ class BasicClient(NumpyFlClient):
         self.set_parameters(parameters, config)
 
         if local_epochs is not None:
-            losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            _, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = self.num_train_samples * local_epochs  # total steps over training round
         else:
             assert isinstance(local_steps, int)
-            losses, metrics = self.train_by_steps(local_steps, current_server_round)
-
-        # Store current losses (Used by FedProx Client)
-        self.current_loss = losses["loss"]
+            _, metrics = self.train_by_steps(local_steps, current_server_round)
 
         # Update model after train round (Used by Scaffold and DP-Scaffold Client)
         self.update_after_train(local_steps)
