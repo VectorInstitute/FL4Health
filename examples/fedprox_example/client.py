@@ -44,19 +44,16 @@ class MnistFedProxClient(FedProxClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return MnistNet()
+        return MnistNet().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
-        return optimizer
+        return torch.optim.AdamW(self.model.parameters(), lr=0.01)
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        preds = self.model(input)
-        return preds
+        return self.model(input)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        loss = torch.nn.functional.cross_entropy(preds, target)
-        return loss, {}
+        return torch.nn.functional.cross_entropy(preds, target), {}
 
 
 if __name__ == "__main__":
