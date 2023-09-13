@@ -21,7 +21,8 @@ from fl4health.utils.metrics import AccumulationMeter, AverageMeter, MeterType, 
 class BasicClient(NumpyFlClient):
     """
     Base FL Client with functionality to train, evaluate, log, report and checkpoint.
-    User is only
+    User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
+    Other methods can be overriden to achieve custom fucntionality.
     """
 
     def __init__(
@@ -134,8 +135,8 @@ class BasicClient(NumpyFlClient):
         self, loss_dict: Dict[str, float], step_loss_dict: Dict[str, torch.Tensor]
     ) -> Dict[str, float]:
         """
-        Update current_losses attribute with new losses in loss_dict.
-        If current_losses is None, initialize with keys of loss_dict and values 0
+        Update loss_dict attribute with new losses in step_loss_dict.
+        If loss_dict is empty, initialize with keys of loss_dict and values 0 prior to updating
         """
         if len(loss_dict.keys()) == 0:
             loss_dict = {key: 0.0 for key in step_loss_dict.keys()}
@@ -144,6 +145,9 @@ class BasicClient(NumpyFlClient):
         return loss_dict
 
     def normalize_loss_dict(self, loss_dict: Dict[str, float], step: int) -> Dict[str, float]:
+        """
+        Divide each of the losses in the loss dict by the step argument and return loss dict
+        """
         assert step > 0
         normalized_loss_dict: Dict[str, float] = {key: val / step for key, val in loss_dict.items()}
         return normalized_loss_dict
