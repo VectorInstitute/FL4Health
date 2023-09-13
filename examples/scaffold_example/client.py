@@ -13,7 +13,7 @@ from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy, MeterType, Metric
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -24,7 +24,7 @@ class MnistScaffoldClient(ScaffoldClient):
         metrics: Sequence[Metric],
         device: torch.device,
         learning_rate_local: float,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:

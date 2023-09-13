@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.utils.metrics import BalancedAccuracy, Metric
+from fl4health.utils.metrics import BalancedAccuracy, MeterType, Metric
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
@@ -28,7 +28,7 @@ class FedIsic2019FendaClient(FendaClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        meter_type: str = "accumulation",
+        meter_type: MeterType = MeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         use_wandb_reporter: bool = False,
     ) -> None:

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
@@ -212,3 +213,8 @@ class AverageMeter(Meter):
     def clear(self) -> None:
         self.metric_values_history = [[] for _ in range(len(self.metrics))]
         self.counts = []
+
+
+class MeterType(Enum):
+    AVERAGE = "AVERGE"
+    ACCUMULATION = "ACCUMULATION"

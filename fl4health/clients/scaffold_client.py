@@ -11,7 +11,7 @@ from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacy
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.metrics import Metric
+from fl4health.utils.metrics import MeterType, Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -29,7 +29,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         learning_rate_local: float,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -208,7 +208,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         learning_rate_local: float,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:

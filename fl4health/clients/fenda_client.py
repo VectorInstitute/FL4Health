@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.metrics import Metric
+from fl4health.utils.metrics import MeterType, Metric
 
 
 class FendaClient(BasicClient):
@@ -18,7 +18,7 @@ class FendaClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:

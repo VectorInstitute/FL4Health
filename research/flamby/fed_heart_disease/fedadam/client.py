@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy, MeterType, Metric
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
@@ -27,7 +27,7 @@ class FedHeartDiseaseFedAdamClient(BasicClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        meter_type: str = "accumulation",
+        meter_type: MeterType = MeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         use_wandb_reporter: bool = False,
     ) -> None:

@@ -13,7 +13,7 @@ from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy, MeterType, Metric
 
 
 class HospitalClient(NumpyClippingClient):
@@ -22,7 +22,7 @@ class HospitalClient(NumpyClippingClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:

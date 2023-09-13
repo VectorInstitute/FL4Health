@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
+from fl4health.utils.metrics import BinarySoftDiceCoefficient, MeterType, Metric
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
@@ -27,7 +27,7 @@ class FedIxiFedProxClient(FedProxClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        meter_type: str = "accumulation",
+        meter_type: MeterType = MeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         use_wandb_reporter: bool = False,
     ) -> None:

@@ -14,7 +14,7 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import AccumulationMeter, AverageMeter, Meter, Metric
+from fl4health.utils.metrics import AccumulationMeter, AverageMeter, Meter, MeterType, Metric
 
 
 class BasicClient(NumpyFlClient):
@@ -28,7 +28,7 @@ class BasicClient(NumpyFlClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -39,9 +39,6 @@ class BasicClient(NumpyFlClient):
         self.use_wandb_reporter = use_wandb_reporter
         self.checkpointer = checkpointer
         self.meter_type = meter_type
-
-        # Make sure meter type is one of average or accumulation
-        assert (self.meter_type == "average") ^ (self.meter_type == "accumulation")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -150,7 +147,7 @@ class BasicClient(NumpyFlClient):
         If no meter exists, meter is initialized based on the clients meter_type prior to updating.
         """
         if self.current_meter is None:
-            if self.meter_type == "average":
+            if self.meter_type == MeterType.AVERAGE:
                 self.current_meter = AverageMeter(self.metrics)
             else:
                 self.current_meter = AccumulationMeter(self.metrics)

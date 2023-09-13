@@ -13,7 +13,7 @@ from examples.models.cnn_model import Net
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy, MeterType, Metric
 
 
 class CifarClient(BasicClient):
@@ -22,7 +22,7 @@ class CifarClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: str = "average",
+        meter_type: MeterType = MeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
