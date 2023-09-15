@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict, List, Sequence, Tuple
@@ -115,6 +117,11 @@ class F1(Metric):
         return metrics.f1_score(y_true, preds, average="weighted")
 
 
+class MeterType(Enum):
+    AVERAGE = "AVERGE"
+    ACCUMULATION = "ACCUMULATION"
+
+
 class Meter(ABC):
     def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
         self.metrics: Sequence[Metric] = metrics
@@ -132,6 +139,15 @@ class Meter(ABC):
 
     def clear(self) -> None:
         raise NotImplementedError
+
+    @classmethod
+    def get_meter_by_type(cls, metrics: Sequence[Metric], meter_enum: MeterType, name: str = "") -> Meter:
+        if meter_enum == MeterType.ACCUMULATION:
+            return AccumulationMeter(metrics, name)
+        elif meter_enum == MeterType.AVERAGE:
+            return AverageMeter(metrics, name)
+        else:
+            ValueError(f"Unsupported Meter Type {str(meter_enum)}")
 
 
 class AccumulationMeter(Meter):
@@ -213,8 +229,3 @@ class AverageMeter(Meter):
     def clear(self) -> None:
         self.metric_values_history = [[] for _ in range(len(self.metrics))]
         self.counts = []
-
-
-class MeterType(Enum):
-    AVERAGE = "AVERGE"
-    ACCUMULATION = "ACCUMULATION"

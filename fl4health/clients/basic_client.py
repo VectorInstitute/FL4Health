@@ -15,7 +15,7 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import AccumulationMeter, AverageMeter, MeterType, Metric
+from fl4health.utils.metrics import Meter, MeterType, Metric
 
 
 class BasicClient(NumpyFlClient):
@@ -38,12 +38,8 @@ class BasicClient(NumpyFlClient):
         self.metrics = metrics
         self.use_wandb_reporter = use_wandb_reporter
         self.checkpointer = checkpointer
-        self.train_meter = (
-            AccumulationMeter(self.metrics) if meter_type == MeterType.ACCUMULATION else AverageMeter(self.metrics)
-        )
-        self.val_meter = (
-            AccumulationMeter(self.metrics) if meter_type == MeterType.ACCUMULATION else AverageMeter(self.metrics)
-        )
+        self.train_meter = Meter.get_meter_by_type(self.metrics, meter_type, "train_meter")
+        self.val_meter = Meter.get_meter_by_type(self.metrics, meter_type, "val_meter")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -67,7 +63,7 @@ class BasicClient(NumpyFlClient):
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
-            raise ValueError("Config must contain one of local_epochs or local_steps key but not both")
+            raise ValueError("Config cannot contain both local_epochs and local_steps, Please specify only one.")
         elif "local_epochs" in config:
             local_epochs = self.narrow_config_type(config, "local_epochs", int)
             local_steps = None
@@ -75,7 +71,7 @@ class BasicClient(NumpyFlClient):
             local_steps = self.narrow_config_type(config, "local_steps", int)
             local_epochs = None
         else:
-            raise ValueError("Config must contain one of local_epochs or local_steps key but not both")
+            raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Either local epochs or local steps is none based on what key is passed in the config
         return local_epochs, local_steps, current_server_round
@@ -91,11 +87,12 @@ class BasicClient(NumpyFlClient):
         if local_epochs is not None:
             _, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = self.num_train_samples * local_epochs  # total steps over training round
-        else:
-            assert isinstance(local_steps, int)
+        elif local_steps is not None:
             _, metrics = self.train_by_steps(local_steps, current_server_round)
+        else:
+            raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
-        # Update model after train round (Used by Scaffold and DP-Scaffold Client)
+        # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -121,8 +118,18 @@ class BasicClient(NumpyFlClient):
         )
 
     def _handle_logging(
-        self, loss_dict: Dict[str, float], metrics_dict: Dict[str, Scalar], is_validation: bool = False
+        self,
+        loss_dict: Dict[str, float],
+        metrics_dict: Dict[str, Scalar],
+        current_round: Optional[int] = None,
+        current_epoch: Optional[int] = None,
+        is_validation: bool = False,
     ) -> None:
+        initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
+        initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
+        if initial_log_str != "":
+            log(INFO, initial_log_str)
+
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
         metric_prefix = "Validation" if is_validation else "Training"
@@ -155,6 +162,7 @@ class BasicClient(NumpyFlClient):
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
+        Assumes self.model is in train model already.
         """
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
@@ -175,6 +183,7 @@ class BasicClient(NumpyFlClient):
     def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
         """
         Given input and target, compute loss, update loss and metrics
+        Assumes self.model is in eval mode already.
         """
 
         # Get preds and compute loss
@@ -194,7 +203,7 @@ class BasicClient(NumpyFlClient):
         for local_epoch in range(epochs):
             loss_dict: Dict[str, float] = {}
             self.train_meter.clear()
-            for _, (input, target) in enumerate(self.train_loader):
+            for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 train_step_loss_dict, preds = self.train_step(input, target)
                 loss_dict = self.update_loss_dict(loss_dict, train_step_loss_dict)
@@ -202,14 +211,7 @@ class BasicClient(NumpyFlClient):
             metrics = self.train_meter.compute()
             normalized_loss_dict = self.normalize_loss_dict(loss_dict, len(self.train_loader))
 
-            log_string = (
-                f"Local Epoch: {local_epoch} \t Server Round: {current_round}"
-                if current_round is not None
-                else f"Local Epoch: {local_epoch}"
-            )
-
-            log(INFO, log_string)
-            self._handle_logging(normalized_loss_dict, metrics)
+            self._handle_logging(normalized_loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
 
         # Return final training metrics
         return normalized_loss_dict, metrics
@@ -239,9 +241,7 @@ class BasicClient(NumpyFlClient):
         normalized_loss_dict = self.normalize_loss_dict(loss_dict, steps)
         metrics = self.train_meter.compute()
 
-        if current_round is not None:
-            log(INFO, f"Server Round: {current_round}")
-        self._handle_logging(normalized_loss_dict, metrics)
+        self._handle_logging(normalized_loss_dict, metrics, current_round=current_round)
 
         return normalized_loss_dict, metrics
 

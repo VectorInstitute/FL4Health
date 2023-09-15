@@ -64,4 +64,9 @@ class NumpyFlClient(NumPyClient):
             self.wandb_reporter.shutdown_reporter()
 
     def setup_client(self, config: Config) -> None:
+        """
+        This method is used to set up all of the required components for the client through the config passed
+        by the server and need only be done once. The Basic Client setup_client overrides this method to setup client
+        by calling the user defined methods and setting the required attributes.
+        """
         self.initialized = True

@@ -40,8 +40,8 @@ class InstanceLevelPrivacyClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         # Ensure that clipping bound and noise multiplier is present in config
-        assert ("clipping_bound" in list(config.keys())) and isinstance(config["clipping_bound"], float)
-        assert ("noise_multiplier" in list(config.keys())) and isinstance(config["noise_multiplier"], float)
+        assert ("clipping_bound" in config) and isinstance(config["clipping_bound"], float)
+        assert ("noise_multiplier" in config) and isinstance(config["noise_multiplier"], float)
 
         # Set attributes to be used when setting DP training
         self.clipping_bound = config["clipping_bound"]
