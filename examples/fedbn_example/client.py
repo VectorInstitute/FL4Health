@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Tuple
 
 import flwr as fl
 import torch
@@ -17,20 +17,11 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedBNClient(BasicClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-    ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device)
-        log(INFO, f"Client Name: {self.client_name}")
-
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)

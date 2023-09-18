@@ -8,7 +8,7 @@ batch_size: 128 # The batch size for client training
 client_sampling_rate: 1.0 # The proportion of clients to select each round
 
 # The local learning rate of the client used for local optimizer and updates to control variates
-learning_rate_local: 0.05
+learning_rate: 0.05
 
 # Differential Privacy Parameters
 noise_multiplier: 1.0

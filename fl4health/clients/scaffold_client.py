@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -11,7 +11,8 @@ from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacy
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.metrics import MeterType, Metric
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -28,8 +29,8 @@ class ScaffoldClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        learning_rate_local: float,
-        meter_type: MeterType = MeterType.AVERAGE,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -37,11 +38,12 @@ class ScaffoldClient(BasicClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
-        self.learning_rate_local: float = learning_rate_local  # eta_l in paper
+        self.learning_rate: float  # eta_l in paper
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
@@ -95,7 +97,7 @@ class ScaffoldClient(BasicClient):
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
-        assert self.learning_rate_local is not None
+        assert self.learning_rate is not None
 
         # y_i
         client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
@@ -158,7 +160,7 @@ class ScaffoldClient(BasicClient):
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate_local)
+        scaling_coeffient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
@@ -167,23 +169,20 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
 
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
 
         # Get predictions and compute loss
         preds = self.predict(input)
-        loss, loss_dict = self.compute_loss(preds, target)
-
-        # Update loss and metrics
-        loss_dict.update({"loss": loss})
+        losses = self.compute_loss(preds, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
-        loss.backward()
+        losses.backward.backward()
         self.modify_grad()
         self.optimizer.step()
-        return loss_dict, preds
+        return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         model_size = len(self.model.state_dict())
@@ -206,8 +205,8 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        learning_rate_local: float,
-        meter_type: MeterType = MeterType.AVERAGE,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -216,8 +215,8 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             data_path=data_path,
             metrics=metrics,
             device=device,
-            learning_rate_local=learning_rate_local,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
@@ -227,7 +226,8 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )

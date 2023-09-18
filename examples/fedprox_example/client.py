@@ -1,7 +1,6 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence
 
 import flwr as fl
 import torch
@@ -13,31 +12,13 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedProxClient(FedProxClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        use_wandb_reporter: bool = True,
-        checkpointer: Optional[TorchCheckpointer] = None,
-    ) -> None:
-        super().__init__(
-            data_path=data_path,
-            metrics=metrics,
-            device=device,
-            use_wandb_reporter=use_wandb_reporter,
-            checkpointer=checkpointer,
-        )
-        log(INFO, f"Client Name: {self.client_name}")
-
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)

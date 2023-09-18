@@ -18,10 +18,8 @@ from fl4health.utils.metrics import Accuracy
 def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     client: NumpyFlClient
     if type == ScaffoldClient:
-        client = ScaffoldClient(
-            data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), learning_rate_local=0.001
-        )
-        client.learning_rate_local = 0.01
+        client = ScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+        client.learning_rate = 0.01
         model_size = len(model.state_dict()) if model else 0
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
     elif type == FedProxClient:
@@ -32,9 +30,7 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     elif type == DPScaffoldClient:
-        client = DPScaffoldClient(
-            data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), learning_rate_local=0.001
-        )
+        client = DPScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     else:

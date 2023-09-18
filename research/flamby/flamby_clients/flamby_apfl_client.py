@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.utils.metrics import AccumulationMeter, Metric
+from fl4health.utils.metrics import Metric, MetricAccumulationMeter
 
 
 class FlambyApflClient(ApflClient):
@@ -38,9 +38,9 @@ class FlambyApflClient(ApflClient):
         if not self.initialized:
             self.setup_client(config)
 
-        global_meter = AccumulationMeter(self.metrics, "train_global")
-        local_meter = AccumulationMeter(self.metrics, "train_local")
-        personal_meter = AccumulationMeter(self.metrics, "train_personal")
+        global_meter = MetricAccumulationMeter(self.metrics, "train_global")
+        local_meter = MetricAccumulationMeter(self.metrics, "train_local")
+        personal_meter = MetricAccumulationMeter(self.metrics, "train_personal")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
         metric_values = self.train_by_steps(local_steps, global_meter, local_meter, personal_meter)
@@ -57,9 +57,9 @@ class FlambyApflClient(ApflClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        global_meter = AccumulationMeter(self.metrics, "val_global")
-        local_meter = AccumulationMeter(self.metrics, "val_local")
-        personal_meter = AccumulationMeter(self.metrics, "val_personal")
+        global_meter = MetricAccumulationMeter(self.metrics, "val_global")
+        local_meter = MetricAccumulationMeter(self.metrics, "val_local")
+        personal_meter = MetricAccumulationMeter(self.metrics, "val_personal")
         loss, metric_values = self.validate(global_meter, local_meter, personal_meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.

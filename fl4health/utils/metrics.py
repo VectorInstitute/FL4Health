@@ -117,12 +117,12 @@ class F1(Metric):
         return metrics.f1_score(y_true, preds, average="weighted")
 
 
-class MeterType(Enum):
+class MetricMeterType(Enum):
     AVERAGE = "AVERGE"
     ACCUMULATION = "ACCUMULATION"
 
 
-class Meter(ABC):
+class MetricMeter(ABC):
     def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
         self.metrics: Sequence[Metric] = metrics
         self.name: str = name
@@ -141,16 +141,16 @@ class Meter(ABC):
         raise NotImplementedError
 
     @classmethod
-    def get_meter_by_type(cls, metrics: Sequence[Metric], meter_enum: MeterType, name: str = "") -> Meter:
-        if meter_enum == MeterType.ACCUMULATION:
-            return AccumulationMeter(metrics, name)
-        elif meter_enum == MeterType.AVERAGE:
-            return AverageMeter(metrics, name)
+    def get_meter_by_type(cls, metrics: Sequence[Metric], meter_enum: MetricMeterType, name: str = "") -> MetricMeter:
+        if meter_enum == MetricMeterType.ACCUMULATION:
+            return MetricAccumulationMeter(metrics, name)
+        elif meter_enum == MetricMeterType.AVERAGE:
+            return MetricAverageMeter(metrics, name)
         else:
             ValueError(f"Unsupported Meter Type {str(meter_enum)}")
 
 
-class AccumulationMeter(Meter):
+class MetricAccumulationMeter(MetricMeter):
     """
     This meter class is used to for metrics that require accumulation of input and target values. That is, they are not
     compatible with computing via weighted averages.
@@ -184,7 +184,7 @@ class AccumulationMeter(Meter):
         self.accumulated_targets = []
 
 
-class AverageMeter(Meter):
+class MetricAverageMeter(MetricMeter):
     """
     class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
     The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is

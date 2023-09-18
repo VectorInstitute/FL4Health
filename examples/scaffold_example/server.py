@@ -26,14 +26,14 @@ def get_initial_model_information() -> Tuple[Parameters, Parameters]:
 
 
 def fit_config(
-    local_steps: int, batch_size: int, n_server_rounds: int, learning_rate_local: float, current_round: int
+    local_steps: int, batch_size: int, n_server_rounds: int, learning_rate: float, current_round: int
 ) -> Config:
     return {
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "learning_rate_local": learning_rate_local,
+        "learning_rate": learning_rate,
     }
 
 
@@ -44,7 +44,7 @@ def main(config: Dict[str, Any]) -> None:
         config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["learning_rate_local"],
+        config["learning_rate"],
     )
 
     initial_parameters, initial_control_variates = get_initial_model_information()

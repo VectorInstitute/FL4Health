@@ -15,7 +15,8 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.metrics import Meter, MeterType, Metric
+from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterType
 
 
 class BasicClient(NumpyFlClient):
@@ -30,7 +31,8 @@ class BasicClient(NumpyFlClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: MeterType = MeterType.AVERAGE,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -38,8 +40,10 @@ class BasicClient(NumpyFlClient):
         self.metrics = metrics
         self.use_wandb_reporter = use_wandb_reporter
         self.checkpointer = checkpointer
-        self.train_meter = Meter.get_meter_by_type(self.metrics, meter_type, "train_meter")
-        self.val_meter = Meter.get_meter_by_type(self.metrics, meter_type, "val_meter")
+        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.train_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
+        self.val_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val_meter")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -49,6 +53,7 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.current_loss: float
+        self.learning_rate: float
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
@@ -138,28 +143,7 @@ class BasicClient(NumpyFlClient):
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
-    def update_loss_dict(
-        self, loss_dict: Dict[str, float], step_loss_dict: Dict[str, torch.Tensor]
-    ) -> Dict[str, float]:
-        """
-        Update loss_dict attribute with new losses in step_loss_dict.
-        If loss_dict is empty, initialize with keys of loss_dict and values 0 prior to updating
-        """
-        if len(loss_dict.keys()) == 0:
-            loss_dict = {key: 0.0 for key in step_loss_dict.keys()}
-
-        loss_dict = {key: val + step_loss_dict[key].item() for key, val in loss_dict.items()}
-        return loss_dict
-
-    def normalize_loss_dict(self, loss_dict: Dict[str, float], step: int) -> Dict[str, float]:
-        """
-        Divide each of the losses in the loss dict by the step argument and return loss dict
-        """
-        assert step > 0
-        normalized_loss_dict: Dict[str, float] = {key: val / step for key, val in loss_dict.items()}
-        return normalized_loss_dict
-
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
         Assumes self.model is in train model already.
@@ -169,18 +153,15 @@ class BasicClient(NumpyFlClient):
 
         # Call user defined methods to get predictions and compute loss
         preds = self.predict(input)
-        loss, loss_dict = self.compute_loss(preds, target)
-
-        # Update losses and metrics
-        loss_dict.update({"loss": loss})
+        losses = self.compute_loss(preds, target)
 
         # Compute backward pass and update paramters with optimizer
-        loss.backward()
+        losses.backward.backward()
         self.optimizer.step()
 
-        return loss_dict, preds
+        return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, compute loss, update loss and metrics
         Assumes self.model is in eval mode already.
@@ -189,32 +170,29 @@ class BasicClient(NumpyFlClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds = self.predict(input)
-            loss, loss_dict = self.compute_loss(preds, target)
+            losses = self.compute_loss(preds, target)
 
-        # Updates losses and metrics
-        loss_dict.update({"loss": loss})
-
-        return loss_dict, preds
+        return losses, preds
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         self.model.train()
         for local_epoch in range(epochs):
-            loss_dict: Dict[str, float] = {}
-            self.train_meter.clear()
+            self.train_metric_meter.clear()
+            self.train_loss_meter.clear()
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                train_step_loss_dict, preds = self.train_step(input, target)
-                loss_dict = self.update_loss_dict(loss_dict, train_step_loss_dict)
-                self.train_meter.update(preds, target)
-            metrics = self.train_meter.compute()
-            normalized_loss_dict = self.normalize_loss_dict(loss_dict, len(self.train_loader))
+                losses, preds = self.train_step(input, target)
+                self.train_loss_meter.update(losses)
+                self.train_metric_meter.update(preds, target)
+            metrics = self.train_metric_meter.compute()
+            loss_dict = self.train_loss_meter.compute()
 
-            self._handle_logging(normalized_loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
+            self._handle_logging(loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
 
         # Return final training metrics
-        return normalized_loss_dict, metrics
+        return loss_dict, metrics
 
     def train_by_steps(
         self, steps: int, current_round: Optional[int] = None
@@ -222,8 +200,8 @@ class BasicClient(NumpyFlClient):
         self.model.train()
         train_iterator = iter(self.train_loader)
 
-        self.train_meter.clear()
-        loss_dict: Dict[str, float] = {}
+        self.train_loss_meter.clear()
+        self.train_metric_meter.clear()
         for _ in range(steps):
             try:
                 input, target = next(train_iterator)
@@ -234,36 +212,36 @@ class BasicClient(NumpyFlClient):
                 input, target = next(train_iterator)
 
             input, target = input.to(self.device), target.to(self.device)
-            train_step_loss_dict, preds = self.train_step(input, target)
-            loss_dict = self.update_loss_dict(loss_dict, train_step_loss_dict)
-            self.train_meter.update(preds, target)
+            losses, preds = self.train_step(input, target)
+            self.train_loss_meter.update(losses)
+            self.train_metric_meter.update(preds, target)
 
-        normalized_loss_dict = self.normalize_loss_dict(loss_dict, steps)
-        metrics = self.train_meter.compute()
+        loss_dict = self.train_loss_meter.compute()
+        metrics = self.train_metric_meter.compute()
 
-        self._handle_logging(normalized_loss_dict, metrics, current_round=current_round)
+        self._handle_logging(loss_dict, metrics, current_round=current_round)
 
-        return normalized_loss_dict, metrics
+        return loss_dict, metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        self.val_meter.clear()
-        loss_dict: Dict[str, float] = {}
+        self.val_metric_meter.clear()
+        self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                val_step_loss_dict, preds = self.val_step(input, target)
-                loss_dict = self.update_loss_dict(loss_dict, val_step_loss_dict)
-                self.val_meter.update(preds, target)
+                losses, preds = self.val_step(input, target)
+                self.val_loss_meter.update(losses)
+                self.val_metric_meter.update(preds, target)
 
         # Compute losses and metrics over validation set
-        normalized_loss_dict = self.normalize_loss_dict(loss_dict, len(self.val_loader))
-        metrics = self.val_meter.compute()
-        self._handle_logging(normalized_loss_dict, metrics, is_validation=True)
+        loss_dict = self.val_loss_meter.compute()
+        metrics = self.val_metric_meter.compute()
+        self._handle_logging(loss_dict, metrics, is_validation=True)
 
         # Checkpoint based on loss which is output of user defined compute_loss method
-        self._maybe_checkpoint(normalized_loss_dict["loss"])
-        return normalized_loss_dict["loss"], metrics
+        self._maybe_checkpoint(loss_dict["checkpoint"])
+        return loss_dict["checkpoint"], metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
@@ -289,6 +267,7 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples = num_val_samples
 
         self.optimizer = self.get_optimizer(config)
+        self.learning_rate = self.optimizer.defaults["lr"]
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
@@ -309,13 +288,14 @@ class BasicClient(NumpyFlClient):
         """
         return self.model(input)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
         loss components if you wish to train the total loss as well as sub losses if they exist.
         """
         loss = self.criterion(preds, target)
-        return loss, {}
+        losses = Losses(checkpoint=loss, backward=loss)
+        return losses
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """

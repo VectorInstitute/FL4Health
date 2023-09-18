@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Tuple
 
 import flwr as fl
 import torch
@@ -12,30 +12,11 @@ from torch.utils.data import DataLoader
 
 from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.utils.metrics import Accuracy, MeterType, Metric
+from fl4health.utils.metrics import Accuracy
 
 
 class HospitalClient(NumpyClippingClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        meter_type: MeterType = MeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
-        checkpointer: Optional[TorchCheckpointer] = None,
-    ) -> None:
-        super().__init__(
-            data_path=data_path,
-            metrics=metrics,
-            device=device,
-            meter_type=meter_type,
-            use_wandb_reporter=use_wandb_reporter,
-            checkpointer=checkpointer,
-        )
-
     def get_model(self, config: Config) -> nn.Module:
         return LogisticRegression(input_dim=31, output_dim=1).to(self.device)
 

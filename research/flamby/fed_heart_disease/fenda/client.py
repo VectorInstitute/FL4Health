@@ -16,7 +16,8 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.utils.metrics import Accuracy, MeterType, Metric
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 from research.flamby.fed_heart_disease.fenda.fenda_model import FedHeartDiseaseFendaModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
@@ -29,7 +30,8 @@ class FedHeartDiseaseFendaClient(FendaClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        meter_type: MeterType = MeterType.ACCUMULATION,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         use_wandb_reporter: bool = False,
     ) -> None:
@@ -37,7 +39,8 @@ class FedHeartDiseaseFendaClient(FendaClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )

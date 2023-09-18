@@ -9,7 +9,8 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.utils.metrics import MeterType, Metric
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 
 class FedProxClient(BasicClient):
@@ -24,22 +25,23 @@ class FedProxClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: MeterType = MeterType.AVERAGE,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
-        proximal_weight: float = 0.1,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
-        self.proximal_weight = proximal_weight
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking
+        self.proximal_weight: float
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
@@ -109,14 +111,14 @@ class FedProxClient(BasicClient):
         self.set_parameters(parameters, config)
 
         if local_epochs is not None:
-            losses, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = self.num_train_samples * local_epochs  # total steps over training round
         else:
             assert isinstance(local_steps, int)
-            losses, metrics = self.train_by_steps(local_steps, current_server_round)
+            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
 
-        # Store current losses (Used by FedProx Client)
-        self.current_loss = losses["loss"]
+        # Store current loss which the vanilla loss without the proximal term added in
+        self.current_loss = loss_dict["checkpoint"]
 
         # Update model after train round (Used by Scaffold and DP-Scaffold Client)
         self.update_after_train(local_steps)
@@ -129,11 +131,12 @@ class FedProxClient(BasicClient):
             metrics,
         )
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
-        return loss, {"proximal_loss": proximal_loss, "total_loss": total_loss}
+        losses = Losses(checkpoint=loss, backward=total_loss)
+        return losses
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

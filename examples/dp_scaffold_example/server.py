@@ -29,7 +29,7 @@ def fit_config(
     local_steps: int,
     batch_size: int,
     n_server_rounds: int,
-    learning_rate_local: float,
+    learning_rate: float,
     noise_multiplier: float,
     clipping_bound: float,
     current_round: int,
@@ -39,7 +39,7 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "learning_rate_local": learning_rate_local,
+        "learning_rate": learning_rate,
         "clipping_bound": clipping_bound,
         "noise_multiplier": noise_multiplier,
     }
@@ -52,7 +52,7 @@ def main(config: Dict[str, Any]) -> None:
         config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["learning_rate_local"],
+        config["learning_rate"],
         config["noise_multiplier"],
         config["clipping_bound"],
     )

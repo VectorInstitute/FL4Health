@@ -16,7 +16,8 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, MeterType, Metric
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
@@ -28,7 +29,8 @@ class FedIxiFedAvgClient(BasicClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        meter_type: MeterType = MeterType.ACCUMULATION,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         use_wandb_reporter: bool = False,
     ) -> None:
@@ -36,7 +38,8 @@ class FedIxiFedAvgClient(BasicClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )

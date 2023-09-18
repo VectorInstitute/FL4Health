@@ -10,7 +10,8 @@ from opacus.validators import ModuleValidator
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import MeterType, Metric
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 
 class InstanceLevelPrivacyClient(BasicClient):
@@ -23,7 +24,8 @@ class InstanceLevelPrivacyClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        meter_type: MeterType = MeterType.AVERAGE,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -31,7 +33,8 @@ class InstanceLevelPrivacyClient(BasicClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            meter_type=meter_type,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
             use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
