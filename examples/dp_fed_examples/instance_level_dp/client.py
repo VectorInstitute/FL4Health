@@ -1,5 +1,4 @@
 import argparse
-import warnings
 from pathlib import Path
 from typing import Tuple
 
@@ -15,8 +14,6 @@ from examples.models.cnn_model import Net
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
-
-warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class CifarClient(InstanceLevelPrivacyClient):

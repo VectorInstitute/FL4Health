@@ -1,5 +1,4 @@
 import argparse
-import warnings
 from pathlib import Path
 from typing import Tuple
 
@@ -16,8 +15,6 @@ from fl4health.clients.scaffold_client import DPScaffoldClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
-
-warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class MnistDPScaffoldClient(DPScaffoldClient):

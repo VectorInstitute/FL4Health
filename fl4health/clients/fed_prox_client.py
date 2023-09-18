@@ -62,29 +62,17 @@ class FedProxClient(BasicClient):
         """
         Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation
         """
-        assert self.model is not None and self.parameter_exchanger is not None
+        assert self.model is not None and self.parameter_exchanger is not None and self.current_loss is not None
 
         model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
         # Weights and training loss sent to server for aggregation
         # Training loss sent because server will decide to increase or decrease the proximal weight
         # Therefore it can only be computed locally
-        assert self.current_loss is not None
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
         return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        """
-        Assumes that the parameters being passed contain model parameters concatenated with
-        proximal weight. They are unpacked for the clients to use in training.
-        """
-        assert self.model is not None and self.parameter_exchanger is not None
-
-        server_model_state, self.proximal_weight = self.parameter_exchanger.unpack_parameters(parameters)
-
-        self.server_model_state = server_model_state
-        self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
-
         """
         Assumes that the parameters being passed contain model parameters concatenated with
         proximal weight. They are unpacked for the clients to use in training.

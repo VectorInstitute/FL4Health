@@ -185,6 +185,7 @@ class ScaffoldClient(BasicClient):
         return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert self.model is not None
         model_size = len(self.model.state_dict())
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger

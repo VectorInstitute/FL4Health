@@ -119,7 +119,7 @@ if __name__ == "__main__":
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     client = FedIxiFedProxClient(
-        data_path=args.dataset_dir,
+        data_path=Path(args.dataset_dir),
         metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
         device=DEVICE,
         client_number=args.client_number,

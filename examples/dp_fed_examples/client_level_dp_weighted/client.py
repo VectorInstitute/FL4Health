@@ -24,7 +24,6 @@ class HospitalClient(NumpyClippingClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         scaler_bytes = self.narrow_config_type(config, "scaler", bytes)
         train_loader, val_loader, _ = load_data(self.data_path, batch_size, scaler_bytes)
-        print(len(train_loader), len(val_loader))
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:

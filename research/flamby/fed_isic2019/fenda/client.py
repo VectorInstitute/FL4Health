@@ -120,7 +120,7 @@ if __name__ == "__main__":
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     client = FedIsic2019FendaClient(
-        data_path=args.dataset_dir,
+        data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         device=DEVICE,
         client_number=args.client_number,

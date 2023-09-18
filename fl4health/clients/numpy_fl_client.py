@@ -53,6 +53,9 @@ class NumpyFlClient(NumPyClient):
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
+        if config_key not in config:
+            raise ValueError(f"{config_key} is not present in the Config.")
+
         config_value = config[config_key]
         if isinstance(config_value, narrow_type_to):
             return config_value

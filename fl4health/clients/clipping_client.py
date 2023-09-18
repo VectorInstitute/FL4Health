@@ -104,6 +104,5 @@ class NumpyClippingClient(BasicClient):
         return parameter_exchanger
 
     def setup_client(self, config: Config) -> None:
-        assert ("adaptive_clipping" in config) and isinstance(config["adaptive_clipping"], bool)
-        self.adaptive_clipping = config["adaptive_clipping"]
+        self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
         super().setup_client(config)

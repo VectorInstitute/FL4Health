@@ -38,6 +38,7 @@ class MnistFedBNClient(BasicClient):
         return MnistNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert self.model is not None
         return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
 
 
