@@ -56,8 +56,8 @@ python -m examples.partial_weight_exchange_example.client --dataset_path <path_t
 * `path_to_dataset` is the path towards the directory where the dataset is stored.
 After `n_clients` clients have been started federated learning should commence.
 
-### Running this example on Vector's clusters
-The slurm and bash scripts `run_client.slrm`, `run_server.slrm`, and `run_fl_cluster.sh` are used to run this example on Vector's clusters.
+### Running this example on REDACTED's clusters
+The slurm and bash scripts `run_client.slrm`, `run_server.slrm`, and `run_fl_cluster.sh` are used to run this example on REDACTED's clusters.
 
 * `run_server.slrm` is responsible for starting the server.
 * `run_client.slrm` is responsible for starting a client based on the server's address.

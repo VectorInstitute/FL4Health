@@ -13,8 +13,8 @@
 # ./research/flamby/fed_ixi/scaffold/run_hp_sweep.sh \
 #   research/flamby/fed_ixi/scaffold/config.yaml \
 #   research/flamby/fed_ixi/scaffold/ \
-#   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /Users/jones/Desktop/FLambyDatasets/fed_ixi/ \
+#   /h/djones/repository/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

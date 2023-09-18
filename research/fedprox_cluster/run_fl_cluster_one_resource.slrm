@@ -23,7 +23,7 @@
 #   examples/fedprox_example/config.yaml \
 #   research/fedprox_cluster/server_logs/ \
 #   research/fedprox_cluster/client_logs/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /h/djones/repository/fl4health_env/
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -38,7 +38,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in REDACTED's cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 

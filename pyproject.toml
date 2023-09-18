@@ -2,7 +2,7 @@
 name = "fl4health"
 version = "0.1.7"
 description = "Federated Learning for Health"
-authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
+authors = ["REDACTED"]
 license = "Apache-2.0"
 readme = "README.md"
 classifiers = [

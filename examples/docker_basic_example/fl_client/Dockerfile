@@ -8,7 +8,7 @@ RUN mkdir /src
 COPY . src/
 
 
-LABEL Maintainer="Vector Institute"
+LABEL Maintainer="REDACTED"
 
 USER root
 

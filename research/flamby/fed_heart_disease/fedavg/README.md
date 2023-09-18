@@ -17,8 +17,8 @@ An example is something like
 ./research/flamby/fed_heart_disease/fedavg/run_hp_sweep.sh \
    research/flamby/fed_heart_disease/fedavg/config.yaml \
    research/flamby/fed_heart_disease/fedavg/ \
-   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/jones/Desktop/FLambyDatasets/fed_heart_disease/ \
+   /h/djones/repository/fl4health_env/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for, `lr`, the client-side learning rate, in the `run_hp_sweep.sh` script directly.

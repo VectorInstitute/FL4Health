@@ -19,6 +19,6 @@ An example is something like
 ```bash
 ./research/flamby/fed_ixi/local/run_all_clients.sh \
    research/flamby/fed_ixi/local/ \
-   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/jones/Desktop/FLambyDatasets/fed_ixi/ \
+   /h/djones/repository/fl4health_env/
 ```

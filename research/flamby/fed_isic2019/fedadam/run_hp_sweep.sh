@@ -13,8 +13,8 @@
 # ./research/flamby/fed_isic2019/fedadam/run_hp_sweep.sh \
 #   research/flamby/fed_isic2019/fedadam/config.yaml \
 #   research/flamby/fed_isic2019/fedadam/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /Users/jones/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/djones/repository/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

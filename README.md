@@ -25,7 +25,6 @@ Principally, this repository contains the federated learning (FL) engine aimed a
         - [Development Requirements](#development-requirements)
         - [Coding Guidelines, Formatters, and Checks](#coding-guidelines-formatters-and-checks)
         - [Running Tests](#running-tests)
-    - [Citation](#citation)
 
 <!-- /TOC -->
 
@@ -109,7 +108,7 @@ __NOTE__: The contents of the examples folder is not packed with the FL4Health l
 
 ## Research Code
 
-The research folder houses code associated with various research being conducted by the team at Vector. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
+The research folder houses code associated with various research being conducted by the team at REDACTED. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
 
 - [FENDA-FL]() FLamby Experiments. There is a README in that folder that provides details on how to run the hyper-parameter sweeps, evaluations, and other experiments.
 
@@ -194,11 +193,3 @@ To run a specific test with pytest, one runs
 pytest tests/checkpointing/test_best_checkpointer.py
 ```
 where the path is the relative one from the root directory. If you're using VSCode, you can use the integrated debugger from the test suite if you properly configure your project. The settings will depend on your specific environment, but a potential setup is shown above in the [Tests Section](#tests).
-
-## Citation
-
-Reference to cite when you use FL4Health in a project or a research paper:
-```
-D.B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
-
-```

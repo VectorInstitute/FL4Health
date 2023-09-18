@@ -16,7 +16,7 @@ An example command for the fedprox approach is:
 ``` bash
 python -m research.flamby.fed_ixi.evaluate_on_holdout \
     --artifact_dir research/flamby/fed_ixi/fedprox/hp_sweep_results/mu_0.01_lr_0.0001/ \
-    --dataset_dir /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
+    --dataset_dir /Users/jones/Desktop/FLambyDatasets/fed_ixi/ \
     --eval_write_path research/flamby/fed_ixi/fedprox/test_eval_results.txt \
     --eval_local_models \
     --eval_global_model

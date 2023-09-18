@@ -27,8 +27,8 @@
 # sbatch research/flamby/fed_ixi/fedavg/run_fold_experiment.slrm \
 #   research/flamby/fed_ixi/fedavg/config.yaml \
 #   research/flamby/fed_ixi/fedavg/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /Users/jones/Desktop/FLambyDatasets/fed_ixi/ \
+#   /h/djones/repository/fl4health_env/ \
 #   0.0001 \
 #   0.0.0.0:8080
 #
@@ -45,7 +45,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in REDACTED's cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 
