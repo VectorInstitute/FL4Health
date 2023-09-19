@@ -16,7 +16,7 @@ class Losses:
     ):
         self.checkpoint = checkpoint
         self.backward = backward
-        self.additional_losses = additional_losses
+        self.additional_losses = additional_losses if additional_losses else {}
 
     def as_dict(self) -> Dict[str, float]:
         loss_dict: Dict[str, float] = {}
@@ -76,26 +76,14 @@ class LossAverageMeter(LossMeter):
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list])) / num_losses
         backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list])) / num_losses
 
-        # We don't know the keys of the additional_losses beforehand so we first check if it is none first
-        # If it is not none, we iterate through the keys, compute the additional losses and store
-        # else additional_losses is set to None
-        if self.losses_list[0].additional_losses is not None:
-            additional_losses = {}
-            for key in self.losses_list[0].additional_losses.keys():
-                additional_losses[key] = (
-                    torch.sum(
-                        torch.FloatTensor(
-                            [
-                                losses.additional_losses[key]
-                                for losses in self.losses_list
-                                if losses.additional_losses is not None and key in losses.additional_losses
-                            ]
-                        )
-                    )
-                    / num_losses
-                )
-        else:
-            additional_losses = None
+        # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
+        # because we know all of the losses will have the same keys in additinal_losses dict
+        additional_losses: Dict[str, torch.Tensor] = {}
+        for key in self.losses_list[0].additional_losses.keys():
+            additional_losses[key] = (
+                torch.sum(torch.FloatTensor([losses.additional_losses[key] for losses in self.losses_list]))
+                / num_losses
+            )
 
         losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
         return losses
