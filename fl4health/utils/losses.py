@@ -57,28 +57,17 @@ class LossAverageMeter(LossMeter):
         assert len(self.losses_list) > 0
         loss_dict: Dict[str, float] = {}
 
+        num_losses = len(self.losses_list)
         # Compute average checkpoint and backward losses across list
-        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list]) / len(
-            self.losses_list
-        )
-        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list]) / len(self.losses_list)
+        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list]) / num_losses
+        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list]) / num_losses
 
-        # Check if additional_loss attribute is not None
-        if len(self.losses_list[0].additional_losses.keys()) > 0:
+        # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
+        # because we know all of the losses will have the same keys in additinal_losses dict
+        for key in self.losses_list[0].additional_losses.keys():
+            loss_dict[key] = sum([losses.additional_losses[key].item() for losses in self.losses_list]) / num_losses
 
-            # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
-            # because we know all of the losses will have the same keys in additinal_losses dict
-            keys = self.losses_list[0].additional_losses.keys()
-
-            # Define dict to store results of computed additional losses
-            running_additional_losses = {}
-            for key in keys:
-                running_additional_losses[key] = sum(
-                    [losses.additional_losses[key].item() for losses in self.losses_list]
-                ) / len(self.losses_list)
-            return {**loss_dict, **running_additional_losses}
-        else:
-            return loss_dict
+        return loss_dict
 
 
 class LossAccumulationMeter(LossMeter):
@@ -99,19 +88,9 @@ class LossAccumulationMeter(LossMeter):
         loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list])
         loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list])
 
-        # Check if additional_loss attribute is not None
+        # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
+        # because we know all of the losses will have the same keys in additinal_losses dict
+        for key in self.losses_list[0].additional_losses.keys():
+            loss_dict[key] = sum([losses.additional_losses[key].item() for losses in self.losses_list])
 
-        if len(self.losses_list[0].additional_losses.keys()) > 0:
-            # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
-            # because we know all of the losses will have the same keys in additinal_losses dict
-            keys = self.losses_list[0].additional_losses.keys()
-
-            # Define dict to store results of computed additional losses
-            running_additional_losses = {}
-            for key in keys:
-                running_additional_losses[key] = sum(
-                    [losses.additional_losses[key].item() for losses in self.losses_list]
-                )
-            return {**loss_dict, **running_additional_losses}
-        else:
-            return loss_dict
+        return loss_dict
