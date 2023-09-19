@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
@@ -16,7 +18,9 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 
 
 class TransformerPartialExchangeClient(BasicClient):
@@ -25,8 +29,16 @@ class TransformerPartialExchangeClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
     ) -> None:
-        super().__init__(data_path, metrics, device)
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+        )
         self.initial_model: nn.Module
         self.test_loader: DataLoader
         self.parameter_exchanger: NormDriftParameterExchanger
@@ -54,40 +66,43 @@ class TransformerPartialExchangeClient(BasicClient):
             test_res_dict["accuracy"] = accuracy
             return (loss, self.num_examples["test_set"], test_res_dict)
 
-    def setup_model(self, num_classes: int) -> None:
+    def get_model(self, config: Config) -> nn.Module:
+        num_classes = self.narrow_config_type(config, "num_classes", int)
         classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
-        self.model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
-        self.model.to(self.device)
+        model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head).to(self.device)
+        return model
+
+    def setup_model(self, config: Config) -> None:
+        super().setup_client(config)
         self.initial_model = copy.deepcopy(self.model).to(self.device)
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sequence_length = self.narrow_config_type(config, "sequence_length", int)
-        num_classes = self.narrow_config_type(config, "num_classes", int)
+        sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
+        beta = self.narrow_config_type(config, "beta", float)
+        train_loader, val_loader, test_loader, num_examples = construct_dataloaders(
+            self.data_path, batch_size, sequence_length, sample_percentage, beta
+        )
+        self.test_loader = test_loader
+        self.num_examples = num_examples
+        return train_loader, val_loader
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         normalize = self.narrow_config_type(config, "normalize", bool)
         filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
         norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
         exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
-        sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
-        beta = self.narrow_config_type(config, "beta", float)
-
-        self.parameter_exchanger = NormDriftParameterExchanger(
+        parameter_exchanger = NormDriftParameterExchanger(
             norm_threshold, exchange_percentage, normalize, filter_by_percentage
         )
+        return parameter_exchanger
 
-        self.setup_model(num_classes)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
-        train_loader, val_loader, test_loader, num_examples = construct_dataloaders(
-            self.data_path, batch_size, sequence_length, sample_percentage, beta
-        )
-
-        self.train_loader = train_loader
-        self.val_loader = val_loader
-        self.test_loader = test_loader
-        self.num_examples = num_examples
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
 
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
@@ -182,3 +197,5 @@ if __name__ == "__main__":
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
     # of larger messages would still be blocked.
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)
+
+    client.shutdown()
