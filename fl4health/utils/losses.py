@@ -2,14 +2,17 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 
 
 class Losses:
     def __init__(
-        self, checkpoint: torch.Tensor, backward: torch.Tensor, additional_losses: Dict[str, torch.Tensor] = {}
+        self,
+        checkpoint: torch.Tensor,
+        backward: torch.Tensor,
+        additional_losses: Optional[Dict[str, torch.Tensor]] = None,
     ):
         self.checkpoint = checkpoint
         self.backward = backward
@@ -20,8 +23,9 @@ class Losses:
         loss_dict["checkpoint"] = float(self.checkpoint.item())
         loss_dict["backward"] = float(self.backward.item())
 
-        for key, val in self.additional_losses.items():
-            loss_dict[key] = float(val.item())
+        if self.additional_losses is not None:
+            for key, val in self.additional_losses.items():
+                loss_dict[key] = float(val.item())
 
         return loss_dict
 
@@ -72,15 +76,26 @@ class LossAverageMeter(LossMeter):
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list])) / num_losses
         backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list])) / num_losses
 
-        # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
-        # because we know all of the losses will have the same keys in additinal_losses dict
-
-        additional_losses = {}
-        for key in self.losses_list[0].additional_losses.keys():
-            additional_losses[key] = (
-                torch.sum(torch.FloatTensor([losses.additional_losses[key] for losses in self.losses_list]))
-                / num_losses
-            )
+        # We don't know the keys of the additional_losses beforehand so we first check if it is none first
+        # If it is not none, we iterate through the keys, compute the additional losses and store
+        # else additional_losses is set to None
+        if self.losses_list[0].additional_losses is not None:
+            additional_losses = {}
+            for key in self.losses_list[0].additional_losses.keys():
+                additional_losses[key] = (
+                    torch.sum(
+                        torch.FloatTensor(
+                            [
+                                losses.additional_losses[key]
+                                for losses in self.losses_list
+                                if losses.additional_losses is not None and key in losses.additional_losses
+                            ]
+                        )
+                    )
+                    / num_losses
+                )
+        else:
+            additional_losses = None
 
         losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
         return losses
@@ -103,13 +118,23 @@ class LossAccumulationMeter(LossMeter):
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list]))
         backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list]))
 
-        # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
-        # because we know all of the losses will have the same keys in additinal_losses dict
-        additional_losses = {}
-        for key in self.losses_list[0].additional_losses.keys():
-            additional_losses[key] = torch.sum(
-                torch.FloatTensor([losses.additional_losses[key] for losses in self.losses_list])
-            )
+        # We don't know the keys of the additional_losses beforehand so we first check if it is none first
+        # If it is not none, we iterate through the keys, compute the additional losses and store
+        # else additional_losses is set to None
+        if self.losses_list[0].additional_losses is not None:
+            additional_losses = {}
+            for key in self.losses_list[0].additional_losses.keys():
+                additional_losses[key] = torch.sum(
+                    torch.FloatTensor(
+                        [
+                            losses.additional_losses[key]
+                            for losses in self.losses_list
+                            if losses.additional_losses is not None and key in losses.additional_losses
+                        ]
+                    )
+                )
+        else:
+            additional_losses = None
 
         losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
         return losses
