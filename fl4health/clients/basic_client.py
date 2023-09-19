@@ -185,7 +185,8 @@ class BasicClient(NumpyFlClient):
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(preds, target)
             metrics = self.train_metric_meter.compute()
-            loss_dict = self.train_loss_meter.compute()
+            losses = self.train_loss_meter.compute()
+            loss_dict = losses.as_dict()
 
             self._handle_logging(loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
 
@@ -214,7 +215,8 @@ class BasicClient(NumpyFlClient):
             self.train_loss_meter.update(losses)
             self.train_metric_meter.update(preds, target)
 
-        loss_dict = self.train_loss_meter.compute()
+        losses = self.train_loss_meter.compute()
+        loss_dict = losses.as_dict()
         metrics = self.train_metric_meter.compute()
 
         self._handle_logging(loss_dict, metrics, current_round=current_round)
@@ -233,7 +235,8 @@ class BasicClient(NumpyFlClient):
                 self.val_metric_meter.update(preds, target)
 
         # Compute losses and metrics over validation set
-        loss_dict = self.val_loss_meter.compute()
+        losses = self.val_loss_meter.compute()
+        loss_dict = losses.as_dict()
         metrics = self.val_metric_meter.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 

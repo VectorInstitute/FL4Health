@@ -36,7 +36,8 @@ def test_loss_average_meter() -> None:
     for loss in losses:
         loss_avg_meter.update(loss)
 
-    loss_dict = loss_avg_meter.compute()
+    computed_losses = loss_avg_meter.compute()
+    loss_dict = computed_losses.as_dict()
 
     assert loss_dict["checkpoint"] == pytest.approx(3.09278, rel=0.01)
     assert loss_dict["backward"] == pytest.approx(3.83582, rel=0.01)
@@ -75,7 +76,8 @@ def test_loss_accumulation_meter() -> None:
     for loss in losses:
         loss_accum_meter.update(loss)
 
-    loss_dict = loss_accum_meter.compute()
+    computed_losses = loss_accum_meter.compute()
+    loss_dict = computed_losses.as_dict()
 
     assert loss_dict["checkpoint"] == pytest.approx(15.4639, rel=0.01)
     assert loss_dict["backward"] == pytest.approx(19.1791, rel=0.01)

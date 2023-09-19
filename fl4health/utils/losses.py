@@ -1,18 +1,29 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
 import torch
 
 
-@dataclass
 class Losses:
-    checkpoint: torch.Tensor
-    backward: torch.Tensor
-    additional_losses: Dict[str, torch.Tensor] = field(default_factory=lambda: {})
+    def __init__(
+        self, checkpoint: torch.Tensor, backward: torch.Tensor, additional_losses: Dict[str, torch.Tensor] = {}
+    ):
+        self.checkpoint = checkpoint
+        self.backward = backward
+        self.additional_losses = additional_losses
+
+    def as_dict(self) -> Dict[str, float]:
+        loss_dict: Dict[str, float] = {}
+        loss_dict["checkpoint"] = float(self.checkpoint.item())
+        loss_dict["backward"] = float(self.backward.item())
+
+        for key, val in self.additional_losses.items():
+            loss_dict[key] = float(val.item())
+
+        return loss_dict
 
 
 class LossMeterType(Enum):
@@ -30,7 +41,7 @@ class LossMeter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute(self) -> Dict[str, float]:
+    def compute(self) -> Losses:
         raise NotImplementedError
 
     @classmethod
@@ -53,21 +64,26 @@ class LossAverageMeter(LossMeter):
     def clear(self) -> None:
         self.losses_list = []
 
-    def compute(self) -> Dict[str, float]:
+    def compute(self) -> Losses:
         assert len(self.losses_list) > 0
-        loss_dict: Dict[str, float] = {}
 
         num_losses = len(self.losses_list)
         # Compute average checkpoint and backward losses across list
-        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list]) / num_losses
-        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list]) / num_losses
+        checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list])) / num_losses
+        backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list])) / num_losses
 
         # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
         # because we know all of the losses will have the same keys in additinal_losses dict
-        for key in self.losses_list[0].additional_losses.keys():
-            loss_dict[key] = sum([losses.additional_losses[key].item() for losses in self.losses_list]) / num_losses
 
-        return loss_dict
+        additional_losses = {}
+        for key in self.losses_list[0].additional_losses.keys():
+            additional_losses[key] = (
+                torch.sum(torch.FloatTensor([losses.additional_losses[key] for losses in self.losses_list]))
+                / num_losses
+            )
+
+        losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
+        return losses
 
 
 class LossAccumulationMeter(LossMeter):
@@ -80,17 +96,20 @@ class LossAccumulationMeter(LossMeter):
     def clear(self) -> None:
         self.losses_list = []
 
-    def compute(self) -> Dict[str, float]:
+    def compute(self) -> Losses:
         assert len(self.losses_list) > 0
-        loss_dict: Dict[str, float] = {}
 
         # Compute average checkpoint and backward losses across list
-        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list])
-        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list])
+        checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list]))
+        backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list]))
 
         # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
         # because we know all of the losses will have the same keys in additinal_losses dict
+        additional_losses = {}
         for key in self.losses_list[0].additional_losses.keys():
-            loss_dict[key] = sum([losses.additional_losses[key].item() for losses in self.losses_list])
+            additional_losses[key] = torch.sum(
+                torch.FloatTensor([losses.additional_losses[key] for losses in self.losses_list])
+            )
 
-        return loss_dict
+        losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
+        return losses
