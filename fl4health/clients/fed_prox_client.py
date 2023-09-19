@@ -123,7 +123,7 @@ class FedProxClient(BasicClient):
         loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
-        losses = Losses(checkpoint=loss, backward=total_loss)
+        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss})
         return losses
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:

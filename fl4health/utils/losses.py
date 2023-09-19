@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List
 
@@ -12,6 +12,7 @@ import torch
 class Losses:
     checkpoint: torch.Tensor
     backward: torch.Tensor
+    additional_losses: Dict[str, torch.Tensor] = field(default_factory=lambda: {})
 
 
 class LossMeterType(Enum):
@@ -55,12 +56,29 @@ class LossAverageMeter(LossMeter):
     def compute(self) -> Dict[str, float]:
         assert len(self.losses_list) > 0
         loss_dict: Dict[str, float] = {}
-        for field in fields(self.losses_list[0]):
-            loss_dict[field.name] = sum([getattr(losses, field.name).item() for losses in self.losses_list]) / len(
-                self.losses_list
-            )
 
-        return loss_dict
+        # Compute average checkpoint and backward losses across list
+        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list]) / len(
+            self.losses_list
+        )
+        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list]) / len(self.losses_list)
+
+        # Check if additional_loss attribute is not None
+        if len(self.losses_list[0].additional_losses.keys()) > 0:
+
+            # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
+            # because we know all of the losses will have the same keys in additinal_losses dict
+            keys = self.losses_list[0].additional_losses.keys()
+
+            # Define dict to store results of computed additional losses
+            running_additional_losses = {}
+            for key in keys:
+                running_additional_losses[key] = sum(
+                    [losses.additional_losses[key].item() for losses in self.losses_list]
+                ) / len(self.losses_list)
+            return {**loss_dict, **running_additional_losses}
+        else:
+            return loss_dict
 
 
 class LossAccumulationMeter(LossMeter):
@@ -76,7 +94,24 @@ class LossAccumulationMeter(LossMeter):
     def compute(self) -> Dict[str, float]:
         assert len(self.losses_list) > 0
         loss_dict: Dict[str, float] = {}
-        for field in fields(self.losses_list[0]):
-            loss_dict[field.name] = sum([getattr(losses, field.name).item() for losses in self.losses_list])
 
-        return loss_dict
+        # Compute average checkpoint and backward losses across list
+        loss_dict["checkpoint"] = sum([losses.checkpoint.item() for losses in self.losses_list])
+        loss_dict["backward"] = sum([losses.backward.item() for losses in self.losses_list])
+
+        # Check if additional_loss attribute is not None
+
+        if len(self.losses_list[0].additional_losses.keys()) > 0:
+            # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
+            # because we know all of the losses will have the same keys in additinal_losses dict
+            keys = self.losses_list[0].additional_losses.keys()
+
+            # Define dict to store results of computed additional losses
+            running_additional_losses = {}
+            for key in keys:
+                running_additional_losses[key] = sum(
+                    [losses.additional_losses[key].item() for losses in self.losses_list]
+                )
+            return {**loss_dict, **running_additional_losses}
+        else:
+            return loss_dict
