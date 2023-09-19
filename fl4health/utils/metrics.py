@@ -142,12 +142,11 @@ class MetricMeter(ABC):
 
     @classmethod
     def get_meter_by_type(cls, metrics: Sequence[Metric], meter_enum: MetricMeterType, name: str = "") -> MetricMeter:
-        if meter_enum == MetricMeterType.ACCUMULATION:
+        if meter_enum is MetricMeterType.ACCUMULATION:
             return MetricAccumulationMeter(metrics, name)
-        elif meter_enum == MetricMeterType.AVERAGE:
+        elif meter_enum is MetricMeterType.AVERAGE:
             return MetricAverageMeter(metrics, name)
-        else:
-            ValueError(f"Unsupported Meter Type {str(meter_enum)}")
+        raise ValueError(f"Unsupported Meter Type {str(meter_enum)}")
 
 
 class MetricAccumulationMeter(MetricMeter):
