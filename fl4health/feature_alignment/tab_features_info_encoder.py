@@ -5,8 +5,6 @@ import pandas as pd
 from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 
-from fl4health.feature_alignment.feature_info_encoder import FeatureInfoEncoder
-
 
 class TargetInfoEncoder:
     def __init__(self, target: str, target_type: str, target_categories: List[Scalar]) -> None:
@@ -42,7 +40,7 @@ class TargetInfoEncoder:
         )
 
 
-class TabFeaturesInfoEncoder(FeatureInfoEncoder):
+class TabFeaturesInfoEncoder:
     def __init__(
         self, features_to_types: Dict[str, str], categories: Dict[str, List[Scalar]], target_info: TargetInfoEncoder
     ) -> None:
@@ -132,5 +130,5 @@ class TabFeaturesInfoEncoder(FeatureInfoEncoder):
         return TabFeaturesInfoEncoder(
             json.loads(attributes["features_to_types"]),
             json.loads(attributes["categories"]),
-            TargetInfoEncoder.from_json(attributes["target_info"]),
+            TargetInfoEncoder.from_json(json.loads(attributes["target_info"])),
         )
