@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import pandas as pd
 from flwr.common.typing import NDArray
 from sklearn.compose import ColumnTransformer
@@ -23,7 +25,7 @@ class TabularFeaturesPreprocessor:
             steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=categories))]
         )
 
-        self.column_transformer = ColumnTransformer(
+        self.data_column_transformer = ColumnTransformer(
             transformers=[
                 ("num", numeric_transformer, numeric_features),
                 ("bin", binary_transformer, binary_features),
@@ -32,5 +34,29 @@ class TabularFeaturesPreprocessor:
             remainder="drop",
         )
 
-    def align_features(self, df: pd.DataFrame) -> NDArray:
-        return self.column_transformer.fit_transform(df)
+        self.target_transformer = self.construct_target_transformer(tab_feature_encoder)
+        self.target_column = tab_feature_encoder.get_target()
+
+    def construct_target_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> ColumnTransformer:
+        target_type = tab_feature_encoder.get_target_type()
+        target = tab_feature_encoder.get_target()
+        target_categories = tab_feature_encoder.get_target_categories()
+        if target_type == "numeric":
+            numeric_transformer = Pipeline(
+                steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
+            )
+            return ColumnTransformer(transformers=[("num", numeric_transformer, [target])], remainder="drop")
+        elif target_type == "binary":
+            binary_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent"))])
+            return ColumnTransformer(transformers=[("bin", binary_transformer, [target])], remainder="drop")
+        elif target_type == "ordinal":
+            categorical_transformer = Pipeline(
+                steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=target_categories))]
+            )
+            return ColumnTransformer(transformers=[("cat", categorical_transformer, [target])], remainder="drop")
+
+    def preprocess_features(self, df: pd.DataFrame) -> Tuple[NDArray, NDArray]:
+
+        return self.data_column_transformer.fit_transform(
+            df.drop(columns=[self.target_column])
+        ), self.target_transformer.fit_transform(df[[self.target_column]])

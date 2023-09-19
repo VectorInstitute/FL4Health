@@ -5,9 +5,11 @@ import pandas as pd
 from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 
+from fl4health.feature_alignment.feature_info_encoder import FeatureInfoEncoder
+
 
 class TargetInfoEncoder:
-    def __init__(self, target: str, target_type: str, target_categories: List[str]) -> None:
+    def __init__(self, target: str, target_type: str, target_categories: List[Scalar]) -> None:
         self.target = target
         self.target_type = target_type
         self.target_categories = target_categories
@@ -18,7 +20,7 @@ class TargetInfoEncoder:
     def get_target_type(self) -> str:
         return self.target_type
 
-    def get_target_categories(self) -> List[str]:
+    def get_target_categories(self) -> List[Scalar]:
         return self.target_categories
 
     def to_json(self) -> str:
@@ -40,7 +42,7 @@ class TargetInfoEncoder:
         )
 
 
-class TabFeaturesInfoEncoder:
+class TabFeaturesInfoEncoder(FeatureInfoEncoder):
     def __init__(
         self, features_to_types: Dict[str, str], categories: Dict[str, List[Scalar]], target_info: TargetInfoEncoder
     ) -> None:
@@ -63,7 +65,7 @@ class TabFeaturesInfoEncoder:
     def get_target_type(self) -> str:
         return self.target_info.get_target_type()
 
-    def get_target_categories(self) -> List[str]:
+    def get_target_categories(self) -> List[Scalar]:
         return self.target_info.get_target_categories()
 
     def merge(self, encoder: "TabFeaturesInfoEncoder") -> "TabFeaturesInfoEncoder":
@@ -98,6 +100,8 @@ class TabFeaturesInfoEncoder:
         )
         features_to_types = tab_features.types
         target_type = features_to_types[target_column]
+        # The target column is separated from the other columns
+        # so that targets and features remain separate after alignment
         features_to_types.pop(target_column)
         ordinal_features: List[str] = sorted(tab_features.features_by_type("ordinal"))
         categories = {
