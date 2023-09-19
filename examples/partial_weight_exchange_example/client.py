@@ -72,7 +72,7 @@ class TransformerPartialExchangeClient(BasicClient):
         model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head).to(self.device)
         return model
 
-    def setup_model(self, config: Config) -> None:
+    def setup_client(self, config: Config) -> None:
         super().setup_client(config)
         self.initial_model = copy.deepcopy(self.model).to(self.device)
 

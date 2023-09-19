@@ -25,7 +25,7 @@ class MnistDPScaffoldClient(DPScaffoldClient):
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.SGD(self.model.parameters(), lr=0.001)
+        return torch.optim.SGD(self.model.parameters(), lr=0.05)
 
     def get_model(self, config: Config) -> nn.Module:
         return MnistNet().to(self.device)
