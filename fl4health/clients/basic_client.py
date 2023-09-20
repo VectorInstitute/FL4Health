@@ -52,7 +52,6 @@ class BasicClient(NumpyFlClient):
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.current_loss: float
         self.learning_rate: float
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -262,10 +261,11 @@ class BasicClient(NumpyFlClient):
         self.train_loader = train_loader
         self.val_loader = val_loader
 
-        num_train_samples = len(self.train_loader.dataset)  # type: ignore
-        num_val_samples = len(self.val_loader.dataset)  # type: ignore
-        self.num_train_samples = num_train_samples
-        self.num_val_samples = num_val_samples
+        # The following lines are type ignored because torch datasets are not "Sized"
+        # IE __len__ is considered optionally defined. In practice, it is almost always defined 
+        # and as such, we will make that assumption. ˝
+        self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
+        self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
         self.optimizer = self.get_optimizer(config)
         self.learning_rate = self.optimizer.defaults["lr"]

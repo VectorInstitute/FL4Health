@@ -42,6 +42,7 @@ class FedProxClient(BasicClient):
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking
         self.proximal_weight: float
+        self.current_loss: float
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
@@ -107,9 +108,6 @@ class FedProxClient(BasicClient):
 
         # Store current loss which the vanilla loss without the proximal term added in
         self.current_loss = loss_dict["checkpoint"]
-
-        # Update model after train round (Used by Scaffold and DP-Scaffold Client)
-        self.update_after_train(local_steps)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
