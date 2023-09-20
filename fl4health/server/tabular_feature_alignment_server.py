@@ -77,7 +77,7 @@ class TabularFeatureAlignmentServer(FlServer):
             self.config["feature_info"] = feature_info_source
 
             def fit_config(config: Config, current_round: int) -> Config:
-                config["format_specified"] = current_round != 1
+                config["format_specified"] = current_round > 1
                 return config
 
             self.strategy.on_fit_config_fn = partial(fit_config, self.config)

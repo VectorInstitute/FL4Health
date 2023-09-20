@@ -25,6 +25,8 @@ class TabularDataClient(BasicClient):
         self.tabular_features_info_encoder: TabFeaturesInfoEncoder
         self.tabular_features_preprocessor: TabularFeaturesPreprocessor
         self.df: pd.DataFrame
+        self.input_dimension: int
+        self.target_dimension: int
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
@@ -44,6 +46,8 @@ class TabularDataClient(BasicClient):
             )
             self.tabular_features_preprocessor = TabularFeaturesPreprocessor(self.tabular_features_info_encoder)
             aligned_features, targets = self.tabular_features_preprocessor.preprocess_features(self.df)
+            self.input_dimension = aligned_features.shape[1]
+            self.target_dimension = targets.shape[1]
             self.train_loader, self.val_loader = self._setup_data_loaders(aligned_features, targets, batch_size)
 
     def _setup_data_loaders(self, data: NDArray, targets: NDArray, batch_size: int) -> Tuple[DataLoader, DataLoader]:
@@ -80,10 +84,19 @@ class TabularDataClient(BasicClient):
         federated learning round.
         """
         self.setup_client(config)
-        return {
-            "num_train_samples": self.num_examples["train_set"],
-            "feature_info": self.tabular_features_info_encoder.to_json(),
-        }
+        format_specified = self.narrow_config_type(config, "format_specified", bool)
+        if not format_specified:
+            return {
+                "num_train_samples": self.num_examples["train_set"],
+                "feature_info": self.tabular_features_info_encoder.to_json(),
+            }
+        else:
+            return {
+                "num_train_samples": self.num_examples["train_set"],
+                "feature_info": self.tabular_features_info_encoder.to_json(),
+                "input_dimension": self.input_dimension,
+                "target_dimension": self.target_dimension,
+            }
 
 
 if __name__ == "__main__":
