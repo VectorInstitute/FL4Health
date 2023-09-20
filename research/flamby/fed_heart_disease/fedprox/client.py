@@ -65,7 +65,7 @@ class FedHeartDiseaseFedProxClient(FedProxClient):
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_criterion(self, config: Config) -> _Loss:
-        return BaselineLoss
+        return BaselineLoss()
 
 
 if __name__ == "__main__":
