@@ -70,7 +70,7 @@ SERVER_ADDRESS=$7
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+RUN_NAMES=( "Run1" "Run2" )
 
 echo "Python Venv Path: ${VENV_PATH}"
 
