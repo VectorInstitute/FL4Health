@@ -25,7 +25,7 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-MU_VALUES=( 0.01 0.1 1.0 )
+MU_VALUES=( 0.01 0.1 )
 # FedHeartDisease LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.001 0.0001 )
 
