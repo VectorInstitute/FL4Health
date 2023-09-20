@@ -59,7 +59,7 @@ class FedIsic2019FendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False).to(self.device)
+        model: nn.Module = FedIsic2019FendaModel(frozen_blocks=13, turn_off_bn_tracking=False).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
