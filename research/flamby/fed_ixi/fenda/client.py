@@ -59,7 +59,7 @@ class FedIxiFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIxiFendaModel().to(self.device)
+        model: nn.Module = FedIxiFendaModel(out_channels_first_layer=12).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
