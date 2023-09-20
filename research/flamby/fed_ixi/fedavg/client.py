@@ -58,7 +58,7 @@ class FedIxiFedAvgClient(BasicClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Baseline().to(self.device)
+        model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
