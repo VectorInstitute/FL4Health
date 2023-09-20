@@ -34,6 +34,8 @@ class BasicClient(NumpyFlClient):
         self.num_examples: Dict[str, int]
         self.criterion: _Loss
         self.optimizer: torch.optim.Optimizer
+        self.warm_up_rounds: int = 0
+        self.pre_train: bool = False
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
@@ -46,6 +48,8 @@ class BasicClient(NumpyFlClient):
         meter = AverageMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
+        if int(config["current_server_round"]) <= self.warm_up_rounds:
+            self.pre_train = True
         # By default uses training by epoch.
         metric_values = self.train_by_epochs(local_epochs, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -81,7 +85,10 @@ class BasicClient(NumpyFlClient):
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         # forward pass on the model
-        preds = self.model(input)
+        if self.pre_train:
+            preds = self.model(input, self.pre_train)
+        else:
+            preds = self.model(input)
         loss = self.criterion(preds, target)
         self.optimizer.zero_grad()
         loss.backward()
@@ -147,7 +154,10 @@ class BasicClient(NumpyFlClient):
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                pred = self.model(input)
+                if self.pre_train:
+                    pred = self.model(input, self.pre_train)
+                else:
+                    pred = self.model(input)
                 loss = self.criterion(pred, target)
 
                 running_loss += loss.item()

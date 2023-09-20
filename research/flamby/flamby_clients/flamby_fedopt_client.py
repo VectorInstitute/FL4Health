@@ -35,10 +35,11 @@ class FlambyFedOptClient(BasicClient):
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
-
         meter = AccumulationMeter(self.metrics, "train_meter")
         self.set_parameters(parameters, config)
         local_steps = self.narrow_config_type(config, "local_steps", int)
+        if int(config["current_server_round"]) <= self.warm_up_rounds:
+            self.pre_train = True
         metric_values = self.train_by_steps(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

@@ -43,7 +43,13 @@ class FendaModel(nn.Module):
     def layers_to_exchange(self) -> List[str]:
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor, pre_train: bool = False) -> torch.Tensor:
+        if pre_train:
+            self.local_module.eval()
+        else:
+            self.local_module.train()
         local_output = self.local_module.forward(input)
+        if pre_train:
+            local_output = 0.0 * local_output
         global_output = self.global_module.forward(input)
         return self.model_head.forward(local_output, global_output)

@@ -24,13 +24,19 @@ def get_initial_model_parameters() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
+    local_epochs: int,
+    batch_size: int,
+    n_server_rounds: int,
+    downsampling_ratio: float,
+    warm_up_rounds: int,
+    current_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
+        "warm_up_rounds": warm_up_rounds,
     }
 
 
@@ -42,6 +48,7 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
         config["n_server_rounds"],
         config["downsampling_ratio"],
+        config["warm_up_rounds"],
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
