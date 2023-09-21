@@ -196,6 +196,8 @@ class BasicClient(NumpyFlClient):
         self, steps: int, current_round: Optional[int] = None
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         self.model.train()
+
+        # Pass loader to iterator so we can step through train loader
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()

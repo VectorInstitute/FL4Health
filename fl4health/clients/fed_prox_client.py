@@ -105,7 +105,7 @@ class FedProxClient(BasicClient):
             assert isinstance(local_steps, int)
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
 
-        # Store current loss which the vanilla loss without the proximal term added in
+        # Store current loss which is the vanilla loss without the proximal term added in
         self.current_loss = loss_dict["checkpoint"]
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
