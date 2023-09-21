@@ -26,11 +26,10 @@ class FedIsic2019FendaClient(FlambyFedOptClient):
         client_number: int,
         checkpoint_stub: str,
         dataset_dir: str,
-        warm_up_rounds: int,
         run_name: str = "",
     ) -> None:
         assert 0 <= client_number < NUM_CLIENTS
-        self.warm_up_rounds = warm_up_rounds
+        self.warm_up_rounds = 5
         super().__init__(learning_rate, metrics, device, client_number, checkpoint_stub, dataset_dir, run_name)
 
     def setup_client(self, config: Config) -> None:
@@ -90,9 +89,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
-    )
-    parser.add_argument(
-        "--warm_up_rounds", action="store", type=float, help="Warm up rounds with FedAvg before Fenda", default=5
     )
     args = parser.parse_args()
 
