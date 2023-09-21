@@ -101,7 +101,6 @@ class FedProxClient(BasicClient):
 
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
-            local_steps = self.num_train_samples * local_epochs  # total steps over training round
         else:
             assert isinstance(local_steps, int)
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
