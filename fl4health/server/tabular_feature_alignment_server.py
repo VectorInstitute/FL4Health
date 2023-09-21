@@ -8,7 +8,6 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
-from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
@@ -33,22 +32,25 @@ class TabularFeatureAlignmentServer(FlServer):
         client_manager: ClientManager,
         config: Config,
         initialize_parameters: Callable,
-        strategy: Optional[Strategy] = None,
+        strategy: BasicFedAvg,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         tab_features_info: Optional[TabFeaturesInfoEncoder] = None,
     ) -> None:
-        assert isinstance(self.strategy, BasicFedAvg)
-        if self.strategy.on_fit_config_fn is not None:
-            warnings.warn("self.strategy.on_fit_config_fn will be overwritten.")
-        if self.strategy.initial_parameters is not None:
-            warnings.warn("self.strategy.initial_parameters will be overwritten.")
+        assert isinstance(strategy, BasicFedAvg)
+        if strategy.on_fit_config_fn is not None:
+            warnings.warn("strategy.on_fit_config_fn will be overwritten.")
+        if strategy.initial_parameters is not None:
+            warnings.warn("strategy.initial_parameters will be overwritten.")
 
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
         self.initial_polls_complete = False
         self.tab_features_info = tab_features_info
         self.config = config
         self.initialize_parameters = initialize_parameters
+        self.format_info_gathered = False
+        self.strategy: BasicFedAvg
+        self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
@@ -75,15 +77,17 @@ class TabularFeatureAlignmentServer(FlServer):
 
             # the feature information is sent to clients through the config parameter.
             self.config["feature_info"] = feature_info_source
+            self.format_info_gathered = True
 
-            def fit_config(config: Config, current_round: int) -> Config:
-                config["format_specified"] = current_round > 1
-                return config
+            # def fit_config(config: Config, current_round: int) -> Config:
+            #     config["format_specified"] = current_round > 1
+            #     return config
 
-            self.strategy.on_fit_config_fn = partial(fit_config, self.config)
+            self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
             input_dimension, output_dimension = self.poll_clients_for_dimension_info(timeout)
             self.strategy.initial_parameters = self.initialize_parameters(input_dimension, output_dimension)
+            log(INFO, f"input dimensions: {input_dimension}")
             self.initial_polls_complete = True
 
         return super().fit(num_rounds=num_rounds, timeout=timeout)
@@ -114,3 +118,8 @@ class TabularFeatureAlignmentServer(FlServer):
         target_dimension = int(results[0][1].properties["target_dimension"])
 
         return input_dimension, target_dimension
+
+
+def fit_config(config: Config, format_specified: bool, _: int) -> Config:
+    config["format_specified"] = format_specified
+    return config

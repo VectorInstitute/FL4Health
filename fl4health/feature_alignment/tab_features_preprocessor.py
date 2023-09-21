@@ -5,7 +5,7 @@ from flwr.common.typing import NDArray
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, OrdinalEncoder
 
 from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
 
@@ -19,7 +19,7 @@ class TabularFeaturesPreprocessor:
 
         numeric_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())])
 
-        binary_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent"))])
+        binary_transformer = Pipeline(steps=[("encoder", OrdinalEncoder())])
 
         categorical_transformer = Pipeline(
             steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=categories))]
