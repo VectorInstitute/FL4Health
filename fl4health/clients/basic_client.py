@@ -23,7 +23,7 @@ class BasicClient(NumpyFlClient):
     """
     Base FL Client with functionality to train, evaluate, log, report and checkpoint.
     User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
-    Other methods can be overriden to achieve custom fucntionality.
+    Other methods can be overriden to achieve custom functionality.
     """
 
     def __init__(

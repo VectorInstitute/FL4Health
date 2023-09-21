@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
@@ -40,6 +41,9 @@ class MnistFendaClient(FendaClient):
             self.device
         )
         return model
+
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
