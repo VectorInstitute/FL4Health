@@ -56,11 +56,13 @@ class FlServer(Server):
             except NotImplementedError:
                 # Checkpointer is defined but there is no server-side model hydration to produce a model from the
                 # server state. This is not a deal breaker, but may be unintended behavior and the user will be warned
-                log(
-                    WARNING,
-                    "Server model hydration is not defined but checkpointer is defined. Not checkpointing"
-                    "model. Please ensure that this is intended",
-                )
+                if server_round == 1:
+                    # just log message on the first round
+                    log(
+                        WARNING,
+                        "Server model hydration is not defined but checkpointer is defined. Not checkpointing "
+                        "model. Please ensure that this is intended",
+                    )
         elif server_round == 1:
             # No checkpointer, just log message on the first round
             log(INFO, "No checkpointer present. Models will not be checkpointed on server-side.")
