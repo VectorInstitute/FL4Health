@@ -98,7 +98,7 @@ class EvaluateServer(Server):
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
         """Validate current global model on a number of clients."""
 
-        # Get clients and their respective instructions from strategy
+        # Get clients and their respective instructions from client manager
         client_instructions = self.configure_evaluate()
 
         if not client_instructions:
@@ -106,7 +106,7 @@ class EvaluateServer(Server):
             return None
         log(
             INFO,
-            f"Federated Evaluation: strategy sampled {len(client_instructions)} "
+            f"Federated Evaluation: Client manager sampled {len(client_instructions)} "
             f"clients (out of {self._client_manager.num_available()})",
         )
 
