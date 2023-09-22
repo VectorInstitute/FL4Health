@@ -47,7 +47,7 @@ class FedIsic2019ApflClient(FlambyApflClient):
         self.criterion = BaselineLoss()
 
         self.model: APFLModule = APFLModule(
-            APFLEfficientNet(frozen_blocks=None, turn_off_bn_tracking=False), alpha_lr=self.alpha_learning_rate
+            APFLEfficientNet(frozen_blocks=13, turn_off_bn_tracking=False), alpha_lr=self.alpha_learning_rate
         ).to(self.device)
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)

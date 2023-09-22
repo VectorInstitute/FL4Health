@@ -21,12 +21,13 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def construct_config(_: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
+def construct_config(current_round: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
+        "current_server_round": current_round,
     }
 
 
