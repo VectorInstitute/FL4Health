@@ -28,7 +28,7 @@ def test_no_hydration_with_checkpointer(caplog: pytest.LogCaptureFixture, tmp_pa
     # Checkpointer is defined but there is no server-side model hydration to produce a model from the server state.
     # This is not a deal breaker, but may be unintended behavior and the user should be warned
     fl_server_no_hydration = FlServer(PoissonSamplingClientManager(), None, None, checkpointer)
-    fl_server_no_hydration._maybe_checkpoint(1.0, server_round=10)
+    fl_server_no_hydration._maybe_checkpoint(1.0, server_round=1)
     assert "Server model hydration is not defined" in caplog.text
 
 
