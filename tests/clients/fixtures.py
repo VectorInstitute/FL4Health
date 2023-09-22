@@ -19,14 +19,14 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     client: NumpyFlClient
     if type == ScaffoldClient:
         client = ScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-        client.learning_rate_local = 0.01
+        client.learning_rate = 0.01
         model_size = len(model.state_dict()) if model else 0
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
     elif type == InstanceLevelPrivacyClient:
-        client = InstanceLevelPrivacyClient(data_path=Path(""), device=torch.device("cpu"))
+        client = InstanceLevelPrivacyClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     elif type == DPScaffoldClient:
@@ -39,5 +39,5 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     client.model = model
     client.optimizer = torch.optim.SGD(client.model.parameters(), lr=0.0001)  # type: ignore
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
-    client.setup_client({})
+    client.initialized = True
     return client

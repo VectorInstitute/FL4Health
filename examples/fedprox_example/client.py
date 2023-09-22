@@ -1,49 +1,38 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Tuple
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedProxClient(FedProxClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-    ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device)
-        log(INFO, f"Client Name: {self.client_name}")
-
-    def setup_client(self, config: Config) -> None:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        self.model: nn.Module = MnistNet().to(self.device)
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
-
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        return train_loader, val_loader
 
-        self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
-        self.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
+    def get_model(self, config: Config) -> nn.Module:
+        return MnistNet().to(self.device)
 
-        # Setup W and B reporter
-        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=0.01)
 
-        super().setup_client(config)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":

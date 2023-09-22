@@ -1,82 +1,56 @@
-from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import numpy as np
 import torch
-import torch.nn as nn
-from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
-from torch.nn.modules.loss import _Loss
-from torch.utils.data import DataLoader
+from flwr.common.typing import Config, NDArrays
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
-from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.utils.metrics import AverageMeter, Meter, Metric
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
 
-class ScaffoldClient(NumpyFlClient):
+class ScaffoldClient(BasicClient):
     """
     Federated Learning Client for Scaffold strategy.
 
     Implementation based on https://arxiv.org/pdf/1910.06378.pdf.
     """
 
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
-        super().__init__(data_path, device)
-        self.metrics = metrics
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        use_wandb_reporter: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )
+        self.learning_rate: float  # eta_l in paper
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        self.model: nn.Module
-        self.train_loader: DataLoader
-        self.val_loader: DataLoader
-        self.criterion: _Loss
         self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
-        self.learning_rate_local: float  # eta_l in paper
         self.server_model_state: Optional[NDArrays] = None  # model state from server
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
-        self.num_examples: Dict[str, int]
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
-
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-
-        self.set_parameters(parameters, config)
-        local_steps = self.narrow_config_type(config, "local_steps", int)
-        # Default SCAFFOLD uses an average meter
-        meter = AverageMeter(self.metrics, "global")
-
-        # Scaffold is train by steps by default
-        metric_values = self.train_by_steps(local_steps, meter)
-
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_examples["train_set"],
-            metric_values,
-        )
-
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-        if not self.initialized:
-            self.setup_client(config)
-
-        self.set_parameters(parameters, config)
-        # Default SCAFFOLD uses an average meter
-        meter = AverageMeter(self.metrics, "global")
-        loss, metric_values = self.validate(meter)
-        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            loss,
-            self.num_examples["validation_set"],
-            metric_values,
-        )
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -123,7 +97,7 @@ class ScaffoldClient(NumpyFlClient):
         assert self.client_control_variates is not None
         assert self.server_control_variates is not None
         assert self.server_model_weights is not None
-        assert self.learning_rate_local is not None
+        assert self.learning_rate is not None
 
         # y_i
         client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
@@ -186,7 +160,7 @@ class ScaffoldClient(NumpyFlClient):
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate_local)
+        scaling_coeffient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
@@ -195,103 +169,29 @@ class ScaffoldClient(NumpyFlClient):
         ]
         return updated_client_control_variates
 
-    def _handle_logging(self, loss: float, metrics_dict: Dict[str, Scalar], is_validation: bool = False) -> None:
-        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
-        metric_prefix = "Validation" if is_validation else "Training"
-        log(
-            INFO,
-            f"Client {metric_prefix} Loss: {loss} \n" f"Client {metric_prefix} Metrics: {metric_string}",
-        )
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> ScaffoldTrainStepOutput:
-        # Forward pass on global model and update global parameters
+        # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
-        pred = self.model(input)
-        loss = self.criterion(pred, target)
-        loss.backward()
 
-        # modify grad to correct for client drift
+        # Get predictions and compute loss
+        preds = self.predict(input)
+        losses = self.compute_loss(preds, target)
+
+        # Calculate backward pass, modify grad to account for client drift, update params
+        losses.backward.backward()
         self.modify_grad()
         self.optimizer.step()
+        return losses, preds
 
-        return loss, pred
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert self.model is not None
+        model_size = len(self.model.state_dict())
+        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        return parameter_exchanger
 
-    def train_by_steps(
-        self,
-        local_steps: int,
-        meter: Meter,
-    ) -> Dict[str, Scalar]:
-        self.model.train()
-        running_loss = 0.0
-        meter.clear()
-
-        # Pass loader to iterator so we can step through train loader
-        train_iterator = iter(self.train_loader)
-        for _ in range(local_steps):
-            try:
-                input, target = next(train_iterator)
-            except StopIteration:
-                # StopIteration is thrown if dataset ends
-                # reinitialize data loader
-                train_iterator = iter(self.train_loader)
-                input, target = next(train_iterator)
-
-            input, target = input.to(self.device), target.to(self.device)
-            loss, pred = self.train_step(input, target)
-
-            running_loss += loss.item()
-            meter.update(pred, target)
-
-        running_loss = running_loss / local_steps
-
-        metrics = meter.compute()
-        self._handle_logging(running_loss, metrics)
+    def update_after_train(self, local_steps: int) -> None:
         self.update_control_variates(local_steps)
-        return metrics
-
-    def train_by_epochs(self, epochs: int, meter: Meter) -> Dict[str, Scalar]:
-        self.model.train()
-
-        for _ in range(epochs):
-            meter.clear()
-            running_loss = 0.0
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                loss, pred = self.train_step(input, target)
-
-                running_loss += loss.item()
-                meter.update(pred, target)
-
-            metrics = meter.compute()
-            running_loss = running_loss / len(self.train_loader)
-
-        # Equation to update control variates requires the number of local_steps
-        local_steps = len(self.train_loader) * epochs
-        self.update_control_variates(local_steps)
-
-        log(INFO, f"Performed {epochs} Epochs of Local training")
-        self._handle_logging(running_loss, metrics)
-
-        return metrics  # return final training metrics
-
-    def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
-        self.model.eval()
-        running_loss = 0.0
-        meter.clear()
-        with torch.no_grad():
-            for input, target in self.val_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                pred = self.model(input)
-                loss = self.criterion(pred, target)
-
-                running_loss += loss.item()
-                meter.update(pred, target)
-
-        running_loss = running_loss / len(self.val_loader)
-        metrics = meter.compute()
-        self._handle_logging(running_loss, metrics, is_validation=True)
-        self._maybe_checkpoint(running_loss)
-        return running_loss, metrics
 
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
@@ -301,6 +201,34 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
     Implemented as specified in https://arxiv.org/abs/2111.09278
     """
 
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
-        ScaffoldClient.__init__(self, data_path, metrics, device)
-        InstanceLevelPrivacyClient.__init__(self, data_path, device)
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        use_wandb_reporter: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        ScaffoldClient.__init__(
+            self,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )
+
+        InstanceLevelPrivacyClient.__init__(
+            self,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )

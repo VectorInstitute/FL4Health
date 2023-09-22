@@ -11,7 +11,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from research.flamby.flamby_servers.flamby_server import FlambyServer
 
 
-class FedproxServer(FlambyServer):
+class FedProxServer(FlambyServer):
     def __init__(
         self,
         client_manager: ClientManager,

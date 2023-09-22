@@ -1,47 +1,45 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence
+from typing import Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedBNClient(BasicClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-    ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device)
-        log(INFO, f"Client Name: {self.client_name}")
-
-    def setup_client(self, config: Config) -> None:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        self.model: nn.Module = MnistNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
-
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        return train_loader, val_loader
 
-        self.train_loader, self.val_loader, self.num_examples = load_mnist_data(self.data_path, batch_size, sampler)
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=0.01)
 
-        # All that we need to do on the client side to apply the FedBN approach is to use the
-        # LayerExchangerWithExclusions and specify that we want to exclude the BatchNorm layers of our model
-        self.parameter_exchanger = LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
-        super().setup_client(config)
+    def get_model(self, config: Config) -> nn.Module:
+        return MnistNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert self.model is not None
+        return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
 
 
 if __name__ == "__main__":

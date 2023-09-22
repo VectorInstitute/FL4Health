@@ -1,19 +1,47 @@
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 import torch
-from flwr.common import Config, NDArrays
+from flwr.common import NDArrays
 from flwr.common.logger import log
+from flwr.common.typing import Config
 from numpy import linalg
 
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 
-class NumpyClippingClient(NumpyFlClient):
-    def __init__(self, data_path: Path, device: torch.device) -> None:
-        super().__init__(data_path, device)
+class NumpyClippingClient(BasicClient):
+    """
+    Client that clips updates being sent to the server where noise is added.
+    Used to obtain Client Level Differenital Privacy in FL setting.
+    """
+
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        use_wandb_reporter: bool = False,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+            use_wandb_reporter=use_wandb_reporter,
+            checkpointer=checkpointer,
+        )
         self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.clipping_bound: Optional[float] = None
         self.adaptive_clipping: Optional[bool] = None
@@ -70,3 +98,11 @@ class NumpyClippingClient(NumpyFlClient):
         self.clipping_bound = clipping_bound
         # Inject the server model parameters into the client model
         self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
+        return parameter_exchanger
+
+    def setup_client(self, config: Config) -> None:
+        self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
+        super().setup_client(config)

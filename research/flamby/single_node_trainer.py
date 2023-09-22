@@ -10,7 +10,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.utils.metrics import Meter
+from fl4health.utils.metrics import MetricMeter
 
 
 class SingleNodeTrainer:
@@ -64,8 +64,8 @@ class SingleNodeTrainer:
     def train_by_epochs(
         self,
         epochs: int,
-        train_meter: Meter,
-        val_meter: Meter,
+        train_meter: MetricMeter,
+        val_meter: MetricMeter,
     ) -> None:
         self.model.train()
 
@@ -86,7 +86,7 @@ class SingleNodeTrainer:
             # After each epoch run a validation pass
             self.validate(val_meter)
 
-    def validate(self, meter: Meter) -> None:
+    def validate(self, meter: MetricMeter) -> None:
         self.model.eval()
         running_loss = 0.0
         meter.clear()
