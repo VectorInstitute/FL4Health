@@ -22,7 +22,7 @@ def get_initial_model_parameters() -> Parameters:
 
 
 def construct_config(
-    _: int,
+    current_round: int,
     local_epochs: int,
     batch_size: int,
     noise_multiplier: float,
@@ -31,6 +31,7 @@ def construct_config(
     # NOTE: a new client is created in each round
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
+        "current_server_round": current_round,
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "noise_multiplier": noise_multiplier,
@@ -54,8 +55,8 @@ def main(config: Dict[str, Any]) -> None:
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        config["client_noise_multiplier"],
-        config["client_clipping"],
+        config["noise_multiplier"],
+        config["clipping_bound"],
     )
 
     # ClientManager that performs Poisson type sampling
@@ -79,7 +80,7 @@ def main(config: Dict[str, Any]) -> None:
     server = InstanceLevelDPServer(
         client_manager=client_manager,
         strategy=strategy,
-        noise_multiplier=config["client_noise_multiplier"],
+        noise_multiplier=config["noise_multiplier"],
         local_epochs=config["local_epochs"],
         batch_size=config["batch_size"],
         num_server_rounds=config["n_server_rounds"],

@@ -24,7 +24,7 @@ def fit_config(
     batch_size: int,
     current_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_round}
 
 
 def main(config: Dict[str, Any]) -> None:

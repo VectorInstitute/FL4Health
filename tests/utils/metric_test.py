@@ -5,11 +5,11 @@ import torch
 from fl4health.utils.metrics import (
     F1,
     ROC_AUC,
-    AccumulationMeter,
     Accuracy,
-    AverageMeter,
     BalancedAccuracy,
     BinarySoftDiceCoefficient,
+    MetricAccumulationMeter,
+    MetricAverageMeter,
 )
 
 
@@ -37,7 +37,7 @@ def test_binary_accuracy() -> None:
 
 
 def test_average_meter() -> None:
-    am = AverageMeter([Accuracy()])
+    am = MetricAverageMeter([Accuracy()])
 
     pred1 = torch.eye(4)
     pred2 = torch.eye(4)
@@ -55,7 +55,7 @@ def test_average_meter() -> None:
 
     assert am.compute()["accuracy"] == 0.5
 
-    am2 = AverageMeter([Accuracy("global_accuracy"), Accuracy("local_accuracy")])
+    am2 = MetricAverageMeter([Accuracy("global_accuracy"), Accuracy("local_accuracy")])
 
     for pred, target in zip(preds, targets):
         am2.update(pred, target)
@@ -88,8 +88,8 @@ def test_balanced_accuracy() -> None:
 
 
 def test_accumulation_meter() -> None:
-    accumulation_meter = AccumulationMeter([BalancedAccuracy()])
-    average_meter = AverageMeter([BalancedAccuracy()])
+    accumulation_meter = MetricAccumulationMeter([BalancedAccuracy()])
+    average_meter = MetricAverageMeter([BalancedAccuracy()])
 
     logits1 = torch.Tensor(
         [

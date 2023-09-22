@@ -17,7 +17,7 @@ def get_run_folders(hp_dir: str) -> List[str]:
     return [os.path.join(hp_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def get_weighted_loss_from_server_log(run_folder_path: str, experiment_name: str) -> float:
+def get_weighted_loss_from_server_log(run_folder_path: str, experiment_name: str, is_fenda: bool) -> float:
     server_log_path = os.path.join(run_folder_path, "server.out")
     with open(server_log_path, "r") as handle:
         files_lines = handle.readlines()
@@ -26,11 +26,15 @@ def get_weighted_loss_from_server_log(run_folder_path: str, experiment_name: str
         elif experiment_name == "fed_ixi":
             line_to_convert = files_lines[-1].strip()
         else:
-            line_to_convert = files_lines[-3].strip()
+            if is_fenda:
+                # FENDA doesn't log the same way as other Fed-ISIC methods
+                line_to_convert = files_lines[-1].strip()
+            else:
+                line_to_convert = files_lines[-3].strip()
         return float(line_to_convert)
 
 
-def main(hp_sweep_dir: str, experiment_name: str) -> None:
+def main(hp_sweep_dir: str, experiment_name: str, is_fenda: bool) -> None:
     hp_folders = get_hp_folders(hp_sweep_dir)
     best_avg_loss: Optional[float] = None
     best_folder = ""
@@ -38,7 +42,7 @@ def main(hp_sweep_dir: str, experiment_name: str) -> None:
         run_folders = get_run_folders(hp_folder)
         hp_losses = []
         for run_folder in run_folders:
-            run_loss = get_weighted_loss_from_server_log(run_folder, experiment_name)
+            run_loss = get_weighted_loss_from_server_log(run_folder, experiment_name, is_fenda)
             hp_losses.append(run_loss)
         current_avg_loss = float(np.mean(hp_losses))
         if best_avg_loss is None or current_avg_loss <= best_avg_loss:
@@ -66,8 +70,14 @@ if __name__ == "__main__":
         help="Name of the experiment type that is being analyzed. Options are: fed_isic, fed_heart_disease, fed_ixi",
         required=True,
     )
+    parser.add_argument(
+        "--is_fenda",
+        action="store_true",
+        help="boolean to indicate whether we're considering FENDA hps (only relevant for fed_isic experiments)",
+    )
     args = parser.parse_args()
 
     log(INFO, f"Hyperparameter Sweep Directory: {args.hp_sweep_dir}")
     log(INFO, f"Experiment Names: {args.experiment_name}")
-    main(args.hp_sweep_dir, args.experiment_name)
+    log(INFO, f"Is FENDA: {args.is_fenda}")
+    main(args.hp_sweep_dir, args.experiment_name, args.is_fenda)

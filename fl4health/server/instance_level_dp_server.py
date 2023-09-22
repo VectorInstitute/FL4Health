@@ -24,7 +24,7 @@ class InstanceLevelDPServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        noise_multiplier: int,
+        noise_multiplier: float,
         batch_size: int,
         num_server_rounds: int,
         strategy: BasicFedAvg,

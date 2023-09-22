@@ -39,7 +39,6 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client = get_client
     config: Config = {}
 
-    fed_prox_client.setup_client(config)
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
@@ -60,7 +59,6 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client = get_client
     config: Config = {}
 
-    fed_prox_client.setup_client(config)
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
@@ -90,7 +88,6 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client = get_client
     config: Config = {}
 
-    fed_prox_client.setup_client(config)
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
@@ -123,7 +120,6 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client = get_client
     config: Config = {}
 
-    fed_prox_client.setup_client(config)
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)

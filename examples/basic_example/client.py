@@ -1,36 +1,35 @@
 import argparse
 from pathlib import Path
-from typing import Sequence
+from typing import Tuple
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(BasicClient):
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
-        super().__init__(data_path, metrics, device)
-        self.model = Net().to(self.device)
-        self.parameter_exchanger = FullParameterExchanger()
-
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
+        return train_loader, val_loader
 
-        train_loader, validation_loader, num_examples = load_cifar10_data(self.data_path, batch_size)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
-        self.train_loader = train_loader
-        self.val_loader = validation_loader
-        self.num_examples = num_examples
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+    def get_model(self, config: Config) -> nn.Module:
+        return Net().to(self.device)
 
 
 if __name__ == "__main__":
@@ -42,3 +41,4 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

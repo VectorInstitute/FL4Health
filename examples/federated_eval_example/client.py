@@ -4,32 +4,42 @@ from typing import Optional, Sequence
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.utils.load_data import load_cifar10_test_data
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 
 
 class CifarClient(EvaluateClient):
     def __init__(
         self, data_path: Path, metrics: Sequence[Metric], device: torch.device, model_checkpoint_path: Optional[Path]
     ) -> None:
-        super().__init__(data_path, metrics, device, model_checkpoint_path)
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            model_checkpoint_path=model_checkpoint_path,
+            loss_meter_type=LossMeterType.AVERAGE,
+            metric_meter_type=MetricMeterType.AVERAGE,
+        )
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def initialize_global_model(self, config: Config) -> Optional[nn.Module]:
         # Initialized a global model to be hydrated with a server-side model if the parameters are passed
-        self.global_model = Net().to(self.device)
+        return Net().to(self.device)
 
+    def get_data_loader(self, config: Config) -> DataLoader:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        evaluation_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
+        return evaluation_loader
 
-        evaluation_loader, num_examples = load_cifar10_test_data(self.data_path, batch_size)
-        self.data_loader = evaluation_loader
-        self.num_examples = num_examples
-
-        self.criterion = torch.nn.CrossEntropyLoss()
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":
@@ -48,5 +58,11 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE, client_checkpoint_path)
+    client = CifarClient(
+        data_path=data_path,
+        metrics=[Accuracy("accuracy")],
+        device=DEVICE,
+        model_checkpoint_path=client_checkpoint_path,
+    )
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

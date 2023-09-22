@@ -25,15 +25,12 @@ def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
 
-def fit_config(
-    local_steps: int, batch_size: int, n_server_rounds: int, learning_rate_local: float, current_round: int
-) -> Config:
+def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
-        "current_round": current_round,
-        "learning_rate_local": learning_rate_local,
+        "current_server_round": current_round,
     }
 
 
@@ -44,7 +41,6 @@ def main(config: Dict[str, Any]) -> None:
         config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["learning_rate_local"],
     )
 
     initial_parameters, initial_control_variates = get_initial_model_information()
