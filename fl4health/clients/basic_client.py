@@ -265,7 +265,7 @@ class BasicClient(NumpyFlClient):
 
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
-        # and as such, we will make that assumption. ˝
+        # and as such, we will make that assumption.
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
