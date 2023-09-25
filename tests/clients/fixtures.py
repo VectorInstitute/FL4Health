@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
@@ -40,4 +41,18 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
     client.optimizer = torch.optim.SGD(client.model.parameters(), lr=0.0001)  # type: ignore
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_evaluation_client(model: nn.Module) -> EvaluateClient:
+    client = EvaluateClient(
+        data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), model_checkpoint_path=None
+    )
+    client.parameter_exchanger = client.get_parameter_exchanger({})
+    client.global_model = model
+    client.local_model = model
+    client.data_loader = DataLoader(TensorDataset(torch.ones((10, 100)), torch.ones((10), dtype=torch.long)), 5)
+    client.initialized = True
+    client.criterion = nn.CrossEntropyLoss()
     return client
