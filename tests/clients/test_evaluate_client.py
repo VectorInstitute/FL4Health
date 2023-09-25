@@ -1,8 +1,10 @@
 import math
+from typing import Dict
 
 import pytest
 import torch
 import torch.nn as nn
+from flwr.common.typing import Scalar
 
 from fl4health.clients.evaluate_client import EvaluateClient
 from tests.clients.fixtures import get_evaluation_client  # noqa
@@ -19,8 +21,8 @@ class SingleLayer(nn.Module):
 
 
 def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
-    global_metrics = {"global_metric_1": 0.22, "local_metric_2": 0.11}
-    local_metrics = {"local_metric_1": 0.1, "local_metric_2": 0.99}
+    global_metrics: Dict[str, Scalar] = {"global_metric_1": 0.22, "local_metric_2": 0.11}
+    local_metrics: Dict[str, Scalar] = {"local_metric_1": 0.1, "local_metric_2": 0.99}
     merged_metrics = EvaluateClient.merge_metrics(global_metrics, local_metrics)
     # Test merge is good, local metrics are folded in last, so they take precedence when overlap exists
     assert merged_metrics == {"global_metric_1": 0.22, "local_metric_1": 0.1, "local_metric_2": 0.99}
