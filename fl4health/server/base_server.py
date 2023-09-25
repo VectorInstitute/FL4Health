@@ -15,7 +15,7 @@ from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 class FlServer(Server):
     """
-    Base Server for the library to facilitate strapping additional/userful machinery to the base flwr server.
+    Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
     """
 
     def __init__(
