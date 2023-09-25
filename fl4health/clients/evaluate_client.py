@@ -1,4 +1,4 @@
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
@@ -157,7 +157,7 @@ class EvaluateClient(NumpyFlClient):
             metrics.update({f"local_loss_{key}": val for key, val in local_loss.as_dict().items()})
 
         # Dummy loss is returned, global and local loss values are stored in the metrics dictionary
-        return 0.0, metrics
+        return float("nan"), metrics
 
     @staticmethod
     def merge_metrics(
@@ -168,12 +168,18 @@ class EvaluateClient(NumpyFlClient):
             metrics = global_metrics
             if local_metrics:
                 for metric_name, metric_value in local_metrics.items():
+                    if metric_name in metrics:
+                        log(
+                            WARNING,
+                            f"metric_name: {metric_name} already exists in dictionary. "
+                            "Please ensure that this is intended behavor",
+                        )
                     metrics[metric_name] = metric_value
         elif local_metrics:
             metrics = local_metrics
         else:
             raise ValueError(
-                "Both metric dictionaries are None. At least one global or local model should be present, but is not"
+                "Both metric dictionaries are None. At least one global or local model should be present."
             )
         return metrics
 

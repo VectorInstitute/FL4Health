@@ -57,6 +57,12 @@ class EvaluateServer(Server):
         self.min_available_clients = min_available_clients
         self.accept_failures = accept_failures
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
+        if self.fraction_evaluate < 1.0:
+            log(
+                INFO,
+                f"Fraction Evaluate is {self.fraction_evaluate}. "
+                "Thus, some clients may not participate in evaluation",
+            )
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path
@@ -98,7 +104,7 @@ class EvaluateServer(Server):
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
         """Validate current global model on a number of clients."""
 
-        # Get clients and their respective instructions from strategy
+        # Get clients and their respective instructions from client manager
         client_instructions = self.configure_evaluate()
 
         if not client_instructions:
@@ -106,7 +112,7 @@ class EvaluateServer(Server):
             return None
         log(
             INFO,
-            f"Federated Evaluation: strategy sampled {len(client_instructions)} "
+            f"Federated Evaluation: Client manager sampled {len(client_instructions)} "
             f"clients (out of {self._client_manager.num_available()})",
         )
 
