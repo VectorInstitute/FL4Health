@@ -3,20 +3,23 @@ from functools import partial
 from typing import Any, Dict
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 
 
-def get_initial_model_parameters() -> Parameters:
+def get_initial_model_parameters(model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
 
 
 def fit_config(
@@ -35,6 +38,12 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
     )
 
+    # Initializing the model on the server side
+    model = Net()
+    # To facilitate checkpointing
+    parameter_exchanger = FullParameterExchanger()
+    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -46,13 +55,15 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_initial_model_parameters(model),
     )
 
+    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
+
     fl.server.start_server(
+        server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
 
 

@@ -35,8 +35,8 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    client_model = Baseline()
-    summarize_model_info(client_model)
+    model = Baseline()
+    summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedProx(
@@ -49,11 +49,11 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=get_initial_model_parameters(model),
         proximal_weight=mu,
     )
 
-    server = FedProxServer(client_manager, client_model, strategy, checkpointer)
+    server = FedProxServer(client_manager, model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,
