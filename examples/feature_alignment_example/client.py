@@ -64,7 +64,7 @@ class TabularDataClient(BasicClient):
             # log(INFO, f"config to be used: {config}")
             self.model = LogisticRegression(self.input_dimension, self.target_dimension)
             self.criterion = torch.nn.CrossEntropyLoss()
-            self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
+            self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.05, weight_decay=0.001)
 
     def _setup_data_loaders(
         self, data: NDArray, targets: NDArray, batch_size: int
