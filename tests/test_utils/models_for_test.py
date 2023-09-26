@@ -12,6 +12,16 @@ class LinearModel(nn.Module):
         self.shared_layer = nn.Linear(3, 3, bias=False)
 
 
+class SingleLayerWithSeed(nn.Module):
+    def __init__(self, seed: int = 42) -> None:
+        super().__init__()
+        torch.manual_seed(seed)
+        self.linear = nn.Linear(100, 2, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.linear(x)
+
+
 class ToyConvNet(nn.Module):
     def __init__(self, include_bn: bool = False) -> None:
         super().__init__()
@@ -22,6 +32,22 @@ class ToyConvNet(nn.Module):
         self.fc2 = nn.Linear(120, 64, bias=False)
         if include_bn:
             self.bn1 = nn.BatchNorm1d(10)
+
+
+class SmallCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 4 * 4, 32)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        return x
 
 
 class LinearTransform(nn.Module):

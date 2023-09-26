@@ -2,22 +2,11 @@ import math
 from typing import Dict
 
 import pytest
-import torch
-import torch.nn as nn
 from flwr.common.typing import Scalar
 
 from fl4health.clients.evaluate_client import EvaluateClient
 from tests.clients.fixtures import get_evaluation_client  # noqa
-
-
-class SingleLayer(nn.Module):
-    def __init__(self, seed: int = 42) -> None:
-        super().__init__()
-        torch.manual_seed(seed)
-        self.linear = nn.Linear(100, 2, bias=False)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.linear(x)
+from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
 def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
@@ -36,7 +25,7 @@ def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
     assert merged_metrics == global_metrics
 
 
-@pytest.mark.parametrize("model", [SingleLayer()])
+@pytest.mark.parametrize("model", [SingleLayerWithSeed()])
 def test_evaluating_identical_global_and_local_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
     evaluate_client = get_evaluation_client
 
@@ -48,10 +37,10 @@ def test_evaluating_identical_global_and_local_models(get_evaluation_client: Eva
     assert pytest.approx(metrics["global_eval_meter_accuracy"], abs=0.0001) == 0.0
 
 
-@pytest.mark.parametrize("model", [SingleLayer()])
+@pytest.mark.parametrize("model", [SingleLayerWithSeed()])
 def test_evaluating_different_global_and_local_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
     evaluate_client = get_evaluation_client
-    evaluate_client.global_model = SingleLayer(seed=37)
+    evaluate_client.global_model = SingleLayerWithSeed(seed=37)
 
     loss, metrics = evaluate_client.validate()
     assert math.isnan(loss)
@@ -61,7 +50,7 @@ def test_evaluating_different_global_and_local_models(get_evaluation_client: Eva
     assert pytest.approx(metrics["global_eval_meter_accuracy"], abs=0.0001) == 0.0
 
 
-@pytest.mark.parametrize("model", [SingleLayer()])
+@pytest.mark.parametrize("model", [SingleLayerWithSeed()])
 def test_evaluating_only_local_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
     evaluate_client = get_evaluation_client
     evaluate_client.global_model = None
@@ -73,7 +62,7 @@ def test_evaluating_only_local_models(get_evaluation_client: EvaluateClient) -> 
     assert pytest.approx(metrics["local_eval_meter_accuracy"], abs=0.0001) == 0.0
 
 
-@pytest.mark.parametrize("model", [SingleLayer()])
+@pytest.mark.parametrize("model", [SingleLayerWithSeed()])
 def test_evaluating_only_global_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
     evaluate_client = get_evaluation_client
     evaluate_client.local_model = None

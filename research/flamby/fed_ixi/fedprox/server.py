@@ -39,8 +39,8 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
     # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
     # and APFL
-    client_model = Baseline(out_channels_first_layer=12)
-    summarize_model_info(client_model)
+    model = Baseline(out_channels_first_layer=12)
+    summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedProx(
@@ -53,11 +53,11 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=get_initial_model_parameters(model),
         proximal_weight=mu,
     )
 
-    server = FedProxServer(client_manager, client_model, strategy, checkpointer)
+    server = FedProxServer(client_manager, model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

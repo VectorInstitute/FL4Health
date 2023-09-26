@@ -1,5 +1,5 @@
 from logging import INFO, WARNING
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -101,12 +101,15 @@ class FlServer(Server):
         return eval_round_results
 
 
-class FlServerWithCheckpointing(FlServer):
+ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
+
+
+class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def __init__(
         self,
         client_manager: ClientManager,
         model: nn.Module,
-        parameter_exchanger: ParameterExchanger,
+        parameter_exchanger: ExchangerType,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
