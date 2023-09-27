@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -54,6 +54,9 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples: int
         self.learning_rate: float
 
+        self.total_steps: Optional[int] = None
+        self.total_epochs: Optional[int] = None
+
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the model weights and initialize the correct weights with the parameter exchanger.
         super().set_parameters(parameters, config)
@@ -67,9 +70,11 @@ class BasicClient(NumpyFlClient):
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
         elif "local_epochs" in config:
+            self.total_epochs = 0 if self.total_epochs is None else self.total_epochs
             local_epochs = self.narrow_config_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
+            self.total_steps = 0 if self.total_steps is None else self.total_steps
             local_steps = self.narrow_config_type(config, "local_steps", int)
             local_epochs = None
         else:
@@ -140,6 +145,24 @@ class BasicClient(NumpyFlClient):
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
+    def _handle_reporting(
+        self,
+        loss_dict: Dict[str, float],
+        metric_dict: Dict[str, Scalar],
+        current_round: Optional[int] = None,
+    ) -> None:
+        current_round = current_round if current_round is not None else 0
+        reporting_dict: Dict[str, Any] = {"server_round": current_round}
+        reporting_dict = (
+            {**reporting_dict, "epoch": self.total_epochs} if self.total_epochs is not None else reporting_dict
+        )
+        reporting_dict = (
+            {**reporting_dict, "step": self.total_steps} if self.total_steps is not None else reporting_dict
+        )
+        reporting_dict.update(loss_dict)
+        reporting_dict.update(metric_dict)
+        self._maybe_report_metrics(reporting_dict)
+
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
@@ -187,7 +210,11 @@ class BasicClient(NumpyFlClient):
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
-            self._handle_logging(loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
+            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
+            self._handle_reporting(loss_dict, metrics, current_round=current_round)
+
+            assert self.total_epochs is not None
+            self.total_epochs += 1
 
         # Return final training metrics
         return loss_dict, metrics
@@ -216,11 +243,15 @@ class BasicClient(NumpyFlClient):
             self.train_loss_meter.update(losses)
             self.train_metric_meter.update(preds, target)
 
+            assert self.total_steps is not None
+            self.total_steps += 1
+
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
         metrics = self.train_metric_meter.compute()
 
         self._handle_logging(loss_dict, metrics, current_round=current_round)
+        self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
 

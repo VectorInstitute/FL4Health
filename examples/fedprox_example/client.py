@@ -52,7 +52,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
+    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, use_wandb_reporter=True)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully
