@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 
 import pandas as pd
+from constants import BINARY, NUMERIC, ORDINAL, STRING, UNKNOWN
 from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 
@@ -42,11 +43,16 @@ class TargetInfoEncoder:
 
 class TabFeaturesInfoEncoder:
     def __init__(
-        self, features_to_types: Dict[str, str], categories: Dict[str, List[Scalar]], target_info: TargetInfoEncoder
+        self,
+        features_to_types: Dict[str, str],
+        categories: Dict[str, List[Scalar]],
+        target_info: TargetInfoEncoder,
+        default_fill_values: Dict[str, Scalar] = {BINARY: 0, NUMERIC: 0, ORDINAL: UNKNOWN, STRING: "N/A"},
     ) -> None:
         self.features_to_types = features_to_types
         self.categories = categories
         self.target_info = target_info
+        self.default_fill_values = default_fill_values
 
     def features_by_type(self, feature_type: str) -> List[str]:
         return sorted([feature for feature, t in self.features_to_types.items() if t == feature_type])
@@ -65,6 +71,15 @@ class TabFeaturesInfoEncoder:
 
     def get_target_categories(self) -> List[Scalar]:
         return self.target_info.get_target_categories()
+
+    def get_all_default_fill_values(self) -> Dict[str, Scalar]:
+        return self.default_fill_values
+
+    def get_default_fill_value(self, key: str) -> Scalar:
+        return self.default_fill_values[key]
+
+    def set_default_fill_value(self, key: str, value: Scalar) -> None:
+        self.default_fill_values[key] = value
 
     def merge(self, encoder: "TabFeaturesInfoEncoder") -> "TabFeaturesInfoEncoder":
         assert self.get_target() == encoder.get_target() and self.get_target_type() == encoder.get_target_type()
@@ -121,6 +136,7 @@ class TabFeaturesInfoEncoder:
                 "features_to_types": json.dumps(self.features_to_types),
                 "categories": json.dumps(self.categories),
                 "target_info": json.dumps(self.target_info.to_json()),
+                "default_fill_values": json.dumps(self.default_fill_values),
             }
         )
 
@@ -131,4 +147,5 @@ class TabFeaturesInfoEncoder:
             json.loads(attributes["features_to_types"]),
             json.loads(attributes["categories"]),
             TargetInfoEncoder.from_json(json.loads(attributes["target_info"])),
+            json.loads(attributes["default_fill_values"]),
         )

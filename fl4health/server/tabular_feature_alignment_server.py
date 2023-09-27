@@ -79,10 +79,6 @@ class TabularFeatureAlignmentServer(FlServer):
             self.config["feature_info"] = feature_info_source
             self.format_info_gathered = True
 
-            # def fit_config(config: Config, current_round: int) -> Config:
-            #     config["format_specified"] = current_round > 1
-            #     return config
-
             self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
             input_dimension, output_dimension = self.poll_clients_for_dimension_info(timeout)
