@@ -1,7 +1,6 @@
 from typing import Dict, List, Tuple
 
 import pandas as pd
-from constants import BINARY, FEATURE_TYPES, NUMERIC, ORDINAL, STRING, TextFeatureTransformer
 from flwr.common.typing import NDArray, Scalar
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
@@ -10,6 +9,14 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, OrdinalEncoder
 
+from fl4health.feature_alignment.constants import (
+    BINARY,
+    FEATURE_TYPES,
+    NUMERIC,
+    ORDINAL,
+    STRING,
+    TextFeatureTransformer,
+)
 from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
 
 

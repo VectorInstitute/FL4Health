@@ -2,9 +2,10 @@ import json
 from typing import Dict, List
 
 import pandas as pd
-from constants import BINARY, NUMERIC, ORDINAL, STRING, UNKNOWN
 from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
+
+from fl4health.feature_alignment.constants import BINARY, NUMERIC, ORDINAL, STRING, UNKNOWN
 
 
 class TargetInfoEncoder:
