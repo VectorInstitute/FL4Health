@@ -161,7 +161,7 @@ class BasicClient(NumpyFlClient):
         # This situation only arises when we do local finetuning and call train_by_epochs or train_by_steps explicitly
         current_round = current_round if current_round is not None else 0
 
-        # We enforce that only one of self.total_epochs and self.total_steps is defined 
+        # We enforce that only one of self.total_epochs and self.total_steps is defined
         # So only one of the two following lines will update the reporting dict
         reporting_dict: Dict[str, Any] = {"server_round": current_round}
         reporting_dict = (
@@ -256,14 +256,14 @@ class BasicClient(NumpyFlClient):
             self.train_loss_meter.update(losses)
             self.train_metric_meter.update(preds, target)
 
-            # Ensure total_steps is not None and increment 
+            # Ensure total_steps is not None and increment
             assert self.total_steps is not None
             self.total_steps += 1
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
         metrics = self.train_metric_meter.compute()
-        
+
         # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
