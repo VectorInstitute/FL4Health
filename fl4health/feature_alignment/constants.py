@@ -1,5 +1,6 @@
-from typing import Union
+from typing import Dict, Union
 
+from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, TfidfTransformer, TfidfVectorizer
 
 TextFeatureTransformer = Union[CountVectorizer, TfidfTransformer, TfidfVectorizer, HashingVectorizer]
@@ -17,3 +18,5 @@ FEATURE_TYPES = [
     STRING,
     ORDINAL,
 ]
+
+DEFAULT_FILL_VALUES: Dict[str, Scalar] = {BINARY: 0, NUMERIC: 0.0, ORDINAL: UNKNOWN, STRING: "N/A"}

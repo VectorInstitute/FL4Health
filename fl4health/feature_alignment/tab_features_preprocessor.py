@@ -2,21 +2,14 @@ from typing import Dict, List, Tuple
 
 import pandas as pd
 from flwr.common.typing import NDArray, Scalar
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, OrdinalEncoder
 
-from fl4health.feature_alignment.constants import (
-    BINARY,
-    FEATURE_TYPES,
-    NUMERIC,
-    ORDINAL,
-    STRING,
-    TextFeatureTransformer,
-)
+from fl4health.feature_alignment.constants import BINARY, FEATURE_TYPES, NUMERIC, ORDINAL, STRING
+from fl4health.feature_alignment.string_columns_transformer import StringColumnTransformer
 from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
 
 
@@ -28,6 +21,7 @@ class TabularFeaturesPreprocessor:
             feature_type: tab_feature_encoder.features_by_type(feature_type) for feature_type in FEATURE_TYPES
         }
         self.default_fill_values: Dict[str, Scalar] = tab_feature_encoder.get_all_default_fill_values()
+        self.vocabulary = tab_feature_encoder.get_vocabulary()
         self.transformers: Dict[str, Pipeline] = {}
 
         self.transformers[NUMERIC] = Pipeline(
@@ -39,7 +33,9 @@ class TabularFeaturesPreprocessor:
         self.transformers[ORDINAL] = Pipeline(
             steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=self.categories))]
         )
-        self.transformers[STRING] = Pipeline(steps=[("vectorizer", StringColumnTransformer(TfidfVectorizer()))])
+        self.transformers[STRING] = Pipeline(
+            steps=[("vectorizer", StringColumnTransformer(TfidfVectorizer(vocabulary=self.vocabulary)))]
+        )
 
         self.data_column_transformer = ColumnTransformer(
             transformers=[
@@ -54,7 +50,7 @@ class TabularFeaturesPreprocessor:
         self.target_transformer = self.construct_target_transformer(tab_feature_encoder)
 
     def construct_target_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> ColumnTransformer:
-        # We assume that the target column is of type BINARY, NUMERIC, or ORDINAL.
+        # We assume that the target column has type BINARY, NUMERIC, or ORDINAL.
         target_type = tab_feature_encoder.get_target_type()
         target = tab_feature_encoder.get_target()
         target_categories = tab_feature_encoder.get_target_categories()
@@ -104,17 +100,3 @@ class TabularFeaturesPreprocessor:
     def _fill_in_missing_column(self, df: pd.DataFrame, column_name: str, value: Scalar) -> None:
         if column_name not in df.columns:
             df[column_name] = value
-
-
-class StringColumnTransformer(BaseEstimator, TransformerMixin):
-    def __init__(self, transformer: TextFeatureTransformer):
-        self.transformer = transformer
-
-    def fit(self, X: pd.DataFrame, y: pd.DataFrame = None) -> "StringColumnTransformer":
-        joined_X = X.apply(lambda x: " ".join(x), axis=1)
-        self.transformer.fit(joined_X)
-        return self
-
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
-        joined_X = X.apply(lambda x: " ".join(x), axis=1)
-        return self.transformer.transform(joined_X)
