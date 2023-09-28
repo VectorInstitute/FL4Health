@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, List
+from typing import List
 
 import torch
 import torch.nn as nn
@@ -21,17 +21,18 @@ class APFLModule(nn.Module):
         self.alpha = alpha
         self.alpha_lr = alpha_lr
 
-    def forward(self, input: torch.Tensor, personal: bool) -> Dict[str, torch.Tensor]:
-        if not personal:
-            global_logits = self.global_model(input)
-            return {"global": global_logits}
+    def global_forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.global_model(input)
 
-        global_logits = self.global_model(input)
-        local_logits = self.local_model(input)
+    def local_forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.local_model(input)
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        global_logits = self.global_forward(input)
+        local_logits = self.local_forward(input)
         personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
-        results = {"personal": personal_logits, "local": local_logits}
 
-        return results
+        return personal_logits
 
     def update_alpha(self) -> None:
         # Updates to mixture parameter follow original implementation

@@ -46,20 +46,23 @@ def test_apfl_layer_exchange() -> None:
             assert np.array_equal(layer_parameters, model_state_dict[layer_name])
 
     input = torch.ones((3, 1, 10, 10))
-    # APFL returns a dictionary of tensors. In the case of personal predictions, it produces a convex combination of
-    # the dual toy model outputs, which have dimension 3 under the key personal and a prediction from the local model
-    # under the key local
-    apfl_output_dict = model(input, personal=True)
-    assert "local" in apfl_output_dict
-    personal_shape = apfl_output_dict["personal"].shape
+    # APFL returns the personal prediction which are a combination of the logits of local and global models
+    personal_shape = model(input).shape
     # Batch size
     assert personal_shape[0] == 3
     # Output size
     assert personal_shape[1] == 3
-    # Make sure that the APFL module still correctly functions when making predictions using only the global model. It
-    # should produce a dictionary with key "global"
-    global_shape = model(input, personal=False)["global"].shape
+
+    # We can get the global preds with the global_forward method
+    global_shape = model.global_forward(input).shape
     # Batch size
     assert global_shape[0] == 3
     # Output size
     assert global_shape[1] == 3
+
+    # We can get the local preds with the local_forward method
+    local_shape = model.local_forward(input).shape
+    # Batch size
+    assert local_shape[0] == 3
+    # Output size
+    assert local_shape[1] == 3

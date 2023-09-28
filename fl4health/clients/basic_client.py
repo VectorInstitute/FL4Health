@@ -178,11 +178,12 @@ class BasicClient(NumpyFlClient):
         for local_epoch in range(epochs):
             self.train_metric_meter.clear()
             self.train_loss_meter.clear()
-            for input, target in self.train_loader:
+            for step, (input, target) in enumerate(self.train_loader):
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(preds, target)
+                self.update_after_step(step)
             metrics = self.train_metric_meter.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
@@ -202,7 +203,7 @@ class BasicClient(NumpyFlClient):
 
         self.train_loss_meter.clear()
         self.train_metric_meter.clear()
-        for _ in range(steps):
+        for step in range(steps):
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -215,6 +216,7 @@ class BasicClient(NumpyFlClient):
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
             self.train_metric_meter.update(preds, target)
+            self.update_after_step(step)
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
@@ -326,4 +328,7 @@ class BasicClient(NumpyFlClient):
         raise NotImplementedError
 
     def update_after_train(self, local_steps: int) -> None:
+        pass
+
+    def update_after_step(self, step: int) -> None:
         pass
