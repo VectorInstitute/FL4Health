@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from fl4health.clients.apfl_client import ApflClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
@@ -34,6 +35,8 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client = DPScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
+    elif type == ApflClient:
+        client = ApflClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     else:
         raise ValueError(f"{str(type)} is not a valid client type")
 

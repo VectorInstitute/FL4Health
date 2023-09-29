@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 import torch
-import torch.nn as nn
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
@@ -29,9 +28,12 @@ class ApflClient(BasicClient):
         super().__init__(
             data_path, metrics, device, loss_meter_type, metric_meter_type, use_wandb_reporter, checkpointer
         )
-
+        # Apfl Module which holds both local and global models
+        # and gives the ability to get personal, local and global predictions
         self.model: APFLModule
-        self.local_model: nn.Module
+
+        # local_optimizer is used on the local model
+        # Usual self.optimizer is used for global model
         self.local_optimizer: Optimizer
 
     def is_start_of_local_training(self, step: int) -> bool:
@@ -42,6 +44,10 @@ class ApflClient(BasicClient):
             self.model.update_alpha()
 
     def split_optimizer(self, global_optimizer: Optimizer) -> Tuple[Optimizer, Optimizer]:
+        """
+        The optimizer from get_optimizer is for the entire APFLModule. We need one optimizer
+        for the local model and one optimizer for the global model.
+        """
         global_optimizer.param_groups.clear()
         global_optimizer.state.clear()
         local_optimizer = copy.deepcopy(global_optimizer)
@@ -55,6 +61,9 @@ class ApflClient(BasicClient):
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
         super().setup_client(config)
+
+        # Split optimizer from get_optimizer into two distinct optimizers
+        # One for local model and one for global model
         global_optimizer, local_optimizer = self.split_optimizer(self.optimizer)
         self.optimizer = global_optimizer
         self.local_optimizer = local_optimizer
