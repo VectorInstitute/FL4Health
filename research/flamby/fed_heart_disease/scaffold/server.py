@@ -37,10 +37,10 @@ def main(
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = FixedSamplingByFractionClientManager()
-    client_model = Baseline()
-    summarize_model_info(client_model)
+    model = Baseline()
+    summarize_model_info(model)
 
-    initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(client_model)
+    initial_parameters, initial_control_variates = get_initial_model_info_with_control_variates(model)
 
     strategy = Scaffold(
         fraction_fit=1.0,
@@ -57,7 +57,7 @@ def main(
         learning_rate=server_learning_rate,
     )
 
-    server = ScaffoldServer(client_manager, client_model, strategy, checkpointer)
+    server = ScaffoldServer(client_manager, model, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

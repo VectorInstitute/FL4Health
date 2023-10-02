@@ -6,6 +6,7 @@ import torch
 from flwr.common import Config
 
 from fl4health.clients.clipping_client import NumpyClippingClient
+from fl4health.utils.metrics import Accuracy
 
 
 class DummyClippingClient(NumpyClippingClient):
@@ -14,7 +15,7 @@ class DummyClippingClient(NumpyClippingClient):
 
 
 def test_weight_update_and_clipping() -> None:
-    clipping_client = DummyClippingClient(Path(""), torch.device("cpu"))
+    clipping_client = DummyClippingClient(Path(""), [Accuracy("accuracy")], torch.device("cpu"))
     clipping_client.adaptive_clipping = True
     clipping_client.clipping_bound = 1.0
     n_layers = 4
@@ -28,7 +29,7 @@ def test_weight_update_and_clipping() -> None:
 
 
 def test_clipping_bit_flip() -> None:
-    clipping_client = DummyClippingClient(Path(""), torch.device("cpu"))
+    clipping_client = DummyClippingClient(Path(""), [Accuracy("accuracy")], torch.device("cpu"))
     clipping_client.adaptive_clipping = True
     clipping_client.clipping_bound = 9.0
     n_layers = 4

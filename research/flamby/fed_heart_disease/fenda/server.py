@@ -29,8 +29,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    client_model = FedHeartDiseaseFendaModel()
-    summarize_model_info(client_model)
+    model = FedHeartDiseaseFendaModel()
+    summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -43,7 +43,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=get_initial_model_parameters(model),
     )
 
     server = PersonalServer(client_manager, strategy)

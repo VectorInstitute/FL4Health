@@ -1,12 +1,12 @@
 # Server settings
-n_server_rounds: 5
+n_server_rounds: 10
 n_clients: 3
 
 # Client learning settings
 client_sampling_rate: 0.66
-local_epochs: 4
+local_epochs: 1
 batch_size: 64
 
 # Differential privacy parameters
-client_noise_multiplier: 1.0
-client_clipping: 5.0
+noise_multiplier: 1.0
+clipping_bound: 5.0

@@ -37,6 +37,7 @@ def fit_config(
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
         "warm_up_rounds": warm_up_rounds,
+        "current_server_round": current_round,
     }
 
 

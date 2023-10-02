@@ -37,8 +37,8 @@ def main(
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    client_model = Baseline()
-    summarize_model_info(client_model)
+    model = Baseline()
+    summarize_model_info(model)
 
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],
@@ -50,11 +50,11 @@ def main(
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(client_model),
+        initial_parameters=get_initial_model_parameters(model),
         eta=server_learning_rate,
     )
 
-    server = FullExchangeServer(client_manager, client_model, strategy, checkpointer)
+    server = FullExchangeServer(client_manager, model, strategy, checkpointer=checkpointer)
 
     fl.server.start_server(
         server=server,

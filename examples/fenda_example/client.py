@@ -1,49 +1,53 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Set
+from typing import Sequence, Set, Tuple
 
 import flwr as fl
 import torch
+import torch.nn as nn
 from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
-from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
-class MnistFendaClient(BasicClient):
+class MnistFendaClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
-        minority_numbers: Set[int],
         device: torch.device,
+        minority_numbers: Set[int],
     ) -> None:
-        super().__init__(data_path, metrics, device)
+        super().__init__(data_path=data_path, metrics=metrics, device=device)
         self.minority_numbers = minority_numbers
-        self.model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
-        self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
         self.warm_up_rounds = self.narrow_config_type(config, "warm_up_rounds", int)
-
         sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        return train_loader, val_loader
 
-        train_loader, validation_loader, num_examples = load_mnist_data(self.data_path, batch_size, sampler)
+    def get_model(self, config: Config) -> nn.Module:
+        model: nn.Module = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(
+            self.device
+        )
+        return model
 
-        self.train_loader = train_loader
-        self.val_loader = validation_loader
-        self.num_examples = num_examples
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
-        self.criterion = torch.nn.CrossEntropyLoss()
-        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
 
 
 if __name__ == "__main__":
@@ -57,5 +61,6 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistFendaClient(data_path, [Accuracy("accuracy")], minority_numbers, DEVICE)
+    client = MnistFendaClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

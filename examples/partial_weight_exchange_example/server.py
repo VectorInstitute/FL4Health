@@ -29,7 +29,7 @@ def get_initial_model_parameters(num_classes: int) -> Parameters:
 
 
 def construct_config(
-    _: int,
+    current_round: int,
     local_epochs: int,
     batch_size: int,
     num_classes: int,
@@ -44,6 +44,7 @@ def construct_config(
     assert 0 < sample_percentage <= 1
     assert 0 < beta
     return {
+        "current_server_round": current_round,
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "num_classes": num_classes,

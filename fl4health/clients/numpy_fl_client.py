@@ -6,8 +6,7 @@ from typing import Any, Dict, Optional, Type, TypeVar
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
-from flwr.common import Config, NDArrays, Scalar
-from torch.utils.data import DataLoader
+from flwr.common import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -24,8 +23,7 @@ class NumpyFlClient(NumPyClient):
         self.initialized = False
         self.data_path = data_path
         self.device = device
-        self.train_loader: DataLoader
-        self.num_examples: Dict[str, int]
+
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
         self.wandb_reporter: Optional[ClientWandBReporter] = None
@@ -42,15 +40,6 @@ class NumpyFlClient(NumPyClient):
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
 
-    def setup_client(self, config: Config) -> None:
-        """
-        This method should be used to set up all of the required components for the client through the config passed
-        by the server and need only be done once. The quintessential example is data loaders with a batch size set by
-        the server in the config. The parameter initialized should be set to true when this function is finished.
-        Overriding this class and calling super is the preferred flow.
-        """
-        self.initialized = True
-
     def get_parameters(self, config: Config) -> NDArrays:
         # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
         # determine parameters sent
@@ -64,6 +53,9 @@ class NumpyFlClient(NumPyClient):
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
+        if config_key not in config:
+            raise ValueError(f"{config_key} is not present in the Config.")
+
         config_value = config[config_key]
         if isinstance(config_value, narrow_type_to):
             return config_value
@@ -74,11 +66,10 @@ class NumpyFlClient(NumPyClient):
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()
 
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def setup_client(self, config: Config) -> None:
         """
-        Return properties of client.
-        First initializes the client because this is called prior to the first
-        federated learning round.
+        This method is used to set up all of the required components for the client through the config passed
+        by the server and need only be done once. The Basic Client setup_client overrides this method to setup client
+        by calling the user defined methods and setting the required attributes.
         """
-        self.setup_client(config)
-        return {"num_train_samples": self.num_examples["train_set"]}
+        self.initialized = True
