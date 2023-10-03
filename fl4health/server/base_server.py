@@ -1,13 +1,17 @@
-from logging import INFO
-from typing import List, Optional
+from logging import INFO, WARNING
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
+import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.parameter import parameters_to_ndarrays
+from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
-from flwr.server.server import Server
+from flwr.server.server import EvaluateResultsAndFailures, Server
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
@@ -15,7 +19,7 @@ from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 class FlServer(Server):
     """
-    Base Server for the library to facilitate strapping additional/userful machinery to the base flwr server.
+    Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
     """
 
     def __init__(
@@ -40,6 +44,29 @@ class FlServer(Server):
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()
 
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        # This function is used for converting server parameters into a torch model that can be checkpointed
+        raise NotImplementedError()
+
+    def _maybe_checkpoint(self, checkpoint_metric: float, server_round: int) -> None:
+        if self.checkpointer:
+            try:
+                model = self._hydrate_model_for_checkpointing()
+                self.checkpointer.maybe_checkpoint(model, checkpoint_metric)
+            except NotImplementedError:
+                # Checkpointer is defined but there is no server-side model hydration to produce a model from the
+                # server state. This is not a deal breaker, but may be unintended behavior and the user will be warned
+                if server_round == 1:
+                    # just log message on the first round
+                    log(
+                        WARNING,
+                        "Server model hydration is not defined but checkpointer is defined. Not checkpointing "
+                        "model. Please ensure that this is intended",
+                    )
+        elif server_round == 1:
+            # No checkpointer, just log message on the first round
+            log(INFO, "No checkpointer present. Models will not be checkpointed on server-side.")
+
     def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function
@@ -56,3 +83,43 @@ class FlServer(Server):
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
 
         return sample_counts
+
+    def evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
+        # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
+        # updated prior to this function being called.
+        eval_round_results = super().evaluate_round(server_round, timeout)
+        if eval_round_results:
+            loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
+            if loss_aggregated:
+                self._maybe_checkpoint(loss_aggregated, server_round)
+
+        return eval_round_results
+
+
+ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
+
+
+class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        model: nn.Module,
+        parameter_exchanger: ExchangerType,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        strategy: Optional[Strategy] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        self.server_model = model
+        # To facilitate model rehydration from server-side state for checkpointing
+        self.parameter_exchanger = parameter_exchanger
+
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
+        return self.server_model

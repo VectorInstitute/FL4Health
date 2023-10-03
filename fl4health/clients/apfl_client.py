@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.model_bases.apfl_base import APFLModule
-from fl4health.utils.metrics import AverageMeter, Meter, Metric
+from fl4health.utils.metrics import Metric, MetricAverageMeter, MetricMeter
 
 LocalLoss = torch.Tensor
 GlobalLoss = torch.Tensor
@@ -51,9 +51,9 @@ class ApflClient(NumpyFlClient):
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
 
         # Default APFL uses an average meter
-        global_meter = AverageMeter(self.metrics, "global")
-        local_meter = AverageMeter(self.metrics, "local")
-        personal_meter = AverageMeter(self.metrics, "personal")
+        global_meter = MetricAverageMeter(self.metrics, "global")
+        local_meter = MetricAverageMeter(self.metrics, "local")
+        personal_meter = MetricAverageMeter(self.metrics, "personal")
         # By default the APFL client trains by epochs
         metric_values = self.train_by_epochs(local_epochs, global_meter, local_meter, personal_meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -70,9 +70,9 @@ class ApflClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         # Default APFL uses an average meter
-        global_meter = AverageMeter(self.metrics, "global")
-        local_meter = AverageMeter(self.metrics, "local")
-        personal_meter = AverageMeter(self.metrics, "personal")
+        global_meter = MetricAverageMeter(self.metrics, "global")
+        local_meter = MetricAverageMeter(self.metrics, "local")
+        personal_meter = MetricAverageMeter(self.metrics, "personal")
         loss, metric_values = self.validate(global_meter, local_meter, personal_meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -129,7 +129,7 @@ class ApflClient(NumpyFlClient):
         return local_loss, global_loss, personal_loss, local_pred, global_pred, personal_pred
 
     def train_by_steps(
-        self, steps: int, global_meter: Meter, local_meter: Meter, personal_meter: Meter
+        self, steps: int, global_meter: MetricMeter, local_meter: MetricMeter, personal_meter: MetricMeter
     ) -> Dict[str, Scalar]:
         self.model.train()
         loss_dict = {"personal": 0.0, "local": 0.0, "global": 0.0}
@@ -177,7 +177,7 @@ class ApflClient(NumpyFlClient):
         return metrics
 
     def train_by_epochs(
-        self, epochs: int, global_meter: Meter, local_meter: Meter, personal_meter: Meter
+        self, epochs: int, global_meter: MetricMeter, local_meter: MetricMeter, personal_meter: MetricMeter
     ) -> Dict[str, Scalar]:
         self.model.train()
         for epoch in range(epochs):
@@ -217,7 +217,7 @@ class ApflClient(NumpyFlClient):
         return metrics
 
     def validate(
-        self, global_meter: Meter, local_meter: Meter, personal_meter: Meter
+        self, global_meter: MetricMeter, local_meter: MetricMeter, personal_meter: MetricMeter
     ) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
         loss_dict = {"global": 0.0, "personal": 0.0, "local": 0.0}

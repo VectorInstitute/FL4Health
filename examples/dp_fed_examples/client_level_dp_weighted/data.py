@@ -33,8 +33,8 @@ def load_data(data_dir: Path, batch_size: int, scaler_bytes: bytes) -> Tuple[Dat
     train_X, train_Y = torch.from_numpy(train_features).float(), torch.from_numpy(train_labels).float()
     val_X, val_Y = torch.from_numpy(val_features).float(), torch.from_numpy(val_labels).float()
     train_ds, val_ds = TensorDataset(train_X, train_Y), TensorDataset(val_X, val_Y)
-    train_loader = DataLoader(train_ds, batch_size=batch_size, drop_last=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, drop_last=True)
+    train_loader = DataLoader(train_ds, batch_size=batch_size)
+    val_loader = DataLoader(val_ds, batch_size=batch_size)
 
     num_examples = {"train_set": train_samples, "validation_set": n_samples - train_samples}
 

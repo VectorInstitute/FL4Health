@@ -38,6 +38,27 @@ def load_mnist_data(
     return train_loader, validation_loader, num_examples
 
 
+def load_cifar10_test_data(
+    data_dir: Path, batch_size: int, sampler: Optional[LabelBasedSampler] = None
+) -> Tuple[DataLoader, Dict[str, int]]:
+    """Load CIFAR-10 test set only."""
+    log(INFO, f"Data directory: {str(data_dir)}")
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ]
+    )
+    evaluation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
+
+    if sampler is not None:
+        evaluation_set = sampler.subsample(evaluation_set)
+
+    evaluation_loader = DataLoader(evaluation_set, batch_size=batch_size, shuffle=False)
+    num_examples = {"eval_set": len(evaluation_set)}
+    return evaluation_loader, num_examples
+
+
 def load_cifar10_data(
     data_dir: Path, batch_size: int, sampler: Optional[LabelBasedSampler] = None
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:

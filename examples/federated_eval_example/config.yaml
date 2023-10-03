@@ -1,0 +1,7 @@
+# Parameters that describe server
+n_server_rounds: 3 # The number of rounds to run FL (Not used for this example)
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+local_epochs: 3 # The number of epochs to complete for client (Not used for this example)
+batch_size: 32 # The batch size for client training
