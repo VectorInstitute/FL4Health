@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -43,7 +43,7 @@ class FendaModel(nn.Module):
     def layers_to_exchange(self) -> List[str]:
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
-    def forward(self, input: torch.Tensor, pre_train: bool = False) -> torch.Tensor:
+    def forward(self, input: torch.Tensor, pre_train: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if pre_train:
             self.local_module.eval()
         else:
@@ -52,4 +52,4 @@ class FendaModel(nn.Module):
         if pre_train:
             local_output = 0.0 * local_output
         global_output = self.global_module.forward(input)
-        return self.model_head.forward(local_output, global_output)
+        return self.model_head.forward(local_output, global_output), local_output, global_output
