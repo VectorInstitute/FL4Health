@@ -29,7 +29,6 @@ class FedIxiFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
-        warm_up_rounds: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
@@ -50,8 +49,6 @@ class FedIxiFendaClient(FendaClient):
         self.learning_rate = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
-
-        self.warm_up_rounds = warm_up_rounds
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -112,9 +109,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
-    parser.add_argument(
-        "--warm_up_rounds", action="store", type=float, help="Warm up rounds with FedAvg before Fenda", default=3
-    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -133,7 +127,6 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        warm_up_rounds=args.warm_up_rounds,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

@@ -66,6 +66,7 @@ class BasicClient(NumpyFlClient):
         Method to ensure the required keys are present in config and extracts the values.
         """
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        self.warm_up_rounds = self.narrow_config_type(config, "warm_up_rounds", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
@@ -89,9 +90,10 @@ class BasicClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
 
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
         if int(config["current_server_round"]) <= self.warm_up_rounds:
             self.pre_train = True
+        else:
+            self.pre_train = False
 
         if local_epochs is not None:
             _, metrics = self.train_by_epochs(local_epochs, current_server_round)
@@ -296,10 +298,7 @@ class BasicClient(NumpyFlClient):
         """
         Return predictions when given input. User can override for more complex logic.
         """
-        if self.pre_train:
-            return self.model(input, self.pre_train)
-        else:
-            return self.model(input)
+        return self.model(input)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         """

@@ -98,6 +98,10 @@ class FedProxClient(BasicClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
+        if int(config["current_server_round"]) <= self.warm_up_rounds:
+            self.pre_train = True
+        else:
+            self.pre_train = False
 
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
@@ -117,6 +121,8 @@ class FedProxClient(BasicClient):
         )
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+        if self.pre_train:
+            return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss

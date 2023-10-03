@@ -13,7 +13,7 @@ from research.flamby.fed_ixi.fenda.fenda_model import FedIxiFendaModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
-    fit_config,
+    fit_config_with_warmup,
     fit_metrics_aggregation_fn,
     get_initial_model_parameters,
     summarize_model_info,
@@ -23,9 +23,10 @@ from research.flamby.utils import (
 def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
-        fit_config,
+        fit_config_with_warmup,
         config["local_steps"],
         config["n_server_rounds"],
+        config["warm_up_rounds"],
     )
 
     client_manager = SimpleClientManager()

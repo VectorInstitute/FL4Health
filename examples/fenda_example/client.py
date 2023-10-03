@@ -32,7 +32,6 @@ class MnistFendaClient(FendaClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
-        self.warm_up_rounds = self.narrow_config_type(config, "warm_up_rounds", int)
         sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader

@@ -14,6 +14,7 @@ proximal_weight_patience : 5 # The number of rounds to wait before increasing or
 n_clients: 3 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client
 batch_size: 128 # The batch size for client training
+warm_up_rounds: 1 # The number of rounds to run before starting FedProx
 
 reporting_config:
   enabled: False
