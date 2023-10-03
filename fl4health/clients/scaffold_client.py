@@ -170,6 +170,9 @@ class ScaffoldClient(BasicClient):
         return updated_client_control_variates
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+        if self.pre_train:
+            return super().train_step(input, target)
+
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
 
