@@ -98,7 +98,7 @@ class FedProxClient(BasicClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        if int(config["current_server_round"]) <= self.warm_up_rounds:
+        if int(config["current_server_round"]) <= self.warmup_rounds:
             self.pre_train = True
         else:
             self.pre_train = False

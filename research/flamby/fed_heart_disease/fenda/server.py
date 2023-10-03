@@ -26,7 +26,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config_with_warmup,
         config["local_steps"],
         config["n_server_rounds"],
-        config["warm_up_rounds"],
+        config["warmup_rounds"],
     )
 
     client_manager = SimpleClientManager()

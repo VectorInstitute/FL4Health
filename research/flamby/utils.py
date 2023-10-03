@@ -33,13 +33,13 @@ def fit_config(
 def fit_config_with_warmup(
     local_steps: int,
     n_server_rounds: int,
-    warm_up_rounds: int,
+    warmup_rounds: int,
     current_round: int,
 ) -> Config:
     return {
         "local_steps": local_steps,
         "n_server_rounds": n_server_rounds,
-        "warm_up_rounds": warm_up_rounds,
+        "warmup_rounds": warmup_rounds,
         "current_server_round": current_round,
     }
 

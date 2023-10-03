@@ -54,7 +54,7 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples: int
         self.learning_rate: float
 
-        self.warm_up_rounds: int = 0
+        self.warmup_rounds: int = 0
         self.pre_train: bool = False
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -66,7 +66,7 @@ class BasicClient(NumpyFlClient):
         Method to ensure the required keys are present in config and extracts the values.
         """
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        self.warm_up_rounds = self.narrow_config_type(config, "warm_up_rounds", int)
+        self.warmup_rounds = self.narrow_config_type(config, "warmup_rounds", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
@@ -90,7 +90,7 @@ class BasicClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
 
-        if int(config["current_server_round"]) <= self.warm_up_rounds:
+        if int(config["current_server_round"]) <= self.warmup_rounds:
             self.pre_train = True
         else:
             self.pre_train = False

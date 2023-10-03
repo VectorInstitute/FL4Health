@@ -27,7 +27,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         fit_config_with_warmup,
         config["local_steps"],
         config["n_server_rounds"],
-        config["warm_up_rounds"],
+        config["warmup_rounds"],
     )
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
