@@ -132,6 +132,9 @@ class TabFeaturesInfoEncoder:
 
         # extract categories information
         ordinal_features: List[str] = sorted(tab_features.features_by_type("ordinal"))
+        string_features: List[str] = sorted(tab_features.features_by_type(type_=STRING))
+        # df[ordinal_features] = df[ordinal_features].astype('U').values
+        # df[string_features] = df[string_features].astype('U').values
         categories = {
             ordinal_feature: sorted(df[ordinal_feature].unique().tolist()) for ordinal_feature in ordinal_features
         }
@@ -144,7 +147,6 @@ class TabFeaturesInfoEncoder:
         target_info = TargetInfoEncoder(target_column, target_type, target_categories)
 
         # Extract vocabulary from the string columns of df
-        string_features = sorted(tab_features.features_by_type(type_=STRING))
         count_vectorizer = CountVectorizer()
         string_col_transformer = StringColumnTransformer(count_vectorizer)
         string_col_transformer.fit(df[string_features])

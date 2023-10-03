@@ -60,11 +60,22 @@ class TabularFeaturesPreprocessor:
             )
             return ColumnTransformer(transformers=[("num", numeric_transformer, [target])], remainder="drop")
         elif target_type == BINARY:
-            binary_transformer = Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent"))])
+            binary_transformer = Pipeline(
+                steps=[("imputer", SimpleImputer(strategy="most_frequent")), ("encoder", OrdinalEncoder())]
+            )
             return ColumnTransformer(transformers=[("bin", binary_transformer, [target])], remainder="drop")
         elif target_type == ORDINAL:
             categorical_transformer = Pipeline(
-                steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=target_categories))]
+                steps=[
+                    (
+                        "encoder",
+                        OrdinalEncoder(
+                            unknown_value=len(target_categories) + 1,
+                            handle_unknown="use_encoded_value",
+                            categories=[target_categories],
+                        ),
+                    )
+                ]
             )
             return ColumnTransformer(transformers=[("cat", categorical_transformer, [target])], remainder="drop")
 

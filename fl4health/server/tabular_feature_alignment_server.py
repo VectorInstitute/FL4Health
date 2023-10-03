@@ -57,16 +57,16 @@ class TabularFeatureAlignmentServer(FlServer):
 
         assert isinstance(self.strategy, BasicFedAvg)
 
-        # Before the normal fitting round commences, the server provides all clients
+        # Before the normal fitting round begins, the server provides all clients
         # the feature information needed to perform feature alignment. Then the server
-        # gathers information from the clients necessary to initialize the global model.
+        # gathers information from the clients that is necessary for initializing the global model.
         if not self.initial_polls_complete:
 
-            # If the server does not have the needed feature info,
+            # If the server does not have the needed feature info a priori,
             # then it requests such information from the clients before the
             # very first fitting round.
             if self.tab_features_info is None:
-                # A random client's feature information is selected as the standard for feature alignment.
+                # A random client's feature information is selected as the source of truth for feature alignment.
                 feature_info = self.poll_clients_for_feature_info(timeout)
 
                 rand_idx = random.randint(0, len(feature_info) - 1)
@@ -81,11 +81,16 @@ class TabularFeatureAlignmentServer(FlServer):
 
             self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
+            # Now the server waits until feature alignment is performed on the clients' side
+            # and subsequently requests the input and output dimensions, which are needed for initializing
+            # the global model.
             input_dimension, output_dimension = self.poll_clients_for_dimension_info(timeout)
+            log(INFO, f"input dimension: {input_dimension}, output dimension: {output_dimension}")
             self.strategy.initial_parameters = self.initialize_parameters(input_dimension, output_dimension)
-            log(INFO, f"input dimensions: {input_dimension}")
             self.initial_polls_complete = True
 
+        # Normal federated learning rounds commence after all clients' features
+        # are aligned and global model is initialized.
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
     def poll_clients_for_feature_info(self, timeout: Optional[float]) -> List[str]:
