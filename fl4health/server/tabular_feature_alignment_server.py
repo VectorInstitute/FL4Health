@@ -10,6 +10,13 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.feature_alignment.constants import (
+    CURRENT_SERVER_ROUND,
+    FEATURE_INFO,
+    FORMAT_SPECIFIED,
+    INPUT_DIMENSION,
+    OUTPUT_DIMENSION,
+)
 from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
@@ -44,11 +51,15 @@ class TabularFeatureAlignmentServer(FlServer):
             warnings.warn("strategy.initial_parameters will be overwritten.")
 
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        # The server performs one or two rounds of polls before the normal federated training.
+        # The first one gathers feature information if the server does not already have it,
+        # and the second one gathers the input/output dimensions of the model.
         self.initial_polls_complete = False
         self.tab_features_info = tab_features_info
         self.config = config
         self.initialize_parameters = initialize_parameters
         self.format_info_gathered = False
+        # casting self.strategy to BasicFedAvg so its on_fit_config_fn can be specified.
         self.strategy: BasicFedAvg
         self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
@@ -72,11 +83,12 @@ class TabularFeatureAlignmentServer(FlServer):
                 rand_idx = random.randint(0, len(feature_info) - 1)
 
                 feature_info_source = feature_info[rand_idx]
+            # If the server already has the feature info, then it simply sends it to the clients.
             else:
                 feature_info_source = self.tab_features_info.to_json()
 
             # the feature information is sent to clients through the config parameter.
-            self.config["feature_info"] = feature_info_source
+            self.config[FEATURE_INFO] = feature_info_source
             self.format_info_gathered = True
 
             self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
@@ -102,7 +114,7 @@ class TabularFeatureAlignmentServer(FlServer):
         )
 
         feature_info: List[str] = [
-            str(get_properties_res.properties["feature_info"]) for (_, get_properties_res) in results
+            str(get_properties_res.properties[FEATURE_INFO]) for (_, get_properties_res) in results
         ]
 
         return feature_info
@@ -115,12 +127,13 @@ class TabularFeatureAlignmentServer(FlServer):
             client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
         )
 
-        input_dimension = int(results[0][1].properties["input_dimension"])
-        target_dimension = int(results[0][1].properties["target_dimension"])
+        input_dimension = int(results[0][1].properties[INPUT_DIMENSION])
+        target_dimension = int(results[0][1].properties[OUTPUT_DIMENSION])
 
         return input_dimension, target_dimension
 
 
-def fit_config(config: Config, format_specified: bool, _: int) -> Config:
-    config["format_specified"] = format_specified
+def fit_config(config: Config, format_specified: bool, current_server_round: int) -> Config:
+    config[FORMAT_SPECIFIED] = format_specified
+    config[CURRENT_SERVER_ROUND] = current_server_round
     return config
