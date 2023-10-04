@@ -44,7 +44,7 @@ class FendaClient(BasicClient):
 
         assert len(self.local_features) == len(self.global_features)
 
-        return self.cos_sim(self.local_features, self.global_features).mean()
+        return torch.abs(self.cos_sim(self.local_features, self.global_features)).mean()
 
     def get_contrastive_loss(self) -> torch.Tensor:
         assert len(self.local_features) == len(self.global_features)
@@ -57,12 +57,12 @@ class FendaClient(BasicClient):
         if self.pre_train:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
-        # cos_loss = self.get_cosine_similarity_loss()
-        # total_loss = loss + cos_loss
-        # losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
-        contrastive_loss = self.get_contrastive_loss()
-        total_loss = loss + 0.001 * contrastive_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
+        cos_loss = self.get_cosine_similarity_loss()
+        total_loss = loss + cos_loss
+        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
+        # contrastive_loss = self.get_contrastive_loss()
+        # total_loss = loss + 0.001 * contrastive_loss
+        # losses=Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
         return losses
 
 
