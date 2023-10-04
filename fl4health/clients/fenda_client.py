@@ -61,7 +61,7 @@ class FendaClient(BasicClient):
         # total_loss = loss + cos_loss
         # losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
         contrastive_loss = self.get_contrastive_loss()
-        total_loss = loss + 0.1 * contrastive_loss
+        total_loss = loss + 0.001 * contrastive_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
         return losses
 
