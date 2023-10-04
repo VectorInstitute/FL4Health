@@ -40,9 +40,9 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def construct_tab_feature_info_encoder(data_path: Path) -> TabFeaturesInfoEncoder:
+def construct_tab_feature_info_encoder(data_path: Path, id_column: str, target_column: str) -> TabFeaturesInfoEncoder:
     df = pd.read_csv(data_path)
-    return TabFeaturesInfoEncoder.encoder_from_dataframe(df, "hadm_id", "LOSgroupNum")
+    return TabFeaturesInfoEncoder.encoder_from_dataframe(df, id_column, target_column)
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -62,7 +62,9 @@ def main(config: Dict[str, Any]) -> None:
 
     source_specified = config["source_specified"]
     if source_specified:
-        tab_feature_info_encoder_hospital1 = construct_tab_feature_info_encoder(Path(DATA_PATH))
+        tab_feature_info_encoder_hospital1 = construct_tab_feature_info_encoder(
+            Path(DATA_PATH), "hadm_id", "LOSgroupNum"
+        )
     else:
         tab_feature_info_encoder_hospital1 = None
 

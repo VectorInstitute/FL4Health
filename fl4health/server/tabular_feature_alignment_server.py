@@ -132,9 +132,9 @@ class TabularFeatureAlignmentServer(FlServer):
         )
 
         input_dimension = int(results[0][1].properties[INPUT_DIMENSION])
-        target_dimension = int(results[0][1].properties[OUTPUT_DIMENSION])
+        out_put_dimension = int(results[0][1].properties[OUTPUT_DIMENSION])
 
-        return input_dimension, target_dimension
+        return input_dimension, out_put_dimension
 
 
 def fit_config(config: Config, format_specified: bool, current_server_round: int) -> Config:

@@ -6,7 +6,7 @@ from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer
 
-from fl4health.feature_alignment.constants import DEFAULT_FILL_VALUES, STRING
+from fl4health.feature_alignment.constants import BINARY, DEFAULT_FILL_VALUES, ORDINAL, STRING
 from fl4health.feature_alignment.string_columns_transformer import StringColumnTransformer
 
 
@@ -139,7 +139,7 @@ class TabFeaturesInfoEncoder:
             ordinal_feature: sorted(df[ordinal_feature].unique().tolist()) for ordinal_feature in ordinal_features
         }
 
-        if target_type == "ordinal":
+        if target_type == ORDINAL or target_type == BINARY:
             target_categories = sorted(df[target_column].unique().tolist())
         else:
             target_categories = []
