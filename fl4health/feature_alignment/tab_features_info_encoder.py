@@ -11,6 +11,17 @@ from fl4health.feature_alignment.string_columns_transformer import StringColumnT
 
 
 class TargetInfoEncoder:
+    """
+    This class encodes the information about the target column(s)
+    that is necessary to perform feature alignment.
+
+    Parameters
+    ----------
+    target:
+    target_type:
+    target_categories:
+    """
+
     def __init__(self, target: str, target_type: str, target_categories: List[Scalar]) -> None:
         self.target = target
         self.target_type = target_type
@@ -45,6 +56,28 @@ class TargetInfoEncoder:
 
 
 class TabFeaturesInfoEncoder:
+    """
+    This class encodes all the information required to perform feature
+    alignment on tabular datasets.
+
+    Parameters
+    ----------
+    features_to_types: Dict[str, str]
+        Dictionary that maps each feature name to its type.
+        We consider four types in tabular data:
+        BINARY, ORDINAL, NUMERICAL, and STRING.
+    categories: Dict[str, List[Scalar]]
+        Dictionary that maps each ordinal feature to its categories.
+    target_info: TargetInfoEncoder
+        Information about the target column(s).
+    vocabulary: Dict[str, int]
+        Vocabulary of all the STRING columns.
+    default_fill_values: Dict[str, Scalar]
+        The default values used to fill in missing values.
+        Each of the four types has a default fill-in value,
+        but each specific feature can also has its own default fill-in value.
+    """
+
     def __init__(
         self,
         features_to_types: Dict[str, str],
@@ -133,8 +166,7 @@ class TabFeaturesInfoEncoder:
         # extract categories information
         ordinal_features: List[str] = sorted(tab_features.features_by_type("ordinal"))
         string_features: List[str] = sorted(tab_features.features_by_type(type_=STRING))
-        # df[ordinal_features] = df[ordinal_features].astype('U').values
-        # df[string_features] = df[string_features].astype('U').values
+
         categories = {
             ordinal_feature: sorted(df[ordinal_feature].unique().tolist()) for ordinal_feature in ordinal_features
         }
