@@ -53,13 +53,6 @@ class FendaClient(BasicClient):
             torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
         )
 
-    def get_contrastive_loss(self) -> torch.Tensor:
-        assert len(self.local_features) == len(self.global_features)
-        labels = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
-        return self.contrastive(
-            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
-        )
-
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         if self.pre_train:
             return super().compute_loss(preds, target)
