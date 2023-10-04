@@ -110,7 +110,7 @@ class TabularFeatureAlignmentServer(FlServer):
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
     def poll_clients_for_feature_info(self, timeout: Optional[float]) -> List[str]:
-        log(INFO, "Waiting for Clients to align features and then polling for feature information")
+        log(INFO, "Feature information source unspecified. Polling clients for feature information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
         results, _ = poll_clients(
@@ -124,7 +124,7 @@ class TabularFeatureAlignmentServer(FlServer):
         return feature_info
 
     def poll_clients_for_dimension_info(self, timeout: Optional[float]) -> Tuple[int, int]:
-        log(INFO, "Polling Clients for dimension information")
+        log(INFO, "Waiting for Clients to align features and then polling for dimension information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
         results, _ = poll_clients(

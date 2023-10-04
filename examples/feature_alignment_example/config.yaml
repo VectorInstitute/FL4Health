@@ -8,4 +8,4 @@ batch_size: 64 # The batch size for client training
 
 format_specified: False
 
-source_specified: True
+source_specified: False
