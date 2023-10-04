@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Metrics, Parameters
 
 from examples.models.logistic_regression import LogisticRegression
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
@@ -32,28 +32,6 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     # NOTE: The first value of the tuple is number of examples for FedAvg
     total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
     return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def construct_config(_: int, local_epochs: int, batch_size: int, id_column: str, target_column: str) -> Config:
-    # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
-    return {
-        "local_epochs": local_epochs,
-        "batch_size": batch_size,
-        "id_column": id_column,
-        "target_column": target_column,
-    }
-
-
-def fit_config(
-    local_epochs: int,
-    batch_size: int,
-    id_column: str,
-    target_column: str,
-    current_round: int,
-) -> Config:
-    config = construct_config(current_round, local_epochs, batch_size, id_column, target_column)
-    config["format_specified"] = current_round != 1
-    return config
 
 
 def main(config: Dict[str, Any]) -> None:
