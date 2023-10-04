@@ -9,6 +9,7 @@ from flwr.common.typing import Config, NDArray, Scalar
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.feature_alignment.constants import (
+    BINARY,
     FEATURE_INFO,
     FORMAT_SPECIFIED,
     INPUT_DIMENSION,
@@ -56,7 +57,8 @@ class TabularDataClient(BasicClient):
                 self.df
             )
             self.input_dimension = self.aligned_features.shape[1]
-            if self.tabular_features_info_encoder.get_target_type() == ORDINAL:
+            target_type = self.tabular_features_info_encoder.get_target_type()
+            if target_type == ORDINAL or target_type == BINARY:
                 self.output_dimension = len(self.tabular_features_info_encoder.get_target_categories())
             else:
                 self.output_dimension = 1
