@@ -85,6 +85,10 @@ class TabularFeatureAlignmentServer(FlServer):
                 feature_info_source = feature_info[rand_idx]
             # If the server already has the feature info, then it simply sends it to the clients.
             else:
+                log(
+                    INFO,
+                    "Features information source already specified. Sending to clients to perform feature alignment.",
+                )
                 feature_info_source = self.tab_features_info.to_json()
 
             # the feature information is sent to clients through the config parameter.
@@ -106,7 +110,7 @@ class TabularFeatureAlignmentServer(FlServer):
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
     def poll_clients_for_feature_info(self, timeout: Optional[float]) -> List[str]:
-        log(INFO, "Polling Clients for feature information")
+        log(INFO, "Waiting for Clients to align features and then polling for feature information")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
         results, _ = poll_clients(

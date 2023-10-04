@@ -1,16 +1,22 @@
 import argparse
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import flwr as fl
+import pandas as pd
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Metrics, Parameters
 
 from examples.models.logistic_regression import LogisticRegression
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
 from fl4health.server.tabular_feature_alignment_server import TabularFeatureAlignmentServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
+
+DATA_PATH = "examples/feature_alignment_example/mimic3d_hospital1.csv"
+CONFIG_PATH = "examples/feature_alignment_example/config.yaml"
 
 
 def get_initial_model_parameters(input_dim: int, output_dim: int) -> Parameters:
@@ -34,6 +40,11 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
+def construct_tab_feature_info_encoder(data_path: Path) -> TabFeaturesInfoEncoder:
+    df = pd.read_csv(data_path)
+    return TabFeaturesInfoEncoder.encoder_from_dataframe(df, "hadm_id", "LOSgroupNum")
+
+
 def main(config: Dict[str, Any]) -> None:
     client_manager = PoissonSamplingClientManager()
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -49,11 +60,18 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=None,
     )
 
+    source_specified = config["source_specified"]
+    if source_specified:
+        tab_feature_info_encoder_hospital1 = construct_tab_feature_info_encoder(Path(DATA_PATH))
+    else:
+        tab_feature_info_encoder_hospital1 = None
+
     server = TabularFeatureAlignmentServer(
         client_manager=client_manager,
         config=config,
         initialize_parameters=get_initial_model_parameters,
         strategy=strategy,
+        tab_features_info=tab_feature_info_encoder_hospital1,
     )
 
     fl.server.start_server(
@@ -70,7 +88,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/feature_alignment_example/config.yaml",
+        default=CONFIG_PATH,
     )
     args = parser.parse_args()
 
