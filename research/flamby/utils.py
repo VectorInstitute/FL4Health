@@ -113,6 +113,8 @@ def evaluate_model_on_dataset(
                 preds = model(input, personal=True)["personal"]
             else:
                 preds = model(input)
+                if preds is Tuple:
+                    preds = preds[0]
             meter.update(preds, target)
     return meter
 
