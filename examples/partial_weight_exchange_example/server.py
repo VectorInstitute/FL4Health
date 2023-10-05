@@ -4,7 +4,6 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
-import numpy as np
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
@@ -20,12 +19,8 @@ def get_initial_model_parameters(num_classes: int) -> Parameters:
     # Initializing the model parameters on the server side.
     classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
     initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
-    names = []
-    params = []
-    for key, val in initial_model.state_dict().items():
-        names.append(key)
-        params.append(val.cpu().numpy())
-    return ndarrays_to_parameters(params + [np.array(names)])
+    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
+    return ndarrays_to_parameters(model_weights)
 
 
 def construct_config(

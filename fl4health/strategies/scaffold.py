@@ -3,6 +3,7 @@ from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import torch.nn as nn
 from flwr.common import (
     FitIns,
     MetricsAggregationFn,
@@ -22,10 +23,6 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
 class Scaffold(BasicFedAvg):
-    """
-    Strategy for Scaffold algorithm as specified in https://arxiv.org/abs/1910.06378
-    """
-
     def __init__(
         self,
         *,
@@ -46,50 +43,49 @@ class Scaffold(BasicFedAvg):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_eval_losses: bool = True,
         learning_rate: float = 1.0,
-        initial_control_variates: Parameters,
+        initial_control_variates: Optional[Parameters] = None,
+        model: Optional[nn.Module] = None,
     ) -> None:
-        """Scaffold Federated Learning strategy.
-
-        Implementation based on https://arxiv.org/pdf/1910.06378.pdf
-
-        Parameters
-        ----------
-        fraction_fit : float, optional
-            Fraction of clients used during training. Defaults to 1.0.
-        fraction_evaluate : float, optional
-            Fraction of clients used during validation. Defaults to 1.0.
-        min_available_clients : int, optional
-            Minimum number of total clients in the system. Defaults to 2.
-        evaluate_fn : Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]]
-            ]
-        ]
-            Optional function used for validation. Defaults to None.
-        on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure training. Defaults to None.
-        on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure validation. Defaults to None.
-        accept_failures : bool, optional
-            Whether or not accept rounds containing failures. Defaults to True.
-        initial_parameters : Parameters
-            Initial global model parameters.
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        weighted_eval_losses: bool, Optional
-            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
-            average. FedAvg default is weighted average of the losses by client dataset counts.
-        learning_rate: Optional[float]
-            Learning rate for server side optimization.
-        initial_control_variates: Parameters.
-            This is the initial set of control variates to use for the scaffold strategy.
         """
+        Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf
+        Args:
+            initial_parameters (Parameters): Initial model parameters to which all client models are set.
+            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
+            min_available_clients (int, optional): Minimum number of total clients in the system.
+                Defaults to 2.
+            evaluate_fn (Optional[
+                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+            ]):
+                Optional function used for central server-side evaluation. Defaults to None.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+               Function used to configure server-side central validation by providing a Config dictionary.
+               Defaults to None.
+            accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
+                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
+                counts. Defaults to True.
+            learning_rate (float, optional): Learning rate for server side optimization. Defaults to 1.0.
+            initial_control_variates (Optional[Parameters], optional): These are the initial set of control variates
+                to use for the scaffold strategy both on the server and client sides. It is optional, but if it is not
+                provided, the strategy must receive a model that reflects the architecture to be used on the clients.
+                Defaults to None.
+            model (Optional[nn.Module], optional): If provided and initial_control_variates is not, this is used to
+                set the server control variates and the initial control variates on the client side to all zeros.
+                If initial_control_variates are provided, they take precendence. Defaults to None.
+        """
+
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        self.server_control_variates = parameters_to_ndarrays(initial_control_variates)
+        # Setup the initial control variates on the server-side and store them to be transmitted to the clients
+        initial_control_variates = self.intialize_control_variates(initial_control_variates, model)
         initial_parameters.tensors.extend(initial_control_variates.tensors)
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -106,6 +102,45 @@ class Scaffold(BasicFedAvg):
         )
         self.learning_rate = learning_rate
         self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))
+
+    def intialize_control_variates(
+        self, initial_control_variates: Optional[Parameters], model: Optional[nn.Module]
+    ) -> Parameters:
+        """
+        This is a helper function for the SCAFFOLD strategy init function to initialize the server_control_variates.
+        It either initializes the control variates with custom provided variates or using the provided model
+        architecture
+        Args:
+            initial_control_variates (Optional[Parameters]): These are the initial set of control variates
+                to use for the scaffold strategy both on the server and client sides. It is optional, but if it is not
+                provided, the strategy must receive a model that reflects the architecture to be used on the clients.
+                Defaults to None.
+            model (Optional[nn.Module]): If provided and initial_control_variates is not, this is used to
+                set the server control variates and the initial control variates on the client side to all zeros.
+                If initial_control_variates are provided, they take precendence. Defaults to None.
+        Returns:
+            Parameters: This quantity represents the initial values for the control variates for the server and on the
+            client-side
+        Raises:
+            ValueError: This error will be raised is neither a model nor initial control variates are provided
+        """
+        if initial_control_variates is not None:
+            # If we've been provided with a set of initial control variates, we use those values
+            self.server_control_variates = parameters_to_ndarrays(initial_control_variates)
+            return initial_control_variates
+        elif model is not None:
+            # If no initial values are provided but a model structure has been given, we initialize the control
+            # variates to zeros as recommended in the SCAFFOLD paper.
+            zero_control_variates = [np.zeros_like(val.data) for val in model.parameters() if val.requires_grad]
+            self.server_control_variates = zero_control_variates
+            return ndarrays_to_parameters(zero_control_variates)
+        else:
+            # Either a model structure or custom initial values for the control variates must be provided to run
+            # SCAFFOLD
+            raise ValueError(
+                "Both initial_control_variates and model are None. One must be defined in order to establish "
+                "initial values for the control variates."
+            )
 
     def aggregate_fit(
         self,

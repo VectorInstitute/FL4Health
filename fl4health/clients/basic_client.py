@@ -54,10 +54,6 @@ class BasicClient(NumpyFlClient):
         self.num_val_samples: int
         self.learning_rate: float
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the model weights and initialize the correct weights with the parameter exchanger.
-        super().set_parameters(parameters, config)
-
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
         """
         Method to ensure the required keys are present in config and extracts the values.
@@ -88,7 +84,7 @@ class BasicClient(NumpyFlClient):
 
         if local_epochs is not None:
             _, metrics = self.train_by_epochs(local_epochs, current_server_round)
-            local_steps = self.num_train_samples * local_epochs  # total steps over training round
+            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
         elif local_steps is not None:
             _, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
