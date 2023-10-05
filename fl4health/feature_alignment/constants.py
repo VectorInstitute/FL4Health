@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer, 
 
 TextFeatureTransformer = Union[CountVectorizer, TfidfTransformer, TfidfVectorizer, HashingVectorizer]
 
-# constants related to tabular data
+# Constants that specify the data type of tabular data columns.
 NUMERIC = "numeric"
 BINARY = "binary"
 STRING = "string"
@@ -19,6 +19,7 @@ FEATURE_TYPES = [
     ORDINAL,
 ]
 
+# The default fill-in values for entire missing columns of a certain data type.
 DEFAULT_FILL_VALUES: Dict[str, Scalar] = {BINARY: 0, NUMERIC: 0.0, ORDINAL: UNKNOWN, STRING: "N/A"}
 
 # constants used in config for communication between

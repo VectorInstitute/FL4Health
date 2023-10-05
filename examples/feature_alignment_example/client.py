@@ -93,5 +93,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
+    # ham_id is the id column and LOSgroupNum is the target column.
     client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", "LOSgroupNum")
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
