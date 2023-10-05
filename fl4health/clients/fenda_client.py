@@ -58,7 +58,7 @@ class FendaClient(BasicClient):
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
         cos_loss = self.get_cosine_similarity_loss()
-        total_loss = loss + cos_loss
+        total_loss = loss + 10 * cos_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
         # contrastive_loss = self.get_contrastive_loss()
         # total_loss = loss + 0.001 * contrastive_loss
