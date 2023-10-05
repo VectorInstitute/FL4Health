@@ -58,7 +58,7 @@ class TargetInfoEncoder:
         )
 
 
-class TabFeaturesInfoEncoder:
+class TabularFeaturesInfoEncoder:
     """
     This class encodes all the information required to perform feature
     alignment on tabular datasets.
@@ -135,7 +135,7 @@ class TabFeaturesInfoEncoder:
         id_column: str,
         target_column: str,
         default_fill_values: Dict[str, Scalar] = DEFAULT_FILL_VALUES,
-    ) -> "TabFeaturesInfoEncoder":
+    ) -> "TabularFeaturesInfoEncoder":
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)
         tab_features = TabularFeatures(
@@ -169,7 +169,7 @@ class TabFeaturesInfoEncoder:
         string_col_transformer.fit(df[string_features])
         vocabulary = count_vectorizer.vocabulary_
 
-        return TabFeaturesInfoEncoder(features_to_types, categories, target_info, vocabulary, default_fill_values)
+        return TabularFeaturesInfoEncoder(features_to_types, categories, target_info, vocabulary, default_fill_values)
 
     def to_json(self) -> str:
         return json.dumps(
@@ -183,9 +183,9 @@ class TabFeaturesInfoEncoder:
         )
 
     @staticmethod
-    def from_json(json_str: str) -> "TabFeaturesInfoEncoder":
+    def from_json(json_str: str) -> "TabularFeaturesInfoEncoder":
         attributes = json.loads(json_str)
-        return TabFeaturesInfoEncoder(
+        return TabularFeaturesInfoEncoder(
             json.loads(attributes["features_to_types"]),
             json.loads(attributes["categories"]),
             TargetInfoEncoder.from_json(json.loads(attributes["target_info"])),

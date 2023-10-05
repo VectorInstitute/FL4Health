@@ -17,7 +17,7 @@ from fl4health.feature_alignment.constants import (
     INPUT_DIMENSION,
     OUTPUT_DIMENSION,
 )
-from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
+from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.polling import poll_clients
@@ -42,7 +42,7 @@ class TabularFeatureAlignmentServer(FlServer):
         strategy: BasicFedAvg,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        tab_features_info: Optional[TabFeaturesInfoEncoder] = None,
+        tab_features_info: Optional[TabularFeaturesInfoEncoder] = None,
     ) -> None:
         assert isinstance(strategy, BasicFedAvg)
         if strategy.on_fit_config_fn is not None:

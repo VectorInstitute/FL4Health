@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler, OneHotEncoder, OrdinalEncoder
 
 from fl4health.feature_alignment.constants import BINARY, FEATURE_TYPES, NUMERIC, ORDINAL, STRING
 from fl4health.feature_alignment.string_columns_transformer import StringColumnTransformer
-from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
+from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 
 
 class TabularFeaturesPreprocessor:
@@ -30,12 +30,12 @@ class TabularFeaturesPreprocessor:
         Encodes the information necessary for constructing the column transformers.
     """
 
-    def __init__(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+    def __init__(self, tab_feature_encoder: TabularFeaturesInfoEncoder) -> None:
         self.transformers: Dict[str, Pipeline] = {}
         self.initialize_default_data_transformer(tab_feature_encoder)
         self.initialize_default_target_transformer(tab_feature_encoder)
 
-    def initialize_default_target_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+    def initialize_default_target_transformer(self, tab_feature_encoder: TabularFeaturesInfoEncoder) -> None:
         """
         Initialize a default column transformer for the target column.
         Assumption: the target column has type BINARY, NUMERIC, or ORDINAL.
@@ -74,7 +74,7 @@ class TabularFeaturesPreprocessor:
                 transformers=[("cat", categorical_transformer, [target])], remainder="drop"
             )
 
-    def initialize_default_data_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+    def initialize_default_data_transformer(self, tab_feature_encoder: TabularFeaturesInfoEncoder) -> None:
         """
         Initialize a default ColumnTransformer for the data columns
         (i.e., all columns except the target column)

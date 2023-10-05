@@ -10,7 +10,7 @@ from flwr.common.typing import Metrics, Parameters
 from examples.models.logistic_regression import LogisticRegression
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
+from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.server.tabular_feature_alignment_server import TabularFeatureAlignmentServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
@@ -40,9 +40,11 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
     return normalize_metrics(total_examples, aggregated_metrics)
 
 
-def construct_tab_feature_info_encoder(data_path: Path, id_column: str, target_column: str) -> TabFeaturesInfoEncoder:
+def construct_tab_feature_info_encoder(
+    data_path: Path, id_column: str, target_column: str
+) -> TabularFeaturesInfoEncoder:
     df = pd.read_csv(data_path)
-    return TabFeaturesInfoEncoder.encoder_from_dataframe(df, id_column, target_column)
+    return TabularFeaturesInfoEncoder.encoder_from_dataframe(df, id_column, target_column)
 
 
 def main(config: Dict[str, Any]) -> None:

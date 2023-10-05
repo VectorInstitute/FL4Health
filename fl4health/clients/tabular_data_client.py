@@ -16,7 +16,7 @@ from fl4health.feature_alignment.constants import (
     ORDINAL,
     OUTPUT_DIMENSION,
 )
-from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInfoEncoder
+from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.feature_alignment.tab_features_preprocessor import TabularFeaturesPreprocessor
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.metrics import Metric
@@ -28,7 +28,7 @@ class TabularDataClient(BasicClient):
     ) -> None:
         super().__init__(data_path, metrics, device)
         self.parameter_exchanger = FullParameterExchanger()
-        self.tabular_features_info_encoder: TabFeaturesInfoEncoder
+        self.tabular_features_info_encoder: TabularFeaturesInfoEncoder
         self.tabular_features_preprocessor: TabularFeaturesPreprocessor
         self.df: pd.DataFrame
         self.input_dimension: int
@@ -40,22 +40,41 @@ class TabularDataClient(BasicClient):
         self.aligned_targets: NDArray
 
     def setup_client(self, config: Config) -> None:
+        """
+        Initialize the client by encoding the information of its tabular data
+        and initializing the corresponding TabularFeaturesPreprocessor.
+
+        config[FORMAT_SPECIFIED] indicates whether the server has obtained
+        the source of information to perform feature alignment.
+        If it is True, it means the server has obtained such information
+        (either a priori or by polling a client).
+        So the client will encode that information and use it instead
+        to perform feature preprocessing.
+        """
         assert FORMAT_SPECIFIED in config.keys()
         format_specified = self.narrow_config_type(config, FORMAT_SPECIFIED, bool)
 
+        # Encode the information of the client's local tabular data.
         self.df = self.get_data_frame(config)
-        self.tabular_features_info_encoder = TabFeaturesInfoEncoder.encoder_from_dataframe(
+        self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.encoder_from_dataframe(
             self.df, self.id_column, self.target_column
         )
 
         if format_specified:
-            self.tabular_features_info_encoder = TabFeaturesInfoEncoder.from_json(
+            # Since the server has obtained its source of information,
+            # the client will encode that instead.
+            self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.from_json(
                 self.narrow_config_type(config, FEATURE_INFO, str)
             )
             self.tabular_features_preprocessor = TabularFeaturesPreprocessor(self.tabular_features_info_encoder)
+
+            # preprocess features.
             self.aligned_features, self.aligned_targets = self.tabular_features_preprocessor.preprocess_features(
                 self.df
             )
+
+            # Obtain the input and output dimensions to be sent to
+            # the server for global model initialization.
             self.input_dimension = self.aligned_features.shape[1]
             target_type = self.tabular_features_info_encoder.get_target_type()
             if target_type == ORDINAL or target_type == BINARY:
@@ -74,7 +93,11 @@ class TabularDataClient(BasicClient):
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
-        Return properties of client.
+        Return properties of client to be sent to the server.
+        Depending on whether the server has communicated the information
+        to be used for feature alignment, the client will send the input/output
+        dimensions so the server can use them to initialize the global model.
+
         First initializes the client because this is called prior to the first
         federated learning round.
         """
