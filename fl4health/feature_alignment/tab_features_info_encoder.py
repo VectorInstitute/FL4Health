@@ -17,9 +17,12 @@ class TargetInfoEncoder:
 
     Parameters
     ----------
-    target:
-    target_type:
-    target_categories:
+    target: str
+        Target column.
+    target_type: str
+        Target column data type. Must be one of BINARY, NUMERICAL, ORDINAL, and STRING.
+    target_categories: List[Scalar]
+        The categories of the target column, provided it is of type ORDINAL.
     """
 
     def __init__(self, target: str, target_type: str, target_categories: List[Scalar]) -> None:
@@ -121,28 +124,6 @@ class TabFeaturesInfoEncoder:
 
     def set_default_fill_value(self, key: str, value: Scalar) -> None:
         self.default_fill_values[key] = value
-
-    # def merge(self, encoder: "TabFeaturesInfoEncoder") -> "TabFeaturesInfoEncoder":
-    #     assert self.get_target() == encoder.get_target() and self.get_target_type() == encoder.get_target_type()
-    #     common_features_to_types = {
-    #         feature: self.features_to_types[feature]
-    #         for feature in self.features_to_types.keys() & encoder.features_to_types.keys()
-    #         if self.features_to_types[feature] == encoder.features_to_types[feature]
-    #     }
-    #     new_categories = {
-    #         feature_name: list(
-    #             set(encoder.get_categories()[feature_name]).union(set(self.get_categories()[feature_name]))
-    #         )
-    #         for feature_name in common_features_to_types
-    #         if common_features_to_types[feature_name] == "ordinal"
-    #     }
-
-    #     new_target_info = TargetInfoEncoder(
-    #         self.get_target(),
-    #         self.get_target_type(),
-    #         list(set(self.get_target_categories()).union(encoder.get_target_categories())),
-    #     )
-    #     return TabFeaturesInfoEncoder(common_features_to_types, new_categories, new_target_info)
 
     @staticmethod
     def encoder_from_dataframe(

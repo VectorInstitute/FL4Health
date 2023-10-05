@@ -102,7 +102,8 @@ class TabularFeaturesPreprocessor:
             # fill in all columns of type "feature_key" with the correspondng default value, if missing.
             if feature_key in FEATURE_TYPES:
                 for column_name in self.type_to_features[feature_key]:
-                    self._fill_in_missing_column(df_new, column_name, fill_in_val)
+                    if column_name not in self.default_fill_values.keys():
+                        self._fill_in_missing_column(df_new, column_name, fill_in_val)
             # Otherwise, feature_key is an actual column name instead of a type.
             else:
                 self._fill_in_missing_column(df_new, feature_key, fill_in_val)
