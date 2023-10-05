@@ -6,7 +6,7 @@ from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer
 
-from fl4health.feature_alignment.constants import BINARY, DEFAULT_FILL_VALUES, ORDINAL, STRING
+from fl4health.feature_alignment.constants import BINARY, DEFAULT_FILL_VALUES, FEATURE_TYPES, ORDINAL, STRING
 from fl4health.feature_alignment.string_columns_transformer import StringColumnTransformer
 
 
@@ -77,7 +77,8 @@ class TabFeaturesInfoEncoder:
         Vocabulary of all the STRING columns.
     default_fill_values: Dict[str, Scalar]
         The default values used to fill in missing values.
-        Each of the four types has a default fill-in value,
+        Each of the four feature types has a default fill-in value, which is used to fill in all missing columns
+        of that type,
         but each specific feature can also has its own default fill-in value.
     """
 
@@ -97,6 +98,9 @@ class TabFeaturesInfoEncoder:
 
     def features_by_type(self, feature_type: str) -> List[str]:
         return sorted([feature for feature, t in self.features_to_types.items() if t == feature_type])
+
+    def type_to_features(self) -> Dict[str, List[str]]:
+        return {feature_type: self.features_by_type(feature_type) for feature_type in FEATURE_TYPES}
 
     def get_categories(self) -> Dict[str, List[Scalar]]:
         return self.categories

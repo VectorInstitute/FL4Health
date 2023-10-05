@@ -14,15 +14,76 @@ from fl4health.feature_alignment.tab_features_info_encoder import TabFeaturesInf
 
 
 class TabularFeaturesPreprocessor:
+    """
+    TabularFeaturesPreprocessor is responsible for constructing
+    the appropriate column transformers based on the information
+    encoded in tab_feature_encoder. These transformers will
+    then be applied to a pandas dataframe.
+
+    For each of the four feature types (BINARY, NUMERIC, ORDINAL, STRING),
+    a default ColumnTransformer is constructed that is responsible for processing all
+    columns of that type.
+
+    Parameters
+    ----------
+    tab_feature_encoder: TabularFeaturesInfoEncoder
+        Encodes the information necessary for constructing the column transformers.
+    """
+
     def __init__(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+        self.transformers: Dict[str, Pipeline] = {}
+        self.initialize_default_data_transformer(tab_feature_encoder)
+        self.initialize_default_target_transformer(tab_feature_encoder)
+
+    def initialize_default_target_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+        """
+        Initialize a default column transformer for the target column.
+        Assumption: the target column has type BINARY, NUMERIC, or ORDINAL.
+        """
+        target_type = tab_feature_encoder.get_target_type()
+        target = tab_feature_encoder.get_target()
+        target_categories = tab_feature_encoder.get_target_categories()
+        if target_type == NUMERIC:
+            numeric_transformer = Pipeline(
+                steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
+            )
+            self.target_column_transformer = ColumnTransformer(
+                transformers=[("num", numeric_transformer, [target])], remainder="drop"
+            )
+        elif target_type == BINARY:
+            binary_transformer = Pipeline(
+                steps=[("imputer", SimpleImputer(strategy="most_frequent")), ("encoder", OrdinalEncoder())]
+            )
+            self.target_column_transformer = ColumnTransformer(
+                transformers=[("bin", binary_transformer, [target])], remainder="drop"
+            )
+        elif target_type == ORDINAL:
+            categorical_transformer = Pipeline(
+                steps=[
+                    (
+                        "encoder",
+                        OrdinalEncoder(
+                            unknown_value=len(target_categories) + 1,
+                            handle_unknown="use_encoded_value",
+                            categories=[target_categories],
+                        ),
+                    )
+                ]
+            )
+            self.target_column_transformer = ColumnTransformer(
+                transformers=[("cat", categorical_transformer, [target])], remainder="drop"
+            )
+
+    def initialize_default_data_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> None:
+        """
+        Initialize a default ColumnTransformer for the data columns
+        (i.e., all columns except the target column)
+        """
         self.categories = tab_feature_encoder.get_categories_list()
         self.target_column = tab_feature_encoder.get_target()
-        self.type_to_features: Dict[str, List[str]] = {
-            feature_type: tab_feature_encoder.features_by_type(feature_type) for feature_type in FEATURE_TYPES
-        }
+        self.type_to_features: Dict[str, List[str]] = tab_feature_encoder.type_to_features()
         self.default_fill_values: Dict[str, Scalar] = tab_feature_encoder.get_all_default_fill_values()
         self.vocabulary = tab_feature_encoder.get_vocabulary()
-        self.transformers: Dict[str, Pipeline] = {}
 
         self.transformers[NUMERIC] = Pipeline(
             steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
@@ -47,56 +108,38 @@ class TabularFeaturesPreprocessor:
             remainder="drop",
         )
 
-        self.target_transformer = self.construct_target_transformer(tab_feature_encoder)
-
-    def construct_target_transformer(self, tab_feature_encoder: TabFeaturesInfoEncoder) -> ColumnTransformer:
-        # We assume that the target column has type BINARY, NUMERIC, or ORDINAL.
-        target_type = tab_feature_encoder.get_target_type()
-        target = tab_feature_encoder.get_target()
-        target_categories = tab_feature_encoder.get_target_categories()
-        if target_type == NUMERIC:
-            numeric_transformer = Pipeline(
-                steps=[("imputer", SimpleImputer(strategy="mean")), ("scaler", MinMaxScaler())]
-            )
-            return ColumnTransformer(transformers=[("num", numeric_transformer, [target])], remainder="drop")
-        elif target_type == BINARY:
-            binary_transformer = Pipeline(
-                steps=[("imputer", SimpleImputer(strategy="most_frequent")), ("encoder", OrdinalEncoder())]
-            )
-            return ColumnTransformer(transformers=[("bin", binary_transformer, [target])], remainder="drop")
-        elif target_type == ORDINAL:
-            categorical_transformer = Pipeline(
-                steps=[
-                    (
-                        "encoder",
-                        OrdinalEncoder(
-                            unknown_value=len(target_categories) + 1,
-                            handle_unknown="use_encoded_value",
-                            categories=[target_categories],
-                        ),
-                    )
-                ]
-            )
-            return ColumnTransformer(transformers=[("cat", categorical_transformer, [target])], remainder="drop")
-
     def set_data_transformer(self, data_type: str, transformer: Pipeline) -> None:
+        """
+        Allow the user to set a custom ColumnTransformer to be applied
+        to features with type data_type.
+        """
         assert data_type in FEATURE_TYPES
         self.transformers[data_type] = transformer
 
     def set_target_transformer(self, transformer: Pipeline) -> None:
-        self.target_transformer = transformer
+        """
+        Allow the user to set a custom ColumnTransformer for the target column.
+        """
+        self.target_column_transformer = transformer
 
     def preprocess_features(self, df: pd.DataFrame) -> Tuple[NDArray, NDArray]:
+        """
+        Apply self.data_column_transformer to all data columns
+        and self.target_column_transformer to the target column to achieve
+        feature alignment.
+        """
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)
         # After filling in missing columns, apply the feature alignment transform.
         return self.data_column_transformer.fit_transform(
             df_filled.drop(columns=[self.target_column])
-        ), self.target_transformer.fit_transform(df_filled[[self.target_column]])
+        ), self.target_column_transformer.fit_transform(df_filled[[self.target_column]])
 
     def fill_in_missing_columns(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Return a new DataFrame where entire missing columns are filled with values specified in
-        # self.default_fill_values
+        """
+        Return a new DataFrame where entire missing columns are filled with values specified in
+        self.default_fill_values
+        """
         df_new = df.copy(deep=True)
         for feature_key, fill_in_val in self.default_fill_values.items():
             # fill in all columns of type "feature_key" with the correspondng default value, if missing.
