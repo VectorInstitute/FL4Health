@@ -34,7 +34,6 @@ class ScaffoldClient(BasicClient):
         use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
-
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -96,7 +95,6 @@ class ScaffoldClient(BasicClient):
         # average of the client variates. So if server_control_variates are non-zero, this ensures that average
         # still holds.
         if self.client_control_variates is None:
-
             self.client_control_variates = copy.deepcopy(self.server_control_variates)
 
     def update_control_variates(self, local_steps: int) -> None:

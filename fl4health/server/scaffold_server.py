@@ -165,7 +165,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            delta (Optional[float], optional): _description_. Defaults to None.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
@@ -179,6 +178,8 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
                 local gradients. The clients will perform a training pass (without updating the weights) in order to
                 provide a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
+            delta (Optional[float], optional): The delta value for epislon-delta DP accounting. If None it defaults to
+                being 1/total_samples in the FL run. Defaults to None.
         """
         ScaffoldServer.__init__(
             self,
@@ -203,6 +204,16 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """
         Run DP Scaffold algorithm for the specified number of rounds.
+
+        Args:
+            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds)
+            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+                timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
+                server waits for the minimum number of clients to be available set in the strategy.
+
+        Returns:
+            History: The history object contains the full set of FL training results, including things like aggregated
+                loss and metrics.
         """
         assert isinstance(self.strategy, Scaffold)
         # Now that we initialized the parameters for scaffold, call instance level privacy fit
