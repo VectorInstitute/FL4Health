@@ -28,7 +28,7 @@ jobs:
       - name: Install Requirements
         run: |
           pip install --upgrade pip
-          pip install $(grep -v '^portalocker\|^torchdata\|^torchtext'\|^torcheval requirements.txt | grep .)
+          pip install $(grep -v '^portalocker\|^torchdata\|^torchtext\|^torcheval' requirements.txt | grep .)
       - name: Run Tests
         run: pytest tests/*
       - name: Check disk space
