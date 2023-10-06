@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 
 
@@ -22,7 +22,7 @@ class ToyModel(nn.Module):
 
 
 def test_apfl_layer_exchange() -> None:
-    model = APFLModule(ToyModel())
+    model = ApflModule(ToyModel())
     apfl_layers_to_exchange = sorted(model.layers_to_exchange())
     assert apfl_layers_to_exchange == [
         "global_model.conv1.bias",
@@ -39,7 +39,7 @@ def test_apfl_layer_exchange() -> None:
         assert np.array_equal(layer_parameters, model_state_dict[layer_name])
 
     # Insert the weights back into another model
-    model_2 = APFLModule(ToyModel())
+    model_2 = ApflModule(ToyModel())
     parameter_exchanger.pull_parameters(parameters_to_exchange, model_2)
     for layer_name, layer_parameters in model_2.state_dict().items():
         if layer_name in apfl_layers_to_exchange:
