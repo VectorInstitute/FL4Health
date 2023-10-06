@@ -13,8 +13,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Check disk space
-        run: df . -h
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Set up Python 3.9
@@ -31,7 +29,3 @@ jobs:
           pip install $(grep -v '^torchdata\|^torchtext\|^torcheval' requirements.txt)
       - name: Run Tests
         run: pytest tests/*
-      - name: Check disk space
-        run: df . -h
-      - name: Clean up
-        run: pip uninstall -y -r requirements.txt
