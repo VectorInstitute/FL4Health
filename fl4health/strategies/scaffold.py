@@ -83,7 +83,7 @@ class Scaffold(BasicFedAvg):
 
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
         # Setup the initial control variates on the server-side and store them to be transmitted to the clients
-        initial_control_variates = self.intialize_control_variates(initial_control_variates, model)
+        initial_control_variates = self.initialize_control_variates(initial_control_variates, model)
         initial_parameters.tensors.extend(initial_control_variates.tensors)
 
         super().__init__(
@@ -103,7 +103,7 @@ class Scaffold(BasicFedAvg):
         self.learning_rate = learning_rate
         self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))
 
-    def intialize_control_variates(
+    def initialize_control_variates(
         self, initial_control_variates: Optional[Parameters], model: Optional[nn.Module]
     ) -> Parameters:
         """
