@@ -1,11 +1,3 @@
-"""Federated Averaging with Flexible Sampling
-This implementation extends that of Flower in two ways. The first is that it provides an option for unweighted
-averaging, where Flower only offers weighted averaging based on client sample counts. The second is that it allows
-users to Flower's standard sampling or use a custom sampling approach implemented in by a custom client manager.
-
-Paper: https://arxiv.org/abs/1602.05629
-"""
-
 from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -59,51 +51,44 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
     ) -> None:
-        """Federated Averaging strategy.
+        """
+        Federated Averaging with Flexible Sampling. This implementation extends that of Flower in two ways. The first
+        is that it provides an option for unweighted averaging, where Flower only offers weighted averaging based on
+        client sample counts. The second is that it allows users to Flower's standard sampling or use a custom
+        sampling approach implemented in by a custom client manager.
 
-        Implementation based on https://arxiv.org/abs/1602.05629
-
-        Parameters
-        ----------
-        fraction_fit : float, optional
-            Fraction of clients used during training. In case `min_fit_clients`
-            is larger than `fraction_fit * available_clients`, `min_fit_clients`
-            will still be sampled. Defaults to 1.0.
-        fraction_evaluate : float, optional
-            Fraction of clients used during validation. In case `min_evaluate_clients`
-            is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-            will still be sampled. Defaults to 1.0.
-        min_fit_clients : int, optional
-            Minimum number of clients used during training. Defaults to 2.
-        min_evaluate_clients : int, optional
-            Minimum number of clients used during validation. Defaults to 2.
-        min_available_clients : int, optional
-            Minimum number of total clients in the system. Defaults to 2.
-        evaluate_fn : Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]]
-            ]
-        ]
-            Optional function used for validation. Defaults to None.
-        on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure training. Defaults to None.
-        on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
-            Function used to configure validation. Defaults to None.
-        accept_failures : bool, optional
-            Whether or not accept rounds containing failures. Defaults to True.
-        initial_parameters : Parameters, optional
-            Initial global model parameters.
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-            Metrics aggregation function, optional.
-        weighted_aggregation: bool, Optional.
-            Defaults to True, determines whether parameter aggregation is a linearly weighted average or a uniform
-            average. FedAvg default is weighted average by client dataset counts.
-        weighted_eval_losses: bool, Optional
-            Defaults to True, determines whether losses during evaluation are linearly weighted averages or a uniform
-            average. FedAvg default is weighted average of the losses by client dataset counts.
+        Args:
+            fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
+                larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
+                Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation. In case
+                `min_evaluate_clients` is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
+                will still be sampled. Defaults to 1.0.
+            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system.
+                Defaults to 2.
+            evaluate_fn (Optional[
+                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+            ]):
+                Optional function used for central server-side evaluation. Defaults to None.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure server-side central validation by providing a Config dictionary.
+               Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
+                average or a uniform average. FedAvg default is weighted average by client dataset counts.
+                Defaults to True.
+            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
+                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
+                counts. Defaults to True.
         """
         super().__init__(
             fraction_fit=fraction_fit,
@@ -125,7 +110,22 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
-        """Configure the next round of training."""
+        """
+        This function configures a sample of clients for a training round. It handles the case where the client
+        manager has a sample fraction vs. a sample function (to allow for more flexible sampling)
+        The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
+        configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
+        clients.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on
+            parameters (Parameters): The parameters to be used to initialize the clients for the fit round
+            client_manager (ClientManager): The manager used to sample from the available clients.
+
+        Returns:
+            List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+                be sent to each client (packaged as FitIns)
+        """
 
         if isinstance(client_manager, BaseFractionSamplingManager):
             # Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_fit
@@ -147,7 +147,22 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
-        """Configure the next round of evaluation."""
+        """
+        This function configures a sample of clients for a evaluation round. It handles the case where the client
+        manager has a sample fraction vs. a sample function (to allow for more flexible sampling)
+        The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
+        produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
+        to the clients.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on
+            parameters (Parameters): The parameters to be used to initialize the clients for the eval round
+            client_manager (ClientManager): The manager used to sample from the available clients.
+
+        Returns:
+            List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
+                to be sent to each client (packaged as EvaluateIns)
+        """
 
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
@@ -174,7 +189,18 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     def configure_poll(
         self, server_round: int, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
-        """Configure server for polling of clients."""
+        """
+        This function configures everything required to request properties from ALL of the clients. The client
+        manger, regardless of type, is instructed to grab all available clients to perform the polling process.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on
+            client_manager (ClientManager): The manager used to sample all available clients.
+
+        Returns:
+            List[Tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
+                to be sent to each client (packaged as GetPropertiesIns)
+        """
         config = {}
         if self.on_fit_config_fn is not None:
             # Custom fit config function provided
@@ -198,7 +224,20 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-        """Aggregate fit results using weighted or unweighted average."""
+        """
+        Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
+        depending on the settings used for the strategy.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on.
+            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+                that need to be aggregated on the server-side.
+            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+                from clients that experienced an issue during training, such as timeouts or exceptions.
+
+        Returns:
+            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+        """
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
@@ -230,7 +269,20 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        """Aggregate evaluation losses using weighted average."""
+        """
+        Aggregate the metrics and losses returned from the clients as a result of the evaluation round
+
+        Args:
+            results (List[Tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
+                evaluation that need to be aggregated on the server-side. These results are loss values and the
+                metrics dictionary
+            failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
+                exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
+
+        Returns:
+            Tuple[Optional[float], Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
+                are aggregated according to evaluate_metrics_aggregation_fn
+        """
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted

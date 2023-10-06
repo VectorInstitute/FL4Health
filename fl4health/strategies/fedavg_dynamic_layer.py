@@ -21,11 +21,6 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
 class FedAvgDynamicLayer(BasicFedAvg):
-    """
-    A generalization of the fedavg strategy where the server can receive any arbitrary subset of the layers from
-    any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
-    """
-
     def __init__(
         self,
         *,
@@ -47,6 +42,36 @@ class FedAvgDynamicLayer(BasicFedAvg):
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
     ) -> None:
+        """
+        A generalization of the FedAvg strategy where the server can receive any arbitrary subset of the layers from
+        any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
+
+        Args:
+            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
+            min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            evaluate_fn (Optional[
+                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+            ]):
+                Optional function used for central server-side evaluation. Defaults to None.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure server-side central validation by providing a Config dictionary.
+               Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
+                average or a uniform average. FedAvg default is weighted average by client dataset counts.
+                Defaults to True.
+            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
+                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
+                counts. Defaults to True.
+        """
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -69,6 +94,24 @@ class FedAvgDynamicLayer(BasicFedAvg):
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        """
+        Aggregate the results from the federated fit round. The aggregation requires some special treatment, as the
+        participating clients are allowed to exchange an arbitrary set of weights. So before aggregation takes place
+        alignment must be done using the layer names packed in along with the weights in the client results.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on.
+            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+                that need to be aggregated on the server-side. In this scheme, the clients pack the layer weights into
+                the results object along with the weight values to allow for alignment during aggregation.
+            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+                from clients that experienced an issue during training, such as timeouts or exceptions.
+
+        Returns:
+            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+                For dynamic layer exchange we also pack in the names of all of the layers that were aggregated in this
+                phase to allow client's to insert the values into the proper areas of their models
+        """
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
@@ -104,7 +147,17 @@ class FedAvgDynamicLayer(BasicFedAvg):
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
         Aggregate the different layers across clients that have contributed to a layer. This aggregation may be
-        weighted or unweighted.
+        weighted or unweighted. The called functions handle layer alignment
+
+        Args:
+            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
+                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                the clients pack the layer weights into the results object along with the weight values to allow for
+                alignment during aggregation.
+
+        Returns:
+            Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
@@ -113,10 +166,19 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
     def weighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
-        Results consists of the layer weights (and their names) sent by clients
-        who participated in this round of training.
-        Since each client can send an arbitrary subset of layers,
-        the aggregate performs weighted averaging for each layer separately.
+        Results consists of the layer weights (and their names) sent by clients who participated in this round of
+        training. Since each client can send an arbitrary subset of layers, the aggregate performs weighted averaging
+        for each layer separately.
+
+        Args:
+            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
+                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                the clients pack the layer weights into the results object along with the weight values to allow for
+                alignment during aggregation.
+
+        Returns:
+            Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights
         """
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_examples: DefaultDict[str, int] = defaultdict(int)
@@ -136,10 +198,19 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
     def unweighted_aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
-        Results consists of the layer weights (and their names) sent by clients
-        who participated in this round of training.
-        Since each client can send an arbitrary subset of layers,
-        the aggregate performs uniform averaging for each layer separately.
+        Results consists of the layer weights (and their names) sent by clients who participated in this round of
+        training. Since each client can send an arbitrary subset of layers, the aggregate performs uniform averaging
+        for each layer separately.
+
+        Args:
+            results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
+                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                the clients pack the layer weights into the results object along with the weight values to allow for
+                alignment during aggregation.
+
+        Returns:
+            Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
+                weights
         """
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_clients: DefaultDict[str, int] = defaultdict(int)
