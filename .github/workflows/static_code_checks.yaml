@@ -25,7 +25,7 @@ jobs:
       - name: precommit checks
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install $(grep -v '^portalocker\|^torchdata\|^torchtext'\|^torcheval requirements.txt | grep .)
           pre-commit run --all-files
       - name: Check disk space
         run: df . -h
