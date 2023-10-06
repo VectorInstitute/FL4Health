@@ -14,7 +14,7 @@ The dataset used here is the MIMIC3d aggregated data collected here:
 
 https://www.kaggle.com/datasets/drscarlat/mimic3d/data
 
-run `misalign_data.py` to manually create two subsets `mimic3d_hospital1.csv` and `mimic3d_hospital2.csv` that are misaligned.
+Run `misalign_data.py` to manually create two subsets `mimic3d_hospital1.csv` and `mimic3d_hospital2.csv` that are misaligned.
 
 More specifically, the original `mimic3d.csv` is randomly split into two datasets which represent two hospitals, and the columns "ExpiredHospital", "admit_type", "NumRx", "ethnicity" are removed from the data of hospital2. In addition, a new category "Unknown" is added to the "insurance" column for hospital2, which is a categorical column.
 
@@ -40,4 +40,4 @@ clients expected by the server. This is done by simply running (remembering to a
 ```
 python -m examples.feature_alignment_example.client --dataset_path <path_to_dataset>
 ```
-* `path_to_dataset` is the path towards the directory where the dataset is stored.
+* `path_to_dataset` is the path towards the directory where the dataset is stored. To see the feature alignment capability in this example, you should launch clients with misaligned datasets.
