@@ -13,6 +13,8 @@ jobs:
   run-code-check:
     runs-on: ubuntu-latest
     steps:
+      - name: Check disk space
+        run: df . -h
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Set up Python 3.9
@@ -25,3 +27,5 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pre-commit run --all-files
+      - name: Check disk space
+        run: df . -h
