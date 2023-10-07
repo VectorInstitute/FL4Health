@@ -29,3 +29,5 @@ jobs:
           pip install $(grep -v '^torchdata\|^torchtext\|^torcheval' requirements.txt)
       - name: Run Tests
         run: pytest tests/*
+      - name: Clearing pip for space
+        run: pip uninstall -y -r requirements.txt
