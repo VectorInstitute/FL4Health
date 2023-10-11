@@ -254,7 +254,8 @@ class BasicClient(NumpyFlClient):
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
-        self.model = self.get_model(config)
+        # Explicitly send the model to the desired device. This is idempotent.
+        self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
