@@ -21,5 +21,9 @@ torchinfo
 torchtext
 torchvision
 types-requests
+types-PyYAML
+types-protobuf
+types-six
+types-tabulate
 types-setuptools
 wandb
