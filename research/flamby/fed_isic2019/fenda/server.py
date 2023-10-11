@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
+import torch
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
@@ -20,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config_with_warmup,
@@ -32,6 +33,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     client_manager = SimpleClientManager()
     model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
     summarize_model_info(model)
+    dir = "research/flamby/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/" + run_name + "/server_best_model.pkl"
+    model.load_state_dict(torch.load(dir))
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -78,8 +81,14 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--run_name",
+        action="store",
+        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
+        required=True,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address)
+    main(config, args.server_address, args.run_name)
