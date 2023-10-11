@@ -33,12 +33,10 @@ class BasicClient(NumpyFlClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.use_wandb_reporter = use_wandb_reporter
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
@@ -320,8 +318,7 @@ class BasicClient(NumpyFlClient):
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        if self.use_wandb_reporter:
-            self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 
