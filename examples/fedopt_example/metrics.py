@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List
 
-import numpy as np
+import torch
 from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 
@@ -107,7 +107,7 @@ class ClientMetrics:
         log_string = f"{log_string}\naverage_f1:{str(sum_f1/n_topics)}"
         return log_string
 
-    def update_performance(self, predictions: np.ndarray, labels: np.ndarray) -> None:
+    def update_performance(self, predictions: torch.Tensor, labels: torch.Tensor) -> None:
         confusion = confusion_matrix(labels, predictions, labels=range(self.n_classes))
         for i in range(self.n_classes):
             true_class = self.label_to_class[i]
