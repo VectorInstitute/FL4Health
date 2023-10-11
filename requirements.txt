@@ -20,10 +20,10 @@ torcheval
 torchinfo
 torchtext
 torchvision
-types-requests
-types-PyYAML
 types-protobuf
+types-PyYAML
+types-requests
+types-setuptools
 types-six
 types-tabulate
-types-setuptools
 wandb
