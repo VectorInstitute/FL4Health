@@ -12,7 +12,7 @@ from fl4health.feature_alignment.string_columns_transformer import StringColumnT
 
 class TargetInfoEncoder:
     """
-    This class encodes the information about the target column(s)
+    This class encodes the information about the target column
     that is necessary to perform feature alignment.
 
     Parameters
@@ -106,7 +106,7 @@ class TabularFeaturesInfoEncoder:
         return self.categories
 
     def get_categories_list(self) -> List[List[Scalar]]:
-        return [self.get_categories()[feature_name] for feature_name in self.features_by_type("ordinal")]
+        return [self.get_categories()[feature_name] for feature_name in self.features_by_type(ORDINAL)]
 
     def get_target(self) -> str:
         return self.target_info.get_target()
@@ -149,7 +149,7 @@ class TabularFeaturesInfoEncoder:
         features_to_types.pop(target_column)
 
         # extract categories information
-        ordinal_features: List[str] = sorted(tab_features.features_by_type("ordinal"))
+        ordinal_features: List[str] = sorted(tab_features.features_by_type(ORDINAL))
         string_features: List[str] = sorted(tab_features.features_by_type(type_=STRING))
 
         categories = {
