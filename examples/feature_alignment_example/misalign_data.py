@@ -14,8 +14,8 @@ def random_split_data(df: pd.DataFrame, n: int) -> List[pd.DataFrame]:
 
 
 if __name__ == "__main__":
-    data_path = Path("examples/feature_alignment_example/mimic3d.csv")
-    target_datapath = "examples/feature_alignment_example"
+    data_path = Path("examples/datasets/mimic3d/mimic3d.csv")
+    target_datapath = "examples/datasets/mimic3d"
 
     df = pd.read_csv(data_path)
     df.dropna(inplace=True, how="any")

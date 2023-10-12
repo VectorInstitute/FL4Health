@@ -143,6 +143,9 @@ settings.json
 **/datasets/news_classification/partitioned_datasets/**
 **/datasets/mnist_data/**
 **/datasets/MNIST/**
+**/datasets/mimic3d/mimic3d_hospital1.csv
+**/datasets/mimic3d/mimic3d_hospital2.csv
+
 
 # logs
 

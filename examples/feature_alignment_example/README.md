@@ -41,3 +41,20 @@ clients expected by the server. This is done by simply running (remembering to a
 python -m examples.feature_alignment_example.client --dataset_path <path_to_dataset>
 ```
 * `path_to_dataset` is the path towards the directory where the dataset is stored. To see the feature alignment capability in this example, you should launch clients with misaligned datasets.
+
+
+## Running the example
+
+For this example, first start the server.
+
+Then run
+
+```
+python -m examples.feature_alignment_example.client --dataset_path /path/mimic3d_hospital1.csv
+```
+
+and then run
+
+```
+python -m examples.feature_alignment_example.client --dataset_path /path/mimic3d_hospital2.csv
+```
