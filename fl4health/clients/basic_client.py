@@ -148,6 +148,10 @@ class BasicClient(NumpyFlClient):
         current_round: Optional[int] = None,
     ) -> None:
 
+        # If reporter is None we do not report to wandb and return
+        if self.wandb_reporter is None:
+            return
+
         # If no current_round is passed or current_round is None, set current_round to 0
         # This situation only arises when we do local finetuning and call train_by_epochs or train_by_steps explicitly
         current_round = current_round if current_round is not None else 0
@@ -156,7 +160,7 @@ class BasicClient(NumpyFlClient):
         reporting_dict.update({"step": self.total_steps})
         reporting_dict.update(loss_dict)
         reporting_dict.update(metric_dict)
-        self._maybe_report_metrics(reporting_dict)
+        self.wandb_reporter.report_metrics(reporting_dict)
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
