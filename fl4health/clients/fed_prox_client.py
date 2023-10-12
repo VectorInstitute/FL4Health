@@ -1,8 +1,8 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import torch
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -91,31 +91,6 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        local_epochs, local_steps, current_server_round = self.process_config(config)
-
-        if not self.initialized:
-            self.setup_client(config)
-
-        self.set_parameters(parameters, config)
-
-        if local_epochs is not None:
-            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
-        else:
-            assert isinstance(local_steps, int)
-            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
-
-        # Store current loss which is the vanilla loss without the proximal term added in
-        self.current_loss = loss_dict["checkpoint"]
-
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_train_samples,
-            metrics,
-        )
-
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
@@ -125,3 +100,7 @@ class FedProxClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())
+
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        # Store current loss which is the vanilla loss without the proximal term added in
+        self.current_loss = loss_dict["checkpoint"]

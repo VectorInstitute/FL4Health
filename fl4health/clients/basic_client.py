@@ -87,15 +87,15 @@ class BasicClient(NumpyFlClient):
         self.set_parameters(parameters, config)
 
         if local_epochs is not None:
-            _, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = self.num_train_samples * local_epochs  # total steps over training round
         elif local_steps is not None:
-            _, metrics = self.train_by_steps(local_steps, current_server_round)
+            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps)
+        self.update_after_train(local_steps, loss_dict)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -328,7 +328,7 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def update_after_train(self, local_steps: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         pass
 
     def update_after_step(self, step: int) -> None:

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -189,7 +189,7 @@ class ScaffoldClient(BasicClient):
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         self.update_control_variates(local_steps)
 
 
