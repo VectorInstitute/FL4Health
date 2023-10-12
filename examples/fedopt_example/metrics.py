@@ -108,6 +108,7 @@ class ClientMetrics:
         return log_string
 
     def update_performance(self, predictions: torch.Tensor, labels: torch.Tensor) -> None:
+        predictions, labels = predictions.numpy(), labels.numpy()
         confusion = confusion_matrix(labels, predictions, labels=range(self.n_classes))
         for i in range(self.n_classes):
             true_class = self.label_to_class[i]
