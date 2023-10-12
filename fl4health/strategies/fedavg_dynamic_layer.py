@@ -58,7 +58,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
                 Function used to configure server-side central validation by providing a Config dictionary.
-               Defaults to None.
+                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
@@ -110,7 +110,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
         Returns:
             Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
                 For dynamic layer exchange we also pack in the names of all of the layers that were aggregated in this
-                phase to allow client's to insert the values into the proper areas of their models
+                phase to allow client's to insert the values into the proper areas of their models.
         """
         if not results:
             return None, {}
@@ -147,7 +147,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         """
         Aggregate the different layers across clients that have contributed to a layer. This aggregation may be
-        weighted or unweighted. The called functions handle layer alignment
+        weighted or unweighted. The called functions handle layer alignment.
 
         Args:
             results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
@@ -157,7 +157,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Returns:
             Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-                weights
+                weights.
         """
         if self.weighted_aggregation:
             return self.weighted_aggregate(results)
@@ -178,7 +178,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Returns:
             Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-                weights
+                weights.
         """
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_examples: DefaultDict[str, int] = defaultdict(int)
@@ -210,7 +210,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Returns:
             Dict[str, NDArray]: A dictionary mapping the name of the layer that was aggregated to the aggregated
-                weights
+                weights.
         """
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_clients: DefaultDict[str, int] = defaultdict(int)

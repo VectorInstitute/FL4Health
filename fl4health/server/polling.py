@@ -20,10 +20,10 @@ def _handle_finished_future_after_poll(
 
     Args:
         future (concurrent.futures.Future): The future returned by a client executing polling. It is either added
-            to results if there are no exceptions or failures if there are
-        results (List[Tuple[ClientProxy, GetPropertiesRes]]): Set of good results from clients that have accumulated
+            to results if there are no exceptions or failures if there are any.
+        results (List[Tuple[ClientProxy, GetPropertiesRes]]): Set of good results from clients that have accumulated.
         failures (List[Union[Tuple[ClientProxy, GetPropertiesRes], BaseException]]): The set of failing results that
-            have accumulated for the polling
+            have accumulated for the polling.
     """
 
     # Check if there was an exception
@@ -47,12 +47,12 @@ def _handle_finished_future_after_poll(
 
 def poll_client(client: ClientProxy, ins: GetPropertiesIns) -> Tuple[ClientProxy, GetPropertiesRes]:
     """
-    Get Properties of client. This is run for each client to extract the properties from the target client
+    Get Properties of client. This is run for each client to extract the properties from the target client.
 
     Args:
-        client (ClientProxy): Client proxy representing one of the clients managed by the server
+        client (ClientProxy): Client proxy representing one of the clients managed by the server.
         ins (GetPropertiesIns): ins provides any configurations required to help the client retrieve the correct
-            properties
+            properties.
 
     Returns:
         Tuple[ClientProxy, GetPropertiesRes]: Returns the resulting properties from the client response.
@@ -71,14 +71,14 @@ def poll_clients(
 
     Args:
         client_instructions (List[Tuple[ClientProxy, GetPropertiesIns]]): This is the set of instructions for the
-            polling to be passed to each client. Each client is represented by a single ClientProxy in the list
+            polling to be passed to each client. Each client is represented by a single ClientProxy in the list.
         max_workers (Optional[int]): This is the maximum number of concurrent workers to be used by the server to
             poll the clients. This should be set if pooling an extremely large number, if none a maximum of 32 workers
-            are used
-        timeout (Optional[float]): How long the executor should wait to receive a response before moving on
+            are used.
+        timeout (Optional[float]): How long the executor should wait to receive a response before moving on.
 
     Returns:
-        PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling
+        PollResultsAndFailures: Object holding the results and failures associate with the concurrent polling.
     """
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:

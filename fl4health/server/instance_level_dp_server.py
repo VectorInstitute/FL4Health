@@ -38,8 +38,8 @@ class InstanceLevelDPServer(FlServer):
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
-                DP-SGD
-            batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting
+                DP-SGD.
+            batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
             local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
@@ -83,9 +83,9 @@ class InstanceLevelDPServer(FlServer):
         Run federated averaging for a number of rounds.
 
         Args:
-            num_rounds (int): Number of server rounds to run
+            num_rounds (int): Number of server rounds to run.
             timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
-                clients selected to participate in federated training
+                clients selected to participate in federated training.
 
         Returns:
             History: The history object contains the full set of FL training results, including things like aggregated
@@ -100,11 +100,11 @@ class InstanceLevelDPServer(FlServer):
 
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
         """
-        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts
+        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts.
 
         Args:
             sample_counts (List[int]): These should be the total number of training examples fetched from all clients
-                during the sample polling process
+                during the sample polling process.
         """
         # Ensures that we're using a fraction sampler of the
         assert isinstance(self._client_manager, PoissonSamplingClientManager)

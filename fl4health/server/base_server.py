@@ -31,9 +31,9 @@ class FlServer(Server):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server
+                strategy is FedAvg as set by the flwr Server.
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
@@ -62,10 +62,10 @@ class FlServer(Server):
         if an inheriting class wants to do server-side checkpointing this functionality needs to be defined there.
 
         Raises:
-            NotImplementedError: If this is called by a child class and the behavior is not defined, we throw an error
+            NotImplementedError: If this is called by a child class and the behavior is not defined, we throw an error.
 
         Returns:
-            nn.Module: Should return a torch model to be checkpointed by a torch checkpointer
+            nn.Module: Should return a torch model to be checkpointed by a torch checkpointer.
         """
         # This function is used for converting server parameters into a torch model that can be checkpointed
         raise NotImplementedError()
@@ -92,7 +92,7 @@ class FlServer(Server):
     def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
         """
         Poll clients for sample counts from their training set, if you want to use this functionality your strategy
-        needs to inherit from the StrategyWithPolling ABC and implement a configure_poll function
+        needs to inherit from the StrategyWithPolling ABC and implement a configure_poll function.
 
         Args:
             timeout (Optional[float]): Timeout for how long the server will wait for clients to report counts. If none
@@ -150,16 +150,16 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
         hydrating the provided server model fully such that it can be checkpointed. For custom checkpointing
-        functionality, one need only override _hydrate_model_for_checkpointing
+        functionality, one need only override _hydrate_model_for_checkpointing.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
-            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model
+            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server
+                strategy is FedAvg as set by the flwr Server.
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.

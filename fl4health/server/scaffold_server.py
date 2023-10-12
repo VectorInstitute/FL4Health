@@ -25,7 +25,7 @@ class ScaffoldServer(FlServer):
     ) -> None:
         """
         Custom FL Server for scaffold algorithm to handle warm initialization of control variates
-        as specified in https://arxiv.org/abs/1910.06378
+        as specified in https://arxiv.org/abs/1910.06378.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -120,7 +120,7 @@ class ScaffoldServer(FlServer):
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
 
         Args:
-            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds)
+            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
             timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.
@@ -156,8 +156,8 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during
-                DP-SGD
-            batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting
+                DP-SGD.
+            batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
             local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
@@ -206,7 +206,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         Run DP Scaffold algorithm for the specified number of rounds.
 
         Args:
-            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds)
+            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
             timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.

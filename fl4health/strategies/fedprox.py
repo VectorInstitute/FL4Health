@@ -48,12 +48,12 @@ class FedProx(BasicFedAvg):
 
         The aggregation strategy for weights is the same as in FedAvg.
 
-        Implementation based on https://arxiv.org/abs/1602.05629
+        Implementation based on https://arxiv.org/abs/1602.05629.
 
         Args:
             initial_parameters (Parameters): Initial global model parameters.
             proximal_weight (float): Initial proximal weight (mu). If adaptivity is false, then this is the constant
-                weight used for all clients
+                weight used for all clients.
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
             min_fit_clients (int, optional): _description_. Defaults to 2.

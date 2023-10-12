@@ -57,7 +57,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         client sample counts. The second is that it allows users to Flower's standard sampling or use a custom
         sampling approach implemented in by a custom client manager.
 
-        FedAvg Paper: https://arxiv.org/abs/1602.05629
+        FedAvg Paper: https://arxiv.org/abs/1602.05629.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
@@ -78,7 +78,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
                 Function used to configure server-side central validation by providing a Config dictionary.
-               Defaults to None.
+                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
@@ -114,19 +114,19 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """
         This function configures a sample of clients for a training round. It handles the case where the client
-        manager has a sample fraction vs. a sample function (to allow for more flexible sampling)
+        manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
         The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
         configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
         clients.
 
         Args:
-            server_round (int): Indicates the server round we're currently on
-            parameters (Parameters): The parameters to be used to initialize the clients for the fit round
+            server_round (int): Indicates the server round we're currently on.
+            parameters (Parameters): The parameters to be used to initialize the clients for the fit round.
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
             List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns)
+                be sent to each client (packaged as FitIns).
         """
 
         if isinstance(client_manager, BaseFractionSamplingManager):
@@ -151,19 +151,19 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """
         This function configures a sample of clients for a evaluation round. It handles the case where the client
-        manager has a sample fraction vs. a sample function (to allow for more flexible sampling)
+        manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
         The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
         produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
         to the clients.
 
         Args:
-            server_round (int): Indicates the server round we're currently on
-            parameters (Parameters): The parameters to be used to initialize the clients for the eval round
+            server_round (int): Indicates the server round we're currently on.
+            parameters (Parameters): The parameters to be used to initialize the clients for the eval round.
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
             List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
-                to be sent to each client (packaged as EvaluateIns)
+                to be sent to each client (packaged as EvaluateIns).
         """
 
         # Do not configure federated evaluation if fraction eval is 0.
@@ -196,12 +196,12 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         manger, regardless of type, is instructed to grab all available clients to perform the polling process.
 
         Args:
-            server_round (int): Indicates the server round we're currently on
+            server_round (int): Indicates the server round we're currently on.
             client_manager (ClientManager): The manager used to sample all available clients.
 
         Returns:
             List[Tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
-                to be sent to each client (packaged as GetPropertiesIns)
+                to be sent to each client (packaged as GetPropertiesIns).
         """
         config = {}
         if self.on_fit_config_fn is not None:
@@ -272,18 +272,18 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, Scalar]]:
         """
-        Aggregate the metrics and losses returned from the clients as a result of the evaluation round
+        Aggregate the metrics and losses returned from the clients as a result of the evaluation round.
 
         Args:
             results (List[Tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values and the
-                metrics dictionary
+                metrics dictionary.
             failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
             Tuple[Optional[float], Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
-                are aggregated according to evaluate_metrics_aggregation_fn
+                are aggregated according to evaluate_metrics_aggregation_fn.
         """
         if not results:
             return None, {}

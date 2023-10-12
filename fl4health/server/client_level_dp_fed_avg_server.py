@@ -36,10 +36,10 @@ class ClientLevelDPFedAvgServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle
+            strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients.
-            server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server
-            num_server_rounds (int): Number of rounds of FL training carried out by the server
+            server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
+            num_server_rounds (int): Number of rounds of FL training carried out by the server.
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
@@ -62,9 +62,9 @@ class ClientLevelDPFedAvgServer(FlServer):
         Run federated averaging for a number of rounds.
 
         Args:
-            num_rounds (int): Number of server rounds to run
+            num_rounds (int): Number of server rounds to run.
             timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
-                clients selected to participate in federated training
+                clients selected to participate in federated training.
 
         Returns:
             History: The history object contains the full set of FL training results, including things like aggregated
@@ -85,11 +85,11 @@ class ClientLevelDPFedAvgServer(FlServer):
 
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
         """
-        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts
+        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts.
 
         Args:
             sample_counts (List[int]): These should be the total number of training examples fetched from all clients
-                during the sample polling process
+                during the sample polling process.
         """
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 

@@ -109,7 +109,8 @@ class Scaffold(BasicFedAvg):
         """
         This is a helper function for the SCAFFOLD strategy init function to initialize the server_control_variates.
         It either initializes the control variates with custom provided variates or using the provided model
-        architecture
+        architecture/
+
         Args:
             initial_control_variates (Optional[Parameters]): These are the initial set of control variates
                 to use for the scaffold strategy both on the server and client sides. It is optional, but if it is not
@@ -118,11 +119,12 @@ class Scaffold(BasicFedAvg):
             model (Optional[nn.Module]): If provided and initial_control_variates is not, this is used to
                 set the server control variates and the initial control variates on the client side to all zeros.
                 If initial_control_variates are provided, they take precendence. Defaults to None.
+
         Returns:
             Parameters: This quantity represents the initial values for the control variates for the server and on the
-            client-side
+            client-side.
         Raises:
-            ValueError: This error will be raised if neither a model nor initial control variates are provided
+            ValueError: This error will be raised if neither a model nor initial control variates are provided.
         """
         if initial_control_variates is not None:
             # If we've been provided with a set of initial control variates, we use those values
@@ -157,10 +159,10 @@ class Scaffold(BasicFedAvg):
         through the fit_metrics_aggregation_fn provided in constructing the strategy.
 
         Args:
-            server_round (int): What round of FL we're on (from servers perspective)
+            server_round (int): What round of FL we're on (from servers perspective).
             results (List[Tuple[ClientProxy, FitRes]]): These are the "successful" training run results. By default
                 these results are the only ones used in aggregation, even if some of the failed clients have partial
-                results (in the failures list)
+                results (in the failures list).
             failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): This is the list of clients that
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
@@ -202,11 +204,11 @@ class Scaffold(BasicFedAvg):
     def compute_parameter_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
         Computes elementwise difference of two lists of NDarray where elements in params_2 are subtracted from
-        elements in params_1
+        elements in params_1.
 
         Args:
-            params_1 (NDArrays): Parameters to be subtracted from
-            params_2 (NDArrays): Parameters to subtract from params_1
+            params_1 (NDArrays): Parameters to be subtracted from.
+            params_2 (NDArrays): Parameters to subtract from params_1.
 
         Returns:
             NDArrays: Elementwise subtraction result across all numpy arrays.
@@ -220,16 +222,16 @@ class Scaffold(BasicFedAvg):
     ) -> NDArrays:
         """
         Computes updated_params by moving in the direction of parameter_updates with a step proportional the scaling
-        coefficient. Calculates original_params + scaling_coefficient * parameter_updates
+        coefficient. Calculates original_params + scaling_coefficient * parameter_updates.
 
         Args:
             scaling_coefficient (float): Scaling length for the parameter updates (can be thought of as
-                "learning rate")
-            original_params (NDArrays): parameters to be updated
-            parameter_updates (NDArrays): update direction to update the original_params
+                "learning rate").
+            original_params (NDArrays): parameters to be updated.
+            parameter_updates (NDArrays): update direction to update the original_params.
 
         Returns:
-            NDArrays: Updated numpy arrays according to original_params + scaling_coefficient * parameter_updates
+            NDArrays: Updated numpy arrays according to original_params + scaling_coefficient * parameter_updates.
         """
 
         updated_parameters = [
@@ -241,10 +243,11 @@ class Scaffold(BasicFedAvg):
 
     def aggregate(self, params: List[NDArrays]) -> NDArrays:
         """
-        Simple unweighted average to aggregate params, consistent with SCAFFOLD paper. This is "element-wise" averaging
+        Simple unweighted average to aggregate params, consistent with SCAFFOLD paper. This is "element-wise"
+        averaging.
 
         Args:
-            params (List[NDArrays]): numpy arrays whose entries are to be averaged together
+            params (List[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
             NDArrays: elementwise average over the list of numpy arrays.
@@ -270,14 +273,14 @@ class Scaffold(BasicFedAvg):
         clients.
 
         Args:
-            server_round (int): Indicates the server round we're currently on
-            parameters (Parameters): The parameters to be used to initialize the clients for the fit round
+            server_round (int): Indicates the server round we're currently on.
+            parameters (Parameters): The parameters to be used to initialize the clients for the fit round.
             client_manager (ClientManager): The manager used to grab all of the clients. Currently we restrict this to
                 be BaseFractionSamplingManager, which has a "sample all" function built in.
 
         Returns:
             List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
-                be sent to each client (packaged as FitIns)
+                be sent to each client (packaged as FitIns).
         """
 
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
@@ -299,15 +302,16 @@ class Scaffold(BasicFedAvg):
         """
         Computes and update to the current self.server_model_weights. This assumes that the weights represents the
         raw weights aggregated from the client. Therefore it first needs to be turned into a "delta" with
-                weights - self.server_model_weights
+                weights - self.server_model_weights.
         Then this is used to update with a learning rate scalar (set by self.learning_rate) as
-                self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)
+                self.server_model_weights + self.learning_rate * (weights - self.server_model_weights).
+
         Args:
-            weights (NDArrays): The updated weights (aggregated from the clients)
+            weights (NDArrays): The updated weights (aggregated from the clients).
 
         Returns:
             NDArrays: self.server_model_weights + self.learning_rate * (weights - self.server_model_weights)
-                These are the updated server model weights
+                These are the updated server model weights.
         """
         # x_update = y_i - x
         delta_weights = self.compute_parameter_delta(weights, self.server_model_weights)
@@ -324,13 +328,13 @@ class Scaffold(BasicFedAvg):
         Given the aggregated control variates from the clients, this updates the server control variates in line with
         the paper. If c is the server control variates and c_update is the client control variates, then this update
         takes the form
-                c + |S| / N * c_update
+                c + |S| / N * c_update,
         where |S| is the number of clients that participated and N is the total number of clients |S|/N is the
-        proportion given by fraction fit
+        proportion given by fraction fit.
 
         Args:
             control_variates_update (NDArrays): Aggregated control variates received from the clients
-                (uniformly averaged)
+                (uniformly averaged).
 
         Returns:
             NDArrays: Updated server control variates according to the formula.

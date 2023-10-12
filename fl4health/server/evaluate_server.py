@@ -30,7 +30,7 @@ class EvaluateServer(Server):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            fraction_evaluate (float): Fraction of clients used during evaluation
+            fraction_evaluate (float): Fraction of clients used during evaluation.
             model_checkpoint_path (Optional[Path], optional): Server side model checkpoint path to load global model
                 from. Defaults to None.
             evaluate_config (Optional[Dict[str, Scalar]], optional): Configuration dictionary to configure evaluation
@@ -74,7 +74,7 @@ class EvaluateServer(Server):
         essentially the entry point for federated learning from the app.
 
         Args:
-            num_rounds (int): Not used
+            num_rounds (int): Not used.
             timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
