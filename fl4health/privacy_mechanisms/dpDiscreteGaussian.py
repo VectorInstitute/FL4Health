@@ -5,20 +5,17 @@ import torch
 
 
 def Bernoulli_exp(gamma: float) -> int:
-    """Draws a sample from Bernoulli(exp(-gamma))
+    """
+    Draws a sample from Bernoulli(exp(-gamma))
 
-    Args
-        gamma
-            A non-negative parameter of type float
+    Args:
+        gamma (float): A non-negative parameter of type float.
 
-    Return
-        A Bernoulli sample, either 0 or 1
+    Returns:
+        int: A Bernoulli sample, either 0 or 1
 
-    Raises
-        AssertionError
-
-    Reference
-        Algorithm 2 in "The Discrete Gaussian for Differential Privacy"
+    Reference:
+        Algorithm 2 of "The Discrete Gaussian for Differential Privacy"
         https://proceedings.neurips.cc/paper/2020/file/b53b3a3d6ab90ce0268229151c9bde11-Paper.pdf
     """
 
@@ -50,17 +47,14 @@ def Bernoulli_exp(gamma: float) -> int:
 
 
 def DiscreteGaussianSampler(variance: float) -> int:
-    """Takes a sample from the centered discrete Gaussian distribution with given variance, using rejection sampling.
+    """
+    Takes a sample from the centered discrete Gaussian distribution with given variance, using rejection sampling.
 
-    Args
-        variance
-            Positive float
+    Args:
+        variance (float): Variance.
 
-    Return
-        An integer sample from the centered discrete Gaussian distribution with given variance.
-
-    Raises
-        AssertionError
+    Returns:
+        int: An integer sample from the centered discrete Gaussian distribution with given variance.
 
     Reference
         Algorithm 1 in "The Discrete Gaussian for Differential Privacy"
@@ -105,22 +99,18 @@ def DiscreteGaussianSampler(variance: float) -> int:
 
 
 def DiscreteGaussianMechanism(query_vector: List[int], variance: float) -> List[int]:
-    """Applies additive discrete Gaussian noise to query_vector.
+    """
+    Applies additive discrete Gaussian noise to query_vector.
 
-    Args
-        query_vector
-            This is the discretized gradient vector in the SecAgg context.
-        variance
-            For the Gaussian noise
+    Args:
+        query_vector (List[int]): This is the discretized gradient vector in the SecAgg context.
+        variance (float): Gaussian noise variance.
 
-    Return
-        Privitized vector of type List[int]
-
-    Raises
-        AssertionError
+    Returns:
+        List[int]: Privitized vector.
 
     Reference
-        "The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation"
+        The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
         http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
     """
 

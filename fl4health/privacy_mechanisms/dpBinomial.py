@@ -5,23 +5,23 @@ import torch
 
 # TODO why doesn't mechanism result in output type List[int]
 def BinomialMechanism(query_vector: List[int], N: int, p: float, j: int) -> List[int]:
-    """Privatization of query_vector via additive binomial noise.
+    """
+    Privatization of query_vector via additive binomial noise.
 
-    Args
-        query_vector
-            A vector with integer valued components
-        N, p
-            The number N of Bernoulli trials with success probability p which determines the distribution Bin(N, p).
-        j
-            Determines the quantization scale s = 1/j
+    Args:
+        query_vector (List[int]): A vector with integer valued components.
+        N (int): The number N of Bernoulli trials which determines the distribution Bin(N, p).
+        p (float): The success probability p which determines the distribution Bin(N, p).
+        j (int): Determines the quantization scale s = 1/j.
 
-    Return
-        Privatized query vector via the scaler binomial mechanism applied to each component of query_vector:
+    Returns:
+        List[int]: Privatized query vector via the scaler binomial mechanism applied to each component of query_vector
 
     Reference
-        "cpSGD: Communication-efficient and differentially-private distributed SGD"
+        cpSGD: Communication-efficient and differentially-private distributed SGD
         https://proceedings.neurips.cc/paper_files/paper/2018/file/21ce689121e39821d07d04faab328370-Paper.pdf
     """
+
     dim = len(query_vector)
     assert dim > 0  # nonempty query_vector
 

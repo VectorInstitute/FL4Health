@@ -2,26 +2,30 @@ import torch
 
 
 def SkellamMechanism(query_vector: list[int], skellam_variance: float) -> list[int]:
-    """Additive mechanism that adds to the given query vector a discrete noise vector
-    sampled from the centered Skellam distribution of given variance.
+    """
+     An additive mechanism that adds to the given query vector a discrete noise vector
+     sampled from the centered Skellam distribution of given variance.
 
-    Args
-        query_vector
-            Discritized vector, meaning its type is an integer list, to which noise will be added.
-        skellam_variance
-            Variance associated with each component of the d-dimensional Skellam distribution.
 
-    Return
-        Perturbed vector of type [int]
+     Args:
+         query_vector (list[int]): Discritized vector to which noise will be added.
+         skellam_variance (float): Variance associated with each component of the d-dimensional Skellam distribution.
+
+     Raises:
+         Exception: Empty query
+         Exception: Un-discretized query.
+
+     Returns:
+         list[int]: Perturbed vector.
 
     Notes
-        1) A Skellam random variable can be obtained as the difference of two independent Poisson random variables.
-        2) A Skellam random vector has as components Skellam random variables.
-        3) Computations are carried throughout on torch.int (32-bit signed integer)
+         1) A Skellam random variable can be obtained as the difference of two independent Poisson random variables.
+         2) A Skellam random vector has as components Skellam random variables.
+         3) Computations are carried throughout on torch.int (32-bit signed integer)
 
-    Reference
-        "The Skellam Mechanism for Differentially Private Federated Learning"
-        https://proceedings.neurips.cc/paper/2021/file/285baacbdf8fda1de94b19282acd23e2-Paper.pdf
+     Reference
+         The Skellam Mechanism for Differentially Private Federated Learning
+         https://proceedings.neurips.cc/paper/2021/file/285baacbdf8fda1de94b19282acd23e2-Paper.pdf
     """
 
     dim = len(query_vector)
