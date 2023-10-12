@@ -63,7 +63,7 @@ class ScaffoldServer(FlServer):
 
         Args:
             timeout (Optional[float]): If the server strategy object does not have a server-side initial parameters
-                unction defined, then one of the clients is polled and their model parameters are returned in order to
+                function defined, then one of the clients is polled and their model parameters are returned in order to
                 initialize the models of all clients. Timeout defines how long to wait for a response.
         """
         assert isinstance(self.strategy, Scaffold)

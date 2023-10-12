@@ -100,7 +100,7 @@ class InstanceLevelDPServer(FlServer):
 
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
         """
-        Sets up FL Accountant and computes privacy loss based on class attributes and retrived sample counts
+        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts
 
         Args:
             sample_counts (List[int]): These should be the total number of training examples fetched from all clients

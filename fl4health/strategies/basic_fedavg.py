@@ -57,6 +57,8 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         client sample counts. The second is that it allows users to Flower's standard sampling or use a custom
         sampling approach implemented in by a custom client manager.
 
+        FedAvg Paper: https://arxiv.org/abs/1602.05629
+
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
                 larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
