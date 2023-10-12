@@ -1,4 +1,4 @@
-document$.subscribe(({ body }) => { 
+document$.subscribe(({ body }) => {
     renderMathInElement(body, {
       delimiters: [
         { left: "$$",  right: "$$",  display: true },
@@ -8,4 +8,3 @@ document$.subscribe(({ body }) => {
       ],
     })
   })
-  

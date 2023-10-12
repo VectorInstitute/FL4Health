@@ -55,7 +55,7 @@ def train(
             # Report some batch loss statistics every so often to track decrease
             if batch_index % 100 == 0:
                 log(INFO, f"Batch Index {batch_index} of {n_batches}, Batch loss: {loss.item()}")
-            epoch_metrics.update_performance(predicted, labels)
+            epoch_metrics.update_performance(predicted, labels)  # type: ignore[arg-type]
 
         log_str = epoch_metrics.summarize()
         # Local client logging of epoch results.
@@ -93,7 +93,7 @@ def validate(
             out = model(data, (h0, c0))
             loss += criterion(out, labels).item()
             _, predicted = torch.max(out.data, 1)
-            epoch_metrics.update_performance(predicted, labels)
+            epoch_metrics.update_performance(predicted, labels)  # type: ignore[arg-type]
 
     log_str = epoch_metrics.summarize()
     # Local client logging.

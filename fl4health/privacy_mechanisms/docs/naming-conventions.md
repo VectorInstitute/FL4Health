@@ -1,6 +1,6 @@
-# Naming Conventions 
+# Naming Conventions
 
-1. Folder containing the privacy mechanism is called `./dp-mechanisms`
+1. Folder containing the privacy mechanism is called `fl4health/privacy_mechanisms`
 
 2. Python files that contain the mechanism begin with `dp*` such as `dpSkellam.py` so all the mechanisms are grouped together.
 

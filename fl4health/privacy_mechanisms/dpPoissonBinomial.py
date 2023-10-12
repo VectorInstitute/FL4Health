@@ -1,12 +1,14 @@
-import math, torch
+import math
+from typing import List
+
+import torch
 from scipy.stats import ortho_group
 from torch.distributions import Binomial
-from typing import List
 
 
 def ScalerPoissonBinomial(x: float, N: int, radius: float, theta: float) -> int:
     """Privacy mechanism which encodes scalar data x as a bionomial random variable.
-    
+
     Args
         x
             Scalar data to be encoded
@@ -14,37 +16,38 @@ def ScalerPoissonBinomial(x: float, N: int, radius: float, theta: float) -> int:
             Number of Bernoulli trials that yields the binomial variable (We have N = modulus - 1).
         radius
             x must be within the real interval [-radius, radius]
-        theta 
+        theta
             a parameter within the real interval [0, 1/4]
 
-    Return 
-        A random sample taken from the bionomial distribution with success probability p = theta * x / radius + 1/2 and trial number N.
-    
-    Reference 
+    Return
+        A random sample taken from the bionomial distribution with success probability
+        p = theta * x / radius + 1/2 and trial number N.
+
+    Reference
         "The Poisson Binomial Mechanism for Unbiased Federated Learning with Secure Aggregation"
         https://proceedings.mlr.press/v162/chen22s/chen22s.pdf
     """
 
     if N < 1 or type(N) != int:
-        raise Exception('The parameter N of Binom(N, p) must be a natural number')
+        raise Exception("The parameter N of Binom(N, p) must be a natural number")
 
     if radius < 0:
-        raise Exception('The radius for the interval must be positive')
-    
-    if not (0 <= theta <= 0.25):
-        raise Exception('theta must be within the real interval [0, 1/4]')
-    
-    # rescaling
-    p = theta * x / radius + 1/2
+        raise Exception("The radius for the interval must be positive")
 
-    # privatization 
+    if not (0 <= theta <= 0.25):
+        raise Exception("theta must be within the real interval [0, 1/4]")
+
+    # rescaling
+    p = theta * x / radius + 1 / 2
+
+    # privatization
     B = Binomial(N, p)
 
     return B.sample().int().item()
 
 
 def Kashin_alternative(dim: int) -> List[List[int]]:
-    """Server generated random rotation matrix that replaces 
+    """Server generated random rotation matrix that replaces
     the tight frame in Kashin representation.
     """
 
@@ -53,13 +56,9 @@ def Kashin_alternative(dim: int) -> List[List[int]]:
     return sample_matrix.tolist()
 
 
-def PoissonBinomialMechanism_Client(query_vector: List[float], 
-                             radius: float, 
-                             tight_frame: List[float], 
-                             theta: float, 
-                             K: float, 
-                             modulus: int) -> List[int]:
-    
+def PoissonBinomialMechanism_Client(
+    query_vector: List[float], radius: float, tight_frame: List[float], theta: float, K: float, modulus: int
+) -> List[int]:
     """Privatization of client vector with Poisson bionomial mechanism.
 
     Args
@@ -75,11 +74,11 @@ def PoissonBinomialMechanism_Client(query_vector: List[float],
             Constant parameter in Kashin representation, or clip.
         modulus
             The modulus for modular arithmetic.
-    
-    Return 
+
+    Return
         The discretized and privatized query_vector as a list of integers.
 
-    Reference 
+    Reference
         "The Poisson Binomial Mechanism for Unbiased Federated Learning with Secure Aggregation"
         https://proceedings.mlr.press/v162/chen22s/chen22s.pdf
     """
@@ -87,51 +86,49 @@ def PoissonBinomialMechanism_Client(query_vector: List[float],
     dim = len(query_vector)
 
     if dim == 0:
-        raise Exception('query_vector cannot be empty')
-    
+        raise Exception("query_vector cannot be empty")
+
     kashin_matrix = torch.tensor(tight_frame)
     client_vector = torch.tensor(query_vector)
 
-    kashin_vector = torch.matmul(kashin_matrix, client_vector) 
+    kashin_vector = torch.matmul(kashin_matrix, client_vector)
 
     # TODO adjust this for l-infinity clipping
     scalar_radius = radius * K / math.sqrt(dim)
 
     privatization = torch.zeros(dim)
     for j in range(dim):
-        privatization[j] += ScalerPoissonBinomial(kashin_vector[j], modulus - 1, scalar_radius, theta)
+        privatization[j] += ScalerPoissonBinomial(kashin_vector[j].item(), modulus - 1, scalar_radius, theta)
 
     return list(privatization)
 
 
-def PoissonBinomialMechanism_Server(inverse_matrix: List[List[int]],
-                                    radius: float,
-                                    modulus: int,
-                                    theta: float,
-                                    *client_vectors: List[int]) -> List[int]:
+def PoissonBinomialMechanism_Server(
+    inverse_matrix: List[List[int]], radius: float, modulus: int, theta: float, *client_vectors: List[int]
+) -> List[int]:
     """Server side function that recovers the sum of vectors from clients
 
-    Args 
+    Args
         inverse_matrix
             The inverse of the random rotation generated by Kashin_alternative().
         radius, modulus, theta
             As in the functions above.
         *client_vectors
             Those client vectors received by the server.
-        
-    Return 
+
+    Return
         Mean estimator of the client updates.
-    
-    Reference 
+
+    Reference
         Algorithm 1 in "The Poisson Binomial Mechanism for Unbiased Federated Learning with Secure Aggregation"
-        https://proceedings.mlr.press/v162/chen22s/chen22s.pdf    
+        https://proceedings.mlr.press/v162/chen22s/chen22s.pdf
     """
 
     dim, num_clients = len(inverse_matrix), len(client_vectors)
 
     # these assertions prevent division by zero
-    assert dim > 0 and num_clients > 0 
-    assert 0 < theta <= .25     
+    assert dim > 0 and num_clients > 0
+    assert 0 < theta <= 0.25
 
     kashin_sum = torch.zeros(dim)  # Coordinates are in Kashin coordinates.
 
@@ -139,7 +136,7 @@ def PoissonBinomialMechanism_Server(inverse_matrix: List[List[int]],
         kashin_sum += torch.tensor(vect)
 
     kashin_sum -= modulus * num_clients / 2 * torch.ones(dim)
-    kashin_sum *= radius / (modulus * num_clients * theta) 
+    kashin_sum *= radius / (modulus * num_clients * theta)
 
     rotation = torch.tensor(inverse_matrix)
 
@@ -148,10 +145,8 @@ def PoissonBinomialMechanism_Server(inverse_matrix: List[List[int]],
     return estimator.tolist()
 
 
-
-if __name__ == '__main__':
-
-    # # ScalerPoissonBinomial test cases 
+if __name__ == "__main__":
+    # # ScalerPoissonBinomial test cases
     # x, N, radius, theta = 0, 20, 5, 0.1
     # out = [ScalerPoissonBinomial(x, N, radius, theta) for _ in range(100)]
     # print(out)
@@ -159,4 +154,4 @@ if __name__ == '__main__':
     # PoissonBinomialMechanism test cases
     out = Kashin_alternative(3)
     print(out, type(out))
-    pass    
+    pass

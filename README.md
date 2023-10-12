@@ -1,12 +1,4 @@
-
-
 # FL4Health
-
-To start docs 
-```
-pip install -r requirements.txt 
-mkdocs serve       
-```
 
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, specifically targetting health applications.
 <!-- TOC -->

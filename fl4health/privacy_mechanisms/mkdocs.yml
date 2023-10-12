@@ -12,12 +12,12 @@ theme:
     - content.tabs.link
   icon:
     admonition:
-      <type>: octicons/alert-16 
+      <type>: octicons/alert-16
 extra:
   generator: false
 extra_javascript:
-  - javascripts/katex.js 
-  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js  
+  - javascripts/katex.js
+  - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/contrib/auto-render.min.js
 extra_css:
   - https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css
@@ -43,7 +43,3 @@ markdown_extensions:
   - pymdownx.mark
   - pymdownx.tilde
   - attr_list
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-
