@@ -1,7 +1,6 @@
 import random
-import warnings
 from functools import partial
-from logging import INFO
+from logging import DEBUG, INFO, WARNING
 from typing import Callable, List, Optional, Tuple
 
 from flwr.common.logger import log
@@ -29,7 +28,7 @@ class TabularFeatureAlignmentServer(FlServer):
     This server is used when the clients all have tabular data that needs to be
     aligned.
 
-    tab_features_info: the information that is required for aligning client features.
+    tab_features_source_of_truth: the information that is required for aligning client features.
     If it is not specified, then the server will randomly poll a client and gather
     this information from its data source.
     """
@@ -42,20 +41,20 @@ class TabularFeatureAlignmentServer(FlServer):
         strategy: BasicFedAvg,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        tab_features_info: Optional[TabularFeaturesInfoEncoder] = None,
+        tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
     ) -> None:
         assert isinstance(strategy, BasicFedAvg)
         if strategy.on_fit_config_fn is not None:
-            warnings.warn("strategy.on_fit_config_fn will be overwritten.")
+            log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
-            warnings.warn("strategy.initial_parameters will be overwritten.")
+            log(WARNING, "strategy.initial_parameters will be overwritten.")
 
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
         # The server performs one or two rounds of polls before the normal federated training.
         # The first one gathers feature information if the server does not already have it,
         # and the second one gathers the input/output dimensions of the model.
         self.initial_polls_complete = False
-        self.tab_features_info = tab_features_info
+        self.tab_features_info = tabular_features_source_of_truth
         self.config = config
         self.initialize_parameters = initialize_parameters
         self.format_info_gathered = False
@@ -101,7 +100,7 @@ class TabularFeatureAlignmentServer(FlServer):
             # and subsequently requests the input and output dimensions, which are needed for initializing
             # the global model.
             input_dimension, output_dimension = self.poll_clients_for_dimension_info(timeout)
-            log(INFO, f"input dimension: {input_dimension}, output dimension: {output_dimension}")
+            log(DEBUG, f"input dimension: {input_dimension}, output dimension: {output_dimension}")
             self.strategy.initial_parameters = self.initialize_parameters(input_dimension, output_dimension)
             self.initial_polls_complete = True
 

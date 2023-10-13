@@ -129,6 +129,14 @@ class TabularFeaturesInfoEncoder:
     def set_default_fill_value(self, key: str, value: Scalar) -> None:
         self.default_fill_values[key] = value
 
+    def get_target_dimension(self) -> int:
+        # Return the dimension of the target array *after* feature alignment is performed.
+        target_type = self.get_target_type()
+        if target_type == ORDINAL or target_type == BINARY:
+            return len(self.get_target_categories())
+        else:
+            return 1
+
     @staticmethod
     def encoder_from_dataframe(
         df: pd.DataFrame,

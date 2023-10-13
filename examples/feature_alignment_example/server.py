@@ -61,7 +61,7 @@ def main(config: Dict[str, Any]) -> None:
         config=config,
         initialize_parameters=get_initial_model_parameters,
         strategy=strategy,
-        tab_features_info=tab_feature_info_encoder_hospital1,
+        tabular_features_source_of_truth=tab_feature_info_encoder_hospital1,
     )
 
     fl.server.start_server(
