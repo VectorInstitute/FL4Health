@@ -76,7 +76,7 @@ class ApflClient(BasicClient):
 
     def train_step(
         self, input: torch.Tensor, target: torch.Tensor
-    ) -> Union[Tuple[Losses, torch.Tensor], Tuple[Losses, Dict[str, torch.Tensor]]]:
+    ) -> Tuple[Losses, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
