@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple, Union
 
@@ -10,6 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
+from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
@@ -43,35 +43,41 @@ class ApflClient(BasicClient):
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 
-    def split_optimizer(self, global_optimizer: Optimizer) -> Tuple[Optimizer, Optimizer]:
-        """
-        The optimizer from get_optimizer is for the entire APFLModule. We need one optimizer
-        for the local model and one optimizer for the global model.
-        """
-        global_optimizer.param_groups.clear()
-        global_optimizer.state.clear()
-        local_optimizer = copy.deepcopy(global_optimizer)
-
-        global_optimizer.add_param_group({"params": [p for p in self.model.global_model.parameters()]})
-        local_optimizer.add_param_group({"params": [p for p in self.model.local_model.parameters()]})
-        return global_optimizer, local_optimizer
-
     def setup_client(self, config: Config) -> None:
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
-        super().setup_client(config)
+        model = self.get_model(config)
+        assert isinstance(model, APFLModule)
+        self.model = model
+        train_loader, val_loader = self.get_data_loaders(config)
+        self.train_loader = train_loader
+        self.val_loader = val_loader
 
-        # Split optimizer from get_optimizer into two distinct optimizers
-        # One for local model and one for global model
-        global_optimizer, local_optimizer = self.split_optimizer(self.optimizer)
-        self.optimizer = global_optimizer
-        self.local_optimizer = local_optimizer
+        # The following lines are type ignored because torch datasets are not "Sized"
+        # IE __len__ is considered optionally defined. In practice, it is almost always defined
+        # and as such, we will make that assumption.
+        self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
+        self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
+
+        optimizer_dict = self.get_optimizer(config)
+        assert isinstance(optimizer_dict, dict)
+        self.optimizer = optimizer_dict["global"]
+        self.local_optimizer = optimizer_dict["local"]
+
+        self.learning_rate = self.optimizer.defaults["lr"]
+        self.criterion = self.get_criterion(config)
+        self.parameter_exchanger = self.get_parameter_exchanger(config)
+
+        if self.use_wandb_reporter:
+            self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+
+        self.initialized = True
 
     def train_step(
         self, input: torch.Tensor, target: torch.Tensor
     ) -> Union[Tuple[Losses, torch.Tensor], Tuple[Losses, Dict[str, torch.Tensor]]]:
-        # Return preds value of torch.Tensor containing personal, global and local predictions
+        # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py

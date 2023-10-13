@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 import flwr as fl
 import torch
@@ -28,8 +28,10 @@ class MnistApflClient(ApflClient):
     def get_model(self, config: Config) -> nn.Module:
         return APFLModule(MnistNetWithBnAndFrozen()).to(self.device)
 
-    def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=0.01)
+    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+        local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)
+        global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=0.01)
+        return {"local": local_optimizer, "global": global_optimizer}
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()

@@ -280,7 +280,10 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
-        self.optimizer = self.get_optimizer(config)
+        optimizer = self.get_optimizer(config)
+        assert isinstance(optimizer, Optimizer)
+        self.optimizer = optimizer
+
         self.learning_rate = self.optimizer.defaults["lr"]
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
@@ -327,7 +330,7 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def get_optimizer(self, config: Config) -> Optimizer:
+    def get_optimizer(self, config: Config) -> Union[Optimizer, Dict[str, Optimizer]]:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
         """

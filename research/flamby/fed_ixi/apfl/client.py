@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -64,8 +64,10 @@ class FedIxiApflClient(ApflClient):
         model: APFLModule = APFLModule(APFLUNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
         return model
 
-    def get_optiizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
+    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+        local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
+        global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)
+        return {"local": local_optimizer, "global": global_optimizer}
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
