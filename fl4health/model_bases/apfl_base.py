@@ -1,5 +1,5 @@
 import copy
-from typing import List
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
@@ -27,12 +27,13 @@ class APFLModule(nn.Module):
     def local_forward(self, input: torch.Tensor) -> torch.Tensor:
         return self.local_model(input)
 
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # Forward return dictionairy because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
         local_logits = self.local_forward(input)
         personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
-
-        return personal_logits
+        preds = {"personal": personal_logits, "global": global_logits, "local": local_logits}
+        return preds
 
     def update_alpha(self) -> None:
         # Updates to mixture parameter follow original implementation

@@ -16,7 +16,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterType
+from fl4health.utils.metrics import Metric, MetricMeterManager, MetricMeterType
 
 
 class BasicClient(NumpyFlClient):
@@ -42,8 +42,8 @@ class BasicClient(NumpyFlClient):
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.train_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
-        self.val_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val_meter")
+        self.train_metric_meter_mngr = MetricMeterManager(self.metrics, metric_meter_type, "train_meter")
+        self.val_metric_meter_mngr = MetricMeterManager(self.metrics, metric_meter_type, "val_meter")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -140,10 +140,14 @@ class BasicClient(NumpyFlClient):
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(
+        self, input: torch.Tensor, target: torch.Tensor
+    ) -> Tuple[Losses, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
         Assumes self.model is in train model already.
+        The preds value that is returned is torch.Tensor for normal cases when there is only a single prediction.
+        In cases where there are multiple prediction types (ie APFL), a Dict of torch.Tensor is returned.
         """
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
@@ -158,10 +162,14 @@ class BasicClient(NumpyFlClient):
 
         return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def val_step(
+        self, input: torch.Tensor, target: torch.Tensor
+    ) -> Tuple[Losses, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         """
         Given input and target, compute loss, update loss and metrics
         Assumes self.model is in eval mode already.
+        The preds value that is returned is torch.Tensor for normal cases when there is only a single prediction.
+        In cases where there are multiple prediction types (ie APFL), a Dict of torch.Tensor is returned.
         """
 
         # Get preds and compute loss
@@ -176,16 +184,16 @@ class BasicClient(NumpyFlClient):
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         self.model.train()
         for local_epoch in range(epochs):
-            self.train_metric_meter.clear()
+            self.train_metric_meter_mngr.clear()
             self.train_loss_meter.clear()
             for step, (input, target) in enumerate(self.train_loader):
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter.update(preds, target)
+                self.train_metric_meter_mngr.update(preds, target)
                 actual_step = int(local_epoch * len(self.train_loader) + step)
                 self.update_after_step(actual_step)
-            metrics = self.train_metric_meter.compute()
+            metrics = self.train_metric_meter_mngr.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
@@ -203,7 +211,7 @@ class BasicClient(NumpyFlClient):
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
-        self.train_metric_meter.clear()
+        self.train_metric_meter_mngr.clear()
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
@@ -216,12 +224,12 @@ class BasicClient(NumpyFlClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter.update(preds, target)
+            self.train_metric_meter_mngr.update(preds, target)
             self.update_after_step(step)
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter.compute()
+        metrics = self.train_metric_meter_mngr.compute()
 
         self._handle_logging(loss_dict, metrics, current_round=current_round)
 
@@ -229,19 +237,19 @@ class BasicClient(NumpyFlClient):
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        self.val_metric_meter.clear()
+        self.val_metric_meter_mngr.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter.update(preds, target)
+                self.val_metric_meter_mngr.update(preds, target)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.val_metric_meter.compute()
+        metrics = self.val_metric_meter_mngr.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
         # Checkpoint based on loss which is output of user defined compute_loss method
@@ -288,16 +296,19 @@ class BasicClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
+    def predict(self, input: torch.Tensor) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Return predictions when given input. User can override for more complex logic.
+        Return predictions when given input. Returns torch tensor for non personalized model with single output.
+        Returns dict of torch tensor for personalized model with multiple outputs (ie APFL)
+        User can override for more complex logic.
         """
         return self.model(input)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+    def compute_loss(self, preds: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor) -> Losses:
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
         loss components if you wish to train the total loss as well as sub losses if they exist.
+        Input can be a single torch.Tensor or a Dict of torch tensors for each prediction type.
         """
         loss = self.criterion(preds, target)
         losses = Losses(checkpoint=loss, backward=loss)

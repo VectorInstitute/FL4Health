@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -91,7 +91,7 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+    def compute_loss(self, preds: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor) -> Losses:
         loss = self.criterion(preds, target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss

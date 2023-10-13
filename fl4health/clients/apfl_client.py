@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.typing import Config
@@ -68,7 +68,11 @@ class ApflClient(BasicClient):
         self.optimizer = global_optimizer
         self.local_optimizer = local_optimizer
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(
+        self, input: torch.Tensor, target: torch.Tensor
+    ) -> Union[Tuple[Losses, torch.Tensor], Tuple[Losses, Dict[str, torch.Tensor]]]:
+        # Return preds value of torch.Tensor containing personal, global and local predictions
+
         # Mechanics of training loop follow from original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
 
@@ -88,14 +92,24 @@ class ApflClient(BasicClient):
 
         # Personal predictions are generated as a convex combination of the output
         # of local and global models
-        personal_pred = self.predict(input)
-
+        preds = self.predict(input)
+        assert isinstance(preds, dict)
         # Parameters of local model are updated to minimize loss of personalized model
-        losses = self.compute_loss(personal_pred, target)
+        losses = self.compute_loss(preds, target)
         losses.backward.backward()
         self.local_optimizer.step()
 
-        return losses, personal_pred
+        # Return dictionairy of predictions where key is used to name respective MetricMeters
+        return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> FixedLayerExchanger:
         return FixedLayerExchanger(self.model.layers_to_exchange())
+
+    def compute_loss(self, preds: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor) -> Losses:
+        assert isinstance(preds, dict)
+        personal_loss = self.criterion(preds["personal"], target)
+        global_loss = self.criterion(preds["global"], target)
+        local_loss = self.criterion(preds["local"], target)
+        additional_losses = {"global": global_loss, "local": local_loss}
+        losses = Losses(checkpoint=personal_loss, backward=personal_loss, additional_losses=additional_losses)
+        return losses

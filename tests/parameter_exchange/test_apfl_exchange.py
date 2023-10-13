@@ -46,22 +46,22 @@ def test_apfl_layer_exchange() -> None:
             assert np.array_equal(layer_parameters, model_state_dict[layer_name])
 
     input = torch.ones((3, 1, 10, 10))
-    # APFL returns the personal prediction which are a combination of the logits of local and global models
-    personal_shape = model(input).shape
+    # APFL returns a dict with personal, global and local predicitons
+    # Assert return values of each prediction type is correct dim
+    preds = model(input)
+    personal_shape = preds["personal"].shape
     # Batch size
     assert personal_shape[0] == 3
     # Output size
     assert personal_shape[1] == 3
 
-    # We can get the global preds with the global_forward method
-    global_shape = model.global_forward(input).shape
+    global_shape = preds["global"].shape
     # Batch size
     assert global_shape[0] == 3
     # Output size
     assert global_shape[1] == 3
 
-    # We can get the local preds with the local_forward method
-    local_shape = model.local_forward(input).shape
+    local_shape = preds["local"].shape
     # Batch size
     assert local_shape[0] == 3
     # Output size

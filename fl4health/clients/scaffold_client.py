@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -169,7 +169,9 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(
+        self, input: torch.Tensor, target: torch.Tensor
+    ) -> Tuple[Losses, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
 
@@ -181,6 +183,7 @@ class ScaffoldClient(BasicClient):
         losses.backward.backward()
         self.modify_grad()
         self.optimizer.step()
+
         return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
