@@ -1,7 +1,7 @@
 import random
 import string
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Optional, Type, TypeVar
 
 import torch
 import torch.nn as nn
@@ -31,10 +31,6 @@ class NumpyFlClient(NumPyClient):
 
     def generate_hash(self, length: int = 8) -> str:
         return "".join(random.choice(string.ascii_lowercase) for i in range(length))
-
-    def _maybe_log_metrics(self, to_log: Dict[str, Any]) -> None:
-        if self.wandb_reporter:
-            self.wandb_reporter.report_metrics(to_log)
 
     def _maybe_checkpoint(self, comparison_metric: float) -> None:
         if self.checkpointer:

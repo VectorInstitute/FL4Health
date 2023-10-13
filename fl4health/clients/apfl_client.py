@@ -22,12 +22,9 @@ class ApflClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
-        super().__init__(
-            data_path, metrics, device, loss_meter_type, metric_meter_type, use_wandb_reporter, checkpointer
-        )
+        super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
         # Apfl Module which holds both local and global models
         # and gives the ability to get personal, local and global predictions
         self.model: APFLModule
@@ -69,8 +66,7 @@ class ApflClient(BasicClient):
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        if self.use_wandb_reporter:
-            self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         self.initialized = True
 
