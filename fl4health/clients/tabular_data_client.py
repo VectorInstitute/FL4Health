@@ -43,6 +43,7 @@ class TabularDataClient(BasicClient):
         to perform feature preprocessing.
         """
         format_specified = self.narrow_config_type(config, FORMAT_SPECIFIED, bool)
+        self.df = self.get_data_frame(config)
 
         if format_specified:
             # Since the server has obtained its source of information,
@@ -70,7 +71,6 @@ class TabularDataClient(BasicClient):
             del self.aligned_targets
         else:
             # Encode the information of the client's local tabular data.
-            self.df = self.get_data_frame(config)
             self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.encoder_from_dataframe(
                 self.df, self.id_column, self.target_column
             )

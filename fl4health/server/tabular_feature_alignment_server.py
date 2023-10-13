@@ -1,7 +1,7 @@
 import random
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 from flwr.common.logger import log
 from flwr.common.typing import Config
@@ -77,11 +77,7 @@ class TabularFeatureAlignmentServer(FlServer):
             # very first fitting round.
             if self.tab_features_info is None:
                 # A random client's feature information is selected as the source of truth for feature alignment.
-                feature_info = self.poll_clients_for_feature_info(timeout)
-
-                rand_idx = random.randint(0, len(feature_info) - 1)
-
-                feature_info_source = feature_info[rand_idx]
+                feature_info_source = self.poll_clients_for_feature_info(timeout)
             # If the server already has the feature info, then it simply sends it to the clients.
             else:
                 log(
@@ -108,28 +104,32 @@ class TabularFeatureAlignmentServer(FlServer):
         # are aligned and global model is initialized.
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
-    def poll_clients_for_feature_info(self, timeout: Optional[float]) -> List[str]:
+    def poll_clients_for_feature_info(self, timeout: Optional[float]) -> str:
         log(INFO, "Feature information source unspecified. Polling clients for feature information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
+        # Randomly select one client to obtain its feature information.
+        client_instructions_rand_sample = random.sample(population=client_instructions, k=1)
         results, _ = poll_clients(
-            client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
+            client_instructions=client_instructions_rand_sample, max_workers=self.max_workers, timeout=timeout
         )
 
-        feature_info: List[str] = [
-            str(get_properties_res.properties[FEATURE_INFO]) for (_, get_properties_res) in results
-        ]
-
+        assert len(results) == 1
+        _, get_properties_res = results[0]
+        feature_info = str(get_properties_res.properties[FEATURE_INFO])
         return feature_info
 
     def poll_clients_for_dimension_info(self, timeout: Optional[float]) -> Tuple[int, int]:
         log(INFO, "Waiting for Clients to align features and then polling for dimension information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
-        results, _ = poll_clients(
-            client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
-        )
+        # Since the features of all clients are aligned, we just select one client
+        # to obtain the input/output dimensions.
 
+        results, _ = poll_clients(
+            client_instructions=client_instructions[:1], max_workers=self.max_workers, timeout=timeout
+        )
+        assert len(results) == 1
         input_dimension = int(results[0][1].properties[INPUT_DIMENSION])
         out_put_dimension = int(results[0][1].properties[OUTPUT_DIMENSION])
 
