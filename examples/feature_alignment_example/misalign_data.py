@@ -1,8 +1,10 @@
 import random
+from logging import INFO
 from pathlib import Path
 from typing import List
 
 import pandas as pd
+from flwr.common.logger import log
 
 
 def random_split_data(df: pd.DataFrame, n: int) -> List[pd.DataFrame]:
@@ -23,6 +25,7 @@ if __name__ == "__main__":
     df1 = dfs[0].reset_index()
     df2 = dfs[1].reset_index()
 
+    # Dropping columns to create misalignment.
     df2 = df2.drop(columns=["ExpiredHospital", "admit_type", "NumRx", "ethnicity"])
 
     # Now we randomly select 10 percent of the rows of df2
@@ -30,11 +33,11 @@ if __name__ == "__main__":
     num_rows_to_select = int(0.10 * len(df2))
     random_indices = random.sample(range(len(df2)), num_rows_to_select)
 
-    # Set a specific column ('B' in this example) to the specific value for the selected rows
+    # Set a specific column ('insurance' in this example) to the specific value for the selected rows
     df2.loc[random_indices, "insurance"] = "Unknown"
 
-    print(f"hospital1 insurance values: {df1['insurance'].unique()}")
-    print(f"hospital2 insurance values: {df2['insurance'].unique()}")
+    log(INFO, f"hospital1 insurance values: {df1['insurance'].unique()}")
+    log(INFO, f"hospital2 insurance values: {df2['insurance'].unique()}")
 
     df1.to_csv(f"{target_datapath}/mimic3d_hospital1.csv", index=False)
     df2.to_csv(f"{target_datapath}/mimic3d_hospital2.csv", index=False)

@@ -27,38 +27,36 @@ class Mimic3TabularDataClient(TabularDataClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        # random train-valid split.
         indices = np.random.permutation(self.aligned_features.shape[0])
         shuffled_data = self.aligned_features[indices]
         shuffled_targets = self.aligned_targets[indices]
         split_percentage = 0.9
         split_point = int(shuffled_data.shape[0] * split_percentage)
-
         train_data = shuffled_data[:split_point]
         val_data = shuffled_data[split_point:]
         train_targets = shuffled_targets[:split_point]
         val_targets = shuffled_targets[split_point:]
 
-        tensor_train_data = torch.from_numpy(train_data.toarray())
+        tensor_train_data = torch.from_numpy(train_data.toarray()).float()
         tensor_train_targets = torch.from_numpy(train_targets)
-        tensor_val_data = torch.from_numpy(val_data.toarray())
+        tensor_val_data = torch.from_numpy(val_data.toarray()).float()
         tensor_val_targets = torch.from_numpy(val_targets)
 
-        tensor_train_data = tensor_train_data.float()
         tensor_train_targets = torch.squeeze(tensor_train_targets.long(), dim=1)
-        tensor_val_data = tensor_val_data.float()
         tensor_val_targets = torch.squeeze(tensor_val_targets.long(), dim=1)
 
         train_loader = DataLoader(
             TensorDataset(tensor_train_data, tensor_train_targets), batch_size=batch_size, shuffle=True
         )
 
-        val_loader = DataLoader(
-            TensorDataset(tensor_val_data, tensor_val_targets), batch_size=batch_size, shuffle=True
-        )
+        val_loader = DataLoader(TensorDataset(tensor_val_data, tensor_val_targets), batch_size=batch_size)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return LogisticRegression(self.input_dimension, self.output_dimension)
+        model = LogisticRegression(self.input_dimension, self.output_dimension)
+        model.to(self.device)
+        return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.05, weight_decay=0.001)

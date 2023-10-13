@@ -1,41 +1,30 @@
 import argparse
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 
 import flwr as fl
 import pandas as pd
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Metrics, Parameters
+from flwr.common.typing import Parameters
 
 from examples.models.logistic_regression import LogisticRegression
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.server.tabular_feature_alignment_server import TabularFeatureAlignmentServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
+# This data path is used to create a "source of truth" on the server-side as an example.
+# This is used if the config specifies source_specified as true
 DATA_PATH = "examples/feature_alignment_example/mimic3d_hospital1.csv"
+
 CONFIG_PATH = "examples/feature_alignment_example/config.yaml"
 
 
 def get_initial_model_parameters(input_dim: int, output_dim: int) -> Parameters:
     initial_model = LogisticRegression(input_dim, output_dim)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
 
 
 def construct_tab_feature_info_encoder(

@@ -18,7 +18,6 @@ from fl4health.feature_alignment.constants import (
 )
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.feature_alignment.tab_features_preprocessor import TabularFeaturesPreprocessor
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.metrics import Metric
 
 
@@ -27,7 +26,6 @@ class TabularDataClient(BasicClient):
         self, data_path: Path, metrics: Sequence[Metric], device: torch.device, id_column: str, target_column: str
     ) -> None:
         super().__init__(data_path, metrics, device)
-        self.parameter_exchanger = FullParameterExchanger()
         self.tabular_features_info_encoder: TabularFeaturesInfoEncoder
         self.tabular_features_preprocessor: TabularFeaturesPreprocessor
         self.df: pd.DataFrame
