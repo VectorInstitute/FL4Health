@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -33,12 +33,10 @@ class BasicClient(NumpyFlClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.use_wandb_reporter = use_wandb_reporter
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
@@ -53,6 +51,9 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: float
+
+        # Need to track total_steps across rounds for WANDB reporting
+        self.total_steps: int = 0
 
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
         """
@@ -136,6 +137,27 @@ class BasicClient(NumpyFlClient):
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
         )
 
+    def _handle_reporting(
+        self,
+        loss_dict: Dict[str, float],
+        metric_dict: Dict[str, Scalar],
+        current_round: Optional[int] = None,
+    ) -> None:
+
+        # If reporter is None we do not report to wandb and return
+        if self.wandb_reporter is None:
+            return
+
+        # If no current_round is passed or current_round is None, set current_round to 0
+        # This situation only arises when we do local finetuning and call train_by_epochs or train_by_steps explicitly
+        current_round = current_round if current_round is not None else 0
+
+        reporting_dict: Dict[str, Any] = {"server_round": current_round}
+        reporting_dict.update({"step": self.total_steps})
+        reporting_dict.update(loss_dict)
+        reporting_dict.update(metric_dict)
+        self.wandb_reporter.report_metrics(reporting_dict)
+
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
@@ -179,11 +201,14 @@ class BasicClient(NumpyFlClient):
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(preds, target)
+                self.total_steps += 1
             metrics = self.train_metric_meter.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
-            self._handle_logging(loss_dict, metrics, current_epoch=local_epoch, current_round=current_round)
+            # Log results and maybe report via WANDB
+            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
+            self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         # Return final training metrics
         return loss_dict, metrics
@@ -212,11 +237,15 @@ class BasicClient(NumpyFlClient):
             self.train_loss_meter.update(losses)
             self.train_metric_meter.update(preds, target)
 
+            self.total_steps += 1
+
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
         metrics = self.train_metric_meter.compute()
 
+        # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
+        self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
 
@@ -271,8 +300,7 @@ class BasicClient(NumpyFlClient):
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        if self.use_wandb_reporter:
-            self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
         super().setup_client(config)
 

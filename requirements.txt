@@ -21,6 +21,10 @@ torcheval
 torchinfo
 torchtext
 torchvision
+types-protobuf
+types-PyYAML
 types-requests
 types-setuptools
+types-six
+types-tabulate
 wandb
