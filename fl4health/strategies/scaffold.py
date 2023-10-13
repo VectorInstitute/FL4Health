@@ -109,7 +109,7 @@ class Scaffold(BasicFedAvg):
         """
         This is a helper function for the SCAFFOLD strategy init function to initialize the server_control_variates.
         It either initializes the control variates with custom provided variates or using the provided model
-        architecture/
+        architecture.
 
         Args:
             initial_control_variates (Optional[Parameters]): These are the initial set of control variates
