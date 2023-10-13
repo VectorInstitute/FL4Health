@@ -161,7 +161,7 @@ class ClientWandBReporter(WandBReporter):
 
     @classmethod
     def from_config(cls, client_name: str, config: Dict[str, Any]) -> Optional["ClientWandBReporter"]:
-        if config["reporting_enabled"]:
+        if "reporting_enabled" in config and config["reporting_enabled"]:
             return ClientWandBReporter(client_name, config["project_name"], config["group_name"], config["entity"])
         else:
             return None
