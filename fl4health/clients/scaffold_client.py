@@ -81,7 +81,8 @@ class ScaffoldClient(BasicClient):
 
         super().set_parameters(server_model_state, config)
 
-        # Note that these are weights the require a gradient, because they are used to compute control variates
+        # Note that we are restricting to weights that require a gradient here because they are used to compute
+        # control variates
         self.server_model_weights = [
             model_params.cpu().detach().clone().numpy()
             for model_params in self.model.parameters()
