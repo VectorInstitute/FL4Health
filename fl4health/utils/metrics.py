@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Sequence, Tuple, Union
+from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -236,47 +235,22 @@ class MetricMeterManager:
     Class to manage one or metric meters.
     """
 
-    def __init__(self, metrics: Sequence[Metric], metric_meter_type: MetricMeterType, name: str):
-        self.metrics = metrics
-        self.metric_meter_type = metric_meter_type
-        self.name = name
-        self.meters: Optional[Sequence[MetricMeter]] = None
+    def __init__(self, key_to_meter_map: Dict[str, MetricMeter]):
+        self.key_to_meter_map = key_to_meter_map
 
-    def update(self, preds: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor) -> None:
-        # Meters are initialized in the update so we know the number and name of meters
-        # If preds is a torch tensor, this is the standard case where the meter manager has a single meter
-        # If preds is a dict, there is multiple predictions (ie for APFL), so the amount of meters is equal
-        # to the amount of different prediction types (ie global, local, personal)
-        if self.meters is None:
-
-            if isinstance(preds, torch.Tensor):
-                self.meters = [
-                    MetricMeter.get_meter_by_type(copy.deepcopy(self.metrics), self.metric_meter_type, self.name)
-                ]
-            else:
-                self.meters = [
-                    MetricMeter.get_meter_by_type(
-                        copy.deepcopy(self.metrics), self.metric_meter_type, f"{self.name} {key}"
-                    )
-                    for key in preds.keys()
-                ]
-        preds_list = [preds] if isinstance(preds, torch.Tensor) else preds.values()
-        for meter, preds in zip(self.meters, preds_list):
-            meter.update(preds, target)
+    def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
+        for map_key, pred_key in zip(sorted(self.key_to_meter_map.keys()), sorted(preds.keys())):
+            assert map_key == pred_key
+            self.key_to_meter_map[map_key].update(preds[pred_key], target)
 
     def compute(self) -> Dict[str, Scalar]:
-        assert self.meters is not None
         all_results = {}
-        for meter in self.meters:
+        for meter in self.key_to_meter_map.values():
             result = meter.compute()
             all_results.update(result)
 
         return all_results
 
     def clear(self) -> None:
-        # If meters is none, no need to clear
-        if self.meters is None:
-            return
-
-        for meter in self.meters:
+        for meter in self.key_to_meter_map.values():
             meter.clear()

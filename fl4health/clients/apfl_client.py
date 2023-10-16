@@ -4,14 +4,15 @@ from typing import Dict, Optional, Sequence, Tuple, Union
 import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import APFLModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
 
 
 class ApflClient(BasicClient):
@@ -24,7 +25,36 @@ class ApflClient(BasicClient):
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
+        super(BasicClient, self).__init__(data_path, device)
+
+        self.metrics = metrics
+        self.checkpointer = checkpointer
+        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+
+        train_key_to_meter_map = {
+            "personal": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - personal"),
+            "global": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - global"),
+            "local": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - local"),
+        }
+        self.train_metric_meter_mngr = MetricMeterManager(train_key_to_meter_map)
+        val_key_to_meter_map = {
+            "personal": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - personal"),
+            "global": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - global"),
+            "local": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - local"),
+        }
+        self.val_metric_meter_mngr = MetricMeterManager(val_key_to_meter_map)
+
+        self.optimizer: torch.optim.Optimizer
+
+        self.train_loader: DataLoader
+        self.val_loader: DataLoader
+        self.num_train_samples: int
+        self.num_val_samples: int
+        self.learning_rate: float
+
+        # Need to track total_steps across rounds for WANDB reporting
+        self.total_steps: int = 0
         # Apfl Module which holds both local and global models
         # and gives the ability to get personal, local and global predictions
         self.model: APFLModule
@@ -70,9 +100,7 @@ class ApflClient(BasicClient):
 
         self.initialized = True
 
-    def train_step(
-        self, input: torch.Tensor, target: torch.Tensor
-    ) -> Tuple[Losses, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
@@ -95,7 +123,6 @@ class ApflClient(BasicClient):
         # Personal predictions are generated as a convex combination of the output
         # of local and global models
         preds = self.predict(input)
-        assert isinstance(preds, dict)
         # Parameters of local model are updated to minimize loss of personalized model
         losses = self.compute_loss(preds, target)
         losses.backward.backward()
