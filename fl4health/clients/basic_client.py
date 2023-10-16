@@ -41,6 +41,7 @@ class BasicClient(NumpyFlClient):
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
 
+        # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
         train_key_to_meter_map = {
             "prediction": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
         }
@@ -173,8 +174,6 @@ class BasicClient(NumpyFlClient):
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
         Assumes self.model is in train model already.
-        The preds value that is returned is torch.Tensor for normal cases when there is only a single prediction.
-        In cases where there are multiple prediction types (ie APFL), a Dict of torch.Tensor is returned.
         """
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
@@ -193,8 +192,6 @@ class BasicClient(NumpyFlClient):
         """
         Given input and target, compute loss, update loss and metrics
         Assumes self.model is in eval mode already.
-        The preds value that is returned is torch.Tensor for normal cases when there is only a single prediction.
-        In cases where there are multiple prediction types (ie APFL), a Dict of torch.Tensor is returned.
         """
 
         # Get preds and compute loss
@@ -332,8 +329,9 @@ class BasicClient(NumpyFlClient):
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         """
-        Return predictions when given input. Returns torch tensor for non personalized model with single output.
-        Returns dict of torch tensor for personalized model with multiple outputs (ie APFL)
+        Return dict of str and torch.Tensor contaiing predictions when given input.
+        In the default case, the dict has a single item with key prediction.
+        In more complicated approaches such as APFL, the dict has as many items as prediction types
         User can override for more complex logic.
         """
         preds = self.model(input)
@@ -344,7 +342,10 @@ class BasicClient(NumpyFlClient):
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
         loss components if you wish to train the total loss as well as sub losses if they exist.
-        Input can be a single torch.Tensor or a Dict of torch tensors for each prediction type.
+        Predicitons are a dictionairy of str and torch.Tensor. In the base case we have one set of prediction
+        stored in the prediction key of the dict.
+        For more complicated loss computations (additional loss components or multiple prediction types)
+        this method should be overridden.
         """
         loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
@@ -376,7 +377,15 @@ class BasicClient(NumpyFlClient):
         raise NotImplementedError
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionairy.
+        """
         pass
 
     def update_after_step(self, step: int) -> None:
+        """
+        Called after local train step on client. step is an integer that represents
+        the local training step that was most recently completed.
+        """
         pass

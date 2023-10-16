@@ -32,6 +32,7 @@ class ApflClient(BasicClient):
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
 
+        # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
         train_key_to_meter_map = {
             "personal": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - personal"),
             "global": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - global"),
@@ -67,6 +68,10 @@ class ApflClient(BasicClient):
         return step == 0
 
     def update_after_step(self, step: int) -> None:
+        """
+        Called after local train step on client. step is an integer that represents
+        the local training step that was most recently completed.
+        """
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 

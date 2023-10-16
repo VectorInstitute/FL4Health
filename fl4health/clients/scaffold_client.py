@@ -189,6 +189,10 @@ class ScaffoldClient(BasicClient):
         return parameter_exchanger
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionairy.
+        """
         self.update_control_variates(local_steps)
 
 
