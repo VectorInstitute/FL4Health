@@ -16,10 +16,10 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
-from research.flamby.fed_ixi.apfl.apfl_model import APFLUNet
+from research.flamby.fed_ixi.apfl.apfl_model import ApflUNet
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
@@ -59,7 +59,7 @@ class FedIxiApflClient(ApflClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: APFLModule = APFLModule(APFLUNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
+        model: ApflModule = ApflModule(ApflUNet(), alpha_lr=self.alpha_learning_rate).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:

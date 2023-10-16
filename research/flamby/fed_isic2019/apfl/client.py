@@ -16,10 +16,10 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
-from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
+from research.flamby.fed_isic2019.apfl.apfl_model import ApflEfficientNet
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
@@ -62,8 +62,8 @@ class FedIsic2019ApflClient(ApflClient):
         return BaselineLoss()
 
     def get_model(self, config: Config) -> nn.Module:
-        model: APFLModule = APFLModule(
-            APFLEfficientNet(frozen_blocks=13, turn_off_bn_tracking=False), alpha_lr=self.alpha_learning_rate
+        model: ApflModule = ApflModule(
+            ApflEfficientNet(frozen_blocks=13, turn_off_bn_tracking=False), alpha_lr=self.alpha_learning_rate
         ).to(self.device)
         return model
 

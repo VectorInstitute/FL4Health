@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -21,12 +21,16 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 class MnistApflClient(ApflClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        self.model: ApflModule = ApflModule(MnistNetWithBnAndFrozen()).to(self.device)
+        self.criterion = torch.nn.CrossEntropyLoss()
+        self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)
+        self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=0.01)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return APFLModule(MnistNetWithBnAndFrozen()).to(self.device)
+        return ApflModule(MnistNetWithBnAndFrozen()).to(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=0.01)

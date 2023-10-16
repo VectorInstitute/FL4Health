@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 
-class APFLModule(nn.Module):
+class ApflModule(nn.Module):
     def __init__(
         self,
         model: nn.Module,

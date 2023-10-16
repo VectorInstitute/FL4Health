@@ -7,5 +7,5 @@ class LogisticRegression(torch.nn.Module):
         self.linear = torch.nn.Linear(input_dim, output_dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        outputs = torch.sigmoid(self.linear(x)).squeeze()
+        outputs = torch.sigmoid(self.linear(x)).reshape(-1)
         return outputs

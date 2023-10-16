@@ -8,11 +8,11 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 
 class ApflClient(BasicClient):
@@ -28,26 +28,6 @@ class ApflClient(BasicClient):
         super(BasicClient, self).__init__(data_path, device)
 
         self.metrics = metrics
-        self.checkpointer = checkpointer
-        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-
-        # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
-        train_key_to_meter_map = {
-            "personal": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - personal"),
-            "global": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - global"),
-            "local": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train meter - local"),
-        }
-        self.train_metric_meter_mngr = MetricMeterManager(train_key_to_meter_map)
-        val_key_to_meter_map = {
-            "personal": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - personal"),
-            "global": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - global"),
-            "local": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val meter - local"),
-        }
-        self.val_metric_meter_mngr = MetricMeterManager(val_key_to_meter_map)
-
-        self.optimizer: torch.optim.Optimizer
-
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.num_train_samples: int
@@ -58,7 +38,7 @@ class ApflClient(BasicClient):
         self.total_steps: int = 0
         # Apfl Module which holds both local and global models
         # and gives the ability to get personal, local and global predictions
-        self.model: APFLModule
+        self.model: ApflModule
 
         # local_optimizer is used on the local model
         # Usual self.optimizer is used for global model
@@ -80,7 +60,7 @@ class ApflClient(BasicClient):
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
         model = self.get_model(config)
-        assert isinstance(model, APFLModule)
+        assert isinstance(model, ApflModule)
         self.model = model
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader

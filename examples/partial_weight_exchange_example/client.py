@@ -111,11 +111,24 @@ class TransformerPartialExchangeClient(BasicClient):
         return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        # parameters are set
-        assert self.model is not None and self.parameter_exchanger is not None
-        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        # stores the values of the model parameters at the beginning of each training round.
+        """
+        Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
+        parameters are set. If it's the first time the model is being initialized, we assume the full model is being
+        initialized and the weights sent correspond to the complete set of weights. Thus we use the
+        FullParameterExchanger() to set all model weights.
+        Subsequently, this approach uses the threshold parameter exchanger to handle exchanging a dynamic subset of
+        model layer weights.
+        Args:
+            parameters (NDArrays): In the first setting, parameters represents the full set of weights for the model
+            for initialization. Thereafter, we assume that it is a subset of the weights packed alongside the names
+            of the layer to which the weights correspond.
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+        """
+        if not self.model_weights_initialized:
+            self.initialize_all_model_weights(parameters, config)
+        else:
+            self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        # stores the values of the new model parameters at the beginning of each training round.
         self._align_model_parameters(self.initial_model, self.model)
 
     def _align_model_parameters(self, initial_model: nn.Module, target_model: nn.Module) -> None:

@@ -5,7 +5,7 @@ from flamby.datasets.fed_ixi import Baseline
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
-class APFLUNet(nn.Module):
+class ApflUNet(nn.Module):
     """
     APFL module to serve as both the local and global models APFL unifies the logits through a convex combination of
     the local and global model versions, so we maintain the original structure of efficient net and simply interpolate

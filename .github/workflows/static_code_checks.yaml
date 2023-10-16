@@ -23,5 +23,7 @@ jobs:
       - name: precommit checks
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install $(grep -v '^torchdata\|^torchtext\|^torcheval' requirements.txt)
           pre-commit run --all-files
+      - name: Clearing pip for space
+        run: pip uninstall -y -r requirements.txt

@@ -63,10 +63,6 @@ class BasicClient(NumpyFlClient):
         # Need to track total_steps across rounds for WANDB reporting
         self.total_steps: int = 0
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the model weights and initialize the correct weights with the parameter exchanger.
-        super().set_parameters(parameters, config)
-
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
         """
         Method to ensure the required keys are present in config and extracts the values.
@@ -97,7 +93,7 @@ class BasicClient(NumpyFlClient):
 
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
-            local_steps = self.num_train_samples * local_epochs  # total steps over training round
+            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
         elif local_steps is not None:
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
@@ -298,7 +294,8 @@ class BasicClient(NumpyFlClient):
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
-        self.model = self.get_model(config)
+        # Explicitly send the model to the desired device. This is idempotent.
+        self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader

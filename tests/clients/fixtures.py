@@ -11,6 +11,8 @@ from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
+from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
 from fl4health.utils.metrics import Accuracy
@@ -58,4 +60,23 @@ def get_evaluation_client(model: nn.Module) -> EvaluateClient:
     client.data_loader = DataLoader(TensorDataset(torch.ones((10, 100)), torch.ones((10), dtype=torch.long)), 5)
     client.initialized = True
     client.criterion = nn.CrossEntropyLoss()
+    return client
+
+
+@pytest.fixture
+def get_numpy_fl_client(model: nn.Module) -> NumpyFlClient:
+    client = NumpyFlClient(data_path=Path(""), device=torch.device("cpu"))
+    client.parameter_exchanger = LayerExchangerWithExclusions(model, {nn.Linear})
+    client.model = model
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_apfl_client(type: type, model: nn.Module) -> ApflClient:
+    client = ApflClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    apfl_model = ApflModule(model, False)
+    client.model = apfl_model
+    client.parameter_exchanger = FixedLayerExchanger(apfl_model.layers_to_exchange())
+    client.initialized = True
     return client

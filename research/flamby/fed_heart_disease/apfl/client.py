@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
@@ -56,8 +56,8 @@ class FedHeartDiseaseApflClient(ApflClient):
         val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
         return train_loader, val_loader
 
-    def get_model(self, config: Config) -> APFLModule:
-        model: APFLModule = APFLModule(Baseline(), alpha_lr=self.alpha_learning_rate).to(self.device)
+    def get_model(self, config: Config) -> ApflModule:
+        model: ApflModule = ApflModule(Baseline(), alpha_lr=self.alpha_learning_rate).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
