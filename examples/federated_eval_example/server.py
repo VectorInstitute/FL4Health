@@ -39,7 +39,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/basic_example/config.yaml",
+        default="examples/federated_eval_example/config.yaml",
     )
     parser.add_argument(
         "--checkpoint_path",

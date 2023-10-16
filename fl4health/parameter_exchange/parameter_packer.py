@@ -51,7 +51,10 @@ class ParameterPackerFedProx(ParameterPacker[float]):
         # The last entry is extra packed fedprox variable
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
-        extra_fedprox_variable = float(packed_parameters[split_size:][0])
+        # The packed contents should have length 1
+        packed_contents = packed_parameters[split_size:]
+        assert len(packed_contents) == 1
+        extra_fedprox_variable = float(packed_contents[0])
         return model_parameters, extra_fedprox_variable
 
 

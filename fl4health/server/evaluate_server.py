@@ -16,26 +16,6 @@ from fl4health.client_managers.base_sampling_manager import BaseFractionSampling
 
 
 class EvaluateServer(Server):
-    """
-    This server implements ONLY federated evaluation. That is, it does no actually FL training. Rather, it simply
-    triggers evaluation runs in each client. Optionally, it sends over a central set of model parameters to be
-    evaluated. If no parameters are sent, the server expects the clients to handle loading a model locally and then
-    evaluating.
-
-    Parameters
-    ----------
-    fraction_evaluate : float, optional
-        Fraction of clients used during evaluation
-    min_available_clients : int, optional
-        Minimum number of total clients in the system. Defaults to 1.
-    evaluate_config : Dict[str, Scalar], optional
-        Configuration dictionary to configure evaluation on clients. Defaults to None.
-    accept_failures : bool, optional
-        Whether or not accept rounds containing failures. Defaults to True.
-    evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn]
-        Metrics aggregation function, optional.
-    """
-
     def __init__(
         self,
         client_manager: ClientManager,
@@ -46,6 +26,21 @@ class EvaluateServer(Server):
         accept_failures: bool = True,
         min_available_clients: int = 1,
     ) -> None:
+        """
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            fraction_evaluate (float): Fraction of clients used during evaluation.
+            model_checkpoint_path (Optional[Path], optional): Server side model checkpoint path to load global model
+                from. Defaults to None.
+            evaluate_config (Optional[Dict[str, Scalar]], optional): Configuration dictionary to configure evaluation
+                on clients. Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):  Metrics aggregation function.
+                 Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
+                Defaults to 1.
+        """
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path
@@ -77,6 +72,14 @@ class EvaluateServer(Server):
         """
         In order to head off training and only run eval, we have to override the fit function as this is
         essentially the entry point for federated learning from the app.
+
+        Args:
+            num_rounds (int): Not used.
+            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
+                If none, then it will wait for the minimum number to respond indefinitely.
+
+        Returns:
+            History: This object will hold the aggregated metrics returned from the clients.
         """
         history = History()
 
@@ -102,7 +105,19 @@ class EvaluateServer(Server):
         self,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
-        """Validate current global model on a number of clients."""
+        """
+        Validate current global model on a number of clients.
+
+        Args:
+            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
+                If none, then it will wait for the minimum number to respond indefinitely.
+
+        Returns:
+            Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]: The first value is the
+                loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
+                The second is the aggregated metrics passed from the clients, the third is the set of raw results and
+                failure objects returned by the clients.
+        """
 
         # Get clients and their respective instructions from client manager
         client_instructions = self.configure_evaluate()
@@ -136,7 +151,15 @@ class EvaluateServer(Server):
         return None, metrics_aggregated, (results, failures)
 
     def configure_evaluate(self) -> List[Tuple[ClientProxy, EvaluateIns]]:
-        """Configure the next round of evaluation."""
+        """
+        Configure the next round of evaluation. This handles the two different was that a set of clients might be
+        sampled.
+
+        Returns:
+            List[Tuple[ClientProxy, EvaluateIns]]: List of configuration instructions for the clients selected by the
+                client manager for evaluation. These configuration objects are sent to the clients to customize
+                evaluation.
+        """
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
             return []
@@ -163,7 +186,21 @@ class EvaluateServer(Server):
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        """Aggregate evaluation losses using weighted average."""
+        """
+        Aggregate evaluation results using the evaluate_metrics_aggregation_fn provided. Note that a dummy loss is
+        returned as we assume that it was packed into the metrics dictionary for this functionality.
+
+        Args:
+            results (List[Tuple[ClientProxy, EvaluateRes]]): List of results objects that have the metrics returned
+                from each client, if successful, along with the number of samples used in the evaluation.
+            failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): Failures reported by the clients
+                along with the client id, the results that we passed, if any, and the associated exception if one was
+                raised.
+
+        Returns:
+            Tuple[Optional[float], Dict[str, Scalar]]: A dummy float for the "loss" (these are packed with the metrics)
+                and the aggregated metrics dictionary.
+        """
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
