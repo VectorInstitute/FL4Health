@@ -1,8 +1,9 @@
+import copy
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config
+from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -31,13 +32,15 @@ class FendaClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        self.perFCL_loss = False
-        self.cos_sim_loss = True
+        self.perFCL_loss = True
+        self.cos_sim_loss = False
         self.contrastive_loss = False
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
         self.contrastive = SupConLoss()
         self.local_features: torch.Tensor
         self.global_features: torch.Tensor
+        self.global_old_features: torch.Tensor
+        self.global_model: torch.nn.Module
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModel)
@@ -45,7 +48,14 @@ class FendaClient(BasicClient):
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
         pred, self.local_features, self.global_features = self.model(input, self.pre_train)
+        if self.perFCL_loss:
+            self.global_old_features = self.global_model.forward(input)
         return pred
+
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        self.global_model = torch.nn.Module(copy.deepcopy(self.model.global_module))
+        self.global_model.eval()
+        return super().fit(parameters, config)
 
     def get_cosine_similarity_loss(self) -> torch.Tensor:
 
@@ -62,11 +72,16 @@ class FendaClient(BasicClient):
 
     def get_perFCL_loss(self) -> Tuple[torch.Tensor, torch.Tensor]:
         assert len(self.local_features) == len(self.global_features)
-        labels = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
+        labels_minimize = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
+        labels_maximize = torch.cat(
+            (torch.arange(len(self.local_features)), torch.arange(len(self.local_features)))
+        ).to(self.device)
         return self.contrastive(
-            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
+            torch.cat((self.local_features.unsqueeze(0), self.global_old_features.unsqueeze(0)), dim=0),
+            labels=labels_minimize,
         ), self.contrastive(
-            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
+            torch.cat((self.global_features.unsqueeze(0), self.global_old_features.unsqueeze(0)), dim=0),
+            labels=labels_maximize,
         )
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
