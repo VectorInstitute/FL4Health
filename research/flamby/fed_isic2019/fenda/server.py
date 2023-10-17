@@ -41,20 +41,17 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
         )
         fedavg_model_state = torch.load(dir).state_dict()
         model_state = model.global_module.state_dict()
+        matching_state = {}
         for k, v in fedavg_model_state.items():
             if k in model_state:
                 if v.size() == model_state[k].size():
-                    fedavg_model_state[k] = v
+                    matching_state[k] = v
                 elif model_state[k].size()[1:] == v.size()[1:]:
                     repeat = model_state[k].size()[0] // v.size()[0]
                     original_size = tuple([1] * (len(model_state[k].size()) - 1))
-                    fedavg_model_state[k] = v.repeat((repeat,) + original_size)
-                else:
-                    del fedavg_model_state[k]
-            else:
-                del fedavg_model_state[k]
-        print(len(fedavg_model_state))
-        model_state.update(fedavg_model_state)
+                    matching_state[k] = v.repeat((repeat,) + original_size)
+        print(len(matching_state))
+        model_state.update(matching_state)
         model.global_module.load_state_dict(model_state)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
