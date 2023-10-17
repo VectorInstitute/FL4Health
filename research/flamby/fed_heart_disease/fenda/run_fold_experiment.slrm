@@ -117,6 +117,7 @@ do
     nohup python -m research.flamby.fed_heart_disease.fenda.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
+        --run_name ${RUN_NAME} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.

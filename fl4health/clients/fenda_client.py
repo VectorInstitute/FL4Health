@@ -32,8 +32,8 @@ class FendaClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        self.perFCL_loss = True
-        self.cos_sim_loss = False
+        self.perFCL_loss = False
+        self.cos_sim_loss = True
         self.contrastive_loss = False
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
         self.contrastive = SupConLoss()

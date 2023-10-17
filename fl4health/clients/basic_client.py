@@ -63,7 +63,8 @@ class BasicClient(NumpyFlClient):
         Method to ensure the required keys are present in config and extracts the values.
         """
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        self.warmup_rounds = self.narrow_config_type(config, "warmup_rounds", int)
+        if "warmup_rounds" in config:
+            self.warmup_rounds = self.narrow_config_type(config, "warmup_rounds", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
