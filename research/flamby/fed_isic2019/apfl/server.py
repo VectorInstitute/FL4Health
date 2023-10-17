@@ -8,9 +8,9 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.config import load_config
-from research.flamby.fed_isic2019.apfl.apfl_model import APFLEfficientNet
+from research.flamby.fed_isic2019.apfl.apfl_model import ApflEfficientNet
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
@@ -30,7 +30,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    model = APFLModule(APFLEfficientNet(frozen_blocks=None, turn_off_bn_tracking=False))
+    model = ApflModule(ApflEfficientNet(frozen_blocks=None, turn_off_bn_tracking=False))
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.utils.data import DataLoader
 
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.metrics import Accuracy, Metric
 from research.flamby.flamby_clients.flamby_apfl_client import FlambyApflClient
@@ -45,7 +45,7 @@ class FedHeartDiseaseApflClient(FlambyApflClient):
 
         self.criterion = BaselineLoss()
 
-        self.model: APFLModule = APFLModule(Baseline(), alpha_lr=self.alpha_learning_rate).to(self.device)
+        self.model: ApflModule = ApflModule(Baseline(), alpha_lr=self.alpha_learning_rate).to(self.device)
         self.local_optimizer = torch.optim.AdamW(self.model.local_model.parameters(), lr=self.learning_rate)
         self.global_optimizer = torch.optim.AdamW(self.model.global_model.parameters(), lr=self.learning_rate)
 

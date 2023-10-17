@@ -21,11 +21,15 @@ class FendaClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
-            data_path, metrics, device, loss_meter_type, metric_meter_type, use_wandb_reporter, checkpointer
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            metric_meter_type=metric_meter_type,
+            checkpointer=checkpointer,
         )
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
         self.contrastive = SupConLoss()

@@ -9,7 +9,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.metrics import Metric, MetricAverageMeter, MetricMeter
 
 LocalLoss = torch.Tensor
@@ -32,7 +32,7 @@ class ApflClient(NumpyFlClient):
     ) -> None:
         super().__init__(data_path, device)
         self.metrics = metrics
-        self.model: APFLModule
+        self.model: ApflModule
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.num_examples: Dict[str, int]

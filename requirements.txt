@@ -7,6 +7,7 @@ nltk
 numpy
 opacus
 pandas
+portalocker
 pre-commit
 pyproject-flake8==5.0.4
 pytest
@@ -20,6 +21,10 @@ torcheval
 torchinfo
 torchtext
 torchvision
+types-protobuf
+types-PyYAML
 types-requests
 types-setuptools
+types-six
+types-tabulate
 wandb
