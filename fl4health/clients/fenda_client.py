@@ -1,9 +1,9 @@
 import copy
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -52,10 +52,12 @@ class FendaClient(BasicClient):
             self.global_old_features = self.global_model.forward(input)
         return pred
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        self.global_model = torch.nn.Module(copy.deepcopy(self.model.global_module))
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        output = super().set_parameters(parameters, config)
+        assert isinstance(self.model.global_module, torch.nn.Module)
+        self.global_model = copy.deepcopy(self.model.global_module)
         self.global_model.eval()
-        return super().fit(parameters, config)
+        return output
 
     def get_cosine_similarity_loss(self) -> torch.Tensor:
 
@@ -73,14 +75,12 @@ class FendaClient(BasicClient):
     def get_perFCL_loss(self) -> Tuple[torch.Tensor, torch.Tensor]:
         assert len(self.local_features) == len(self.global_features)
         labels_minimize = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
-        labels_maximize = torch.cat(
-            (torch.arange(len(self.local_features)), torch.arange(len(self.local_features)))
-        ).to(self.device)
+        labels_maximize = torch.arange(len(self.local_features)).to(self.device)
         return self.contrastive(
             torch.cat((self.local_features.unsqueeze(0), self.global_old_features.unsqueeze(0)), dim=0),
             labels=labels_minimize,
         ), self.contrastive(
-            torch.cat((self.global_features.unsqueeze(0), self.global_old_features.unsqueeze(0)), dim=0),
+            torch.cat((self.global_features.unsqueeze(1), self.global_old_features.unsqueeze(1)), dim=1),
             labels=labels_maximize,
         )
 
@@ -99,7 +99,7 @@ class FendaClient(BasicClient):
                 checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
             )
         if self.perFCL_loss:
-            contrastive_loss_minimize, contrastive_loss_maximize = self.get_contrastive_loss()
+            contrastive_loss_minimize, contrastive_loss_maximize = self.get_perFCL_loss()
             total_loss = loss + 0.001 * contrastive_loss_minimize + 0.001 * contrastive_loss_maximize
             losses = Losses(
                 checkpoint=loss,
