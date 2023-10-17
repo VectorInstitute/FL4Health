@@ -32,8 +32,8 @@ class FendaClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.perFCL_loss = False
-        self.cos_sim_loss = False
-        self.contrastive_loss = True
+        self.cos_sim_loss = True
+        self.contrastive_loss = False
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
         self.contrastive = SupConLoss()
         self.local_features: torch.Tensor
