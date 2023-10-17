@@ -33,12 +33,13 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
     client_manager = SimpleClientManager()
     model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
     summarize_model_info(model)
-    dir = (
-        "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
-        + run_name
-        + "/server_best_model.pkl"
-    )
-    model.load_state_dict(torch.load(dir))
+    if config["load_fedavg_model"]:
+        dir = (
+            "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
+            + run_name
+            + "/server_best_model.pkl"
+        )
+        model = torch.load(dir)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

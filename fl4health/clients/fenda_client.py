@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
@@ -31,6 +31,9 @@ class FendaClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
+        self.perFCL_loss = False
+        self.cos_sim_loss = False
+        self.contrastive_loss = True
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
         self.contrastive = SupConLoss()
         self.local_features: torch.Tensor
@@ -57,14 +60,39 @@ class FendaClient(BasicClient):
             torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
         )
 
+    def get_perFCL_loss(self) -> Tuple[torch.Tensor, torch.Tensor]:
+        assert len(self.local_features) == len(self.global_features)
+        labels = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
+        return self.contrastive(
+            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
+        ), self.contrastive(
+            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
+        )
+
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         if self.pre_train:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
-        cos_loss = self.get_cosine_similarity_loss()
-        total_loss = loss + 10 * cos_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
-        # contrastive_loss = self.get_contrastive_loss()
-        # total_loss = loss + 0.001 * contrastive_loss
-        # losses = Losses(checkpoint=loss, backward=total_loss,additional_losses={"contrastive_loss":contrastive_loss})
+        if self.cos_sim_loss:
+            cos_loss = self.get_cosine_similarity_loss()
+            total_loss = loss + 10 * cos_loss
+            losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
+        if self.contrastive_loss:
+            contrastive_loss = self.get_contrastive_loss()
+            total_loss = loss + 0.001 * contrastive_loss
+            losses = Losses(
+                checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
+            )
+        if self.perFCL_loss:
+            contrastive_loss_minimize, contrastive_loss_maximize = self.get_contrastive_loss()
+            total_loss = loss + 0.001 * contrastive_loss_minimize + 0.001 * contrastive_loss_maximize
+            losses = Losses(
+                checkpoint=loss,
+                backward=total_loss,
+                additional_losses={
+                    "contrastive_loss_minimize": contrastive_loss_minimize,
+                    "contrastive_loss_maximize": contrastive_loss_maximize,
+                },
+            )
+
         return losses
