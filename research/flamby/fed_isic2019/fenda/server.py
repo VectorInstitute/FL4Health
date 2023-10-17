@@ -51,6 +51,8 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
                     fedavg_model_state[k] = v.repeat((repeat,) + original_size)
                 else:
                     del fedavg_model_state[k]
+            else:
+                del fedavg_model_state[k]
         print(len(fedavg_model_state))
         model_state.update(fedavg_model_state)
         model.global_module.load_state_dict(model_state)
