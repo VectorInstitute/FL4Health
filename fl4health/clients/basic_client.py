@@ -364,6 +364,7 @@ class BasicClient(NumpyFlClient):
     def get_optimizer(self, config: Config) -> Union[Optimizer, Dict[str, Optimizer]]:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
+        Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
         """
         raise NotImplementedError
 
