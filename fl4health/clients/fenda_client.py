@@ -61,10 +61,10 @@ class FendaClient(BasicClient):
         if self.pre_train:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
-        # cos_loss = self.get_cosine_similarity_loss()
-        # total_loss = loss + 10 * cos_loss
-        # losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
-        contrastive_loss = self.get_contrastive_loss()
-        total_loss = loss + 0.001 * contrastive_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
+        cos_loss = self.get_cosine_similarity_loss()
+        total_loss = loss + 10 * cos_loss
+        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
+        # contrastive_loss = self.get_contrastive_loss()
+        # total_loss = loss + 0.001 * contrastive_loss
+        # losses = Losses(checkpoint=loss, backward=total_loss,additional_losses={"contrastive_loss":contrastive_loss})
         return losses
