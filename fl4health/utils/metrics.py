@@ -228,3 +228,30 @@ class MetricAverageMeter(MetricMeter):
     def clear(self) -> None:
         self.metric_values_history = [[] for _ in range(len(self.metrics))]
         self.counts = []
+
+
+class MetricMeterManager:
+    """
+    Class to manage one or metric meters.
+    """
+
+    def __init__(self, key_to_meter_map: Dict[str, MetricMeter]):
+        self.key_to_meter_map = key_to_meter_map
+
+    def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
+        # Assert that set of preds keys and map keys are the same
+        assert set(preds.keys()) == set(self.key_to_meter_map.keys())
+        for pred_key in preds.keys():
+            self.key_to_meter_map[pred_key].update(preds[pred_key], target)
+
+    def compute(self) -> Dict[str, Scalar]:
+        all_results = {}
+        for meter in self.key_to_meter_map.values():
+            result = meter.compute()
+            all_results.update(result)
+
+        return all_results
+
+    def clear(self) -> None:
+        for meter in self.key_to_meter_map.values():
+            meter.clear()

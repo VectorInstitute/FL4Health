@@ -37,6 +37,8 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client = DPScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
+    elif type == ApflClient:
+        client = ApflClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     else:
         raise ValueError(f"{str(type)} is not a valid client type")
 

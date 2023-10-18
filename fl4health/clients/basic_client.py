@@ -16,7 +16,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterType
+from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
 
 
 class BasicClient(NumpyFlClient):
@@ -40,8 +40,16 @@ class BasicClient(NumpyFlClient):
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.train_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
-        self.val_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val_meter")
+
+        # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
+        train_key_to_meter_map = {
+            "prediction": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
+        }
+        self.train_metric_meter_mngr = MetricMeterManager(train_key_to_meter_map)
+        val_key_to_meter_map = {
+            "prediction": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val_meter")
+        }
+        self.val_metric_meter_mngr = MetricMeterManager(val_key_to_meter_map)
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -84,15 +92,15 @@ class BasicClient(NumpyFlClient):
         self.set_parameters(parameters, config)
 
         if local_epochs is not None:
-            _, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
         elif local_steps is not None:
-            _, metrics = self.train_by_steps(local_steps, current_server_round)
+            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps)
+        self.update_after_train(local_steps, loss_dict)
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -158,7 +166,7 @@ class BasicClient(NumpyFlClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
         Assumes self.model is in train model already.
@@ -176,7 +184,7 @@ class BasicClient(NumpyFlClient):
 
         return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         """
         Given input and target, compute loss, update loss and metrics
         Assumes self.model is in eval mode already.
@@ -193,16 +201,19 @@ class BasicClient(NumpyFlClient):
         self, epochs: int, current_round: Optional[int] = None
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         self.model.train()
+        local_step = 0
         for local_epoch in range(epochs):
-            self.train_metric_meter.clear()
+            self.train_metric_meter_mngr.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter.update(preds, target)
+                self.train_metric_meter_mngr.update(preds, target)
+                self.update_after_step(local_step)
                 self.total_steps += 1
-            metrics = self.train_metric_meter.compute()
+                local_step += 1
+            metrics = self.train_metric_meter_mngr.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
@@ -222,8 +233,8 @@ class BasicClient(NumpyFlClient):
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
-        self.train_metric_meter.clear()
-        for _ in range(steps):
+        self.train_metric_meter_mngr.clear()
+        for step in range(steps):
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -235,13 +246,13 @@ class BasicClient(NumpyFlClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter.update(preds, target)
-
+            self.train_metric_meter_mngr.update(preds, target)
+            self.update_after_step(step)
             self.total_steps += 1
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter.compute()
+        metrics = self.train_metric_meter_mngr.compute()
 
         # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
@@ -251,19 +262,19 @@ class BasicClient(NumpyFlClient):
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        self.val_metric_meter.clear()
+        self.val_metric_meter_mngr.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter.update(preds, target)
+                self.val_metric_meter_mngr.update(preds, target)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.val_metric_meter.compute()
+        metrics = self.val_metric_meter_mngr.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
         # Checkpoint based on loss which is output of user defined compute_loss method
@@ -295,7 +306,7 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
-        self.optimizer = self.get_optimizer(config)
+        self.set_optimizer(config)
         self.learning_rate = self.optimizer.defaults["lr"]
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
@@ -310,20 +321,44 @@ class BasicClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
+    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         """
-        Return predictions when given input. User can override for more complex logic.
+        Return dict of str and torch.Tensor containing predictions when given input.
+        In the default case, the dict has a single item with key prediction.
+        In more complicated approaches such as APFL, the dict has as many items as prediction types
+        User can override for more complex logic.
         """
-        return self.model(input)
+        preds = self.model(input)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+        if isinstance(preds, dict):
+            return preds
+        elif isinstance(preds, torch.Tensor):
+            return {"prediction": preds}
+        else:
+            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+
+    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
         loss components if you wish to train the total loss as well as sub losses if they exist.
+        Predicitons are a dictionairy of str and torch.Tensor. In the base case we have one set of prediction
+        stored in the prediction key of the dict.
+        For more complicated loss computations (additional loss components or multiple prediction types)
+        this method should be overridden.
         """
-        loss = self.criterion(preds, target)
+        loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
         return losses
+
+    def set_optimizer(self, config: Config) -> None:
+        """
+        Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
+        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionairy of
+        string and optimizer are returned (ie APFL), the use must override this method.
+        """
+        optimizer = self.get_optimizer(config)
+        assert not isinstance(optimizer, dict)
+        self.optimizer = optimizer
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
@@ -338,9 +373,10 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def get_optimizer(self, config: Config) -> Optimizer:
+    def get_optimizer(self, config: Config) -> Union[Optimizer, Dict[str, Optimizer]]:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
+        Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
         """
         raise NotImplementedError
 
@@ -350,5 +386,16 @@ class BasicClient(NumpyFlClient):
         """
         raise NotImplementedError
 
-    def update_after_train(self, local_steps: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionairy.
+        """
+        pass
+
+    def update_after_step(self, step: int) -> None:
+        """
+        Called after local train step on client. step is an integer that represents
+        the local training step that was most recently completed.
+        """
         pass
