@@ -10,7 +10,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.losses import Losses, LossMeterType, SupConLoss
+from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
 
@@ -36,53 +36,72 @@ class FendaClient(BasicClient):
         self.cos_sim_loss = True
         self.contrastive_loss = False
         self.cos_sim = torch.nn.CosineSimilarity(dim=0)
-        self.contrastive = SupConLoss()
-        self.local_features: torch.Tensor
-        self.global_features: torch.Tensor
-        self.global_old_features: torch.Tensor
+        self.ce_criterion = torch.nn.CrossEntropyLoss().cuda()
+        self.old_model: torch.nn.Module
         self.global_model: torch.nn.Module
+        self.local_features: torch.Tensor
+        self.shared_features: torch.Tensor
+        self.local_old_features: torch.Tensor
+        self.shared_old_features: torch.Tensor
+        self.global_features: torch.Tensor
+        self.temprature: float = 0.5
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModel)
+        self.old_model = copy.deepcopy(self.model)
+        self.old_model.eval()
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
-        pred, self.local_features, self.global_features = self.model(input, self.pre_train)
+        pred, self.local_features, self.shared_features = self.model(input, self.pre_train)
+        _, self.local_old_features, self.shared_old_features = self.old_model(input, self.pre_train)
         if self.perFCL_loss:
-            self.global_old_features = self.global_model.forward(input)
+            self.global_features = self.global_model.forward(input)
         return pred
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         output = super().set_parameters(parameters, config)
-        assert isinstance(self.model.global_module, torch.nn.Module)
-        self.global_model = copy.deepcopy(self.model.global_module)
-        self.global_model.eval()
+        if self.perFCL_loss:
+            assert isinstance(self.model.global_module, torch.nn.Module)
+            self.global_model = copy.deepcopy(self.model.global_module)
+            self.global_model.eval()
         return output
 
     def get_cosine_similarity_loss(self) -> torch.Tensor:
 
-        assert len(self.local_features) == len(self.global_features)
-
-        return torch.abs(self.cos_sim(self.local_features, self.global_features)).mean()
+        assert len(self.local_features) == len(self.shared_features)
+        return torch.abs(self.cos_sim(self.local_features, self.shared_features)).mean()
 
     def get_contrastive_loss(self) -> torch.Tensor:
-        assert len(self.local_features) == len(self.global_features)
-        labels = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
-        return self.contrastive(
-            torch.cat((self.local_features.unsqueeze(0), self.global_features.unsqueeze(0)), dim=0), labels=labels
-        )
+        assert len(self.local_features) == len(self.shared_features)
+
+        posi = self.cos_sim(self.local_features, self.local_old_features)
+        logits = posi.reshape(-1, 1)
+        nega = self.cos_sim(self.local_features, self.shared_features)
+        logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
+        logits /= self.temprature
+        labels = torch.zeros(self.local_features.size(0)).cuda().long()
+
+        return self.ce_criterion(logits, labels)
 
     def get_perFCL_loss(self) -> Tuple[torch.Tensor, torch.Tensor]:
         assert len(self.local_features) == len(self.global_features)
-        labels_minimize = torch.cat((torch.ones(1), torch.zeros(1))).to(self.device)
-        labels_maximize = torch.arange(len(self.local_features)).to(self.device)
-        return self.contrastive(
-            torch.cat((self.local_features.unsqueeze(0), self.global_old_features.unsqueeze(0)), dim=0),
-            labels=labels_minimize,
-        ), self.contrastive(
-            torch.cat((self.global_features.unsqueeze(1), self.global_old_features.unsqueeze(1)), dim=1),
-            labels=labels_maximize,
-        )
+
+        posi = self.cos_sim(self.global_features, self.shared_features)
+        logits_max = posi.reshape(-1, 1)
+        nega = self.cos_sim(self.shared_features, self.shared_old_features)
+        logits_max = torch.cat((logits_max, nega.reshape(-1, 1)), dim=1)
+        logits_max /= self.temprature
+        labels_max = torch.zeros(self.local_features.size(0)).cuda().long()
+
+        posi = self.cos_sim(self.local_features, self.local_old_features)
+        logits_min = posi.reshape(-1, 1)
+        nega = self.cos_sim(self.local_features, self.global_features)
+        logits_min = torch.cat((logits_min, nega.reshape(-1, 1)), dim=1)
+        logits_min /= self.temprature
+        labels_min = torch.zeros(self.local_features.size(0)).cuda().long()
+
+        return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         if self.pre_train:
