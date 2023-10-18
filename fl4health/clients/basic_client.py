@@ -306,10 +306,7 @@ class BasicClient(NumpyFlClient):
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
-        optimizer = self.get_optimizer(config)
-        assert isinstance(optimizer, Optimizer)
-        self.optimizer = optimizer
-
+        self.set_optimizer(config)
         self.learning_rate = self.optimizer.defaults["lr"]
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
@@ -326,14 +323,19 @@ class BasicClient(NumpyFlClient):
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         """
-        Return dict of str and torch.Tensor contaiing predictions when given input.
+        Return dict of str and torch.Tensor containing predictions when given input.
         In the default case, the dict has a single item with key prediction.
         In more complicated approaches such as APFL, the dict has as many items as prediction types
         User can override for more complex logic.
         """
         preds = self.model(input)
-        preds = preds if isinstance(preds, dict) else {"prediction": preds}
-        return preds
+
+        if isinstance(preds, dict):
+            return preds
+        elif isinstance(preds, torch.Tensor):
+            return {"prediction": preds}
+        else:
+            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         """
@@ -347,6 +349,16 @@ class BasicClient(NumpyFlClient):
         loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
         return losses
+
+    def set_optimizer(self, config: Config) -> None:
+        """
+        Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
+        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionairy of
+        string and optimizer are returned (ie APFL), the use must override this method.
+        """
+        optimizer = self.get_optimizer(config)
+        assert not isinstance(optimizer, dict)
+        self.optimizer = optimizer
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
