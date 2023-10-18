@@ -59,6 +59,31 @@ class BinarySoftDiceCoefficient(Metric):
         dice[union == 0] = 1
         return torch.mean(dice).item()
 
+class PSNR(Metric):
+    def __init__(self, name: str = "psnr",
+        image_type: np._IntType = np.uint8,
+        max_pixel: int = 255
+    ):
+        self.image_type = image_type
+        # The maximum possible pixel value (255 for uint8 images)
+        self.max_pixel = max_pixel
+        super().__init__(name)
+
+    def __call__(self, reconstructed_image: torch.Tensor, input_image: torch.Tensor) -> Scalar:
+        # assuming batch first
+        assert reconstructed_image.shape[0] == input_image.shape[0]
+        input_image = input_image.cpu().detach()
+        reconstructed_image = reconstructed_image.cpu().detach()
+        # Ensuring that images have the same data type
+        input_image = np.array(input_image).astype(self.image_type)
+        reconstructed_image = np.array(reconstructed_image).astype(self.image_type)
+        # Mean Squared Error (MSE)
+        mse = np.mean((input_image - reconstructed_image) ** 2)
+        # PSNR in decibels
+        psnr = 10 * np.log10((self.max_pixel ** 2) / mse)
+
+        return psnr
+    
 
 class Accuracy(Metric):
     def __init__(self, name: str = "accuracy"):

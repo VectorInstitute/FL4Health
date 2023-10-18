@@ -158,3 +158,4 @@ settings.json
 # model artifacts
 
 **/*.pkl
+**/*.png
