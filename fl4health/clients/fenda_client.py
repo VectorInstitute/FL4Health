@@ -54,6 +54,7 @@ class FendaClient(BasicClient):
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
         pred, self.local_features, self.shared_features = self.model(input, self.pre_train)
+        self.local_features = self.local_features.unsqueeze(2).unsqueeze(3)
         self.local_features = self.local_features.view(len(self.local_features), -1)
         self.shared_features = self.shared_features.view(len(self.shared_features), -1)
         _, self.local_old_features, self.shared_old_features = self.old_model(input, self.pre_train)
@@ -136,6 +137,11 @@ class FendaClient(BasicClient):
                     "contrastive_loss_minimize": contrastive_loss_minimize,
                     "contrastive_loss_maximize": contrastive_loss_maximize,
                 },
+            )
+        else:
+            losses = Losses(
+                checkpoint=loss,
+                backward=total_loss,
             )
 
         return losses
