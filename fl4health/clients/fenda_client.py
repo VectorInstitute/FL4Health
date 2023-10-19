@@ -80,15 +80,10 @@ class FendaClient(BasicClient):
 
     def get_contrastive_loss(self) -> torch.Tensor:
         assert len(self.local_features) == len(self.shared_features)
-        print("debug", self.local_features.size())
         posi = self.cos_sim(self.local_features, self.local_old_features)
-        print("debug", posi.shape)
         logits = posi.reshape(-1, 1)
-        print("debug", logits.shape)
         nega = self.cos_sim(self.local_features, self.shared_features)
-        print("debug", nega.shape)
         logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        print("debug", nega.shape)
         logits /= self.temprature
         labels = torch.zeros(self.local_features.size(0)).to(self.device).long()
 
