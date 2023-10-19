@@ -44,8 +44,9 @@ class FedIsic2019FendaClient(FendaClient):
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
-        # self.dir = 'research/flamby/fed_isic2019/fedavg/hp_sweep_results/lr_' + str(self.learning_rate) \
-        # + '/Run_' + str(self.run_name) + '/client_' + str(self.client_number) + '_best_model.pkl'
+        self.perFCL_loss = False
+        self.cos_sim_loss = False
+        self.contrastive_loss = True
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")

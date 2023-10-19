@@ -33,10 +33,10 @@ class FendaClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.perFCL_loss = False
-        self.cos_sim_loss = True
-        self.contrastive_loss = False
-        self.cos_sim = torch.nn.CosineSimilarity(dim=0)
-        self.ce_criterion = torch.nn.CrossEntropyLoss().cuda()
+        self.cos_sim_loss = False
+        self.contrastive_loss = True
+        self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
+        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.old_model: torch.nn.Module
         self.global_model: torch.nn.Module
         self.local_features: torch.Tensor
@@ -74,13 +74,17 @@ class FendaClient(BasicClient):
 
     def get_contrastive_loss(self) -> torch.Tensor:
         assert len(self.local_features) == len(self.shared_features)
-
+        print("debug", self.local_features.size())
         posi = self.cos_sim(self.local_features, self.local_old_features)
+        print("debug", posi.shape)
         logits = posi.reshape(-1, 1)
+        print("debug", logits.shape)
         nega = self.cos_sim(self.local_features, self.shared_features)
+        print("debug", nega.shape)
         logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
+        print("debug", nega.shape)
         logits /= self.temprature
-        labels = torch.zeros(self.local_features.size(0)).cuda().long()
+        labels = torch.zeros(self.local_features.size(0)).to(self.device).long()
 
         return self.ce_criterion(logits, labels)
 
@@ -92,14 +96,14 @@ class FendaClient(BasicClient):
         nega = self.cos_sim(self.shared_features, self.shared_old_features)
         logits_max = torch.cat((logits_max, nega.reshape(-1, 1)), dim=1)
         logits_max /= self.temprature
-        labels_max = torch.zeros(self.local_features.size(0)).cuda().long()
+        labels_max = torch.zeros(self.local_features.size(0)).to(self.device).long()
 
         posi = self.cos_sim(self.local_features, self.local_old_features)
         logits_min = posi.reshape(-1, 1)
         nega = self.cos_sim(self.local_features, self.global_features)
         logits_min = torch.cat((logits_min, nega.reshape(-1, 1)), dim=1)
         logits_min /= self.temprature
-        labels_min = torch.zeros(self.local_features.size(0)).cuda().long()
+        labels_min = torch.zeros(self.local_features.size(0)).to(self.device).long()
 
         return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
 
