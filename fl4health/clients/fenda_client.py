@@ -54,9 +54,14 @@ class FendaClient(BasicClient):
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
         pred, self.local_features, self.shared_features = self.model(input, self.pre_train)
+        self.local_features = self.local_features.view(len(self.local_features), -1)
+        self.shared_features = self.shared_features.view(len(self.shared_features), -1)
         _, self.local_old_features, self.shared_old_features = self.old_model(input, self.pre_train)
+        self.local_old_features = self.local_old_features.view(len(self.local_old_features), -1)
+        self.shared_old_features = self.shared_old_features.view(len(self.shared_old_features), -1)
         if self.perFCL_loss:
             self.global_features = self.global_model.forward(input)
+            self.global_features = self.global_features.view(len(self.global_features), -1)
         return pred
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
