@@ -21,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: bool) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config_with_warmup,
@@ -33,7 +33,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
     client_manager = SimpleClientManager()
     model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
     summarize_model_info(model)
-    if config["load_fedavg_model"]:
+    if pretrain:
         dir = (
             "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
             + run_name
@@ -105,8 +105,13 @@ if __name__ == "__main__":
         help="Name of the run, model checkpoints will be saved under a subfolder with this name",
         required=True,
     )
+    parser.add_argument(
+        "--pretrain",
+        action="store_true",
+        help="whether load pretrained fedavg",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.run_name)
+    main(config, args.server_address, args.run_name, args.pretrain)
