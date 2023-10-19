@@ -34,7 +34,7 @@ class FendaClient(BasicClient):
         )
         self.perFCL_loss = False
         self.cos_sim_loss = False
-        self.contrastive_loss = True
+        self.contrastive_loss = False
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.old_model: torch.nn.Module
