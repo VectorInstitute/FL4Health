@@ -14,26 +14,56 @@ from torch.utils.data import DataLoader
 
 from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.losses import Losses
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from fl4health.utils.metrics import PSNR
+# Data
+import torchvision.transforms as transforms
+from fl4health.utils.dataset import BaseDataset, MNISTDataset
+from fl4health.utils.sampler import LabelBasedSampler
 
 
 class AutoEncoderClient(BasicClient):
     
     def vae_loss(self, reconstruction_loss:torch.Tensor, mu:torch.Tensor, logvar:torch.Tensor):
+        assert mu.size(0)==logvar.size(0)
         # KL Divergence loss
-        assert mu.shape()==logvar.shape()
         kl_divergence_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
         # The total VAE loss
         total_loss = reconstruction_loss + kl_divergence_loss
         return total_loss
     
+    def load_mnist_data(
+        self,
+        data_dir: Path,
+        batch_size: int,
+        sampler: Optional[LabelBasedSampler] = None,
+    ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+        """Load MNIST Dataset (training and validation set)."""
+        log(INFO, f"Data directory: {str(data_dir)}")
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(), # removing transforms.Normalize() to keep the range between 0 and 1 for BCE loss
+            ]
+        )
+        train_ds: BaseDataset = MNISTDataset(data_dir, train=True, transform=transform)
+        val_ds: BaseDataset = MNISTDataset(data_dir, train=False, transform=transform)
+
+        if sampler is not None:
+            train_ds = sampler.subsample(train_ds)
+            val_ds = sampler.subsample(val_ds)
+
+        train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        validation_loader = DataLoader(val_ds, batch_size=batch_size)
+
+        num_examples = {"train_set": len(train_ds), "validation_set": len(val_ds)}
+        return train_loader, validation_loader, num_examples
+
+    
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=30)
-        train_loader, val_loader, _ = load_mnist_data(self.data_path,batch_size, sampler)
+        train_loader, val_loader, _ = self.load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
     def get_criterion(self, config: Config) -> _Loss:
@@ -100,8 +130,9 @@ class AutoEncoderClient(BasicClient):
             self.train_loss_meter.clear()
             for input, _ in self.train_loader:
                 input = input.to(self.device)
+                # print(input[0])
                 losses, reconstruction = self.train_step(input)
-                
+                # print(reconstruction[0])
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(reconstruction, input)
                 self.total_steps += 1
@@ -124,10 +155,14 @@ class AutoEncoderClient(BasicClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            generated_image = self.predict(input)
-            losses = self.compute_loss(generated_image, input)
+            if self.variational:
+                reconstruction, mu, logvar = self.predict(input)
+                losses = self.compute_loss(reconstruction, input, mu, logvar)
+            else:
+                reconstruction = self.predict(input)
+                losses = self.compute_loss(reconstruction, input)
 
-        return losses, generated_image 
+        return losses, reconstruction 
    
    
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
@@ -137,9 +172,9 @@ class AutoEncoderClient(BasicClient):
         with torch.no_grad():
             for input, _ in self.val_loader:
                 input = input.to(self.device)
-                losses, generated_image = self.val_step(input)
+                losses, reconstruction = self.val_step(input)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter.update(generated_image, input)
+                self.val_metric_meter.update(reconstruction, input)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()

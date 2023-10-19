@@ -43,11 +43,13 @@ def main(config: Dict[str, Any]) -> None:
     # Initializing the model on the server side
     if config["variational"]:
         model = ConvVae()
+        model_checkpoint_name = "best_VAE_model.pkl"
     else:
         model = ConvAutoencoder()
+        model_checkpoint_name = "best_AE_model.pkl"
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
+    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name, maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

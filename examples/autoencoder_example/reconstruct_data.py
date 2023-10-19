@@ -7,33 +7,39 @@ an illustration of the trained model outputs.
 import matplotlib.pyplot as plt
 import torchvision
 import torch
+from pathlib import Path
 import os
-from fl4health.utils.load_data import load_mnist_data
+import torchvision.transforms as transforms
+from fl4health.utils.dataset import BaseDataset, MNISTDataset
+from torch.utils.data import DataLoader
 
 checkpoint_path= "examples/autoencoder_example"
 model_checkpoint_path = os.path.join(checkpoint_path, "best_model.pkl")
 autoencoder = torch.load(model_checkpoint_path)
+# print(autoencoder)
 
 # Load the original image (example, replace with your image)
-dataset_path = "examples/datasets/"
-_, val_loader, _ = load_mnist_data(dataset_path, batch_size=1)
-# Define a dictionary to keep track of whether we have encountered a sample for each class
-classes = 5
-class_sample_map = {}
-for group in range(0,classes):
-    class_sample_map[group] = None
+dataset_path = Path("examples/datasets/MNIST")
+transform = transforms.Compose([transforms.ToTensor()])
+val_ds: BaseDataset = MNISTDataset(dataset_path, train=False, transform=transform)
+validation_loader = DataLoader(val_ds, batch_size=1)
 
-print(class_sample_map)
+# Define a dictionary to keep track of whether we have encountered a sample for each class
+classes = [1,2,3]
+class_sample_map = {}
+for group in range(0,10): class_sample_map[group] = True if group in classes else False
+
 # Iterate through the validation data loader
-for image, label in val_loader:
+for image, label in validation_loader:
     label = label.item()  # Convert the label to an integer
-    
+
     # Check if you have already encountered a sample for this class
-    if label < classes and class_sample_map[label] is None:
+    if class_sample_map[label] is True:
+
         # If not, store this sample and display it (e.g., using plt.imshow)
         class_sample_map[label] = image
         # Pass the original image through the autoencoder to get the reconstructed image
-        reconstructed_image = autoencoder(image)
+        reconstructed_image, _, _ = autoencoder(image)
         reconstructed_image = reconstructed_image.squeeze().detach().numpy() 
         image= image.squeeze().detach().numpy() 
         # Create a side-by-side comparison plot

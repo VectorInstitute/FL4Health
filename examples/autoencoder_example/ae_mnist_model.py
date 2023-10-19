@@ -58,6 +58,7 @@ class ConvVae(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(32, 1, 6, stride=2)
         )
+        self.sigmoid = nn.Sigmoid()
 
     def encode(self, x):
         x = self.encoder(x)
@@ -73,13 +74,14 @@ class ConvVae(nn.Module):
 
     def decode(self, z):
         z = self.decoder(z)
-        z = z.view(z.size(0), 64, 7, 7)
+        z = z.view(z.size(0), 16, 4, 4)
         return self.deconv(z)
 
     def forward(self, x):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         x_reconstructed = self.decode(z)
+        x_reconstructed = self.sigmoid(x_reconstructed)
         return x_reconstructed, mu, logvar
     
 
