@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder
+from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -25,9 +25,10 @@ def get_initial_model_parameters(model: nn.Module) -> Parameters:
 def fit_config(
     local_epochs: int,
     batch_size: int,
+    variational: bool,
     current_server_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_server_round}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "variational": variational,"current_server_round": current_server_round}
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -36,10 +37,14 @@ def main(config: Dict[str, Any]) -> None:
         fit_config,
         config["local_epochs"],
         config["batch_size"],
+        config["variational"]
     )
 
     # Initializing the model on the server side
-    model = ConvAutoencoder()
+    if config["variational"]:
+        model = ConvVae()
+    else:
+        model = ConvAutoencoder()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)

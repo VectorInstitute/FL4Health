@@ -12,36 +12,61 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder
+from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.losses import Losses
+from fl4health.utils.sampler import DirichletLabelBasedSampler
 from fl4health.utils.metrics import PSNR
 
 
 class AutoEncoderClient(BasicClient):
+    
+    def vae_loss(self, reconstruction_loss:torch.Tensor, mu:torch.Tensor, logvar:torch.Tensor):
+        # KL Divergence loss
+        assert mu.shape()==logvar.shape()
+        kl_divergence_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
+        # The total VAE loss
+        total_loss = reconstruction_loss + kl_divergence_loss
+        return total_loss
+    
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size=batch_size)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=30)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path,batch_size, sampler)
         return train_loader, val_loader
 
     def get_criterion(self, config: Config) -> _Loss:
-        return nn.MSELoss()
+        return nn.BCELoss(reduction='sum')
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
-
+    
     def get_model(self, config: Config) -> nn.Module:
-        return ConvAutoencoder().to(self.device)
+        variational = self.narrow_config_type(config, "variational", bool)
+        if variational:
+            self.variational= True
+            return ConvVae().to(self.device)
+        else:
+            self.variational= False
+            return ConvAutoencoder().to(self.device)
  
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor, mu: Optional[torch.Tensor]=None, logvar: Optional[torch.Tensor]=None) -> Losses:
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
         loss components if you wish to train the total loss as well as sub losses if they exist.
         """
-        loss = self.criterion(preds, target)
+
+        if self.variational:
+            assert mu is not None
+            assert logvar is not None
+            bce_loss = self.criterion(preds, target)
+            loss = self.vae_loss(bce_loss, mu, logvar)
+        else:
+            loss = self.criterion(preds, target)
         losses = Losses(checkpoint=loss, backward=loss)
         return losses
+   
     
     def train_step(self, input: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
         """
@@ -52,15 +77,19 @@ class AutoEncoderClient(BasicClient):
         self.optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        generated_image = self.predict(input)
-        # log(INFO, f"output size: {generated_image.shape}")
-        losses = self.compute_loss(generated_image, input)
+        if self.variational:
+            reconstruction, mu, logvar = self.predict(input)
+            losses = self.compute_loss(reconstruction, input, mu, logvar)
+        else:
+            reconstruction = self.predict(input)
+            # log(INFO, f"output size: {generated_image.shape}")
+            losses = self.compute_loss(reconstruction, input)
 
         # Compute backward pass and update paramters with optimizer
         losses.backward.backward()
         self.optimizer.step()
 
-        return losses, generated_image
+        return losses, reconstruction
     
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
@@ -71,12 +100,10 @@ class AutoEncoderClient(BasicClient):
             self.train_loss_meter.clear()
             for input, _ in self.train_loader:
                 input = input.to(self.device)
-
-                
-                losses, generated_image = self.train_step(input)
+                losses, reconstruction = self.train_step(input)
                 
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter.update(generated_image, input)
+                self.train_metric_meter.update(reconstruction, input)
                 self.total_steps += 1
             metrics = self.train_metric_meter.compute()
             losses = self.train_loss_meter.compute()

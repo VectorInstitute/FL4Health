@@ -8,3 +8,7 @@ batch_size: 32 # The batch size for client training
 
 # checkpointing
 checkpoint_path: "examples/autoencoder_example"
+
+# Model type
+variational: True 
+
