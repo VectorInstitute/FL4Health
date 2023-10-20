@@ -21,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: bool) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config_with_warmup,
@@ -32,8 +32,9 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
 
     client_manager = SimpleClientManager()
     model = FedHeartDiseaseFendaModel()
+    log(INFO, f"if pretrain: {pretrain}")
     summarize_model_info(model)
-    if config["load_fedavg_model"]:
+    if pretrain:
         dir = (
             "/Users/sanaayromlou/Desktop/FL4Health/results/fed_heart_disease/fedavg/"
             + run_name
@@ -50,7 +51,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
                     repeat = model_state[k].size()[0] // v.size()[0]
                     original_size = tuple([1] * (len(model_state[k].size()) - 1))
                     matching_state[k] = v.repeat((repeat,) + original_size)
-        print("matching state", len(matching_state))
+        log(INFO, f"matching state: {len(matching_state)}")
         model_state.update(matching_state)
         model.global_module.load_state_dict(model_state)
 
@@ -105,8 +106,13 @@ if __name__ == "__main__":
         help="Name of the run, model checkpoints will be saved under a subfolder with this name",
         required=True,
     )
+    parser.add_argument(
+        "--pretrain",
+        action="store_true",
+        help="whether load pretrained fedavg",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.run_name)
+    main(config, args.server_address, args.run_name, args.pretrain)
