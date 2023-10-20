@@ -109,7 +109,7 @@ class FendaClient(BasicClient):
         return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
-        if self.pre_train:
+        if self.pre_train or self.old_model is None:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
         if self.cos_sim_loss:
