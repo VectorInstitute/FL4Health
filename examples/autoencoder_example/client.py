@@ -25,7 +25,7 @@ from fl4health.utils.sampler import LabelBasedSampler
 
 class AutoEncoderClient(BasicClient):
     
-    def vae_loss(self, reconstruction_loss:torch.Tensor, mu:torch.Tensor, logvar:torch.Tensor):
+    def vae_loss(self, reconstruction_loss:torch.Tensor, mu:torch.Tensor, logvar:torch.Tensor) -> torch.Tensor:
         assert mu.size(0)==logvar.size(0)
         # KL Divergence loss
         kl_divergence_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
@@ -62,7 +62,7 @@ class AutoEncoderClient(BasicClient):
     
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=30)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.5, beta=0.5)
         train_loader, val_loader, _ = self.load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 

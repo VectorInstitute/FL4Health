@@ -14,9 +14,9 @@ from fl4health.utils.dataset import BaseDataset, MNISTDataset
 from torch.utils.data import DataLoader
 
 checkpoint_path= "examples/autoencoder_example"
-model_checkpoint_path = os.path.join(checkpoint_path, "best_model.pkl")
+model_checkpoint_path = os.path.join(checkpoint_path, "best_VAE_model.pkl")
 autoencoder = torch.load(model_checkpoint_path)
-# print(autoencoder)
+autoencoder.eval()
 
 # Load the original image (example, replace with your image)
 dataset_path = Path("examples/datasets/MNIST")
@@ -25,7 +25,7 @@ val_ds: BaseDataset = MNISTDataset(dataset_path, train=False, transform=transfor
 validation_loader = DataLoader(val_ds, batch_size=1)
 
 # Define a dictionary to keep track of whether we have encountered a sample for each class
-classes = [1,2,3]
+classes = [1,2,4]
 class_sample_map = {}
 for group in range(0,10): class_sample_map[group] = True if group in classes else False
 
