@@ -136,7 +136,7 @@ class FendaClient(BasicClient):
         else:
             losses = Losses(
                 checkpoint=loss,
-                backward=total_loss,
+                backward=loss,
             )
 
         return losses
