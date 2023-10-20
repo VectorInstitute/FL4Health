@@ -52,5 +52,5 @@ for image, label in validation_loader:
         plt.imshow(reconstructed_image, cmap='gray')  # Display as grayscale
         plt.title("Generated Image")
         plt.axis('off')
-        plt.savefig(f"examples/autoencoder_example/output/{label}_out.png")
+        plt.savefig(f"examples/autoencoder_example/images/{label}_out.png")
 

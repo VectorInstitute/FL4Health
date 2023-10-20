@@ -74,8 +74,10 @@ do
     echo "Launching ${CLIENT_NAME}"
 
     CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
+    CLIENT_OUTPUT_PATH="${CLIENT_LOG_DIR}distributions/client_${client_number}/"
+
     echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-    nohup python -m examples.autoencoder_example.client --dataset_path ${CLIENT_DATA_PATH} > ${CLIENT_LOG_PATH} 2>&1 &
+    nohup python -m examples.autoencoder_example.client --dataset_path ${CLIENT_DATA_PATH} --artifact_dir ${CLIENT_OUTPUT_PATH} > ${CLIENT_LOG_PATH} 2>&1 &
 
     client_number=$((client_number+1))
 done

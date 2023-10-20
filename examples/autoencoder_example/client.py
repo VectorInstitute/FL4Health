@@ -2,6 +2,8 @@ import argparse
 from pathlib import Path
 from typing import Tuple, Dict, Optional
 from logging import INFO
+from collections import Counter
+import pickle
 
 import flwr as fl
 from flwr.common.logger import log
@@ -17,10 +19,12 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import Losses
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from fl4health.utils.metrics import PSNR
+
 # Data
 import torchvision.transforms as transforms
 from fl4health.utils.dataset import BaseDataset, MNISTDataset
 from fl4health.utils.sampler import LabelBasedSampler
+
 
 
 class AutoEncoderClient(BasicClient):
@@ -33,6 +37,18 @@ class AutoEncoderClient(BasicClient):
         total_loss = reconstruction_loss + kl_divergence_loss
         return total_loss
     
+    def save_data_distrubution(self, train_labels:torch.Tensor):
+        # Create a dictionary to count samples per class
+        class_distribution = {}
+        labels_list = train_labels.detach().tolist()
+        class_distribution = dict(Counter(labels_list))
+
+        with open(f"{self.artifact_dir}distribution.pkl", 'wb') as file:
+            pickle.dump(class_distribution, file)
+        log(INFO, f"Data distribution saved at: {self.artifact_dir}distribution.pkl")
+
+        pass
+
     def load_mnist_data(
         self,
         data_dir: Path,
@@ -53,6 +69,8 @@ class AutoEncoderClient(BasicClient):
             train_ds = sampler.subsample(train_ds)
             val_ds = sampler.subsample(val_ds)
 
+        # Save client's data distribution information in self.artifact_dir directory
+        self.save_data_distrubution(train_ds.targets)
         train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
         validation_loader = DataLoader(val_ds, batch_size=batch_size)
 
@@ -62,7 +80,7 @@ class AutoEncoderClient(BasicClient):
     
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.5, beta=0.5)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         train_loader, val_loader, _ = self.load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
@@ -130,9 +148,7 @@ class AutoEncoderClient(BasicClient):
             self.train_loss_meter.clear()
             for input, _ in self.train_loader:
                 input = input.to(self.device)
-                # print(input[0])
                 losses, reconstruction = self.train_step(input)
-                # print(reconstruction[0])
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(reconstruction, input)
                 self.total_steps += 1
@@ -190,10 +206,13 @@ class AutoEncoderClient(BasicClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    parser.add_argument("--artifact_dir", action="store", type=str, help="Path to save client specific outputs", default="examples/autoencoder_example/distributions")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     client = AutoEncoderClient(data_path, [PSNR("psnr")], DEVICE)
+    # Add args.artifact_dir in client's attributes
+    client.artifact_dir = args.artifact_dir
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
