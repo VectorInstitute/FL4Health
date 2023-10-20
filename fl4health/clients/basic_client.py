@@ -81,6 +81,7 @@ class BasicClient(NumpyFlClient):
         return local_epochs, local_steps, current_server_round
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        print("fit is started setup")
         local_epochs, local_steps, current_server_round = self.process_config(config)
 
         if not self.initialized:
@@ -103,6 +104,8 @@ class BasicClient(NumpyFlClient):
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps)
+
+        print("train updated")
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -293,6 +296,7 @@ class BasicClient(NumpyFlClient):
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
         """
+        print("client is setup")
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
