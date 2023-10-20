@@ -88,6 +88,7 @@ class BasicClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
 
+        print(f"Current Server Round: {current_server_round}")
         if int(config["current_server_round"]) <= self.warmup_rounds:
             self.pre_train = True
         else:

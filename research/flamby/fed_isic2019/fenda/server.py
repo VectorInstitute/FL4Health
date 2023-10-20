@@ -33,6 +33,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
     client_manager = SimpleClientManager()
     model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
     summarize_model_info(model)
+    print("if pretrain:", pretrain)
     if pretrain:
         dir = (
             "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
@@ -50,7 +51,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
                     repeat = model_state[k].size()[0] // v.size()[0]
                     original_size = tuple([1] * (len(model_state[k].size()) - 1))
                     matching_state[k] = v.repeat((repeat,) + original_size)
-        print(len(matching_state))
+        print("matching state", len(matching_state))
         model_state.update(matching_state)
         model.global_module.load_state_dict(model_state)
 

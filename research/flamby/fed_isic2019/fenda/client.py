@@ -51,6 +51,15 @@ class FedIsic2019FendaClient(FendaClient):
             self.perFCL_loss = True
         elif type_run == "contrastive":
             self.contrastive_loss = True
+        print("type_run:", type_run)
+        print(
+            "cos_sim_loss:",
+            self.cos_sim_loss,
+            "perFCL_loss:",
+            self.perFCL_loss,
+            "contrastive_loss:",
+            self.contrastive_loss,
+        )
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")

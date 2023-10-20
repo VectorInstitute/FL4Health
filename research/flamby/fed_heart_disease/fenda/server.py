@@ -50,7 +50,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
                     repeat = model_state[k].size()[0] // v.size()[0]
                     original_size = tuple([1] * (len(model_state[k].size()) - 1))
                     matching_state[k] = v.repeat((repeat,) + original_size)
-        print(len(matching_state))
+        print("matching state", len(matching_state))
         model_state.update(matching_state)
         model.global_module.load_state_dict(model_state)
 

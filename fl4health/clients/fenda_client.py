@@ -116,13 +116,13 @@ class FendaClient(BasicClient):
             cos_loss = self.get_cosine_similarity_loss()
             total_loss = loss + 10 * cos_loss
             losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
-        if self.contrastive_loss:
+        elif self.contrastive_loss:
             contrastive_loss = self.get_contrastive_loss()
             total_loss = loss + 0.001 * contrastive_loss
             losses = Losses(
                 checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
             )
-        if self.perFCL_loss:
+        elif self.perFCL_loss:
             contrastive_loss_minimize, contrastive_loss_maximize = self.get_perFCL_loss()
             total_loss = loss + 0.001 * contrastive_loss_minimize + 0.001 * contrastive_loss_maximize
             losses = Losses(
