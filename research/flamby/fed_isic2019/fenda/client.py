@@ -51,7 +51,7 @@ class FedIsic2019FendaClient(FendaClient):
             self.perFCL_loss = True
         elif type_run == "contrastive":
             self.contrastive_loss = True
-        log(INFO, f"type_run:{type_run}")
+        log(INFO, f"type_run:{type_run},just load the best model")
         log(INFO, f"cos_sim_loss:{self.cos_sim_loss}")
         log(INFO, f"perFCL_loss:{self.perFCL_loss}")
         log(INFO, f"contrastive_loss:{self.contrastive_loss}")

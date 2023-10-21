@@ -33,7 +33,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
     client_manager = SimpleClientManager()
     model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
     summarize_model_info(model)
-    log(INFO, f"if pretrain: {pretrain}")
+    log(INFO, f"if pretrain: {pretrain},just load the best model")
     if pretrain:
         dir = (
             "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
