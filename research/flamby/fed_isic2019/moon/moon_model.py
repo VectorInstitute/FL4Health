@@ -34,7 +34,6 @@ class HeadClassifier(nn.Module):
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = self.fc1(x)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
