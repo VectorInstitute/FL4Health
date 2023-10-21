@@ -41,6 +41,8 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
         fedavg_model_state = torch.load(dir).state_dict()
         model_state = model.state_dict()
         matching_state = {}
+        log(INFO, f"params: {fedavg_model_state}")
+        log(INFO, f"params: {model_state}")
         for k, v in fedavg_model_state.items():
             if k in model_state:
                 if v.size() == model_state[k].size():
