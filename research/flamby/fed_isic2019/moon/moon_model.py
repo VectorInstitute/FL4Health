@@ -1,3 +1,4 @@
+from logging import INFO
 from typing import Optional
 
 import torch
@@ -5,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
+from flwr.common.logger import log
 from torch.utils import model_zoo
 
 from fl4health.model_bases.moon_base import MoonModel
@@ -76,7 +78,9 @@ class BaseEfficientNet(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
+        log(INFO, f"statistics one: {x.shape}")
         x = x.flatten(start_dim=1)
+        log(INFO, f"statistics two: {x.shape}")
         return x
 
 
