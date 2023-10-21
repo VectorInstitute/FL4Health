@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from fl4health.model_bases.moon_base import MoonModel
 
 
-class Logistic(nn.Module):
+class BaseLogistic(nn.Module):
     """Moon feature extractor module"""
 
     def __init__(self, input_dim: int = 13):
@@ -19,7 +19,7 @@ class Logistic(nn.Module):
         return x
 
 
-class Head(nn.Module):
+class HeadClassifier(nn.Module):
     """Moon head module"""
 
     def __init__(self, stack_output_dimension: int):
@@ -36,6 +36,6 @@ class Head(nn.Module):
 
 class FedHeartDiseaseMoonModel(MoonModel):
     def __init__(self) -> None:
-        base_module = Logistic()
-        head_module = Head(5)
+        base_module = BaseLogistic()
+        head_module = HeadClassifier(5)
         super().__init__(base_module, head_module)
