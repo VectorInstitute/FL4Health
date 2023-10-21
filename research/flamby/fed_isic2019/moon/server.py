@@ -40,11 +40,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
         )
         fedavg_model_state = torch.load(dir).state_dict()
         model_state = model.base_module.state_dict()
-        model_head_state = model.head_module.state_dict()
-        model_state.update(model_head_state)
         matching_state = {}
-        log(INFO, f"params: {fedavg_model_state.keys()}")
-        log(INFO, f"params: {model_state.keys()}")
         for k, v in fedavg_model_state.items():
             if k in model_state:
                 if v.size() == model_state[k].size():
@@ -55,7 +51,7 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
                     matching_state[k] = v.repeat((repeat,) + original_size)
         log(INFO, f"matching state: {len(matching_state)}")
         model_state.update(matching_state)
-        model.load_state_dict(model_state)
+        model.base_module.load_state_dict(model_state)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
