@@ -47,18 +47,19 @@ class MoonClient(BasicClient):
         self.len_old_models_buffer: int = 1
         self.temprature: float = 0.5
         self.features: torch.Tensor
-        self.old_features_list: list[torch.Tensor]
+        self.old_features_list: list[torch.Tensor] = []
         self.global_features: torch.Tensor
 
     def predict(self, input: torch.Tensor) -> torch.Tensor:
         pred, self.features, _ = self.model(input)
         self.features = self.features.view(len(self.features), -1)
+        self.old_features_list = []
         for old_model in self.old_models_list:
             _, old_features, _ = old_model(input)
-            old_features = old_features.view(len(old_features), -1)
+            old_features = old_features.view(len(old_features), -1).detach()
             self.old_features_list.append(old_features)
-        _, global_features, _ = self.global_model(input)
-        global_features = global_features.view(len(global_features), -1)
+        _, self.global_features, _ = self.global_model(input)
+        self.global_features = self.global_features.view(len(self.global_features), -1).detach()
         return pred
 
     def get_contrastive_loss(self) -> torch.Tensor:
