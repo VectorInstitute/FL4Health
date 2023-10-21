@@ -39,7 +39,9 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
             + "/server_best_model.pkl"
         )
         fedavg_model_state = torch.load(dir).state_dict()
-        model_state = model.state_dict()
+        model_state = model.base_module.state_dict()
+        model_head_state = model.head_module.state_dict()
+        model_state.update(model_head_state)
         matching_state = {}
         log(INFO, f"params: {fedavg_model_state.keys()}")
         log(INFO, f"params: {model_state.keys()}")
