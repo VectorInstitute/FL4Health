@@ -21,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: bool) -> None:
+def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: bool, double_pretrain: bool) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config_with_warmup,
@@ -54,6 +54,8 @@ def main(config: Dict[str, Any], server_address: str, run_name: str, pretrain: b
         log(INFO, f"matching state: {len(matching_state)}")
         model_state.update(matching_state)
         model.global_module.load_state_dict(model_state)
+        if double_pretrain:
+            model.local_module.load_state_dict(model_state)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -111,8 +113,13 @@ if __name__ == "__main__":
         action="store_true",
         help="whether load pretrained fedavg",
     )
+    parser.add_argument(
+        "--double_pretrain",
+        action="store_true",
+        help="whether load pretrained fedavg to local module too",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.run_name, args.pretrain)
+    main(config, args.server_address, args.run_name, args.pretrain, args.double_pretrain)
