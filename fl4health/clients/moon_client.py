@@ -92,7 +92,7 @@ class MoonClient(BasicClient):
         return output
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
-        if len(self.old_models_list) == 0:
+        if self.pre_train or len(self.old_models_list) == 0:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
         contrastive_loss = self.get_contrastive_loss()
