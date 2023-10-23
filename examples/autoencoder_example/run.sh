@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:t4:1
 #SBATCH --mem=8G
 #SBATCH --qos=normal
-#SBATCH --job-name=VAE
+#SBATCH --job-name=VAE_beta=1
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
 
@@ -32,12 +32,15 @@ fi
 # Process Inputs
 
 SERVER_CONFIG_PATH=$1
-SERVER_LOG_DIR=$2
-CLIENT_LOG_DIR=$3
+LOG_DIR=$2
+RUN_NAME=$3
 VENV_PATH=$4
 
+EXPERIMENT_LOG_DIR="${LOG_DIR}${RUN_NAME}"
+mkdir ${EXPERIMENT_LOG_DIR}
+
 CLIENT_DATA_BASE_PATH="examples/datasets/mnist_data/"
-# Spins up 2 clients, as the list is 3 strings long
+# Spins up 2 clients, as the list is 2 strings long
 CLIENT_DATA_PATH_SUFFIXES=( "" "" )
 
 echo "Dataset Base Path: ${CLIENT_DATA_BASE_PATH}"
@@ -53,14 +56,14 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
+SERVER_LOG_PATH="${EXPERIMENT_LOG_DIR}/server.out"
 
 # Start the server, divert the outputs to a server file
 
-echo "Server logging at: ${SERVER_OUTPUT_FILE}"
+echo "Server logging at: ${SERVER_LOG_PATH}"
 echo "Launching Server"
 
-nohup python -m examples.autoencoder_example.server --config_path ${SERVER_CONFIG_PATH} > ${SERVER_OUTPUT_FILE} 2>&1 &
+nohup python -m examples.autoencoder_example.server --config_path ${SERVER_CONFIG_PATH} --checkpoint_path ${EXPERIMENT_LOG_DIR}> ${SERVER_LOG_PATH} 2>&1 &
 
 # Sleep for 20 seconds to allow the server to come up.
 sleep 20
@@ -72,9 +75,15 @@ do
     CLIENT_NAME="client_${client_number}"
     CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}${DATA_PATH_SUFFIX}"
     echo "Launching ${CLIENT_NAME}"
+    
+    CLIENT_OUTPUT_PATH="${EXPERIMENT_LOG_DIR}/${CLIENT_NAME}/"
+    # Creating the directory for client
+    mkdir ${CLIENT_OUTPUT_PATH}
+    echo "Created client's output file at ${CLIENT_OUTPUT_PATH}"
 
-    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
-    CLIENT_OUTPUT_PATH="${CLIENT_LOG_DIR}distributions/client_${client_number}/"
+    CLIENT_LOG_PATH="${CLIENT_OUTPUT_PATH}client_${client_number}.out"
+
+
 
     echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
     nohup python -m examples.autoencoder_example.client --dataset_path ${CLIENT_DATA_PATH} --artifact_dir ${CLIENT_OUTPUT_PATH} > ${CLIENT_LOG_PATH} 2>&1 &

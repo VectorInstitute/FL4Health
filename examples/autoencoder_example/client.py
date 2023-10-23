@@ -80,7 +80,8 @@ class AutoEncoderClient(BasicClient):
     
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
+        # TODO: set the beta in the config file
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         train_loader, val_loader, _ = self.load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 

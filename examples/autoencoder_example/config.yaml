@@ -1,13 +1,10 @@
 # Parameters that describe server
-n_server_rounds: 3 # The number of rounds to run FL
+n_server_rounds: 70 # The number of rounds to run FL (50)
 
 # Parameters that describe clients
 n_clients: 2 # The number of clients in the FL experiment
-local_epochs: 3 # The number of epochs to complete for client
+local_epochs: 4 # The number of epochs to complete for client (4)
 batch_size: 32 # The batch size for client training
-
-# checkpointing
-checkpoint_path: "examples/autoencoder_example"
 
 # Model type
 variational: True 

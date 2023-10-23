@@ -31,7 +31,7 @@ def fit_config(
     return {"local_epochs": local_epochs, "batch_size": batch_size, "variational": variational,"current_server_round": current_server_round}
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: Dict[str, Any], checkpoint_path: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -49,7 +49,7 @@ def main(config: Dict[str, Any]) -> None:
         model_checkpoint_name = "best_AE_model.pkl"
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name, maximize=False)
+    checkpointer = BestMetricTorchCheckpointer(checkpoint_path, model_checkpoint_name, maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -83,8 +83,15 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/autoencoder_example/config.yaml",
     )
+    parser.add_argument(
+        "--checkpoint_path",
+        action="store",
+        type=str,
+        help="Path to save the model.",
+        default="examples/autoencoder_example/",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config)
+    main(config, args.checkpoint_path)

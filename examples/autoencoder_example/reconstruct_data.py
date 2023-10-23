@@ -25,7 +25,7 @@ val_ds: BaseDataset = MNISTDataset(dataset_path, train=False, transform=transfor
 validation_loader = DataLoader(val_ds, batch_size=1)
 
 # Define a dictionary to keep track of whether we have encountered a sample for each class
-classes = [1,2,4]
+classes = [8]
 class_sample_map = {}
 for group in range(0,10): class_sample_map[group] = True if group in classes else False
 

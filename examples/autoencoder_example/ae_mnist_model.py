@@ -32,37 +32,42 @@ class ConvAutoencoder(nn.Module):
     
 
 class ConvVae(nn.Module):
-    def __init__(self, latent_dim=16):
+    def __init__(self, latent_dim=64):
         super().__init__()
         self.latent_dim = latent_dim
         
         # Encoder
-        self.encoder = nn.Sequential(
+        self.conv = nn.Sequential(
             nn.Conv2d(1, 32, 5),
             nn.ReLU(),
             nn.MaxPool2d(2, 2),
-            nn.Conv2d(32, 16, 5),
+            nn.Conv2d(32, 64, 5),
             nn.ReLU(),
             nn.MaxPool2d(2, 2)
         )
-        self.fc_mu = nn.Linear(16 * 4 * 4, latent_dim)
-        self.fc_logvar = nn.Linear(16 * 4 * 4, latent_dim)
+        self.fc1 = nn.Sequential(
+            nn.Linear(64 * 4 * 4, 128),
+            nn.ReLU()
+        )
+        self.fc_mu = nn.Linear(128, latent_dim)
+        self.fc_logvar = nn.Linear(128, latent_dim)
         
         # Decoder
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, 16 * 4 * 4),
+        self.fc2 = nn.Sequential(
+            nn.Linear(latent_dim, 64 * 4 * 4),
             nn.ReLU()
         )
         self.deconv = nn.Sequential(
-            nn.ConvTranspose2d(16, 32, 6, stride=2),
+            nn.ConvTranspose2d(64, 32, 6, stride=2),
             nn.ReLU(),
             nn.ConvTranspose2d(32, 1, 6, stride=2)
         )
         self.sigmoid = nn.Sigmoid()
 
     def encode(self, x):
-        x = self.encoder(x)
+        x = self.conv(x)
         x = x.view(x.size(0), -1)
+        x = self.fc1(x)
         mu = self.fc_mu(x)
         logvar = self.fc_logvar(x)
         return mu, logvar
@@ -73,17 +78,16 @@ class ConvVae(nn.Module):
         return mu + eps * std
 
     def decode(self, z):
-        z = self.decoder(z)
-        z = z.view(z.size(0), 16, 4, 4)
-        return self.deconv(z)
+        z = self.fc2(z)
+        z = z.view(z.size(0), self.latent_dim, 4, 4)
+        z = self.deconv(z)
+        return self.sigmoid(z)
 
     def forward(self, x):
         mu, logvar = self.encode(x)
         z = self.reparameterize(mu, logvar)
         x_reconstructed = self.decode(z)
-        x_reconstructed = self.sigmoid(x_reconstructed)
         return x_reconstructed, mu, logvar
-    
 
 
     
