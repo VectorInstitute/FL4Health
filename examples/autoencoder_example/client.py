@@ -57,13 +57,8 @@ class AutoEncoderClient(BasicClient):
     ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
         """Load MNIST Dataset (training and validation set)."""
         log(INFO, f"Data directory: {str(data_dir)}")
-        transform = transforms.Compose(
-            [
-                transforms.ToTensor(), # removing transforms.Normalize() to keep the range between 0 and 1 for BCE loss
-            ]
-        )
-        train_ds: BaseDataset = MNISTDataset(data_dir, train=True, transform=transform)
-        val_ds: BaseDataset = MNISTDataset(data_dir, train=False, transform=transform)
+        train_ds: BaseDataset = MNISTDataset(data_dir, train=True, transform=transforms.ToTensor())
+        val_ds: BaseDataset = MNISTDataset(data_dir, train=False, transform=transforms.ToTensor())
 
         if sampler is not None:
             train_ds = sampler.subsample(train_ds)
@@ -89,7 +84,7 @@ class AutoEncoderClient(BasicClient):
         return nn.BCELoss(reduction='sum')
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.Adam(self.model.parameters(), lr=0.001)
+        return torch.optim.Adam(self.model.parameters(), lr=0.01)
     
     def get_model(self, config: Config) -> nn.Module:
         variational = self.narrow_config_type(config, "variational", bool)

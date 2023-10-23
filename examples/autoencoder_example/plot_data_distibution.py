@@ -34,7 +34,7 @@ if __name__ == "__main__":
         "--experiment_name",
         type=str,
         action="store",
-        help="Name of the experiment.",
+        help="Name of the experiment to read the model from.",
         default="beta=1"
         )
     parser.add_argument(
