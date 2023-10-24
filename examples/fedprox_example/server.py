@@ -33,7 +33,6 @@ def fit_config(
     proximal_weight: float,
     proximal_weight_delta: float,
     proximal_weight_patience: int,
-    warmup_rounds: int,
     reporting_enabled: bool,
     project_name: str,
     group_name: str,
@@ -48,7 +47,6 @@ def fit_config(
         "proximal_weight": proximal_weight,
         "proximal_weight_delta": proximal_weight_delta,
         "proximal_weight_patience": proximal_weight_patience,
-        "warmup_rounds": warmup_rounds,
         "current_server_round": current_round,
         "reporting_enabled": reporting_enabled,
         "project_name": project_name,
@@ -68,7 +66,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["proximal_weight"],
         config["proximal_weight_delta"],
         config["proximal_weight_patience"],
-        config["warmup_rounds"],
         config["reporting_config"].get("enabled", False),
         # Note that run name is not included, it will be set in the clients
         config["reporting_config"].get("project_name", ""),

@@ -6,4 +6,3 @@ n_clients: 4 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)
 batch_size: 64 # The batch size for client training (NOT USED FOR FLAMBY)
 local_steps: 100 # The number of local training steps to perform.
-warmup_rounds: 5 # The number of rounds to run before starting FedProx

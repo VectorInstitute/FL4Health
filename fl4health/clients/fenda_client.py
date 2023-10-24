@@ -53,11 +53,11 @@ class FendaClient(BasicClient):
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        preds, self.local_features, self.shared_features = self.model(input, self.pre_train)
+        preds, self.local_features, self.shared_features = self.model(input)
         self.local_features = self.local_features.unsqueeze(2).unsqueeze(3)
         self.local_features = self.local_features.view(len(self.local_features), -1)
         self.shared_features = self.shared_features.view(len(self.shared_features), -1)
-        _, self.local_old_features, self.shared_old_features = self.old_model(input, self.pre_train)
+        _, self.local_old_features, self.shared_old_features = self.old_model(input)
         self.local_old_features = self.local_old_features.view(len(self.local_old_features), -1)
         self.shared_old_features = self.shared_old_features.view(len(self.shared_old_features), -1)
         if self.perFCL_loss:
@@ -114,7 +114,7 @@ class FendaClient(BasicClient):
         return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
-        if self.pre_train or self.old_model is None:
+        if self.old_model is None:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
         if self.cos_sim_loss:

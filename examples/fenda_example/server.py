@@ -25,7 +25,6 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     downsampling_ratio: float,
-    warmup_rounds: int,
     current_round: int,
 ) -> Config:
     return {
@@ -33,7 +32,6 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
-        "warmup_rounds": warmup_rounds,
         "current_server_round": current_round,
     }
 
@@ -46,7 +44,6 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
         config["n_server_rounds"],
         config["downsampling_ratio"],
-        config["warmup_rounds"],
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

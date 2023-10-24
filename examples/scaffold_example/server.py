@@ -21,14 +21,11 @@ def get_initial_model_parameters(initial_model: nn.Module) -> Parameters:
     return ndarrays_to_parameters(model_weights)
 
 
-def fit_config(
-    local_steps: int, batch_size: int, n_server_rounds: int, warmup_rounds: int, current_round: int
-) -> Config:
+def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
         "local_steps": local_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
-        "warmup_rounds": warmup_rounds,
         "current_server_round": current_round,
     }
 
@@ -40,7 +37,6 @@ def main(config: Dict[str, Any]) -> None:
         config["local_steps"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["warmup_rounds"],
     )
 
     model = MnistNetWithBnAndFrozen()
