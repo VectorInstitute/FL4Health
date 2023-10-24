@@ -17,7 +17,7 @@ batch_size: 128 # The batch size for client training
 warmup_rounds: 1 # The number of FedAvg rounds to run before starting FedProx
 
 reporting_config:
-  enabled: True
+  enabled: False
   project_name: FL4Health # Name of the project under which everything should be logged
   run_name: "FedProx Server" # Name of the run on the server-side, each client will also have it's own run name
   group_name: "FedProx Experiment" # Group under which each of the FL run logging will be stored

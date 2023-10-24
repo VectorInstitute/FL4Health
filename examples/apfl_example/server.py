@@ -22,6 +22,7 @@ def get_initial_model_parameters() -> Parameters:
 
 def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
+        "current_server_round": current_round,
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,

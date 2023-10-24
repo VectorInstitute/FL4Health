@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -179,10 +179,7 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
-        if self.pre_train:
-            return super().train_step(input, target)
-
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
         self.optimizer.zero_grad()
 
@@ -194,6 +191,7 @@ class ScaffoldClient(BasicClient):
         losses.backward.backward()
         self.modify_grad()
         self.optimizer.step()
+
         return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -202,7 +200,11 @@ class ScaffoldClient(BasicClient):
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionairy.
+        """
         self.update_control_variates(local_steps)
 
 

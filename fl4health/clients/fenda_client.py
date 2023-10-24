@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -52,8 +52,8 @@ class FendaClient(BasicClient):
         self.old_model.eval()
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        pred, self.local_features, self.shared_features = self.model(input, self.pre_train)
+    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        preds, self.local_features, self.shared_features = self.model(input, self.pre_train)
         self.local_features = self.local_features.unsqueeze(2).unsqueeze(3)
         self.local_features = self.local_features.view(len(self.local_features), -1)
         self.shared_features = self.shared_features.view(len(self.shared_features), -1)
@@ -63,7 +63,12 @@ class FendaClient(BasicClient):
         if self.perFCL_loss:
             self.global_features = self.global_model.forward(input)
             self.global_features = self.global_features.view(len(self.global_features), -1)
-        return pred
+        if isinstance(preds, dict):
+            return preds
+        elif isinstance(preds, torch.Tensor):
+            return {"prediction": preds}
+        else:
+            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         output = super().set_parameters(parameters, config)
@@ -108,7 +113,7 @@ class FendaClient(BasicClient):
 
         return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         if self.pre_train or self.old_model is None:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)

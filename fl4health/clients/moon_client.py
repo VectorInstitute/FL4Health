@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -8,7 +8,6 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
@@ -50,8 +49,8 @@ class MoonClient(BasicClient):
         self.old_features_list: list[torch.Tensor] = []
         self.global_features: torch.Tensor
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        pred, self.features, _ = self.model(input)
+    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        preds, self.features, _ = self.model(input)
         self.features = self.features.view(len(self.features), -1)
         self.old_features_list = []
         for old_model in self.old_models_list:
@@ -60,7 +59,12 @@ class MoonClient(BasicClient):
             self.old_features_list.append(old_features)
         _, self.global_features, _ = self.global_model(input)
         self.global_features = self.global_features.view(len(self.global_features), -1).detach()
-        return pred
+        if isinstance(preds, dict):
+            return preds
+        elif isinstance(preds, torch.Tensor):
+            return {"prediction": preds}
+        else:
+            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
     def get_contrastive_loss(self) -> torch.Tensor:
         assert len(self.features) == len(self.global_features)
@@ -75,23 +79,25 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         assert isinstance(self.model, MoonModel)
+
+        # Save the parameters of the old local model
         old_model = copy.deepcopy(self.model)
         old_model.eval()
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
-        return super().get_parameter_exchanger(config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        # Set the parameters of the model
         output = super().set_parameters(parameters, config)
-        assert isinstance(self.model, MoonModel)
+
+        # Save the parameters of the global model
         self.global_model = copy.deepcopy(self.model)
         self.global_model.eval()
         return output
 
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
+    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         if self.pre_train or len(self.old_models_list) == 0:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds, target)
