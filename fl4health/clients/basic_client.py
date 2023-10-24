@@ -20,12 +20,6 @@ from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, Met
 
 
 class BasicClient(NumpyFlClient):
-    """
-    Base FL Client with functionality to train, evaluate, log, report and checkpoint.
-    User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
-    Other methods can be overriden to achieve custom functionality.
-    """
-
     def __init__(
         self,
         data_path: Path,
@@ -35,6 +29,23 @@ class BasicClient(NumpyFlClient):
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+        """
+        Base FL Client with functionality to train, evaluate, log, report and checkpoint.
+        User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
+        Other methods can be overriden to achieve custom functionality.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            metric_meter_type (MetricMeterType, optional): Type of meter used to track and compute the metrics over
+                each batch. Defaults to MetricMeterType.AVERAGE.
+            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
+                checkpointing. Defaults to None.
+        """
         super().__init__(data_path, device)
         self.metrics = metrics
         self.checkpointer = checkpointer
@@ -151,7 +162,6 @@ class BasicClient(NumpyFlClient):
         metric_dict: Dict[str, Scalar],
         current_round: Optional[int] = None,
     ) -> None:
-
         # If reporter is None we do not report to wandb and return
         if self.wandb_reporter is None:
             return
