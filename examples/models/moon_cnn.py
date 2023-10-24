@@ -6,20 +6,18 @@ import torch.nn.functional as F
 class HeadCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.fc1 = nn.Linear(120 * 2, 84)
-        self.fc2 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(256, 10)
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(input_tensor))
-        x = self.fc2(x)
+        x = self.fc1(input_tensor)
         return x
 
 
 class ProjectionCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.fc1 = nn.Linear(120 * 2, 84)
-        self.fc2 = nn.Linear(84, 10)
+        self.fc1 = nn.Linear(120, 256)
+        self.fc2 = nn.Linear(256, 256)
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))

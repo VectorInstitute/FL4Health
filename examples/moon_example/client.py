@@ -37,7 +37,7 @@ class MnistMoonClient(MoonClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = MoonModel(BaseCnn(), ProjectionCnn(), HeadCnn()).to(self.device)
+        model: nn.Module = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn()).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

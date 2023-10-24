@@ -1,46 +1,36 @@
 import argparse
 from functools import partial
+from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.logger import log
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.config import load_config
+from research.flamby.fed_ixi.moon.moon_model import FedIxiMoonModel
+from research.flamby.flamby_servers.personal_server import PersonalServer
+from research.flamby.utils import (
+    evaluate_metrics_aggregation_fn,
+    fit_config,
+    fit_metrics_aggregation_fn,
+    get_initial_model_parameters,
+    summarize_model_info,
+)
 
 
-def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn())
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
-def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
-) -> Config:
-    return {
-        "local_epochs": local_epochs,
-        "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
-        "downsampling_ratio": downsampling_ratio,
-        "current_server_round": current_round,
-    }
-
-
-def main(config: Dict[str, Any]) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
-        config["batch_size"],
+        config["local_steps"],
         config["n_server_rounds"],
-        config["downsampling_ratio"],
     )
+
+    client_manager = SimpleClientManager()
+    model = FedIxiMoonModel()
+    summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -53,14 +43,22 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_initial_model_parameters(model),
     )
 
+    server = PersonalServer(client_manager, strategy)
+
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
+        server=server,
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
+
+    log(INFO, "Training Complete")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{server.best_aggregated_loss}")
+
+    # Shutdown the server gracefully
+    server.shutdown()
 
 
 if __name__ == "__main__":
@@ -70,10 +68,17 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/moon_example/config.yaml",
+        default="config.yaml",
+    )
+    parser.add_argument(
+        "--server_address",
+        action="store",
+        type=str,
+        help="Server Address to be used to communicate with the clients",
+        default="0.0.0.0:8080",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
-    main(config)
+    log(INFO, f"Server Address: {args.server_address}")
+    main(config, args.server_address)
