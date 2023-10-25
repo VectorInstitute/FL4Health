@@ -27,6 +27,7 @@ def reconstruct_save(experiment_name: str, laten_dim:int, target:int, dataset_pa
                 targer_found = True
     # Pass the original image through the autoencoder to get the reconstructed image
     reconstructed_image, _, _ = autoencoder(original_image)
+    reconstructed_image = reconstructed_image.view(-1, 1, 28, 28)
     reconstructed_image = reconstructed_image.squeeze().detach().numpy() 
     original_image = original_image.squeeze().detach().numpy() 
     # Create a side-by-side comparison plot

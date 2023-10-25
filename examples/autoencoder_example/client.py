@@ -14,7 +14,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae
+from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae, VAE
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import Losses
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -24,8 +24,6 @@ from fl4health.utils.metrics import PSNR
 import torchvision.transforms as transforms
 from fl4health.utils.dataset import BaseDataset, MNISTDataset
 from fl4health.utils.sampler import LabelBasedSampler
-
-
 
 class AutoEncoderClient(BasicClient):
     
@@ -84,17 +82,21 @@ class AutoEncoderClient(BasicClient):
         return nn.BCELoss(reduction='sum')
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.Adam(self.model.parameters(), lr=0.01)
+        return torch.optim.Adam(self.model.parameters(), lr=0.001)
     
     def get_model(self, config: Config) -> nn.Module:
         variational = self.narrow_config_type(config, "variational", bool)
         if variational:
             self.variational= True
+            # return  VAE(x_dim=784, h_dim1= 512, h_dim2=256, z_dim=2).to(self.device)
             return ConvVae().to(self.device)
         else:
             self.variational= False
             return ConvAutoencoder().to(self.device)
- 
+    def predict(self, input: torch.Tensor) -> torch.Tensor:
+
+        return self.model(input)
+    
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor, mu: Optional[torch.Tensor]=None, logvar: Optional[torch.Tensor]=None) -> Losses:
         """
         Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
@@ -144,6 +146,7 @@ class AutoEncoderClient(BasicClient):
             self.train_loss_meter.clear()
             for input, _ in self.train_loader:
                 input = input.to(self.device)
+                # input = input.view(-1, 784) # For the linear model
                 losses, reconstruction = self.train_step(input)
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(reconstruction, input)
@@ -184,6 +187,7 @@ class AutoEncoderClient(BasicClient):
         with torch.no_grad():
             for input, _ in self.val_loader:
                 input = input.to(self.device)
+                # input = input.view(-1, 784) # For the linear model
                 losses, reconstruction = self.val_step(input)
                 self.val_loss_meter.update(losses)
                 self.val_metric_meter.update(reconstruction, input)

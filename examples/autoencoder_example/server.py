@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae
+from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae, VAE, CVAE
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -28,7 +28,7 @@ def fit_config(
     variational: bool,
     current_server_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "variational": variational,"current_server_round": current_server_round}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "variational": variational, "current_server_round": current_server_round}
 
 
 def main(config: Dict[str, Any], checkpoint_path: str) -> None:
@@ -37,12 +37,17 @@ def main(config: Dict[str, Any], checkpoint_path: str) -> None:
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        config["variational"]
+        config["variational"],
+        # config["conditional"]
     )
 
     # Initializing the model on the server side
     if config["variational"]:
+        # if config["conditional"]:
+        #     model = CVAE(x_dim=784, h_dim1= 512, h_dim2=256)
+        # else:
         model = ConvVae()
+        # model = VAE(x_dim=784, h_dim1= 512, h_dim2=256, z_dim=2)
         model_checkpoint_name = "best_VAE_model.pkl"
     else:
         model = ConvAutoencoder()
