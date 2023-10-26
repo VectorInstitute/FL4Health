@@ -1,4 +1,5 @@
 black
+cryptography
 flake8
 flwr==1.4.0
 isort
@@ -9,6 +10,7 @@ opacus
 pandas
 portalocker
 pre-commit
+pycryptodome
 pyproject-flake8==5.0.4
 pytest
 pytest-cov

@@ -1,0 +1,8 @@
+# YAML parser's must-have configs
+n_server_rounds: 5
+n_clients: 2
+batch_size: 16
+
+# Other configs
+local_epochs: 1
+checkpoint_path: "examples/secure_aggregation_example"
