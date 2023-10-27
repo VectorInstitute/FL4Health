@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, Optional, Sequence
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -27,6 +27,9 @@ class MoonClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        temperature: float = 0.5,
+        contrastive_weight: float = 10,
+        len_old_models_buffer: int = 1,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -36,29 +39,23 @@ class MoonClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        self.initial_tensors: List[torch.Tensor]
-        self.contrastive_weight: float = 10
-        self.temprature: float = 0.5
-        self.current_loss: float
+
+        self.contrastive_weight = contrastive_weight
+        self.temperature = temperature
+        self.len_old_models_buffer = len_old_models_buffer
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        self.len_old_models_buffer: int = 1
         self.old_models_list: list[MoonModel] = []
         self.global_model: MoonModel
-        self.features: torch.Tensor
-        self.old_features_list: list[torch.Tensor] = []
-        self.global_features: torch.Tensor
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        preds, self.features, _ = self.model(input)
-        self.features = self.features.view(len(self.features), -1)
-        self.old_features_list = []
-        for old_model in self.old_models_list:
-            _, old_features, _ = old_model(input)
-            old_features = old_features.view(len(old_features), -1).detach()
-            self.old_features_list.append(old_features)
-        _, self.global_features, _ = self.global_model(input)
-        self.global_features = self.global_features.view(len(self.global_features), -1).detach()
+        preds = self.model(input)
+        preds["old_features"] = torch.zeros(self.len_old_models_buffer, *preds["features"].size()).to(self.device)
+        for i, old_model in enumerate(self.old_models_list):
+            old_preds = old_model(input)
+            preds["old_features"][i] = old_preds["features"]
+        global_preds = self.global_model(input)
+        preds["global_features"] = global_preds["features"]
         if isinstance(preds, dict):
             return preds
         elif isinstance(preds, torch.Tensor):
@@ -66,16 +63,18 @@ class MoonClient(BasicClient):
         else:
             raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
-    def get_contrastive_loss(self) -> torch.Tensor:
-        assert len(self.features) == len(self.global_features)
-        posi = self.cos_sim(self.features, self.global_features)
+    def get_contrastive_loss(
+        self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
+    ) -> torch.Tensor:
+        assert len(features) == len(global_features)
+        posi = self.cos_sim(features, global_features)
         logits = posi.reshape(-1, 1)
-        for old_features in self.old_features_list:
-            assert len(self.features) == len(old_features)
-            nega = self.cos_sim(self.features, old_features)
+        for old_feature in old_features:
+            assert len(features) == len(old_feature)
+            nega = self.cos_sim(features, old_feature)
             logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        logits /= self.temprature
-        labels = torch.zeros(self.features.size(0)).to(self.device).long()
+        logits /= self.temperature
+        labels = torch.zeros(features.size(0)).to(self.device).long()
 
         return self.ce_criterion(logits, labels)
 
@@ -84,6 +83,8 @@ class MoonClient(BasicClient):
 
         # Save the parameters of the old local model
         old_model = copy.deepcopy(self.model)
+        for param in old_model.parameters():
+            param.requires_grad = False
         old_model.eval()
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
@@ -94,6 +95,8 @@ class MoonClient(BasicClient):
 
         # Save the parameters of the global model
         self.global_model = copy.deepcopy(self.model)
+        for param in self.global_model.parameters():
+            param.requires_grad = False
         self.global_model.eval()
         return output
 
@@ -101,7 +104,9 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) == 0:
             return super().compute_loss(preds, target)
         loss = self.criterion(preds["prediction"], target)
-        contrastive_loss = self.get_contrastive_loss()
+        contrastive_loss = self.get_contrastive_loss(
+            preds["features"], preds["global_features"], preds["old_features"]
+        )
         total_loss = loss + self.contrastive_weight * contrastive_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
         return losses

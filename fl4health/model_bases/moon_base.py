@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -13,11 +13,11 @@ class MoonModel(nn.Module):
         self.projection_module = projection_module
         self.head_module = head_module
 
-    def forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         x = self.base_module.forward(input)
         if self.projection_module:
             p = self.projection_module.forward(x)
         else:
             p = x
         output = self.head_module.forward(p)
-        return output, p, x
+        return {"prediction": output, "features": p.view(len(p), -1)}

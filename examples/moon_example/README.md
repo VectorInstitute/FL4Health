@@ -1,6 +1,6 @@
 # Moon Federated Learning Example
 This example provides an example of training a Moon type model on a non-IID subset of the MNIST data. The FL server
-expects two clients to be spun up (i.e. it will wait until two clients report in before starting training). Each client
+expects two clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client
 has a modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original
 training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties
 of the clients training/validation data. In theory, the models should be able to perform well on their local data
