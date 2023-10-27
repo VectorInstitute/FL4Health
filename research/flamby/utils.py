@@ -30,20 +30,6 @@ def fit_config(
     }
 
 
-def fit_config_with_warmup(
-    local_steps: int,
-    n_server_rounds: int,
-    warmup_rounds: int,
-    current_round: int,
-) -> Config:
-    return {
-        "local_steps": local_steps,
-        "n_server_rounds": n_server_rounds,
-        "warmup_rounds": warmup_rounds,
-        "current_server_round": current_round,
-    }
-
-
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
