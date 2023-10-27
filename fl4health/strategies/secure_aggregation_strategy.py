@@ -5,6 +5,7 @@ from typing import List, Tuple
 from flwr.server.client_proxy import ClientProxy
 from flwr.common import GetPropertiesIns
 from typing import Optional, Callable, Dict
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
 Request = List[Tuple[ClientProxy, GetPropertiesIns]]
 
@@ -53,15 +54,26 @@ class SecureAggregationStrategy(BasicFedAvg):
             )
 
     
-    def package_request(self, request: Dict[str, Scalar], client_manager: ClientManager) -> Request:
+    def package_request(self, request: Dict[str, Scalar], event_name: str, client_manager: ClientManager) -> Request:
 
         assert client_manager.num_available() > 1   # make sure there are clients online
 
-        # all online clients for SecAgg (substitute for different sampler for SecAgg+)
-        clients_proxy_list = client_manager.all()
+        # get all online clients for SecAgg (substitute for different client sampler for SecAgg+)
+        if isinstance(client_manager, BaseFractionSamplingManager):
+            clients_proxy_list = client_manager.sample_all(min_num_clients=self.min_available_clients)
+        else:
+            # Grab all available clients using the basic Flower client manager
+            num_available_clients = client_manager.num_available()
+            clients_proxy_list = client_manager.sample(num_available_clients, min_num_clients=self.min_available_clients)
+
+        # adjoin event_name
+        req = {
+             "event_name": event_name,
+             **request
+        }
 
         # Package dictionary to Flower request format 
-        wrapper = GetPropertiesIns(request)
+        wrapper = GetPropertiesIns(req)
 
         packaged = map(lambda client: (client, wrapper), clients_proxy_list)
         return list(packaged)

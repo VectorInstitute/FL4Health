@@ -1,6 +1,6 @@
 from fl4health.clients.basic_client import BasicClient
 from pathlib import Path
-from typing import Sequence, Optional, Tuple, Dict
+from typing import Sequence, Optional, Tuple, Dict, Any 
 from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
 import torch
 import torch.nn as nn
@@ -32,4 +32,15 @@ class SecureAggregationClient(BasicClient):
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         if not self.initialized:
             self.setup_client(config)
-        return {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples}
+        log(INFO, config)
+        if config['event_name'] == 'greet':
+            msg = config['greet']
+            log(INFO, f'>>>>>>>>>>>>>>>>\n\n\n{msg}\n\n\n<<<<<<<<<<<<<<')
+        response_dict = {}
+        response_dict["num_train_samples"] = self.num_train_samples
+        response_dict["num_val_samples"]: self.num_val_samples
+
+        return response_dict
+
+    def api_receiver(self, config: Config) -> Any: 
+        pass

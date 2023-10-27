@@ -1,7 +1,7 @@
 from fl4health.server.base_server import FlServerWithCheckpointing, ExchangerType
 from flwr.server.client_manager import ClientManager
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from flwr.server.history import History
@@ -32,7 +32,14 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
 
+        # Handled in the respective communication stack, as in polling.py
+        self.timeout: Optional[float] = None 
+    
+    def set_timeout(self, timeout: float) -> None:
+        self.timeout = timeout
+
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        # ============= event sequence ===============
         """Run federated averaging for a number of rounds."""
         history = History()
 
@@ -57,7 +64,9 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         for current_round in range(1, num_rounds + 1):
             if current_round > 1:
-                self.key_agreement()
+                # call client
+                self.api(request_dict={"greet": "server greets client"}, event_name="greet")
+
             # Train model and replace previous global model
             res_fit = self.fit_round(server_round=current_round, timeout=timeout)
             if res_fit:
@@ -107,19 +116,39 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             self.wandb_reporter.report_metrics(num_rounds, history)
         return history
 
-    def api(self, request_dict: Dict[str, Scalar], timeout: Optional[float] = None) -> Scalar:
-        log(INFO, "API Running ...")
+    def api(self, request_dict: Dict[str, Scalar], event_name: str) -> Any:
+        """
+        How this works:
 
-        request = self.strategy.package_request(request_dict, self._client_manager)
+        1. Call this method on the server side to pass request_dict to all the client.
+        event_name defines how client handles the API call 
+
+        2. Clients receive the request_dict in SecureAggregationClient.get_properties().
+
+        3. This SecureAggregationServer.api() method returns online clients' response.
+        """
+        log(INFO, "\n\n\nAPI running, communicating with client ...\n\n\n")
+
+        request = self.strategy.package_request(request_dict, event_name, self._client_manager)
+
+        # Debug
+        log(INFO, '\n\n\n\n\n\n')
+        log(DEBUG, request)
+        log(INFO, '\n\n\n\n\n\n')
+        log(DEBUG, self._client_manager.num_available())
+        log(INFO, '\n\n\n\n\n\n')
+
+        # later we will extend the SecAgg protocol implementation to deal with dropouts
         online, dropouts = poll_clients(
             client_instructions=request,
             max_workers=self.max_workers,
-            timeout=timeout
+            timeout=self.timeout
         )
         
         # resolve response
         response = []
         i = 0
+        # NOTE for test purposes we will discard the client information, and only take their response
         for client, res in online:
             # type of online variable is List[Tuple[ClientProxy, GetPropertiesRes]]
             i += 1

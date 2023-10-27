@@ -1,5 +1,5 @@
 # YAML parser's must-have configs
-n_server_rounds: 5
+n_server_rounds: 2
 n_clients: 2
 batch_size: 16
 
