@@ -45,7 +45,7 @@ def main(config: Dict[str, Any], checkpoint_path: str) -> None:
     # Initializing the model on the server side
 
     if config["conditional"]:
-        CVAE(x_dim=784, h_dim1= 512, h_dim2=256, num_class=10, z_dim=2)
+        model = CVAE(x_dim=784, h_dim1= 512, h_dim2=256, num_class=10, z_dim=2)
         model_checkpoint_name = "best_CVAE_model.pkl"
     elif config["variational"]:
         model = ConvVae()

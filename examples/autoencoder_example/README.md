@@ -1,10 +1,12 @@
 
 ## Run on your local machine 
-python -m examples.autoencoder_example.server 
+Make sure the directories exist.
 
-python -m examples.autoencoder_example.client --dataset_path examples/datasets/MNIST --artifact_dir "examples/autoencoder_example/distributions/client_1/"
+python -m examples.autoencoder_example.server --checkpoint_path  "examples/autoencoder_example/experiment/"
 
-python -m examples.autoencoder_example.client --dataset_path examples/datasets/MNIST --artifact_dir "examples/autoencoder_example/distributions/client_2/"
+python -m examples.autoencoder_example.client --dataset_path examples/datasets/MNIST --artifact_dir "examples/autoencoder_example/experiment/client_1/"
+
+python -m examples.autoencoder_example.client --dataset_path examples/datasets/MNIST --artifact_dir "examples/autoencoder_example/experiment/client_2/"
 
 ## Reconstruction
 python -m examples.autoencoder_example.reconstruct_samples --experiment_name "beta=1" --laten_dim=16 --label=2 

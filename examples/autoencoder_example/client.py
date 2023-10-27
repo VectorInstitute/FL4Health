@@ -158,6 +158,8 @@ class AutoEncoderClient(BasicClient):
             self.train_loss_meter.clear()
             for input, label in self.train_loader:
                 input = input.to(self.device)
+                # If the model is MLP based
+                input = input.view(-1, 28*28)
                 if self.conditional:
                     label = label.to(self.device)
                     losses, reconstruction = self.train_step(input, label)
@@ -177,7 +179,7 @@ class AutoEncoderClient(BasicClient):
         # Return final training metrics
         return loss_dict, metrics
 
-    def val_step(self, input: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def val_step(self, input: torch.Tensor, label: Optional[torch.Tensor]=None) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, compute loss, update loss and metrics
         Assumes self.model is in eval mode already.
@@ -185,13 +187,16 @@ class AutoEncoderClient(BasicClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            if self.variational:
+            if self.conditional:
+                assert label != None
+                reconstruction, mu, logvar = self.predict(input, label)
+                losses = self.compute_loss(reconstruction, input, mu, logvar)
+            elif self.variational:
                 reconstruction, mu, logvar = self.predict(input)
                 losses = self.compute_loss(reconstruction, input, mu, logvar)
             else:
                 reconstruction = self.predict(input)
                 losses = self.compute_loss(reconstruction, input)
-
         return losses, reconstruction 
    
    
@@ -200,10 +205,15 @@ class AutoEncoderClient(BasicClient):
         self.val_metric_meter.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
-            for input, _ in self.val_loader:
+            for input, label in self.val_loader:
                 input = input.to(self.device)
-                # input = input.view(-1, 784) # For the linear model
-                losses, reconstruction = self.val_step(input)
+                # If the model is MLP based
+                input = input.view(-1, 28*28)
+                if self.conditional:
+                    label = label.to(self.device)
+                    losses, reconstruction = self.val_step(input, label)
+                else:
+                    losses, reconstruction = self.val_step(input)
                 self.val_loss_meter.update(losses)
                 self.val_metric_meter.update(reconstruction, input)
 

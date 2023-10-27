@@ -36,9 +36,11 @@ class CVAE(nn.Module):
     
     def forward(self, x, y):
         # One-hot encoding
-        y = torch.zeros(y.size(0), self.num_class).scatter_(1, y, 1).to(y.device())
+        zeros_t = torch.zeros(y.size(0), self.num_class).to(y.device)
+        y_index = y.view(y.size(0), 1)
+        y = zeros_t.scatter_(1, y_index, 1)
         # Feeding the input and the label vector to the encoder
-        mu, log_var = self.encoder(x.view(-1, 28*28), y)
+        mu, log_var = self.encoder(x, y)
         z = self.sampling(mu, log_var)
         # Feeding the laten vector and label vector to the decoder
         return self.decoder(z, y), mu, log_var
@@ -74,7 +76,6 @@ class VAE(nn.Module):
         return F.sigmoid(self.fc6(h)) 
     
     def forward(self, x):
-        x = x.view(-1, 784) 
         mu, log_var = self.encoder(x)
         z = self.sampling(mu, log_var)
         return self.decoder(z), mu, log_var
