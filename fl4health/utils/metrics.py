@@ -239,10 +239,10 @@ class MetricMeterManager:
         self.key_to_meter_map = key_to_meter_map
 
     def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
-        # Assert that set of preds keys and map keys are the same
-        assert set(preds.keys()) == set(self.key_to_meter_map.keys())
+
         for pred_key in preds.keys():
-            self.key_to_meter_map[pred_key].update(preds[pred_key], target)
+            if pred_key in self.key_to_meter_map.keys():
+                self.key_to_meter_map[pred_key].update(preds[pred_key], target)
 
     def compute(self) -> Dict[str, Scalar]:
         all_results = {}

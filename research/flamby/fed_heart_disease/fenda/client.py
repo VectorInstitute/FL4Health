@@ -46,15 +46,11 @@ class FedHeartDiseaseFendaClient(FendaClient):
         self.client_number = client_number
         self.learning_rate = learning_rate
         if type_run == "cos_sim":
-            self.cos_sim_loss = True
-        elif type_run == "perFCL":
-            self.perFCL_loss = True
+            self.cos_sim_loss_weight = 100.0
         elif type_run == "contrastive":
-            self.contrastive_loss = True
-        log(INFO, f"type_run:{type_run}")
-        log(INFO, f"cos_sim_loss:{self.cos_sim_loss}")
-        log(INFO, f"perFCL_loss:{self.perFCL_loss}")
-        log(INFO, f"contrastive_loss:{self.contrastive_loss}")
+            self.contrastive_loss_weight = 10.0
+        elif type_run == "perFCL":
+            self.perFCL_loss_weights = [10.0, 10.0]
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -117,7 +113,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
-    parser.add_argument("--type_run", action="store", help="type of run", default="cos_sim")
+    parser.add_argument("--type_run", action="store", help="type of run", default="None")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
