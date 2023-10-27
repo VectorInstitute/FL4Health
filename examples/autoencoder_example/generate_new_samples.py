@@ -8,11 +8,10 @@ def generate_save(experiment_name:str, latent_dim:int, n_images:int):
     checkpoint_path= f"examples/autoencoder_example/{experiment_name}/"
     model_checkpoint_path = os.path.join(checkpoint_path, "best_VAE_model.pkl")
     image_saving_path = os.path.join(checkpoint_path, "generated_image.png")
-     # Load the model
+    # Load the model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     autoencoder = torch.load(model_checkpoint_path)
     autoencoder.eval()
-
     with torch.no_grad():
         # Sample from the latent space (from a unit Gaussian distribution)
         latent_samples = torch.randn(n_images, latent_dim).to(device)

@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae, VAE, CVAE
+from examples.vae_dim_example.mnist_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -25,38 +25,24 @@ def get_initial_model_parameters(model: nn.Module) -> Parameters:
 def fit_config(
     local_epochs: int,
     batch_size: int,
-    variational: bool,
-    conditional: bool,
     current_server_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "variational": variational, "conditional": conditional, "current_server_round": current_server_round}
+    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_server_round}
 
 
-def main(config: Dict[str, Any], checkpoint_path: str) -> None:
+def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        config["variational"],
-        config["conditional"]
     )
 
     # Initializing the model on the server side
-
-    if config["conditional"]:
-        CVAE(x_dim=784, h_dim1= 512, h_dim2=256, num_class=10, z_dim=2)
-        model_checkpoint_name = "best_CVAE_model.pkl"
-    elif config["variational"]:
-        model = ConvVae()
-        # model = VAE(x_dim=784, h_dim1= 512, h_dim2=256, z_dim=2)
-        model_checkpoint_name = "best_VAE_model.pkl"
-    else:
-        model = ConvAutoencoder()
-        model_checkpoint_name = "best_AE_model.pkl"
+    model = MnistNet()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_path, model_checkpoint_name, maximize=False)
+    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -88,17 +74,10 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/autoencoder_example/config.yaml",
-    )
-    parser.add_argument(
-        "--checkpoint_path",
-        action="store",
-        type=str,
-        help="Path to save the model.",
-        default="examples/autoencoder_example/",
+        default="examples/vae_dim_example/config.yaml",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config, args.checkpoint_path)
+    main(config)

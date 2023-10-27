@@ -14,7 +14,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae, VAE
+from examples.autoencoder_example.ae_mnist_model import ConvAutoencoder, ConvVae, VAE, CVAE
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import Losses
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -73,7 +73,6 @@ class AutoEncoderClient(BasicClient):
     
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        # TODO: set the beta in the config file
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         train_loader, val_loader, _ = self.load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
@@ -85,16 +84,25 @@ class AutoEncoderClient(BasicClient):
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
     
     def get_model(self, config: Config) -> nn.Module:
+        self.variational = False
+        self.conditional = False
         variational = self.narrow_config_type(config, "variational", bool)
+        conditional = self.narrow_config_type(config, "conditional", bool)
         if variational:
-            self.variational= True
-            # return  VAE(x_dim=784, h_dim1= 512, h_dim2=256, z_dim=2).to(self.device)
-            return ConvVae().to(self.device)
+            if conditional:
+                self.conditional= True
+                return CVAE(x_dim=784, h_dim1= 512, h_dim2=256, num_class=10, z_dim=2).to(self.device)
+            else:
+                self.variational= True
+                # return  VAE(x_dim=784, h_dim1= 512, h_dim2=256, z_dim=2).to(self.device)
+                return ConvVae().to(self.device)
         else:
             self.variational= False
             return ConvAutoencoder().to(self.device)
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-
+    
+    def predict(self, input: torch.Tensor, label: Optional[torch.Tensor]=None) -> torch.Tensor:
+        if label!=None:
+            return self.model(input, label)
         return self.model(input)
     
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor, mu: Optional[torch.Tensor]=None, logvar: Optional[torch.Tensor]=None) -> Losses:
@@ -103,7 +111,7 @@ class AutoEncoderClient(BasicClient):
         loss components if you wish to train the total loss as well as sub losses if they exist.
         """
 
-        if self.variational:
+        if self.variational or self.conditional:
             assert mu is not None
             assert logvar is not None
             bce_loss = self.criterion(preds, target)
@@ -114,7 +122,7 @@ class AutoEncoderClient(BasicClient):
         return losses
    
     
-    def train_step(self, input: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(self, input: torch.Tensor, label: Optional[torch.Tensor]=None) -> Tuple[Losses, torch.Tensor]:
         """
         Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
         Assumes self.model is in train model already.
@@ -123,7 +131,11 @@ class AutoEncoderClient(BasicClient):
         self.optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        if self.variational:
+        if self.conditional:
+            assert label != None
+            reconstruction, mu, logvar = self.predict(input, label)
+            losses = self.compute_loss(reconstruction, input, mu, logvar)
+        elif self.variational:
             reconstruction, mu, logvar = self.predict(input)
             losses = self.compute_loss(reconstruction, input, mu, logvar)
         else:
@@ -144,10 +156,13 @@ class AutoEncoderClient(BasicClient):
         for local_epoch in range(epochs):
             self.train_metric_meter.clear()
             self.train_loss_meter.clear()
-            for input, _ in self.train_loader:
+            for input, label in self.train_loader:
                 input = input.to(self.device)
-                # input = input.view(-1, 784) # For the linear model
-                losses, reconstruction = self.train_step(input)
+                if self.conditional:
+                    label = label.to(self.device)
+                    losses, reconstruction = self.train_step(input, label)
+                else:
+                    losses, reconstruction = self.train_step(input)
                 self.train_loss_meter.update(losses)
                 self.train_metric_meter.update(reconstruction, input)
                 self.total_steps += 1

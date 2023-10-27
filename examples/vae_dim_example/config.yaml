@@ -1,12 +1,10 @@
 # Parameters that describe server
-n_server_rounds: 5 # The number of rounds to run FL (50)
+n_server_rounds: 10 # The number of rounds to run FL
 
 # Parameters that describe clients
 n_clients: 2 # The number of clients in the FL experiment
-local_epochs: 3 # The number of epochs to complete for client (4)
+local_epochs: 2 # The number of epochs to complete for client
 batch_size: 32 # The batch size for client training
 
-# Model type
-variational: True 
-conditional: True
-
+# checkpointing
+checkpoint_path: "examples/vae_dim_example"

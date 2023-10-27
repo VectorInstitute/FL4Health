@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 class CVAE(nn.Module):
     def __init__(self, x_dim, h_dim1, h_dim2, num_class ,z_dim):
         super().__init__()
@@ -43,7 +44,6 @@ class CVAE(nn.Module):
         return self.decoder(z, y), mu, log_var
 
 
-    
 class VAE(nn.Module):
     def __init__(self, x_dim, h_dim1, h_dim2, z_dim):
         super().__init__()
@@ -74,10 +74,10 @@ class VAE(nn.Module):
         return F.sigmoid(self.fc6(h)) 
     
     def forward(self, x):
-        mu, log_var = self.encoder(x.view(-1, 784))
+        x = x.view(-1, 784) 
+        mu, log_var = self.encoder(x)
         z = self.sampling(mu, log_var)
         return self.decoder(z), mu, log_var
-
 
 
 class ConvVae(nn.Module):
