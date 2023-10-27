@@ -13,8 +13,25 @@ import torch
 
 from cryptography.fernet import Fernet
 import pickle
-
 from numpy.random import default_rng
+from dataclasses import dataclass
+
+from enum import Enum
+
+
+
+class Event(Enum):
+    ADVERTISE_KEYS = 'round 0'
+    SHARE_KEYS = 'round 1'
+    MASKED_INPUT_COLLECTION = 'round 2'
+    UNMASKING = 'round 4'
+
+@dataclass
+class PublicKeyChain:
+    """Customized for round 0 of SecAgg key agreement"""
+    encryption_key: bytes
+    mask_key: bytes     # pairwise masking 
+
 
 ClientId = int 
 ShamirSecret = List[bytes]
@@ -24,17 +41,25 @@ class ClientCryptoKit:
     # NOTE We call the client itself "Alice", her peer clients "Bob", and the server "Sam".
     # NOTE As a design decision, Alice only stores the key agreement with Bob, never Bob's public key.
     
-    def __init__(self, client_id: ClientId = None):
-        self.client_id = client_id
+    def __init__(self, *, 
+                 client_integer: ClientId = None, 
+                 arithmetic_modulus: int = None,
+                 reconstruction_threshold: int
+    ) -> None:
+        
+        self.client_integer = client_integer
+        self.arithmetic_modulus = arithmetic_modulus
+        self.reconstruction_threshold = reconstruction_threshold
 
         # ------------ Alice's Private Keys ------------ #
 
-        self.alice_cipher_key: EllipticCurvePrivateKey
+        self.alice_encryption_key: EllipticCurvePrivateKey
         self.alice_mask_key: EllipticCurvePrivateKey
+        self.alice_self_mask_seed: int = ClientCryptoKit.generate_seed()
 
         # ------------ Key Agreement Secrets ------------ #
 
-        self.agreed_cipher_keys: Dict[ClientId, AgreedSecret]
+        self.agreed_encryption_keys: Dict[ClientId, AgreedSecret]
         self.agreed_mask_keys: Dict[ClientId, AgreedSecret]
 
 
@@ -43,6 +68,47 @@ class ClientCryptoKit:
         self.shamir_self_masks: Dict[ClientId, ShamirSecret]
         self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret]
 
+    def generate_public_keys(self) -> PublicKeyChain:
+        # encryption keys
+        self.alice_encryption_key, encryption_public = ClientCryptoKit.generate_keypair()
+        # pair masking key 
+        self.alice_mask_key, mask_public = ClientCryptoKit.generate_keypair()
+
+        # returns public keys in this container
+        return PublicKeyChain(encryption_key=encryption_public, mask_key=mask_public)
+    
+    def process_bobs_keys(self, bobs_keys_list: Dict) -> None:
+        """Perform key agreement and storage 
+
+        Expected arg: bobs_keys_list is a list of dictionaries, one per bob
+        Each dict has keys ['event_name', 'fl_round', 'client_integer', 'encryption_key', 'mask_key']
+        """
+        round = bobs_keys_list[0]["fl_round"]
+        assert round > 0    # used to ensure bobs are on the same FL round.
+
+        event = Event.SHARE_KEYS.value
+
+        for bob in bobs_keys_list:
+            # safe checking 
+            assert bob["fl_round"] == round 
+            assert bob["event_name"] == event
+
+            id: ClientId = bob['client_integer']
+            
+            # encryption key agreement and storage
+            self.agreed_encryption_keys[id] = ClientCryptoKit.key_agreement(
+                self.alice_encryption_key,
+                bob["encryption_key"]
+            )
+
+            # masking key agreement and storage 
+            self.alice_mask_key[id] = ClientCryptoKit.key_agreement(
+                self.alice_mask_key,
+                bob['mask_key']
+            )
+
+    def set_threshold(self, new_threshold: int):
+        self.reconstruction_threshold = new_threshold
 
     @staticmethod
     def generate_keypair() -> Tuple[EllipticCurvePrivateKey, bytes]:
@@ -139,7 +205,7 @@ class ClientCryptoKit:
 
 class ServerCryptoKit:
 
-    def __init__(self, shamir_reconstruction_threshold: int):
+    def __init__(self, shamir_reconstruction_threshold: int = None):
         self.t = shamir_reconstruction_threshold
 
     @staticmethod
@@ -179,8 +245,8 @@ if __name__ == "__main__":
     """
     ========= KEY AGREEMENT ========
     """
-    alice = ClientCryptoKit(client_id=1)
-    bob = ClientCryptoKit(client_id=2)
+    alice = ClientCryptoKit(client_integer=1)
+    bob = ClientCryptoKit(client_integer=2)
 
     alice_private, alice_public = alice.generate_keypair()
     bob_private, bob_public = alice.generate_keypair()
@@ -209,7 +275,7 @@ if __name__ == "__main__":
     secret = get_random_bytes(BYTES)
 
     # client encode
-    tao = ClientCryptoKit(client_id=3)
+    tao = ClientCryptoKit(client_integer=3)
     shares = tao.generate_shamir_shares(secret, SHARES, THRESHOLD)
 
     # server decode

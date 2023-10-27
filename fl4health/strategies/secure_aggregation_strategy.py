@@ -6,6 +6,26 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.common import GetPropertiesIns
 from typing import Optional, Callable, Dict
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
+
+from typing import Callable, Dict, List, Optional, Tuple, Union
+from logging import INFO, WARNING
+from flwr.common.logger import log
+from flwr.common import (
+    EvaluateIns,
+    EvaluateRes,
+    FitIns,
+    FitRes,
+    GetPropertiesIns,
+    MetricsAggregationFn,
+    NDArrays,
+    Parameters,
+    Scalar,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
+
+
 
 Request = List[Tuple[ClientProxy, GetPropertiesIns]]
 
@@ -77,4 +97,54 @@ class SecureAggregationStrategy(BasicFedAvg):
 
         packaged = map(lambda client: (client, wrapper), clients_proxy_list)
         return list(packaged)
+    
 
+
+    """
+    Customize: first compute sum, then communicate w/clients to remove masks, then average
+    """
+
+    # def aggregate_fit(
+    #     self,
+    #     server_round: int,
+    #     results: List[Tuple[ClientProxy, FitRes]],
+    #     failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+    # ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    #     """
+    #     Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
+    #     depending on the settings used for the strategy.
+
+    #     Args:
+    #         server_round (int): Indicates the server round we're currently on.
+    #         results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+    #             that need to be aggregated on the server-side.
+    #         failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+    #             from clients that experienced an issue during training, such as timeouts or exceptions.
+
+    #     Returns:
+    #         Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+    #     """
+    #     if not results:
+    #         return None, {}
+    #     # Do not aggregate if there are failures and failures are not accepted
+    #     if not self.accept_failures and failures:
+    #         return None, {}
+
+    #     # Convert results
+    #     weights_results = [
+    #         (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
+    #     ]
+    #     # Aggregate them in a weighted or unweighted fashion based on settings.
+    #     aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
+    #     # Convert back to parameters
+    #     parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
+
+    #     # Aggregate custom metrics if aggregation fn was provided
+    #     metrics_aggregated = {}
+    #     if self.fit_metrics_aggregation_fn:
+    #         fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+    #         metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+    #     elif server_round == 1:  # Only log this warning once
+    #         log(WARNING, "No fit_metrics_aggregation_fn provided")
+
+    #     return parameters_aggregated, metrics_aggregated

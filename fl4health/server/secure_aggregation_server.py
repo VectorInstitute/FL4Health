@@ -12,6 +12,7 @@ from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from .polling import poll_clients
 import timeit
 from flwr.common.typing import Scalar
+from fl4health.security.secure_aggregation import ServerCryptoKit, Event
 
 
 
@@ -34,6 +35,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # Handled in the respective communication stack, as in polling.py
         self.timeout: Optional[float] = None 
+        self.crypto = ServerCryptoKit()
     
     def set_timeout(self, timeout: float) -> None:
         self.timeout = timeout
@@ -65,7 +67,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         for current_round in range(1, num_rounds + 1):
             if current_round > 1:
                 # call client
-                self.api(request_dict={"greet": "server greets client"}, event_name="greet")
+                self.api(request_dict={"greet": "server greets client", "round": current_round}, event_name="greet")
 
             # Train model and replace previous global model
             res_fit = self.fit_round(server_round=current_round, timeout=timeout)
@@ -121,7 +123,16 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         How this works:
 
         1. Call this method on the server side to pass request_dict to all the client.
-        event_name defines how client handles the API call 
+        Secure aggregation uses events
+
+        class Event(Enum):
+            ADVERTISE_KEYS = 'round 0'
+            SHARE_KEYS = 'round 1'
+            MASKED_INPUT_COLLECTION = 'round 2'
+            UNMASKING = 'round 4'
+
+        The event_value: str defines how client handles the API call. Thus we pass Event.UNMASING.value
+        to this api() method as opposed to the enum Event.UNMASING.
 
         2. Clients receive the request_dict in SecureAggregationClient.get_properties().
 
@@ -130,13 +141,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         log(INFO, "\n\n\nAPI running, communicating with client ...\n\n\n")
 
         request = self.strategy.package_request(request_dict, event_name, self._client_manager)
-
-        # Debug
-        log(INFO, '\n\n\n\n\n\n')
-        log(DEBUG, request)
-        log(INFO, '\n\n\n\n\n\n')
-        log(DEBUG, self._client_manager.num_available())
-        log(INFO, '\n\n\n\n\n\n')
 
         # later we will extend the SecAgg protocol implementation to deal with dropouts
         online, dropouts = poll_clients(
@@ -147,13 +151,12 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         
         # resolve response
         response = []
-        i = 0
+        i = 1
         # NOTE for test purposes we will discard the client information, and only take their response
         for client, res in online:
             # type of online variable is List[Tuple[ClientProxy, GetPropertiesRes]]
-            i += 1
             response.append(res.properties)
-
+            i += 1
         return response
 
 
