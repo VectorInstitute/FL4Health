@@ -39,12 +39,13 @@ class MoonClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-
-        self.contrastive_weight = contrastive_weight
-        self.temperature = temperature
-        self.len_old_models_buffer = len_old_models_buffer
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
+        self.contrastive_weight = contrastive_weight
+        self.temperature = temperature
+
+        # Saving previous local models and global model at each communication round to compute contrastive loss
+        self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[MoonModel] = []
         self.global_model: MoonModel
 
@@ -66,6 +67,12 @@ class MoonClient(BasicClient):
     def get_contrastive_loss(
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
     ) -> torch.Tensor:
+        """
+        This constrastive loss is implemented based on https://github.com/QinbinLi/MOON.
+        The primary idea is to enhance the similarity between the current local features and the global feature
+        as positive pairs while reducing the similarity between the current local features and the previous local
+        features as negative pairs.
+        """
         assert len(features) == len(global_features)
         posi = self.cos_sim(features, global_features)
         logits = posi.reshape(-1, 1)
