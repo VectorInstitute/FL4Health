@@ -3,6 +3,9 @@ cryptography
 flake8
 flwr==1.4.0
 isort
+mkdocs
+mkdocs-material
+mkdocs-material-extensions
 mypy
 nltk
 numpy
