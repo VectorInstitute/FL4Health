@@ -65,3 +65,4 @@ if __name__ == '__main__':
 
     # NOTE server needs to be started before clients
     RunClient(server_address="0.0.0.0:8080", client=client)
+    client.shutdown()

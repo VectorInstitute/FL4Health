@@ -27,55 +27,60 @@ class SecureAggregationClient(BasicClient):
         
         super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
         
-        # >>>>>>>>
-        # TODO generate these data
-        self.arithmetic_modulus = None
-        self.client_integer = None  # 'integer' reminds us this is not cid from flwr
-        self.reconstruction_threshold = None
-        assert 1 <= self.client_integer <= self.arithmetic_modulus
-        # <<<<<<<<
+        # handles SecAgg cryptography on the client-side
+        self.crypto = ClientCryptoKit()
+        
+        # federated round
+        self.fl_round = 0  
 
-        self.crypto = ClientCryptoKit(client_integer=self.client_integer, 
-                                      arithemetic_modulus=self.arithmetic_modulus,
-                                      reconstruction_threshold=self.reconstruction_threshold)
-        self.fl_round = 0  # federated round
+    # def fit(parmeters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    #     assert config['event_name'] == Event.MASKED_INPUT_COLLECTION.value
 
-    def fit(parmeters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        assert config['event_name'] == Event.MASKED_INPUT_COLLECTION.value
+    #     # unmaked params
+    #     update_params = super().fit(parmeters, config)
 
-        # unmaked params
-        update_params = super().fit(parmeters, config)
-
-        # add masks
+    #     # add masks
 
 
-        return update_params
+    #     return update_params
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
 
         if not self.initialized:
             self.setup_client(config)
-
         # be sure to include a round in config
-        self.fl_round = config["fl_round"]
+        # self.fl_round = config["fl_round"]
 
         response_dict = {}
-
         match config['event_name']:
+            case Event.BROADCAST_ID.value:
+                i = config['client_integer']
+                self.debugger('\n\n\n\n\n\n>>>>>>>')
+                self.debugger('client integer')
+                self.debugger(i)
+                self.debugger('<<<<<<\n\n\n\n\n\n')
+                self.crypto.set_client_integer(i)
             case Event.ADVERTISE_KEYS.value:
-                response_dict = self._generate_public_keys_dict()
+                # response_dict = self._generate_public_keys_dict()
+                # set up client integer
+                pass
 
             case Event.SHARE_KEYS.value:
-                self.crypto.process_bobs_keys(bobs_keys_list=config['bobs_keys_list']) 
-
-            case Event.MASKED_INPUT_COLLECTION:
+                # self.crypto.process_bobs_keys(bobs_keys_list=config['bobs_keys_list']) 
                 pass
-            case Event.UNMASKING:
+            case Event.MASKED_INPUT_COLLECTION.value:
+                pass
+
+            case Event.UNMASKING.value:
                 pass
             case _ :
-                response_dict = {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples}
+                response_dict = {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples, "response": "client served default"}
 
         return response_dict
+    
+    def debugger(self, info):
+        log(DEBUG, 6*'\n')
+        log(DEBUG, info)
     
     def _generate_public_keys_dict(self):
 
@@ -93,7 +98,3 @@ class SecureAggregationClient(BasicClient):
         }
 
         return package
-
-
-    def api_receiver(self, config: Config) -> Any: 
-        pass

@@ -27,7 +27,8 @@ from flwr.common import (
 
 
 
-Request = List[Tuple[ClientProxy, GetPropertiesIns]]
+Requests = List[Tuple[ClientProxy, GetPropertiesIns]]
+Request = Tuple[ClientProxy, GetPropertiesIns]
 
 class SecureAggregationStrategy(BasicFedAvg):
 
@@ -74,17 +75,16 @@ class SecureAggregationStrategy(BasicFedAvg):
             )
 
     
-    def package_request(self, request: Dict[str, Scalar], event_name: str, client_manager: ClientManager) -> Request:
-
-        assert client_manager.num_available() > 1   # make sure there are clients online
+    def package_request(self, request: Dict[str, Scalar], event_name: str, client_manager: ClientManager) -> Requests:
 
         # get all online clients for SecAgg (substitute for different client sampler for SecAgg+)
         if isinstance(client_manager, BaseFractionSamplingManager):
-            clients_proxy_list = client_manager.sample_all(min_num_clients=self.min_available_clients)
+            clients_list = client_manager.sample_all(min_num_clients=self.min_available_clients)
         else:
             # Grab all available clients using the basic Flower client manager
             num_available_clients = client_manager.num_available()
-            clients_proxy_list = client_manager.sample(num_available_clients, min_num_clients=self.min_available_clients)
+            clients_list = client_manager.sample(num_available_clients, min_num_clients=self.min_available_clients)
+        
 
         # adjoin event_name
         req = {
@@ -95,9 +95,22 @@ class SecureAggregationStrategy(BasicFedAvg):
         # Package dictionary to Flower request format 
         wrapper = GetPropertiesIns(req)
 
-        packaged = map(lambda client: (client, wrapper), clients_proxy_list)
+        packaged = map(lambda client: (client, wrapper), clients_list)
         return list(packaged)
     
+    def package_single_client_request(self, client: ClientProxy, request: Dict[str, Scalar], event_name: str) -> Request:
+        # adjoin event_name
+        req = {
+             "event_name": event_name,
+             **request
+        }
+
+        # Package dictionary to Flower request format 
+        wrapper = GetPropertiesIns(req)
+
+        return client, wrapper
+
+
 
 
     """

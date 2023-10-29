@@ -13,7 +13,8 @@ from .polling import poll_clients
 import timeit
 from flwr.common.typing import Scalar
 from fl4health.security.secure_aggregation import ServerCryptoKit, Event
-
+from time import sleep
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
 
 
@@ -26,17 +27,32 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         model: Module,
         parameter_exchanger: ExchangerType,
         wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None
+        checkpointer: Optional[TorchCheckpointer] = None,
+        # secure aggregation params
+        shamir_reconstruction_threshold: int = 2,
+        arithmetic_modulus: int = 1 << 30,
     ) -> None:
 
         assert isinstance(strategy, SecureAggregationStrategy)    
 
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
 
+        # federated round
+        self.fl_round = 0 
+
         # Handled in the respective communication stack, as in polling.py
         self.timeout: Optional[float] = None 
+
+        # handles SecAgg cryptography on the server-side
         self.crypto = ServerCryptoKit()
-    
+        assert isinstance(shamir_reconstruction_threshold, int) and shamir_reconstruction_threshold >= 2
+        self.crypto.set_shamir_threshold(shamir_reconstruction_threshold)
+
+        assert isinstance(arithmetic_modulus, int) and arithmetic_modulus > 1
+        self.crypto.set_arithmetic_modulus(arithmetic_modulus)
+
+
+
     def set_timeout(self, timeout: float) -> None:
         self.timeout = timeout
 
@@ -68,6 +84,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             if current_round > 1:
                 # call client
                 self.api(request_dict={"greet": "server greets client", "round": current_round}, event_name="greet")
+                self.secure_aggregation()
 
             # Train model and replace previous global model
             res_fit = self.fit_round(server_round=current_round, timeout=timeout)
@@ -117,6 +134,47 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         if self.wandb_reporter:
             self.wandb_reporter.report_metrics(num_rounds, history)
         return history
+    
+    def secure_aggregation(self):
+        
+        N = self.get_peer_number()
+        # assert 1 <= N <= self.crypto.arithmetic_modulus
+        # assert 2 <= self.crypto.shamir_reconstruction_threshold <= N    
+        self.crypto.set_number_of_bobs(N)
+        self.broadcast_id()
+        # c = self._client_manager.all()
+        # keys = list(c.keys())
+        # self.debugger(keys)
+        # sleep(3)
+        # self.debugger(c[keys[0]])
+        # self.debugger(type(c[keys[0]]))
+
+
+
+        # time.sleep(10)
+        # round 0, advertise keys
+        req_keys = {
+            # meta data 
+            'sender': 'server',
+            'fl_round': self.fl_round,
+        }
+
+        """
+        Expected dict of structure
+        {
+            
+        }
+        """
+        public_keys = self.api(request_dict=req_keys, event_name=Event.ADVERTISE_KEYS.value)
+        
+    def debugger(self, info):
+        log(DEBUG, 6*'\n')
+        log(DEBUG, info)
+
+
+    def get_peer_number(self):
+        """The number of peers of Alice (total number of clients - 1)"""
+        return self._client_manager.num_available() - 1
 
     def api(self, request_dict: Dict[str, Scalar], event_name: str) -> Any:
         """
@@ -130,6 +188,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             SHARE_KEYS = 'round 1'
             MASKED_INPUT_COLLECTION = 'round 2'
             UNMASKING = 'round 4'
+            BROADCAST_ID = 'assign client_integer'
+
 
         The event_value: str defines how client handles the API call. Thus we pass Event.UNMASING.value
         to this api() method as opposed to the enum Event.UNMASING.
@@ -138,7 +198,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         3. This SecureAggregationServer.api() method returns online clients' response.
         """
-        log(INFO, "\n\n\nAPI running, communicating with client ...\n\n\n")
+        log(INFO, "API calling client \n")
 
         request = self.strategy.package_request(request_dict, event_name, self._client_manager)
 
@@ -159,4 +219,39 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             i += 1
         return response
 
+    def broadcast_id(self) -> int:
+        assert isinstance(self.strategy, SecureAggregationStrategy)
 
+        if isinstance(self._client_manager, BaseFractionSamplingManager):
+            clients_list = self._client_manager.sample_all(min_num_clients=self.strategy.min_available_clients)
+        else:
+            # Grab all available clients using the basic Flower client manager
+            num_available_clients = self._client_manager.num_available()
+            clients_list = self._client_manager.sample(num_available_clients, min_num_clients=self.strategy.min_available_clients)
+        
+        all_requests = []
+        client_int = 1
+        for client in clients_list:
+            assert client.cid is not None
+            self.crypto.append_client_table(client_ip=client.cid, client_id=client_int)
+            req_dict = {
+                'sender': 'server',
+                'fl_round': self.fl_round,
+                'client_integer': client_int,
+            }
+            request = self.strategy.package_single_client_request(
+                client=client,
+                request=req_dict,
+                event_name=Event.BROADCAST_ID.value
+            )
+            all_requests.append(request)
+            client_int += 1
+
+        # broadcast
+        online, dropouts = poll_clients(
+            client_instructions=all_requests,
+            max_workers=self.max_workers,
+            timeout=self.timeout
+        )
+        return len(online)
+        
