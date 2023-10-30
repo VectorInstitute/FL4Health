@@ -17,6 +17,7 @@ from time import sleep
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
 
+# TODO delete all dummy values 
 
 class SecureAggregationServer(FlServerWithCheckpointing):
 
@@ -141,35 +142,18 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # assert 1 <= N <= self.crypto.arithmetic_modulus
         # assert 2 <= self.crypto.shamir_reconstruction_threshold <= N    
         self.crypto.set_number_of_bobs(N)
-        self.broadcast_id()
-        # c = self._client_manager.all()
-        # keys = list(c.keys())
-        # self.debugger(keys)
-        # sleep(3)
-        # self.debugger(c[keys[0]])
-        # self.debugger(type(c[keys[0]]))
 
-
-
-        # time.sleep(10)
-        # round 0, advertise keys
-        req_keys = {
-            # meta data 
-            'sender': 'server',
-            'fl_round': self.fl_round,
-        }
-
-        """
-        Expected dict of structure
-        {
-            
-        }
-        """
-        public_keys = self.api(request_dict=req_keys, event_name=Event.ADVERTISE_KEYS.value)
+        # list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
+        all_public_keys = self.setup_and_key_agreement()
         
-    def debugger(self, info):
+
+
+
+        
+    def debugger(self, *info):
         log(DEBUG, 6*'\n')
-        log(DEBUG, info)
+        for item in info:
+            log(DEBUG, item)
 
 
     def get_peer_number(self):
@@ -188,7 +172,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             SHARE_KEYS = 'round 1'
             MASKED_INPUT_COLLECTION = 'round 2'
             UNMASKING = 'round 4'
-            BROADCAST_ID = 'assign client_integer'
 
 
         The event_value: str defines how client handles the API call. Thus we pass Event.UNMASING.value
@@ -219,7 +202,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             i += 1
         return response
 
-    def broadcast_id(self) -> int:
+    def setup_and_key_agreement(self) -> int:
         assert isinstance(self.strategy, SecureAggregationStrategy)
 
         if isinstance(self._client_manager, BaseFractionSamplingManager):
@@ -238,11 +221,14 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                 'sender': 'server',
                 'fl_round': self.fl_round,
                 'client_integer': client_int,
+                'shamir_reconstruction_threshold': self.crypto.shamir_reconstruction_threshold,
+                'number_of_bobs': self.crypto.number_of_bobs + 10 ,  # TODO remove dummy value 10
+                'arithmetic_modulus': self.crypto.arithmetic_modulus
             }
             request = self.strategy.package_single_client_request(
                 client=client,
                 request=req_dict,
-                event_name=Event.BROADCAST_ID.value
+                event_name=Event.ADVERTISE_KEYS.value
             )
             all_requests.append(request)
             client_int += 1
@@ -253,5 +239,28 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             max_workers=self.max_workers,
             timeout=self.timeout
         )
-        return len(online)
+
+        assert len(online) + 10 >= self.crypto.shamir_reconstruction_threshold  # TODO remove dummy value 10
+
+        for client, response in online:
+            # parse
+            ip = client.cid
+            res = response.properties
+
+            # # safe checking 
+            # assert res['sender'] == 'client'
+            # assert res['fl_round'] == self.fl_round
+            # assert res['client_integer'] == self.crypto.client_table[res[ip]]
+            # assert res['event_name'] == Event.ADVERTISE_KEYS.value
+
+            self.crypto.append_client_public_keys(
+                client_integer=res['client_integer'],
+                encryption_public_key=res['public_encryption_key'],
+                masking_public_key=res['public_mask_key']    
+            )
+
+        return self.crypto.get_all_public_keys()
         
+        def broadcast_keys(self, all_public_keys: List[Dict[str, int | bytes]]):
+            pass
+            

@@ -52,14 +52,31 @@ class SecureAggregationClient(BasicClient):
         # self.fl_round = config["fl_round"]
 
         response_dict = {}
+
         match config['event_name']:
-            case Event.BROADCAST_ID.value:
-                i = config['client_integer']
-                self.debugger('\n\n\n\n\n\n>>>>>>>')
-                self.debugger('client integer')
-                self.debugger(i)
-                self.debugger('<<<<<<\n\n\n\n\n\n')
-                self.crypto.set_client_integer(i)
+
+            case Event.ADVERTISE_KEYS.value:
+                assert config['sender'] == 'server'
+                self.fl_round = config['fl_round']
+                self.crypto.set_client_integer(integer=config['client_integer'])
+                self.crypto.set_number_of_bobs(integer=config['number_of_bobs'])
+                self.crypto.set_reconstruction_threshold(new_threshold= config['shamir_reconstruction_threshold'])
+                self.crypto.set_arithmetic_modulus(modulus=config['arithmetic_modulus'])
+
+                public_keys = self.crypto.generate_public_keys()
+
+                response_dict = {
+                    # meta data used for safe checking
+                    'sender' : f'client',
+                    'fl_round' : self.fl_round,
+                    'client_interger' : self.crypto.client_integer,
+                    'event_name' : Event.ADVERTISE_KEYS.value,
+
+                    # main data
+                    'public_encryption_key' : public_keys.encryption_key,
+                    'public_mask_key' : public_keys.mask_key,
+                }
+
             case Event.ADVERTISE_KEYS.value:
                 # response_dict = self._generate_public_keys_dict()
                 # set up client integer
@@ -78,9 +95,10 @@ class SecureAggregationClient(BasicClient):
 
         return response_dict
     
-    def debugger(self, info):
+    def debugger(self, *info):
         log(DEBUG, 6*'\n')
-        log(DEBUG, info)
+        for item in info:
+            log(DEBUG, item)
     
     def _generate_public_keys_dict(self):
 

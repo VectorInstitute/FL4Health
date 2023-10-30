@@ -24,7 +24,6 @@ class Event(Enum):
     SHARE_KEYS = 'round 1'
     MASKED_INPUT_COLLECTION = 'round 2'
     UNMASKING = 'round 4'
-    BROADCAST_ID = 'assign client_integer'
 
 
 @dataclass
@@ -44,7 +43,7 @@ class ClientCryptoKit:
     # NOTE We call the client itself "Alice", her peer clients "Bob", and the server "Sam".
     # NOTE As a design decision, Alice only stores the key agreement with Bob, never Bob's public key.
 
-    def __init__(self, arithmetic_modulus=1<<30) -> None:
+    def __init__(self, arithmetic_modulus: int = 1<<30) -> None:
 
         self.arithmetic_modulus = arithmetic_modulus
 
@@ -69,6 +68,9 @@ class ClientCryptoKit:
         self.shamir_self_masks: Dict[ClientId, ShamirSecret]
         self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret]
 
+    def set_arithmetic_modulus(self, modulus: int) -> None:
+        assert isinstance(modulus, int) and modulus > 1
+        self.arithmetic_modulus = modulus
 
     def generate_public_keys(self) -> PublicKeyChain:
         # encryption keys
@@ -285,11 +287,31 @@ class ServerCryptoKit:
 
         # records
         self.client_table: Dict[ClientIP, ClientId] = {}
+        self.client_public_keys: Dict[ClientId, PublicKeyChain] = {}
     
 
-    def append_client_table(self, client_ip: str, client_id: int) -> None:
+    def append_client_table(self, client_ip: ClientIP, client_id: ClientId) -> None:
         self.client_table[client_ip] = client_id
-        
+    
+    def append_client_public_keys(self, client_integer: ClientId, encryption_public_key: bytes, masking_public_key: bytes) -> None :
+        key = PublicKeyChain(encryption_key=encryption_public_key, mask_key=masking_public_key)
+        self.client_public_keys[client_integer] = key
+
+    def get_all_public_keys(self) -> List[Dict[str, int | bytes]]:
+        """Yields keys in the format of the input to ClientCryptoKit.register_bobs_keys()
+        namely, a list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
+        """
+        all_keys = []
+        for id, public_key_chain in self.client_public_keys.items():
+            all_keys.append(
+                {
+                    'client_integer' : id,
+                    'encryption_key': public_key_chain.encryption_key,
+                    'mask_key' : public_key_chain.mask_key
+                }
+            )
+        return all_keys
+
     def set_arithmetic_modulus(self, modulus: int) -> None:
         self.set_arithmetic_modulus = modulus
     
