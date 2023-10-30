@@ -89,6 +89,9 @@ class ClientCryptoKit:
         """
         for bob in bobs_keys_list:
             id: ClientId = bob['client_integer']
+            # skip alice
+            if id == self.client_integer:
+                continue
 
             # encryption key agreement and storage
             self.agreed_encryption_keys[id] = ClientCryptoKit.key_agreement(

@@ -77,14 +77,10 @@ class SecureAggregationClient(BasicClient):
                     'public_mask_key' : public_keys.mask_key,
                 }
 
-            case Event.ADVERTISE_KEYS.value:
-                # response_dict = self._generate_public_keys_dict()
-                # set up client integer
-                pass
-
             case Event.SHARE_KEYS.value:
-                # self.crypto.process_bobs_keys(bobs_keys_list=config['bobs_keys_list']) 
-                pass
+                all_public_keys = config['bobs_public_keys']
+                self.crypto.register_bobs_keys(bobs_keys_list=all_public_keys)
+
             case Event.MASKED_INPUT_COLLECTION.value:
                 pass
 

@@ -1,7 +1,7 @@
 from fl4health.server.base_server import FlServerWithCheckpointing, ExchangerType
 from flwr.server.client_manager import ClientManager
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from flwr.server.history import History
@@ -146,6 +146,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
         all_public_keys = self.setup_and_key_agreement()
         
+        shamir_shares = self.broadcast_keys()
 
 
 
@@ -261,6 +262,13 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         return self.crypto.get_all_public_keys()
         
-        def broadcast_keys(self, all_public_keys: List[Dict[str, int | bytes]]):
-            pass
+    def broadcast_keys(self):
+        req = {
+            'sender': 'server',
+            'fl_round': self.fl_round,
+            'bobs_public_keys': self.crypto.get_all_public_keys()
+        }
+
+        # process shamir shares
+        res = self.api(request_dict=1, event_name=Event.SHARE_KEYS.value)
             
