@@ -160,3 +160,4 @@ settings.json
 # model artifacts
 
 **/*.pkl
+examples/secure_aggregation_example/running_pid.txt

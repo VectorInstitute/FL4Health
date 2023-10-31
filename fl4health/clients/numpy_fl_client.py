@@ -51,7 +51,7 @@ class NumpyFlClient(NumPyClient):
         """
 
         assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+        return self.parameter_exchanger.push_paraymeters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """

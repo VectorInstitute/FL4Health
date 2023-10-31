@@ -90,7 +90,6 @@ class BasicClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round

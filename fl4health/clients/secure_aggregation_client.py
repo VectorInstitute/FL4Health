@@ -33,17 +33,57 @@ class SecureAggregationClient(BasicClient):
         # federated round
         self.fl_round = 0  
 
-    # def fit(parmeters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-    #     assert config['event_name'] == Event.MASKED_INPUT_COLLECTION.value
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        local_epochs, local_steps, current_server_round = self.process_config(config)
 
-    #     # unmaked params
-    #     update_params = super().fit(parmeters, config)
+        if not self.initialized:
+            self.setup_client(config)
 
-    #     # add masks
+        self.set_parameters(parameters, config)
+        if local_epochs is not None:
+            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+        elif local_steps is not None:
+            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
+        else:
+            raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
+        # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
+        self.update_after_train(local_steps, loss_dict)
 
-    #     return update_params
+        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
+        # calculation results.
 
+        # add mask and privacy noise 
+        self.modify_parmeters()
+
+        return (
+            self.get_parameters(config),
+            self.num_train_samples,
+            metrics,
+        )
+    
+    def modify_parmeters(self):
+        "Use this method to post process model parameters (i.e. masking & noising) after train and distributed evaluation."
+        
+        # counts trainable model parameters 
+        dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
+
+        # computes masking vector; this can only be run after masking seed agreement
+        pair_mask_vect: List[int] = self.crypto.get_pair_mask_sum(vector_dim=dim)  # pass in online_clients kwarg for drop out case
+
+        # modify parms  << TODO quantization >>
+        i = 0
+        params_dict = self.model.state_dict()
+        for name, params in params_dict.items():
+            j = i + params.numel()
+            mask = torch.tensor(pair_mask_vect[i:j]).reshape(params.shape)
+            params_dict[name] += mask
+            i = j
+
+        # load modified parms
+        self.model.load_state_dict(params_dict)
+    
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
 
         if not self.initialized:
@@ -69,7 +109,7 @@ class SecureAggregationClient(BasicClient):
                     # meta data used for safe checking
                     'sender' : f'client',
                     'fl_round' : self.fl_round,
-                    'client_interger' : self.crypto.client_integer,
+                    'client_integer' : self.crypto.client_integer,
                     'event_name' : Event.ADVERTISE_KEYS.value,
 
                     # main data
@@ -79,12 +119,15 @@ class SecureAggregationClient(BasicClient):
 
             case Event.SHARE_KEYS.value:
                 all_public_keys = config['bobs_public_keys']
+                # register_bobs_keys() will filter out Alice's own key
                 self.crypto.register_bobs_keys(bobs_keys_list=all_public_keys)
-
+                
             case Event.MASKED_INPUT_COLLECTION.value:
+                # not needed assuming no drop out
                 pass
-
+ 
             case Event.UNMASKING.value:
+                # not needed assuming no drop out (hence no self masking)
                 pass
             case _ :
                 response_dict = {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples, "response": "client served default"}

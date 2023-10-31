@@ -1,7 +1,7 @@
 import cryptography.hazmat.primitives.asymmetric.ec as ec
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives import hashes, serialization
-from typing import Dict, Tuple, cast, List, Any
+from typing import Dict, Tuple, cast, List, Any, Optional
 import base64
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
@@ -14,6 +14,7 @@ import torch
 from cryptography.fernet import Fernet
 import pickle
 from numpy.random import default_rng
+from numpy import ndarray, zeros, ones
 from dataclasses import dataclass
 
 from enum import Enum
@@ -43,14 +44,14 @@ class ClientCryptoKit:
     # NOTE We call the client itself "Alice", her peer clients "Bob", and the server "Sam".
     # NOTE As a design decision, Alice only stores the key agreement with Bob, never Bob's public key.
 
-    def __init__(self, arithmetic_modulus: int = 1<<30) -> None:
+    def __init__(self, arithmetic_modulus: int = 1<<30, client_integer: Optional[int] =None) -> None:
 
         self.arithmetic_modulus = arithmetic_modulus
 
         # These are determined by the server, based on number of available clients, and will be assigned later.
-        self.client_integer = None
-        self.reconstruction_threshold = None
-        self.number_of_bobs = None    # the number of online clients alice communicates with for SecAgg
+        self.client_integer = client_integer
+        self.reconstruction_threshold = 2
+        self.number_of_bobs = 2    # the number of online clients alice communicates with for SecAgg
 
         # ------------ Alice's Private Keys ------------ #
 
@@ -67,6 +68,22 @@ class ClientCryptoKit:
 
         self.shamir_self_masks: Dict[ClientId, ShamirSecret]
         self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret]
+    
+    def get_pair_mask_sum(self, vector_dim: int, online_clients: Optional[List[ClientId]] = None) -> List[int]:
+        """This function can only be run after masking seed agreement."""
+        assert self.agreed_mask_keys is not None
+        sum: ndarray = zeros(shape=vector_dim, dtype=int)
+        if online_clients is not None:
+            for id in online_clients:
+                seed = self.agreed_mask_keys[id]
+                vec = self.generate_peudorandom_vector(seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim)
+                sum = sum + vec if self.client_integer > id else sum - vec
+            return sum
+        # no dropouts
+        for id, seed in self.agreed_mask_keys.items():
+            vec = self.generate_peudorandom_vector(seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim)
+            sum = sum + vec if self.client_integer > id else sum - vec
+        return sum.tolist()
 
     def set_arithmetic_modulus(self, modulus: int) -> None:
         assert isinstance(modulus, int) and modulus > 1
@@ -145,9 +162,9 @@ class ClientCryptoKit:
 
     def get_self_mask_shamir(self) -> List[ShamirSecret]:
 
-        assert self.alice_self_mask_seed is not None
-        assert self.number_of_bobs is not None
-        assert self.reconstruction_threshold is not None
+        # assert self.alice_self_mask_seed is not None
+        # assert self.number_of_bobs is not None
+        # assert self.reconstruction_threshold is not None
 
         # 16 bytes
         secret_byte = self.alice_self_mask_seed.to_bytes(length=16)
@@ -229,7 +246,7 @@ class ClientCryptoKit:
         given to client i. Thus, each client gets an array of secret shares.
         """
 
-        assert 1 < reconstruction_threshold <= total_shares
+        # assert 1 < reconstruction_threshold <= total_shares
 
         # PyCryptodome's Shamir algorithm works on 16 byte strings
         Len = 16
@@ -254,7 +271,7 @@ class ClientCryptoKit:
         return randrange(start=0, stop=sample_size)
 
     @staticmethod
-    def generate_peudorandom_vector(seed: int | bytes, arithmetic_modulus: int, dimension: int) -> List[int]:
+    def generate_peudorandom_vector(seed: int | bytes, arithmetic_modulus: int, dimension: int) -> ndarray:
         "Used to compute self mask and pairwise mask, also used by server for unmasking."
 
         if isinstance(seed, int):
@@ -265,9 +282,7 @@ class ClientCryptoKit:
         else:
             raise Exception("Seed must be integer or bytes")
 
-        vector = np_generator.integers(low=0, high=arithmetic_modulus, size=dimension)
-
-        return vector.tolist()
+        return np_generator.integers(low=0, high=arithmetic_modulus, size=dimension)
 
     @staticmethod
     def encrypt_message(key: bytes, plaintext: Any) -> bytes:
@@ -283,8 +298,8 @@ class ClientCryptoKit:
 
 class ServerCryptoKit:
 
-    def __init__(self):
-        self.shamir_reconstruction_threshold = 2
+    def __init__(self, shamir_reconstruction_threshold: Optional[int] = 2):
+        self.shamir_reconstruction_threshold = shamir_reconstruction_threshold
         self.number_of_bobs = None   # (number of online clients) - 1
         self.arithmetic_modulus = 1 << 30
 
@@ -326,7 +341,7 @@ class ServerCryptoKit:
 
     def reconstruct_self_mask_seed(self, shamir_shares) -> int:
         secret_byte = ServerCryptoKit.shamir_reconstruct_secret(
-            shares=shamir_shares, reconstruction_threshold=self.reconstruction_threshold)
+            shares=shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold)
         return int.from_bytes(secret_byte)
 
     def reconstruct_pair_mask(self, alice_shamir_shares: [ShamirSecret], bob_public_key: bytes) -> bytes:
@@ -335,7 +350,7 @@ class ServerCryptoKit:
         This secret is the seed for their pairwise vector for masking.
         """
         private_key = ServerCryptoKit.shamir_reconstruct_secret(
-            shares=alice_shamir_shares, reconstruction_threshold=self.reconstruction_threshold)
+            shares=alice_shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold)
 
         key: EllipticCurvePrivateKey = ServerCryptoKit.deserialize_private_key(private_key)
         return ClientCryptoKit.key_agreement(private_key=key, peer_public_key_bytes=bob_public_key)

@@ -17,7 +17,6 @@ from time import sleep
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
 
-# TODO delete all dummy values 
 
 class SecureAggregationServer(FlServerWithCheckpointing):
 
@@ -83,8 +82,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         for current_round in range(1, num_rounds + 1):
             if current_round > 1:
-                # call client
-                self.api(request_dict={"greet": "server greets client", "round": current_round}, event_name="greet")
                 self.secure_aggregation()
 
             # Train model and replace previous global model
@@ -145,11 +142,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
         all_public_keys = self.setup_and_key_agreement()
-        
         shamir_shares = self.broadcast_keys()
-
-
-
+        
         
     def debugger(self, *info):
         log(DEBUG, 6*'\n')
@@ -223,7 +217,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                 'fl_round': self.fl_round,
                 'client_integer': client_int,
                 'shamir_reconstruction_threshold': self.crypto.shamir_reconstruction_threshold,
-                'number_of_bobs': self.crypto.number_of_bobs + 10 ,  # TODO remove dummy value 10
+                'number_of_bobs': self.crypto.number_of_bobs,
                 'arithmetic_modulus': self.crypto.arithmetic_modulus
             }
             request = self.strategy.package_single_client_request(
@@ -241,7 +235,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             timeout=self.timeout
         )
 
-        assert len(online) + 10 >= self.crypto.shamir_reconstruction_threshold  # TODO remove dummy value 10
+        assert len(online) >= self.crypto.shamir_reconstruction_threshold  
 
         for client, response in online:
             # parse
@@ -269,6 +263,14 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             'bobs_public_keys': self.crypto.get_all_public_keys()
         }
 
-        # process shamir shares
-        res = self.api(request_dict=1, event_name=Event.SHARE_KEYS.value)
+        # TODO process shamir shares to account for drop out model
+        res = self.api(request_dict=req, event_name=Event.SHARE_KEYS.value)
+    
+    def request_masked_input(self):
+        req = {
+            'sender': 'server',
+            'fl_round': self.fl_round,
+            'even_name': Event.MASKED_INPUT_COLLECTION.value
+        }
+
             
