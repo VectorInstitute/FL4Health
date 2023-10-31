@@ -1,18 +1,14 @@
 import json
 from logging import INFO
-from typing import Dict, List, TypeVar
+from typing import Dict, List
 
-import numpy as np
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
-from torch import Tensor
 
 from examples.fedopt_example.client_data import LabelEncoder
 from fl4health.utils.metrics import MetricMeter
-
-T = TypeVar("T", np.ndarray, Tensor)
 
 
 class Outcome:
@@ -103,7 +99,8 @@ class CustomMetricMeter(MetricMeter):
         """
         Evaluate metrics and store results.
         """
-        confusion = confusion_matrix(target, input, labels=range(self.n_classes))
+        predictions = torch.argmax(input.detach().clone(), dim=1)
+        confusion = confusion_matrix(target.detach().clone(), predictions, labels=range(self.n_classes))
         for i in range(self.n_classes):
             true_class = self.label_to_class[i]
             for j in range(self.n_classes):

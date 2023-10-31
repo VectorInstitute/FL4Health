@@ -54,7 +54,7 @@ def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics
 
 
 def construct_config(
-    _: int,
+    current_round: int,
     sequence_length: int,
     local_epochs: int,
     batch_size: int,
@@ -72,6 +72,7 @@ def construct_config(
         "hidden_size": hidden_size,
         "vocabulary": vocabulary.to_json(),
         "label_encoder": label_encoder.to_json(),
+        "current_server_round": current_round,
     }
 
 
@@ -101,8 +102,8 @@ def pretrain_vocabulary(path: Path) -> Tuple[Vocabulary, LabelEncoder]:
     df = get_local_data(path)
     # Drop 20% of the texts to artificially create some UNK tokens
     processed_df, _ = train_test_split(df, test_size=0.8)
-    headline_text = [word_tokenize(text.lower()) for _, text in processed_df["headline"].items()]
-    body_text = [word_tokenize(text.lower()) for _, text in processed_df["short_description"].items()]
+    headline_text = [word_tokenize(text.lower()) for _, text in processed_df["title"].items()]
+    body_text = [word_tokenize(text.lower()) for _, text in processed_df["body"].items()]
     label_encoder = LabelEncoder.encoder_from_dataframe(processed_df, "category")
     return Vocabulary(None, headline_text + body_text), label_encoder
 
@@ -111,7 +112,11 @@ def main(config: Dict[str, Any]) -> None:
     log(INFO, "Fitting vocabulary to a centralized text sample")
     data_path = Path(
         os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "datasets", "news_classification", "news_dataset.json"
+            os.path.dirname(os.path.dirname(__file__)),
+            "datasets",
+            "agnews_data",
+            "partitioned_datasets",
+            "partition_0.json",
         )
     )
     # Each of the clients needs a shared vocabulary and label encoder to produce their own data loaders
