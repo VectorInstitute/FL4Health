@@ -105,8 +105,24 @@ class ROC_AUC(Metric):
 
 
 class F1(Metric):
-    def __init__(self, name: str = "F1 score"):
+    def __init__(
+        self,
+        name: str = "F1 score",
+        average: Optional[str] = "weighted",
+    ):
+        """
+        Computes the F1 score using the sklearn f1_score function. As such, the values of average are correspond to
+        those of that function.
+
+        Args:
+            name (str, optional): Name of the metric. Defaults to "F1 score".
+            average (Optional[str], optional): Whether to perform averaging of the F1 scores and how. The values of
+                this string corresponds to those of the sklearn f1_score function. See:
+                https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
+                Defaults to "weighted".
+        """
         super().__init__(name)
+        self.average = average
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         assert logits.shape[0] == target.shape[0]
@@ -114,7 +130,7 @@ class F1(Metric):
         logits = logits.cpu().detach()
         y_true = target.reshape(-1)
         preds = np.argmax(logits, axis=1)
-        return metrics.f1_score(y_true, preds, average="weighted")
+        return metrics.f1_score(y_true, preds, average=self.average)
 
 
 class MetricMeterType(Enum):

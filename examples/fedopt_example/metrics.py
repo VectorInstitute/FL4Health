@@ -1,12 +1,16 @@
 import json
+from logging import INFO
 from typing import Dict, List, TypeVar
 
 import numpy as np
+import torch
+from flwr.common.logger import log
 from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 from torch import Tensor
 
 from examples.fedopt_example.client_data import LabelEncoder
+from fl4health.utils.metrics import MetricMeter
 
 T = TypeVar("T", np.ndarray, Tensor)
 
@@ -75,54 +79,68 @@ class ServerMetrics:
         return metrics
 
 
-class ClientMetrics:
+class CustomMetricMeter(MetricMeter):
+    """
+    class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
+    The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
+    called with predcitions and ground truth labels. The count corresponding to each evaluation is stored to ensure
+    the metrics average is accurate. The compute method is used to return a dictionairy of metrics along with their
+    current values.
+    """
+
     def __init__(self, label_encoder: LabelEncoder) -> None:
         self.true_preds = 0
         self.total_preds = 0
         self.classes = label_encoder.classes
         self.outcome_dict = self._initialize_outcomes(self.classes)
         self.label_to_class = label_encoder.label_to_class
-        self.results: Metrics = {}
         self.n_classes = len(self.classes)
 
     def _initialize_outcomes(self, classes: List[str]) -> Dict[str, Outcome]:
         return {topic: Outcome(topic) for topic in classes}
 
-    def summarize(self) -> str:
-        sum_f1 = 0.0
-        n_topics = 0
-        log_string = ""
-        for _, outcome in self.outcome_dict.items():
-            summary_dict = outcome.summarize()
-            n_topics += 1
-            sum_f1 += outcome.get_f1()
-
-            self.results[
-                outcome.class_name
-            ] = f"[{outcome.true_positive}, {outcome.false_positive}, {outcome.false_negative}]"
-
-            for metric_name, metric_value in summary_dict.items():
-                log_string = f"{log_string}\n{metric_name}:{str(metric_value)}"
-
-        self.results["total_preds"] = self.total_preds
-        self.results["true_preds"] = self.true_preds
-        log_string = f"{log_string}\ntotal_accuracy:{str(self.true_preds/self.total_preds)}"
-        log_string = f"{log_string}\naverage_f1:{str(sum_f1/n_topics)}"
-        return log_string
-
-    def update_performance(self, predictions: T, labels: T) -> None:
-        confusion = confusion_matrix(labels, predictions, labels=range(self.n_classes))
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        Evaluate metrics and store results.
+        """
+        confusion = confusion_matrix(target, input, labels=range(self.n_classes))
         for i in range(self.n_classes):
             true_class = self.label_to_class[i]
             for j in range(self.n_classes):
                 pred_class = self.label_to_class[j]
                 # int cast is because FL metrics don't play nice with numpy int.64 types
                 count = int(confusion[i][j])
+                self.total_preds += count
                 if i == j:
                     self.outcome_dict[true_class].true_positive += count
                     self.true_preds += count
-                    self.total_preds += count
                 else:
                     self.outcome_dict[true_class].false_negative += count
                     self.outcome_dict[pred_class].false_positive += count
-                    self.total_preds += count
+
+    def compute(self) -> Metrics:
+        sum_f1 = 0.0
+        results: Metrics = {"total_preds": self.total_preds, "true_preds": self.true_preds}
+        log_string = ""
+        for outcome in self.outcome_dict.values():
+            summary_dict = outcome.summarize()
+            sum_f1 += outcome.get_f1()
+
+            results[
+                outcome.class_name
+            ] = f"[{outcome.true_positive}, {outcome.false_positive}, {outcome.false_negative}]"
+
+            for metric_name, metric_value in summary_dict.items():
+                log_string = f"{log_string}\n{metric_name}:{str(metric_value)}"
+
+        log_string = f"{log_string}\ntotal_accuracy:{str(self.true_preds/self.total_preds)}"
+        log_string = f"{log_string}\naverage_f1:{str(sum_f1/self.n_classes)}"
+        log(INFO, log_string)
+
+        return results
+
+    def clear(self) -> None:
+        self.true_preds = 0
+        self.total_preds = 0
+        # Re-initialize the outcomes dictionary to be fresh.
+        self.outcome_dict = self._initialize_outcomes(self.classes)

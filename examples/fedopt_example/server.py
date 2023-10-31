@@ -53,18 +53,6 @@ def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics
     return server_metrics.compute_metrics()
 
 
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedOpt
-    return metric_aggregation(all_client_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedOpt
-    return metric_aggregation(all_client_metrics)
-
-
 def construct_config(
     _: int,
     sequence_length: int,
@@ -113,9 +101,10 @@ def pretrain_vocabulary(path: Path) -> Tuple[Vocabulary, LabelEncoder]:
     df = get_local_data(path)
     # Drop 20% of the texts to artificially create some UNK tokens
     processed_df, _ = train_test_split(df, test_size=0.8)
-    text = [word_tokenize(text.lower()) for _, text in processed_df["headline"].items()]
+    headline_text = [word_tokenize(text.lower()) for _, text in processed_df["headline"].items()]
+    body_text = [word_tokenize(text.lower()) for _, text in processed_df["short_description"].items()]
     label_encoder = LabelEncoder.encoder_from_dataframe(processed_df, "category")
-    return Vocabulary(None, text), label_encoder
+    return Vocabulary(None, headline_text + body_text), label_encoder
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -149,8 +138,8 @@ def main(config: Dict[str, Any]) -> None:
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
-        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-        evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+        fit_metrics_aggregation_fn=metric_aggregation,
+        evaluate_metrics_aggregation_fn=metric_aggregation,
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
