@@ -1,30 +1,31 @@
-from typing import Dict, Tuple
-from flwr.common.typing import Config
-from torch.nn import Module, CrossEntropyLoss
-from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer, SGD
-from torch.utils.data import DataLoader
-from fl4health.clients.secure_aggregation_client import SecureAggregationClient
-from examples.models.cnn_model import Net
-from fl4health.utils.load_data import load_cifar10_data
 from argparse import ArgumentParser
 from pathlib import Path
-import torch 
-from fl4health.utils.metrics import Accuracy
-from flwr.client import start_numpy_client as RunClient
+from typing import Dict, Tuple
 
+import torch
+from flwr.client import start_numpy_client as RunClient
+from flwr.common.typing import Config
+from torch.nn import CrossEntropyLoss, Module
+from torch.nn.modules.loss import _Loss
+from torch.optim import SGD, Optimizer
+from torch.utils.data import DataLoader
+
+from examples.models.cnn_model import Net
+from fl4health.clients.secure_aggregation_client import SecureAggregationClient
+from fl4health.utils.load_data import load_cifar10_data
+from fl4health.utils.metrics import Accuracy
 
 
 class SecAggClient(SecureAggregationClient):
-    
-    # Supply @abstractmethod implementations 
+    # Supply @abstractmethod implementations
 
     """
     model, loss, optimizer
     """
+
     def get_model(self, config: Config) -> Module:
         return Net().to(self.device)
-    
+
     def get_criterion(self, config: Config) -> _Loss:
         return CrossEntropyLoss()
 
@@ -34,25 +35,25 @@ class SecAggClient(SecureAggregationClient):
     """
     training & validation data
     """
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
 
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
 
         # sample_size is currently unused
         training_loader, training_loader, sample_size = load_cifar10_data(self.data_path, batch_size)
 
         return training_loader, training_loader
-    
 
-if __name__ == '__main__':
 
+if __name__ == "__main__":
     # link to dataset
     parser = ArgumentParser(description="Secure aggregation client.")
-    parser.add_argument("--dataset_path", 
-                        action="store", 
-                        type=str, 
-                        default="examples/datasets",
-                        help="Path to the local dataset, no need to encluse in quotes."
+    parser.add_argument(
+        "--dataset_path",
+        action="store",
+        type=str,
+        default="examples/datasets",
+        help="Path to the local dataset, no need to encluse in quotes.",
     )
     args = parser.parse_args()
     data_path = Path(args.dataset_path)

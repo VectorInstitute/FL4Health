@@ -1,31 +1,33 @@
+import base64
+import random
+from dataclasses import dataclass
+from typing import Dict, Tuple, cast
+
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
-from cryptography.hazmat.primitives import hashes, serialization
-from typing import Tuple, Dict, cast
-import base64
-from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-import random
-
-from cryptography.hazmat.backends import default_backend
-from dataclasses import dataclass
-
 
 # alias types
 PeerId, PeerPublicKey = int, bytes
 
+
 @dataclass
 class PeerKeyChain:
     # peer can drop out and not share these keys
-    cipher_key: PeerPublicKey = None    
+    cipher_key: PeerPublicKey = None
     pair_mask_key: PeerPublicKey = None
+
 
 @dataclass
 class PeerShamirSecrets:
-    # clients will send these to the server to remove their peer's self mask or 
+    # clients will send these to the server to remove their peer's self mask or
     # pairwise mask from the aggregation, depending on whether this peer has dropped out
-    self_mask_secret: bytes = None 
+    self_mask_secret: bytes = None
     pair_mask_secret: bytes = None
+
 
 @dataclass
 class ClientKeyChain:
@@ -39,18 +41,16 @@ class ClientKeyChain:
 
 
 class ClientCryptoKit:
-
     def __init__(self, client_id: int):
         # initialized
         self.id = client_id
 
         self.keychain_private: ClientKeyChain
 
-        self.keychain_public = Dict[PeerId, PeerKeyChain]   # holds public keys shared by peers
+        self.keychain_public = Dict[PeerId, PeerKeyChain]  # holds public keys shared by peers
 
         self.shamir_secrets = Dict[PeerId, PeerShamirSecrets]
 
-    
     @staticmethod
     def generate_keypair() -> Tuple[ec.EllipticCurvePrivateKey, bytes]:
         """Generates (private, public) key pair.
@@ -63,18 +63,19 @@ class ClientCryptoKit:
         # generates private key
         private_key = ec.generate_private_key(NIST_P384_curve)
 
-        # generates public key 
+        # generates public key
         public_key = private_key.public_key()
 
         # serialize to bytes for transmission
-        public_key_bytes = public_key.public_bytes(encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
+        public_key_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
 
         return private_key, public_key_bytes
 
     @staticmethod
     def key_agreement(private_key: EllipticCurvePrivateKey, peer_public_key_bytes: bytes) -> bytes:
-        
-        # deserialize peer public key 
+        # deserialize peer public key
         peer_public_key = cast(EllipticCurvePublicKey, serialization.load_pem_public_key(data=peer_public_key_bytes))
 
         # 384 bits
@@ -88,33 +89,26 @@ class ClientCryptoKit:
             info=None,
         ).derive(diffie_hellman_shared)
 
-        return base64.urlsafe_b64encode(hashed_secret)  
-
+        return base64.urlsafe_b64encode(hashed_secret)
 
     def bytes_to_public_key(public_key_bytes: bytes) -> EllipticCurvePublicKey:
         return serialization.load_pem_public_key(public_key_bytes)
-    
 
 
 class ServerCryptoKit:
-
     def __init__(self):
         pass
 
 
-
 class SecureAggregationProtocal:
-    
     def __init__(
-        self, 
+        self,
         *,
         number_clients: int,
         shamir_threshold: int,
         arithemtic_modulus: int,
         vector_dimension: int,
-
     ) -> None:
-        
         self.number_clients = number_clients
         self.shamir_threshold = shamir_threshold
         self.arithemtic_modulus = arithemtic_modulus
@@ -126,7 +120,7 @@ _, public = a.generate_keypair()
 private, _ = a.generate_keypair()
 
 exchange = a.key_agreement(private, public)
-print(int(exchange.hex(),16))
+print(int(exchange.hex(), 16))
 
 
 # a.key_agreement(private, public)

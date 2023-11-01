@@ -1,13 +1,13 @@
 # How Flower Works
 
 Flower's `Server` class has a `fit()` method that coordinates $N$ rounds of federated learning.
-Each round is executed by the `fit_round()` method, which works in a three step process 
+Each round is executed by the `fit_round()` method, which works in a three step process
 
 1. set up configuration to call clients via `Strategy.config_fit()`
 
 2. broadcasts configurations to clients for local training and receive response via `fit_clients`
 
-3. construct global model from client updates via `Strategy.aggregate_fit()` 
+3. construct global model from client updates via `Strategy.aggregate_fit()`
 
 ```py title="server.py" linenums="1"
 class Server:
@@ -18,10 +18,10 @@ class Server:
 
 ```
 
-The counter tracking the federated round is called `server_round` and is a parameter to key methods of the `Strategy` class such as `Strategy.configure_fit()` which is assigns each client 
+The counter tracking the federated round is called `server_round` and is a parameter to key methods of the `Strategy` class such as `Strategy.configure_fit()` which is assigns each client
 what updates will be sent to them, and `Strategy.aggregate_fit()` constructs new global model parameters.
 
-The server-to-client messages is stored as a list variable 
+The server-to-client messages is stored as a list variable
 
 ```
 client_instructions = Strategy.configure_fit()
@@ -53,7 +53,7 @@ class Parameters:
 
 and `FitIns.config` is a dictionary that can be customized to pass other parameters to the client besides the model parameters.
 
-Analogously server-to-client communication through `FitIns` the client-to-server communication 
+Analogously server-to-client communication through `FitIns` the client-to-server communication
 is packaged with the data type `FitRes` defined as
 
 ```py title="flwr/common/typing.py" linenums="1"
@@ -67,7 +67,7 @@ class FitRes:
     metrics: Dict[str, Scalar]
 ```
 
-The limitation is that the `FitRes` response is only returned by client side `Client.fit()` method. It turns out that each client side function is associated with unique `*Ins` and `*Res` types (see `flwr/common/typing.py`). For example what is useful for client-server communication is the `Client.get_property()` method, whose input and reponse type are 
+The limitation is that the `FitRes` response is only returned by client side `Client.fit()` method. It turns out that each client side function is associated with unique `*Ins` and `*Res` types (see `flwr/common/typing.py`). For example what is useful for client-server communication is the `Client.get_property()` method, whose input and reponse type are
 
 ```py title="flwr/common/typing.py" linenums="1"
 @dataclass
@@ -85,7 +85,7 @@ class GetPropertiesRes:
     properties: Properties
 ```
 
-Here the types `Config` and `Properties` are both `Dict[str, Scalar]` with `Scalar = Union[bool, bytes, float, int, str]`. The `Status` code is defined 
+Here the types `Config` and `Properties` are both `Dict[str, Scalar]` with `Scalar = Union[bool, bytes, float, int, str]`. The `Status` code is defined
 
 ```py title="flwr/common/typing.py" linenums="1"
 @dataclass
@@ -94,7 +94,7 @@ class Status:
 
     code: Code
     message: str
-    
+
 class Code(Enum):
     """Client status codes."""
 

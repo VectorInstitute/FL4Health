@@ -1,37 +1,36 @@
-import cryptography.hazmat.primitives.asymmetric.ec as ec
-from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
-from cryptography.hazmat.primitives import hashes, serialization
-from typing import Dict, Tuple, cast, List, Any, Optional
 import base64
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-
-from Crypto.Protocol.SecretSharing import Shamir
-from Crypto.Util.Padding import pad, unpad
-from Crypto.Random import get_random_bytes
-from random import randrange
-import torch
-
-from cryptography.fernet import Fernet
 import pickle
-from numpy.random import default_rng
-from numpy import ndarray, zeros, ones
 from dataclasses import dataclass
-
 from enum import Enum
+from random import randrange
+from typing import Any, Dict, List, Optional, Tuple, cast
+
+import cryptography.hazmat.primitives.asymmetric.ec as ec
+import torch
+from Crypto.Protocol.SecretSharing import Shamir
+from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from numpy import ndarray, ones, zeros
+from numpy.random import default_rng
 
 
 class Event(Enum):
-    ADVERTISE_KEYS = 'round 0'
-    SHARE_KEYS = 'round 1'
-    MASKED_INPUT_COLLECTION = 'round 2'
-    UNMASKING = 'round 4'
+    ADVERTISE_KEYS = "round 0"
+    SHARE_KEYS = "round 1"
+    MASKED_INPUT_COLLECTION = "round 2"
+    UNMASKING = "round 4"
 
 
 @dataclass
 class PublicKeyChain:
     """Customized for round 0 of SecAgg key agreement"""
+
     encryption_key: bytes
-    mask_key: bytes     # pairwise masking
+    mask_key: bytes  # pairwise masking
 
 
 ClientId = int
@@ -44,14 +43,13 @@ class ClientCryptoKit:
     # NOTE We call the client itself "Alice", her peer clients "Bob", and the server "Sam".
     # NOTE As a design decision, Alice only stores the key agreement with Bob, never Bob's public key.
 
-    def __init__(self, arithmetic_modulus: int = 1<<30, client_integer: Optional[int] =None) -> None:
-
+    def __init__(self, arithmetic_modulus: int = 1 << 30, client_integer: Optional[int] = None) -> None:
         self.arithmetic_modulus = arithmetic_modulus
 
         # These are determined by the server, based on number of available clients, and will be assigned later.
         self.client_integer = client_integer
         self.reconstruction_threshold = 2
-        self.number_of_bobs = 2    # the number of online clients alice communicates with for SecAgg
+        self.number_of_bobs = 2  # the number of online clients alice communicates with for SecAgg
 
         # ------------ Alice's Private Keys ------------ #
 
@@ -61,14 +59,14 @@ class ClientCryptoKit:
 
         # ------------ Key Agreement Secrets ------------ #
 
-        self.agreed_encryption_keys: Dict[ClientId, AgreedSecret]
-        self.agreed_mask_keys: Dict[ClientId, AgreedSecret]
+        self.agreed_encryption_keys: Dict[ClientId, AgreedSecret] = {}
+        self.agreed_mask_keys: Dict[ClientId, AgreedSecret] = {}
 
         # ------------ Alice's Store of Bob's Shamir Secrets ------------ #
 
-        self.shamir_self_masks: Dict[ClientId, ShamirSecret]
-        self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret]
-    
+        self.shamir_self_masks: Dict[ClientId, ShamirSecret] = {}
+        self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret] = {}
+
     def get_pair_mask_sum(self, vector_dim: int, online_clients: Optional[List[ClientId]] = None) -> List[int]:
         """This function can only be run after masking seed agreement."""
         assert self.agreed_mask_keys is not None
@@ -76,12 +74,16 @@ class ClientCryptoKit:
         if online_clients is not None:
             for id in online_clients:
                 seed = self.agreed_mask_keys[id]
-                vec = self.generate_peudorandom_vector(seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim)
+                vec = self.generate_peudorandom_vector(
+                    seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim
+                )
                 sum = sum + vec if self.client_integer > id else sum - vec
             return sum
         # no dropouts
         for id, seed in self.agreed_mask_keys.items():
-            vec = self.generate_peudorandom_vector(seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim)
+            vec = self.generate_peudorandom_vector(
+                seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim
+            )
             sum = sum + vec if self.client_integer > id else sum - vec
         return sum.tolist()
 
@@ -97,59 +99,55 @@ class ClientCryptoKit:
 
         # returns public keys in this container
         return PublicKeyChain(encryption_key=encryption_public, mask_key=mask_public)
-    
-    def register_bobs_keys(self, bobs_keys_list: Dict[str, Any]) -> None:
-        """Perform key agreement and storage 
 
-        Expected arg: bobs_keys_list is a list of dictionaries, one per bob
-        Each dict has keys ['client_integer', 'encryption_key', 'mask_key'] among others.
+    def register_bobs_keys(self, bobs_keys_dict: Dict[ClientId, Dict[str, AgreedSecret]]) -> None:
+        """Perform key agreement and storage
+
+        Expected arg: dictionary with structure
+        {
+            ClientId: {
+                'encryption_key': AgreedSecret,
+                'mask_key': AgreedSecret
+            }
+        }
         """
-        for bob in bobs_keys_list:
-            id: ClientId = bob['client_integer']
-            # skip alice
-            if id == self.client_integer:
-                continue
+        for id, keys in bobs_keys_dict.items():
 
             # encryption key agreement and storage
             self.agreed_encryption_keys[id] = ClientCryptoKit.key_agreement(
-                self.alice_encryption_key,
-                bob["encryption_key"]
+                self.alice_encryption_key, keys["encryption_key"]
             )
 
             # masking key agreement and storage
-            self.agreed_mask_keys[id] = ClientCryptoKit.key_agreement(
-                self.alice_mask_key,
-                bob['mask_key']
-            )
+            self.agreed_mask_keys[id] = ClientCryptoKit.key_agreement(self.alice_mask_key, keys["mask_key"])
 
     def register_bobs_shamir_shares(self, bobs_shamir_shares: Dict[ClientId, Dict[str, ShamirSecret]]) -> None:
-        """Save shamir shares generated by Bobs. Expect a dictionary of the following structure
-            {
-                ClientId: {
-                    'shamir_pairwise': ShamirSecret,
-                    'shamir_self': ShamirSecret
-                },
-            }
+        """Save shamir shares generated by Bobs. Expects a dictionary of the following structure
+        {
+            ClientId: {
+                'shamir_pairwise': ShamirSecret,
+                'shamir_self': ShamirSecret
+            },
+        }
         """
         for id in bobs_shamir_shares:
-            self.shamir_pairwise_masks[id] = bobs_shamir_shares[id]['shamir_pairwise']
-            self.shamir_self_masks[id] = bobs_shamir_shares[id]['shamir_self']               
-    
+            self.shamir_pairwise_masks[id] = bobs_shamir_shares[id]["shamir_pairwise"]
+            self.shamir_self_masks[id] = bobs_shamir_shares[id]["shamir_self"]
 
     # ================= Setters =================
 
     def set_client_integer(self, integer: int) -> None:
-        assert 1 <= integer <= self.arithmetic_modulus
+        # assert 1 <= integer <= self.arithmetic_modulus
         self.client_integer = integer
 
     def set_number_of_bobs(self, integer: int) -> None:
         """Number of online peers (Bobs) which Alice communicates with."""
-        assert 1 <= integer <= self.arithmetic_modulus
+        # assert 1 <= integer <= self.arithmetic_modulus
         self.number_of_bobs = integer
 
     def set_reconstruction_threshold(self, new_threshold: int) -> None:
         # shamir threshold must be at least 2, but no greater than total number of online peers
-        assert 1 < new_threshold <= self.number_of_bobs
+        # assert 1 < new_threshold <= self.number_of_bobs
         self.reconstruction_threshold = new_threshold
 
     # ================= Getters =================
@@ -161,7 +159,6 @@ class ClientCryptoKit:
         return self.shamir_pairwise_masks[client_integer]
 
     def get_self_mask_shamir(self) -> List[ShamirSecret]:
-
         # assert self.alice_self_mask_seed is not None
         # assert self.number_of_bobs is not None
         # assert self.reconstruction_threshold is not None
@@ -172,10 +169,10 @@ class ClientCryptoKit:
         return ClientCryptoKit.generate_shamir_shares(
             secret=secret_byte,
             total_shares=self.number_of_bobs,
-            reconstruction_threshold=self.reconstruction_threshold)
+            reconstruction_threshold=self.reconstruction_threshold,
+        )
 
     def get_pair_mask_shamir(self) -> List[ShamirSecret]:
-
         assert self.alice_mask_key is not None
         assert self.number_of_bobs is not None
         assert self.reconstruction_threshold is not None
@@ -186,9 +183,8 @@ class ClientCryptoKit:
         return ClientCryptoKit.generate_shamir_shares(
             secret=private_bytes,
             total_shares=self.number_of_bobs,
-            reconstruction_threshold=self.reconstruction_threshold)
-    
-    
+            reconstruction_threshold=self.reconstruction_threshold,
+        )
 
     @staticmethod
     def generate_keypair() -> Tuple[EllipticCurvePrivateKey, bytes]:
@@ -207,7 +203,8 @@ class ClientCryptoKit:
 
         # serialize to bytes for transmission
         public_key_bytes = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo)
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
 
         return private_key, public_key_bytes
 
@@ -221,7 +218,6 @@ class ClientCryptoKit:
 
     @staticmethod
     def key_agreement(private_key: EllipticCurvePrivateKey, peer_public_key_bytes: bytes) -> bytes:
-
         # deserialize peer public key
         peer_public_key = cast(EllipticCurvePublicKey, serialization.load_pem_public_key(data=peer_public_key_bytes))
 
@@ -242,7 +238,7 @@ class ClientCryptoKit:
     @staticmethod
     def generate_shamir_shares(secret: bytes, total_shares: int, reconstruction_threshold: int) -> List[ShamirSecret]:
         """Shamir t out of n secret sharing.
-        The return type is an array, where the item at index i is another array of shares 
+        The return type is an array, where the item at index i is another array of shares
         given to client i. Thus, each client gets an array of secret shares.
         """
 
@@ -251,14 +247,13 @@ class ClientCryptoKit:
         # PyCryptodome's Shamir algorithm works on 16 byte strings
         Len = 16
         padded = pad(secret, block_size=Len)
-        segmented = [padded[i: i + Len] for i in range(0, len(padded), Len)]
+        segmented = [padded[i : i + Len] for i in range(0, len(padded), Len)]
 
         # client - to - shares (client indexed from 1)
         client_shares = [[] for _ in range(total_shares)]
 
         for segment in segmented:
             for i, share in Shamir.split(reconstruction_threshold, total_shares, segment):
-
                 # i starts from 1 but list index starts from 0
                 client_shares[i - 1].append(share)
 
@@ -295,44 +290,44 @@ class ClientCryptoKit:
         return pickle.loads(seralized)
 
 
-
 class ServerCryptoKit:
-
     def __init__(self, shamir_reconstruction_threshold: Optional[int] = 2):
         self.shamir_reconstruction_threshold = shamir_reconstruction_threshold
-        self.number_of_bobs = None   # (number of online clients) - 1
+        self.number_of_bobs = None  # (number of online clients) - 1
         self.arithmetic_modulus = 1 << 30
 
         # records
         self.client_table: Dict[ClientIP, ClientId] = {}
         self.client_public_keys: Dict[ClientId, PublicKeyChain] = {}
-    
 
     def append_client_table(self, client_ip: ClientIP, client_id: ClientId) -> None:
         self.client_table[client_ip] = client_id
-    
-    def append_client_public_keys(self, client_integer: ClientId, encryption_public_key: bytes, masking_public_key: bytes) -> None :
+
+    def append_client_public_keys(
+        self, client_integer: ClientId, encryption_public_key: bytes, masking_public_key: bytes
+    ) -> None:
         key = PublicKeyChain(encryption_key=encryption_public_key, mask_key=masking_public_key)
         self.client_public_keys[client_integer] = key
 
-    def get_all_public_keys(self) -> List[Dict[str, int | bytes]]:
+    def get_all_public_keys(self) -> Dict[ClientId, Dict[str, bytes]]:
         """Yields keys in the format of the input to ClientCryptoKit.register_bobs_keys()
-        namely, a list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
+        {
+            ClientId: {
+                'shamir_pairwise': ShamirSecret,
+                'shamir_self': ShamirSecret
+            },
+        }
+
+        a list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
         """
-        all_keys = []
+        all_keys = {}
         for id, public_key_chain in self.client_public_keys.items():
-            all_keys.append(
-                {
-                    'client_integer' : id,
-                    'encryption_key': public_key_chain.encryption_key,
-                    'mask_key' : public_key_chain.mask_key
-                }
-            )
+            all_keys[id] = {"encryption_key": public_key_chain.encryption_key, "mask_key": public_key_chain.mask_key}
         return all_keys
 
     def set_arithmetic_modulus(self, modulus: int) -> None:
         self.set_arithmetic_modulus = modulus
-    
+
     def set_shamir_threshold(self, threshold: int) -> None:
         self.shamir_reconstruction_threshold = threshold
 
@@ -341,39 +336,40 @@ class ServerCryptoKit:
 
     def reconstruct_self_mask_seed(self, shamir_shares) -> int:
         secret_byte = ServerCryptoKit.shamir_reconstruct_secret(
-            shares=shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold)
+            shares=shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold
+        )
         return int.from_bytes(secret_byte)
 
     def reconstruct_pair_mask(self, alice_shamir_shares: [ShamirSecret], bob_public_key: bytes) -> bytes:
         """
-        Reconstructs from private key the shared secrete between alice (dropout) and bob (online). 
+        Reconstructs from private key the shared secrete between alice (dropout) and bob (online).
         This secret is the seed for their pairwise vector for masking.
         """
         private_key = ServerCryptoKit.shamir_reconstruct_secret(
-            shares=alice_shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold)
+            shares=alice_shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold
+        )
 
         key: EllipticCurvePrivateKey = ServerCryptoKit.deserialize_private_key(private_key)
         return ClientCryptoKit.key_agreement(private_key=key, peer_public_key_bytes=bob_public_key)
 
     @staticmethod
     def shamir_reconstruct_secret(shares: List[ShamirSecret], reconstruction_threshold: int) -> bytes:
-
         assert len(shares) >= reconstruction_threshold > 1
 
         # number of segments
         S = len(shares[0])
 
         secret_segments: List[bytes] = map(
-            lambda s : Shamir.combine(shares=s),
-            [[(i + 1, shares[i][j]) for i in range(reconstruction_threshold)] for j in range(S)]
+            lambda s: Shamir.combine(shares=s),
+            [[(i + 1, shares[i][j]) for i in range(reconstruction_threshold)] for j in range(S)],
         )
         # Explanation
         # Build each segment j by applying Shamir.combine() to shares from all clients 1 <= i <= reconstruction_threshold.
         # Recall ShamirSecret := List[bytes] is a list of segmented Shamir secret shares.
 
-        join = b''.join(secret_segments)
+        join = b"".join(secret_segments)
 
-        return unpad(join , block_size=16)
+        return unpad(join, block_size=16)
 
     @staticmethod
     def deserialize_private_key(private_key_bytes: bytes) -> EllipticCurvePrivateKey:
@@ -384,7 +380,6 @@ class ServerCryptoKit:
 
 
 if __name__ == "__main__":
-
     # TODO Turn these into into PyTest
 
     """
@@ -398,8 +393,8 @@ if __name__ == "__main__":
 
     common_a = alice.key_agreement(alice_private, bob_public)
     common_b = bob.key_agreement(bob_private, alice_public)
-    print('agree ', common_a == common_b)
-    print('shared key: ', common_a, common_b)
+    print("agree ", common_a == common_b)
+    print("shared key: ", common_a, common_b)
 
     """
     ========= MESSAGE ENCRYPTION ========
@@ -408,7 +403,7 @@ if __name__ == "__main__":
     ciphertext = alice.encrypt_message(common_a, plaintext)
 
     decrypted = bob.decrypt_message(common_a, ciphertext)
-    print(plaintext, ciphertext, decrypted, type(decrypted), sep='\n\n')
+    print(plaintext, ciphertext, decrypted, type(decrypted), sep="\n\n")
 
     """
     ========= SHAMIR SECRET SPLIT ========
@@ -428,12 +423,12 @@ if __name__ == "__main__":
     reconstructed = sam.shamir_reconstruct_secret(shares=shares, reconstruction_threshold=THRESHOLD)
 
     # match results
-    print('match: ', reconstructed == secret)
+    print("match: ", reconstructed == secret)
 
     """
     ======== Peudo Vector ========
     """
-    MODULUS = 10 ** 10
+    MODULUS = 10**10
     DIM = 10
 
     seed = alice.generate_seed()
@@ -458,7 +453,7 @@ if __name__ == "__main__":
 
     assert key_original == key_reconstructed
 
-    print(key_original, key_reconstructed, sep='\n')
+    print(key_original, key_reconstructed, sep="\n")
 
     """
     ======== Self Mask Seed Reconstruction on the Server ========
@@ -470,7 +465,7 @@ if __name__ == "__main__":
     reconstructed = ServerCryptoKit().reconstruct_self_mask_seed(self_shamir)
 
     assert reconstructed == alice.alice_self_mask_seed
-    print(alice.alice_self_mask_seed, reconstructed, sep='\n')
+    print(alice.alice_self_mask_seed, reconstructed, sep="\n")
 
     """
     ======== Pair Mask Seed Reconstruction on the Server ========
@@ -478,7 +473,7 @@ if __name__ == "__main__":
     # Suppose Alice is the dropout and Bob is online. Sam is the server
     alice, bob, sam = ClientCryptoKit(), ClientCryptoKit(), ServerCryptoKit()
 
-    # key agreement 
+    # key agreement
     alice_public = alice.generate_public_keys().mask_key
     alice_private = alice.alice_mask_key
     bob_public = bob.generate_public_keys().mask_key
@@ -488,12 +483,12 @@ if __name__ == "__main__":
     shared_bob = bob.key_agreement(bob_private, alice_public)
 
     assert shared_alice == shared_bob
-    print(shared_alice, shared_bob, sep='\n')
+    print(shared_alice, shared_bob, sep="\n")
 
     alice_shamir = alice.get_pair_mask_shamir()
     shared_sam = sam.reconstruct_pair_mask(alice_shamir, bob_public)
 
     assert shared_sam == shared_alice
-    print('\n', shared_alice, shared_bob, shared_sam, sep='\n')
+    print("\n", shared_alice, shared_bob, shared_sam, sep="\n")
 
     pass

@@ -13,6 +13,5 @@ class BasicClient(...):
     return FullParameterExchanger()
 ```
 
-By default we are getting the FullParameterExchanger, and for us to customize `SecureAggregationClient` to add mask and noise, we must create a new parameter exchanger, extending 
+By default we are getting the FullParameterExchanger, and for us to customize `SecureAggregationClient` to add mask and noise, we must create a new parameter exchanger, extending
 `FullParameterExchanger`, that supports parameter post (training) processing.
-

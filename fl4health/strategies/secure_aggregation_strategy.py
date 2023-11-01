@@ -1,16 +1,6 @@
-from fl4health.strategies.basic_fedavg import BasicFedAvg
-from flwr.server.client_manager import ClientManager
-from flwr.common import Parameters, FitIns, Scalar, MetricsAggregationFn, NDArrays
-from typing import List, Tuple
-from flwr.server.client_proxy import ClientProxy
-from flwr.common import GetPropertiesIns
-from typing import Optional, Callable, Dict
-from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
-from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
-
-from typing import Callable, Dict, List, Optional, Tuple, Union
 from logging import INFO, WARNING
-from flwr.common.logger import log
+from typing import Callable, Dict, List, Optional, Tuple, Union
+
 from flwr.common import (
     EvaluateIns,
     EvaluateRes,
@@ -24,14 +14,19 @@ from flwr.common import (
     ndarrays_to_parameters,
     parameters_to_ndarrays,
 )
+from flwr.common.logger import log
+from flwr.server.client_manager import ClientManager
+from flwr.server.client_proxy import ClientProxy
 
-
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 Requests = List[Tuple[ClientProxy, GetPropertiesIns]]
 Request = Tuple[ClientProxy, GetPropertiesIns]
 
-class SecureAggregationStrategy(BasicFedAvg):
 
+class SecureAggregationStrategy(BasicFedAvg):
     def __init__(
         self,
         *,
@@ -55,28 +50,26 @@ class SecureAggregationStrategy(BasicFedAvg):
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
     ) -> None:
-            # NOTE currently secure aggregation supports no dropouts, hence fraction_fit_fit = 1
-            # I will define on_fit_config_fn to avoid complication
-            super().__init__(
-                fraction_fit=fraction_fit,
-                fraction_evaluate=fraction_evaluate,
-                min_fit_clients=min_fit_clients,
-                min_evaluate_clients=min_evaluate_clients,
-                min_available_clients=min_available_clients,
-                evaluate_fn=evaluate_fn,
-                on_fit_config_fn=on_fit_config_fn,
-                on_evaluate_config_fn=on_evaluate_config_fn,
-                accept_failures=accept_failures,
-                initial_parameters=initial_parameters,
-                fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
-                evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-                weighted_aggregation=weighted_aggregation,
-                weighted_eval_losses= weighted_eval_losses,
-            )
+        # NOTE currently secure aggregation supports no dropouts, hence fraction_fit_fit = 1
+        # I will define on_fit_config_fn to avoid complication
+        super().__init__(
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
+            min_available_clients=min_available_clients,
+            evaluate_fn=evaluate_fn,
+            on_fit_config_fn=on_fit_config_fn,
+            on_evaluate_config_fn=on_evaluate_config_fn,
+            accept_failures=accept_failures,
+            initial_parameters=initial_parameters,
+            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=weighted_aggregation,
+            weighted_eval_losses=weighted_eval_losses,
+        )
 
-    
     def package_request(self, request: Dict[str, Scalar], event_name: str, client_manager: ClientManager) -> Requests:
-
         # get all online clients for SecAgg (substitute for different client sampler for SecAgg+)
         if isinstance(client_manager, BaseFractionSamplingManager):
             clients_list = client_manager.sample_all(min_num_clients=self.min_available_clients)
@@ -84,34 +77,26 @@ class SecureAggregationStrategy(BasicFedAvg):
             # Grab all available clients using the basic Flower client manager
             num_available_clients = client_manager.num_available()
             clients_list = client_manager.sample(num_available_clients, min_num_clients=self.min_available_clients)
-        
 
         # adjoin event_name
-        req = {
-             "event_name": event_name,
-             **request
-        }
+        req = {"event_name": event_name, **request}
 
-        # Package dictionary to Flower request format 
+        # Package dictionary to Flower request format
         wrapper = GetPropertiesIns(req)
 
         packaged = map(lambda client: (client, wrapper), clients_list)
         return list(packaged)
-    
-    def package_single_client_request(self, client: ClientProxy, request: Dict[str, Scalar], event_name: str) -> Request:
-        # adjoin event_name
-        req = {
-             "event_name": event_name,
-             **request
-        }
 
-        # Package dictionary to Flower request format 
+    def package_single_client_request(
+        self, client: ClientProxy, request: Dict[str, Scalar], event_name: str
+    ) -> Request:
+        # adjoin event_name
+        req = {"event_name": event_name, **request}
+
+        # Package dictionary to Flower request format
         wrapper = GetPropertiesIns(req)
 
         return client, wrapper
-
-
-
 
     """
     Customize: first compute sum, then communicate w/clients to remove masks, then average

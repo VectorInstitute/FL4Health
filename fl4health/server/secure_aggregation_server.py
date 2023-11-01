@@ -1,29 +1,32 @@
-from fl4health.server.base_server import FlServerWithCheckpointing, ExchangerType
+import pickle
+import timeit
+from logging import DEBUG, INFO, WARNING
+from time import sleep
+from typing import Any, Dict, List, Optional
+
+from flwr.common import parameters_to_ndarrays
+from flwr.common.logger import log
+from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
-from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
-from typing import Optional, Dict, Any, List
-from fl4health.reporting.fl_wanb import ServerWandBReporter
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from flwr.server.history import History
 from torch.nn import Module
-from logging import DEBUG, INFO, WARNING
-from flwr.common.logger import log
-from fl4health.strategies.strategy_with_poll import StrategyWithPolling
-from .polling import poll_clients
-import timeit
-from flwr.common.typing import Scalar
-from fl4health.security.secure_aggregation import ServerCryptoKit, Event
-from time import sleep
-from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.security.secure_aggregation import Event, ServerCryptoKit
+from fl4health.server.base_server import ExchangerType, FlServerWithCheckpointing
+from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
+from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+
+from .polling import poll_clients
 
 
 class SecureAggregationServer(FlServerWithCheckpointing):
-
     def __init__(
-        self, 
-        client_manager: ClientManager, 
-        strategy: SecureAggregationStrategy, 
+        self,
+        client_manager: ClientManager,
+        strategy: SecureAggregationStrategy,
         model: Module,
         parameter_exchanger: ExchangerType,
         wandb_reporter: Optional[ServerWandBReporter] = None,
@@ -32,16 +35,15 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         shamir_reconstruction_threshold: int = 2,
         arithmetic_modulus: int = 1 << 30,
     ) -> None:
-
-        assert isinstance(strategy, SecureAggregationStrategy)    
+        assert isinstance(strategy, SecureAggregationStrategy)
 
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
 
         # federated round
-        self.fl_round = 0 
+        self.fl_round = 0
 
         # Handled in the respective communication stack, as in polling.py
-        self.timeout: Optional[float] = None 
+        self.timeout: Optional[float] = None
 
         # handles SecAgg cryptography on the server-side
         self.crypto = ServerCryptoKit()
@@ -50,8 +52,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         assert isinstance(arithmetic_modulus, int) and arithmetic_modulus > 1
         self.crypto.set_arithmetic_modulus(arithmetic_modulus)
-
-
 
     def set_timeout(self, timeout: float) -> None:
         self.timeout = timeout
@@ -90,9 +90,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                 parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
                 if parameters_prime:
                     self.parameters = parameters_prime
-                history.add_metrics_distributed_fit(
-                    server_round=current_round, metrics=fit_metrics
-                )
+                    self.debugger("parameters_prime", parameters_to_ndarrays(self.parameters))
+                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
 
             # Evaluate model using strategy implementation
             res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
@@ -107,49 +106,39 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                     timeit.default_timer() - start_time,
                 )
                 history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-                history.add_metrics_centralized(
-                    server_round=current_round, metrics=metrics_cen
-                )
+                history.add_metrics_centralized(server_round=current_round, metrics=metrics_cen)
 
             # Evaluate model on a sample of available clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
-                    history.add_loss_distributed(
-                        server_round=current_round, loss=loss_fed
-                    )
-                    history.add_metrics_distributed(
-                        server_round=current_round, metrics=evaluate_metrics_fed
-                    )
+                    history.add_loss_distributed(server_round=current_round, loss=loss_fed)
+                    history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
 
         # Bookkeeping
         end_time = timeit.default_timer()
         elapsed = end_time - start_time
         log(INFO, "FL finished in %s", elapsed)
-    
 
         if self.wandb_reporter:
             self.wandb_reporter.report_metrics(num_rounds, history)
         return history
-    
+
     def secure_aggregation(self):
-        
         N = self.get_peer_number()
         # assert 1 <= N <= self.crypto.arithmetic_modulus
-        # assert 2 <= self.crypto.shamir_reconstruction_threshold <= N    
+        # assert 2 <= self.crypto.shamir_reconstruction_threshold <= N
         self.crypto.set_number_of_bobs(N)
 
         # list of dictionaries, each dict contains keys ['client_integer', 'encryption_key', 'mask_key']
         all_public_keys = self.setup_and_key_agreement()
         shamir_shares = self.broadcast_keys()
-        
-        
+
     def debugger(self, *info):
-        log(DEBUG, 6*'\n')
+        log(DEBUG, 6 * "\n")
         for item in info:
             log(DEBUG, item)
-
 
     def get_peer_number(self):
         """The number of peers of Alice (total number of clients - 1)"""
@@ -182,11 +171,9 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # later we will extend the SecAgg protocol implementation to deal with dropouts
         online, dropouts = poll_clients(
-            client_instructions=request,
-            max_workers=self.max_workers,
-            timeout=self.timeout
+            client_instructions=request, max_workers=self.max_workers, timeout=self.timeout
         )
-        
+
         # resolve response
         response = []
         i = 1
@@ -205,72 +192,60 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         else:
             # Grab all available clients using the basic Flower client manager
             num_available_clients = self._client_manager.num_available()
-            clients_list = self._client_manager.sample(num_available_clients, min_num_clients=self.strategy.min_available_clients)
-        
+            clients_list = self._client_manager.sample(
+                num_available_clients, min_num_clients=self.strategy.min_available_clients
+            )
+
         all_requests = []
         client_int = 1
         for client in clients_list:
             assert client.cid is not None
             self.crypto.append_client_table(client_ip=client.cid, client_id=client_int)
             req_dict = {
-                'sender': 'server',
-                'fl_round': self.fl_round,
-                'client_integer': client_int,
-                'shamir_reconstruction_threshold': self.crypto.shamir_reconstruction_threshold,
-                'number_of_bobs': self.crypto.number_of_bobs,
-                'arithmetic_modulus': self.crypto.arithmetic_modulus
+                "sender": "server",
+                "fl_round": self.fl_round,
+                "client_integer": client_int,
+                "shamir_reconstruction_threshold": self.crypto.shamir_reconstruction_threshold,
+                "number_of_bobs": self.crypto.number_of_bobs,
+                "arithmetic_modulus": self.crypto.arithmetic_modulus,
             }
             request = self.strategy.package_single_client_request(
-                client=client,
-                request=req_dict,
-                event_name=Event.ADVERTISE_KEYS.value
+                client=client, request=req_dict, event_name=Event.ADVERTISE_KEYS.value
             )
             all_requests.append(request)
             client_int += 1
 
         # broadcast
         online, dropouts = poll_clients(
-            client_instructions=all_requests,
-            max_workers=self.max_workers,
-            timeout=self.timeout
+            client_instructions=all_requests, max_workers=self.max_workers, timeout=self.timeout
         )
 
-        assert len(online) >= self.crypto.shamir_reconstruction_threshold  
+        assert len(online) >= self.crypto.shamir_reconstruction_threshold
 
         for client, response in online:
             # parse
             ip = client.cid
             res = response.properties
 
-            # # safe checking 
+            # # safe checking
             # assert res['sender'] == 'client'
             # assert res['fl_round'] == self.fl_round
             # assert res['client_integer'] == self.crypto.client_table[res[ip]]
             # assert res['event_name'] == Event.ADVERTISE_KEYS.value
 
             self.crypto.append_client_public_keys(
-                client_integer=res['client_integer'],
-                encryption_public_key=res['public_encryption_key'],
-                masking_public_key=res['public_mask_key']    
+                client_integer=res["client_integer"],
+                encryption_public_key=res["public_encryption_key"],
+                masking_public_key=res["public_mask_key"],
             )
 
         return self.crypto.get_all_public_keys()
-        
-    def broadcast_keys(self):
-        req = {
-            'sender': 'server',
-            'fl_round': self.fl_round,
-            'bobs_public_keys': self.crypto.get_all_public_keys()
-        }
 
+    def broadcast_keys(self):
+        pickled_byte_keys = pickle.dumps(self.crypto.get_all_public_keys())
+        req = {"sender": "server", "fl_round": self.fl_round, "bobs_public_keys": pickled_byte_keys}
         # TODO process shamir shares to account for drop out model
         res = self.api(request_dict=req, event_name=Event.SHARE_KEYS.value)
-    
-    def request_masked_input(self):
-        req = {
-            'sender': 'server',
-            'fl_round': self.fl_round,
-            'even_name': Event.MASKED_INPUT_COLLECTION.value
-        }
 
-            
+    def request_masked_input(self):
+        req = {"sender": "server", "fl_round": self.fl_round, "even_name": Event.MASKED_INPUT_COLLECTION.value}

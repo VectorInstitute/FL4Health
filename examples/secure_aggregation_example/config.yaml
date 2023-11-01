@@ -2,7 +2,7 @@
 n_server_rounds: 2
 
 # must have at least 3 clients
-n_clients: 1
+n_clients: 3
 batch_size: 16
 
 # Other configs
