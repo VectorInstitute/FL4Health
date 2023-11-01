@@ -1,3 +1,4 @@
+import copy
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
@@ -359,6 +360,18 @@ class BasicClient(NumpyFlClient):
         optimizer = self.get_optimizer(config)
         assert not isinstance(optimizer, dict)
         self.optimizer = optimizer
+
+    def clone_model(self, model: nn.Module) -> nn.Module:
+        """
+        Method to deepcopy model. By default, uses PyTorch deepcopy.
+        """
+
+        cloned_model = copy.deepcopy(model)
+        for param in cloned_model.parameters():
+            param.requires_grad = False
+        cloned_model.eval()
+
+        return cloned_model
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """

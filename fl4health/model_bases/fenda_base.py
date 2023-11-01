@@ -48,6 +48,6 @@ class FendaModel(nn.Module):
         global_output = self.global_module.forward(input)
         return {
             "prediction": self.model_head.forward(local_output, global_output),
-            "local_features": local_output.view(len(local_output), -1),
-            "global_features": global_output.view(len(global_output), -1),
+            "local_features": local_output.reshape(len(local_output), -1),
+            "global_features": global_output.reshape(len(global_output), -1),
         }

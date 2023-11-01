@@ -50,7 +50,7 @@ class FedIsic2019FendaClient(FendaClient):
         elif type_run == "contrastive":
             self.contrastive_loss_weight = 10.0
         elif type_run == "perFCL":
-            self.perFCL_loss_weights = [10.0, 10.0]
+            self.perFCL_loss_weights = (10.0, 10.0)
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")

@@ -1,6 +1,5 @@
-import copy
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -23,10 +22,10 @@ class FendaClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        temperature: float = 0.5,
-        perFCL_loss_weights: List[float] = [0.0, 0.0],
-        cos_sim_loss_weight: float = 0.0,
-        contrastive_loss_weight: float = 0.0,
+        temperature: Optional[float] = 0.5,
+        perFCL_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
+        cos_sim_loss_weight: Optional[float] = 0.0,
+        contrastive_loss_weight: Optional[float] = 0.0,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -36,12 +35,27 @@ class FendaClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
+        """ This module is used to init fenda client with various auxiliary loss functions.
+        These losses will be activated only when their weights are not 0.0
+        Args:
+            data_path: Path to the data directory.
+            metrics: List of metrics to be used for evaluation.
+            device: Device to be used for training.
+            loss_meter_type: Type of loss meter to be used.
+            metric_meter_type: Type of metric meter to be used.
+            checkpointer: Checkpointer to be used for checkpointing.
+            temperature: Temperature to be used for contrastive loss.
+            perFCL_loss_weights: Weights to be used for perFCL loss.
+            Each value associate with one of two contrastive losses in perFCL loss.
+            cos_sim_loss_weight: Weight to be used for cosine similarity loss.
+            contrastive_loss_weight: Weight to be used for contrastive loss.
+        """
         self.perFCL_loss_weights = perFCL_loss_weights
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        self.temperature: float = temperature
+        self.temperature = temperature
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
@@ -57,45 +71,35 @@ class FendaClient(BasicClient):
 
         preds = self.model(input)
 
-        preds["old_local_features"] = self.old_local_module.forward(input).view(len(preds["local_features"]), -1)
-        preds["old_global_features"] = self.old_global_module.forward(input).view(len(preds["global_features"]), -1)
-        if self.perFCL_loss_weights[0] != 0.0 or self.perFCL_loss_weights[1] != 0.0:
-            preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).view(
-                len(preds["global_features"]), -1
-            )
-
-        if isinstance(preds, dict):
-            return preds
-        elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}
-        else:
-            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+        if self.contrastive_loss_weight or self.perFCL_loss_weights:
+            preds["old_local_features"] = self.old_local_module.forward(input).view(len(preds["local_features"]), -1)
+            if self.perFCL_loss_weights:
+                preds["old_global_features"] = self.old_global_module.forward(input).reshape(
+                    len(preds["global_features"]), -1
+                )
+                preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
+                    len(preds["global_features"]), -1
+                )
+        return preds
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
 
         # Save the parameters of the old model
         assert isinstance(self.model.local_module, torch.nn.Module)
         assert isinstance(self.model.global_module, torch.nn.Module)
-        self.old_local_module = copy.deepcopy(self.model.local_module)
-        self.old_global_module = copy.deepcopy(self.model.global_module)
-        for param in self.old_local_module.parameters():
-            param.requires_grad = False
-        for param in self.old_global_module.parameters():
-            param.requires_grad = False
-        self.old_local_module.eval()
-        self.old_global_module.eval()
+        if self.contrastive_loss_weight or self.perFCL_loss_weights:
+            self.old_local_module = self.clone_model(self.model.local_module)
+            self.old_global_module = self.clone_model(self.model.global_module)
 
         # Set the parameters of the model
-        output = super().set_parameters(parameters, config)
+        super().set_parameters(parameters, config)
 
         # Save the parameters of the global model
-        if self.perFCL_loss_weights[0] != 0.0 or self.perFCL_loss_weights[1] != 0.0:
+        if self.perFCL_loss_weights:
             assert isinstance(self.model.global_module, torch.nn.Module)
-            self.aggregated_global_module = copy.deepcopy(self.model.global_module)
-            for param in self.aggregated_global_module.parameters():
-                param.requires_grad = False
-            self.aggregated_global_module.eval()
-        return output
+            self.aggregated_global_module = self.clone_model(self.model.global_module)
+
+        return
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
@@ -113,6 +117,7 @@ class FendaClient(BasicClient):
         as positive pairs while reducing the similarity between the current local features and current global
         features as negative pairs.
         """
+        assert isinstance(self.temperature, float)
         assert len(local_features) == len(old_local_features)
         posi = self.cos_sim(local_features, old_local_features)
         logits = posi.reshape(-1, 1)
@@ -142,6 +147,7 @@ class FendaClient(BasicClient):
         features as negative pairs.
         """
 
+        assert isinstance(self.temperature, float)
         assert len(global_features) == len(aggregated_global_features)
         posi = self.cos_sim(global_features, aggregated_global_features)
         logits_max = posi.reshape(-1, 1)
@@ -168,7 +174,7 @@ class FendaClient(BasicClient):
         loss = self.criterion(preds["prediction"], target)
 
         # Optimal cos_sim_loss_weight is 100.0
-        if self.cos_sim_loss_weight != 0.0:
+        if self.cos_sim_loss_weight:
             cos_loss = self.get_cosine_similarity_loss(
                 local_features=preds["local_features"],
                 global_features=preds["global_features"],
@@ -189,7 +195,7 @@ class FendaClient(BasicClient):
             )
 
         # Optimal perFCL_loss_weight is [10.0, 10.0]
-        elif self.perFCL_loss_weights[0] != 0.0 or self.perFCL_loss_weights[1] != 0.0:
+        elif self.perFCL_loss_weights:
             contrastive_loss_minimize, contrastive_loss_maximize = self.get_perFCL_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
