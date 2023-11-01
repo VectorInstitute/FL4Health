@@ -76,15 +76,17 @@ class ServerMetrics:
 
 
 class CustomMetricMeter(MetricMeter):
-    """
-    class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
-    The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
-    called with predcitions and ground truth labels. The count corresponding to each evaluation is stored to ensure
-    the metrics average is accurate. The compute method is used to return a dictionairy of metrics along with their
-    current values.
-    """
-
     def __init__(self, label_encoder: LabelEncoder) -> None:
+        """
+        This class is used to compute metrics associated with the AG's News task. There are a number of classes and
+        we want to accumulate a bunch of statistics all at once to facilitate the computation of a number of different
+        metrics for this problem. As such, we define our own MetricMeter and bypass the standard metric meter
+        implementations, which calculate separate metrics individually.
+
+        Args:
+            label_encoder (LabelEncoder): This class is used to determine the mapping of integers to label names for
+            the AG's news task.
+        """
         self.true_preds = 0
         self.total_preds = 0
         self.classes = label_encoder.classes

@@ -11,7 +11,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, construct_dataloaders
-from examples.fedopt_example.metrics import CustomMetricMeter
+from examples.fedopt_example.metrics import CustomMetricMeter, MetricMeter
 from examples.models.lstm_model import LSTM
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -74,9 +74,9 @@ class NewsClassifierClient(BasicClient):
         self.vocabulary = Vocabulary.from_json(self.narrow_config_type(config, "vocabulary", str))
         self.label_encoder = LabelEncoder.from_json(self.narrow_config_type(config, "label_encoder", str))
         # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
-        train_key_to_meter_map = {"prediction": CustomMetricMeter(self.label_encoder)}
+        train_key_to_meter_map: Dict[str, MetricMeter] = {"prediction": CustomMetricMeter(self.label_encoder)}
         self.train_metric_meter_mngr = MetricMeterManager(train_key_to_meter_map)
-        val_key_to_meter_map = {"prediction": CustomMetricMeter(self.label_encoder)}
+        val_key_to_meter_map: Dict[str, MetricMeter] = {"prediction": CustomMetricMeter(self.label_encoder)}
         self.val_metric_meter_mngr = MetricMeterManager(val_key_to_meter_map)
         super().setup_client(config)
 
