@@ -54,7 +54,7 @@ class FendaClient(BasicClient):
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
-        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
+        self.ce_criterion = torch.nn.CrossEntropyLoss()
         self.temperature = temperature
 
         # Need to save previous local module, global module and aggregated global module at each communication round

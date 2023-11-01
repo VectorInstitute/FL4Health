@@ -20,4 +20,4 @@ class MoonModel(nn.Module):
         else:
             p = x
         output = self.head_module.forward(p)
-        return {"prediction": output, "features": p.view(len(p), -1)}
+        return {"prediction": output, "features": p.reshape(len(p), -1)}
