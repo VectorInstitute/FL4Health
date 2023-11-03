@@ -12,6 +12,16 @@ class TabularFeature:
     def __init__(
         self, feature_name: str, feature_type: TabularType, fill_value: Optional[Scalar], metadata: MetaData = []
     ) -> None:
+        """
+        Information that represents a tabular feature.
+
+        Args:
+            feature_name (str): name of the feature.
+            feature_type (TabularType): data type of the feature.
+            fill_value (Optional[Scalar]): the default fill value for this feature when it is missing in a dataframe.
+            metadata (MetaData, optional): metadata associated with this feature.
+            For example, if the feature is categorical, then metadata would be all the categories. Defaults to [].
+        """
         self.feature_name = feature_name
         self.feature_type = feature_type
         # Each TabularType has its own default fill value, which is used
