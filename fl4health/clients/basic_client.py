@@ -49,8 +49,8 @@ class BasicClient(NumpyFlClient):
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
 
-        self.train_metric_meter_mngr = MetricManager(metrics=self.metrics, meter_mngr_name="train")
-        self.val_metric_meter_mngr = MetricManager(metrics=self.metrics, meter_mngr_name="val")
+        self.train_metric_meter_mngr = MetricManager(metrics=self.metrics, metric_mngr_name="train")
+        self.val_metric_meter_mngr = MetricManager(metrics=self.metrics, metric_mngr_name="val")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer

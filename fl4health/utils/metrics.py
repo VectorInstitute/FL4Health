@@ -9,35 +9,101 @@ from sklearn import metrics
 
 
 class Metric(ABC):
+    def __init__(self, name: str) -> None:
+        """
+        Base abstract Metric class to extend for metric accumulation and computation.
+
+        Args:
+            name (str): Name of the metric.
+        """
+        self.name = name
+
     @abstractmethod
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        This method updates the state of the metric by appending the passed input and target
+        pairing to their respective list.
+
+        Args:
+            input (torch.Tensor): The predictions of the model to be evaluated.
+            target (torch.Tensor): The ground truth target to evaluate predictions against.
+
+        Raises:
+            NotImplementedError: To be defined in the classes extending this class.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def compute(self, name: Optional[str]) -> Metrics:
+        """
+        Compute metric on accumulated input and output over updates.
+
+        Args:
+            name (Optional[str]): Optional name used in conjunction with class attribute name
+                to define key in metrics dictionairy.
+
+        Raises:
+            NotImplementedError: To be defined in the classes extending this class.
+
+        Returns:
+           Metrics: A dictionairy of string and Scalar representing the computed metric
+                and its associated key.
+        """
         raise NotImplementedError
 
     @abstractmethod
     def clear(self) -> None:
+        """
+        Resets metric.
+
+        Raises:
+            NotImplmentedError: To be defined in the classes expending this class.
+        """
         raise NotImplementedError
 
 
-class SimpleMetric(Metric):
-    """
-    Abstract class to be extended to create metric functions used to evaluate the
-    predictions of a model.
-    """
+class SimpleMetric(Metric, ABC):
+    def __init__(self, name: str) -> None:
+        """
+        Abstract metric class with base functionality to update, compute and clear metrics.
+        User needs to define __call__ method which returns metric given inputs and target.
 
-    def __init__(self, name: str):
-        self.name = name
+        Args:
+            name (str): Name of the metric.
+        """
+        super().__init__(name)
         self.accumulated_inputs: List[torch.Tensor] = []
         self.accumulated_targets: List[torch.Tensor] = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        """
+        This method updates the state of the metric by appending the passed input and target
+        pairing to their respective list.
+
+        Args:
+            input (torch.Tensor): The predictions of the model to be evaluated.
+            target (torch.Tensor): The ground truth target to evaluate predictions against.
+        """
         self.accumulated_inputs.append(input)
         self.accumulated_targets.append(target)
 
     def compute(self, name: Optional[str] = None) -> Metrics:
+        """
+        Compute metric on accumulated input and output over updates.
+
+        Args:
+            name (Optional[str]): Optional name used in conjunction with class attribute name
+                to define key in metrics dictionairy.
+
+        Raises:
+            AssertionError: Input and rarget lists must be non empty.
+
+        Returns:
+            Metrics: A dictionairy of string and Scalar representing the computed metric
+                and its associated key.
+        """
+
+        assert len(self.accumulated_inputs) > 0 and len(self.accumulated_targets) > 0
         stacked_inputs = torch.cat(self.accumulated_inputs)
         stacked_targets = torch.cat(self.accumulated_targets)
         result = self.__call__(stacked_inputs, stacked_targets)
@@ -45,15 +111,21 @@ class SimpleMetric(Metric):
 
         return {result_key: result}
 
-    def __str__(self) -> str:
-        return self.name
-
     def clear(self) -> None:
+        """
+        Resets metrics by clearing input and target lists.
+        """
         self.accumulated_inputs = []
         self.accumulated_targets = []
 
     @abstractmethod
-    def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
+    def __call__(self, input: torch.Tensor, target: torch.Tensor) -> Scalar:
+        """
+        User defined method that calculates the desired metric given the predictions and target.
+
+        Raises:
+            NotImplementedError: User must define this method.
+        """
         raise NotImplementedError
 
 
@@ -65,13 +137,22 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         spatial_dimensions: Tuple[int, ...] = (2, 3, 4),
         logits_threshold: Optional[float] = 0.5,
     ):
-        # Correction term on the DICE denominator calculation
+        """
+        Binary DICE Coeffiecient Metric with configurable spatial dimensions and logits threshold.
+
+        Args:
+            name (str): Name of the metric.
+            epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.
+            spatial_dimensions (Tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
+                The default assumes that the images are 3D and have shape:
+                batch_size, channel, spatial, spatial, spatial.
+            logits_threshold: This is a threshold value where values above are classified as 1
+                and those below are mapped to 0. If the threshod is None, then no thresholding is performed
+                and a continuous or "soft" DICE coeff. is computed.
+        """
         self.epsilon = epsilon
-        # The spatial dimensions of the image within the prediction tensors. The default assumes that the images are 3D
-        # and have shape batch_size, channel, spatial, spatial, spatial
         self.spatial_dimensions = spatial_dimensions
-        # This is a threshold value where values above are classified as 1 and those below are mapped to 0. If the
-        # threshod is None, then no thresholding is performed and a continuous or "soft" DICE coeff. is computed
+
         self.logits_threshold = logits_threshold
         super().__init__(name)
 
@@ -92,6 +173,13 @@ class BinarySoftDiceCoefficient(SimpleMetric):
 
 class Accuracy(SimpleMetric):
     def __init__(self, name: str = "accuracy"):
+        """
+        Accuracy metric for classification tasks.
+
+        Args:
+            name (str): The name of the metric.
+
+        """
         super().__init__(name)
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
@@ -109,6 +197,11 @@ class Accuracy(SimpleMetric):
 
 class BalancedAccuracy(SimpleMetric):
     def __init__(self, name: str = "balanced_accuracy"):
+        """
+        Balanced accuracy metric for classification tasks. Used for the evaluation of imbalanced datasets.
+            For more information:
+            https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
+        """
         super().__init__(name)
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
@@ -123,6 +216,10 @@ class BalancedAccuracy(SimpleMetric):
 
 class ROC_AUC(SimpleMetric):
     def __init__(self, name: str = "ROC_AUC score"):
+        """
+        Area under the Reciever Operator Curve (AUCROC) metric for classification. For more information:
+        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
+        """
         super().__init__(name)
 
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
@@ -164,16 +261,25 @@ class F1(SimpleMetric):
 
 
 class MetricManager:
-    """
-    Class to manage manage a set of metrics associated to a given prediction type.
-    """
+    def __init__(self, metrics: Sequence[Metric], metric_mngr_name: str) -> None:
+        """
+        Class to manage a set of metrics associated to a given prediction type.
 
-    def __init__(self, metrics: Sequence[Metric], meter_mngr_name: str) -> None:
+        Args:
+            metrics (Sequence[Metric]): List of metric to evaluate predictions on.
+            metric_mngr_name (str): Name of the metric manager (ie train, val, test)
+        """
         self.og_metrics = metrics
-        self.meter_mngr_name = meter_mngr_name
+        self.metric_mngr_name = metric_mngr_name
         self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
 
     def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
+        """
+        Updates (or creates then updates) a list of metrics for each prediction type.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): A dictionairy of
+        """
         if len(self.metrics_per_prediction_type) == 0:
             self.metrics_per_prediction_type = {key: copy.deepcopy(self.og_metrics) for key in preds.keys()}
 
@@ -182,13 +288,23 @@ class MetricManager:
                 m.update(pred, target)
 
     def compute(self) -> Metrics:
+        """
+        Computes set of metrics for each prediction type.
+
+        Returns:
+            Metrics: Dictionairy containing computed metrics along with string identifiers
+                for each prediction type.
+        """
         all_results = {}
         for metrics_key, mtrcs in self.metrics_per_prediction_type.items():
             for m in mtrcs:
-                result = m.compute(f"{self.meter_mngr_name} - {metrics_key}")
+                result = m.compute(f"{self.metric_mngr_name} - {metrics_key}")
                 all_results.update(result)
 
         return all_results
 
     def clear(self) -> None:
+        """
+        Clears metrics for each of the prediction type.
+        """
         self.metrics_per_prediction_type = {}
