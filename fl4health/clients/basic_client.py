@@ -309,7 +309,7 @@ class BasicClient(NumpyFlClient):
 
         self.set_optimizer(config)
         self.learning_rate = self.optimizer.defaults["lr"]
-        self.criterion = self.get_criterion(config)
+        self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
@@ -361,7 +361,7 @@ class BasicClient(NumpyFlClient):
         assert not isinstance(optimizer, dict)
         self.optimizer = optimizer
 
-    def clone_model(self, model: nn.Module) -> nn.Module:
+    def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
         """
         Method to deepcopy model. By default, uses PyTorch deepcopy.
         """

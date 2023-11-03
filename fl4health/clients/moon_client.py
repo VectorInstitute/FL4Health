@@ -38,8 +38,8 @@ class MoonClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
-        self.ce_criterion = torch.nn.CrossEntropyLoss()
+        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
+        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.contrastive_weight = contrastive_weight
         self.temperature = temperature
 
@@ -84,7 +84,7 @@ class MoonClient(BasicClient):
         assert isinstance(self.model, MoonModel)
 
         # Save the parameters of the old local model
-        old_model = self.clone_model(self.model)
+        old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
@@ -93,7 +93,7 @@ class MoonClient(BasicClient):
         super().set_parameters(parameters, config)
 
         # Save the parameters of the global model
-        self.global_model = self.clone_model(self.model)
+        self.global_model = self.clone_and_freeze_model(self.model)
 
         return
 

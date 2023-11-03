@@ -44,6 +44,7 @@ class FendaModel(nn.Module):
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # input is expected to be of shape (batch_size, *)
         local_output = self.local_module.forward(input)
         global_output = self.global_module.forward(input)
         return {

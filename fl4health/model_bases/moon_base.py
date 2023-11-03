@@ -14,6 +14,7 @@ class MoonModel(nn.Module):
         self.head_module = head_module
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # input is expected to be of shape (batch_size, *)
         x = self.base_module.forward(input)
         if self.projection_module:
             p = self.projection_module.forward(x)

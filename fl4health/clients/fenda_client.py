@@ -53,15 +53,15 @@ class FendaClient(BasicClient):
         self.perFCL_loss_weights = perFCL_loss_weights
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
-        self.ce_criterion = torch.nn.CrossEntropyLoss()
+        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
+        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.temperature = temperature
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
-        self.old_local_module: torch.nn.Module
-        self.old_global_module: torch.nn.Module
-        self.aggregated_global_module: torch.nn.Module
+        self.old_local_module: Optional[torch.nn.Module] = None
+        self.old_global_module: Optional[torch.nn.Module] = None
+        self.aggregated_global_module: Optional[torch.nn.Module] = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModel)
@@ -72,11 +72,16 @@ class FendaClient(BasicClient):
         preds = self.model(input)
 
         if self.contrastive_loss_weight or self.perFCL_loss_weights:
-            preds["old_local_features"] = self.old_local_module.forward(input).view(len(preds["local_features"]), -1)
+            assert isinstance(self.old_local_module, torch.nn.Module)
+            preds["old_local_features"] = self.old_local_module.forward(input).reshape(
+                len(preds["local_features"]), -1
+            )
             if self.perFCL_loss_weights:
+                assert isinstance(self.old_global_module, torch.nn.Module)
                 preds["old_global_features"] = self.old_global_module.forward(input).reshape(
                     len(preds["global_features"]), -1
                 )
+                assert isinstance(self.aggregated_global_module, torch.nn.Module)
                 preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
                     len(preds["global_features"]), -1
                 )
@@ -85,19 +90,17 @@ class FendaClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
 
         # Save the parameters of the old model
-        assert isinstance(self.model.local_module, torch.nn.Module)
-        assert isinstance(self.model.global_module, torch.nn.Module)
+        assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perFCL_loss_weights:
-            self.old_local_module = self.clone_model(self.model.local_module)
-            self.old_global_module = self.clone_model(self.model.global_module)
+            self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
+            self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
         # Save the parameters of the global model
         if self.perFCL_loss_weights:
-            assert isinstance(self.model.global_module, torch.nn.Module)
-            self.aggregated_global_module = self.clone_model(self.model.global_module)
+            self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
 
         return
 
@@ -113,7 +116,7 @@ class FendaClient(BasicClient):
         self, local_features: torch.Tensor, old_local_features: torch.Tensor, global_features: torch.Tensor
     ) -> torch.Tensor:
         """
-        Contrastive loss airms to enhance the similarity between the current local features and old local feature
+        Contrastive loss aims to enhance the similarity between the current local features and old local features
         as positive pairs while reducing the similarity between the current local features and current global
         features as negative pairs.
         """
