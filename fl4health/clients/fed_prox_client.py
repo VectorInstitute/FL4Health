@@ -12,7 +12,7 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class FedProxClient(BasicClient):
@@ -28,7 +28,6 @@ class FedProxClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -36,7 +35,6 @@ class FedProxClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
         self.initial_tensors: List[torch.Tensor]
@@ -96,7 +94,9 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
         loss = self.criterion(preds["prediction"], target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss

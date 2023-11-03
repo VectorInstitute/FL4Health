@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -9,7 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class MoonClient(BasicClient):
@@ -25,7 +25,6 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
         contrastive_weight: float = 10,
@@ -36,7 +35,6 @@ class MoonClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
@@ -49,20 +47,14 @@ class MoonClient(BasicClient):
         self.old_models_list: list[MoonModel] = []
         self.global_model: MoonModel
 
-    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        preds = self.model(input)
-        preds["old_features"] = torch.zeros(self.len_old_models_buffer, *preds["features"].size()).to(self.device)
+    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        preds, features = self.model(input)
+        old_features = torch.zeros(self.len_old_models_buffer, *features.size()).to(self.device)
         for i, old_model in enumerate(self.old_models_list):
-            old_preds = old_model(input)
-            preds["old_features"][i] = old_preds["features"]
-        global_preds = self.global_model(input)
-        preds["global_features"] = global_preds["features"]
-        if isinstance(preds, dict):
-            return preds
-        elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}
-        else:
-            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+            old_features[i] = old_model(input)[1]
+        global_features = self.global_model(input)[1]
+        features_dict = {"features": features, "global_features": global_features, "old_features": old_features}
+        return {"prediction": preds}, features_dict
 
     def get_contrastive_loss(
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
@@ -107,12 +99,14 @@ class MoonClient(BasicClient):
         self.global_model.eval()
         return output
 
-    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
         if len(self.old_models_list) == 0:
-            return super().compute_loss(preds, target)
+            return super().compute_loss(preds, features, target)
         loss = self.criterion(preds["prediction"], target)
         contrastive_loss = self.get_contrastive_loss(
-            preds["features"], preds["global_features"], preds["old_features"]
+            features["features"], features["global_features"], features["old_features"]
         )
         total_loss = loss + self.contrastive_weight * contrastive_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})

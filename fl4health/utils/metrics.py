@@ -1,33 +1,63 @@
-from __future__ import annotations
-
+import copy
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
-from flwr.common.typing import Optional, Scalar
+from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics
 
 
 class Metric(ABC):
+    @abstractmethod
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def compute(self, name: Optional[str]) -> Metrics:
+        raise NotImplementedError
+
+    @abstractmethod
+    def clear(self) -> None:
+        raise NotImplementedError
+
+
+class SimpleMetric(Metric):
     """
-    Abstact class to be extended to create metric functions used to evaluate the
+    Abstract class to be extended to create metric functions used to evaluate the
     predictions of a model.
     """
 
     def __init__(self, name: str):
         self.name = name
+        self.accumulated_inputs: List[torch.Tensor] = []
+        self.accumulated_targets: List[torch.Tensor] = []
+
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        self.accumulated_inputs.append(input)
+        self.accumulated_targets.append(target)
+
+    def compute(self, name: Optional[str] = None) -> Metrics:
+        stacked_inputs = torch.cat(self.accumulated_inputs)
+        stacked_targets = torch.cat(self.accumulated_targets)
+        result = self.__call__(stacked_inputs, stacked_targets)
+        result_key = f"{name} - {self.name}" if name is not None else self.name
+
+        return {result_key: result}
+
+    def __str__(self) -> str:
+        return self.name
+
+    def clear(self) -> None:
+        self.accumulated_inputs = []
+        self.accumulated_targets = []
 
     @abstractmethod
     def __call__(self, logits: torch.Tensor, target: torch.Tensor) -> Scalar:
         raise NotImplementedError
 
-    def __str__(self) -> str:
-        return self.name
 
-
-class BinarySoftDiceCoefficient(Metric):
+class BinarySoftDiceCoefficient(SimpleMetric):
     def __init__(
         self,
         name: str = "BinarySoftDiceCoefficient",
@@ -60,7 +90,7 @@ class BinarySoftDiceCoefficient(Metric):
         return torch.mean(dice).item()
 
 
-class Accuracy(Metric):
+class Accuracy(SimpleMetric):
     def __init__(self, name: str = "accuracy"):
         super().__init__(name)
 
@@ -77,7 +107,7 @@ class Accuracy(Metric):
         return metrics.accuracy_score(target, preds)
 
 
-class BalancedAccuracy(Metric):
+class BalancedAccuracy(SimpleMetric):
     def __init__(self, name: str = "balanced_accuracy"):
         super().__init__(name)
 
@@ -91,7 +121,7 @@ class BalancedAccuracy(Metric):
         return metrics.balanced_accuracy_score(y_true, preds)
 
 
-class ROC_AUC(Metric):
+class ROC_AUC(SimpleMetric):
     def __init__(self, name: str = "ROC_AUC score"):
         super().__init__(name)
 
@@ -104,7 +134,7 @@ class ROC_AUC(Metric):
         return metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
 
 
-class F1(Metric):
+class F1(SimpleMetric):
     def __init__(
         self,
         name: str = "F1 score",
@@ -133,141 +163,32 @@ class F1(Metric):
         return metrics.f1_score(y_true, preds, average=self.average)
 
 
-class MetricMeterType(Enum):
-    AVERAGE = "AVERGE"
-    ACCUMULATION = "ACCUMULATION"
-
-
-class MetricMeter(ABC):
-    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
-        self.metrics: Sequence[Metric] = metrics
-        self.name: str = name
-
-    @abstractmethod
-    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        # Update the meter with batch input and target values
-        raise NotImplementedError
-
-    @abstractmethod
-    def compute(self) -> Dict[str, Scalar]:
-        # Compute final metric representations based on the underlying metrics provided to the meter
-        raise NotImplementedError
-
-    def clear(self) -> None:
-        raise NotImplementedError
-
-    @classmethod
-    def get_meter_by_type(cls, metrics: Sequence[Metric], meter_enum: MetricMeterType, name: str = "") -> MetricMeter:
-        if meter_enum is MetricMeterType.ACCUMULATION:
-            return MetricAccumulationMeter(metrics, name)
-        elif meter_enum is MetricMeterType.AVERAGE:
-            return MetricAverageMeter(metrics, name)
-        raise ValueError(f"Unsupported Meter Type {str(meter_enum)}")
-
-
-class MetricAccumulationMeter(MetricMeter):
+class MetricManager:
     """
-    This meter class is used to for metrics that require accumulation of input and target values. That is, they are not
-    compatible with computing via weighted averages.
+    Class to manage manage a set of metrics associated to a given prediction type.
     """
 
-    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
-        super().__init__(metrics, name)
-        self.accumulated_inputs: List[torch.Tensor] = []
-        self.accumulated_targets: List[torch.Tensor] = []
-
-    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        self.accumulated_inputs.append(input)
-        self.accumulated_targets.append(target)
-
-    def compute(self) -> Dict[str, Scalar]:
-        metric_values = []
-        stacked_inputs = torch.cat(self.accumulated_inputs)
-        stacked_targets = torch.cat(self.accumulated_targets)
-        for metric in self.metrics:
-            metric_values.append(metric(stacked_inputs, stacked_targets))
-
-        results: Dict[str, Scalar] = {
-            f"{self.name}_{str(metric)}".lstrip("_"): metric_value
-            for metric, metric_value in zip(self.metrics, metric_values)
-        }
-
-        return results
-
-    def clear(self) -> None:
-        self.accumulated_inputs = []
-        self.accumulated_targets = []
-
-
-class MetricAverageMeter(MetricMeter):
-    """
-    class used to compute the average of metrics iteratively evaluated over a set of prediction-target pairings.
-    The constructor takes a list of type Metric. These metrics are then evaluated each time the update method is
-    called with predcitions and ground truth labels. The count corresponding to each evaluation is stored to ensure
-    the metrics average is accurate. The compute method is used to return a dictionairy of metrics along with their
-    current values.
-    """
-
-    def __init__(self, metrics: Sequence[Metric], name: str = "") -> None:
-        super().__init__(metrics, name)
-        self.metric_values_history: List[List[Scalar]] = [[] for _ in range(len(self.metrics))]
-        self.counts: List[int] = []
-
-    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        """
-        Evaluate metrics and store results.
-        """
-        metric_values: List[Scalar] = [metric(input, target) for metric in self.metrics]
-        self.counts.append(target.size(0))
-
-        for i, metric_value in enumerate(metric_values):
-            self.metric_values_history[i].append(metric_value)
-
-    def compute(self) -> Dict[str, Scalar]:
-        """
-        Returns average of each metrics given its historical values and counts
-        """
-        total_count = sum(self.counts)
-        weights: List[float] = [count / total_count for count in self.counts]
-
-        metric_value_averages = []
-        for metric_values in self.metric_values_history:
-            avg = sum([weight * float(val) for weight, val in zip(weights, metric_values)])
-            metric_value_averages.append(avg)
-
-        results: Dict[str, Scalar] = {
-            f"{self.name}_{str(metric)}".lstrip("_"): avg for metric, avg in zip(self.metrics, metric_value_averages)
-        }
-
-        return results
-
-    def clear(self) -> None:
-        self.metric_values_history = [[] for _ in range(len(self.metrics))]
-        self.counts = []
-
-
-class MetricMeterManager:
-    """
-    Class to manage one or metric meters.
-    """
-
-    def __init__(self, key_to_meter_map: Dict[str, MetricMeter]):
-        self.key_to_meter_map = key_to_meter_map
+    def __init__(self, metrics: Sequence[Metric], meter_mngr_name: str) -> None:
+        self.og_metrics = metrics
+        self.meter_mngr_name = meter_mngr_name
+        self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
 
     def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
-        # Assert that set of preds keys and map keys are the same
-        for pred_key in preds.keys():
-            if pred_key in self.key_to_meter_map.keys():
-                self.key_to_meter_map[pred_key].update(preds[pred_key], target)
+        if len(self.metrics_per_prediction_type) == 0:
+            self.metrics_per_prediction_type = {key: copy.deepcopy(self.og_metrics) for key in preds.keys()}
 
-    def compute(self) -> Dict[str, Scalar]:
+        for pred, mtrcs in zip(preds.values(), self.metrics_per_prediction_type.values()):
+            for m in mtrcs:
+                m.update(pred, target)
+
+    def compute(self) -> Metrics:
         all_results = {}
-        for meter in self.key_to_meter_map.values():
-            result = meter.compute()
-            all_results.update(result)
+        for metrics_key, mtrcs in self.metrics_per_prediction_type.items():
+            for m in mtrcs:
+                result = m.compute(f"{self.meter_mngr_name} - {metrics_key}")
+                all_results.update(result)
 
         return all_results
 
     def clear(self) -> None:
-        for meter in self.key_to_meter_map.values():
-            meter.clear()
+        self.metrics_per_prediction_type = {}

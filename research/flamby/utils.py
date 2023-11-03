@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
-from fl4health.utils.metrics import Metric, MetricAccumulationMeter
+from fl4health.utils.metrics import Metric, MetricManager
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -88,9 +88,9 @@ def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
 
 def evaluate_model_on_dataset(
     model: nn.Module, dataset: DataLoader, metrics: Sequence[Metric], device: torch.device, is_apfl: bool
-) -> MetricAccumulationMeter:
+) -> MetricManager:
     model.to(device).eval()
-    meter = MetricAccumulationMeter(metrics, "test_meter")
+    meter = MetricManager(metrics, "test_meter")
 
     with torch.no_grad():
         for input, target in dataset:
@@ -99,6 +99,7 @@ def evaluate_model_on_dataset(
                 preds = model(input, personal=True)["personal"]
             else:
                 preds = model(input)
+            preds = preds if isinstance(preds, dict) else {"predictions": preds}
             meter.update(preds, target)
     return meter
 

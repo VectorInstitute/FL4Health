@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
@@ -31,7 +31,6 @@ class FedIsic2019FendaClient(FendaClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -39,7 +38,6 @@ class FedIsic2019FendaClient(FendaClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
         self.client_number = client_number
