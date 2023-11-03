@@ -142,10 +142,10 @@ class FendaClient(BasicClient):
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         PerFCL loss consists of two contrastive losses.
-        First one airms to enhance the similarity between the current global features and aggregated global feature
+        First one aims to enhance the similarity between the current global features and aggregated global features
         as positive pairs while reducing the similarity between the current global features and old global
         features as negative pairs.
-        Second one airms to enhance the similarity between the current local features and old local feature
+        Second one aims to enhance the similarity between the current local features and old local features
         as positive pairs while reducing the similarity between the current local features and aggregated global
         features as negative pairs.
         """

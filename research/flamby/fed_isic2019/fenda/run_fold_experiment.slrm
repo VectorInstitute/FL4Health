@@ -139,7 +139,6 @@ do
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
-            --type_run cos_sim \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

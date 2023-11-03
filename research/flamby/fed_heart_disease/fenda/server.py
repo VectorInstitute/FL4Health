@@ -20,7 +20,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -77,14 +77,8 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
-    parser.add_argument(
-        "--run_name",
-        action="store",
-        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
-        required=True,
-    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.run_name)
+    main(config, args.server_address)

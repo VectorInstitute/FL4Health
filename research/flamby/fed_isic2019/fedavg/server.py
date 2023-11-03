@@ -5,7 +5,6 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
-import torch
 from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
@@ -22,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, pretrain: bool) -> None:
+def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -36,28 +35,6 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     client_manager = SimpleClientManager()
     model = Baseline()
-
-    log(INFO, f"if pretrain: {pretrain}")
-    if pretrain:
-        dir = (
-            "/ssd003/projects/aieng/public/FL_env/models/fed_isic2019/fedavg/hp_sweep_results/lr_0.001/"
-            + run_name
-            + "/server_best_model.pkl"
-        )
-        fedavg_model_state = torch.load(dir).state_dict()
-        model_state = model.state_dict()
-        matching_state = {}
-        for k, v in fedavg_model_state.items():
-            if k in model_state:
-                if v.size() == model_state[k].size():
-                    matching_state[k] = v
-                elif model_state[k].size()[1:] == v.size()[1:]:
-                    repeat = model_state[k].size()[0] // v.size()[0]
-                    original_size = tuple([1] * (len(model_state[k].size()) - 1))
-                    matching_state[k] = v.repeat((repeat,) + original_size)
-        log(INFO, f"matching state: {len(matching_state)}")
-        model_state.update(matching_state)
-        model.load_state_dict(model_state)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -125,4 +102,4 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name, args.pretrain)
+    main(config, args.server_address, args.artifact_dir, args.run_name)

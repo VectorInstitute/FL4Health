@@ -33,7 +33,7 @@ class FedHeartDiseaseFendaClient(FendaClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
-        type_run: str = "cos_sim",
+        type_run: str = "vanilla",
     ) -> None:
         super().__init__(
             data_path=data_path,
