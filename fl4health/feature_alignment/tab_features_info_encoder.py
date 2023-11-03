@@ -1,61 +1,13 @@
 import json
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 from cyclops.process.feature.feature import TabularFeatures
 from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer
 
-from fl4health.feature_alignment.constants import BINARY, DEFAULT_FILL_VALUES, FEATURE_TYPES, ORDINAL, STRING
-from fl4health.feature_alignment.string_columns_transformer import StringColumnTransformer
-
-
-class TargetInfoEncoder:
-    """
-    This class encodes the information about the target column
-    that is necessary to perform feature alignment.
-
-    Parameters
-    ----------
-    target: str
-        Target column.
-    target_type: str
-        Target column data type. Must be one of BINARY, NUMERICAL, ORDINAL, and STRING.
-    target_categories: List[Scalar]
-        The categories of the target column, provided it is of type ORDINAL.
-    """
-
-    def __init__(self, target: str, target_type: str, target_categories: List[Scalar]) -> None:
-        self.target = target
-        self.target_type = target_type
-        self.target_categories = target_categories
-
-    def get_target(self) -> str:
-        return self.target
-
-    def get_target_type(self) -> str:
-        return self.target_type
-
-    def get_target_categories(self) -> List[Scalar]:
-        return self.target_categories
-
-    def to_json(self) -> str:
-        return json.dumps(
-            {
-                "target": json.dumps(self.get_target()),
-                "target_type": json.dumps(self.get_target_type()),
-                "target_categories": json.dumps(self.get_target_categories()),
-            }
-        )
-
-    @staticmethod
-    def from_json(json_str: str) -> "TargetInfoEncoder":
-        attributes = json.loads(json_str)
-        return TargetInfoEncoder(
-            json.loads(attributes["target"]),
-            json.loads(attributes["target_type"]),
-            json.loads(attributes["target_categories"]),
-        )
+from fl4health.feature_alignment.tabular_feature import MetaData, TabularFeature
+from fl4health.feature_alignment.tabular_type import TabularType
 
 
 class TabularFeaturesInfoEncoder:
@@ -65,128 +17,107 @@ class TabularFeaturesInfoEncoder:
 
     Parameters
     ----------
-    features_to_types: Dict[str, str]
-        Dictionary that maps each feature name to its type.
-        We consider four types in tabular data:
-        BINARY, ORDINAL, NUMERICAL, and STRING.
-    categories: Dict[str, List[Scalar]]
-        Dictionary that maps each ordinal feature to its categories.
-    target_info: TargetInfoEncoder
-        Information about the target column(s).
-    vocabulary: Dict[str, int]
-        Vocabulary of all the STRING columns.
-    default_fill_values: Dict[str, Scalar]
-        The default values used to fill in missing values.
-        Each of the four feature types has a default fill-in value, which is used to fill in all missing columns
-        of that type,
-        but each specific feature can also has its own default fill-in value.
+    tabular_features: List[TabularFeature]
+        List of all tabular features.
+    tabular_targets: List[TabularFeature]
+        List of all targets. (Note: targets are not included in tabular_features)
     """
 
-    def __init__(
-        self,
-        features_to_types: Dict[str, str],
-        categories: Dict[str, List[Scalar]],
-        target_info: TargetInfoEncoder,
-        vocabulary: Dict[str, int],
-        default_fill_values: Dict[str, Scalar] = DEFAULT_FILL_VALUES,
-    ) -> None:
-        self.features_to_types = features_to_types
-        self.categories = categories
-        self.target_info = target_info
-        self.vocabulary = vocabulary
-        self.default_fill_values = default_fill_values
+    def __init__(self, tabular_features: List[TabularFeature], tabular_targets: List[TabularFeature]) -> None:
+        self.tabular_features = sorted(tabular_features, key=TabularFeature.get_feature_name)
+        self.tabular_targets = sorted(tabular_targets, key=TabularFeature.get_feature_name)
 
-    def features_by_type(self, feature_type: str) -> List[str]:
-        return sorted([feature for feature, t in self.features_to_types.items() if t == feature_type])
+    def get_tabular_features(self) -> List[TabularFeature]:
+        return self.tabular_features
 
-    def type_to_features(self) -> Dict[str, List[str]]:
-        return {feature_type: self.features_by_type(feature_type) for feature_type in FEATURE_TYPES}
+    def get_tabular_targets(self) -> List[TabularFeature]:
+        return self.tabular_targets
 
-    def get_categories(self) -> Dict[str, List[Scalar]]:
-        return self.categories
+    def get_feature_columns(self) -> List[str]:
+        return sorted([feature.get_feature_name() for feature in self.tabular_features])
 
-    def get_categories_list(self) -> List[List[Scalar]]:
-        return [self.get_categories()[feature_name] for feature_name in self.features_by_type(ORDINAL)]
+    def get_target_columns(self) -> List[str]:
+        return sorted([target.get_feature_name() for target in self.tabular_targets])
 
-    def get_target(self) -> str:
-        return self.target_info.get_target()
+    def features_by_type(self, tabular_type: TabularType) -> List[TabularFeature]:
+        return sorted(
+            [feature for feature in self.tabular_features if feature.get_feature_type() == tabular_type],
+            key=TabularFeature.get_feature_name,
+        )
 
-    def get_target_type(self) -> str:
-        return self.target_info.get_target_type()
+    def type_to_features(self) -> Dict[TabularType, List[TabularFeature]]:
+        return {tabular_type: self.features_by_type(tabular_type) for tabular_type in TabularType}
 
-    def get_target_categories(self) -> List[Scalar]:
-        return self.target_info.get_target_categories()
-
-    def get_vocabulary(self) -> Dict[str, int]:
-        return self.vocabulary
-
-    def get_all_default_fill_values(self) -> Dict[str, Scalar]:
-        return self.default_fill_values
-
-    def get_default_fill_value(self, key: str) -> Scalar:
-        return self.default_fill_values[key]
-
-    def set_default_fill_value(self, key: str, value: Scalar) -> None:
-        self.default_fill_values[key] = value
+    def get_categories_list(self) -> List[MetaData]:
+        return [cat_feature.get_metadata() for cat_feature in self.features_by_type(TabularType.ORDINAL)]
 
     def get_target_dimension(self) -> int:
         # Return the dimension of the target array *after* feature alignment is performed.
-        target_type = self.get_target_type()
-        if target_type == ORDINAL or target_type == BINARY:
-            return len(self.get_target_categories())
+        dimension = 0
+        for target in self.tabular_targets:
+            dimension += target.get_metadata_dimension()
+        return dimension
+
+    @staticmethod
+    def _construct_tab_feature(
+        df: pd.DataFrame,
+        feature_name: str,
+        features_to_types: Dict[str, TabularType],
+        fill_values: Optional[Dict[str, Scalar]],
+    ) -> TabularFeature:
+        feature_type = TabularType(features_to_types[feature_name])
+
+        if fill_values is None or feature_name not in fill_values:
+            fill_value = TabularType.get_default_fill_value(feature_type)
         else:
-            return 1
+            fill_value = fill_values[feature_name]
+
+        if feature_type == TabularType.ORDINAL or feature_type == TabularType.BINARY:
+            # Extract categories information.
+            feature_categories = sorted(df[feature_name].unique().tolist())
+            return TabularFeature(feature_name, feature_type, fill_value, feature_categories)
+        elif feature_type == TabularType.STRING:
+            # Extract vocabulary from a string column of df.
+            count_vectorizer = CountVectorizer()
+            count_vectorizer.fit(df[feature_name])
+            vocabulary = count_vectorizer.vocabulary_
+            return TabularFeature(feature_name, feature_type, fill_value, vocabulary)
+        else:
+            return TabularFeature(feature_name, feature_type, fill_value)
 
     @staticmethod
     def encoder_from_dataframe(
         df: pd.DataFrame,
         id_column: str,
-        target_column: str,
-        default_fill_values: Dict[str, Scalar] = DEFAULT_FILL_VALUES,
+        target_columns: Union[str, List[str]],
+        fill_values: Optional[Dict[str, Scalar]] = None,
     ) -> "TabularFeaturesInfoEncoder":
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)
+        # Leverage cyclops to perform type inference
         tab_features = TabularFeatures(
-            data=df.reset_index(), features=features_list, by=id_column, targets=target_column
+            data=df.reset_index(), features=features_list, by=id_column, targets=target_columns
         )
         features_to_types = tab_features.types
-        target_type = features_to_types[target_column]
 
-        # The target column is separated from the other columns
-        # so that targets and features remain separate after alignment
-        features_to_types.pop(target_column)
-
-        # extract categories information
-        ordinal_features: List[str] = sorted(tab_features.features_by_type(ORDINAL))
-        string_features: List[str] = sorted(tab_features.features_by_type(type_=STRING))
-
-        categories = {
-            ordinal_feature: sorted(df[ordinal_feature].unique().tolist()) for ordinal_feature in ordinal_features
-        }
-
-        if target_type == ORDINAL or target_type == BINARY:
-            target_categories = sorted(df[target_column].unique().tolist())
-        else:
-            target_categories = []
-
-        target_info = TargetInfoEncoder(target_column, target_type, target_categories)
-
-        # Extract vocabulary from the string columns of df
-        count_vectorizer = CountVectorizer()
-        string_col_transformer = StringColumnTransformer(count_vectorizer)
-        string_col_transformer.fit(df[string_features])
-        vocabulary = count_vectorizer.vocabulary_
-
-        return TabularFeaturesInfoEncoder(features_to_types, categories, target_info, vocabulary, default_fill_values)
+        tabular_targets = []
+        tabular_features = []
+        # Construct TabularFeature objects.
+        for feature_name in features_to_types:
+            tabular_feature = TabularFeaturesInfoEncoder._construct_tab_feature(
+                df, feature_name, features_to_types, fill_values
+            )
+            if feature_name in target_columns:
+                tabular_targets.append(tabular_feature)
+            else:
+                tabular_features.append(tabular_feature)
+        return TabularFeaturesInfoEncoder(tabular_features, tabular_targets)
 
     def to_json(self) -> str:
         return json.dumps(
             {
-                "features_to_types": json.dumps(self.features_to_types),
-                "categories": json.dumps(self.categories),
-                "target_info": json.dumps(self.target_info.to_json()),
-                "vocabulary": json.dumps(self.vocabulary),
-                "default_fill_values": json.dumps(self.default_fill_values),
+                "tabular_features": json.dumps([tab_feature.to_json() for tab_feature in self.tabular_features]),
+                "tabular_targets": json.dumps([tab_target.to_json() for tab_target in self.tabular_targets]),
             }
         )
 
@@ -194,9 +125,6 @@ class TabularFeaturesInfoEncoder:
     def from_json(json_str: str) -> "TabularFeaturesInfoEncoder":
         attributes = json.loads(json_str)
         return TabularFeaturesInfoEncoder(
-            json.loads(attributes["features_to_types"]),
-            json.loads(attributes["categories"]),
-            TargetInfoEncoder.from_json(json.loads(attributes["target_info"])),
-            json.loads(attributes["vocabulary"]),
-            json.loads(attributes["default_fill_values"]),
+            [TabularFeature.from_json(tab_str) for tab_str in json.loads(attributes["tabular_features"])],
+            [TabularFeature.from_json(target_str) for target_str in json.loads(attributes["tabular_targets"])],
         )
