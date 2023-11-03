@@ -114,6 +114,16 @@ class TabularFeaturesPreprocessor:
             remainder="drop",
         )
 
+    def set_feature_pipeline(self, feature_name: str, pipeline: Pipeline, target: bool) -> None:
+        # This method allows the user to customize a specific pipeline to be applied to a specific feature.
+        # For example, the user may want to use different scalers for two distinct numerical features.
+        if not target:
+            self.features_to_pipelines[feature_name] = pipeline
+            self.data_column_transformer = self.return_column_transformer(self.features_to_pipelines)
+        else:
+            self.targets_to_pipelines[feature_name] = pipeline
+            self.target_column_transformer = self.return_column_transformer(self.targets_to_pipelines)
+
     def preprocess_features(self, df: pd.DataFrame) -> Tuple[NDArray, NDArray]:
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)

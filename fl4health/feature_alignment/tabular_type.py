@@ -22,7 +22,3 @@ class TabularType(str, Enum):
             return "UNKNOWN"
         else:
             raise ValueError("Invalid Tabular Data Type.")
-
-
-if __name__ == "__main__":
-    print("numeric" == TabularType.NUMERIC)
