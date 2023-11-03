@@ -66,7 +66,6 @@ class Mimic3TabularDataClient(TabularDataClient):
 
     def get_data_frame(self, config: Config) -> pd.DataFrame:
         df = pd.read_csv(self.data_path)
-        df.dropna(subset=[self.target_column], inplace=True)
         return df
 
 
