@@ -362,8 +362,13 @@ class BasicClient(NumpyFlClient):
         self.optimizer = optimizer
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
-        """
-        Method to deepcopy model. By default, uses PyTorch deepcopy.
+        """Clone and freeze model for use in various loss calculation.
+
+        Args:
+            model (nn.Module): model to clone and freeze
+
+        Returns:
+            nn.Module: cloned and frozen model
         """
 
         cloned_model = copy.deepcopy(model)

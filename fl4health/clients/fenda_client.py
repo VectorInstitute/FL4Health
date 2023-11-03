@@ -35,8 +35,8 @@ class FendaClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        """ This module is used to init fenda client with various auxiliary loss functions.
-        These losses will be activated only when their weights are not 0.0
+        """This module is used to init fenda client with various auxiliary loss functions.
+        These losses will be activated only when their weights are not 0.0.
         Args:
             data_path: Path to the data directory.
             metrics: List of metrics to be used for evaluation.
