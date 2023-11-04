@@ -23,7 +23,7 @@ class FendaClient(BasicClient):
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: Optional[float] = 0.5,
-        perFCL_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
+        perfcl_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
         cos_sim_loss_weight: Optional[float] = 0.0,
         contrastive_loss_weight: Optional[float] = 0.0,
     ) -> None:
@@ -45,12 +45,12 @@ class FendaClient(BasicClient):
             metric_meter_type: Type of metric meter to be used.
             checkpointer: Checkpointer to be used for checkpointing.
             temperature: Temperature to be used for contrastive loss.
-            perFCL_loss_weights: Weights to be used for perFCL loss.
-            Each value associate with one of two contrastive losses in perFCL loss.
+            perfcl_loss_weights: Weights to be used for perfcl loss.
+            Each value associate with one of two contrastive losses in perfcl loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
         """
-        self.perFCL_loss_weights = perFCL_loss_weights
+        self.perfcl_loss_weights = perfcl_loss_weights
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
@@ -71,12 +71,12 @@ class FendaClient(BasicClient):
 
         preds = self.model(input)
 
-        if self.contrastive_loss_weight or self.perFCL_loss_weights:
+        if self.contrastive_loss_weight or self.perfcl_loss_weights:
             assert isinstance(self.old_local_module, torch.nn.Module)
             preds["old_local_features"] = self.old_local_module.forward(input).reshape(
                 len(preds["local_features"]), -1
             )
-            if self.perFCL_loss_weights:
+            if self.perfcl_loss_weights:
                 assert isinstance(self.old_global_module, torch.nn.Module)
                 preds["old_global_features"] = self.old_global_module.forward(input).reshape(
                     len(preds["global_features"]), -1
@@ -91,7 +91,7 @@ class FendaClient(BasicClient):
 
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
-        if self.contrastive_loss_weight or self.perFCL_loss_weights:
+        if self.contrastive_loss_weight or self.perfcl_loss_weights:
             self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
             self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
@@ -99,10 +99,8 @@ class FendaClient(BasicClient):
         super().set_parameters(parameters, config)
 
         # Save the parameters of the global model
-        if self.perFCL_loss_weights:
+        if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
-
-        return
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
@@ -132,7 +130,7 @@ class FendaClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def get_perFCL_loss(
+    def get_perfcl_loss(
         self,
         local_features: torch.Tensor,
         old_local_features: torch.Tensor,
@@ -141,7 +139,7 @@ class FendaClient(BasicClient):
         aggregated_global_features: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        PerFCL loss consists of two contrastive losses.
+        Perfcl loss consists of two contrastive losses.
         First one aims to enhance the similarity between the current global features and aggregated global features
         as positive pairs while reducing the similarity between the current global features and old global
         features as negative pairs.
@@ -197,9 +195,9 @@ class FendaClient(BasicClient):
                 checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
             )
 
-        # Optimal perFCL_loss_weight is [10.0, 10.0]
-        elif self.perFCL_loss_weights:
-            contrastive_loss_minimize, contrastive_loss_maximize = self.get_perFCL_loss(
+        # Optimal perfcl_loss_weight is [10.0, 10.0]
+        elif self.perfcl_loss_weights:
+            contrastive_loss_minimize, contrastive_loss_maximize = self.get_perfcl_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
                 global_features=preds["global_features"],
@@ -208,8 +206,8 @@ class FendaClient(BasicClient):
             )
             total_loss = (
                 loss
-                + self.perFCL_loss_weights[0] * contrastive_loss_minimize
-                + self.perFCL_loss_weights[1] * contrastive_loss_maximize
+                + self.perfcl_loss_weights[0] * contrastive_loss_minimize
+                + self.perfcl_loss_weights[1] * contrastive_loss_maximize
             )
             losses = Losses(
                 checkpoint=loss,

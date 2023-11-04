@@ -33,7 +33,9 @@ class FedHeartDiseaseFendaClient(FendaClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
-        type_run: str = "vanilla",
+        cos_sim_activate: bool = False,
+        contrastive_activate: bool = False,
+        perfcl_activate: bool = False,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -45,12 +47,12 @@ class FedHeartDiseaseFendaClient(FendaClient):
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
-        if type_run == "cos_sim":
+        if cos_sim_activate:
             self.cos_sim_loss_weight = 100.0
-        elif type_run == "contrastive":
+        if contrastive_activate:
             self.contrastive_loss_weight = 10.0
-        elif type_run == "perFCL":
-            self.perFCL_loss_weights = (10.0, 10.0)
+        if perfcl_activate:
+            self.perfcl_loss_weights = (10.0, 10.0)
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -113,7 +115,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
-    parser.add_argument("--type_run", action="store", help="type of run", default="None")
+    parser.add_argument("--cos_sim_loss", action="store_true", help="Activate Cosine Similarity loss")
+    parser.add_argument("--contrastive_loss", action="store_true", help="Activate Contrastive loss")
+    parser.add_argument("--perfcl_loss", action="store_true", help="Activate PerFCL loss")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -132,10 +136,15 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        type_run=args.type_run,
+        cos_sim_activate=args.cos_sim_loss,
+        contrastive_activate=args.contrastive_loss,
+        perfcl_activate=args.perfcl_loss,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_numpy_client(
+        server_address=args.server_address,
+        client=client,
+    )
 
     # Shutdown the client gracefully
     client.shutdown()
