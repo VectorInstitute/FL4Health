@@ -96,11 +96,11 @@ def evaluate_model_on_dataset(
         for input, target in dataset:
             input, target = input.to(device), target.to(device)
             if is_apfl:
-                preds = model(input, personal=True)["personal"]
+                preds = model(input)["personal"]
             else:
                 preds = model(input)
-                if isinstance(preds, tuple):
-                    preds = preds[0]
+                if isinstance(preds, dict):
+                    preds = preds["prediction"]
             meter.update(preds, target)
     return meter
 
