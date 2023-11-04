@@ -72,22 +72,22 @@ class FendaClient(BasicClient):
         preds = self.model(input)
 
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
-            assert isinstance(self.old_local_module, torch.nn.Module)
-            preds["old_local_features"] = self.old_local_module.forward(input).reshape(
-                len(preds["local_features"]), -1
-            )
-            if self.perfcl_loss_weights:
-                assert isinstance(self.old_global_module, torch.nn.Module)
-                preds["old_global_features"] = self.old_global_module.forward(input).reshape(
-                    len(preds["global_features"]), -1
+            if self.old_local_module is not None:
+                preds["old_local_features"] = self.old_local_module.forward(input).reshape(
+                    len(preds["local_features"]), -1
                 )
-                assert isinstance(self.aggregated_global_module, torch.nn.Module)
-                preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
-                    len(preds["global_features"]), -1
-                )
+                if self.perfcl_loss_weights:
+                    if self.old_global_module is not None:
+                        preds["old_global_features"] = self.old_global_module.forward(input).reshape(
+                            len(preds["global_features"]), -1
+                        )
+                    if self.aggregated_global_module is not None:
+                        preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
+                            len(preds["global_features"]), -1
+                        )
         return preds
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
 
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
@@ -95,10 +95,15 @@ class FendaClient(BasicClient):
             self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
             self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
+        return super().get_parameters(config)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
-        # Save the parameters of the global model
+        # Save the parameters of the aggregated global model
+        assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
 
@@ -110,25 +115,37 @@ class FendaClient(BasicClient):
         assert len(local_features) == len(global_features)
         return torch.abs(self.cos_sim(local_features, global_features)).mean()
 
+    def compute_contrastive_loss(
+        self, features: torch.Tensor, positive_pairs: torch.Tensor, negative_pairs: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        Contrastive loss aims to enhance the similarity between the features and their positive pairs
+        while reducing the similarity between the features and their negative pairs.
+        """
+        assert self.temperature is not None
+        assert len(features) == len(positive_pairs)
+        posi = self.cos_sim(features, positive_pairs)
+        logits = posi.reshape(-1, 1)
+        assert len(features) == len(negative_pairs)
+        nega = self.cos_sim(features, negative_pairs)
+        logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
+        logits /= self.temperature
+        labels = torch.zeros(features.size(0)).to(self.device).long()
+
+        return self.ce_criterion(logits, labels)
+
     def get_contrastive_loss(
         self, local_features: torch.Tensor, old_local_features: torch.Tensor, global_features: torch.Tensor
     ) -> torch.Tensor:
         """
-        Contrastive loss aims to enhance the similarity between the current local features and old local features
-        as positive pairs while reducing the similarity between the current local features and current global
-        features as negative pairs.
+        Compute contrastive over current local features (z_p) with old local features (hat{z_p}) as positive pairs
+        and current global features (z_s) as negative pairs.
         """
-        assert isinstance(self.temperature, float)
-        assert len(local_features) == len(old_local_features)
-        posi = self.cos_sim(local_features, old_local_features)
-        logits = posi.reshape(-1, 1)
-        assert len(local_features) == len(global_features)
-        nega = self.cos_sim(local_features, global_features)
-        logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        logits /= self.temperature
-        labels = torch.zeros(local_features.size(0)).to(self.device).long()
-
-        return self.ce_criterion(logits, labels)
+        return self.compute_contrastive_loss(
+            features=local_features,  # (z_p)
+            positive_pairs=old_local_features,  # (\hat{z_p})
+            negative_pairs=global_features,  # (z_s)
+        )
 
     def get_perfcl_loss(
         self,
@@ -139,42 +156,34 @@ class FendaClient(BasicClient):
         aggregated_global_features: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Perfcl loss consists of two contrastive losses.
-        First one aims to enhance the similarity between the current global features and aggregated global features
-        as positive pairs while reducing the similarity between the current global features and old global
-        features as negative pairs.
-        Second one aims to enhance the similarity between the current local features and old local features
-        as positive pairs while reducing the similarity between the current local features and aggregated global
-        features as negative pairs.
+        Perfcl loss consists of two contrastive loss computation.
+
+        First one aims to enhance the similarity between the current global features (z_s) and aggregated global
+        features (z_g) as positive pairs while reducing the similarity between the current global features (z_s)
+        and old global features (hat{z_s}) as negative pairs.
+
+        Second one aims to enhance the similarity between the current local features (z_p) and old local features
+        (hat{z_p}) as positive pairs while reducing the similarity between the current local features (z_p) and
+        aggregated lobal features (z_g) as negative pairs.
         """
 
-        assert isinstance(self.temperature, float)
-        assert len(global_features) == len(aggregated_global_features)
-        posi = self.cos_sim(global_features, aggregated_global_features)
-        logits_max = posi.reshape(-1, 1)
-        assert len(global_features) == len(old_global_features)
-        nega = self.cos_sim(global_features, old_global_features)
-        logits_max = torch.cat((logits_max, nega.reshape(-1, 1)), dim=1)
-        logits_max /= self.temperature
-        labels_max = torch.zeros(local_features.size(0)).to(self.device).long()
+        contrastive_loss_minimize = self.compute_contrastive_loss(
+            features=global_features,  # (z_s)
+            positive_pairs=aggregated_global_features,  # (z_g)
+            negative_pairs=old_global_features,  # (\hat{z_s})
+        )
+        contrastive_loss_maximize = self.compute_contrastive_loss(
+            features=local_features,  # (z_p)
+            positive_pairs=old_local_features,  # (\hat{z_p})
+            negative_pairs=aggregated_global_features,  # (z_g)
+        )
 
-        assert len(local_features) == len(old_local_features)
-        posi = self.cos_sim(local_features, old_local_features)
-        logits_min = posi.reshape(-1, 1)
-        assert len(local_features) == len(aggregated_global_features)
-        nega = self.cos_sim(local_features, aggregated_global_features)
-        logits_min = torch.cat((logits_min, nega.reshape(-1, 1)), dim=1)
-        logits_min /= self.temperature
-        labels_min = torch.zeros(local_features.size(0)).to(self.device).long()
-
-        return self.ce_criterion(logits_min, labels_min), self.ce_criterion(logits_max, labels_max)
+        return contrastive_loss_minimize, contrastive_loss_maximize
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
-        if self.old_global_module is None:
-            return super().compute_loss(preds, target)
         loss = self.criterion(preds["prediction"], target)
 
-        # Optimal cos_sim_loss_weight is 100.0
+        # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
             cos_loss = self.get_cosine_similarity_loss(
                 local_features=preds["local_features"],
@@ -183,8 +192,8 @@ class FendaClient(BasicClient):
             total_loss = loss + self.cos_sim_loss_weight * cos_loss
             losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
 
-        # Optimal contrastive_loss_weight is 10.0
-        elif self.contrastive_loss_weight:
+        # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
+        elif self.contrastive_loss_weight and "old_local_features" in preds:
             contrastive_loss = self.get_contrastive_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
@@ -195,8 +204,8 @@ class FendaClient(BasicClient):
                 checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
             )
 
-        # Optimal perfcl_loss_weight is [10.0, 10.0]
-        elif self.perfcl_loss_weights:
+        # Optimal perfcl_loss_weights for FedIsic dataset is [10.0, 10.0]
+        elif self.perfcl_loss_weights and "old_local_features" in preds and "old_global_features" in preds:
             contrastive_loss_minimize, contrastive_loss_maximize = self.get_perfcl_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
