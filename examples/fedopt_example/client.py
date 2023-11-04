@@ -59,6 +59,9 @@ class NewsClassifierClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         self.vocabulary = Vocabulary.from_json(self.narrow_config_type(config, "vocabulary", str))
         self.label_encoder = LabelEncoder.from_json(self.narrow_config_type(config, "label_encoder", str))
+        # Since the label_encoder is required for CompundMetric but it is not available until after we receive
+        # it from the Server, we pass it to the CompoundMetric through the CompoundMetric._setup method once its
+        # available
         for metric in self.metrics:
             if isinstance(metric, CompoundMetric):
                 metric._setup(self.label_encoder)

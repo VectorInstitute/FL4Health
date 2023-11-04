@@ -80,6 +80,18 @@ class ApflClient(BasicClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
     ) -> Losses:
+        """
+        Computes loss given predictions of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Additional losses include global and local losses.
+        """
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)
         global_loss = self.criterion(preds["global"], target)

@@ -48,6 +48,18 @@ class MoonClient(BasicClient):
         self.global_model: MoonModel
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s) and features of the model(s) given the input.
+
+        Args:
+            input (torch.Tensor): Inputs to be fed into the model.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. Specificaly the features of the model, features of the global model and features of
+            the old model are passed.
+        """
         preds, features = self.model(input)
         old_features = torch.zeros(self.len_old_models_buffer, *features.size()).to(self.device)
         for i, old_model in enumerate(self.old_models_list):
@@ -102,6 +114,18 @@ class MoonClient(BasicClient):
     def compute_loss(
         self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
     ) -> Losses:
+        """
+        Computes loss given predictions and features of the model and ground truth data. Loss includes
+        base loss plus a model contrastive loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+        """
         if len(self.old_models_list) == 0:
             return super().compute_loss(preds, features, target)
         loss = self.criterion(preds["prediction"], target)

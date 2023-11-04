@@ -31,8 +31,6 @@ class DynamicWeightExchangeClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            metric_meter_type (MetricMeterType, optional): Type of meter used to track and compute the metrics over
-                each batch. Defaults to MetricMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """

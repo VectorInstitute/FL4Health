@@ -97,6 +97,18 @@ class FedProxClient(BasicClient):
     def compute_loss(
         self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
     ) -> Losses:
+        """
+        Computes loss given predictions of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Additional losses includes proximal loss.
+        """
         loss = self.criterion(preds["prediction"], target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
