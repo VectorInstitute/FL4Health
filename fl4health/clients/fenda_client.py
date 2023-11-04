@@ -181,31 +181,32 @@ class FendaClient(BasicClient):
         return contrastive_loss_minimize, contrastive_loss_maximize
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+
         loss = self.criterion(preds["prediction"], target)
+        total_loss = loss
+        additional_losses = {}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
-            cos_loss = self.get_cosine_similarity_loss(
+            cos_sim_loss = self.get_cosine_similarity_loss(
                 local_features=preds["local_features"],
                 global_features=preds["global_features"],
             )
-            total_loss = loss + self.cos_sim_loss_weight * cos_loss
-            losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"cos_sim_loss": cos_loss})
+            total_loss += self.cos_sim_loss_weight * cos_sim_loss
+            additional_losses["cos_sime_loss"] = cos_sim_loss
 
         # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
-        elif self.contrastive_loss_weight and "old_local_features" in preds:
+        if self.contrastive_loss_weight and "old_local_features" in preds:
             contrastive_loss = self.get_contrastive_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
                 global_features=preds["global_features"],
             )
-            total_loss = loss + self.contrastive_loss_weight * contrastive_loss
-            losses = Losses(
-                checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss}
-            )
+            total_loss += self.contrastive_loss_weight * contrastive_loss
+            additional_losses["contrastive_loss"] = contrastive_loss
 
         # Optimal perfcl_loss_weights for FedIsic dataset is [10.0, 10.0]
-        elif self.perfcl_loss_weights and "old_local_features" in preds and "old_global_features" in preds:
+        if self.perfcl_loss_weights and "old_local_features" in preds and "old_global_features" in preds:
             contrastive_loss_minimize, contrastive_loss_maximize = self.get_perfcl_loss(
                 local_features=preds["local_features"],
                 old_local_features=preds["old_local_features"],
@@ -213,24 +214,13 @@ class FendaClient(BasicClient):
                 old_global_features=preds["old_global_features"],
                 aggregated_global_features=preds["aggregated_global_features"],
             )
-            total_loss = (
-                loss
-                + self.perfcl_loss_weights[0] * contrastive_loss_minimize
+            total_loss += (
+                self.perfcl_loss_weights[0] * contrastive_loss_minimize
                 + self.perfcl_loss_weights[1] * contrastive_loss_maximize
             )
-            losses = Losses(
-                checkpoint=loss,
-                backward=total_loss,
-                additional_losses={
-                    "contrastive_loss_minimize": contrastive_loss_minimize,
-                    "contrastive_loss_maximize": contrastive_loss_maximize,
-                },
-            )
+            additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
+            additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
-        else:
-            losses = Losses(
-                checkpoint=loss,
-                backward=loss,
-            )
+        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
 
         return losses
