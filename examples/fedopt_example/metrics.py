@@ -80,11 +80,13 @@ class CompoundMetric(Metric):
         """
         This class is used to compute metrics associated with the AG's News task. There are a number of classes and
         we want to accumulate a bunch of statistics all at once to facilitate the computation of a number of different
-        metrics for this problem. As such, we define our own MetricMeter and bypass the standard metric meter
-        implementations, which calculate separate metrics individually.
+        metrics for this problem. As such, we define our own Metric class and bypass the standard SimpleMetric class,
+        which calculate separate metrics individually.
 
-            the AG's news task.
+        Args:
+            name (str): The name of the compound metric.
         """
+        super().__init__(name)
         self.true_preds = 0
         self.total_preds = 0
         self.classes: List[str]
