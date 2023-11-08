@@ -1,73 +1,50 @@
 import argparse
 from functools import partial
-from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
-from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
+from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import WarmUpMnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.warm_up_base import WarmUpModel
-from fl4health.reporting.fl_wanb import ServerWandBReporter
-from fl4health.server.base_server import FlServer
-from fl4health.strategies.fedprox import FedProx
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 
 
-def get_initial_model_information(initial_model: WarmUpModel) -> Parameters:
+def get_initial_model_parameters(initial_model: WarmUpModel) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(
-    local_epochs: int,
-    batch_size: int,
-    n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
-    current_round: int,
-) -> Config:
+def fit_config(local_epochs: int, batch_size: int, n_warm_up_rounds: int, current_round: int) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
+        "n_server_rounds": n_warm_up_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
-def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, warm_up_dir: str, seed: int) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    if "n_warm_up_rounds" in config:
-        total_rounds = config["n_server_rounds"] - config["n_warm_up_rounds"]
-    else:
-        total_rounds = config["n_server_rounds"]
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        total_rounds,
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
+        config["n_warm_up_rounds"],
     )
-    model = WarmUpMnistNet(warmed_up_dir=warmed_up_dir)
+
+    model = WarmUpMnistNet(warm_up=True)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    strategy = FedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -77,24 +54,22 @@ def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[st
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_information(model),
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
-        proximal_weight_delta=config["proximal_weight_delta"],
-        proximal_weight_patience=config["proximal_weight_patience"],
+        initial_parameters=get_initial_model_parameters(model),
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter, seed=seed)
+    checkpoint_name = "warmed_up_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(warm_up_dir, checkpoint_name, maximize=False)
+
+    server = FlServerWithCheckpointing(
+        client_manager, model, FullParameterExchanger(), strategy=strategy, checkpointer=checkpointer, seed=seed
+    )
 
     fl.server.start_server(
         server=server,
         server_address=server_address,
-        config=fl.server.ServerConfig(num_rounds=total_rounds),
+        config=fl.server.ServerConfig(num_rounds=config["n_warm_up_rounds"]),
     )
-    # Shutdown the server gracefully
-    server.shutdown()
 
 
 if __name__ == "__main__":
@@ -104,7 +79,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/fedprox_example/config.yaml",
+        default="examples/fenda_example/config.yaml",
     )
     parser.add_argument(
         "--server_address",
@@ -117,7 +92,7 @@ if __name__ == "__main__":
         "--warm_up_dir",
         action="store",
         help="Dir to save warm up checkpoint file",
-        required=False,
+        required=True,
     )
     parser.add_argument(
         "--seed",
@@ -126,8 +101,9 @@ if __name__ == "__main__":
         help="Seed for the random number generator",
         required=True,
     )
+
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-    log(INFO, f"Server Address: {args.server_address}")
+
     main(config, args.server_address, args.warm_up_dir, args.seed)

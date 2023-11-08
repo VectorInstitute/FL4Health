@@ -1,5 +1,6 @@
 # Parameters that describe server
 n_server_rounds: 15 # The number of rounds to run FL
+n_warm_up_rounds: 5 # The number of rounds to run before starting FedProx
 
 # Following the adaptive proximal weight setup in Appendix C3.3 of the FedProx paper: https://arxiv.org/pdf/1812.06127.pdf
 # Server decides to increase or decrease the proximal weight based on the average training losses of clients that were sent during training.

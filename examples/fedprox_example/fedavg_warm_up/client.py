@@ -12,13 +12,13 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import WarmUpMnistNet
-from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistFedProxClient(FedProxClient):
+class WarmUpMnistClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -26,7 +26,8 @@ class MnistFedProxClient(FedProxClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return WarmUpMnistNet().to(self.device)
+        model: nn.Module = WarmUpMnistNet(warm_up=True).to(self.device)
+        return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.01)
@@ -59,8 +60,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
+    client = WarmUpMnistClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
-
-    # Shutdown the client gracefully
     client.shutdown()

@@ -5,6 +5,8 @@ from typing import List
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.warm_up_base import WarmUpModel
+
 
 class FendaJoinMode(Enum):
     CONCATENATE = "CONCATENATE"
@@ -33,7 +35,7 @@ class FendaHeadModule(nn.Module, ABC):
         return self.head_forward(head_input)
 
 
-class FendaModel(nn.Module):
+class FendaModel(WarmUpModel):
     def __init__(self, local_module: nn.Module, global_module: nn.Module, model_head: FendaHeadModule) -> None:
         super().__init__()
         self.local_module = local_module

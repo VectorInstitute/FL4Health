@@ -1,7 +1,9 @@
+import random
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
@@ -34,7 +36,15 @@ class BasicClient(NumpyFlClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
+        if seed is not None:
+            log(INFO, f"Setting seed to {seed}")
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
+
         super().__init__(data_path, device)
         self.metrics = metrics
         self.checkpointer = checkpointer
@@ -346,7 +356,13 @@ class BasicClient(NumpyFlClient):
         For more complicated loss computations (additional loss components or multiple prediction types)
         this method should be overridden.
         """
-        loss = self.criterion(preds["prediction"], target)
+        assert isinstance(preds, dict)
+
+        if "prediction" in preds:
+            loss = self.criterion(preds["prediction"], target)
+        else:
+            loss = self.criterion(preds["global"], target)
+
         losses = Losses(checkpoint=loss, backward=loss)
         return losses
 

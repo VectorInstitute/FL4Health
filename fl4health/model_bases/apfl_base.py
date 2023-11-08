@@ -4,8 +4,10 @@ from typing import Dict, List
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.warm_up_base import WarmUpModel
 
-class ApflModule(nn.Module):
+
+class ApflModule(WarmUpModel):
     def __init__(
         self,
         model: nn.Module,
