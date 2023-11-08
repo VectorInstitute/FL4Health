@@ -26,12 +26,18 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
     fenda_client.get_parameters(config)
 
     assert isinstance(fenda_client.old_local_module, torch.nn.Module)
-    assert isinstance(fenda_client.old_global_module, torch.nn.Module)
-    old_local_module_params = [val.cpu().numpy() for _, val in fenda_client.old_local_module.state_dict().items()]
-    old_global_module_params = [val.cpu().numpy() for _, val in fenda_client.old_global_module.state_dict().items()]
+    for param in fenda_client.old_local_module.parameters():
+        assert param.requires_grad is False
 
+    old_local_module_params = [val.cpu().numpy() for _, val in fenda_client.old_local_module.state_dict().items()]
     for i in range(len(params_local)):
         assert (params_local[i] == old_local_module_params[i]).all()
+
+    assert isinstance(fenda_client.old_global_module, torch.nn.Module)
+    for param in fenda_client.old_global_module.parameters():
+        assert param.requires_grad is False
+
+    old_global_module_params = [val.cpu().numpy() for _, val in fenda_client.old_global_module.state_dict().items()]
     for i in range(len(params_global)):
         assert (params_global[i] == old_global_module_params[i]).all()
 
@@ -40,14 +46,14 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
 def test_computting_contrastive_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
-    fenda_client.temperature = 1
+    fenda_client.temperature = 0.5
 
     features = torch.tensor([[1, 1, 1]]).float()
     positive_pairs = torch.tensor([[1, 1, 1]]).float()
     negative_pairs = torch.tensor([[0, 0, 0]]).float()
     contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
 
-    assert contrastive_loss == pytest.approx(0.3133, rel=0.01)
+    assert contrastive_loss == pytest.approx(0.1269, rel=0.01)
 
     features = torch.tensor([[0, 0, 0]]).float()
     positive_pairs = torch.tensor([[1, 1, 1]]).float()

@@ -77,12 +77,6 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
-    parser.add_argument(
-        "--run_name",
-        action="store",
-        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
-        required=True,
-    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)

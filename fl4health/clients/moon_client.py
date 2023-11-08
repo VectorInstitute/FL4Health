@@ -95,8 +95,6 @@ class MoonClient(BasicClient):
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
-        return
-
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         if len(self.old_models_list) == 0:
             return super().compute_loss(preds, target)

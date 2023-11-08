@@ -156,13 +156,13 @@ class FendaClient(BasicClient):
         aggregated_global_features: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Perfcl loss consists of two contrastive loss computation.
+        Perfcl loss implemented based on https://www.sciencedirect.com/science/article/pii/S0031320323002078.
 
-        First one aims to enhance the similarity between the current global features (z_s) and aggregated global
+        This paper introduced two contrastive loss functions:
+        1- First one aims to enhance the similarity between the current global features (z_s) and aggregated global
         features (z_g) as positive pairs while reducing the similarity between the current global features (z_s)
         and old global features (hat{z_s}) as negative pairs.
-
-        Second one aims to enhance the similarity between the current local features (z_p) and old local features
+        2- Second one aims to enhance the similarity between the current local features (z_p) and old local features
         (hat{z_p}) as positive pairs while reducing the similarity between the current local features (z_p) and
         aggregated lobal features (z_g) as negative pairs.
         """
@@ -193,7 +193,7 @@ class FendaClient(BasicClient):
                 global_features=preds["global_features"],
             )
             total_loss += self.cos_sim_loss_weight * cos_sim_loss
-            additional_losses["cos_sime_loss"] = cos_sim_loss
+            additional_losses["cos_sim_loss"] = cos_sim_loss
 
         # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
         if self.contrastive_loss_weight and "old_local_features" in preds:
