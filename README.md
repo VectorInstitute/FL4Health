@@ -182,6 +182,28 @@ It can also be run on a subset of files by omitting the `--all-files` option and
 
 If you're using VSCode for development, pre-commit should setup git hooks that execute the pre-commit checks each time you check code into your branch through the integrated source-control as well. This will ensure that each of your commits conform to the desired format before they are run remotely and without needing to remember to run the checks before pushing to a remote. If this isn't done automatically, you can find instructions for setting up these hooks manually online.
 
+### Code Documentation
+
+For code documentation, we try to adhere to the Google docstring style (See [Here](https://google.github.io/styleguide/pyguide.html), Section: Comments and Docstrings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, __any non-trivial or non-obvious methods added to the library should have a doc string__. For our library this applies only to code added to the main library in `fl4health`. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in those code is __strongly encouraged__.
+
+__NOTE__: As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
+
+If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted docstrings called autoDocstring [VS Code Page](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) and [Documentation](https://github.com/NilsJPWerner/autoDocstring). This tool will automatically generate a docstring template when starting a docstring with triple quotation marks ("""). To get the correct format, the following settings should be prescribed:
+
+```json
+{
+    "autoDocstring.customTemplatePath": "",
+    "autoDocstring.docstringFormat": "google",
+    "autoDocstring.generateDocstringOnEnter": true,
+    "autoDocstring.guessTypes": true,
+    "autoDocstring.includeExtendedSummary": false,
+    "autoDocstring.includeName": false,
+    "autoDocstring.logLevel": "Info",
+    "autoDocstring.quoteStyle": "\"\"\"",
+    "autoDocstring.startOnNewLine": true
+}
+```
+
 ### Running Tests
 
 We use pytest for our unit and integration testing in the tests folder. These tests are automatically run on GitHub for PRs targeting the main branch. All tests need to pass before merging can happen. To run all tests in the tests folder one only run (with the venv active)

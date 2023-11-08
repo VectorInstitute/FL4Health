@@ -6,12 +6,38 @@ from flwr.common import NDArray, NDArrays
 
 
 def add_noise_to_array(layer: NDArray, noise_std_dev: float, denominator: int) -> NDArray:
-    # elementwise noise addition and normalization
+    """
+    For a given numpy array, this adds centered gaussian noise with a provided standard deviation to each element of
+    the provided array. This noise is normalized by some value, as given in the denominator.
+
+    Args:
+        layer (NDArray): The numpy array to have elementwise noise added to it.
+        noise_std_dev (float): The standard deviation of the centered gaussian noise to be added to each element
+        denominator (int): Normalization value for scaling down the values in the array.
+
+    Returns:
+        NDArray: The element-wise noised array, scaled by the denominator value.
+    """
     layer_noise = np.random.normal(0.0, noise_std_dev, layer.shape)
     return (1.0 / denominator) * (layer + layer_noise)
 
 
 def add_noise_to_ndarrays(client_model_updates: List[NDArrays], sigma: float, n_clients: int) -> NDArrays:
+    """
+    This function adds centered gaussian noise (with standard deviation sigma) to the uniform average  of the list
+    of the numpy arrays provided.
+
+    Args:
+        client_model_updates (List[NDArrays]): List of lists of numpy arrays. Each member of the list represents a
+            set of numpy arrays, each of which should be averaged elementwise with the corresponding array from the
+            other lists. These will have centered gaussian noise added.
+        sigma (float): The standard deviation of the centered gaussian noise to be added to each element.
+        n_clients (int): The number of arrays in the average. This should be the same as the size of
+            client_model_updates in almost all cases.
+
+    Returns:
+        NDArrays: Average of the centered gaussian noised arrays.
+    """
     layer_sums: NDArrays = [
         add_noise_to_array(reduce(np.add, layer_updates), sigma, n_clients)
         for layer_updates in zip(*client_model_updates)
@@ -22,20 +48,18 @@ def add_noise_to_ndarrays(client_model_updates: List[NDArrays], sigma: float, n_
 def gaussian_noisy_unweighted_aggregate(
     results: List[Tuple[NDArrays, int]], noise_multiplier: float, clipping_bound: float
 ) -> NDArrays:
-    """Compute unweighted average of weights. Apply gaussian noise to the sum of.
+    """
+    Compute unweighted average of weights. Apply gaussian noise to the sum of these weights prior to normalizing.
 
-    Parameters
-    ----------
-    reults : List[Tuple[NDArrays, int]]
-        List of tuples containing the model updates and the number of samples for each client.
-    noise_multiplier : float
-        The multiplier on the clipping bound to determine the std of noise applied to weight updates.
-    clipping_bound : float
-        The clipping bound applied to client model updates.
+    Args:
+        results (List[Tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
+            for each client.
+        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
+            updates.
+        clipping_bound (float): The clipping bound applied to client model updates.
+
     Returns:
-    --------
-    layer_sums : NDArrays
-        Model update for a given round.
+        NDArrays: Model update for a given round.
     """
     n_clients = len(results)
     # dropping number of data points component
@@ -53,31 +77,25 @@ def gaussian_noisy_weighted_aggregate(
     per_client_example_cap: float,
     total_client_weight: float,
 ) -> NDArrays:
-    """Compute weighted average of weights. Apply gaussian noise to the sum of.
+    """
+    Compute weighted average of weights. Apply gaussian noise to the sum of these weights prior to normalizing.
 
-    Weighted Implementation based on https://arxiv.org/pdf/1710.06963.pdf
+    Weighted Implementation based on https://arxiv.org/pdf/1710.06963.pdf.
 
-    Parameters
-    ----------
-    reults : List[Tuple[NDArrays, int]]
-        List of tuples containing the model updates and the number of samples for each client.
-    noise_multiplier : float
-        The multiplier on the clipping bound to determine the std of noise applied to weight updates.
-    clipping_bound : float
-        The clipping bound applied to client model updates.
-    fraction_fit : float, optional
-        Fraction of clients sampled each round.
-    per_client_example_cap : float, optional
-        The maximum number samples per client.
-    total_client_weight : float, optional
-        The total client weight across samples.
+
+    Args:
+        results (List[Tuple[NDArrays, int]]): List of tuples containing the model updates and the number of samples
+            for each client.
+        noise_multiplier (float): The multiplier on the clipping bound to determine the std of noise applied to weight
+            updates.
+        clipping_bound (float):  The clipping bound applied to client model updates.
+        fraction_fit (float): Fraction of clients sampled each round.
+        per_client_example_cap (float): The maximum number samples per client.
+        total_client_weight (float): The total client weight across samples.
 
     Returns:
-    --------
-    layer_sums : NDArrays
-        Model update for a given round.
+        NDArrays: Noised model update for a given round.
     """
-
     n_clients = len(results)
     client_model_updates: List[NDArrays] = []
     client_n_points: List[int] = []
@@ -109,8 +127,21 @@ def gaussian_noisy_weighted_aggregate(
 
 
 def gaussian_noisy_aggregate_clipping_bits(bits: NDArrays, noise_std_dev: float) -> float:
+    """
+    Computes the noisy aggregate of the clipping bits returned by each client as a list of numpy arrays. Note that each
+    array should only have a single bit value. This returns the noisy unweighted average of these bits. The noise is
+    centered Gaussian.
+
+    Args:
+        bits (NDArrays): Clipping bit returned by each client.
+        noise_std_dev (float): The standard deviation of the centered Gaussian noise applied to the bits.
+
+    Returns:
+        float: The uniformly averaged noisy bit.
+    """
     n_clients = len(bits)
     bit_sum = reduce(np.add, bits)
+    # This should be "shapeless" since each client returns a single bit as a numpy array.
     assert bit_sum.shape == ()
     noised_bit_sum = add_noise_to_array(bit_sum, noise_std_dev, n_clients)
     return float(noised_bit_sum)

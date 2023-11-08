@@ -50,6 +50,32 @@ class SmallCnn(nn.Module):
         return x
 
 
+class FeatureCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(x)
+        x = x.flatten(start_dim=1)
+        return x
+
+
+class HeadCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.fc1 = nn.Linear(16 * 4 * 4, 32)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.fc1(x)
+        return x
+
+
 class LinearTransform(nn.Module):
     def __init__(self) -> None:
         super().__init__()

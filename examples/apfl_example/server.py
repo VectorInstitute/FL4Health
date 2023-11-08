@@ -9,19 +9,20 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.model_bases.apfl_base import APFLModule
+from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = APFLModule(MnistNetWithBnAndFrozen())
+    initial_model = ApflModule(MnistNetWithBnAndFrozen())
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
     return {
+        "current_server_round": current_round,
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,

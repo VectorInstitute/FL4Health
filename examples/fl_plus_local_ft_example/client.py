@@ -1,10 +1,12 @@
 import argparse
+from logging import INFO
 from pathlib import Path
 from typing import Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
@@ -44,7 +46,9 @@ if __name__ == "__main__":
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
     # Run further local training after the federated learning has finished
-    client.train_by_epochs(2)
+    local_epochs_to_perform = 2
+    log(INFO, f"Beginning {local_epochs_to_perform} local epochs of training on each client")
+    client.train_by_epochs(local_epochs_to_perform)
     # Finally, we evaluate the model
     client.validate()
     client.shutdown()

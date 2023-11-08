@@ -30,7 +30,6 @@ class NumpyClippingClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -39,7 +38,6 @@ class NumpyClippingClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             metric_meter_type=metric_meter_type,
-            use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
         self.parameter_exchanger: ParameterExchangerWithPacking[float]
@@ -68,6 +66,7 @@ class NumpyClippingClient(BasicClient):
 
     def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
         assert self.initial_weights is not None
+        assert len(parameters) == len(self.initial_weights)
         weight_update: NDArrays = [
             new_layer_weights - old_layer_weights
             for old_layer_weights, new_layer_weights in zip(self.initial_weights, parameters)
@@ -88,16 +87,30 @@ class NumpyClippingClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         This function assumes that the parameters being passed contain model parameters followed by the last entry
-        of the list being the new clipping bound.
+        of the list being the new clipping bound. They are unpacked for the clients to use in training. If it's the
+        first time the model is being initialized, we assume the full model is being initialized and use the
+        FullParameterExchanger() to set all model weights
+
+        Args:
+            parameters (NDArrays): Parameters have information about model state to be added to the relevant client
+                model and also the clipping bound.
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         assert self.model is not None and self.parameter_exchanger is not None
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
-        # Store the starting parameters without clipping bound before client optimization steps
-        self.initial_weights = server_model_parameters
         self.clipping_bound = clipping_bound
-        # Inject the server model parameters into the client model
-        self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
+
+        if not self.model_weights_initialized:
+            # Initialize all model weights as this is the first time things have been set
+            self.initialize_all_model_weights(server_model_parameters, config)
+            # Extract only the initial weights that we care about clipping and exchanging
+            self.initial_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        else:
+            # Store the starting parameters without clipping bound before client optimization steps
+            self.initial_weights = server_model_parameters
+            # Inject the server model parameters into the client model
+            self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())

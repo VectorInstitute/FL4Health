@@ -145,7 +145,7 @@ settings.json
 **/datasets/MNIST/**
 **/datasets/mimic3d/mimic3d_hospital1.csv
 **/datasets/mimic3d/mimic3d_hospital2.csv
-
+**/datasets/agnews_data/**
 
 # logs
 
