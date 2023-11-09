@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.logger import log
@@ -10,59 +10,68 @@ from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.model_bases.warm_up_base import WarmUpModel
-from fl4health.server.scaffold_server import ScaffoldServer
-from fl4health.strategies.scaffold import Scaffold
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters(initial_model: WarmUpModel) -> Parameters:
     # Initializing the model parameters on the server side.
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
+    # Currently uses the Pytorch default initialization for the model parameters.
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(local_steps: int, batch_size: int, n_warm_up_rounds: int, current_round: int) -> Config:
     return {
         "local_steps": local_steps,
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
+        "n_server_rounds": n_warm_up_rounds,
         "current_server_round": current_round,
     }
 
 
-def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, warm_up_dir: str, seed: int) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["local_steps"],
         config["batch_size"],
-        config["n_server_rounds"],
+        config["n_warm_up_rounds"],
     )
 
-    model = MnistNetWithBnAndFrozen(warmed_up_dir=warmed_up_dir)
+    model = MnistNetWithBnAndFrozen(warm_up=True)
 
-    # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
-    strategy = Scaffold(
+    # Server performs simple FedAveraging as its server-side optimization strategy
+    strategy = BasicFedAvg(
+        min_fit_clients=config["n_clients"],
+        min_evaluate_clients=config["n_clients"],
+        # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
-        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
+        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(model),
-        model=model,
     )
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
+    checkpoint_name = "warmed_up_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(warm_up_dir, checkpoint_name, maximize=False)
 
-    server = ScaffoldServer(client_manager=client_manager, strategy=strategy, warm_start=True, seed=seed)
+    server = FlServerWithCheckpointing(
+        client_manager, model, FullParameterExchanger(), strategy=strategy, checkpointer=checkpointer, seed=seed
+    )
+
     fl.server.start_server(
         server=server,
         server_address=server_address,
-        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+        config=fl.server.ServerConfig(num_rounds=config["n_warm_up_rounds"]),
     )
     # Shutdown the server gracefully
     server.shutdown()
@@ -75,7 +84,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/scaffold_example/config.yaml",
+        default="examples/fenda_example/config.yaml",
     )
     parser.add_argument(
         "--server_address",
@@ -88,7 +97,7 @@ if __name__ == "__main__":
         "--warm_up_dir",
         action="store",
         help="Dir to save warm up checkpoint file",
-        required=False,
+        required=True,
     )
     parser.add_argument(
         "--seed",

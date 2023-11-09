@@ -6,7 +6,6 @@ import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import WarmUpMnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -14,6 +13,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.warm_up_base import WarmUpModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
 
@@ -44,7 +44,7 @@ def main(config: Dict[str, Any], server_address: str, warm_up_dir: str, seed: in
     model = WarmUpMnistNet(warm_up=True)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = BasicFedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds

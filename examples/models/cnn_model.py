@@ -63,9 +63,11 @@ class WarmUpMnistNet(WarmUpModel):
         return x
 
 
-class MnistNetWithBnAndFrozen(nn.Module):
-    def __init__(self, freeze_cnn_layer: bool = True) -> None:
-        super().__init__()
+class MnistNetWithBnAndFrozen(WarmUpModel):
+    def __init__(
+        self, freeze_cnn_layer: bool = True, warm_up: bool = False, warmed_up_dir: Optional[str] = None
+    ) -> None:
+        super().__init__(warm_up, warmed_up_dir)
         self.conv1 = nn.Conv2d(1, 8, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(8, 16, 5)

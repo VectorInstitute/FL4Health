@@ -49,15 +49,12 @@ def fit_config(
 
 def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    if "n_warm_up_rounds" in config:
-        total_rounds = config["n_server_rounds"] - config["n_warm_up_rounds"]
-    else:
-        total_rounds = config["n_server_rounds"]
+
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        total_rounds,
+        config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
         # Note that run name is not included, it will be set in the clients
         config["reporting_config"].get("project_name", ""),
@@ -91,7 +88,7 @@ def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[st
     fl.server.start_server(
         server=server,
         server_address=server_address,
-        config=fl.server.ServerConfig(num_rounds=total_rounds),
+        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
     # Shutdown the server gracefully
     server.shutdown()

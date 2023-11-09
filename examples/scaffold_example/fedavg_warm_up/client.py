@@ -1,36 +1,36 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Tuple
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
-from fl4health.clients.scaffold_client import ScaffoldClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class MnistScaffoldClient(ScaffoldClient):
+class WarmUpMnistClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
+    def get_model(self, config: Config) -> nn.Module:
+        model: nn.Module = MnistNetWithBnAndFrozen(warm_up=True).to(self.device)
+        return model
+
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.05)
-
-    def get_model(self, config: Config) -> nn.Module:
-        return MnistNetWithBnAndFrozen().to(self.device)
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
@@ -60,6 +60,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistScaffoldClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
+    client = WarmUpMnistClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
     client.shutdown()
