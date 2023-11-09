@@ -1,33 +1,33 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Set, Tuple
+from typing import Optional, Sequence, Set
 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Tuple
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
-from fl4health.clients.fenda_client import FendaClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
-class MnistFendaClient(FendaClient):
+class WarmUpMnistClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         minority_numbers: Set[int],
-        seed: int,
+        seed: Optional[int] = None,
     ) -> None:
         super().__init__(data_path=data_path, metrics=metrics, device=device, seed=seed)
         self.minority_numbers = minority_numbers
@@ -40,9 +40,9 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(
-            self.device
-        )
+        model: nn.Module = FendaModel(
+            LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE), warm_up=True
+        ).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistFendaClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, seed=args.seed)
+    client = WarmUpMnistClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, seed=args.seed)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully
