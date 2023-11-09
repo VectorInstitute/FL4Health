@@ -1,4 +1,3 @@
-import copy
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
@@ -39,15 +38,15 @@ class MoonClient(BasicClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1)
+        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.contrastive_weight = contrastive_weight
         self.temperature = temperature
 
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
-        self.old_models_list: list[MoonModel] = []
-        self.global_model: MoonModel
+        self.old_models_list: list[torch.nn.Module] = []
+        self.global_model: torch.nn.Module
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         preds = self.model(input)
@@ -57,12 +56,8 @@ class MoonClient(BasicClient):
             preds["old_features"][i] = old_preds["features"]
         global_preds = self.global_model(input)
         preds["global_features"] = global_preds["features"]
-        if isinstance(preds, dict):
-            return preds
-        elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}
-        else:
-            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+
+        return preds
 
     def get_contrastive_loss(
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
@@ -89,23 +84,16 @@ class MoonClient(BasicClient):
         assert isinstance(self.model, MoonModel)
 
         # Save the parameters of the old local model
-        old_model = copy.deepcopy(self.model)
-        for param in old_model.parameters():
-            param.requires_grad = False
-        old_model.eval()
+        old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
         # Set the parameters of the model
-        output = super().set_parameters(parameters, config)
+        super().set_parameters(parameters, config)
 
         # Save the parameters of the global model
-        self.global_model = copy.deepcopy(self.model)
-        for param in self.global_model.parameters():
-            param.requires_grad = False
-        self.global_model.eval()
-        return output
+        self.global_model = self.clone_and_freeze_model(self.model)
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
         if len(self.old_models_list) == 0:

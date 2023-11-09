@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode
+
 
 class LinearModel(nn.Module):
     def __init__(self) -> None:
@@ -73,6 +75,20 @@ class HeadCnn(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.fc1(x)
+        return x
+
+
+class FendaHeadCnn(FendaHeadModule):
+    def __init__(self, join_mode: FendaJoinMode = FendaJoinMode.CONCATENATE) -> None:
+        super().__init__(join_mode)
+        self.fc1 = nn.Linear(16 * 4 * 4 * 2, 32)
+
+    def local_global_concat(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
+        # Assuming tensors are "batch first" so join column-wise
+        return torch.concat([local_x, global_x], dim=1)
+
+    def head_forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = F.relu(self.fc1(x))
         return x
 
 
