@@ -1,9 +1,7 @@
-import random
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
@@ -38,14 +36,7 @@ class BasicClient(NumpyFlClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         seed: Optional[int] = None,
     ) -> None:
-        if seed is not None:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
-
-        super().__init__(data_path, device)
+        super().__init__(data_path, device, seed=seed)
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)

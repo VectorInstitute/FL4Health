@@ -32,8 +32,9 @@ class EvaluateClient(NumpyFlClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super().__init__(data_path=data_path, device=device)
+        super().__init__(data_path=data_path, device=device, seed=seed)
         self.model_checkpoint_path = model_checkpoint_path
         self.metrics = metrics
         self.local_model: Optional[nn.Module] = None

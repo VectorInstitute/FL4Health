@@ -11,8 +11,10 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.server.base_server import FlServer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
@@ -24,27 +26,27 @@ def get_initial_model_parameters(initial_model: MoonModel) -> Parameters:
 
 
 def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
+    local_epochs: int, batch_size: int, n_warm_up_rounds: int, downsampling_ratio: float, current_round: int
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
+        "n_server_rounds": n_warm_up_rounds,
         "downsampling_ratio": downsampling_ratio,
         "current_server_round": current_round,
     }
 
 
-def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, warm_up_dir: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
         config["batch_size"],
-        config["n_server_rounds"],
+        config["n_warm_up_rounds"],
         config["downsampling_ratio"],
     )
-    model = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn(), warmed_up_dir=warmed_up_dir)
+    model = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn(), warm_up=True)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
         min_fit_clients=config["n_clients"],
@@ -58,13 +60,19 @@ def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[st
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(model),
     )
+
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, seed=seed)
+    checkpoint_name = "warmed_up_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(warm_up_dir, checkpoint_name, maximize=False)
+
+    server = FlServerWithCheckpointing(
+        client_manager, model, FullParameterExchanger(), strategy=strategy, checkpointer=checkpointer, seed=seed
+    )
 
     fl.server.start_server(
         server=server,
         server_address=server_address,
-        config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+        config=fl.server.ServerConfig(num_rounds=config["n_warm_up_rounds"]),
     )
     # Shutdown the server gracefully
     server.shutdown()
@@ -99,6 +107,7 @@ if __name__ == "__main__":
         help="Seed for the random number generator",
         required=True,
     )
+
     args = parser.parse_args()
 
     config = load_config(args.config_path)

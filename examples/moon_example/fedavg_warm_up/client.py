@@ -13,14 +13,14 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
-from fl4health.clients.moon_client import MoonClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
-class MnistMoonClient(MoonClient):
+class WarmUpMnistClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
@@ -40,7 +40,7 @@ class MnistMoonClient(MoonClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn()).to(self.device)
+        model: nn.Module = MoonModel(BaseCnn(), HeadCnn(), ProjectionCnn(), warm_up=True).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistMoonClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, seed=args.seed)
+    client = WarmUpMnistClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, seed=args.seed)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

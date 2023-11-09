@@ -23,8 +23,9 @@ class ApflClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super(BasicClient, self).__init__(data_path, device)
+        super(BasicClient, self).__init__(data_path, device, seed=seed)
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)

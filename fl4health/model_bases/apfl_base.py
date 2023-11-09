@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
@@ -14,8 +14,10 @@ class ApflModule(WarmUpModel):
         adaptive_alpha: bool = True,
         alpha: float = 0.5,
         alpha_lr: float = 0.01,
+        warm_up: bool = False,
+        warmed_up_dir: Optional[str] = None,
     ) -> None:
-        super().__init__()
+        super().__init__(warm_up, warmed_up_dir)
         self.local_model: nn.Module = model
         self.global_model: nn.Module = copy.deepcopy(model)
 
@@ -32,8 +34,13 @@ class ApflModule(WarmUpModel):
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         # Forward return dictionairy because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
-        local_logits = self.local_forward(input)
-        personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
+        if not self.warm_up:
+            local_logits = self.local_forward(input)
+            personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
+        else:
+            self.local_model.eval()
+            local_logits = torch.zeros_like(global_logits)
+            personal_logits = global_logits
         preds = {"personal": personal_logits, "global": global_logits, "local": local_logits}
         return preds
 

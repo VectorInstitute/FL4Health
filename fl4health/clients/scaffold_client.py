@@ -225,6 +225,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -234,6 +235,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             loss_meter_type=loss_meter_type,
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
         )
 
         InstanceLevelPrivacyClient.__init__(
@@ -244,4 +246,5 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             loss_meter_type=loss_meter_type,
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
         )
