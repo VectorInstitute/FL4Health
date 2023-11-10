@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArray, Scalar
+from sklearn.pipeline import Pipeline
 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.feature_alignment.constants import FEATURE_INFO, FORMAT_SPECIFIED, INPUT_DIMENSION, OUTPUT_DIMENSION
@@ -29,6 +30,7 @@ class TabularDataClient(BasicClient):
         # The aligned data and targets, which are used to construct dataloaders.
         self.aligned_features: NDArray
         self.aligned_targets: NDArray
+        self.feature_specific_pipelines: Dict[str, Pipeline] = {}
 
     def setup_client(self, config: Config) -> None:
         """
@@ -52,6 +54,9 @@ class TabularDataClient(BasicClient):
                 self.narrow_config_type(config, FEATURE_INFO, str)
             )
             self.tabular_features_preprocessor = TabularFeaturesPreprocessor(self.tabular_features_info_encoder)
+
+            # Set feature specific pipelines if the user has defined them.
+            self.set_feature_specific_pipelines()
 
             # preprocess features.
             self.aligned_features, self.aligned_targets = self.tabular_features_preprocessor.preprocess_features(
@@ -106,3 +111,11 @@ class TabularDataClient(BasicClient):
                 INPUT_DIMENSION: self.input_dimension,
                 OUTPUT_DIMENSION: self.output_dimension,
             }
+
+    def preset_specific_pipeline(self, feature_name: str, pipeline: Pipeline) -> None:
+        self.feature_specific_pipelines[feature_name] = pipeline
+
+    def set_feature_specific_pipelines(self) -> None:
+        assert self.tabular_features_preprocessor is not None
+        for feature_name, pipeline in self.feature_specific_pipelines.items():
+            self.tabular_features_preprocessor.set_feature_pipeline(feature_name, pipeline)

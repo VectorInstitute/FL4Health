@@ -27,6 +27,7 @@ if __name__ == "__main__":
 
     # Dropping columns to create misalignment.
     df2 = df2.drop(columns=["ExpiredHospital", "admit_type", "NumRx", "ethnicity"])
+    log(INFO, "Hospital2 missing columns: ExpiredHospital, admit_type, NumRx, ethnicity")
 
     # Now we randomly select 10 percent of the rows of df2
     # and set its 'insurance' column to 'Unknown'
@@ -36,8 +37,8 @@ if __name__ == "__main__":
     # Set a specific column ('insurance' in this example) to the specific value for the selected rows
     df2.loc[random_indices, "insurance"] = "Unknown"
 
-    log(INFO, f"hospital1 insurance values: {df1['insurance'].unique()}")
-    log(INFO, f"hospital2 insurance values: {df2['insurance'].unique()}")
+    log(INFO, f"Hospital1 insurance values: {df1['insurance'].unique()}")
+    log(INFO, f"Hospital2 insurance values: {df2['insurance'].unique()}")
 
     df1.to_csv(f"{target_datapath}/mimic3d_hospital1.csv", index=False)
     df2.to_csv(f"{target_datapath}/mimic3d_hospital2.csv", index=False)

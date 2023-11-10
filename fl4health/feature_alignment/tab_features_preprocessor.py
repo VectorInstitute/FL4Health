@@ -1,6 +1,8 @@
+from logging import WARNING
 from typing import Dict, List, Tuple
 
 import pandas as pd
+from flwr.common.logger import log
 from flwr.common.typing import NDArray, Scalar
 from sklearn.compose import ColumnTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -43,8 +45,8 @@ class TabularFeaturesPreprocessor:
         self.feature_columns = tab_feature_encoder.get_feature_columns()
         self.target_columns = tab_feature_encoder.get_target_columns()
 
-        self.initialize_default_pipelines(self.tabular_features, self.features_to_pipelines, one_hot=True)
-        self.initialize_default_pipelines(self.tabular_targets, self.targets_to_pipelines, one_hot=False)
+        self.features_to_pipelines = self.initialize_default_pipelines(self.tabular_features, one_hot=True)
+        self.targets_to_pipelines = self.initialize_default_pipelines(self.tabular_targets, one_hot=False)
 
         self.data_column_transformer = self.return_column_transformer(self.features_to_pipelines)
         self.target_column_transformer = self.return_column_transformer(self.targets_to_pipelines)
@@ -76,8 +78,8 @@ class TabularFeaturesPreprocessor:
         return Pipeline(steps=[("vectorizer", TextColumnTransformer(TfidfVectorizer(vocabulary=vocabulary)))])
 
     def initialize_default_pipelines(
-        self, tabular_features: List[TabularFeature], feature_to_transformer: Dict[str, Pipeline], one_hot: bool
-    ) -> None:
+        self, tabular_features: List[TabularFeature], one_hot: bool
+    ) -> Dict[str, Pipeline]:
         """
         Initialize a default Pipeline for every data column in tabular_features.
 
@@ -86,6 +88,7 @@ class TabularFeaturesPreprocessor:
             tabular_features (List[TabularFeature]): list of tabular
             features in the data columns.
         """
+        columns_to_pipelines = {}
         for tab_feature in tabular_features:
             feature_type = tab_feature.get_feature_type()
             feature_name = tab_feature.get_feature_name()
@@ -102,7 +105,8 @@ class TabularFeaturesPreprocessor:
             else:
                 vocabulary = tab_feature.get_metadata()
                 feature_pipeline = self.get_default_string_pipeline(vocabulary)
-            feature_to_transformer[feature_name] = feature_pipeline
+            columns_to_pipelines[feature_name] = feature_pipeline
+        return columns_to_pipelines
 
     def return_column_transformer(self, pipelines: Dict[str, Pipeline]) -> ColumnTransformer:
         transformers = [
@@ -114,15 +118,17 @@ class TabularFeaturesPreprocessor:
             remainder="drop",
         )
 
-    def set_feature_pipeline(self, feature_name: str, pipeline: Pipeline, target: bool) -> None:
+    def set_feature_pipeline(self, feature_name: str, pipeline: Pipeline) -> None:
         # This method allows the user to customize a specific pipeline to be applied to a specific feature.
         # For example, the user may want to use different scalers for two distinct numerical features.
-        if not target:
+        if feature_name in self.features_to_pipelines:
             self.features_to_pipelines[feature_name] = pipeline
             self.data_column_transformer = self.return_column_transformer(self.features_to_pipelines)
-        else:
+        elif feature_name in self.targets_to_pipelines:
             self.targets_to_pipelines[feature_name] = pipeline
             self.target_column_transformer = self.return_column_transformer(self.targets_to_pipelines)
+        else:
+            log(WARNING, f"{feature_name} is neither a feature nor target and the provided pipeline will be ignored.")
 
     def preprocess_features(self, df: pd.DataFrame) -> Tuple[NDArray, NDArray]:
         # If the dataframe has an entire column missing, we need to fill it with some default value first.

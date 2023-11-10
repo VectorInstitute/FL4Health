@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from sklearn.preprocessing import MaxAbsScaler
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
@@ -92,4 +93,6 @@ if __name__ == "__main__":
 
     # ham_id is the id column and LOSgroupNum is the target column.
     client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", "LOSgroupNum")
+    # This call demonstrates how the user may specify a particular sklearn pipeline for a specific feature.
+    client.preset_specific_pipeline("NumNotes", MaxAbsScaler())
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
