@@ -8,11 +8,13 @@ from torch.utils.data import DataLoader, TensorDataset
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.model_bases.fenda_base import FendaHeadModule, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
@@ -32,6 +34,8 @@ def get_client(type: type, model: nn.Module) -> NumpyFlClient:
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
     elif type == MoonClient:
         client = MoonClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    elif type == FendaClient:
+        client = FendaClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == InstanceLevelPrivacyClient:
         client = InstanceLevelPrivacyClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
@@ -81,5 +85,15 @@ def get_apfl_client(type: type, model: nn.Module) -> ApflClient:
     apfl_model = ApflModule(model, False)
     client.model = apfl_model
     client.parameter_exchanger = FixedLayerExchanger(apfl_model.layers_to_exchange())
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_fenda_client(local_module: nn.Module, global_module: nn.Module, head_module: FendaHeadModule) -> FendaClient:
+    client = FendaClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    fenda_model = FendaModel(local_module, global_module, head_module)
+    client.model = fenda_model
+    client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())
     client.initialized = True
     return client

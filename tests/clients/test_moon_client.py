@@ -17,12 +17,12 @@ def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     config: Config = {}
 
     params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
-    new_prams = [layer_weights + 0.1 for layer_weights in params]
-    moon_client.set_parameters(new_prams, config)
+    new_params = [layer_weights + 0.1 for layer_weights in params]
+    moon_client.set_parameters(new_params, config)
 
     old_model_params = [val.cpu().numpy() for _, val in moon_client.old_models_list[-1].state_dict().items()]
     global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
 
     for i in range(len(params)):
         assert (params[i] == old_model_params[i]).all()
-        assert (new_prams[i] == global_model_params[i]).all()
+        assert (new_params[i] == global_model_params[i]).all()

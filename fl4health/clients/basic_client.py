@@ -1,3 +1,4 @@
+import copy
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Union
@@ -309,7 +310,7 @@ class BasicClient(NumpyFlClient):
 
         self.set_optimizer(config)
         self.learning_rate = self.optimizer.defaults["lr"]
-        self.criterion = self.get_criterion(config)
+        self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
@@ -366,6 +367,23 @@ class BasicClient(NumpyFlClient):
         optimizer = self.get_optimizer(config)
         assert not isinstance(optimizer, dict)
         self.optimizer = optimizer
+
+    def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
+        """Clone and freeze model for use in various loss calculation.
+
+        Args:
+            model (nn.Module): model to clone and freeze
+
+        Returns:
+            nn.Module: cloned and frozen model
+        """
+
+        cloned_model = copy.deepcopy(model)
+        for param in cloned_model.parameters():
+            param.requires_grad = False
+        cloned_model.eval()
+
+        return cloned_model
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """

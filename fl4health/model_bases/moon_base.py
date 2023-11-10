@@ -21,10 +21,8 @@ class MoonModel(WarmUpModel):
         self.head_module = head_module
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # input is expected to be of shape (batch_size, *)
         x = self.base_module.forward(input)
-        if self.projection_module:
-            p = self.projection_module.forward(x)
-        else:
-            p = x
+        p = self.projection_module.forward(x) if self.projection_module else x
         output = self.head_module.forward(p)
-        return {"prediction": output, "features": p.view(len(p), -1)}
+        return {"prediction": output, "features": p.reshape(len(p), -1)}
