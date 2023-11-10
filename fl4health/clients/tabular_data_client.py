@@ -59,18 +59,21 @@ class TabularDataClient(BasicClient):
             )
 
             # Obtain the input and output dimensions to be sent to
-            # the server for global model initialization.
+            # the server for global model initialization. Assuming
+            # that the first dimension is the number of rows.
             self.input_dimension = self.aligned_features.shape[1]
             self.output_dimension = self.tabular_features_info_encoder.get_target_dimension()
             log(INFO, f"input dimension: {self.input_dimension}, output_dimension: {self.output_dimension}")
 
             super().setup_client(config)
 
-            # freeing the memory of aligned features/targets.
+            # freeing the memory of aligned features/targets and data.
             del self.aligned_features
             del self.aligned_targets
+            del self.df
         else:
-            # Encode the information of the client's local tabular data.
+            # Encode the information of the client's local tabular data. This is expected to happen only once
+            # if the client is requested to provide alignment information.
             self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.encoder_from_dataframe(
                 self.df, self.id_column, self.target_column
             )

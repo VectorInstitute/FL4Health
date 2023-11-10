@@ -59,7 +59,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self.initialize_parameters = initialize_parameters
         self.format_info_gathered = False
         # casting self.strategy to BasicFedAvg so its on_fit_config_fn can be specified.
-        self.strategy: BasicFedAvg
+        assert isinstance(self.strategy, BasicFedAvg)
         self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:

@@ -55,10 +55,10 @@ class TabularFeaturesPreprocessor:
     def get_default_binary_pipeline(self) -> Pipeline:
         return Pipeline(steps=[("imputer", SimpleImputer(strategy="most_frequent")), ("encoder", OrdinalEncoder())])
 
-    def get_one_hot_pipeline(self, categories: MetaData) -> Pipeline:
+    def get_default_one_hot_pipeline(self, categories: MetaData) -> Pipeline:
         return Pipeline(steps=[("encoder", OneHotEncoder(handle_unknown="ignore", categories=[categories]))])
 
-    def get_ordinal_pipeline(self, categories: MetaData) -> Pipeline:
+    def get_default_ordinal_pipeline(self, categories: MetaData) -> Pipeline:
         return Pipeline(
             steps=[
                 (
@@ -96,9 +96,9 @@ class TabularFeaturesPreprocessor:
             elif feature_type == TabularType.ORDINAL:
                 feature_categories = tab_feature.get_metadata()
                 if one_hot:
-                    feature_pipeline = self.get_one_hot_pipeline(feature_categories)
+                    feature_pipeline = self.get_default_one_hot_pipeline(feature_categories)
                 else:
-                    feature_pipeline = self.get_ordinal_pipeline(feature_categories)
+                    feature_pipeline = self.get_default_ordinal_pipeline(feature_categories)
             else:
                 vocabulary = tab_feature.get_metadata()
                 feature_pipeline = self.get_default_string_pipeline(vocabulary)

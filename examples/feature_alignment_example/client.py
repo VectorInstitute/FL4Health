@@ -14,7 +14,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, TensorDataset
 
-from examples.models.logistic_regression import LogisticRegression
+from examples.models.mlp_classifier import MLP
 from fl4health.clients.tabular_data_client import TabularDataClient
 from fl4health.utils.metrics import Accuracy, Metric
 
@@ -54,7 +54,7 @@ class Mimic3TabularDataClient(TabularDataClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model = LogisticRegression(self.input_dimension, self.output_dimension)
+        model = MLP(self.input_dimension, self.output_dimension)
         model.to(self.device)
         return model
 

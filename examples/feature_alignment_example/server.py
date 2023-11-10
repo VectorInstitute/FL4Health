@@ -7,7 +7,7 @@ import pandas as pd
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Parameters
 
-from examples.models.logistic_regression import LogisticRegression
+from examples.models.mlp_classifier import MLP
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
@@ -23,7 +23,7 @@ CONFIG_PATH = "examples/feature_alignment_example/config.yaml"
 
 
 def get_initial_model_parameters(input_dim: int, output_dim: int) -> Parameters:
-    initial_model = LogisticRegression(input_dim, output_dim)
+    initial_model = MLP(input_dim, output_dim)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
