@@ -29,10 +29,9 @@ class TabularFeaturesPreprocessor:
     but the user may also manually specify a transformer for this
     feature.
 
-    Parameters
-    ----------
-    tab_feature_encoder: TabularFeaturesInfoEncoder
-        Encodes the information necessary for constructing the column transformers.
+    Args:
+        tab_feature_encoder (TabularFeaturesInfoEncoder):
+        encodes the information necessary for constructing the column transformers.
     """
 
     def __init__(self, tab_feature_encoder: TabularFeaturesInfoEncoder) -> None:
@@ -83,8 +82,7 @@ class TabularFeaturesPreprocessor:
         """
         Initialize a default Pipeline for every data column in tabular_features.
 
-        Parameters
-        ----------
+        Args:
             tabular_features (List[TabularFeature]): list of tabular
             features in the data columns.
         """
@@ -113,6 +111,7 @@ class TabularFeaturesPreprocessor:
             (f"{feature_name}_pipeline", pipelines[feature_name], [feature_name])
             for feature_name in sorted(pipelines.keys())
         ]
+        # If a column does not have an associated transformer then it is dropped from the df.
         return ColumnTransformer(
             transformers=transformers,
             remainder="drop",

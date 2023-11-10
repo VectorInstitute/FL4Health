@@ -28,9 +28,21 @@ class TabularFeatureAlignmentServer(FlServer):
     This server is used when the clients all have tabular data that needs to be
     aligned.
 
-    tab_features_source_of_truth: the information that is required for aligning client features.
-    If it is not specified, then the server will randomly poll a client and gather
-    this information from its data source.
+    Args:
+        client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+        strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+            client updates and other information potentially sent by the participating clients. If None the
+            strategy is FedAvg as set by the flwr Server.
+        wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+            information and results to a Weights and Biases account. If None is provided, no logging occurs.
+            Defaults to None.
+        checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+            server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+            performed. Defaults to None.
+        tab_features_source_of_truth (Optional[TabularFeaturesInfoEncoder]): The information that is required
+        for aligning client features. If it is not specified, then the server will randomly poll a client
+        and gather this information from its data source.
     """
 
     def __init__(
@@ -43,7 +55,6 @@ class TabularFeatureAlignmentServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
     ) -> None:
-        assert isinstance(strategy, BasicFedAvg)
         if strategy.on_fit_config_fn is not None:
             log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
@@ -64,7 +75,6 @@ class TabularFeatureAlignmentServer(FlServer):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
-
         assert isinstance(self.strategy, BasicFedAvg)
 
         # Before the normal fitting round begins, the server provides all clients
@@ -123,9 +133,9 @@ class TabularFeatureAlignmentServer(FlServer):
         log(INFO, "Waiting for Clients to align features and then polling for dimension information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
+
         # Since the features of all clients are aligned, we just select one client
         # to obtain the input/output dimensions.
-
         results, _ = poll_clients(
             client_instructions=client_instructions[:1], max_workers=self.max_workers, timeout=timeout
         )

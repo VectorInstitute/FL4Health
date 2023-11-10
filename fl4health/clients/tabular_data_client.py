@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Sequence
+from typing import Dict, List, Sequence, Union
 
 import pandas as pd
 import torch
@@ -17,7 +17,12 @@ from fl4health.utils.metrics import Metric
 
 class TabularDataClient(BasicClient):
     def __init__(
-        self, data_path: Path, metrics: Sequence[Metric], device: torch.device, id_column: str, target_column: str
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        id_column: str,
+        targets: Union[str, List[str]],
     ) -> None:
         super().__init__(data_path, metrics, device)
         self.tabular_features_info_encoder: TabularFeaturesInfoEncoder
@@ -26,7 +31,7 @@ class TabularDataClient(BasicClient):
         self.input_dimension: int
         self.output_dimension: int
         self.id_column = id_column
-        self.target_column = target_column
+        self.targets = targets
         # The aligned data and targets, which are used to construct dataloaders.
         self.aligned_features: NDArray
         self.aligned_targets: NDArray
@@ -80,12 +85,15 @@ class TabularDataClient(BasicClient):
             # Encode the information of the client's local tabular data. This is expected to happen only once
             # if the client is requested to provide alignment information.
             self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.encoder_from_dataframe(
-                self.df, self.id_column, self.target_column
+                self.df, self.id_column, self.targets
             )
 
     def get_data_frame(self, config: Config) -> pd.DataFrame:
         """
         User defined method that returns a pandas dataframe.
+
+        Args:
+
         """
         raise NotImplementedError
 
@@ -113,6 +121,8 @@ class TabularDataClient(BasicClient):
             }
 
     def preset_specific_pipeline(self, feature_name: str, pipeline: Pipeline) -> None:
+        # The user may use this method to specify a specific pipeline to be applied to a
+        # particular feature.
         self.feature_specific_pipelines[feature_name] = pipeline
 
     def set_feature_specific_pipelines(self) -> None:
