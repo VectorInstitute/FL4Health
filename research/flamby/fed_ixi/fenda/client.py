@@ -37,7 +37,6 @@ class FedIxiFendaClient(FendaClient):
         contrastive_activate: bool = False,
         perfcl_activate: bool = False,
     ) -> None:
-
         super().__init__(
             data_path=data_path,
             metrics=metrics,

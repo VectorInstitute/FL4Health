@@ -5,7 +5,7 @@ from flwr.common.parameter import parameters_to_ndarrays
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.server.base_server import FlServerWithCheckpointing
@@ -17,7 +17,7 @@ class FedProxServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
         client_manager: ClientManager,
         model: nn.Module,
         strategy: Optional[Strategy] = None,
-        checkpointer: Optional[BestMetricTorchCheckpointer] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         # To help with model rehydration
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())

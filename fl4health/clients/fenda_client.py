@@ -68,7 +68,6 @@ class FendaClient(BasicClient):
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
     def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-
         preds = self.model(input)
 
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
@@ -88,7 +87,6 @@ class FendaClient(BasicClient):
         return preds
 
     def get_parameters(self, config: Config) -> NDArrays:
-
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
@@ -98,7 +96,6 @@ class FendaClient(BasicClient):
         return super().get_parameters(config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
@@ -181,7 +178,6 @@ class FendaClient(BasicClient):
         return contrastive_loss_minimize, contrastive_loss_maximize
 
     def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
-
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss
         additional_losses = {}

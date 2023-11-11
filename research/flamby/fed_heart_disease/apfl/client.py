@@ -13,7 +13,11 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import (
+    BestMetricTorchCheckpointer,
+    LatestTorchCheckpointer,
+    TorchCheckpointer,
+)
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
@@ -111,6 +115,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--alpha_learning_rate", action="store", type=float, help="Learning rate for the APFL alpha", default=0.01
     )
+    parser.add_argument(
+        "--no_federated_checkpointing",
+        action="store_true",
+        help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -118,10 +127,16 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Alpha Learning Rate: {args.alpha_learning_rate}")
+    log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
 
+    federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = (
+        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        if federated_checkpointing
+        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedHeartDiseaseApflClient(
         data_path=args.dataset_dir,

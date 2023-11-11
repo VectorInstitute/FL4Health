@@ -10,7 +10,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
 
 
@@ -24,11 +24,7 @@ class ApflClient(BasicClient):
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
-        super(BasicClient, self).__init__(data_path, device)
-        self.metrics = metrics
-        self.checkpointer = checkpointer
-        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
 
         # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
         train_key_to_meter_map = {

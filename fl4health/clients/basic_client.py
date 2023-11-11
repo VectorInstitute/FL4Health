@@ -152,7 +152,6 @@ class BasicClient(NumpyFlClient):
         metric_dict: Dict[str, Scalar],
         current_round: Optional[int] = None,
     ) -> None:
-
         # If reporter is None we do not report to wandb and return
         if self.wandb_reporter is None:
             return
