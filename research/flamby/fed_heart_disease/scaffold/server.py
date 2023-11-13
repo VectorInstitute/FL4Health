@@ -34,7 +34,7 @@ def main(
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    federated_checkpointing: bool = config.get("federated_checkpoiting", True)
+    federated_checkpointing: bool = config.get("federated_checkpointing", True)
     log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
     checkpointer = (
         BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
