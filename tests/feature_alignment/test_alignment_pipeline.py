@@ -1,10 +1,12 @@
 import pandas as pd
+import pytest
 
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.feature_alignment.tab_features_preprocessor import TabularFeaturesPreprocessor
 from fl4health.feature_alignment.tabular_type import TabularType
 
 
+@pytest.fixture
 def create_df1() -> pd.DataFrame:
     df = pd.DataFrame(
         {
@@ -23,6 +25,7 @@ def create_df1() -> pd.DataFrame:
     return df
 
 
+@pytest.fixture
 def create_df2() -> pd.DataFrame:
     df = pd.DataFrame(
         {
@@ -43,6 +46,7 @@ def create_df2() -> pd.DataFrame:
     return df
 
 
+@pytest.fixture
 def create_df3() -> pd.DataFrame:
     df = pd.DataFrame(
         {
@@ -63,8 +67,8 @@ def create_df3() -> pd.DataFrame:
     return df
 
 
-def test_encoding() -> None:
-    df = create_df1()
+def test_encoding(create_df1: pd.DataFrame) -> None:
+    df = create_df1
     # Test some basic functionalities of TabularFeaturesInfoEncoder.
     encoder = TabularFeaturesInfoEncoder.encoder_from_dataframe(df, id_column="ID", target_columns="Wealth")
     assert encoder.get_feature_columns() == ["Age", "Name", "Sex"]
@@ -100,16 +104,16 @@ def test_encoding() -> None:
     assert encoder_new.get_target_dimension() == 1
 
 
-def test_preprocessor() -> None:
+def test_preprocessor(create_df1: pd.DataFrame, create_df2: pd.DataFrame, create_df3: pd.DataFrame) -> None:
     # These three dataframes are misaligned in the following ways:
     #   - df2 contains columns that df1 does not have.
     #   - df3 has the same columns as df2,
     #     but its "Insurance" column, which is a  categorical column,
     #     has more categories than that of df2.
     # These are the major types of misalignment in Tabular data which we care about.
-    df1 = create_df1()
-    df2 = create_df2()
-    df3 = create_df3()
+    df1 = create_df1
+    df2 = create_df2
+    df3 = create_df3
 
     encoder1 = TabularFeaturesInfoEncoder.encoder_from_dataframe(df1, id_column="ID", target_columns="Wealth")
     encoder2 = TabularFeaturesInfoEncoder.encoder_from_dataframe(df2, id_column="ID", target_columns="Wealth")
