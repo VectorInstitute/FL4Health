@@ -26,8 +26,9 @@ if __name__ == "__main__":
     df2 = dfs[1].reset_index()
 
     # Dropping columns to create misalignment.
-    df2 = df2.drop(columns=["ExpiredHospital", "admit_type", "NumRx", "ethnicity"])
-    log(INFO, "Hospital2 missing columns: ExpiredHospital, admit_type, NumRx, ethnicity")
+    columns_to_drop = ["ExpiredHospital", "admit_type", "NumRx", "ethnicity"]
+    df2 = df2.drop(columns=columns_to_drop)
+    log(INFO, "Hospital2 missing columns: {', '.join(columns_to_drop)}")
 
     # Now we randomly select 10 percent of the rows of df2
     # and set its 'insurance' column to 'Unknown'

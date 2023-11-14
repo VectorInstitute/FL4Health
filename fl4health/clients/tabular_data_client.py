@@ -93,6 +93,7 @@ class TabularDataClient(BasicClient):
         User defined method that returns a pandas dataframe.
 
         Args:
+            config (Config): flower's config dictionary.
 
         """
         raise NotImplementedError

@@ -71,7 +71,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self.initialize_parameters = initialize_parameters
         self.format_info_gathered = False
         self.dimension_info: Dict[str, int] = {}
-        # casting self.strategy to BasicFedAvg so its on_fit_config_fn can be specified.
+        # ensure that self.strategy has type BasicFedAvg so its on_fit_config_fn can be specified.
         assert isinstance(self.strategy, BasicFedAvg)
         self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
 

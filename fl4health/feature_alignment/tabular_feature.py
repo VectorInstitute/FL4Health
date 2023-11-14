@@ -50,7 +50,7 @@ class TabularFeature:
         elif self.feature_type == TabularType.NUMERIC:
             return 1
         else:
-            return 0
+            raise ValueError("Metadata dimension is not supported when self.feature_type is TabularType.STRING.")
 
     def to_json(self) -> str:
         return json.dumps(
