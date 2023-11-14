@@ -17,6 +17,7 @@ flwr = "1.4.0"
 opacus = "^1.3.0"
 tensorflow-privacy = "^0.8.7"
 torch = "^1.12.1"
+pycyclops = "^0.1.40"
 
 [tool.poetry.group.dev.dependencies]
 nltk = "^3.8.1"

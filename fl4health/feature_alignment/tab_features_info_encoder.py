@@ -60,11 +60,9 @@ class TabularFeaturesInfoEncoder:
     def _construct_tab_feature(
         df: pd.DataFrame,
         feature_name: str,
-        features_to_types: Dict[str, TabularType],
+        feature_type: TabularType,
         fill_values: Optional[Dict[str, Scalar]],
     ) -> TabularFeature:
-        feature_type = TabularType(features_to_types[feature_name])
-
         if fill_values is None or feature_name not in fill_values:
             fill_value = TabularType.get_default_fill_value(feature_type)
         else:
@@ -102,8 +100,9 @@ class TabularFeaturesInfoEncoder:
         tabular_features = []
         # Construct TabularFeature objects.
         for feature_name in features_to_types:
+            feature_type = TabularType(features_to_types[feature_name])
             tabular_feature = TabularFeaturesInfoEncoder._construct_tab_feature(
-                df, feature_name, features_to_types, fill_values
+                df, feature_name, feature_type, fill_values
             )
             if feature_name == target_columns or feature_name in target_columns:
                 tabular_targets.append(tabular_feature)
