@@ -105,7 +105,7 @@ class TabularFeaturesInfoEncoder:
             tabular_feature = TabularFeaturesInfoEncoder._construct_tab_feature(
                 df, feature_name, features_to_types, fill_values
             )
-            if feature_name in target_columns:
+            if feature_name == target_columns or feature_name in target_columns:
                 tabular_targets.append(tabular_feature)
             else:
                 tabular_features.append(tabular_feature)

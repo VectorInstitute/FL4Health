@@ -45,7 +45,7 @@ class TabularFeature:
         return self.metadata
 
     def get_metadata_dimension(self) -> int:
-        if self.feature_type == TabularType.BINARY or TabularType.ORDINAL:
+        if self.feature_type == TabularType.BINARY or self.feature_type == TabularType.ORDINAL:
             return len(self.metadata)
         elif self.feature_type == TabularType.NUMERIC:
             return 1
