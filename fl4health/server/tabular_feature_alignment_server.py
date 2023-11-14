@@ -1,8 +1,9 @@
 import random
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
+from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
@@ -49,7 +50,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self,
         client_manager: ClientManager,
         config: Config,
-        initialize_parameters: Callable,
+        initialize_parameters: Callable[..., Parameters],
         strategy: BasicFedAvg,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
@@ -69,9 +70,20 @@ class TabularFeatureAlignmentServer(FlServer):
         self.config = config
         self.initialize_parameters = initialize_parameters
         self.format_info_gathered = False
+        self.dimension_info: Dict[str, int] = {}
         # casting self.strategy to BasicFedAvg so its on_fit_config_fn can be specified.
         assert isinstance(self.strategy, BasicFedAvg)
         self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
+
+    def _set_dimension_info(self, input_dimension: int, output_dimension: int) -> None:
+        self.dimension_info[INPUT_DIMENSION] = input_dimension
+        self.dimension_info[OUTPUT_DIMENSION] = output_dimension
+
+    def _get_initial_parameters(self, timeout: Optional[float]) -> Parameters:
+        assert INPUT_DIMENSION in self.dimension_info and OUTPUT_DIMENSION in self.dimension_info
+        input_dimension = self.dimension_info[INPUT_DIMENSION]
+        output_dimension = self.dimension_info[OUTPUT_DIMENSION]
+        return self.initialize_parameters(input_dimension, output_dimension)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """Run federated averaging for a number of rounds."""
@@ -107,7 +119,7 @@ class TabularFeatureAlignmentServer(FlServer):
             # the global model.
             input_dimension, output_dimension = self.poll_clients_for_dimension_info(timeout)
             log(DEBUG, f"input dimension: {input_dimension}, output dimension: {output_dimension}")
-            self.strategy.initial_parameters = self.initialize_parameters(input_dimension, output_dimension)
+            self._set_dimension_info(input_dimension, output_dimension)
             self.initial_polls_complete = True
 
         # Normal federated learning rounds commence after all clients' features
