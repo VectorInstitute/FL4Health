@@ -142,7 +142,6 @@ do
             --learning_rate ${CLIENT_LR} \
             --alpha_learning_rate ${ALPHA_LR} \
             --server_address ${SERVER_ADDRESS} \
-            # --no_federated_checkpointing \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 
