@@ -23,9 +23,9 @@ class FendaClient(BasicClient):
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: Optional[float] = 0.5,
-        perfcl_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
-        cos_sim_loss_weight: Optional[float] = 0.0,
-        contrastive_loss_weight: Optional[float] = 0.0,
+        perfcl_loss_weights: Optional[Tuple[float, float]] = None,
+        cos_sim_loss_weight: Optional[float] = None,
+        contrastive_loss_weight: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
