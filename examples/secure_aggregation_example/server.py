@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from functools import partial
 
+import torch
 from flwr.server import ServerConfig
 from flwr.server import start_server as RunServer
 from flwr.server.client_manager import SimpleClientManager
@@ -8,7 +9,8 @@ from flwr.server.client_manager import SimpleClientManager
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.server.secure_aggregation_server import SecureAggregationServer
 
 # replace later with secure aggregation strategy
@@ -16,6 +18,8 @@ from fl4health.strategies.secure_aggregation_strategy import SecureAggregationSt
 from fl4health.utils.config import load_config
 
 from .utils import generate_config, get_parameters
+
+torch.set_default_dtype(torch.float64)
 
 if __name__ == "__main__":
     # get configurations from command line
@@ -51,7 +55,7 @@ if __name__ == "__main__":
     server = SecureAggregationServer(
         client_manager=SimpleClientManager(),
         model=model,
-        parameter_exchanger=FullParameterExchanger(),
+        parameter_exchanger=SecureAggregationExchanger(),
         wandb_reporter=None,
         strategy=strategy,
         checkpointer=BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False),

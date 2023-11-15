@@ -1,10 +1,7 @@
-from logging import INFO, WARNING
+from logging import DEBUG, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import (
-    EvaluateIns,
-    EvaluateRes,
-    FitIns,
     FitRes,
     GetPropertiesIns,
     MetricsAggregationFn,
@@ -19,11 +16,15 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
-from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
+from fl4health.strategies.aggregate_utils import aggregate_results
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 Requests = List[Tuple[ClientProxy, GetPropertiesIns]]
 Request = Tuple[ClientProxy, GetPropertiesIns]
+
+from functools import reduce
+
+import numpy as np
 
 
 class SecureAggregationStrategy(BasicFedAvg):
@@ -102,47 +103,116 @@ class SecureAggregationStrategy(BasicFedAvg):
     Customize: first compute sum, then communicate w/clients to remove masks, then average
     """
 
-    # def aggregate_fit(
-    #     self,
-    #     server_round: int,
-    #     results: List[Tuple[ClientProxy, FitRes]],
-    #     failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    # ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-    #     """
-    #     Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
-    #     depending on the settings used for the strategy.
+    def sum_results(results: List[Tuple[NDArrays, int]]) -> NDArrays:
+        """
+        Sum the client parameter vectors.
+        """
 
-    #     Args:
-    #         server_round (int): Indicates the server round we're currently on.
-    #         results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
-    #             that need to be aggregated on the server-side.
-    #         failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
-    #             from clients that experienced an issue during training, such as timeouts or exceptions.
+        weighted_weights = [[layer for layer in weights] for weights, _ in results]
 
-    #     Returns:
-    #         Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
-    #     """
-    #     if not results:
-    #         return None, {}
-    #     # Do not aggregate if there are failures and failures are not accepted
-    #     if not self.accept_failures and failures:
-    #         return None, {}
+        # Compute unweighted average by summing up across clients for each layer.
+        return [reduce(np.add, layer_updates) for layer_updates in zip(*weighted_weights)]
 
-    #     # Convert results
-    #     weights_results = [
-    #         (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
-    #     ]
-    #     # Aggregate them in a weighted or unweighted fashion based on settings.
-    #     aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
-    #     # Convert back to parameters
-    #     parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
+    def get_client_models(self, results: List[Tuple[ClientProxy, FitRes]]) -> List[NDArrays]:
 
-    #     # Aggregate custom metrics if aggregation fn was provided
-    #     metrics_aggregated = {}
-    #     if self.fit_metrics_aggregation_fn:
-    #         fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
-    #         metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-    #     elif server_round == 1:  # Only log this warning once
-    #         log(WARNING, "No fit_metrics_aggregation_fn provided")
+        # unpack parameters
+        serialized_models = [client.parameters for _, client in results]
 
-    #     return parameters_aggregated, metrics_aggregated
+        # deserialize
+        client_models = map(lambda serialized_model: parameters_to_ndarrays(serialized_model), serialized_models)
+
+        # This is an array. Each index corresponds a client model.
+        # The type at each index is an array of numpy arrays.
+        models: List[NDArrays] = list(client_models)
+        # self.debugger('model', models)
+        return models
+
+    def aggregate_sum(self, client_models: List[NDArrays]):
+
+        # hard coded modulus
+        MODULUS = 1 << 30
+
+        # number of layers per model
+        N = len(client_models[0])
+
+        model_sum = []
+        for layer_i in range(N):
+            layer_sum = reduce(np.add, [client_model[layer_i] for client_model in client_models])
+
+            # this can be cutomized depending on post processing procedure
+            layer_sum = layer_sum  #% MODULUS
+
+            model_sum.append(layer_sum)
+
+        # do post processing (such as taking peudo-Kashin inverse, or averaging)
+        # layer_sum /= 3
+
+        return model_sum
+
+    def aggregate_fit(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, FitRes]],
+        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+        """
+        Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
+        depending on the settings used for the strategy.
+
+        Args:
+            server_round (int): Indicates the server round we're currently on.
+            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+                that need to be aggregated on the server-side.
+            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+                from clients that experienced an issue during training, such as timeouts or exceptions.
+
+        Returns:
+            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+        """
+        if not results:
+            return None, {}
+        # Do not aggregate if there are failures and failures are not accepted
+        if not self.accept_failures and failures:
+            return None, {}
+
+        # Convert results
+        weights_results = [
+            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
+        ]
+
+        # compute sum right away
+        # at each index is the layers of that client
+        params = [param_dict for param_dict, _ in weights_results]
+        # all layers of the first client
+        sum_list = [arr for arr in params[0]]
+        nlayers = len(sum_list)
+
+        for client in params[1:]:
+            for layer in range(nlayers):
+                sum_list[layer] += client[layer]
+        # self.debugger(f"Server round {server_round}, dtype {sum_list[0].dtype}", sum_list)
+
+        global_sum = self.aggregate_sum(self.get_client_models(results))
+        self.debugger("global_sum", global_sum)
+
+        # Aggregate them in a weighted or unweighted fashion based on settings.
+        aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
+        # self.debugger(aggregated_arrays)
+        # Convert back to parameters
+        # parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
+
+        parameters_aggregated = ndarrays_to_parameters(global_sum)
+        # Aggregate custom metrics if aggregation fn was provided
+        metrics_aggregated = {}
+        if self.fit_metrics_aggregation_fn:
+            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+        elif server_round == 1:  # Only log this warning once
+            log(WARNING, "No fit_metrics_aggregation_fn provided")
+
+        return parameters_aggregated, metrics_aggregated
+
+    def debugger(self, *info):
+        log(DEBUG, 6 * "\n")
+        for item in info:
+            log(DEBUG, item)

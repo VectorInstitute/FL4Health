@@ -1,7 +1,6 @@
-import pytest
 import torch
 
-from fl4health.security.secure_aggregation import ClientCryptoKit, EllipticCurvePrivateKey, ServerCryptoKit
+from fl4health.security.secure_aggregation import ClientCryptoKit, EllipticCurvePrivateKey
 
 # To see print statements run with -rP
 # pytest -rP tests/cryptography/test_cryptography.py

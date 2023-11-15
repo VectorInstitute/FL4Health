@@ -1,5 +1,5 @@
 # YAML parser's must-have configs
-n_server_rounds: 2
+n_server_rounds: 4
 
 # must have at least 3 clients
 n_clients: 3

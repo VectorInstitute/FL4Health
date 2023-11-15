@@ -8,13 +8,12 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import cryptography.hazmat.primitives.asymmetric.ec as ec
 import torch
 from Crypto.Protocol.SecretSharing import Shamir
-from Crypto.Random import get_random_bytes
 from Crypto.Util.Padding import pad, unpad
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from numpy import ndarray, ones, zeros
+from numpy import ndarray, zeros
 from numpy.random import default_rng
 
 
@@ -36,6 +35,7 @@ class PublicKeyChain:
 ClientId = int
 ClientIP = str
 ShamirSecret = List[bytes]
+EncryptedShamirSecret = List[bytes]
 AgreedSecret = bytes
 
 
@@ -44,7 +44,7 @@ class ClientCryptoKit:
     # NOTE As a design decision, Alice only stores the key agreement with Bob, never Bob's public key.
 
     def __init__(self, arithmetic_modulus: int = 1 << 30, client_integer: Optional[int] = None) -> None:
-        self.arithmetic_modulus = arithmetic_modulus
+        self.arithmetic_modulus = 1 << 30  # arithmetic_modulus
 
         # These are determined by the server, based on number of available clients, and will be assigned later.
         self.client_integer = client_integer
@@ -67,9 +67,50 @@ class ClientCryptoKit:
         self.shamir_self_masks: Dict[ClientId, ShamirSecret] = {}
         self.shamir_pairwise_masks: Dict[ClientId, ShamirSecret] = {}
 
+    def get_encrypted_shamir_shares(self) -> Dict[ClientId, Dict[str, bytes]]:
+        """Assumes dropouts is possible.
+        Returns a dictionary of encrypted shamir shares, with the following structure
+        {
+            ClientId: {
+                'encrypted_shamir_pairwise': EncryptedShamirSecret,
+                'encrypted_shamir_self': EncryptedShamirSecret
+            },
+        }
+        """
+
+        shamir_self_list = self.get_self_mask_shamir()
+        shamir_pairwise_list = self.get_pair_mask_shamir()
+
+        encrypted_shares = {}
+        j = 0  # index of serialized lists
+        for id, shamir_self in self.agreed_encryption_keys.items():
+            encrypted_shares[id] = {
+                "encrypted_shamir_pairwise": ClientCryptoKit.encrypt_message(
+                    key=self.agreed_encryption_keys[id], plaintext=shamir_self_list[j]
+                ),
+                "encrypted_shamir_self": ClientCryptoKit.encrypt_message(
+                    key=self.agreed_encryption_keys[id], plaintext=shamir_pairwise_list[j]
+                ),
+            }
+            j += 1
+        return encrypted_shares
+
+    def clear_cache(self) -> None:
+        # TODO extend this method to account for drop outs (reset reconstruction thresholds etc)
+        self.client_integer = None
+        self.number_of_bobs = None
+        self.alice_encryption_key = None
+        self.alice_mask_key = None
+        self.alice_self_mask_seed = None
+        self.agreed_encryption_keys = {}
+        self.agreed_mask_keys = {}
+        self.shamir_self_masks = {}
+        self.shamir_pairwise_masks = {}
+
     def get_pair_mask_sum(self, vector_dim: int, online_clients: Optional[List[ClientId]] = None) -> List[int]:
         """This function can only be run after masking seed agreement."""
-        assert self.agreed_mask_keys is not None
+        # assert self.agreed_mask_keys    # dict should not be empty
+        assert self.client_integer not in self.agreed_mask_keys
         sum: ndarray = zeros(shape=vector_dim, dtype=int)
         if online_clients is not None:
             for id in online_clients:
@@ -78,7 +119,7 @@ class ClientCryptoKit:
                     seed=seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim
                 )
                 sum = sum + vec if self.client_integer > id else sum - vec
-            return sum
+            return sum.tolist()
         # no dropouts
         for id, seed in self.agreed_mask_keys.items():
             vec = self.generate_peudorandom_vector(
@@ -111,15 +152,22 @@ class ClientCryptoKit:
             }
         }
         """
+        # Clear shared keys on previous round
+        self.agreed_mask_keys = {}
+        self.agreed_encryption_keys = {}
+
+        assert self.client_integer not in bobs_keys_dict
         for id, keys in bobs_keys_dict.items():
 
             # encryption key agreement and storage
             self.agreed_encryption_keys[id] = ClientCryptoKit.key_agreement(
-                self.alice_encryption_key, keys["encryption_key"]
+                self.alice_encryption_key, keys["encryption_key"]  # private key (alice)  # public key  (bob)
             )
 
             # masking key agreement and storage
-            self.agreed_mask_keys[id] = ClientCryptoKit.key_agreement(self.alice_mask_key, keys["mask_key"])
+            self.agreed_mask_keys[id] = ClientCryptoKit.key_agreement(
+                self.alice_mask_key, keys["mask_key"]  # private key (alice)  # public key  (bob)
+            )
 
     def register_bobs_shamir_shares(self, bobs_shamir_shares: Dict[ClientId, Dict[str, ShamirSecret]]) -> None:
         """Save shamir shares generated by Bobs. Expects a dictionary of the following structure
@@ -135,6 +183,8 @@ class ClientCryptoKit:
             self.shamir_self_masks[id] = bobs_shamir_shares[id]["shamir_self"]
 
     # ================= Setters =================
+    def set_self_mask_seed(self) -> None:
+        self.alice_self_mask_seed = ClientCryptoKit.generate_seed()
 
     def set_client_integer(self, integer: int) -> None:
         # assert 1 <= integer <= self.arithmetic_modulus
@@ -162,7 +212,6 @@ class ClientCryptoKit:
         # assert self.alice_self_mask_seed is not None
         # assert self.number_of_bobs is not None
         # assert self.reconstruction_threshold is not None
-
         # 16 bytes
         secret_byte = self.alice_self_mask_seed.to_bytes(length=16)
 
@@ -291,14 +340,21 @@ class ClientCryptoKit:
 
 
 class ServerCryptoKit:
-    def __init__(self, shamir_reconstruction_threshold: Optional[int] = 2):
+    def __init__(
+        self, shamir_reconstruction_threshold: Optional[int] = 2, arithmetic_modulus: Optional[int] = 1 << 30
+    ):
         self.shamir_reconstruction_threshold = shamir_reconstruction_threshold
+        self.arithmetic_modulus = arithmetic_modulus
         self.number_of_bobs = None  # (number of online clients) - 1
-        self.arithmetic_modulus = 1 << 30
 
         # records
         self.client_table: Dict[ClientIP, ClientId] = {}
         self.client_public_keys: Dict[ClientId, PublicKeyChain] = {}
+
+    def clear_cache(self) -> None:
+        self.number_of_bobs = None
+        self.client_table = {}
+        self.client_public_keys = {}
 
     def append_client_table(self, client_ip: ClientIP, client_id: ClientId) -> None:
         self.client_table[client_ip] = client_id
@@ -382,113 +438,135 @@ class ServerCryptoKit:
 if __name__ == "__main__":
     # TODO Turn these into into PyTest
 
+    # """
+    # ========= KEY AGREEMENT ========
+    # """
+    # alice = ClientCryptoKit(client_integer=1)
+    # bob = ClientCryptoKit(client_integer=2)
+
+    # alice_private, alice_public = alice.generate_keypair()
+    # bob_private, bob_public = alice.generate_keypair()
+
+    # common_a = alice.key_agreement(alice_private, bob_public)
+    # common_b = bob.key_agreement(bob_private, alice_public)
+    # print("agree ", common_a == common_b)
+    # print("shared key: ", common_a, common_b)
+
+    # """
+    # ========= MESSAGE ENCRYPTION ========
+    # """
+    # plaintext = torch.tensor([1, 2, 3, 4, 5])
+    # ciphertext = alice.encrypt_message(common_a, plaintext)
+
+    # decrypted = bob.decrypt_message(common_a, ciphertext)
+    # print(plaintext, ciphertext, decrypted, type(decrypted), sep="\n\n")
+
+    # """
+    # ========= SHAMIR SECRET SPLIT ========
+    # """
+    # BYTES = 16
+    # SHARES = 100
+    # THRESHOLD = 59
+
+    # secret = get_random_bytes(BYTES)
+
+    # # client encode
+    # tao = ClientCryptoKit(client_integer=3)
+    # shares = tao.generate_shamir_shares(secret, SHARES, THRESHOLD)
+
+    # # server decode
+    # sam = ServerCryptoKit(shamir_reconstruction_threshold=THRESHOLD)
+    # reconstructed = sam.shamir_reconstruct_secret(shares=shares, reconstruction_threshold=THRESHOLD)
+
+    # # match results
+    # print("match: ", reconstructed == secret)
+
+    # """
+    # ======== Peudo Vector ========
+    # """
+    # MODULUS = 10**10
+    # DIM = 10
+
+    # seed = alice.generate_seed()
+    # print(seed)
+    # num = alice.generate_peudorandom_vector(seed=seed, arithmetic_modulus=MODULUS, dimension=DIM)
+    # print(len(num), type(num), print(num))
+
+    # """
+    # ======== Private Key Serialization ========
+    # """
+    # private, _ = ClientCryptoKit.generate_keypair()
+
+    # # bytes
+    # serialized = ClientCryptoKit.serialize_private_key(private)
+
+    # # EllipticCurvePrivateKey
+    # deserialized = ServerCryptoKit.deserialize_private_key(serialized)
+
+    # # integers
+    # key_original: int = private.private_numbers().private_value
+    # key_reconstructed: int = deserialized.private_numbers().private_value
+
+    # assert key_original == key_reconstructed
+
+    # print(key_original, key_reconstructed, sep="\n")
+
+    # """
+    # ======== Self Mask Seed Reconstruction on the Server ========
+    # """
+    # alice = ClientCryptoKit()
+
+    # # self mask secret shares
+    # self_shamir = alice.get_self_mask_shamir()
+    # reconstructed = ServerCryptoKit().reconstruct_self_mask_seed(self_shamir)
+
+    # assert reconstructed == alice.alice_self_mask_seed
+    # print(alice.alice_self_mask_seed, reconstructed, sep="\n")
+
+    # """
+    # ======== Pair Mask Seed Reconstruction on the Server ========
+    # """
+    # # Suppose Alice is the dropout and Bob is online. Sam is the server
+    # alice, bob, sam = ClientCryptoKit(), ClientCryptoKit(), ServerCryptoKit()
+
+    # # key agreement
+    # alice_public = alice.generate_public_keys().mask_key
+    # alice_private = alice.alice_mask_key
+    # bob_public = bob.generate_public_keys().mask_key
+    # bob_private = bob.alice_mask_key
+
+    # shared_alice = alice.key_agreement(alice_private, bob_public)
+    # shared_bob = bob.key_agreement(bob_private, alice_public)
+
+    # assert shared_alice == shared_bob
+    # print(shared_alice, shared_bob, sep="\n")
+
+    # alice_shamir = alice.get_pair_mask_shamir()
+    # shared_sam = sam.reconstruct_pair_mask(alice_shamir, bob_public)
+
+    # assert shared_sam == shared_alice
+    # print("\n", shared_alice, shared_bob, shared_sam, sep="\n")
+
     """
-    ========= KEY AGREEMENT ========
+    ==== TEST MASK CANCELLATION ===
     """
-    alice = ClientCryptoKit(client_integer=1)
-    bob = ClientCryptoKit(client_integer=2)
+    dim = 5
 
-    alice_private, alice_public = alice.generate_keypair()
-    bob_private, bob_public = alice.generate_keypair()
+    # generate_peudorandom_vector() is working properly on byte string & ints
+    vec1 = ClientCryptoKit.generate_peudorandom_vector(seed=b"a", arithmetic_modulus=2**8, dimension=dim)
+    vec2 = ClientCryptoKit.generate_peudorandom_vector(seed=1, arithmetic_modulus=2**8, dimension=dim)
+    print(vec1, vec2, sep="\n")
 
-    common_a = alice.key_agreement(alice_private, bob_public)
-    common_b = bob.key_agreement(bob_private, alice_public)
-    print("agree ", common_a == common_b)
-    print("shared key: ", common_a, common_b)
+    a, b, c = ClientCryptoKit(client_integer=0), ClientCryptoKit(client_integer=1), ClientCryptoKit(client_integer=2)
 
-    """
-    ========= MESSAGE ENCRYPTION ========
-    """
-    plaintext = torch.tensor([1, 2, 3, 4, 5])
-    ciphertext = alice.encrypt_message(common_a, plaintext)
+    # shared key is the sum of the client integers
+    a.agreed_mask_keys = {1: 0 + 1, 2: 0 + 2}
+    b.agreed_mask_keys = {0: 1 + 0, 2: 1 + 2}
+    c.agreed_mask_keys = {0: 2 + 0, 1: 2 + 1}
 
-    decrypted = bob.decrypt_message(common_a, ciphertext)
-    print(plaintext, ciphertext, decrypted, type(decrypted), sep="\n\n")
+    v1 = a.get_pair_mask_sum(dim)
+    v2 = b.get_pair_mask_sum(dim)
+    v3 = c.get_pair_mask_sum(dim)
 
-    """
-    ========= SHAMIR SECRET SPLIT ========
-    """
-    BYTES = 16
-    SHARES = 100
-    THRESHOLD = 59
-
-    secret = get_random_bytes(BYTES)
-
-    # client encode
-    tao = ClientCryptoKit(client_integer=3)
-    shares = tao.generate_shamir_shares(secret, SHARES, THRESHOLD)
-
-    # server decode
-    sam = ServerCryptoKit(shamir_reconstruction_threshold=THRESHOLD)
-    reconstructed = sam.shamir_reconstruct_secret(shares=shares, reconstruction_threshold=THRESHOLD)
-
-    # match results
-    print("match: ", reconstructed == secret)
-
-    """
-    ======== Peudo Vector ========
-    """
-    MODULUS = 10**10
-    DIM = 10
-
-    seed = alice.generate_seed()
-    print(seed)
-    num = alice.generate_peudorandom_vector(seed=seed, arithmetic_modulus=MODULUS, dimension=DIM)
-    print(len(num), type(num), print(num))
-
-    """
-    ======== Private Key Serialization ========
-    """
-    private, _ = ClientCryptoKit.generate_keypair()
-
-    # bytes
-    serialized = ClientCryptoKit.serialize_private_key(private)
-
-    # EllipticCurvePrivateKey
-    deserialized = ServerCryptoKit.deserialize_private_key(serialized)
-
-    # integers
-    key_original: int = private.private_numbers().private_value
-    key_reconstructed: int = deserialized.private_numbers().private_value
-
-    assert key_original == key_reconstructed
-
-    print(key_original, key_reconstructed, sep="\n")
-
-    """
-    ======== Self Mask Seed Reconstruction on the Server ========
-    """
-    alice = ClientCryptoKit()
-
-    # self mask secret shares
-    self_shamir = alice.get_self_mask_shamir()
-    reconstructed = ServerCryptoKit().reconstruct_self_mask_seed(self_shamir)
-
-    assert reconstructed == alice.alice_self_mask_seed
-    print(alice.alice_self_mask_seed, reconstructed, sep="\n")
-
-    """
-    ======== Pair Mask Seed Reconstruction on the Server ========
-    """
-    # Suppose Alice is the dropout and Bob is online. Sam is the server
-    alice, bob, sam = ClientCryptoKit(), ClientCryptoKit(), ServerCryptoKit()
-
-    # key agreement
-    alice_public = alice.generate_public_keys().mask_key
-    alice_private = alice.alice_mask_key
-    bob_public = bob.generate_public_keys().mask_key
-    bob_private = bob.alice_mask_key
-
-    shared_alice = alice.key_agreement(alice_private, bob_public)
-    shared_bob = bob.key_agreement(bob_private, alice_public)
-
-    assert shared_alice == shared_bob
-    print(shared_alice, shared_bob, sep="\n")
-
-    alice_shamir = alice.get_pair_mask_shamir()
-    shared_sam = sam.reconstruct_pair_mask(alice_shamir, bob_public)
-
-    assert shared_sam == shared_alice
-    print("\n", shared_alice, shared_bob, shared_sam, sep="\n")
-
-    pass
+    mask_cancellation = torch.tensor(v1) + torch.tensor(v2) + torch.tensor(v3)
+    print(mask_cancellation)

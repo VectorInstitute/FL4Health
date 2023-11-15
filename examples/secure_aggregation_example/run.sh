@@ -2,6 +2,7 @@
 
 # pass in command line arg "clean" to kill all previous processes
 
+rm examples/secure_aggregation_example/*.pkl
 clean()
 {
     echo "killing processes"

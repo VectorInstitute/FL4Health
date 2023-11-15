@@ -1,10 +1,7 @@
 import base64
-import random
 from dataclasses import dataclass
 from typing import Dict, Tuple, cast
 
-from cryptography.fernet import Fernet
-from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey, EllipticCurvePublicKey

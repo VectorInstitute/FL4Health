@@ -15,6 +15,8 @@ from fl4health.clients.secure_aggregation_client import SecureAggregationClient
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
+torch.set_default_dtype(torch.float64)
+
 
 class SecAggClient(SecureAggregationClient):
     # Supply @abstractmethod implementations
