@@ -179,6 +179,20 @@ class FendaClient(BasicClient):
     def compute_loss(
         self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
     ) -> Losses:
+        """
+        Computes loss given predictions of the model and ground truth data. Optionally computes additional loss
+        components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on client attributes
+        set from server config.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Additional losses includes proximal loss.
+        """
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss

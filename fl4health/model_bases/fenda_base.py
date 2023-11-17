@@ -52,4 +52,5 @@ class FendaModel(nn.Module):
             "local_features": local_output.reshape(len(local_output), -1),
             "global_features": global_output.reshape(len(global_output), -1),
         }
+        # Return preds and features as seperate dictionairy as in moon base
         return preds, features

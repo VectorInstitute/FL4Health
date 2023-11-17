@@ -64,8 +64,8 @@ class MoonClient(BasicClient):
         for i, old_model in enumerate(self.old_models_list):
             old_features[i] = old_model(input)[1]
         global_features = self.global_model(input)[1]
-        features_dict = {"features": features, "global_features": global_features, "old_features": old_features}
-        return {"prediction": preds}, features_dict
+        features.update({"global_features": global_features, "old_features": old_features})
+        return preds, features
 
     def get_contrastive_loss(
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
