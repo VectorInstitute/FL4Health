@@ -75,14 +75,14 @@ def test_fenda_join_and_layer_exchange() -> None:
 
     input = torch.ones((3, 1, 10, 10))
     # Test that concatenation produces the right output dimension
-    output_shape = model(input).shape
+    output_shape = model(input)["prediction"].shape
     # Batch size
     assert output_shape[0] == 3
     # Output size
     assert output_shape[1] == 2
     # Test that summing produces the right output dimension
     model = FendaModel(LocalFendaTest(), GlobalFendaTest(), FendaTestClassifier(3, FendaJoinMode.SUM))
-    output_shape = model(input).shape
+    output_shape = model(input)["prediction"].shape
     # Batch size
     assert output_shape[0] == 3
     # Output size

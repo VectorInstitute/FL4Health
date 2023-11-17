@@ -21,7 +21,11 @@ def get_initial_model_parameters() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
+    local_epochs: int,
+    batch_size: int,
+    n_server_rounds: int,
+    downsampling_ratio: float,
+    current_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
