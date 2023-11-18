@@ -53,13 +53,6 @@ def construct_config(
     }
 
 
-def construct_eval_config(
-    _: int,
-    num_classes: int,
-) -> Config:
-    return {"num_classes": num_classes}
-
-
 def fit_config(
     local_epochs: int,
     batch_size: int,

@@ -117,9 +117,8 @@ def construct_dataloaders(
     path: Path, vocabulary: Vocabulary, label_encoder: LabelEncoder, sequence_length: int, batch_size: int
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int], torch.Tensor]:
     df = get_local_data(path)
-    df.drop(["authors", "link"], axis=1, inplace=True)
     # lower case the headlines and description and concatenate
-    df["article_text"] = df["headline"].str.lower() + " " + df["short_description"].str.lower()
+    df["article_text"] = df["title"].str.lower() + " " + df["body"].str.lower()
     # encode category column as labels
     df = label_encoder.label_dataframe(df, "category")
     processed_df = df[["label", "article_text"]]

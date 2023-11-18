@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, cast
+from typing import Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ import pandas as pd
 
 class DatasetPartitionerEnum(Enum):
     JSON_TO_PANDAS = "JSON_TO_PANDAS"
+    CSV_TO_PANDAS = "CSV_TO_PANDAS"
 
 
 class DatasetPartitioner(ABC):
@@ -19,7 +20,9 @@ class DatasetPartitioner(ABC):
         self.partition_dir = partition_dir
 
     @abstractmethod
-    def partition_dataset(self, n_partiions: int) -> None:
+    def partition_dataset(
+        self, n_partiions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+    ) -> None:
         pass
 
 
@@ -32,7 +35,9 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
         if "json_lines" in config:
             self.json_lines = config["json_lines"] == "True"
 
-    def partition_dataset(self, n_partitions: int) -> None:
+    def partition_dataset(
+        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+    ) -> None:
         df = pd.read_json(self.dataset_path, lines=self.json_lines)
         # Shuffle the dataframe rows
         df = df.sample(frac=1).reset_index(drop=True)
@@ -46,11 +51,32 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
             )
 
 
+class CsvToPandasDatasetPartitioner(DatasetPartitioner):
+    def partition_dataset(
+        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+    ) -> None:
+        df = pd.read_csv(self.dataset_path, names=["label", "title", "body"])
+        # Shuffle the dataframe rows
+        df = df.sample(frac=1).reset_index(drop=True)
+        if label_column_name and label_map:
+            df["category"] = df[label_column_name].map(label_map)
+        paritioned_dfs = cast(List[pd.DataFrame], np.array_split(df, n_partitions))
+
+        for chunk, df in enumerate(paritioned_dfs):
+            df.to_json(
+                os.path.join(self.partition_dir, f"partition_{str(chunk)}.json"),
+                orient="records",
+                lines=True,
+            )
+
+
 def construct_dataset_partitioner(
     dataset_path: Path, partition_dir: Path, config: Dict[str, str]
 ) -> DatasetPartitioner:
     data_loader_enum = DatasetPartitionerEnum(config["dataset_partitioner_type"])
     if data_loader_enum == DatasetPartitionerEnum.JSON_TO_PANDAS:
         return JsonToPandasDatasetPartitioner(dataset_path, partition_dir, config)
+    elif data_loader_enum == DatasetPartitionerEnum.CSV_TO_PANDAS:
+        return CsvToPandasDatasetPartitioner(dataset_path, partition_dir)
     else:
         raise NotImplementedError("No valid partitioner implemented for the configuration")
