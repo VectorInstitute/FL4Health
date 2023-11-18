@@ -9,6 +9,7 @@ opacus
 pandas
 portalocker
 pre-commit
+pycyclops
 pyproject-flake8==5.0.4
 pytest
 pytest-cov
