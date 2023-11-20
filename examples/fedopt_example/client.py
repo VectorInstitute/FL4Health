@@ -65,7 +65,7 @@ class NewsClassifierClient(BasicClient):
         # available
         for metric in self.metrics:
             if isinstance(metric, CompoundMetric):
-                metric._setup(self.label_encoder)
+                metric.setup(self.label_encoder)
         super().setup_client(config)
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
@@ -86,5 +86,5 @@ if __name__ == "__main__":
     # Load model and data
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = NewsClassifierClient(data_path, [CompoundMetric("")], DEVICE)
+    client = NewsClassifierClient(data_path, [CompoundMetric("Compound Metric")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

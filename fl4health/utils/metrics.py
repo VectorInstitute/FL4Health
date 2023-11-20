@@ -5,7 +5,7 @@ from typing import Dict, List, Sequence, Tuple
 import numpy as np
 import torch
 from flwr.common.typing import Metrics, Optional, Scalar
-from sklearn import metrics
+from sklearn import metrics as sklearn_metrics
 
 
 class Metric(ABC):
@@ -40,13 +40,13 @@ class Metric(ABC):
 
         Args:
             name (Optional[str]): Optional name used in conjunction with class attribute name
-                to define key in metrics dictionairy.
+                to define key in metrics dictionary.
 
         Raises:
             NotImplementedError: To be defined in the classes extending this class.
 
         Returns:
-           Metrics: A dictionairy of string and Scalar representing the computed metric
+           Metrics: A dictionary of string and Scalar representing the computed metric
                 and its associated key.
         """
         raise NotImplementedError
@@ -93,13 +93,13 @@ class SimpleMetric(Metric, ABC):
 
         Args:
             name (Optional[str]): Optional name used in conjunction with class attribute name
-                to define key in metrics dictionairy.
+                to define key in metrics dictionary.
 
         Raises:
             AssertionError: Input and rarget lists must be non empty.
 
         Returns:
-            Metrics: A dictionairy of string and Scalar representing the computed metric
+            Metrics: A dictionary of string and Scalar representing the computed metric
                 and its associated key.
         """
 
@@ -192,7 +192,7 @@ class Accuracy(SimpleMetric):
             preds = torch.argmax(logits, 1)
         target = target.cpu().detach()
         preds = preds.cpu().detach()
-        return metrics.accuracy_score(target, preds)
+        return sklearn_metrics.accuracy_score(target, preds)
 
 
 class BalancedAccuracy(SimpleMetric):
@@ -211,7 +211,7 @@ class BalancedAccuracy(SimpleMetric):
         logits = logits.cpu().detach()
         y_true = target.reshape(-1)
         preds = np.argmax(logits, axis=1)
-        return metrics.balanced_accuracy_score(y_true, preds)
+        return sklearn_metrics.balanced_accuracy_score(y_true, preds)
 
 
 class ROC_AUC(SimpleMetric):
@@ -228,7 +228,7 @@ class ROC_AUC(SimpleMetric):
         prob = prob.cpu().detach()
         target = target.cpu().detach()
         y_true = target.reshape(-1)
-        return metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
+        return sklearn_metrics.roc_auc_score(y_true, prob, average="weighted", multi_class="ovr")
 
 
 class F1(SimpleMetric):
@@ -257,20 +257,20 @@ class F1(SimpleMetric):
         logits = logits.cpu().detach()
         y_true = target.reshape(-1)
         preds = np.argmax(logits, axis=1)
-        return metrics.f1_score(y_true, preds, average=self.average)
+        return sklearn_metrics.f1_score(y_true, preds, average=self.average)
 
 
 class MetricManager:
-    def __init__(self, metrics: Sequence[Metric], metric_mngr_name: str) -> None:
+    def __init__(self, metrics: Sequence[Metric], metric_manager_name: str) -> None:
         """
         Class to manage a set of metrics associated to a given prediction type.
 
         Args:
             metrics (Sequence[Metric]): List of metric to evaluate predictions on.
-            metric_mngr_name (str): Name of the metric manager (ie train, val, test)
+            metric_manager_name (str): Name of the metric manager (ie train, val, test)
         """
-        self.og_metrics = metrics
-        self.metric_mngr_name = metric_mngr_name
+        self.original_metrics = metrics
+        self.metric_manager_name = metric_manager_name
         self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
 
     def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
@@ -278,27 +278,30 @@ class MetricManager:
         Updates (or creates then updates) a list of metrics for each prediction type.
 
         Args:
-            preds (Dict[str, torch.Tensor]): A dictionairy of
+            preds (Dict[str, torch.Tensor]): A dictionary of preds from the model
+            target (torch.Tensor): The ground truth labels for the data
         """
         if len(self.metrics_per_prediction_type) == 0:
-            self.metrics_per_prediction_type = {key: copy.deepcopy(self.og_metrics) for key in preds.keys()}
+            self.metrics_per_prediction_type = {key: copy.deepcopy(self.original_metrics) for key in preds.keys()}
 
-        for pred, mtrcs in zip(preds.values(), self.metrics_per_prediction_type.values()):
-            for m in mtrcs:
-                m.update(pred, target)
+        for prediction_key, pred in preds.items():
+            metrics_for_prediction_type = self.metrics_per_prediction_type[prediction_key]
+            assert len(preds) == len(self.metrics_per_prediction_type)
+            for metric_for_prediction_type in metrics_for_prediction_type:
+                metric_for_prediction_type.update(pred, target)
 
     def compute(self) -> Metrics:
         """
         Computes set of metrics for each prediction type.
 
         Returns:
-            Metrics: Dictionairy containing computed metrics along with string identifiers
+            Metrics: dictionary containing computed metrics along with string identifiers
                 for each prediction type.
         """
         all_results = {}
-        for metrics_key, mtrcs in self.metrics_per_prediction_type.items():
-            for m in mtrcs:
-                result = m.compute(f"{self.metric_mngr_name} - {metrics_key}")
+        for metrics_key, metrics in self.metrics_per_prediction_type.items():
+            for metric in metrics:
+                result = metric.compute(f"{self.metric_manager_name} - {metrics_key}")
                 all_results.update(result)
 
         return all_results

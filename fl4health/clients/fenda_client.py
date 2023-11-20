@@ -191,7 +191,7 @@ class FendaClient(BasicClient):
 
         Returns:
             Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses includes proximal loss.
+            Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
         """
 
         loss = self.criterion(preds["prediction"], target)

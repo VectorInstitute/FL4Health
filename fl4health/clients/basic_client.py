@@ -50,8 +50,8 @@ class BasicClient(NumpyFlClient):
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
 
-        self.train_metric_meter_mngr = MetricManager(metrics=self.metrics, metric_mngr_name="train")
-        self.val_metric_meter_mngr = MetricManager(metrics=self.metrics, metric_mngr_name="val")
+        self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
+        self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -204,17 +204,17 @@ class BasicClient(NumpyFlClient):
         self.model.train()
         local_step = 0
         for local_epoch in range(epochs):
-            self.train_metric_meter_mngr.clear()
+            self.train_metric_manager.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter_mngr.update(preds, target)
+                self.train_metric_manager.update(preds, target)
                 self.update_after_step(local_step)
                 self.total_steps += 1
                 local_step += 1
-            metrics = self.train_metric_meter_mngr.compute()
+            metrics = self.train_metric_manager.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
@@ -234,7 +234,7 @@ class BasicClient(NumpyFlClient):
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
-        self.train_metric_meter_mngr.clear()
+        self.train_metric_manager.clear()
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
@@ -247,13 +247,13 @@ class BasicClient(NumpyFlClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter_mngr.update(preds, target)
+            self.train_metric_manager.update(preds, target)
             self.update_after_step(step)
             self.total_steps += 1
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter_mngr.compute()
+        metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
@@ -263,19 +263,19 @@ class BasicClient(NumpyFlClient):
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        self.val_metric_meter_mngr.clear()
+        self.val_metric_manager.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter_mngr.update(preds, target)
+                self.val_metric_manager.update(preds, target)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.val_metric_meter_mngr.compute()
+        metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
         # Checkpoint based on loss which is output of user defined compute_loss method
@@ -324,7 +324,7 @@ class BasicClient(NumpyFlClient):
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
-        Computes the prediction(s) (and potentially features) of the model(s) given the input.
+        Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
             input (torch.Tensor): Inputs to be fed into the model.
@@ -332,7 +332,7 @@ class BasicClient(NumpyFlClient):
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
-            index by name. BY passing features, we can compute losses such as the model contrasting loss in MOON.
+            index by name. By passing features, we can compute losses such as the model contrasting loss in MOON.
         """
         preds = self.model(input)
 
@@ -350,7 +350,8 @@ class BasicClient(NumpyFlClient):
         Computes loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 

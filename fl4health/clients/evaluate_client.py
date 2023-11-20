@@ -41,9 +41,9 @@ class EvaluateClient(NumpyFlClient):
         self.data_loader: DataLoader
         self.criterion: _Loss
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.global_metric_meter = MetricManager(self.metrics, "global_eval_meter")
+        self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
         self.local_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.local_metric_meter = MetricManager(self.metrics, "local_eval_meter")
+        self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -139,13 +139,13 @@ class EvaluateClient(NumpyFlClient):
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
             local_loss, local_metrics = self.validate_on_model(
-                self.local_model, self.local_metric_meter, self.local_loss_meter, is_global=False
+                self.local_model, self.local_metric_manager, self.local_loss_meter, is_global=False
             )
 
         if self.global_model:
             log(INFO, "Performing evaluation on global model")
             global_loss, global_metrics = self.validate_on_model(
-                self.global_model, self.global_metric_meter, self.global_loss_meter, is_global=True
+                self.global_model, self.global_metric_manager, self.global_loss_meter, is_global=True
             )
 
         # Store the losses in the metrics, since we can't return more than one loss.

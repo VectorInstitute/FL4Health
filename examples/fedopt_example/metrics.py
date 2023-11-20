@@ -94,7 +94,14 @@ class CompoundMetric(Metric):
         self.n_classes: int
         self.outcome_dict: Dict[str, Outcome]
 
-    def _setup(self, label_encoder: LabelEncoder) -> None:
+    def setup(self, label_encoder: LabelEncoder) -> None:
+        """
+        Setup metric by initializing label encoder and other relevant attributes.
+
+        Args:
+            label_encoder (LabelEncoder):
+                This class is used to determine the mapping of integers to label names for the AG News Task.
+        """
         self.classes = label_encoder.classes
         self.outcome_dict = self._initialize_outcomes(self.classes)
         self.label_to_class = label_encoder.label_to_class
