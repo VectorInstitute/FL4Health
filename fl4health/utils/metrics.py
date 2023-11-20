@@ -281,7 +281,7 @@ class MetricManager:
             preds (Dict[str, torch.Tensor]): A dictionary of preds from the model
             target (torch.Tensor): The ground truth labels for the data
         """
-        if len(self.metrics_per_prediction_type) == 0:
+        if not self.metrics_per_prediction_type:
             self.metrics_per_prediction_type = {key: copy.deepcopy(self.original_metrics) for key in preds.keys()}
 
         for prediction_key, pred in preds.items():
