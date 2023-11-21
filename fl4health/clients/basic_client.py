@@ -333,6 +333,7 @@ class BasicClient(NumpyFlClient):
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. By passing features, we can compute losses such as the model contrasting loss in MOON.
+            All predictions included in dictionary will be used to compute metrics.
         """
         preds = self.model(input)
 

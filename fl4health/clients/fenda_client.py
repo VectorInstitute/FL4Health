@@ -65,7 +65,18 @@ class FendaClient(BasicClient):
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s) and features of the model(s) given the input.
 
+        Args:
+            input (torch.Tensor): Inputs to be fed into the model.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. Specificaly the features of the model, features of the global model and features of
+            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+        """
         preds, features = self.model(input)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             if self.old_local_module is not None:
@@ -186,6 +197,7 @@ class FendaClient(BasicClient):
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 

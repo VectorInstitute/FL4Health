@@ -99,10 +99,11 @@ class FedProxClient(BasicClient):
     ) -> Losses:
         """
         Computes loss given predictions of the model and ground truth data. Adds to objective by including
-        proximal loss which is the L2 norm between the initial and final weights of local training.
+        proximal loss which is the l2 norm between the initial and final weights of local training.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
