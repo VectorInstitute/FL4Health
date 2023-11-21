@@ -38,6 +38,8 @@ class FedPerModel(PartialLayerExchangeModel):
         # input is expected to be of shape (batch_size, *)
         features = self.global_feature_extractor.forward(input)
         preds = {"prediction": self.local_prediction_head.forward(features)}
-        features = {"features": features} if not self.flatten_features else {features.reshape(len(features), -1)}
+        features = (
+            {"features": features} if not self.flatten_features else {"features": features.reshape(len(features), -1)}
+        )
         # Return preds and features as separate dictionary
         return preds, features

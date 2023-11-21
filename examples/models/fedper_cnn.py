@@ -5,10 +5,11 @@ import torch.nn.functional as F
 
 class FedPerLocalPredictionHead(nn.Module):
     def __init__(self) -> None:
+        super().__init__()
         self.fc1 = nn.Linear(120, 84)
         self.fc2 = nn.Linear(84, 10)
 
-    def head_forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
+    def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = F.relu(self.fc1(input_tensor))
         x = self.fc2(x)
         return x
