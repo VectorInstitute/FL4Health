@@ -123,7 +123,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--no_federated_checkpointing",
         action="store_true",
-        help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
+        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
     )
     args = parser.parse_args()
 
