@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
+
 
 class FendaJoinMode(Enum):
     CONCATENATE = "CONCATENATE"
@@ -33,7 +35,7 @@ class FendaHeadModule(nn.Module, ABC):
         return self.head_forward(head_input)
 
 
-class FendaModel(nn.Module):
+class FendaModel(PartialLayerExchangeModel):
     def __init__(self, local_module: nn.Module, global_module: nn.Module, model_head: FendaHeadModule) -> None:
         super().__init__()
         self.local_module = local_module
@@ -52,5 +54,5 @@ class FendaModel(nn.Module):
             "local_features": local_output.reshape(len(local_output), -1),
             "global_features": global_output.reshape(len(global_output), -1),
         }
-        # Return preds and features as separate dictionairy as in moon base
+        # Return preds and features as separate dictionary as in moon base
         return preds, features

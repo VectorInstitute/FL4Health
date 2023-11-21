@@ -1,0 +1,10 @@
+# Parameters that describe server
+n_server_rounds: 3 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+local_epochs: 1 # The number of epochs to complete for client
+batch_size: 32 # The batch size for client training
+
+# Downsampling settings per client
+downsampling_ratio: 0.1 # percentage of original mnist data to keep for minority numbers

@@ -18,5 +18,5 @@ class MoonModel(nn.Module):
         x = self.base_module.forward(input)
         features = self.projection_module.forward(x) if self.projection_module else x
         preds = self.head_module.forward(features)
-        # Return preds and features as seperate dictionairy as in fenda base
-        return {"prediction": preds}, {"features": features.view(len(features), -1)}
+        # Return preds and features as seperate dictionary as in fenda base
+        return {"prediction": preds}, {"features": features.reshape(len(features), -1)}

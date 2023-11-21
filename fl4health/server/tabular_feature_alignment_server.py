@@ -93,7 +93,6 @@ class TabularFeatureAlignmentServer(FlServer):
         # the feature information needed to perform feature alignment. Then the server
         # gathers information from the clients that is necessary for initializing the global model.
         if not self.initial_polls_complete:
-
             # If the server does not have the needed feature info a priori,
             # then it requests such information from the clients before the
             # very first fitting round.
