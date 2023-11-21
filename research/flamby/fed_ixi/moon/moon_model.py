@@ -10,7 +10,6 @@ from research.flamby.utils import shutoff_batch_norm_tracking
 
 class HeadClassifier(nn.Module):
     def __init__(self, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0) -> None:
-
         # We're doing 3D segmentation, so hardcode
         dimensions = 3
         # Binary segmentation so out_classes = 2

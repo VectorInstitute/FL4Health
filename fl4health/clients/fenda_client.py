@@ -22,9 +22,9 @@ class FendaClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: Optional[float] = 0.5,
-        perfcl_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
-        cos_sim_loss_weight: Optional[float] = 0.0,
-        contrastive_loss_weight: Optional[float] = 0.0,
+        perfcl_loss_weights: Optional[Tuple[float, float]] = None,
+        cos_sim_loss_weight: Optional[float] = None,
+        contrastive_loss_weight: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -95,7 +95,6 @@ class FendaClient(BasicClient):
         return preds, features
 
     def get_parameters(self, config: Config) -> NDArrays:
-
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
@@ -105,7 +104,6 @@ class FendaClient(BasicClient):
         return super().get_parameters(config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 

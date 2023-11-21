@@ -91,7 +91,14 @@ def get_apfl_client(type: type, model: nn.Module) -> ApflClient:
 
 @pytest.fixture
 def get_fenda_client(local_module: nn.Module, global_module: nn.Module, head_module: FendaHeadModule) -> FendaClient:
-    client = FendaClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client = FendaClient(
+        data_path=Path(""),
+        metrics=[Accuracy()],
+        device=torch.device("cpu"),
+        perfcl_loss_weights=(1.0, 1.0),
+        cos_sim_loss_weight=0.0,
+        contrastive_loss_weight=0.0,
+    )
     fenda_model = FendaModel(local_module, global_module, head_module)
     client.model = fenda_model
     client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())

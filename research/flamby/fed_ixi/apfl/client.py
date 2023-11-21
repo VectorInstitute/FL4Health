@@ -14,7 +14,11 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import (
+    BestMetricTorchCheckpointer,
+    LatestTorchCheckpointer,
+    TorchCheckpointer,
+)
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
@@ -48,7 +52,7 @@ class FedIxiApflClient(ApflClient):
         self.alpha_learning_rate = alpha_learning_rate
         self.client_number = client_number
 
-    def get_dataloader(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -111,6 +115,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--alpha_learning_rate", action="store", type=float, help="Learning rate for the APFL alpha", default=0.01
     )
+    parser.add_argument(
+        "--no_federated_checkpointing",
+        action="store_true",
+        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -118,10 +127,16 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Alpha Learning Rate: {args.alpha_learning_rate}")
+    log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
 
+    federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = (
+        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        if federated_checkpointing
+        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedIxiApflClient(
         data_path=Path(args.dataset_dir),
