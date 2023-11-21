@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -8,7 +8,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class MoonClient(BasicClient):
@@ -24,7 +24,6 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
         contrastive_weight: float = 10,
@@ -35,7 +34,6 @@ class MoonClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
@@ -48,16 +46,26 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: torch.nn.Module
 
-    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        preds = self.model(input)
-        preds["old_features"] = torch.zeros(self.len_old_models_buffer, *preds["features"].size()).to(self.device)
-        for i, old_model in enumerate(self.old_models_list):
-            old_preds = old_model(input)
-            preds["old_features"][i] = old_preds["features"]
-        global_preds = self.global_model(input)
-        preds["global_features"] = global_preds["features"]
+    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s) and features of the model(s) given the input.
 
-        return preds
+        Args:
+            input (torch.Tensor): Inputs to be fed into the model.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. Specificaly the features of the model, features of the global model and features of
+            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+        """
+        preds, features = self.model(input)
+        old_features = torch.zeros(self.len_old_models_buffer, *features.size()).to(self.device)
+        for i, old_model in enumerate(self.old_models_list):
+            old_features[i] = old_model(input)[1]
+        global_features = self.global_model(input)[1]
+        features.update({"global_features": global_features, "old_features": old_features})
+        return preds, features
 
     def get_contrastive_loss(
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
@@ -95,12 +103,27 @@ class MoonClient(BasicClient):
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
-    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
+        """
+        Computes loss given predictions and features of the model and ground truth data. Loss includes
+        base loss plus a model contrastive loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+        """
         if len(self.old_models_list) == 0:
-            return super().compute_loss(preds, target)
+            return super().compute_loss(preds, features, target)
         loss = self.criterion(preds["prediction"], target)
         contrastive_loss = self.get_contrastive_loss(
-            preds["features"], preds["global_features"], preds["old_features"]
+            features["features"], features["global_features"], features["old_features"]
         )
         total_loss = loss + self.contrastive_weight * contrastive_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})

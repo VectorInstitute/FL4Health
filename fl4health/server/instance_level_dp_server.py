@@ -34,7 +34,6 @@ class InstanceLevelDPServer(FlServer):
         Modified the fit function to poll clients for sample counts prior to the first round of FL.
 
         Args:
-        Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             noise_multiplier (int): The amount of Gaussian noise to be added to the per sample gradient during

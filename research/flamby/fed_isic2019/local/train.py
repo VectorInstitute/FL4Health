@@ -7,7 +7,7 @@ from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_EPOCHS_POOLED, Base
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import BalancedAccuracy, MetricAccumulationMeter
+from fl4health.utils.metrics import BalancedAccuracy, MetricManager
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from research.flamby.single_node_trainer import SingleNodeTrainer
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         args.run_name,
     )
     metrics = [BalancedAccuracy("FedIsic2019_balanced_accuracy")]
-    train_meter = MetricAccumulationMeter(metrics, "train_meter")
-    val_meter = MetricAccumulationMeter(metrics, "val_meter")
+    train_metric_mngr = MetricManager(metrics, "train_meter")
+    val_metric_mngr = MetricManager(metrics, "val_meter")
     # Central and local models in FLamby for FedISic are trained for 20 epochs
-    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_meter, val_meter)
+    trainer.train_by_epochs(NUM_EPOCHS_POOLED, train_metric_mngr, val_metric_mngr)

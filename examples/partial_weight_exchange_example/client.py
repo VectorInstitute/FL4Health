@@ -17,7 +17,7 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
 from fl4health.clients.dynamic_weight_exchange_client import DynamicWeightExchangeClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import Accuracy, Metric
 
 
 class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
@@ -27,14 +27,12 @@ class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
         )
         self.test_loader: DataLoader
 

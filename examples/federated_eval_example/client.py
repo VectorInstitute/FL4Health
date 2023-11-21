@@ -13,7 +13,7 @@ from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import Accuracy, Metric
 
 
 class CifarClient(EvaluateClient):
@@ -26,7 +26,6 @@ class CifarClient(EvaluateClient):
             device=device,
             model_checkpoint_path=model_checkpoint_path,
             loss_meter_type=LossMeterType.AVERAGE,
-            metric_meter_type=MetricMeterType.AVERAGE,
         )
 
     def initialize_global_model(self, config: Config) -> Optional[nn.Module]:

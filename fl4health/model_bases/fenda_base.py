@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn as nn
@@ -43,12 +43,14 @@ class FendaModel(nn.Module):
     def layers_to_exchange(self) -> List[str]:
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
-    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
         local_output = self.local_module.forward(input)
         global_output = self.global_module.forward(input)
-        return {
-            "prediction": self.model_head.forward(local_output, global_output),
+        preds = {"prediction": self.model_head.forward(local_output, global_output)}
+        features = {
             "local_features": local_output.reshape(len(local_output), -1),
             "global_features": global_output.reshape(len(global_output), -1),
         }
+        # Return preds and features as separate dictionairy as in moon base
+        return preds, features
