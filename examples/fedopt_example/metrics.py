@@ -1,6 +1,6 @@
 import json
 from logging import INFO
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import torch
 from flwr.common.logger import log
@@ -8,7 +8,7 @@ from flwr.common.typing import Metrics
 from sklearn.metrics import confusion_matrix
 
 from examples.fedopt_example.client_data import LabelEncoder
-from fl4health.utils.metrics import MetricMeter
+from fl4health.utils.metrics import Metric
 
 
 class Outcome:
@@ -75,20 +75,33 @@ class ServerMetrics:
         return metrics
 
 
-class CustomMetricMeter(MetricMeter):
-    def __init__(self, label_encoder: LabelEncoder) -> None:
+class CompoundMetric(Metric):
+    def __init__(self, name: str) -> None:
         """
         This class is used to compute metrics associated with the AG's News task. There are a number of classes and
         we want to accumulate a bunch of statistics all at once to facilitate the computation of a number of different
-        metrics for this problem. As such, we define our own MetricMeter and bypass the standard metric meter
-        implementations, which calculate separate metrics individually.
+        metrics for this problem. As such, we define our own Metric class and bypass the standard SimpleMetric class,
+        which calculate separate metrics individually.
 
         Args:
-            label_encoder (LabelEncoder): This class is used to determine the mapping of integers to label names for
-            the AG's news task.
+            name (str): The name of the compound metric.
         """
+        super().__init__(name)
         self.true_preds = 0
         self.total_preds = 0
+        self.classes: List[str]
+        self.label_to_class: Dict[int, str]
+        self.n_classes: int
+        self.outcome_dict: Dict[str, Outcome]
+
+    def setup(self, label_encoder: LabelEncoder) -> None:
+        """
+        Setup metric by initializing label encoder and other relevant attributes.
+
+        Args:
+            label_encoder (LabelEncoder):
+                This class is used to determine the mapping of integers to label names for the AG News Task.
+        """
         self.classes = label_encoder.classes
         self.outcome_dict = self._initialize_outcomes(self.classes)
         self.label_to_class = label_encoder.label_to_class
@@ -117,7 +130,7 @@ class CustomMetricMeter(MetricMeter):
                     self.outcome_dict[true_class].false_negative += count
                     self.outcome_dict[pred_class].false_positive += count
 
-    def compute(self) -> Metrics:
+    def compute(self, name: Optional[str]) -> Metrics:
         sum_f1 = 0.0
         results: Metrics = {"total_preds": self.total_preds, "true_preds": self.true_preds}
         log_string = ""

@@ -10,7 +10,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class DynamicWeightExchangeClient(BasicClient):
@@ -20,7 +20,6 @@ class DynamicWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
     ) -> None:
         """
         Dynamic weight exchange client used to exchange a dynamic subset of layers per client.
@@ -32,8 +31,6 @@ class DynamicWeightExchangeClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            metric_meter_type (MetricMeterType, optional): Type of meter used to track and compute the metrics over
-                each batch. Defaults to MetricMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
@@ -42,7 +39,6 @@ class DynamicWeightExchangeClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module

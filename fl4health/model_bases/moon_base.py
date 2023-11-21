@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -13,9 +13,10 @@ class MoonModel(nn.Module):
         self.projection_module = projection_module
         self.head_module = head_module
 
-    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
         x = self.base_module.forward(input)
-        p = self.projection_module.forward(x) if self.projection_module else x
-        output = self.head_module.forward(p)
-        return {"prediction": output, "features": p.reshape(len(p), -1)}
+        features = self.projection_module.forward(x) if self.projection_module else x
+        preds = self.head_module.forward(features)
+        # Return preds and features as seperate dictionairy as in fenda base
+        return {"prediction": preds}, {"features": features.view(len(features), -1)}
