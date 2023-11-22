@@ -205,7 +205,7 @@ class FendaClient(BasicClient):
         """
 
         loss = self.criterion(preds["prediction"], target)
-        total_loss = loss
+        total_loss = loss.clone()
         additional_losses = {}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
