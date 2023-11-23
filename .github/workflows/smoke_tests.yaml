@@ -1,0 +1,32 @@
+# only has to pass for python 3.9
+name: Smoke Tests
+
+on:
+  push:
+    branches:
+      main
+  pull_request:
+    branches:
+      main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+          cache: 'pip' # Display the Python version being used
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+      - name: Install Requirements
+        run: |
+          pip install --upgrade pip
+          pip install $(grep -v '^torchdata\|^torchtext\|^torcheval' requirements.txt)
+      - name: Run Script
+        run: sh examples/utils/run_fl_local.sh # TODO create new script to check for logs, move it to the tests folder
+      - name: Clearing pip for space
+        run: pip uninstall -y -r requirements.txt
