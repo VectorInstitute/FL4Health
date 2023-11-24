@@ -27,6 +27,6 @@ jobs:
           pip install --upgrade pip
           pip install $(grep -v '^torchdata\|^torchtext\|^torcheval' requirements.txt)
       - name: Run Script
-        run: sh examples/utils/run_fl_local.sh # TODO create new script to check for logs, move it to the tests folder
+        run: python -m tests.smoke_tests.run_smoke_test
       - name: Clearing pip for space
         run: pip uninstall -y -r requirements.txt
