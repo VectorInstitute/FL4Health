@@ -46,9 +46,9 @@ def run_smoke_test(
     # TODO make asserts
 
     while True:
-        logger.info(f"Server output: {server_output.readline()}")
+        logger.info(f"Server output: {server_output.readline().decode()}")
         for i in range(len(client_outputs)):
-            logger.info(f"Client {i} output: {client_outputs[i].readline()}")
+            logger.info(f"Client {i} output: {client_outputs[i].readline().decode()}")
 
 
 if __name__ == "__main__":
