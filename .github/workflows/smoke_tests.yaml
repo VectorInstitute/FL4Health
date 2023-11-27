@@ -19,7 +19,8 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.9
-          cache: 'pip' # Display the Python version being used
+          cache: 'pip'
+      # Display the Python version being used
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install Requirements

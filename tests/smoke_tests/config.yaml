@@ -11,7 +11,7 @@ proximal_weight_delta : 0.1 # The amount by which to increase or decrease the pr
 proximal_weight_patience : 5 # The number of rounds to wait before increasing or decreasing the proximal weight, if adaptive_proximal_weight is True
 
 # Parameters that describe clients
-n_clients: 3 # The number of clients in the FL experiment
+n_clients: 4 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client
 batch_size: 128 # The batch size for client training
 
