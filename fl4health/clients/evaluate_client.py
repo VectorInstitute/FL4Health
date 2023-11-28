@@ -9,14 +9,14 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
 
-class EvaluateClient(NumpyFlClient):
+class EvaluateClient(BasicClient):
     """
     This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with the
     server past the model initialization stage. The implementing client should instantiate a global model if one is
@@ -32,18 +32,24 @@ class EvaluateClient(NumpyFlClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
     ) -> None:
-        super().__init__(data_path=data_path, device=device)
+        self.client_name = self.generate_hash()
+        self.data_path = data_path
+        self.device = device
         self.model_checkpoint_path = model_checkpoint_path
         self.metrics = metrics
+        self.initialized = False
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
+
         # This data loader should be instantiated as the one on which to run evaluation
-        self.data_loader: DataLoader
-        self.criterion: _Loss
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
         self.local_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
+
+        # The attributes to be set in setup_client
+        self.data_loader: DataLoader
+        self.criterion: _Loss
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -66,7 +72,7 @@ class EvaluateClient(NumpyFlClient):
 
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
-        super().setup_client(config)
+        self.initialized = True
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Sets the global model parameters transfered from the server using a parameter exchanger to coordinate how
@@ -98,7 +104,10 @@ class EvaluateClient(NumpyFlClient):
             metric_values,
         )
 
-    def _handle_logging(self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool) -> None:
+    def _handle_logging(  # type: ignore
+        self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool
+    ) -> None:
+
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
         eval_prefix = "Global Model" if is_global else "Local Model"
@@ -118,10 +127,10 @@ class EvaluateClient(NumpyFlClient):
         with torch.no_grad():
             for inputs, targets in self.data_loader:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
-                preds = model(inputs)
-                losses = self.compute_loss(preds, targets)
+                preds = {"prediction": model(inputs)}
+                losses = self.compute_loss(preds, {}, targets)
 
-                metric_meter.update({"predictions": preds}, targets)
+                metric_meter.update(preds, targets)
                 loss_meter.update(losses)
 
         metrics = metric_meter.compute()
@@ -190,30 +199,9 @@ class EvaluateClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: torch.Tensor) -> torch.Tensor:
-        """
-        Return predictions when given input. User can override for more complex logic.
-        """
-        return self.model(input)
-
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
-        """
-        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
-        loss components if you wish to train the total loss as well as sub losses if they exist.
-        """
-        loss = self.criterion(preds, target)
-        losses = Losses(checkpoint=loss, backward=loss)
-        return losses
-
-    def get_data_loader(self, config: Config) -> DataLoader:
+    def get_data_loader(self, config: Config) -> DataLoader:  # type: ignore
         """
         User defined method that returns a PyTorch DataLoader for validation
-        """
-        raise NotImplementedError
-
-    def get_criterion(self, config: Config) -> _Loss:
-        """
-        User defined method that returns PyTorch loss to train model.
         """
         raise NotImplementedError
 
