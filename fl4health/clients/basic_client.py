@@ -48,24 +48,26 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
-        self.client_name = self.generate_hash()
-        self.initialized = False  # Whether or not the client has been setup
         self.data_path = data_path
         self.device = device
-        self.model_weights_initialized = False
-
         self.metrics = metrics
         self.checkpointer = checkpointer
+
+        self.client_name = self.generate_hash()
+        self.initialized = False  # Whether or not the client has been setup
+        self.model_weights_initialized = False
+
+        # Loss and Metric management
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
-        self.total_steps: int = 0  # Need to track total_steps across rounds for WANDB reporting
 
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
+
         self.wandb_reporter: Optional[ClientWandBReporter] = None
+        self.total_steps: int = 0  # Need to track total_steps across rounds for WANDB reporting
 
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
@@ -180,7 +182,7 @@ class BasicClient(NumPyClient):
         Method to ensure the required keys are present in config and extracts values to be returned.
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
 
         Returns:
             Tuple[Union[int, None], Union[int, None], int]: Returns the local_epochs, local_steps and
@@ -213,7 +215,7 @@ class BasicClient(NumPyClient):
 
         Args:
             parameters (NDArrays): The parameters of the model to be used in fit.
-            config (NDArrays): The config object from the server.
+            config (NDArrays): The config from the server.
 
         Returns:
             Tuple[NDArrays, int, Dict[str, Scalar]]: The parameters following the local training along with the
@@ -315,7 +317,7 @@ class BasicClient(NumPyClient):
 
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
-            metrics_dict (Dict[str, Scalar]): A dictionary of the metric to log.
+            metrics_dict (Dict[str, Scalar]): A dictionary of metrics to log.
             current_round (Optional[int]): The current FL round.
         """
         # If reporter is None we do not report to wandb and return
@@ -360,7 +362,7 @@ class BasicClient(NumPyClient):
 
     def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         """
-        Given input and target, compute loss, update loss and metrics
+        Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
 
         Args:
@@ -493,7 +495,7 @@ class BasicClient(NumPyClient):
         Return properties (train and validation dataset sample counts) of client.
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
 
         Returns:
             Dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
@@ -507,9 +509,10 @@ class BasicClient(NumPyClient):
     def setup_client(self, config: Config) -> None:
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True.
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
         """
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
@@ -537,7 +540,7 @@ class BasicClient(NumPyClient):
         Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
 
         Args:
-            config (Config): The config object from server.
+            config (Config): The config from server.
 
         Returns:
             ParameterExchanger: Used to exchange weights between server and client.
@@ -556,6 +559,10 @@ class BasicClient(NumPyClient):
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. By passing features, we can compute losses such as the model contrasting loss in MOON.
             All predictions included in dictionary will be used to compute metrics.
+
+        Raises:
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+            forward.
         """
         preds = self.model(input)
 
@@ -592,7 +599,7 @@ class BasicClient(NumPyClient):
         string and optimizer are returned (ie APFL), the use must override this method.
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
         """
         optimizer = self.get_optimizer(config)
         assert not isinstance(optimizer, dict)
@@ -621,7 +628,7 @@ class BasicClient(NumPyClient):
         and a PyTorch Validation DataLoader
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
 
         Returns:
             Tuple[DataLoader, DataLoader]: The client train and validation loader.
@@ -636,7 +643,7 @@ class BasicClient(NumPyClient):
         User defined method that returns PyTorch loss to train model.
 
         Args:
-            config (Config): The config object sent from the server.
+            config (Config): The config from the server.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -665,7 +672,7 @@ class BasicClient(NumPyClient):
         User defined method that Returns PyTorch model.
 
         Args:
-            config (Config): The config object from the server.
+            config (Config): The config from the server.
 
         Returns:
             nn.Module: The client model.
@@ -681,7 +688,7 @@ class BasicClient(NumPyClient):
         the corresponding loss dictionairy.
 
         Args:
-            local_steps (int): The number of steps in the local training
+            local_steps (int): The number of steps in the local training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
         """
         pass

@@ -32,14 +32,15 @@ class EvaluateClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
     ) -> None:
+
+        # EvaluateClient does not call BasicClient constructor and sets attributes
+        # in a custom way to account for the fact it does not involve any training
         self.client_name = self.generate_hash()
         self.data_path = data_path
         self.device = device
         self.model_checkpoint_path = model_checkpoint_path
         self.metrics = metrics
         self.initialized = False
-        self.local_model: Optional[nn.Module] = None
-        self.global_model: Optional[nn.Module] = None
 
         # This data loader should be instantiated as the one on which to run evaluation
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
@@ -50,6 +51,8 @@ class EvaluateClient(BasicClient):
         # The attributes to be set in setup_client
         self.data_loader: DataLoader
         self.criterion: _Loss
+        self.local_model: Optional[nn.Module] = None
+        self.global_model: Optional[nn.Module] = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
