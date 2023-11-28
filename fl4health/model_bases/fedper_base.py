@@ -1,12 +1,12 @@
-from typing import Dict, List, Tuple
+from typing import List
 
-import torch
 import torch.nn as nn
 
+from fl4health.model_bases.moon_base import MoonModel
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 
 
-class FedPerModel(PartialLayerExchangeModel):
+class FedPerModel(MoonModel, PartialLayerExchangeModel):
     def __init__(
         self, global_feature_extractor: nn.Module, local_prediction_head: nn.Module, flatten_features: bool = False
     ) -> None:
@@ -14,9 +14,8 @@ class FedPerModel(PartialLayerExchangeModel):
         Implementation of the FedPer model structure: https://arxiv.org/pdf/1912.00818.pdf
         The architecture is fairly straightforward. The global module represents the first set of layers. These are
         learned with FedAvg. The local_prediction_head are the last layers, these are not exchanged with the server.
-        The approach resembles FENDA, but vertical rather than parallel models.
-
-        NOTE: The structure is similar to MOON but only a subset of the components are aggregated server-side.
+        The approach resembles FENDA, but vertical rather than parallel models. It also resembles MOON, but with
+        partial weight exchange for weight aggregation. Hence, it inherits from MoonModel and PartialLayerExchangeModel
 
         Args:
             global_feature_extractor (nn.Module): First set of layers. These are exchanged with the server.
@@ -26,22 +25,12 @@ class FedPerModel(PartialLayerExchangeModel):
                 MOON-based constrative loss functions. This allows a FedPer model to be used with a MOON client.
                 Defaults to False.
         """
-        super().__init__()
-        self.global_feature_extractor = global_feature_extractor
-        self.local_prediction_head = local_prediction_head
+        super().__init__(
+            base_module=global_feature_extractor, head_module=local_prediction_head, projection_module=None
+        )
+        # This overrides the flatten features option if we don't want to flatten them
+        # (i.e. not using contrastive loss) in the Moon Client
         self.flatten_features = flatten_features
 
     def layers_to_exchange(self) -> List[str]:
-        return [
-            layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_feature_extractor.")
-        ]
-
-    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        # input is expected to be of shape (batch_size, *)
-        features = self.global_feature_extractor.forward(input)
-        preds = {"prediction": self.local_prediction_head.forward(features)}
-        features = (
-            {"features": features} if not self.flatten_features else {"features": features.reshape(len(features), -1)}
-        )
-        # Return preds and features as separate dictionary
-        return preds, features
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("base_model.")]

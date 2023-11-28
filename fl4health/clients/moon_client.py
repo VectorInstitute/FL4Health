@@ -6,6 +6,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -89,6 +90,7 @@ class MoonClient(BasicClient):
         return self.ce_criterion(logits, labels)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        assert isinstance(self.model, MoonModel)
         # Save the parameters of the old local model
         old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)

@@ -6,7 +6,7 @@ def test_fedper_model_gets_correct_layers() -> None:
     model = FedPerModel(FeatureCnn(), HeadCnn())
     layers_to_exchange = model.layers_to_exchange()
     filtered_layer_names = [
-        layer_name for layer_name in model.state_dict().keys() if layer_name.startswith("global_feature_extractor.")
+        layer_name for layer_name in model.state_dict().keys() if layer_name.startswith("base_module.")
     ]
     for test_layer, expected_layer in zip(layers_to_exchange, filtered_layer_names):
         assert test_layer == expected_layer
