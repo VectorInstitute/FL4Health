@@ -22,6 +22,8 @@ class FedPerModel(PartialLayerExchangeModel):
             global_feature_extractor (nn.Module): First set of layers. These are exchanged with the server.
             local_prediction_head (nn.Module): Final set of layers. These are not aggregated by the server.
             flatten_features (bool): Whether or not the forward should flatten the produced features across the batch.
+                Flattening of the features can be used to ensure that the features produced are compatible with the
+                MOON-based constrative loss functions. This allows a FedPer model to be used with a MOON client.
                 Defaults to False.
         """
         super().__init__()

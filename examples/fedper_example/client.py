@@ -28,6 +28,8 @@ class MnistFedPerClient(MoonClient):
         device: torch.device,
         minority_numbers: Set[int],
     ) -> None:
+        # We inherit from a MOON client here intentionally to be able to use auxiliary losses associated with the
+        # global module's feature space in addition to the personalized architecture of FedPer.
         super().__init__(data_path=data_path, metrics=metrics, device=device)
         self.minority_numbers = minority_numbers
 
@@ -39,6 +41,8 @@ class MnistFedPerClient(MoonClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
+        # NOTE: Flatten features is set to true to make the model compatible with the MOON contrastive loss function,
+        # which requires the intermediate feature representations to be flattened for similarity calculations.
         model: nn.Module = FedPerModel(
             global_feature_extractor=FedPerGloalFeatureExtractor(),
             local_prediction_head=FedPerLocalPredictionHead(),
