@@ -67,61 +67,76 @@ async def run_smoke_test(
         )
         client_processes.append(client_process)
 
-    # Collecting the clients output until their processes finish
+    # Collecting the clients output when their processes finish
     full_client_outputs = [""] * n_clients_to_start
-    # Clients that have finished execution are set to None, so the loop finishes when all of them are None
-    # or in other words, while there are still any valid process objects in the list
-    while any(client_processes):
-        for i in range(len(client_processes)):
-            if client_processes[i] is None:
-                # Clients that have finished execution are set to None
-                continue
+    for i in range(len(client_processes)):
+        logger.info(f"Waiting for client {i} to finish execution to collect its output...")
+        client_output, client_err = await client_processes[i].communicate()
+        logger.info(f"Output collected for client {i}")
 
-            client_output_in_bytes = await asyncio.wait_for(client_processes[i].stdout.readline(), 20)
-            client_output = client_output_in_bytes.decode()
-            logger.debug(f"Client {i} output: {client_output}")
+        client_output = client_output.decode().replace("\\n", "\n")
+        full_client_outputs[i] = client_output
+        logger.debug(f"Client {i} stdout: {client_output}")
 
-            full_client_outputs[i] += client_output
+        if client_err is not None and len(client_err) > 0:
+            client_err = client_err.decode().replace("\\n", "\n")
+            full_client_outputs[i] += client_err
+            logger.error(f"Client {i} stderr: {client_err}")
 
-            # checking for clients with failure exit codes
-            client_return_code = client_processes[i].returncode
-            assert client_return_code is None or (client_return_code is not None and client_return_code == 0), \
-                f"Client {i} exited with code {client_return_code}"
-
-            if client_output is None or len(client_output) == 0 or client_return_code == 0:
-                logger.info(f"Client {i} finished execution")
-                # Setting the client that has finished to None
-                client_processes[i] = None
+        # checking for clients with failure exit codes
+        client_return_code = client_processes[i].returncode
+        assert client_return_code is None or (client_return_code is not None and client_return_code == 0), \
+            f"Client {i} exited with code {client_return_code}. Full client output: {full_client_outputs[i]}"
 
     logger.info("All clients finished execution")
 
-    # now wait for the server to finish
-    while True:
-        try:
-            server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
-            server_output = server_output_in_bytes.decode()
-            full_server_output += server_output
-            logger.debug(f"Server output: {server_output}")
-        except asyncio.TimeoutError:
-            logger.debug(f"Server log message retrieval timed out, it has likely finished execution")
-            break
+    logger.info(f"Waiting for the server to finish execution to collect its output...")
+    server_output, server_err = await server_process.communicate()
+    logger.info(f"Output collected for server")
 
-        # checking for clients with failure exit codes
-        server_return_code = server_process.returncode
-        assert server_return_code is None or (server_return_code is not None and server_return_code == 0), \
-            f"Server exited with code {server_return_code}"
+    server_output = server_output.decode().replace("\\n", "\n")
+    full_server_output = server_output
+    logger.debug(f"Client {i} stdout: {server_output}")
 
-        if server_output is None or len(server_output) == 0 or server_return_code == 0:
-            break
+    if server_err is not None and len(server_err) > 0:
+        server_err = server_err.decode().replace("\\n", "\n")
+        full_client_outputs[i] += server_err
+        logger.error(f"Client {i} stderr: {server_err}")
+
+    # checking for clients with failure exit codes
+    server_return_code = server_process.returncode
+    assert server_return_code is None or (server_return_code is not None and server_return_code == 0), \
+        f"Server exited with code {server_return_code}"
 
     logger.info("Server has finished execution")
 
-    assert "error" not in full_server_output.lower(), "Error message found for server"
-    for i in range(full_client_outputs):
-        assert "error" not in full_client_outputs[i].lower(), f"Error message found for client {i}"
+    # server assertions
+    assert "error" not in full_server_output.lower(), \
+        f"Error message found for server. Full output:{full_server_output}"
+    # TODO pull this number from the config
+    assert "evaluate_round 15" in full_server_output, \
+        f"Last FL round message not found for server. Full output:\n{full_server_output}"
+    assert "FL finished" in full_server_output, \
+        f"FL finished message not found for server. Full output:\n{full_server_output}"
+    assert all(message in full_server_output for message in [
+        "app_fit: losses_distributed",
+        "app_fit: metrics_distributed_fit",
+        "app_fit: metrics_distributed",
+        "app_fit: losses_centralized",
+        "app_fit: metrics_centralized",
+    ]), f"Metrics message not found for server. Full output:\n{full_server_output}"
+    assert "Server has finished execution" in full_server_output, \
+        f"End of execution message not found in server. Full output:\n{full_server_output}"
+
+    # client assertions
+    for i in range(len(full_client_outputs)):
+        assert "error" not in full_client_outputs[i].lower(), \
+            f"Error message found for client {i}. Full output:\n{full_client_outputs[i]}"
         # TODO pull this number from the config
-        assert "Current FL Round: 15" in full_client_outputs[i], f"Last FL round message not found for client {i}"
-        assert "Disconnect and shut down" in full_client_outputs[i], f"Shutdown message not found for client {i}"
+        assert "Current FL Round: 15" in full_client_outputs[i], \
+            f"Last FL round message not found for client {i}. Full output:\n{full_client_outputs[i]}"
+        assert "Disconnect and shut down" in full_client_outputs[i], \
+            f"Shutdown message not found for client {i}. Full client output:\n{full_client_outputs[i]}"
 
 
 if __name__ == "__main__":
