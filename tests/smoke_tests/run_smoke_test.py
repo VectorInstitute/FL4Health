@@ -36,6 +36,7 @@ async def run_smoke_test(
     output_found = False
     while True:
         try:
+            assert server_process.stdout is not None, f"Server's process stdout is None"
             server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
             server_output = server_output_in_bytes.decode()
             full_server_output += server_output
@@ -71,15 +72,15 @@ async def run_smoke_test(
     full_client_outputs = [""] * n_clients_to_start
     for i in range(len(client_processes)):
         logger.info(f"Waiting for client {i} to finish execution to collect its output...")
-        client_output, client_err = await client_processes[i].communicate()
+        client_output_bytes, client_err_bytes = await client_processes[i].communicate()
         logger.info(f"Output collected for client {i}")
 
-        client_output = client_output.decode().replace("\\n", "\n")
+        client_output = client_output_bytes.decode().replace("\\n", "\n")
         full_client_outputs[i] = client_output
         logger.debug(f"Client {i} stdout: {client_output}")
 
-        if client_err is not None and len(client_err) > 0:
-            client_err = client_err.decode().replace("\\n", "\n")
+        if client_err_bytes is not None and len(client_err_bytes) > 0:
+            client_err = client_err_bytes.decode().replace("\\n", "\n")
             full_client_outputs[i] += client_err
             logger.error(f"Client {i} stderr: {client_err}")
 
@@ -91,15 +92,15 @@ async def run_smoke_test(
     logger.info("All clients finished execution")
 
     logger.info(f"Waiting for the server to finish execution to collect its output...")
-    server_output, server_err = await server_process.communicate()
+    server_output_bytes, server_err_bytes = await server_process.communicate()
     logger.info(f"Output collected for server")
 
-    server_output = server_output.decode().replace("\\n", "\n")
+    server_output = server_output_bytes.decode().replace("\\n", "\n")
     full_server_output = server_output
     logger.debug(f"Client {i} stdout: {server_output}")
 
-    if server_err is not None and len(server_err) > 0:
-        server_err = server_err.decode().replace("\\n", "\n")
+    if server_err_bytes is not None and len(server_err_bytes) > 0:
+        server_err = server_err_bytes.decode().replace("\\n", "\n")
         full_client_outputs[i] += server_err
         logger.error(f"Client {i} stderr: {server_err}")
 
@@ -137,6 +138,8 @@ async def run_smoke_test(
             f"Last FL round message not found for client {i}. Full output:\n{full_client_outputs[i]}"
         assert "Disconnect and shut down" in full_client_outputs[i], \
             f"Shutdown message not found for client {i}. Full client output:\n{full_client_outputs[i]}"
+
+logger.info("All checks passed. Test finished.")
 
 
 if __name__ == "__main__":
