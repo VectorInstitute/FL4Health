@@ -1,16 +1,15 @@
 import asyncio
 import logging
+from pathlib import Path
 
+import torch
 from six.moves import urllib
+
+from examples.fedprox_example.client import MnistFedProxClient
+from fl4health.utils.metrics import Accuracy
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
-
-# Working around mnist download issue
-# https://github.com/pytorch/vision/issues/1938
-opener = urllib.request.build_opener()
-opener.addheaders = [("User-agent", "Mozilla/5.0")]
-urllib.request.install_opener(opener)
 
 
 async def run_smoke_test(
@@ -18,6 +17,9 @@ async def run_smoke_test(
     config_path: str = "tests/smoke_tests/config.yaml",
     dataset_path: str = "examples/datasets/mnist_data/",
 ) -> None:
+
+    _preload_dataset(dataset_path)
+
     # Start the server, divert the outputs to a server file
     logger.info("Starting server")
 
@@ -122,6 +124,25 @@ async def run_smoke_test(
         )
 
     logger.info("All checks passed. Test finished.")
+
+
+def _preload_dataset(dataset_path: str) -> None:
+    if "mnist" in dataset_path:
+        logger.info("Preloading MNIST dataset...")
+
+        # Working around mnist download issue
+        # https://github.com/pytorch/vision/issues/1938
+        opener = urllib.request.build_opener()
+        opener.addheaders = [("User-agent", "Mozilla/5.0")]
+        urllib.request.install_opener(opener)
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
+        client.get_data_loaders(config={"batch_size": 128})  # TODO get this from the config file
+
+        logger.info("Finished preloading MNIST dataset")
+    else:
+        logger.info("Preload not supported for specified dataset. Skipping.")
 
 
 async def _wait_for_process_to_finish_and_retrieve_logs(
