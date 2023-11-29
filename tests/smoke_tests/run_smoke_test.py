@@ -13,7 +13,7 @@ logger = logging.getLogger()
 
 
 async def run_smoke_test(
-    n_clients_to_start: int = 4,
+    n_clients_to_start: int = 2,
     config_path: str = "tests/smoke_tests/config.yaml",
     dataset_path: str = "examples/datasets/mnist_data/",
 ) -> None:
@@ -21,7 +21,7 @@ async def run_smoke_test(
     _preload_dataset(dataset_path)
 
     # Start the server, divert the outputs to a server file
-    logger.info("Starting server")
+    logger.info("Starting server...")
 
     server_process = await asyncio.create_subprocess_exec(
         "nohup",
@@ -82,6 +82,7 @@ async def run_smoke_test(
 
     logger.info("All clients finished execution")
 
+    # Collecting the server output when its process finish
     full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
 
     logger.info("Server has finished execution")
@@ -136,6 +137,8 @@ def _preload_dataset(dataset_path: str) -> None:
         opener.addheaders = [("User-agent", "Mozilla/5.0")]
         urllib.request.install_opener(opener)
 
+        # Creating a client and getting the data loaders will trigger
+        # the download of the dataset
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
         client.get_data_loaders(config={"batch_size": 128})  # TODO get this from the config file
