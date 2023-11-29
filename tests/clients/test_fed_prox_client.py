@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import pytest
 import torch
 from flwr.common import Config
@@ -111,3 +113,32 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.set_parameters(packed_perturbed_params, config)
 
     assert fed_prox_client.proximal_weight == perturbed_proximal_weight
+
+
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCnn())])
+def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
+    torch.manual_seed(42)
+    fed_prox_client = get_client
+    config: Config = {}
+    fed_prox_client.criterion = torch.nn.CrossEntropyLoss()
+
+    params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
+    proximal_weight = 1.0
+    packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
+    fed_prox_client.set_parameters(packed_params, config)
+
+    # We've taken no training steps so the proximal loss should be 0.0
+    assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
+
+    perturbed_params = [layer_weights + 0.1 for layer_weights in params]
+
+    params_dict = zip(fed_prox_client.model.state_dict().keys(), perturbed_params)
+    state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+    fed_prox_client.model.load_state_dict(state_dict, strict=True)
+
+    preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
+    target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+    loss = fed_prox_client.compute_loss(preds, {}, target)
+
+    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
+    assert loss.checkpoint.item() != loss.backward.item()
