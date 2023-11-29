@@ -24,6 +24,7 @@ class LatestTorchCheckpointer(TorchCheckpointer):
 
     def maybe_checkpoint(self, model: nn.Module, _: Optional[float] = None) -> None:
         # Always checkpoint the latest model
+        log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
         torch.save(model, self.best_checkpoint_path)
 
 

@@ -10,7 +10,7 @@ from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class FendaClient(BasicClient):
@@ -20,12 +20,11 @@ class FendaClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: Optional[float] = 0.5,
-        perfcl_loss_weights: Optional[Tuple[float, float]] = (0.0, 0.0),
-        cos_sim_loss_weight: Optional[float] = 0.0,
-        contrastive_loss_weight: Optional[float] = 0.0,
+        perfcl_loss_weights: Optional[Tuple[float, float]] = None,
+        cos_sim_loss_weight: Optional[float] = None,
+        contrastive_loss_weight: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -33,7 +32,6 @@ class FendaClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             seed=seed,
         )
@@ -44,7 +42,6 @@ class FendaClient(BasicClient):
             metrics: List of metrics to be used for evaluation.
             device: Device to be used for training.
             loss_meter_type: Type of loss meter to be used.
-            metric_meter_type: Type of metric meter to be used.
             checkpointer: Checkpointer to be used for checkpointing.
             temperature: Temperature to be used for contrastive loss.
             perfcl_loss_weights: Weights to be used for perfcl loss.
@@ -69,28 +66,37 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s) and features of the model(s) given the input.
 
-        preds = self.model(input)
+        Args:
+            input (torch.Tensor): Inputs to be fed into the model.
 
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. Specificaly the features of the model, features of the global model and features of
+            the old model are returned. All predictions included in dictionary will be used to compute metrics.
+        """
+        preds, features = self.model(input)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             if self.old_local_module is not None:
-                preds["old_local_features"] = self.old_local_module.forward(input).reshape(
-                    len(preds["local_features"]), -1
+                features["old_local_features"] = self.old_local_module.forward(input).reshape(
+                    len(features["local_features"]), -1
                 )
                 if self.perfcl_loss_weights:
                     if self.old_global_module is not None:
-                        preds["old_global_features"] = self.old_global_module.forward(input).reshape(
-                            len(preds["global_features"]), -1
+                        features["old_global_features"] = self.old_global_module.forward(input).reshape(
+                            len(features["global_features"]), -1
                         )
                     if self.aggregated_global_module is not None:
-                        preds["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
-                            len(preds["global_features"]), -1
+                        features["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
+                            len(features["global_features"]), -1
                         )
-        return preds
+        return preds, features
 
     def get_parameters(self, config: Config) -> NDArrays:
-
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
@@ -100,7 +106,6 @@ class FendaClient(BasicClient):
         return super().get_parameters(config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
@@ -182,39 +187,56 @@ class FendaClient(BasicClient):
 
         return contrastive_loss_minimize, contrastive_loss_maximize
 
-    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
+        """
+        Computes loss given predictions of the model and ground truth data. Optionally computes additional loss
+        components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on client attributes
+        set from server config.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
+        """
 
         loss = self.criterion(preds["prediction"], target)
-        total_loss = loss
+        total_loss = loss.clone()
         additional_losses = {}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
             cos_sim_loss = self.get_cosine_similarity_loss(
-                local_features=preds["local_features"],
-                global_features=preds["global_features"],
+                local_features=features["local_features"],
+                global_features=features["global_features"],
             )
             total_loss += self.cos_sim_loss_weight * cos_sim_loss
             additional_losses["cos_sim_loss"] = cos_sim_loss
 
         # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
-        if self.contrastive_loss_weight and "old_local_features" in preds:
+        if self.contrastive_loss_weight and "old_local_features" in features:
             contrastive_loss = self.get_contrastive_loss(
-                local_features=preds["local_features"],
-                old_local_features=preds["old_local_features"],
-                global_features=preds["global_features"],
+                local_features=features["local_features"],
+                old_local_features=features["old_local_features"],
+                global_features=features["global_features"],
             )
             total_loss += self.contrastive_loss_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
 
         # Optimal perfcl_loss_weights for FedIsic dataset is [10.0, 10.0]
-        if self.perfcl_loss_weights and "old_local_features" in preds and "old_global_features" in preds:
+        if self.perfcl_loss_weights and "old_local_features" in features and "old_global_features" in features:
             contrastive_loss_minimize, contrastive_loss_maximize = self.get_perfcl_loss(
-                local_features=preds["local_features"],
-                old_local_features=preds["old_local_features"],
-                global_features=preds["global_features"],
-                old_global_features=preds["old_global_features"],
-                aggregated_global_features=preds["aggregated_global_features"],
+                local_features=features["local_features"],
+                old_local_features=features["old_local_features"],
+                global_features=features["global_features"],
+                old_global_features=features["old_global_features"],
+                aggregated_global_features=features["aggregated_global_features"],
             )
             total_loss += (
                 self.perfcl_loss_weights[0] * contrastive_loss_minimize

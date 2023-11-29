@@ -13,7 +13,7 @@ from fl4health.clients.numpy_fl_client import NumpyFlClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterType
+from fl4health.utils.metrics import Metric, MetricManager
 
 
 class EvaluateClient(NumpyFlClient):
@@ -30,7 +30,6 @@ class EvaluateClient(NumpyFlClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -43,9 +42,9 @@ class EvaluateClient(NumpyFlClient):
         self.data_loader: DataLoader
         self.criterion: _Loss
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.global_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "global_eval_meter")
+        self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
         self.local_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.local_metric_meter = MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "local_eval_meter")
+        self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -111,7 +110,7 @@ class EvaluateClient(NumpyFlClient):
         )
 
     def validate_on_model(
-        self, model: nn.Module, metric_meter: MetricMeter, loss_meter: LossMeter, is_global: bool
+        self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, is_global: bool
     ) -> Tuple[Losses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
@@ -123,7 +122,7 @@ class EvaluateClient(NumpyFlClient):
                 preds = model(inputs)
                 losses = self.compute_loss(preds, targets)
 
-                metric_meter.update(preds, targets)
+                metric_meter.update({"predictions": preds}, targets)
                 loss_meter.update(losses)
 
         metrics = metric_meter.compute()
@@ -141,13 +140,13 @@ class EvaluateClient(NumpyFlClient):
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
             local_loss, local_metrics = self.validate_on_model(
-                self.local_model, self.local_metric_meter, self.local_loss_meter, is_global=False
+                self.local_model, self.local_metric_manager, self.local_loss_meter, is_global=False
             )
 
         if self.global_model:
             log(INFO, "Performing evaluation on global model")
             global_loss, global_metrics = self.validate_on_model(
-                self.global_model, self.global_metric_meter, self.global_loss_meter, is_global=True
+                self.global_model, self.global_metric_manager, self.global_loss_meter, is_global=True
             )
 
         # Store the losses in the metrics, since we can't return more than one loss.
@@ -200,7 +199,7 @@ class EvaluateClient(NumpyFlClient):
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         """
-        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
+        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionary of
         loss components if you wish to train the total loss as well as sub losses if they exist.
         """
         loss = self.criterion(preds, target)

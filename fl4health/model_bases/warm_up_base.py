@@ -1,7 +1,6 @@
 import os
-from abc import abstractmethod
 from logging import DEBUG, INFO
-from typing import Dict, Optional, Union
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -21,7 +20,3 @@ class WarmUpModel(nn.Module):
         if not os.path.exists(self.warmed_up_path):
             log(DEBUG, f"Warmed up model not found at {self.warmed_up_path}. Please first run the warm-up script.")
         self = torch.load(self.warmed_up_path)
-
-    @abstractmethod
-    def forward(self, input_tensor: torch.Tensor) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
-        raise NotImplementedError

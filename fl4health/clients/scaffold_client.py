@@ -12,7 +12,7 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -30,7 +30,6 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -39,7 +38,6 @@ class ScaffoldClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             seed=seed,
         )
@@ -186,8 +184,8 @@ class ScaffoldClient(BasicClient):
         self.optimizer.zero_grad()
 
         # Get predictions and compute loss
-        preds = self.predict(input)
-        losses = self.compute_loss(preds, target)
+        preds, features = self.predict(input)
+        losses = self.compute_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
         losses.backward.backward()
@@ -205,7 +203,7 @@ class ScaffoldClient(BasicClient):
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
         """
         self.update_control_variates(local_steps)
 
@@ -223,7 +221,6 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -233,7 +230,6 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             seed=seed,
         )
@@ -244,7 +240,6 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             seed=seed,
         )

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 from fl4health.model_bases.warm_up_base import WarmUpModel
 
 
@@ -35,7 +36,7 @@ class FendaHeadModule(nn.Module, ABC):
         return self.head_forward(head_input)
 
 
-class FendaModel(WarmUpModel):
+class FendaModel(WarmUpModel, PartialLayerExchangeModel):
     def __init__(
         self,
         local_module: nn.Module,
@@ -52,7 +53,7 @@ class FendaModel(WarmUpModel):
     def layers_to_exchange(self) -> List[str]:
         return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("global_module.")]
 
-    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
         global_output = self.global_module.forward(input)
         if self.warm_up:
@@ -60,8 +61,10 @@ class FendaModel(WarmUpModel):
             local_output = torch.zeros_like(global_output)
         else:
             local_output = self.local_module.forward(input)
-        return {
-            "prediction": self.model_head.forward(local_output, global_output),
+        preds = {"prediction": self.model_head.forward(local_output, global_output)}
+        features = {
             "local_features": local_output.reshape(len(local_output), -1),
             "global_features": global_output.reshape(len(global_output), -1),
         }
+        # Return preds and features as separate dictionary as in moon base
+        return preds, features

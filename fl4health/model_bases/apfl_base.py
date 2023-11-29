@@ -4,10 +4,11 @@ from typing import Dict, List, Optional
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 from fl4health.model_bases.warm_up_base import WarmUpModel
 
 
-class ApflModule(WarmUpModel):
+class ApflModule(WarmUpModel, PartialLayerExchangeModel):
     def __init__(
         self,
         model: nn.Module,
@@ -32,7 +33,7 @@ class ApflModule(WarmUpModel):
         return self.local_model(input)
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
-        # Forward return dictionairy because APFL has multiple different prediction types
+        # Forward return dictionary because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
         if not self.warm_up:
             local_logits = self.local_forward(input)
@@ -78,5 +79,7 @@ class ApflModule(WarmUpModel):
         self.alpha = alpha
 
     def layers_to_exchange(self) -> List[str]:
-        layers_to_exchange: List[str] = [layer for layer in self.state_dict().keys() if "global_model" in layer]
+        layers_to_exchange: List[str] = [
+            layer for layer in self.state_dict().keys() if layer.startswith("global_model.")
+        ]
         return layers_to_exchange

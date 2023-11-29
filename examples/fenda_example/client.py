@@ -29,7 +29,10 @@ class MnistFendaClient(FendaClient):
         minority_numbers: Set[int],
         seed: int,
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device, seed=seed)
+
+        super().__init__(
+            data_path=data_path, metrics=metrics, device=device, perfcl_loss_weights=(1.0, 1.0), seed=seed
+        )
         self.minority_numbers = minority_numbers
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:

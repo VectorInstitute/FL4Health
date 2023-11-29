@@ -17,41 +17,42 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeter, MetricMeterManager, MetricMeterType
+from fl4health.utils.metrics import Metric, MetricManager
 
 
 class BasicClient(NumpyFlClient):
-    """
-    Base FL Client with functionality to train, evaluate, log, report and checkpoint.
-    User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
-    Other methods can be overriden to achieve custom functionality.
-    """
-
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         seed: Optional[int] = None,
     ) -> None:
+        """
+        Base FL Client with functionality to train, evaluate, log, report and checkpoint.
+        User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
+        Other methods can be overriden to achieve custom functionality.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
+                checkpointing. Defaults to None.
+        """
         super().__init__(data_path, device, seed=seed)
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
 
-        # Define mapping from prediction key to meter to pass to MetricMeterManager constructor for train and val
-        train_key_to_meter_map = {
-            "prediction": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "train_meter")
-        }
-        self.train_metric_meter_mngr = MetricMeterManager(train_key_to_meter_map)
-        val_key_to_meter_map = {
-            "prediction": MetricMeter.get_meter_by_type(self.metrics, metric_meter_type, "val_meter")
-        }
-        self.val_metric_meter_mngr = MetricMeterManager(val_key_to_meter_map)
+        self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
+        self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
 
         self.model: nn.Module
         self.optimizer: torch.optim.Optimizer
@@ -153,7 +154,6 @@ class BasicClient(NumpyFlClient):
         metric_dict: Dict[str, Scalar],
         current_round: Optional[int] = None,
     ) -> None:
-
         # If reporter is None we do not report to wandb and return
         if self.wandb_reporter is None:
             return
@@ -177,8 +177,8 @@ class BasicClient(NumpyFlClient):
         self.optimizer.zero_grad()
 
         # Call user defined methods to get predictions and compute loss
-        preds = self.predict(input)
-        losses = self.compute_loss(preds, target)
+        preds, features = self.predict(input)
+        losses = self.compute_loss(preds, features, target)
 
         # Compute backward pass and update paramters with optimizer
         losses.backward.backward()
@@ -194,8 +194,8 @@ class BasicClient(NumpyFlClient):
 
         # Get preds and compute loss
         with torch.no_grad():
-            preds = self.predict(input)
-            losses = self.compute_loss(preds, target)
+            preds, features = self.predict(input)
+            losses = self.compute_loss(preds, features, target)
 
         return losses, preds
 
@@ -205,17 +205,17 @@ class BasicClient(NumpyFlClient):
         self.model.train()
         local_step = 0
         for local_epoch in range(epochs):
-            self.train_metric_meter_mngr.clear()
+            self.train_metric_manager.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
-                self.train_metric_meter_mngr.update(preds, target)
+                self.train_metric_manager.update(preds, target)
                 self.update_after_step(local_step)
                 self.total_steps += 1
                 local_step += 1
-            metrics = self.train_metric_meter_mngr.compute()
+            metrics = self.train_metric_manager.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
 
@@ -235,7 +235,7 @@ class BasicClient(NumpyFlClient):
         train_iterator = iter(self.train_loader)
 
         self.train_loss_meter.clear()
-        self.train_metric_meter_mngr.clear()
+        self.train_metric_manager.clear()
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
@@ -248,13 +248,13 @@ class BasicClient(NumpyFlClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter_mngr.update(preds, target)
+            self.train_metric_manager.update(preds, target)
             self.update_after_step(step)
             self.total_steps += 1
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter_mngr.compute()
+        metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
@@ -264,19 +264,19 @@ class BasicClient(NumpyFlClient):
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        self.val_metric_meter_mngr.clear()
+        self.val_metric_manager.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter_mngr.update(preds, target)
+                self.val_metric_manager.update(preds, target)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()
         loss_dict = losses.as_dict()
-        metrics = self.val_metric_meter_mngr.compute()
+        metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
         # Checkpoint based on loss which is output of user defined compute_loss method
@@ -323,30 +323,42 @@ class BasicClient(NumpyFlClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
-        Return dict of str and torch.Tensor containing predictions when given input.
-        In the default case, the dict has a single item with key prediction.
-        In more complicated approaches such as APFL, the dict has as many items as prediction types
-        User can override for more complex logic.
+        Computes the prediction(s), and potentially features, of the model(s) given the input.
+
+        Args:
+            input (torch.Tensor): Inputs to be fed into the model.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. By passing features, we can compute losses such as the model contrasting loss in MOON.
+            All predictions included in dictionary will be used to compute metrics.
         """
         preds = self.model(input)
 
         if isinstance(preds, dict):
-            return preds
+            return preds, {}
         elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}
+            return {"prediction": preds}, {}
         else:
             raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
-    def compute_loss(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> Losses:
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
         """
-        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
-        loss components if you wish to train the total loss as well as sub losses if they exist.
-        Predicitons are a dictionairy of str and torch.Tensor. In the base case we have one set of prediction
-        stored in the prediction key of the dict.
-        For more complicated loss computations (additional loss components or multiple prediction types)
-        this method should be overridden.
+        Computes loss given predictions (and potentially features) of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
         """
         assert isinstance(preds, dict)
 
@@ -361,7 +373,7 @@ class BasicClient(NumpyFlClient):
     def set_optimizer(self, config: Config) -> None:
         """
         Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
-        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionairy of
+        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
         string and optimizer are returned (ie APFL), the use must override this method.
         """
         optimizer = self.get_optimizer(config)
@@ -414,7 +426,7 @@ class BasicClient(NumpyFlClient):
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
         """
         pass
 

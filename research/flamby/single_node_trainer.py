@@ -10,7 +10,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.utils.metrics import MetricMeter
+from fl4health.utils.metrics import MetricManager
 
 
 class SingleNodeTrainer:
@@ -50,7 +50,7 @@ class SingleNodeTrainer:
             f"Centralized {metric_prefix} Loss: {loss} \n" f"Centralized {metric_prefix} Metrics: {metric_string}",
         )
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         # forward pass on the model
         preds = self.model(input)
         loss = self.criterion(preds, target)
@@ -59,48 +59,48 @@ class SingleNodeTrainer:
         loss.backward()
         self.optimizer.step()
 
-        return loss, preds
+        return loss, {"predictions": preds}
 
     def train_by_epochs(
         self,
         epochs: int,
-        train_meter: MetricMeter,
-        val_meter: MetricMeter,
+        train_metric_mngr: MetricManager,
+        val_metric_mngr: MetricManager,
     ) -> None:
         self.model.train()
 
         for local_epoch in range(epochs):
-            train_meter.clear()
+            train_metric_mngr.clear()
             running_loss = 0.0
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 batch_loss, preds = self.train_step(input, target)
                 running_loss += batch_loss.item()
-                train_meter.update(preds, target)
+                train_metric_mngr.update(preds, target)
 
             log(INFO, f"Local Epoch: {local_epoch}")
             running_loss = running_loss / len(self.train_loader)
-            metrics = train_meter.compute()
+            metrics = train_metric_mngr.compute()
             self._handle_reporting(running_loss, metrics)
 
             # After each epoch run a validation pass
-            self.validate(val_meter)
+            self.validate(val_metric_mngr)
 
-    def validate(self, meter: MetricMeter) -> None:
+    def validate(self, val_metric_mngr: MetricManager) -> None:
         self.model.eval()
         running_loss = 0.0
-        meter.clear()
+        val_metric_mngr.clear()
 
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
 
                 preds = self.model(input)
-                batch_loss = self.criterion(preds, target)
+                batch_loss = self.criterion(preds["predictions"], target)
                 running_loss += batch_loss.item()
-                meter.update(preds, target)
+                val_metric_mngr.update(preds, target)
 
         running_loss = running_loss / len(self.val_loader)
-        metrics = meter.compute()
+        metrics = val_metric_mngr.compute()
         self._handle_reporting(running_loss, metrics, is_validation=True)
         self._maybe_checkpoint(running_loss)
