@@ -3,22 +3,25 @@ import logging
 from pathlib import Path
 
 import torch
+import yaml
+from flwr.common.typing import Config
 from six.moves import urllib
 
 from examples.fedprox_example.client import MnistFedProxClient
 from fl4health.utils.metrics import Accuracy
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
 async def run_smoke_test(
-    n_clients_to_start: int = 2,
     config_path: str = "tests/smoke_tests/config.yaml",
     dataset_path: str = "examples/datasets/mnist_data/",
 ) -> None:
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path)
+    _preload_dataset(dataset_path, config)
 
     # Start the server, divert the outputs to a server file
     logger.info("Starting server...")
@@ -59,7 +62,7 @@ async def run_smoke_test(
 
     # Start n number of clients and capture their process objects
     client_processes = []
-    for i in range(n_clients_to_start):
+    for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
         client_process = await asyncio.create_subprocess_exec(
             "nohup",
@@ -91,8 +94,7 @@ async def run_smoke_test(
     assert "error" not in full_server_output.lower(), (
         f"Full output:\n{full_server_output}\n" + "[ASSERT ERROR] Error message found for server."
     )
-    # TODO pull this number from the config
-    assert "evaluate_round 15" in full_server_output, (
+    assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
         f"Full output:\n{full_server_output}\n" + "[ASSERT ERROR] Last FL round message not found for server."
     )
     assert "FL finished" in full_server_output, (
@@ -114,8 +116,7 @@ async def run_smoke_test(
         assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" + f"[ASSERT ERROR] Error message found for client {i}."
         )
-        # TODO pull this number from the config
-        assert "Current FL Round: 15" in full_client_outputs[i], (
+        assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
             f"Full client output:\n{full_client_outputs[i]}\n"
             + f"[ASSERT ERROR] Last FL round message not found for client {i}."
         )
@@ -127,7 +128,7 @@ async def run_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str) -> None:
+def _preload_dataset(dataset_path: str, config: Config) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -141,7 +142,7 @@ def _preload_dataset(dataset_path: str) -> None:
         # the download of the dataset
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
-        client.get_data_loaders(config={"batch_size": 128})  # TODO get this from the config file
+        client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
     else:
