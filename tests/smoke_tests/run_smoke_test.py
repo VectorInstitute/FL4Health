@@ -23,9 +23,8 @@ async def run_smoke_test(
 
     _preload_dataset(dataset_path, config)
 
-    # Start the server, divert the outputs to a server file
+    # Start the server and capture its process object
     logger.info("Starting server...")
-
     server_process = await asyncio.create_subprocess_exec(
         "nohup",
         "python",
@@ -132,14 +131,14 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
-        # Working around mnist download issue
+        # Working around MNIST download issue
         # https://github.com/pytorch/vision/issues/1938
         opener = urllib.request.build_opener()
         opener.addheaders = [("User-agent", "Mozilla/5.0")]
         urllib.request.install_opener(opener)
 
         # Creating a client and getting the data loaders will trigger
-        # the download of the dataset
+        # the dataset's download
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
         client.get_data_loaders(config)
