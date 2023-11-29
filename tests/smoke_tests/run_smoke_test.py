@@ -154,8 +154,7 @@ async def run_smoke_test(
             + f"[ASSERT ERROR] Shutdown message not found for client {i}."
         )
 
-
-logger.info("All checks passed. Test finished.")
+    logger.info("All checks passed. Test finished.")
 
 
 if __name__ == "__main__":
