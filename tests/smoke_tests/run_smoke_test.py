@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from asyncio.subprocess import PIPE, STDOUT
+from six.moves import urllib
+
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -8,6 +9,12 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger()
+
+# Working around mnist download issue
+# https://github.com/pytorch/vision/issues/1938
+opener = urllib.request.build_opener()
+opener.addheaders = [("User-agent", "Mozilla/5.0")]
+urllib.request.install_opener(opener)
 
 
 async def run_smoke_test(
@@ -25,8 +32,8 @@ async def run_smoke_test(
         "examples.fedprox_example.server",
         "--config_path",
         config_path,
-        stdout=PIPE,
-        stderr=STDOUT,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
     )
 
     # reads lines from the server output in search of the startup log message
@@ -36,7 +43,7 @@ async def run_smoke_test(
     output_found = False
     while True:
         try:
-            assert server_process.stdout is not None, f"Server's process stdout is None"
+            assert server_process.stdout is not None, "Server's process stdout is None"
             server_output_in_bytes = await asyncio.wait_for(server_process.stdout.readline(), 20)
             server_output = server_output_in_bytes.decode()
             full_server_output += server_output
@@ -63,8 +70,8 @@ async def run_smoke_test(
             "examples.fedprox_example.client",
             "--dataset_path",
             dataset_path,
-            stdout=PIPE,
-            stderr=STDOUT,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
         client_processes.append(client_process)
 
@@ -87,57 +94,59 @@ async def run_smoke_test(
         # checking for clients with failure exit codes
         client_return_code = client_processes[i].returncode
         assert client_return_code is None or (client_return_code is not None and client_return_code == 0), \
-            f"Client {i} exited with code {client_return_code}. Full client output: {full_client_outputs[i]}"
+            f"Client {i} exited with code {client_return_code}. Full output:\n{full_client_outputs[i]}"
 
     logger.info("All clients finished execution")
 
-    logger.info(f"Waiting for the server to finish execution to collect its output...")
+    logger.info("Waiting for the server to finish execution to collect its output...")
     server_output_bytes, server_err_bytes = await server_process.communicate()
-    logger.info(f"Output collected for server")
+    logger.info("Output collected for server")
 
     server_output = server_output_bytes.decode().replace("\\n", "\n")
     full_server_output = server_output
-    logger.debug(f"Client {i} stdout: {server_output}")
+    logger.debug(f"Server stdout: {server_output}")
 
     if server_err_bytes is not None and len(server_err_bytes) > 0:
         server_err = server_err_bytes.decode().replace("\\n", "\n")
-        full_client_outputs[i] += server_err
-        logger.error(f"Client {i} stderr: {server_err}")
+        full_server_output += server_err
+        logger.error(f"Server stderr: {server_err}")
 
     # checking for clients with failure exit codes
     server_return_code = server_process.returncode
     assert server_return_code is None or (server_return_code is not None and server_return_code == 0), \
-        f"Server exited with code {server_return_code}"
+        f"Server exited with code {server_return_code}. Full output:\n{full_server_output}"
 
     logger.info("Server has finished execution")
 
     # server assertions
     assert "error" not in full_server_output.lower(), \
-        f"Error message found for server. Full output:{full_server_output}"
+        f"Full output:\n{full_server_output}.\n\n[ASSERT ERROR] Error message found for server."
     # TODO pull this number from the config
     assert "evaluate_round 15" in full_server_output, \
-        f"Last FL round message not found for server. Full output:\n{full_server_output}"
+        f"Full output:\n{full_server_output}.\n\n[ASSERT ERROR] Last FL round message not found for server."
     assert "FL finished" in full_server_output, \
-        f"FL finished message not found for server. Full output:\n{full_server_output}"
+        f"Full output:\n{full_server_output}.\n\n[ASSERT ERROR] FL finished message not found for server."
     assert all(message in full_server_output for message in [
         "app_fit: losses_distributed",
         "app_fit: metrics_distributed_fit",
         "app_fit: metrics_distributed",
         "app_fit: losses_centralized",
         "app_fit: metrics_centralized",
-    ]), f"Metrics message not found for server. Full output:\n{full_server_output}"
+    ]), f"Full output:\n{full_server_output}.\n\n[ASSERT ERROR] Metrics message not found for server."
     assert "Server has finished execution" in full_server_output, \
-        f"End of execution message not found in server. Full output:\n{full_server_output}"
+        f"Full output:\n{full_server_output}.\n\n[ASSERT ERROR] End of execution message not found in server."
 
     # client assertions
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), \
-            f"Error message found for client {i}. Full output:\n{full_client_outputs[i]}"
+            f"Full client output:\n{full_client_outputs[i]}.\n\n[ASSERT ERROR] Error message found for client {i}."
         # TODO pull this number from the config
         assert "Current FL Round: 15" in full_client_outputs[i], \
-            f"Last FL round message not found for client {i}. Full output:\n{full_client_outputs[i]}"
+            f"Full client output:\n{full_client_outputs[i]}.\n\n" + \
+            f"[ASSERT ERROR] Last FL round message not found for client {i}."
         assert "Disconnect and shut down" in full_client_outputs[i], \
-            f"Shutdown message not found for client {i}. Full client output:\n{full_client_outputs[i]}"
+            f"Full client output:\n{full_client_outputs[i]}.\n\n" + \
+            "[ASSERT ERROR] Shutdown message not found for client {i}."
 
 logger.info("All checks passed. Test finished.")
 
