@@ -72,62 +72,29 @@ async def run_smoke_test(
         client_processes.append(client_process)
 
     # Collecting the clients output when their processes finish
-    full_client_outputs = [""] * n_clients_to_start
+    full_client_outputs = []
     for i in range(len(client_processes)):
-        logger.info(f"Waiting for client {i} to finish execution to collect its output...")
-        client_output_bytes, client_err_bytes = await client_processes[i].communicate()
-        logger.info(f"Output collected for client {i}")
-
-        client_output = client_output_bytes.decode().replace("\\n", "\n")
-        full_client_outputs[i] = client_output
-        logger.debug(f"Client {i} stdout: {client_output}")
-
-        if client_err_bytes is not None and len(client_err_bytes) > 0:
-            client_err = client_err_bytes.decode().replace("\\n", "\n")
-            full_client_outputs[i] += client_err
-            logger.error(f"Client {i} stderr: {client_err}")
-
-        # checking for clients with failure exit codes
-        client_return_code = client_processes[i].returncode
-        assert client_return_code is None or (client_return_code is not None and client_return_code == 0), (
-            f"Full client output:\n{full_client_outputs[i]}\n"
-            + f"[ASSERT ERROR] Client {i} exited with code {client_return_code}."
+        full_client_outputs.append(
+            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
         )
 
     logger.info("All clients finished execution")
 
-    logger.info("Waiting for the server to finish execution to collect its output...")
-    server_output_bytes, server_err_bytes = await server_process.communicate()
-    logger.info("Output collected for server")
-
-    server_output = server_output_bytes.decode().replace("\\n", "\n")
-    full_server_output = server_output
-    logger.debug(f"Server stdout: {server_output}")
-
-    if server_err_bytes is not None and len(server_err_bytes) > 0:
-        server_err = server_err_bytes.decode().replace("\\n", "\n")
-        full_server_output += server_err
-        logger.error(f"Server stderr: {server_err}")
-
-    # checking for clients with failure exit codes
-    server_return_code = server_process.returncode
-    assert server_return_code is None or (
-        server_return_code is not None and server_return_code == 0
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Server exited with code {server_return_code}"
+    full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
 
     logger.info("Server has finished execution")
 
     # server assertions
-    assert (
-        "error" not in full_server_output.lower()
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Error message found for server."
+    assert "error" not in full_server_output.lower(), (
+        f"Full output:\n{full_server_output}\n" + "[ASSERT ERROR] Error message found for server."
+    )
     # TODO pull this number from the config
-    assert (
-        "evaluate_round 15" in full_server_output
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Last FL round message not found for server."
-    assert (
-        "FL finished" in full_server_output
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] FL finished message not found for server."
+    assert "evaluate_round 15" in full_server_output, (
+        f"Full output:\n{full_server_output}\n" + "[ASSERT ERROR] Last FL round message not found for server."
+    )
+    assert "FL finished" in full_server_output, (
+        f"Full output:\n{full_server_output}\n" + "[ASSERT ERROR] FL finished message not found for server."
+    )
     assert all(
         message in full_server_output
         for message in [
@@ -141,9 +108,9 @@ async def run_smoke_test(
 
     # client assertions
     for i in range(len(full_client_outputs)):
-        assert (
-            "error" not in full_client_outputs[i].lower()
-        ), f"Full client output:\n{full_client_outputs[i]}\n[ASSERT ERROR] Error message found for client {i}."
+        assert "error" not in full_client_outputs[i].lower(), (
+            f"Full client output:\n{full_client_outputs[i]}\n" + f"[ASSERT ERROR] Error message found for client {i}."
+        )
         # TODO pull this number from the config
         assert "Current FL Round: 15" in full_client_outputs[i], (
             f"Full client output:\n{full_client_outputs[i]}\n"
@@ -155,6 +122,31 @@ async def run_smoke_test(
         )
 
     logger.info("All checks passed. Test finished.")
+
+
+async def _wait_for_process_to_finish_and_retrieve_logs(
+    process: asyncio.subprocess.Process,
+    process_name: str,
+) -> str:
+    logger.info(f"Waiting for {process_name} to finish execution to collect its output...")
+    stdout_bytes, stderr_bytes = await process.communicate()
+    logger.info(f"Output collected for {process_name}")
+
+    full_output = stdout_bytes.decode().replace("\\n", "\n")
+    logger.debug(f"{process_name} stdout: {full_output}")
+
+    if stderr_bytes is not None and len(stderr_bytes) > 0:
+        stderr = stderr_bytes.decode().replace("\\n", "\n")
+        full_output += stderr
+        logger.error(f"{process_name} stderr: {stderr}")
+
+    # checking for clients with failure exit codes
+    return_code = process.returncode
+    assert return_code is None or (return_code is not None and return_code == 0), (
+        f"Full output:\n{full_output}\n" + f"[ASSERT ERROR] {process_name} exited with code {return_code}."
+    )
+
+    return full_output
 
 
 if __name__ == "__main__":
