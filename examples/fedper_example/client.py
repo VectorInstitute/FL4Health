@@ -10,15 +10,17 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
-from fl4health.clients.fenda_client import FendaClient
-from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from examples.models.fedper_cnn import FedPerGloalFeatureExtractor, FedPerLocalPredictionHead
+from fl4health.clients.moon_client import MoonClient
+from fl4health.model_bases.fedper_base import FedPerModel
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
-class MnistFendaClient(FendaClient):
+class MnistFedPerClient(MoonClient):
     def __init__(
         self,
         data_path: Path,
@@ -26,7 +28,9 @@ class MnistFendaClient(FendaClient):
         device: torch.device,
         minority_numbers: Set[int],
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device, perfcl_loss_weights=(1.0, 1.0))
+        # We inherit from a MOON client here intentionally to be able to use auxiliary losses associated with the
+        # global module's feature space in addition to the personalized architecture of FedPer.
+        super().__init__(data_path=data_path, metrics=metrics, device=device)
         self.minority_numbers = minority_numbers
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -37,16 +41,24 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(
-            self.device
-        )
+        # NOTE: Flatten features is set to true to make the model compatible with the MOON contrastive loss function,
+        # which requires the intermediate feature representations to be flattened for similarity calculations.
+        model: nn.Module = FedPerModel(
+            global_feature_extractor=FedPerGloalFeatureExtractor(),
+            local_prediction_head=FedPerLocalPredictionHead(),
+            flatten_features=True,
+        ).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+        return torch.optim.AdamW(self.model.parameters(), lr=0.001)
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert isinstance(self.model, FedPerModel)
+        return FixedLayerExchanger(self.model.layers_to_exchange())
 
 
 if __name__ == "__main__":
@@ -60,6 +72,6 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistFendaClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
+    client = MnistFedPerClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()

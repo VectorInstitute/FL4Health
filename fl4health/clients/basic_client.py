@@ -595,7 +595,7 @@ class BasicClient(NumPyClient):
     def set_optimizer(self, config: Config) -> None:
         """
         Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
-        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionairy of
+        In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
         string and optimizer are returned (ie APFL), the use must override this method.
 
         Args:
@@ -685,7 +685,7 @@ class BasicClient(NumPyClient):
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Hook method Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
 
         Args:
             local_steps (int): The number of steps in the local training.

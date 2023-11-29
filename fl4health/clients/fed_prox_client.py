@@ -123,7 +123,7 @@ class FedProxClient(BasicClient):
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
         """
         # Store current loss which is the vanilla loss without the proximal term added in
         self.current_loss = loss_dict["checkpoint"]
