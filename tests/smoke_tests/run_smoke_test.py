@@ -55,7 +55,10 @@ async def run_smoke_test(
             output_found = True
             break
 
-    assert output_found, f"Startup log message '{startup_message}' not found in server output."
+    assert output_found, (
+        f"Full output:\n{full_server_output}\n"
+        + f"[ASSERT_ERROR] Startup log message '{startup_message}' not found in server output."
+    )
 
     logger.info("Server started")
 
