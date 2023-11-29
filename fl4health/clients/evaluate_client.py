@@ -198,7 +198,7 @@ class EvaluateClient(NumpyFlClient):
 
     def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
         """
-        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionairy of
+        Computes loss given preds and torch and the user defined criterion. Optionally includes dictionary of
         loss components if you wish to train the total loss as well as sub losses if they exist.
         """
         loss = self.criterion(preds, target)

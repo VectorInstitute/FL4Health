@@ -68,7 +68,7 @@ class ApflClient(BasicClient):
         losses.backward.backward()
         self.local_optimizer.step()
 
-        # Return dictionairy of predictions where key is used to name respective MetricMeters
+        # Return dictionary of predictions where key is used to name respective MetricMeters
         return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> FixedLayerExchanger:
@@ -108,6 +108,6 @@ class ApflClient(BasicClient):
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
-        Returns a dictionairy with global and local optimizers with string keys 'global' and 'local' respectively.
+        Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """
         raise NotImplementedError
