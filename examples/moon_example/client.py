@@ -1,11 +1,11 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Set
+from typing import Sequence, Set, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, Tuple
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -60,6 +60,4 @@ if __name__ == "__main__":
     minority_numbers = {int(number) for number in args.minority_numbers}
     client = MnistMoonClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
-
-    # Shutdown the client gracefully
     client.shutdown()

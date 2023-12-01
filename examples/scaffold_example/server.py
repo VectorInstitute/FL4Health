@@ -41,6 +41,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     model = MnistNetWithBnAndFrozen()
+
     # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
     strategy = Scaffold(
         min_available_clients=config["n_clients"],
