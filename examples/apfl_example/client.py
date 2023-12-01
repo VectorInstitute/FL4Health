@@ -55,7 +55,6 @@ if __name__ == "__main__":
         type=int,
         help="Seed for the random number generator",
         required=False,
-        default=2023,
     )
     args = parser.parse_args()
 

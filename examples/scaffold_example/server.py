@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 import torch.nn as nn
@@ -33,7 +33,7 @@ def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_
     }
 
 
-def main(config: Dict[str, Any], server_address: str, seed: int) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

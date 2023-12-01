@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
@@ -47,7 +47,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, seed: int) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
 
     fit_config_fn = partial(
@@ -117,7 +117,6 @@ if __name__ == "__main__":
         type=int,
         help="Seed for the random number generator",
         required=False,
-        default=2023,
     )
     args = parser.parse_args()
 
