@@ -28,6 +28,7 @@ class InstanceLevelDPServer(FlServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         delta: Optional[float] = None,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Server to be used in case of Instance Level Differential Privacy with Federated Averaging.
@@ -62,6 +63,7 @@ class InstanceLevelDPServer(FlServer):
             strategy=strategy,
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
+            seed=seed,
         )
 
         # Ensure that one of local_epochs and local_steps is passed (and not both)

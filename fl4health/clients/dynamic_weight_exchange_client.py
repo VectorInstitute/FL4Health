@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
@@ -20,6 +20,7 @@ class DynamicWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Dynamic weight exchange client used to exchange a dynamic subset of layers per client.
@@ -39,6 +40,7 @@ class DynamicWeightExchangeClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
+            seed=seed,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module

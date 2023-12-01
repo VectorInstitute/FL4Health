@@ -1,8 +1,10 @@
+import random
 import timeit
 from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import torch
 from flwr.common import EvaluateIns, EvaluateRes, MetricsAggregationFn, Parameters, Scalar
 from flwr.common.logger import log
@@ -25,6 +27,7 @@ class EvaluateServer(Server):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         accept_failures: bool = True,
         min_available_clients: int = 1,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Args:
@@ -41,6 +44,15 @@ class EvaluateServer(Server):
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
                 Defaults to 1.
         """
+        if seed is None:
+            self.seed = 2023
+        else:
+            self.seed = seed
+        log(INFO, f"Setting seed to {seed}")
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed(self.seed)
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path

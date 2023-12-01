@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import pandas as pd
 import torch
@@ -23,8 +23,9 @@ class TabularDataClient(BasicClient):
         device: torch.device,
         id_column: str,
         targets: Union[str, List[str]],
+        seed: Optional[int] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device)
+        super().__init__(data_path, metrics, device, seed=seed)
         self.tabular_features_info_encoder: TabularFeaturesInfoEncoder
         self.tabular_features_preprocessor: TabularFeaturesPreprocessor
         self.df: pd.DataFrame
