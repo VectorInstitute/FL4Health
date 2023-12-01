@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Set
+from typing import Sequence, Set
 
 import flwr as fl
 import torch
@@ -27,7 +27,7 @@ class MnistMoonClient(MoonClient):
         metrics: Sequence[Metric],
         device: torch.device,
         minority_numbers: Set[int],
-        seed: Optional[int] = None,
+        seed: int,
     ) -> None:
         super().__init__(data_path=data_path, metrics=metrics, device=device, seed=seed)
         self.minority_numbers = minority_numbers
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         type=int,
         help="Seed for the random number generator",
         required=False,
-        default="2023",
+        default=2023,
     )
     args = parser.parse_args()
 
