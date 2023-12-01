@@ -159,7 +159,8 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     process_name: str,
 ) -> str:
     logger.info(f"Waiting for {process_name} to finish execution to collect its output...")
-    stdout_bytes, stderr_bytes = await process.communicate()
+    # Times out after 5 minutes just so it doesn't hang for a very long timeon some edge cases
+    stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=300)
     logger.info(f"Output collected for {process_name}")
 
     full_output = stdout_bytes.decode().replace("\\n", "\n")

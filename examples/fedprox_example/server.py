@@ -27,6 +27,7 @@ def get_initial_model_information() -> Parameters:
 
 def fit_config(
     local_epochs: int,
+    local_steps: int,
     batch_size: int,
     n_server_rounds: int,
     reporting_enabled: bool,
@@ -35,8 +36,7 @@ def fit_config(
     entity: str,
     current_round: int,
 ) -> Config:
-    return {
-        "local_epochs": local_epochs,
+    config_dict: Config = {
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -46,12 +46,20 @@ def fit_config(
         "entity": entity,
     }
 
+    if local_epochs is not None:
+        config_dict["local_epochs"] = local_epochs
+    if local_steps is not None:
+        config_dict["local_steps"] = local_steps
+
+    return config_dict
+
 
 def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config.get("local_epochs", config["local_steps"]),
+        config.get("local_epochs"),
+        config.get("local_steps"),
         config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
