@@ -5,7 +5,7 @@ import pytest
 from flwr.common.typing import Scalar
 
 from fl4health.clients.evaluate_client import EvaluateClient
-from tests.clients.fixtures import get_evaluation_client  # noqa
+from tests.clients.fixtures import get_basic_client, get_evaluation_client  # noqa
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
@@ -30,11 +30,12 @@ def test_evaluating_identical_global_and_local_models(get_evaluation_client: Eva
     evaluate_client = get_evaluation_client
 
     loss, metrics = evaluate_client.validate()
+    print(metrics.keys())
     assert math.isnan(loss)
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.43826544285
     assert pytest.approx(metrics["local_loss_checkpoint"], abs=0.0001) == 1.43826544285
-    assert pytest.approx(metrics["local_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
-    assert pytest.approx(metrics["global_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["local_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["global_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
 
 
 @pytest.mark.parametrize("model", [SingleLayerWithSeed()])
@@ -46,8 +47,8 @@ def test_evaluating_different_global_and_local_models(get_evaluation_client: Eva
     assert math.isnan(loss)
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.5104386806
     assert pytest.approx(metrics["local_loss_checkpoint"], abs=0.0001) == 1.43826544285
-    assert pytest.approx(metrics["local_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
-    assert pytest.approx(metrics["global_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["local_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["global_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
 
 
 @pytest.mark.parametrize("model", [SingleLayerWithSeed()])
@@ -59,7 +60,7 @@ def test_evaluating_only_local_models(get_evaluation_client: EvaluateClient) -> 
     assert math.isnan(loss)
     assert "global_loss_checkpoint" not in metrics
     assert pytest.approx(metrics["local_loss_checkpoint"], abs=0.0001) == 1.43826544285
-    assert pytest.approx(metrics["local_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["local_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
 
 
 @pytest.mark.parametrize("model", [SingleLayerWithSeed()])
@@ -71,4 +72,4 @@ def test_evaluating_only_global_models(get_evaluation_client: EvaluateClient) ->
     assert math.isnan(loss)
     assert "local_loss_checkpoint" not in metrics
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.43826544285
-    assert pytest.approx(metrics["global_eval_manager - predictions - accuracy"], abs=0.0001) == 0.0
+    assert pytest.approx(metrics["global_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
