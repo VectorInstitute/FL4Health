@@ -49,6 +49,8 @@ class EvaluateClient(BasicClient):
         self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
 
         # The attributes to be set in setup_client
+        # Models corresponding to client-side and server-side checkpoints,
+        # if they exist, to be evaluated on the clients dataset.
         self.data_loader: DataLoader
         self.criterion: _Loss
         self.local_model: Optional[nn.Module] = None

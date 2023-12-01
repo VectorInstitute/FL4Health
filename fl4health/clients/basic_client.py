@@ -79,16 +79,16 @@ class BasicClient(NumPyClient):
         self.num_val_samples: int
         self.learning_rate: float
 
-    def _maybe_checkpoint(self, comparison_metric: float) -> None:
+    def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
-        If checkpointer exists, maybe checkpoint model based on the comparison metric.
+        If checkpointer exists, maybe checkpoint model based on the current comparison metric value.
 
         Args:
-            comparison_metric (float): The metric value obtained by the current model.
+            current_metric_value (float): The metric value obtained by the current model.
                 Used to decide if to checkpoint model by checkpointer.
         """
         if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
+            self.checkpointer.maybe_checkpoint(self.model, current_metric_value)
 
     def generate_hash(self, length: int = 8) -> str:
         """
@@ -104,7 +104,7 @@ class BasicClient(NumPyClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
+        Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
         determine parameters sent.
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -159,7 +159,8 @@ class BasicClient(NumPyClient):
             T: The type-checked value at config[config_key]
 
         Raises:
-            ValueError: If config[config_key] is not of type narrow_type_to.
+            ValueError: If config[config_key] is not of type narrow_type_to or
+                if the config_key is not present in config.
         """
         if config_key not in config:
             raise ValueError(f"{config_key} is not present in the Config.")
@@ -172,7 +173,7 @@ class BasicClient(NumPyClient):
 
     def shutdown(self) -> None:
         """
-        Shuts down the client. Inolves shutting down W&B reporter if one exists.
+        Shuts down the client. Involves shutting down W&B reporter if one exists.
         """
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()
@@ -191,7 +192,7 @@ class BasicClient(NumPyClient):
 
         Raises:
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
-                current_server_round is of thje wrong type (int).
+                current_server_round is of the wrong type (int).
         """
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
 
@@ -222,7 +223,7 @@ class BasicClient(NumPyClient):
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
-            ValueError: If local_steps or local_epochs is not speccified in config.
+            ValueError: If local_steps or local_epochs is not specified in config.
         """
         local_epochs, local_steps, current_server_round = self.process_config(config)
 
@@ -260,7 +261,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[float, int, Dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-                validation set and the metric_vaues associated with evaluation.
+                validation set and the metric_values associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -289,7 +290,7 @@ class BasicClient(NumPyClient):
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
             metrics_dict (Dict[str, Scalar]): A dictionary of the metric to log.
-            current_round (Optional[int]): The current FL round.
+            current_round (Optional[int]): The current FL round (ie current server round).
             current_epoch (Optional[int]): The current epoch of local training.
             is_validation (bool): Whether or not this logging is for validation set.
         """
@@ -336,7 +337,8 @@ class BasicClient(NumPyClient):
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         """
-        Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
+        Given a single batch of input and target data, generate predictions, compute loss, update parameters and
+        optionally update metrics if they exist. (ie backprop on a single batch of data).
         Assumes self.model is in train model already.
 
         Args:
@@ -393,6 +395,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
         local_step = 0
@@ -429,6 +432,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+                Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
 
@@ -543,7 +547,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from server.
 
         Returns:
-            ParameterExchanger: Used to exchange weights between server and client.
+            ParameterExchanger: Used to exchange parameters between server and client.
         """
         return FullParameterExchanger()
 
@@ -654,6 +658,8 @@ class BasicClient(NumPyClient):
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
         Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
+        Returning multiple optimizers is useful in methods like APFL which has a different optimizer
+        for the local and global models.
 
         Args:
             config (Config): The config sent from the server.
@@ -669,7 +675,7 @@ class BasicClient(NumPyClient):
 
     def get_model(self, config: Config) -> nn.Module:
         """
-        User defined method that Returns PyTorch model.
+        User defined method that returns PyTorch model.
 
         Args:
             config (Config): The config from the server.
@@ -684,8 +690,10 @@ class BasicClient(NumPyClient):
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
-        Hook method Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionary.
+        Hook method called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionary. For example, used by Scaffold to update the control variates
+        after a local round of training. Also used by FedProx to update the current loss based on the loss
+        returned during training.
 
         Args:
             local_steps (int): The number of steps in the local training.
@@ -695,8 +703,9 @@ class BasicClient(NumPyClient):
 
     def update_after_step(self, step: int) -> None:
         """
-        Hook method Called after local train step on client. step is an integer that represents
-        the local training step that was most recently completed.
+        Hook method called after local train step on client. step is an integer that represents
+        the local training step that was most recently completed. For example, used by the APFL
+        method to update the alpha value after a training a step.
 
         Args:
             step (int): The step number in local training that was most recently completed.
