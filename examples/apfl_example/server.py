@@ -39,6 +39,7 @@ def main(config: Dict[str, Any]) -> None:
         config["batch_size"],
         config["n_server_rounds"],
     )
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -77,4 +78,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_config(args.config_path)
+
     main(config)
