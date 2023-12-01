@@ -1,25 +1,26 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
+from flwr.server.strategy import FedAvg
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
 
-def get_initial_model_parameters(initial_model: FendaModel) -> Parameters:
+def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
@@ -39,7 +40,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: int) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
 
     fit_config_fn = partial(
@@ -49,9 +50,9 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         config["n_server_rounds"],
         config["downsampling_ratio"],
     )
-    model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
+
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = BasicFedAvg(
+    strategy = FedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -61,7 +62,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_initial_model_parameters(),
     )
 
     client_manager = SimpleClientManager()
@@ -97,7 +98,8 @@ if __name__ == "__main__":
         action="store",
         type=int,
         help="Seed for the random number generator",
-        required=True,
+        required=False,
+        default="2023",
     )
     args = parser.parse_args()
 
