@@ -635,7 +635,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[DataLoader, DataLoader]: The client train and validation loader.
+            Tuple[DataLoader, ...]: Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.
