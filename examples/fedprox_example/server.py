@@ -36,7 +36,9 @@ def fit_config(
     entity: str,
     current_round: int,
 ) -> Config:
-    config_dict: Config = {
+    epochs_or_steps = {"local_epochs": local_epochs} if local_epochs else {"local_steps": local_steps}
+    return {
+        **epochs_or_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -45,13 +47,6 @@ def fit_config(
         "group_name": group_name,
         "entity": entity,
     }
-
-    if local_epochs is not None:
-        config_dict["local_epochs"] = local_epochs
-    if local_steps is not None:
-        config_dict["local_steps"] = local_steps
-
-    return config_dict
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:
