@@ -62,8 +62,6 @@ def main(config: Dict[str, Any]) -> None:
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-    # Shutdown the server gracefully
-    server.shutdown()
 
 
 if __name__ == "__main__":

@@ -40,7 +40,9 @@ class MnistApflClient(ApflClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+
     args = parser.parse_args()
+
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
