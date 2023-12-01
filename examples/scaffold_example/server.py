@@ -16,7 +16,6 @@ from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters(initial_model: nn.Module) -> Parameters:
-
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
     return ndarrays_to_parameters(model_weights)
@@ -63,8 +62,6 @@ def main(config: Dict[str, Any]) -> None:
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-    # Shutdown the server gracefully
-    server.shutdown()
 
 
 if __name__ == "__main__":
