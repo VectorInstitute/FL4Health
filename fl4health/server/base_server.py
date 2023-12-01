@@ -49,7 +49,7 @@ class FlServer(Server):
             self.seed = 2023
         else:
             self.seed = seed
-        log(INFO, f"Setting seed to {seed}")
+        log(INFO, f"Setting seed to {self.seed}")
         random.seed(self.seed)
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
