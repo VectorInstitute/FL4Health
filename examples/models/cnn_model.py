@@ -1,10 +1,6 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from fl4health.model_bases.warm_up_base import WarmUpModel
 
 
 class Net(nn.Module):
@@ -45,29 +41,9 @@ class MnistNet(nn.Module):
         return x
 
 
-class WarmUpMnistNet(WarmUpModel):
-    def __init__(self, warm_up: bool = False, warmed_up_dir: Optional[str] = None) -> None:
-        super().__init__(warm_up, warmed_up_dir)
-        self.conv1 = nn.Conv2d(1, 8, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(8, 16, 5)
-        self.fc1 = nn.Linear(16 * 4 * 4, 120)
-        self.fc2 = nn.Linear(120, 10)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 4 * 4)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return x
-
-
-class MnistNetWithBnAndFrozen(WarmUpModel):
-    def __init__(
-        self, freeze_cnn_layer: bool = True, warm_up: bool = False, warmed_up_dir: Optional[str] = None
-    ) -> None:
-        super().__init__(warm_up, warmed_up_dir)
+class MnistNetWithBnAndFrozen(nn.Module):
+    def __init__(self, freeze_cnn_layer: bool = True) -> None:
+        super().__init__()
         self.conv1 = nn.Conv2d(1, 8, 5)
         self.pool = nn.MaxPool2d(2, 2)
         self.conv2 = nn.Conv2d(8, 16, 5)

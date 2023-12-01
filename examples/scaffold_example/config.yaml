@@ -1,6 +1,5 @@
 # Parameters that describe server
 n_server_rounds: 50 # The number of rounds to run FL
-n_warm_up_rounds: 5 # The number of rounds to run before starting SCAFFOLD
 
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment

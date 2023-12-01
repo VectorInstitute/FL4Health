@@ -11,7 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import WarmUpMnistNet
+from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -26,7 +26,7 @@ class MnistFedProxClient(FedProxClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return WarmUpMnistNet().to(self.device)
+        return MnistNet().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.01)
@@ -50,7 +50,8 @@ if __name__ == "__main__":
         action="store",
         type=int,
         help="Seed for the random number generator",
-        required=True,
+        required=False,
+        default="2023",
     )
     args = parser.parse_args()
 

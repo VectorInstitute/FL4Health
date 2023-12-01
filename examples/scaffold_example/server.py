@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any, Dict, Optional
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
@@ -11,13 +12,13 @@ from flwr.common.typing import Config, Parameters
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.model_bases.warm_up_base import WarmUpModel
 from fl4health.server.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 
 
-def get_initial_model_parameters(initial_model: WarmUpModel) -> Parameters:
+def get_initial_model_parameters(initial_model: nn.Module) -> Parameters:
+
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
     return ndarrays_to_parameters(model_weights)
@@ -32,7 +33,7 @@ def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_
     }
 
 
-def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -41,8 +42,7 @@ def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[st
         config["n_server_rounds"],
     )
 
-    model = MnistNetWithBnAndFrozen(warmed_up_dir=warmed_up_dir)
-
+    model = MnistNetWithBnAndFrozen()
     # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
     strategy = Scaffold(
         min_available_clients=config["n_clients"],
@@ -85,20 +85,15 @@ if __name__ == "__main__":
         default="0.0.0.0:8080",
     )
     parser.add_argument(
-        "--warm_up_dir",
-        action="store",
-        help="Dir to save warm up checkpoint file",
-        required=False,
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
         help="Seed for the random number generator",
-        required=True,
+        required=False,
+        default="2023",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.warm_up_dir, args.seed)
+    main(config, args.server_address, args.seed)

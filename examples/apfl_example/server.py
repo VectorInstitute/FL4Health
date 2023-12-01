@@ -33,7 +33,7 @@ def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current
     }
 
 
-def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[str], seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -41,7 +41,7 @@ def main(config: Dict[str, Any], server_address: str, warmed_up_dir: Optional[st
         config["batch_size"],
         config["n_server_rounds"],
     )
-    model = ApflModule(MnistNetWithBnAndFrozen(), warmed_up_dir=warmed_up_dir)
+    model = ApflModule(MnistNetWithBnAndFrozen())
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
         min_fit_clients=config["n_clients"],
@@ -85,20 +85,15 @@ if __name__ == "__main__":
         default="0.0.0.0:8080",
     )
     parser.add_argument(
-        "--warm_up_dir",
-        action="store",
-        help="Dir to save warm up checkpoint file",
-        required=False,
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
         help="Seed for the random number generator",
-        required=True,
+        required=False,
+        default="2023",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.warm_up_dir, args.seed)
+    main(config, args.server_address, args.seed)

@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import torch
 import torch.nn as nn
 
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
-from fl4health.model_bases.warm_up_base import WarmUpModel
 
 
 class FendaJoinMode(Enum):
@@ -36,16 +35,14 @@ class FendaHeadModule(nn.Module, ABC):
         return self.head_forward(head_input)
 
 
-class FendaModel(WarmUpModel, PartialLayerExchangeModel):
+class FendaModel(PartialLayerExchangeModel):
     def __init__(
         self,
         local_module: nn.Module,
         global_module: nn.Module,
         model_head: FendaHeadModule,
-        warm_up: bool = False,
-        warmed_up_dir: Optional[str] = None,
     ) -> None:
-        super().__init__(warm_up, warmed_up_dir)
+        super().__init__()
         self.local_module = local_module
         self.global_module = global_module
         self.model_head = model_head
@@ -56,11 +53,7 @@ class FendaModel(WarmUpModel, PartialLayerExchangeModel):
     def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
         global_output = self.global_module.forward(input)
-        if self.warm_up:
-            self.local_module.eval()
-            local_output = torch.zeros_like(global_output)
-        else:
-            local_output = self.local_module.forward(input)
+        local_output = self.local_module.forward(input)
         preds = {"prediction": self.model_head.forward(local_output, global_output)}
         features = {
             "local_features": local_output.reshape(len(local_output), -1),

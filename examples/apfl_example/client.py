@@ -54,7 +54,8 @@ if __name__ == "__main__":
         action="store",
         type=int,
         help="Seed for the random number generator",
-        required=True,
+        required=False,
+        default="2023",
     )
     args = parser.parse_args()
 

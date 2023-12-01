@@ -1,24 +1,21 @@
 import copy
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import torch
 import torch.nn as nn
 
 from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
-from fl4health.model_bases.warm_up_base import WarmUpModel
 
 
-class ApflModule(WarmUpModel, PartialLayerExchangeModel):
+class ApflModule(PartialLayerExchangeModel):
     def __init__(
         self,
         model: nn.Module,
         adaptive_alpha: bool = True,
         alpha: float = 0.5,
         alpha_lr: float = 0.01,
-        warm_up: bool = False,
-        warmed_up_dir: Optional[str] = None,
     ) -> None:
-        super().__init__(warm_up, warmed_up_dir)
+        super().__init__()
         self.local_model: nn.Module = model
         self.global_model: nn.Module = copy.deepcopy(model)
 
@@ -35,13 +32,8 @@ class ApflModule(WarmUpModel, PartialLayerExchangeModel):
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         # Forward return dictionary because APFL has multiple different prediction types
         global_logits = self.global_forward(input)
-        if not self.warm_up:
-            local_logits = self.local_forward(input)
-            personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
-        else:
-            self.local_model.eval()
-            local_logits = torch.zeros_like(global_logits)
-            personal_logits = global_logits
+        local_logits = self.local_forward(input)
+        personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
         preds = {"personal": personal_logits, "global": global_logits, "local": local_logits}
         return preds
 
