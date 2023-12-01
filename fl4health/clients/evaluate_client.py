@@ -34,6 +34,8 @@ class EvaluateClient(BasicClient):
         seed: Optional[int] = None,
     ) -> None:
 
+        self._maybe_fix_random_seeds(seed)
+
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
         self.client_name = self.generate_hash()
