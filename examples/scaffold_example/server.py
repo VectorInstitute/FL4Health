@@ -1,11 +1,9 @@
 import argparse
 from functools import partial
-from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 import torch.nn as nn
-from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 
@@ -33,7 +31,7 @@ def fit_config(local_steps: int, batch_size: int, n_server_rounds: int, current_
     }
 
 
-def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
+def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -58,10 +56,10 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
-    server = ScaffoldServer(client_manager=client_manager, strategy=strategy, warm_start=True, seed=seed)
+    server = ScaffoldServer(client_manager=client_manager, strategy=strategy, warm_start=True)
     fl.server.start_server(
         server=server,
-        server_address=server_address,
+        server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
     # Shutdown the server gracefully
@@ -77,23 +75,8 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/scaffold_example/config.yaml",
     )
-    parser.add_argument(
-        "--server_address",
-        action="store",
-        type=str,
-        help="Server Address to be used to communicate with the clients",
-        default="0.0.0.0:8080",
-    )
-    parser.add_argument(
-        "--seed",
-        action="store",
-        type=int,
-        help="Seed for the random number generator",
-        required=False,
-        default=2023,
-    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-    log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.seed)
+
+    main(config)
