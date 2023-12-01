@@ -51,7 +51,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
+        config.get("local_epochs", config["local_steps"]),
         config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
