@@ -45,6 +45,13 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -52,7 +59,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
+    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

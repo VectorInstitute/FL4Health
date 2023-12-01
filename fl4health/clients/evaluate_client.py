@@ -31,7 +31,10 @@ class EvaluateClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
+        seed: Optional[int] = None,
     ) -> None:
+
+        self._maybe_fix_random_seeds(seed)
 
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training

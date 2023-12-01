@@ -5,11 +5,13 @@ from typing import Any, Dict
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.moon_base import MoonModel
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 
@@ -41,7 +43,6 @@ def main(config: Dict[str, Any]) -> None:
         config["n_server_rounds"],
         config["downsampling_ratio"],
     )
-
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -55,12 +56,16 @@ def main(config: Dict[str, Any]) -> None:
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(),
     )
+    client_manager = SimpleClientManager()
+    server = FlServer(client_manager, strategy)
 
     fl.server.start_server(
+        server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
+    # Shutdown the server gracefully
+    server.shutdown()
 
 
 if __name__ == "__main__":

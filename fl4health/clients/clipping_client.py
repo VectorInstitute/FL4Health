@@ -30,6 +30,7 @@ class NumpyClippingClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -37,6 +38,7 @@ class NumpyClippingClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
         )
         self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.clipping_bound: Optional[float] = None

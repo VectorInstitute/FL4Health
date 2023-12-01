@@ -11,6 +11,7 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
 
@@ -155,13 +156,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = PoissonSamplingClientManager()
+    server = FlServer(client_manager, strategy)
 
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     fl.server.start_server(
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
-        client_manager=client_manager,
+        server=server,
         grpc_max_message_length=1600000000,
     )
 

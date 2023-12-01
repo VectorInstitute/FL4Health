@@ -21,8 +21,9 @@ class ApflClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, seed=seed)
 
         self.model: ApflModule
         self.learning_rate: float
