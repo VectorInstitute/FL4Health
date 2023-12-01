@@ -626,7 +626,7 @@ class BasicClient(NumPyClient):
 
         return cloned_model
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, ...]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader

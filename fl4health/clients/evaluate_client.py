@@ -66,7 +66,7 @@ class EvaluateClient(BasicClient):
         """
         Set dataloaders, parameter exchangers and other attributes for the client
         """
-        self.data_loader = self.get_data_loader(config)
+        self.data_loader = self.get_data_loader(config)[0]
         self.global_model = self.initialize_global_model(config)
         self.local_model = self.get_local_model(config)
 
@@ -204,7 +204,7 @@ class EvaluateClient(BasicClient):
         """
         return FullParameterExchanger()
 
-    def get_data_loader(self, config: Config) -> DataLoader:  # type: ignore
+    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
         """
         User defined method that returns a PyTorch DataLoader for validation
         """
