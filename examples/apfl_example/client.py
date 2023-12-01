@@ -1,12 +1,10 @@
 import argparse
-from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
@@ -42,29 +40,10 @@ class MnistApflClient(ApflClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    parser.add_argument(
-        "--server_address",
-        action="store",
-        type=str,
-        help="Server Address for the clients to communicate with the server through",
-        default="0.0.0.0:8080",
-    )
-    parser.add_argument(
-        "--seed",
-        action="store",
-        type=int,
-        help="Seed for the random number generator",
-        required=False,
-    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    log(INFO, f"Device to be used: {DEVICE}")
-    log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistApflClient(data_path, [Accuracy()], DEVICE, seed=args.seed)
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
-
-    # Shutdown the client gracefully
-    client.shutdown()
+    client = MnistApflClient(data_path, [Accuracy()], DEVICE)
+    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
