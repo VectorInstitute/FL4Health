@@ -4,23 +4,23 @@ from logging import INFO
 from typing import Any, Dict, Optional
 
 import flwr as fl
-import torch
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
+from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 
 
-def get_initial_model_parameters(initial_model: torch.nn.Module) -> Parameters:
+def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = ApflModule(MnistNetWithBnAndFrozen())
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
@@ -41,9 +41,8 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         config["batch_size"],
         config["n_server_rounds"],
     )
-    model = ApflModule(MnistNetWithBnAndFrozen())
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = BasicFedAvg(
+    strategy = FedAvg(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -53,7 +52,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_initial_model_parameters(),
     )
 
     client_manager = SimpleClientManager()
