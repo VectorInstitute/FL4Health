@@ -9,12 +9,14 @@ import flwr as fl
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Metrics, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 from sklearn.model_selection import train_test_split
 
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, get_local_data, word_tokenize
 from examples.fedopt_example.metrics import Outcome, ServerMetrics
 from examples.models.lstm_model import LSTM
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 
@@ -154,10 +156,13 @@ def main(config: Dict[str, Any]) -> None:
         ),
     )
 
+    client_manager = SimpleClientManager()
+    server = FlServer(client_manager, strategy)
+
     fl.server.start_server(
         server_address=config["server_address"],
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
+        server=server,
     )
 
 
