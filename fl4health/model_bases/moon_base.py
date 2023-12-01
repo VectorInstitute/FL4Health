@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 
-class MoonModel(torch.nn.Module):
+class MoonModel(nn.Module):
     def __init__(
         self, base_module: nn.Module, head_module: nn.Module, projection_module: Optional[nn.Module] = None
     ) -> None:
