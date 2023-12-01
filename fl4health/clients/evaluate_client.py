@@ -66,7 +66,8 @@ class EvaluateClient(BasicClient):
         """
         Set dataloaders, parameter exchangers and other attributes for the client
         """
-        self.data_loader = self.get_data_loader(config)[0]
+        (data_loader,) = self.get_data_loader(config)
+        self.data_loader = data_loader
         self.global_model = self.initialize_global_model(config)
         self.local_model = self.get_local_model(config)
 
