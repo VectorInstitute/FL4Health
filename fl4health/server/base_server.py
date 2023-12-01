@@ -45,19 +45,27 @@ class FlServer(Server):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
-        if seed is None:
-            self.seed = 2023
-        else:
-            self.seed = seed
-        log(INFO, f"Setting seed to {self.seed}")
-        random.seed(self.seed)
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
-        torch.cuda.manual_seed(self.seed)
+        self._maybe_fix_random_seeds(seed)
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = checkpointer
+
+    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
+        """
+        If seed value is provided, fix random seeds for reproducibility of results.
+
+        Args:
+            seed (int): The seed value to be used for random number generators.
+        """
+        if seed is None:
+            log(INFO, "No seed provided. Using random seed.")
+        else:
+            log(INFO, f"Setting seed to {seed}")
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         history = super().fit(num_rounds, timeout)

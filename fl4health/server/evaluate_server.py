@@ -44,15 +44,7 @@ class EvaluateServer(Server):
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
                 Defaults to 1.
         """
-        if seed is None:
-            self.seed = 2023
-        else:
-            self.seed = seed
-        log(INFO, f"Setting seed to {seed}")
-        random.seed(self.seed)
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
-        torch.cuda.manual_seed(self.seed)
+        self._maybe_fix_random_seeds(seed)
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path
@@ -70,6 +62,22 @@ class EvaluateServer(Server):
                 f"Fraction Evaluate is {self.fraction_evaluate}. "
                 "Thus, some clients may not participate in evaluation",
             )
+
+    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
+        """
+        If seed value is provided, fix random seeds for reproducibility of results.
+
+        Args:
+            seed (int): The seed value to be used for random number generators.
+        """
+        if seed is None:
+            log(INFO, "No seed provided. Using random seed.")
+        else:
+            log(INFO, f"Setting seed to {seed}")
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path

@@ -11,12 +11,6 @@ from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_seed_setting(get_fenda_client: FendaClient) -> None:  # noqa
-    client = get_fenda_client
-    assert client.seed == 2023
-
-
-@pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
 def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client

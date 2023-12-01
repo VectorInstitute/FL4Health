@@ -9,12 +9,6 @@ from tests.clients.fixtures import get_client  # noqa
 
 
 @pytest.mark.parametrize("type,model", [(InstanceLevelPrivacyClient, Net())])
-def test_seed_setting(get_client: InstanceLevelPrivacyClient) -> None:  # noqa
-    client = get_client
-    assert client.seed == 2023
-
-
-@pytest.mark.parametrize("type,model", [(InstanceLevelPrivacyClient, Net())])
 def test_instance_level_client(get_client: InstanceLevelPrivacyClient) -> None:  # noqa
     client = get_client
     client.setup_opacus_objects()

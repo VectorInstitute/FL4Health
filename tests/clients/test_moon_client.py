@@ -11,12 +11,6 @@ from tests.test_utils.models_for_test import FeatureCnn, HeadCnn
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_seed_setting(get_client: MoonClient) -> None:  # noqa
-    client = get_client
-    assert client.seed == 2023
-
-
-@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
 def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client

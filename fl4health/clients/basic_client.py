@@ -50,15 +50,9 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
-        if seed is None:
-            self.seed = 2023
-        else:
-            self.seed = seed
-        log(INFO, f"Setting seed to {self.seed}")
-        random.seed(self.seed)
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
-        torch.cuda.manual_seed(self.seed)
+
+        self._maybe_fix_random_seeds(seed)
+
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
@@ -89,6 +83,22 @@ class BasicClient(NumPyClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: float
+
+    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
+        """
+        If seed value is provided, fix random seeds for reproducibility of results.
+
+        Args:
+            seed (int): The seed value to be used for random number generators.
+        """
+        if seed is None:
+            log(INFO, "No seed provided. Using random seed.")
+        else:
+            log(INFO, f"Setting seed to {seed}")
+            random.seed(seed)
+            np.random.seed(seed)
+            torch.manual_seed(seed)
+            torch.cuda.manual_seed(seed)
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """

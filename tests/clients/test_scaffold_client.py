@@ -11,12 +11,6 @@ from tests.clients.fixtures import get_client  # noqa
 
 
 @pytest.mark.parametrize("type,model", [(ScaffoldClient, Net())])
-def test_seed_setting(get_client: ScaffoldClient) -> None:  # noqa
-    client = get_client
-    assert client.seed == 2023
-
-
-@pytest.mark.parametrize("type,model", [(ScaffoldClient, Net())])
 def test_compute_parameter_delta(get_client: ScaffoldClient) -> None:  # noqa
     layer_size = 10
     num_layers = 5
