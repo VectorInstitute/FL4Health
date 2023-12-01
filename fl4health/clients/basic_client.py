@@ -98,7 +98,6 @@ class BasicClient(NumPyClient):
             random.seed(seed)
             np.random.seed(seed)
             torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """

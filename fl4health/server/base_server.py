@@ -65,7 +65,6 @@ class FlServer(Server):
             random.seed(seed)
             np.random.seed(seed)
             torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         history = super().fit(num_rounds, timeout)

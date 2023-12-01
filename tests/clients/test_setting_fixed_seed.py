@@ -18,4 +18,3 @@ def test_set_fixing_random_seeds(get_basic_client: BasicClient) -> None:  # noqa
     assert pytest.approx(random.random(), abs=0.0001) == 0.3829
     assert pytest.approx(np.random.rand(), abs=0.0001) == 0.3219
     assert pytest.approx(torch.rand(1).item(), abs=0.0001) == 0.4290
-    # assert pytest.approx(torch.cuda.FloatTensor(1).uniform_(), abs=0.0001) == 0.4290

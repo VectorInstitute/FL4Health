@@ -77,7 +77,6 @@ class EvaluateServer(Server):
             random.seed(seed)
             np.random.seed(seed)
             torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path
