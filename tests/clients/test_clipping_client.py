@@ -14,6 +14,11 @@ class DummyClippingClient(NumpyClippingClient):
         raise NotImplementedError
 
 
+def test_seed_setting() -> None:
+    clipping_client = DummyClippingClient(Path(""), [Accuracy("accuracy")], torch.device("cpu"))
+    assert clipping_client.seed == 2023
+
+
 def test_weight_update_and_clipping() -> None:
     clipping_client = DummyClippingClient(Path(""), [Accuracy("accuracy")], torch.device("cpu"))
     clipping_client.adaptive_clipping = True

@@ -10,6 +10,12 @@ from tests.test_utils.models_for_test import LinearTransform, SmallCnn
 
 
 @pytest.mark.parametrize("type,model", [(FedProxClient, SmallCnn())])
+def test_seed_setting(get_client: FedProxClient) -> None:  # noqa
+    fed_prox_client = get_client
+    assert fed_prox_client.seed == 2023
+
+
+@pytest.mark.parametrize("type,model", [(FedProxClient, SmallCnn())])
 def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client

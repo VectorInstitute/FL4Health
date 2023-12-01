@@ -19,6 +19,11 @@ class DummyFLServer(FlServer):
         return model
 
 
+def test_seed_setting() -> None:
+    fl_server = FlServer(PoissonSamplingClientManager(), None, None, None)
+    assert fl_server.seed == 2023
+
+
 def test_no_hydration_with_checkpointer(caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
