@@ -45,12 +45,15 @@ class FlServer(Server):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
-        if seed is not None:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
+        if seed is None:
+            self.seed = 2023
+        else:
+            self.seed = seed
+        log(INFO, f"Setting seed to {seed}")
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed(self.seed)
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter

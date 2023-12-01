@@ -6,10 +6,7 @@ import torch.nn as nn
 
 class MoonModel(torch.nn.Module):
     def __init__(
-        self,
-        base_module: nn.Module,
-        head_module: nn.Module,
-        projection_module: Optional[nn.Module] = None,
+        self, base_module: nn.Module, head_module: nn.Module, projection_module: Optional[nn.Module] = None
     ) -> None:
         super().__init__()
         self.base_module = base_module

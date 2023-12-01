@@ -360,13 +360,7 @@ class BasicClient(NumpyFlClient):
         Returns:
             Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
         """
-        assert isinstance(preds, dict)
-
-        if "prediction" in preds:
-            loss = self.criterion(preds["prediction"], target)
-        else:
-            loss = self.criterion(preds["global"], target)
-
+        loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
         return losses
 

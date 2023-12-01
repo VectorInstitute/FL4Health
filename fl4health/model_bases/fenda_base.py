@@ -36,12 +36,7 @@ class FendaHeadModule(nn.Module, ABC):
 
 
 class FendaModel(PartialLayerExchangeModel):
-    def __init__(
-        self,
-        local_module: nn.Module,
-        global_module: nn.Module,
-        model_head: FendaHeadModule,
-    ) -> None:
+    def __init__(self, local_module: nn.Module, global_module: nn.Module, model_head: FendaHeadModule) -> None:
         super().__init__()
         self.local_module = local_module
         self.global_module = global_module
@@ -52,8 +47,8 @@ class FendaModel(PartialLayerExchangeModel):
 
     def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
-        global_output = self.global_module.forward(input)
         local_output = self.local_module.forward(input)
+        global_output = self.global_module.forward(input)
         preds = {"prediction": self.model_head.forward(local_output, global_output)}
         features = {
             "local_features": local_output.reshape(len(local_output), -1),

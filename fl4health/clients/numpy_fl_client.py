@@ -21,12 +21,15 @@ T = TypeVar("T")
 
 class NumpyFlClient(NumPyClient):
     def __init__(self, data_path: Path, device: torch.device, seed: Optional[int] = None) -> None:
-        if seed is not None:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
-            torch.cuda.manual_seed(seed)
+        if seed is None:
+            self.seed = 2023
+        else:
+            self.seed = seed
+        log(INFO, f"Setting seed to {self.seed}")
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed(self.seed)
         self.client_name = self.generate_hash()
         self.model: nn.Module
         self.parameter_exchanger: ParameterExchanger
