@@ -1,15 +1,12 @@
 import random
 import string
-from logging import INFO
 from pathlib import Path
 from typing import Optional, Type, TypeVar
 
-import numpy as np
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
 from flwr.common import Config, NDArrays
-from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -20,16 +17,7 @@ T = TypeVar("T")
 
 
 class NumpyFlClient(NumPyClient):
-    def __init__(self, data_path: Path, device: torch.device, seed: Optional[int] = None) -> None:
-        if seed is None:
-            self.seed = 2023
-        else:
-            self.seed = seed
-        log(INFO, f"Setting seed to {self.seed}")
-        random.seed(self.seed)
-        np.random.seed(self.seed)
-        torch.manual_seed(self.seed)
-        torch.cuda.manual_seed(self.seed)
+    def __init__(self, data_path: Path, device: torch.device) -> None:
         self.client_name = self.generate_hash()
         self.model: nn.Module
         self.parameter_exchanger: ParameterExchanger

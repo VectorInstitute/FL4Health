@@ -33,7 +33,7 @@ class EvaluateClient(NumpyFlClient):
         model_checkpoint_path: Optional[Path] = None,
         seed: Optional[int] = None,
     ) -> None:
-        super().__init__(data_path=data_path, device=device, seed=seed)
+        super().__init__(data_path=data_path, device=device)
         self.model_checkpoint_path = model_checkpoint_path
         self.metrics = metrics
         self.local_model: Optional[nn.Module] = None
