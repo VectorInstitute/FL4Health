@@ -35,9 +35,13 @@ class EnsembleModel(nn.Module):
         return preds
 
     def ensemble_vote(self, model_preds: Dict[str, torch.Tensor]) -> torch.Tensor:
-        argmax_per_model = torch.stack([torch.argmax(val, dim=1) for val in model_preds.values()])
-        argmax = torch.max(argmax_per_model, dim=0)[0]
-        vote_preds = nn.functional.one_hot(argmax, num_classes=model_preds["ensemble-model-0"].shape[-1])
+        argmax_per_model = torch.hstack([torch.argmax(val, dim=-1, keepdim=True) for val in model_preds.values()])
+        index_count_list = map(lambda x: torch.unique(x, return_counts=True), argmax_per_model.unbind())
+        indices_with_highest_counts = torch.tensor([index[torch.argmax(count)] for index, count in index_count_list])
+        vote_preds = nn.functional.one_hot(
+            indices_with_highest_counts, num_classes=model_preds["ensemble-model-0"].shape[-1]
+        )
+
         return vote_preds
 
     def ensemble_average(self, model_preds: Dict[str, torch.Tensor]) -> torch.Tensor:
