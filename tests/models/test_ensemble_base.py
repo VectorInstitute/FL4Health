@@ -31,11 +31,34 @@ def test_forward_vote_mode() -> None:
 
 def test_ensemble_vote() -> None:
     fake_instance = mock.Mock()
-    tnsr = {
-        "ensemble-model-0": torch.tensor([[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]]),
-        "ensemble-model-1": torch.tensor([[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]]),
-        "ensemble-model-2": torch.tensor([[0.25, 0.5, 1.0], [1.0, 3.21, 0.2], [2.4, 0.5, 0.8]]),
-    }
-    ensemble_pred = EnsembleModel.ensemble_vote(fake_instance, tnsr)
+    tnsr_list = [
+        torch.tensor([[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]]),
+        torch.tensor([[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]]),
+        torch.tensor([[0.25, 0.5, 1.0], [1.0, 3.21, 0.2], [2.4, 0.5, 0.8]]),
+    ]
+    ensemble_pred = EnsembleModel.ensemble_vote(fake_instance, tnsr_list)
     gt_ensemble_pred = torch.tensor([[1, 0, 0], [0, 0, 1], [0, 0, 1]])
     assert torch.equal(ensemble_pred, gt_ensemble_pred)
+
+    tnsr_list2 = [
+        torch.tensor([[[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]] for _ in range(3)]),
+        torch.tensor([[[1.0, 0.5, 0.25], [0.25, 0.33, 0.89], [0.2, 0.4, 0.8]] for _ in range(3)]),
+        torch.tensor([[[0.25, 0.5, 1.0], [1.0, 3.21, 0.2], [2.4, 0.5, 0.8]] for _ in range(3)]),
+    ]
+
+    ensemble_pred2 = EnsembleModel.ensemble_vote(fake_instance, tnsr_list2)
+    gt_ensemble_pred2 = torch.tensor([[[1, 0, 0], [0, 0, 1], [0, 0, 1]] for _ in range(3)])
+    assert torch.equal(ensemble_pred2, gt_ensemble_pred2)
+
+
+def test_ensenble_average() -> None:
+    fake_instance = mock.Mock()
+    tnsr_list = [torch.eye(5) * (i + 1.0) for i in range(3)]
+    ensemble_pred = EnsembleModel.ensemble_average(fake_instance, tnsr_list)
+    gt_ensemble_pred = torch.eye(5) * 2.0
+    assert torch.equal(ensemble_pred, gt_ensemble_pred)
+
+    tnsr_list2 = [torch.ones((7, 7, 7)), torch.zeros((7, 7, 7)), torch.ones((7, 7, 7)), torch.zeros((7, 7, 7))]
+    ensemble_pred2 = EnsembleModel.ensemble_average(fake_instance, tnsr_list2)
+    gt_ensemble_pred2 = torch.ones((7, 7, 7)) * 0.5
+    assert torch.equal(ensemble_pred2, gt_ensemble_pred2)
