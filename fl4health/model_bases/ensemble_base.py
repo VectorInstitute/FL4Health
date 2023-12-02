@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional
 
 import torch
 import torch.nn as nn
@@ -13,7 +13,7 @@ class EnsembleAggregationMode(Enum):
 class EnsembleModel(nn.Module):
     def __init__(
         self,
-        models: Sequence[nn.Module],
+        models: Dict[str, nn.Module],
         aggregation_mode: Optional[EnsembleAggregationMode] = EnsembleAggregationMode.AVERAGE,
     ) -> None:
         super().__init__()
@@ -22,8 +22,8 @@ class EnsembleModel(nn.Module):
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         preds = {}
-        for i, model in enumerate(self.models):
-            preds[f"ensemble-model-{str(i)}"] = model(input).squeeze()
+        for key, model in self.models.items():
+            preds[key] = model(input).squeeze()
 
         if self.aggregation_mode == EnsembleAggregationMode.AVERAGE:
             ensemble_pred = self.ensemble_average(list(preds.values()))

@@ -1,12 +1,15 @@
+from typing import Dict
+
 import mock
 import torch
+import torch.nn as nn
 
 from fl4health.model_bases.ensemble_base import EnsembleAggregationMode, EnsembleModel
 from tests.test_utils.models_for_test import SmallCnn
 
 
 def test_forward_average_mode() -> None:
-    models = [SmallCnn(), SmallCnn()]
+    models: Dict[str, nn.Module] = {"ensemble-model-0": SmallCnn(), "ensemble-model-1": SmallCnn()}
     em = EnsembleModel(models, EnsembleAggregationMode.AVERAGE)
     data = torch.rand((64, 1, 28, 28))
     ep = em(data)
@@ -18,7 +21,7 @@ def test_forward_average_mode() -> None:
 
 
 def test_forward_vote_mode() -> None:
-    models = [SmallCnn(), SmallCnn()]
+    models: Dict[str, nn.Module] = {"ensemble-model-0": SmallCnn(), "ensemble-model-1": SmallCnn()}
     em = EnsembleModel(models, EnsembleAggregationMode.VOTE)
     data = torch.rand((64, 1, 28, 28))
     ep = em(data)

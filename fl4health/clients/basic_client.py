@@ -72,7 +72,7 @@ class BasicClient(NumPyClient):
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
         self.model: nn.Module
-        self.optimizer: torch.optim.Optimizer
+        self.optimizers: Dict[str, torch.optim.Optimizer]
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.num_train_samples: int
@@ -350,7 +350,7 @@ class BasicClient(NumPyClient):
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
@@ -358,7 +358,7 @@ class BasicClient(NumPyClient):
 
         # Compute backward pass and update paramters with optimizer
         losses.backward.backward()
-        self.optimizer.step()
+        self.optimizers["global"].step()
 
         return losses, preds
 
@@ -531,7 +531,11 @@ class BasicClient(NumPyClient):
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
-        self.learning_rate = self.optimizer.defaults["lr"]
+        if "global" in self.optimizers:
+            self.learning_rate = self.optimizers["global"].defaults["lr"]
+        else:
+            self.learning_rate = list(self.optimizers.values())[0].defaults["lr"]
+
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
@@ -607,7 +611,7 @@ class BasicClient(NumPyClient):
         """
         optimizer = self.get_optimizer(config)
         assert not isinstance(optimizer, dict)
-        self.optimizer = optimizer
+        self.optimizers = {"global": optimizer}
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
         """Clone and freeze model for use in various loss calculation.
