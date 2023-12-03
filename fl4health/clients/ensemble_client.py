@@ -34,10 +34,10 @@ class EnsembleClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
 
-        assert len(self.optimizers) == len(self.model.models)
+        assert len(self.optimizers) == len(self.model.model_keys)
         assert all(
             opt_key == model_key
-            for opt_key, model_key in zip(sorted(self.optimizers.keys()), sorted(self.model.models.keys()))
+            for opt_key, model_key in zip(sorted(self.optimizers.keys()), sorted(self.model.model_keys))
         )
 
     def set_optimizer(self, config: Config) -> None:
@@ -52,7 +52,9 @@ class EnsembleClient(BasicClient):
 
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
-        losses.backward.backward()
+
+        for loss in losses.additional_losses.values():
+            loss.backward()
 
         for optimizer in self.optimizers.values():
             optimizer.step()

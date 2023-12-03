@@ -9,26 +9,26 @@ from tests.test_utils.models_for_test import SmallCnn
 
 
 def test_forward_average_mode() -> None:
-    models: Dict[str, nn.Module] = {"ensemble-model-0": SmallCnn(), "ensemble-model-1": SmallCnn()}
+    models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
     em = EnsembleModel(models, EnsembleAggregationMode.AVERAGE)
     data = torch.rand((64, 1, 28, 28))
     ep = em(data)
 
     assert len(ep) == 3
-    assert "ensemble-model-0" in ep and ep["ensemble-model-0"].shape == torch.Size([64, 32])
-    assert "ensemble-model-1" in ep and ep["ensemble-model-1"].shape == torch.Size([64, 32])
+    assert "model_0" in ep and ep["model_1"].shape == torch.Size([64, 32])
+    assert "model_0" in ep and ep["model_1"].shape == torch.Size([64, 32])
     assert "ensemble-pred" in ep and ep["ensemble-pred"].shape == torch.Size([64, 32])
 
 
 def test_forward_vote_mode() -> None:
-    models: Dict[str, nn.Module] = {"ensemble-model-0": SmallCnn(), "ensemble-model-1": SmallCnn()}
+    models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
     em = EnsembleModel(models, EnsembleAggregationMode.VOTE)
     data = torch.rand((64, 1, 28, 28))
     ep = em(data)
 
     assert len(ep) == 3
-    assert "ensemble-model-0" in ep and ep["ensemble-model-0"].shape == torch.Size([64, 32])
-    assert "ensemble-model-1" in ep and ep["ensemble-model-1"].shape == torch.Size([64, 32])
+    assert "model_0" in ep and ep["model_0"].shape == torch.Size([64, 32])
+    assert "model_1" in ep and ep["model_0"].shape == torch.Size([64, 32])
     assert "ensemble-pred" in ep and ep["ensemble-pred"].shape == torch.Size([64, 32])
 
 

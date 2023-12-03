@@ -18,9 +18,9 @@ def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
     ensemble_models: Dict[str, nn.Module] = {
-        "ensemble-model-0": ConfigurableMnistNet(out_channel_mult=1),
-        "ensemble-model-1": ConfigurableMnistNet(out_channel_mult=2),
-        "ensemble-model-2": ConfigurableMnistNet(out_channel_mult=3),
+        "model_0": ConfigurableMnistNet(out_channel_mult=1),
+        "model_1": ConfigurableMnistNet(out_channel_mult=2),
+        "model_2": ConfigurableMnistNet(out_channel_mult=3),
     }
     initial_model = EnsembleModel(ensemble_models)
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])

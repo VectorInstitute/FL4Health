@@ -22,22 +22,22 @@ class MnistEnsembleClient(EnsembleClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
-        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
         ensemble_models: Dict[str, nn.Module] = {
-            "ensemble-model-0": ConfigurableMnistNet(out_channel_mult=1).to(self.device),
-            "ensemble-model-1": ConfigurableMnistNet(out_channel_mult=2).to(self.device),
-            "ensemble-model-2": ConfigurableMnistNet(out_channel_mult=3).to(self.device),
+            "model_0": ConfigurableMnistNet(out_channel_mult=1).to(self.device),
+            "model_1": ConfigurableMnistNet(out_channel_mult=2).to(self.device),
+            "model_2": ConfigurableMnistNet(out_channel_mult=3).to(self.device),
         }
         return EnsembleModel(ensemble_models)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         ensemble_optimizers: Dict[str, torch.optim.Optimizer] = {
-            "ensemble-model-0": torch.optim.AdamW(self.model.models["ensemble-model-0"].parameters(), lr=0.01),
-            "ensemble-model-1": torch.optim.AdamW(self.model.models["ensemble-model-1"].parameters(), lr=0.01),
-            "ensemble-model-2": torch.optim.AdamW(self.model.models["ensemble-model-2"].parameters(), lr=0.01),
+            "model_0": torch.optim.AdamW(self.model.model_0.parameters(), lr=0.01),  # type: ignore
+            "model_1": torch.optim.AdamW(self.model.model_1.parameters(), lr=0.01),  # type: ignore
+            "model_2": torch.optim.AdamW(self.model.model_2.parameters(), lr=0.01),  # type: ignore
         }
         return ensemble_optimizers
 

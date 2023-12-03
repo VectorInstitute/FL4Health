@@ -17,13 +17,15 @@ class EnsembleModel(nn.Module):
         aggregation_mode: Optional[EnsembleAggregationMode] = EnsembleAggregationMode.AVERAGE,
     ) -> None:
         super().__init__()
-        self.models = models
+        self.model_keys = list(models.keys())
+        for key in self.model_keys:
+            setattr(self, key, models[key])
         self.aggregation_mode = aggregation_mode
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
         preds = {}
-        for key, model in self.models.items():
-            preds[key] = model(input).squeeze()
+        for key in self.model_keys:
+            preds[key] = getattr(self, key)(input).squeeze()
 
         if self.aggregation_mode == EnsembleAggregationMode.AVERAGE:
             ensemble_pred = self.ensemble_average(list(preds.values()))
