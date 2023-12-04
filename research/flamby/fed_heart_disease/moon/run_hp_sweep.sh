@@ -27,7 +27,7 @@ VENV_PATH=$4
 
 # FedHeartDisease LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
-MU_VALUES=( 0.001 0.1 1 5 1 })
+MU_VALUES=( 0.001 0.1 1 5 1 )
 
 SERVER_PORT=8100
 
