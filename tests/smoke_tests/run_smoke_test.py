@@ -15,9 +15,17 @@ logger = logging.getLogger()
 
 
 async def run_smoke_test(
-    config_path: str = "tests/smoke_tests/config.yaml",
-    dataset_path: str = "examples/datasets/mnist_data/",
+    server_python_path: str,
+    client_python_path: str,
+    config_path: str,
+    dataset_path: str,
 ) -> None:
+    logger.info("Running smoke tests with parameters:")
+    logger.info(f"\tServer : {server_python_path}")
+    logger.info(f"\tClient : {client_python_path}")
+    logger.info(f"\tConfig : {config_path}")
+    logger.info(f"\tDataset: {dataset_path}")
+
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
@@ -28,7 +36,7 @@ async def run_smoke_test(
     server_process = await asyncio.create_subprocess_exec(
         "python",
         "-m",
-        "examples.fedprox_example.server",
+        server_python_path,
         "--config_path",
         config_path,
         stdout=asyncio.subprocess.PIPE,
@@ -38,7 +46,10 @@ async def run_smoke_test(
     # reads lines from the server output in search of the startup log message
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
-    startup_message = "FL starting"
+    startup_messages = [
+        "FL starting",
+        "Using Warm Start Strategy. Waiting for clients to be available for polling",
+    ]
     output_found = False
     while not output_found:
         try:
@@ -48,7 +59,7 @@ async def run_smoke_test(
             logger.debug(f"Server output: {server_output}")
             full_server_output += server_output
         except asyncio.TimeoutError:
-            logger.error(f"Timeout waiting for server startup message '{startup_message}'")
+            logger.error("Timeout waiting for server startup messages")
             break
 
         return_code = server_process.returncode
@@ -56,12 +67,11 @@ async def run_smoke_test(
             f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
         )
 
-        if startup_message in server_output:
+        if any(startup_message in server_output for startup_message in startup_messages):
             output_found = True
 
     assert output_found, (
-        f"Full output:\n{full_server_output}\n"
-        f"[ASSERT_ERROR] Startup log message '{startup_message}' not found in server output."
+        f"Full output:\n{full_server_output}\n" f"[ASSERT_ERROR] Startup log message not found in server output."
     )
 
     logger.info("Server started")
@@ -73,7 +83,7 @@ async def run_smoke_test(
         client_process = await asyncio.create_subprocess_exec(
             "python",
             "-m",
-            "examples.fedprox_example.client",
+            client_python_path,
             "--dataset_path",
             dataset_path,
             stdout=asyncio.subprocess.PIPE,
@@ -182,5 +192,28 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_smoke_test())
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedprox_example.server",
+            client_python_path="examples.fedprox_example.client",
+            config_path="tests/smoke_tests/fedprox_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.scaffold_example.server",
+            client_python_path="examples.scaffold_example.client",
+            config_path="tests/smoke_tests/scaffold_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.apfl_example.server",
+            client_python_path="examples.apfl_example.client",
+            config_path="tests/smoke_tests/apfl_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
     loop.close()
