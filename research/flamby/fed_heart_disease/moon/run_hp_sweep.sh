@@ -36,7 +36,7 @@ SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
-for LR_VALUE in "${LR_VALUES[@]}";
+for LR_VALUE in "${LR_VALUES[@]}"; do
   for MU_VALUE in "${MU_VALUES[@]}";
   do
     EXPERIMENT_NAME="lr_${LR_VALUE}_${MU_VALUE}"
@@ -58,5 +58,5 @@ for LR_VALUE in "${LR_VALUES[@]}";
     sbatch ${SBATCH_COMMAND}
     ((SERVER_PORT=SERVER_PORT+1))
   done
-
+done
 echo Experiments Launched

@@ -83,7 +83,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-for ((i=0; i<${#RUN_NAMES[@]}; i++))
+for ((i=0; i<${#RUN_NAMES[@]}; i++));
 do
     RUN_NAME="${RUN_NAMES[i]}"
     SEED="${SEEDS[i]}"
