@@ -144,7 +144,7 @@ do
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --client_mu ${CLIENT_MU} \
+            --mu ${CLIENT_MU} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 
