@@ -37,7 +37,7 @@ echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
 for LR_VALUE in "${LR_VALUES[@]}";
-  for MU_VALUES in "${MU_VALUES[@]}";
+  for MU_VALUE in "${MU_VALUES[@]}";
   do
     EXPERIMENT_NAME="lr_${LR_VALUE}_${MU_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
