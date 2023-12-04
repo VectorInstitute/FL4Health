@@ -31,7 +31,9 @@ class FedHeartDiseaseMoonClient(MoonClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        contrastive_weight: float = 10,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -39,6 +41,8 @@ class FedHeartDiseaseMoonClient(MoonClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
+            contrastive_weight=contrastive_weight,
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
@@ -104,6 +108,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
+    parser.add_argument(
+        "--mu",
+        action="store",
+        type=int,
+        help="Weight for the contrastive loss",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -122,6 +140,8 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        seed=args.seed,
+        contrastive_weight=args.mu,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
