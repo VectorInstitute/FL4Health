@@ -16,6 +16,19 @@ class EnsembleModel(nn.Module):
         ensemble_models: Dict[str, nn.Module],
         aggregation_mode: Optional[EnsembleAggregationMode] = EnsembleAggregationMode.AVERAGE,
     ) -> None:
+        """
+        Class that acts a wrapper to an ensemble of models to be trained in federated manner with support
+        for both voting and averaging prediction of individual models.
+
+        Args:
+            ensemble_models (Dict[str, nn.Module]): A dictionary of models that make up the ensemble.
+            aggregation_mode (Optional[EnsembleAggregationMode]): The mode in which to aggregate the
+                predictions of indivdual models.
+
+        Raises:
+            ValueError: Keys of the ensemble_dicts must be valid python identifiers.
+
+        """
         super().__init__()
 
         # Set attribute for each model in ensemble (nn.Module won't pick up parameters if stored in data structure)
@@ -27,6 +40,16 @@ class EnsembleModel(nn.Module):
         self.aggregation_mode = aggregation_mode
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        """
+        Produce the predictions of the ensemble models given input data.
+
+        Args:
+            input (torch.Tensor): A batch of input data.
+
+        Returns:
+            Dict[str, torch.Tensor]: A dictionary of predictions of the individual ensemble models
+                as well as prediction of the ensemble as a whole.
+        """
         preds = {}
         for key in self.model_keys:
             preds[key] = getattr(self, key)(input).squeeze()
@@ -41,6 +64,17 @@ class EnsembleModel(nn.Module):
         return preds
 
     def ensemble_vote(self, preds_list: List[torch.Tensor]) -> torch.Tensor:
+        """
+        Produces the aggregated prediction of the ensemble via voting. Expects predictions
+        to be in a format where the 0 axis represents the sample index and the -1 axis represents
+        the class dimension.
+
+        Args:
+            preds_list (List[torch.Tensor]): A list of predictions of the models in the ensemble.
+
+        Returns:
+            torch.Tensor: The vote prediction of the ensemble.
+        """
         assert all(preds.shape == preds_list[0].shape for preds in preds_list)
         preds_dimension = list(preds_list[0].shape)
 
@@ -58,6 +92,15 @@ class EnsembleModel(nn.Module):
         return vote_preds
 
     def ensemble_average(self, preds_list: List[torch.Tensor]) -> torch.Tensor:
+        """
+        Produces the aggregated prediction of the ensemble via averaging.
+
+        Args:
+            preds_list (List[torch.Tensor]): A list of predictions of the models in the ensemble.
+
+        Returns:
+            torch.Tensor: The average prediction of the ensemble.
+        """
         stacked_model_preds = torch.stack(preds_list)
         avg_preds = torch.mean(stacked_model_preds, dim=0)
         return avg_preds
