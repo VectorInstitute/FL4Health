@@ -26,8 +26,8 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    local_epochs: Optional[int],
-    local_steps: Optional[int],
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
     if local_epochs is not None:
         epochs_or_steps = {"local_epochs": local_epochs}
