@@ -26,7 +26,6 @@ def get_initial_model_information() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
     reporting_enabled: bool,
@@ -34,9 +33,18 @@ def fit_config(
     group_name: str,
     entity: str,
     current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
+    if local_epochs is not None:
+        epochs_or_steps = {"local_epochs": local_epochs}
+    elif local_steps is not None:
+        epochs_or_steps = {"local_steps": local_steps}
+    else:
+        epochs_or_steps = {}
+
     return {
-        "local_epochs": local_epochs,
+        **epochs_or_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -52,7 +60,6 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
 
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
@@ -60,6 +67,8 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         config["reporting_config"].get("project_name", ""),
         config["reporting_config"].get("group_name", ""),
         config["reporting_config"].get("entity", ""),
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     initial_parameters = get_initial_model_information()
