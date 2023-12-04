@@ -139,6 +139,6 @@ def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
     preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
     target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
     loss = fed_prox_client.compute_loss(preds, {}, target)
-
+    assert isinstance(loss.backward, torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
     assert loss.checkpoint.item() != loss.backward.item()

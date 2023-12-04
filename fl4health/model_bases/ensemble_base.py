@@ -13,13 +13,17 @@ class EnsembleAggregationMode(Enum):
 class EnsembleModel(nn.Module):
     def __init__(
         self,
-        models: Dict[str, nn.Module],
+        ensemble_models: Dict[str, nn.Module],
         aggregation_mode: Optional[EnsembleAggregationMode] = EnsembleAggregationMode.AVERAGE,
     ) -> None:
         super().__init__()
-        self.model_keys = list(models.keys())
+
+        # Set attribute for each model in ensemble (nn.Module won't pick up parameters if stored in data structure)
+        self.model_keys = list(ensemble_models.keys())
         for key in self.model_keys:
-            setattr(self, key, models[key])
+            if not key.isidentifier():
+                raise ValueError("Model name must be valid Python identifier.")
+            setattr(self, key, ensemble_models[key])
         self.aggregation_mode = aggregation_mode
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:

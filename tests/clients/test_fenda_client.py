@@ -86,7 +86,7 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
         "aggregated_global_features": aggregated_global_features,
     }
     loss = fenda_client.compute_loss(preds=preds, target=target, features=features)
-
+    assert isinstance(loss.backward, torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
     assert loss.checkpoint.item() != loss.backward.item()
 

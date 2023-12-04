@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import torch
 
@@ -11,7 +11,7 @@ class Losses:
     def __init__(
         self,
         checkpoint: torch.Tensor,
-        backward: torch.Tensor,
+        backward: Union[torch.Tensor, Dict[str, torch.Tensor]],
         additional_losses: Optional[Dict[str, torch.Tensor]] = None,
     ):
         self.checkpoint = checkpoint
@@ -21,7 +21,11 @@ class Losses:
     def as_dict(self) -> Dict[str, float]:
         loss_dict: Dict[str, float] = {}
         loss_dict["checkpoint"] = float(self.checkpoint.item())
-        loss_dict["backward"] = float(self.backward.item())
+        if isinstance(self.backward, dict):
+            backward = {key: loss.item() for key, loss in self.backward.items()}
+            loss_dict.update(backward)
+        else:
+            loss_dict.update({"backward": self.backward.item()})
 
         if self.additional_losses is not None:
             for key, val in self.additional_losses.items():
@@ -74,7 +78,20 @@ class LossAverageMeter(LossMeter):
         num_losses = len(self.losses_list)
         # Compute average checkpoint and backward losses across list
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list])) / num_losses
-        backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list])) / num_losses
+        backward_loss: Union[torch.Tensor, Dict[str, torch.Tensor]]
+        if all(isinstance(losses.backward, dict) for losses in self.losses_list):
+            assert isinstance(self.losses_list[0].backward, dict)
+            backward_loss = {
+                key: torch.sum(
+                    torch.FloatTensor(
+                        [losses.backward[key] for losses in self.losses_list if isinstance(losses.backward, dict)]
+                    )
+                )
+                / num_losses
+                for key in self.losses_list[0].backward.keys()
+            }
+        else:
+            backward_loss = torch.sum(torch.FloatTensor([losses.backward for losses in self.losses_list])) / num_losses
 
         # We don't know the keys of the additional_losses beforehand so we extract them from the first entry
         # because we know all of the losses will have the same keys in additinal_losses dict

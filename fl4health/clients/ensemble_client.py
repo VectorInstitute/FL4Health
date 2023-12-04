@@ -53,7 +53,8 @@ class EnsembleClient(BasicClient):
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
 
-        for loss in losses.additional_losses.values():
+        assert isinstance(losses.backward, dict)
+        for loss in losses.backward.values():
             loss.backward()
 
         for optimizer in self.optimizers.values():
@@ -68,12 +69,11 @@ class EnsembleClient(BasicClient):
         for key, pred in preds.items():
             loss_dict[key] = self.criterion(pred, target)
 
-        individual_model_loss_list = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
-        backward_loss = torch.sum(torch.tensor(list(individual_model_loss_list.values()), requires_grad=True))
+        individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
+        backward_loss = individual_model_losses
         checkpoint_loss = loss_dict["ensemble-pred"]
-        additional_losses = individual_model_loss_list
 
-        losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss, additional_losses=additional_losses)
+        losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss)
         return losses
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
