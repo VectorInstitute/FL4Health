@@ -1,0 +1,14 @@
+client_0_model_local_avg: 0.6040705561399191
+client_0_model_local_std: 0.012111631379487016
+client_1_model_local_avg: 0.6615689290521053
+client_1_model_local_std: 0.03699383258485067
+client_2_model_local_avg: 0.6692728186858022
+client_2_model_local_std: 0.043767941883020876
+client_3_model_local_avg: 0.5124039289222646
+client_3_model_local_std: 0.01996029606930161
+client_4_model_local_avg: 0.642650999793857
+client_4_model_local_std: 0.012025183809671115
+client_5_model_local_avg: 0.37545045045045045
+client_5_model_local_std: 0.03225105864831557
+avg_local_model_avg_across_clients: 0.5775696138407331
+std_local_model_avg_across_clients: 0.015786162467273844
