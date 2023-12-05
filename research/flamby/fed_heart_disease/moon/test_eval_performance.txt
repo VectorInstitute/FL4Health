@@ -1,0 +1,10 @@
+client_0_model_local_avg: 0.7730769230769231
+client_0_model_local_std: 0.008600261451922282
+client_1_model_local_avg: 0.7707865168539325
+client_1_model_local_std: 0.017040169537194495
+client_2_model_local_avg: 0.6875
+client_2_model_local_std: 0.0625
+client_3_model_local_avg: 0.6044444444444446
+client_3_model_local_std: 0.032960882164869615
+avg_local_model_avg_across_clients: 0.708951971093825
+std_local_model_avg_across_clients: 0.012351493274787016

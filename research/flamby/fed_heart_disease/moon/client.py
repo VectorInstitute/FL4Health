@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--mu",
         action="store",
-        type=int,
+        type=float,
         help="Weight for the contrastive loss",
         required=False,
     )
