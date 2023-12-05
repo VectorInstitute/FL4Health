@@ -29,11 +29,11 @@ class HeadClassifier(nn.Module):
         # Classifier
         # Standard UNet concatenates the channels from the first conv layer (residual connection) and the upsampled
         # embeddings from the full-forward process of the U-Net.
-        single_stack_in_channels = out_channels_first_layer
+        single_stack_in_channels = 2 * out_channels_first_layer
 
         self.classifier = ConvolutionalBlock(
             dimensions,
-            in_channels=2 * single_stack_in_channels,
+            in_channels=single_stack_in_channels,
             out_channels=out_classes,
             kernel_size=1,
             activation=None,
