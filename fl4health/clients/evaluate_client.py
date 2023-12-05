@@ -58,6 +58,7 @@ class EvaluateClient(BasicClient):
         self.criterion: _Loss
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
+        self.wandb_reporter = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -231,10 +232,3 @@ class EvaluateClient(BasicClient):
             return torch.load(self.model_checkpoint_path)
         else:
             return None
-
-    def shutdown(self) -> None:
-        """
-        Shuts down the client. Currently, performs a no-op to avoid the super method from being invoked and in turn
-        using attributes that are not relevant to the evaluation (namely `self.wandb_reporter`).
-        """
-        pass

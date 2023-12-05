@@ -11,7 +11,7 @@ from six.moves import urllib
 from examples.fedprox_example.client import MnistFedProxClient
 from fl4health.utils.metrics import Accuracy
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -302,6 +302,38 @@ if __name__ == "__main__":
             dataset_path="examples/datasets/mnist_data/",
             checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
             assert_evaluation_logs=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedper_example.server",
+            client_python_path="examples.fedper_example.client",
+            config_path="tests/smoke_tests/fedper_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fenda_example.server",
+            client_python_path="examples.fenda_example.client",
+            config_path="tests/smoke_tests/fenda_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fl_plus_local_ft_example.server",
+            client_python_path="examples.fl_plus_local_ft_example.client",
+            config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.moon_example.server",
+            client_python_path="examples.moon_example.client",
+            config_path="tests/smoke_tests/moon_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
         )
     )
     loop.close()
