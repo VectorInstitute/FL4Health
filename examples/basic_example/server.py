@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 import torch.nn as nn
@@ -23,19 +23,31 @@ def get_initial_model_parameters(model: nn.Module) -> Parameters:
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     current_server_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_server_round": current_server_round}
+    if local_epochs is not None:
+        epochs_or_steps = {"local_epochs": local_epochs}
+    elif local_steps is not None:
+        epochs_or_steps = {"local_steps": local_steps}
+    else:
+        epochs_or_steps = {}
+    return {
+        **epochs_or_steps,
+        "batch_size": batch_size,
+        "current_server_round": current_server_round,
+    }
 
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # Initializing the model on the server side

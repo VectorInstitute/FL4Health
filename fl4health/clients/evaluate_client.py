@@ -53,7 +53,7 @@ class EvaluateClient(BasicClient):
 
         # The attributes to be set in setup_client
         # Models corresponding to client-side and server-side checkpoints,
-        # if they exist, to be evaluated on the clients dataset.
+        # if they exist, to be evaluated on the client's dataset.
         self.data_loader: DataLoader
         self.criterion: _Loss
         self.local_model: Optional[nn.Module] = None
@@ -231,3 +231,10 @@ class EvaluateClient(BasicClient):
             return torch.load(self.model_checkpoint_path)
         else:
             return None
+
+    def shutdown(self) -> None:
+        """
+        Shuts down the client. Currently, performs a no-op to avoid the super method from being invoked and in turn
+        using attributes that are not relevant to the evaluation (namely `self.wandb_reporter`).
+        """
+        pass

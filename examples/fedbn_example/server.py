@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
@@ -24,13 +24,20 @@ def get_initial_model_information() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
+    if local_epochs is not None:
+        epochs_or_steps = {"local_epochs": local_epochs}
+    elif local_steps is not None:
+        epochs_or_steps = {"local_steps": local_steps}
+    else:
+        epochs_or_steps = {}
     return {
-        "local_epochs": local_epochs,
+        **epochs_or_steps,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -41,9 +48,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     initial_parameters = get_initial_model_information()

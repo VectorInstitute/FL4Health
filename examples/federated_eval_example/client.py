@@ -44,13 +44,7 @@ class CifarClient(EvaluateClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    parser.add_argument(
-        "--checkpoint_path",
-        action="store",
-        type=str,
-        help="Path to client model checkpoint.",
-        required=False,
-    )
+    parser.add_argument("--checkpoint_path", action="store", type=str, help="Path to client model checkpoint.")
     args = parser.parse_args()
     data_path = Path(args.dataset_path)
     client_checkpoint_path = Path(args.checkpoint_path) if args.checkpoint_path else None

@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from pathlib import Path
+from typing import Optional
 
 import torch
 import yaml
@@ -19,6 +20,11 @@ async def run_smoke_test(
     client_python_path: str,
     config_path: str,
     dataset_path: str,
+    checkpoint_path: Optional[str] = None,
+    assert_evaluation_logs: Optional[bool] = False,
+    # The param below exists to work around an issue with some clients
+    # not printing the "Current FL Round" log message reliably
+    skip_assert_client_fl_rounds: Optional[bool] = False,
 ) -> None:
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
@@ -49,7 +55,10 @@ async def run_smoke_test(
     startup_messages = [
         "FL starting",
         "Using Warm Start Strategy. Waiting for clients to be available for polling",
+        "Polling Clients for sample counts",
+        "Federated Evaluation Starting",
     ]
+
     output_found = False
     while not output_found:
         try:
@@ -80,12 +89,15 @@ async def run_smoke_test(
     client_processes = []
     for i in range(config["n_clients"]):
         logger.info(f"Starting client {i}")
+
+        client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
+        if checkpoint_path is not None:
+            client_args.append("--checkpoint_path")
+            client_args.append(checkpoint_path)
+
         client_process = await asyncio.create_subprocess_exec(
             "python",
-            "-m",
-            client_python_path,
-            "--dataset_path",
-            dataset_path,
+            *client_args,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
@@ -109,12 +121,21 @@ async def run_smoke_test(
     assert "error" not in full_server_output.lower(), (
         f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
     )
-    assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
-        f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
-    )
-    assert "FL finished" in full_server_output, (
-        f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] FL finished message not found for server."
-    )
+    if assert_evaluation_logs:
+        assert f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+        )
+        assert "Federated Evaluation Finished" in full_server_output, (
+            f"Full output:\n{full_server_output}\n"
+            "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
+        )
+    else:
+        assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+        )
+        assert "FL finished" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] FL finished message not found for server."
+        )
     assert all(
         message in full_server_output
         for message in [
@@ -131,14 +152,20 @@ async def run_smoke_test(
         assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
         )
-        assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
-            f"Full client output:\n{full_client_outputs[i]}\n"
-            f"[ASSERT ERROR] Last FL round message not found for client {i}."
-        )
         assert "Disconnect and shut down" in full_client_outputs[i], (
             f"Full client output:\n{full_client_outputs[i]}\n"
             f"[ASSERT ERROR] Shutdown message not found for client {i}."
         )
+        if assert_evaluation_logs:
+            assert "Client Evaluation Local Model Metrics" in full_client_outputs[i], (
+                f"Full client output:\n{full_client_outputs[i]}\n"
+                f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+            )
+        elif not skip_assert_client_fl_rounds:
+            assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
+                f"Full client output:\n{full_client_outputs[i]}\n"
+                f"[ASSERT ERROR] Last FL round message not found for client {i}."
+            )
 
     logger.info("All checks passed. Test finished.")
 
@@ -214,6 +241,67 @@ if __name__ == "__main__":
             client_python_path="examples.apfl_example.client",
             config_path="tests/smoke_tests/apfl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.basic_example.server",
+            client_python_path="examples.basic_example.client",
+            config_path="tests/smoke_tests/basic_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.client_level_dp.server",
+            client_python_path="examples.dp_fed_examples.client_level_dp.client",
+            config_path="tests/smoke_tests/client_level_dp_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
+            client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
+            config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
+            dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.instance_level_dp.server",
+            client_python_path="examples.dp_fed_examples.instance_level_dp.client",
+            config_path="tests/smoke_tests/instance_level_dp_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_scaffold_example.server",
+            client_python_path="examples.dp_scaffold_example.client",
+            config_path="tests/smoke_tests/dp_scaffold_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedbn_example.server",
+            client_python_path="examples.fedbn_example.client",
+            config_path="tests/smoke_tests/fedbn_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.federated_eval_example.server",
+            client_python_path="examples.federated_eval_example.client",
+            config_path="tests/smoke_tests/federated_eval_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
+            assert_evaluation_logs=True,
         )
     )
     loop.close()

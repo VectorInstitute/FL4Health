@@ -1,0 +1,12 @@
+# Parameters that describe server
+n_server_rounds: 3 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+local_steps: 5 # The number of local steps (one per batch) to complete for client
+batch_size: 128 # The batch size for client training
+client_sampling_rate: 1.0 # The proportion of clients to select each round
+
+# Differential Privacy Parameters
+noise_multiplier: 1.0
+clipping_bound: 5.0

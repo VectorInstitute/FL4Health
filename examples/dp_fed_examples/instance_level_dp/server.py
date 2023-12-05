@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
@@ -23,16 +23,23 @@ def get_initial_model_parameters() -> Parameters:
 
 def construct_config(
     current_round: int,
-    local_epochs: int,
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
     # NOTE: a new client is created in each round
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
+    if local_epochs is not None:
+        epochs_or_steps = {"local_epochs": local_epochs}
+    elif local_steps is not None:
+        epochs_or_steps = {"local_steps": local_steps}
+    else:
+        epochs_or_steps = {}
     return {
+        **epochs_or_steps,
         "current_server_round": current_round,
-        "local_epochs": local_epochs,
         "batch_size": batch_size,
         "noise_multiplier": noise_multiplier,
         "clipping_bound": clipping_bound,
@@ -40,23 +47,25 @@ def construct_config(
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
     current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
-    return construct_config(current_round, local_epochs, batch_size, noise_multiplier, clipping_bound)
+    return construct_config(current_round, batch_size, noise_multiplier, clipping_bound, local_epochs, local_steps)
 
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["noise_multiplier"],
         config["clipping_bound"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # ClientManager that performs Poisson type sampling
@@ -81,7 +90,8 @@ def main(config: Dict[str, Any]) -> None:
         client_manager=client_manager,
         strategy=strategy,
         noise_multiplier=config["noise_multiplier"],
-        local_epochs=config["local_epochs"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
         batch_size=config["batch_size"],
         num_server_rounds=config["n_server_rounds"],
     )
