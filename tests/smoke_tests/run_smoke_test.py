@@ -9,6 +9,7 @@ from flwr.common.typing import Config
 from six.moves import urllib
 
 from examples.fedprox_example.client import MnistFedProxClient
+from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
@@ -187,6 +188,10 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
+    if "cifar10" in dataset_path:
+        logger.info("Preloading CIFAR10 dataset...")
+        load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+        logger.info("Finished preloading CIFAR10 dataset")
     else:
         logger.info("Preload not supported for specified dataset. Skipping.")
 
@@ -197,7 +202,7 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
 ) -> str:
     logger.info(f"Waiting for {process_name} to finish execution to collect its output...")
     # Times out after 5 minutes just so it doesn't hang for a very long timeon some edge cases
-    stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=300)
+    stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=900)
     logger.info(f"Output collected for {process_name}")
 
     full_output = stdout_bytes.decode().replace("\\n", "\n")
@@ -248,7 +253,7 @@ if __name__ == "__main__":
             server_python_path="examples.basic_example.server",
             client_python_path="examples.basic_example.client",
             config_path="tests/smoke_tests/basic_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar10_data/",
         )
     )
     loop.run_until_complete(
@@ -256,7 +261,7 @@ if __name__ == "__main__":
             server_python_path="examples.dp_fed_examples.client_level_dp.server",
             client_python_path="examples.dp_fed_examples.client_level_dp.client",
             config_path="tests/smoke_tests/client_level_dp_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar10_data/",
             skip_assert_client_fl_rounds=True,
         )
     )
@@ -274,7 +279,7 @@ if __name__ == "__main__":
             server_python_path="examples.dp_fed_examples.instance_level_dp.server",
             client_python_path="examples.dp_fed_examples.instance_level_dp.client",
             config_path="tests/smoke_tests/instance_level_dp_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar10_data/",
             skip_assert_client_fl_rounds=True,
         )
     )
@@ -299,7 +304,7 @@ if __name__ == "__main__":
             server_python_path="examples.federated_eval_example.server",
             client_python_path="examples.federated_eval_example.client",
             config_path="tests/smoke_tests/federated_eval_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar10_data/",
             checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
             assert_evaluation_logs=True,
         )
@@ -325,7 +330,7 @@ if __name__ == "__main__":
             server_python_path="examples.fl_plus_local_ft_example.server",
             client_python_path="examples.fl_plus_local_ft_example.client",
             config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar10_data/",
         )
     )
     loop.run_until_complete(
