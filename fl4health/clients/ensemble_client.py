@@ -22,7 +22,7 @@ class EnsembleClient(BasicClient):
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         """
-        This client enables the training of ensemble of models in a federated manner.
+        This client enables the training of ensemble models in a federated manner.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -78,7 +78,7 @@ class EnsembleClient(BasicClient):
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
-        Assumes self.model is in train model already. Differs from parent method in that, there is multiple losses
+        Assumes self.model is in train model already. Differs from parent method in that, there are multiple losses
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 
         Args:
