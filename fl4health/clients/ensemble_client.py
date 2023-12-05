@@ -55,10 +55,10 @@ class EnsembleClient(BasicClient):
         """
         super().setup_client(config)
 
-        assert len(self.optimizers) == len(self.model.model_keys)
+        assert len(self.optimizers) == len(self.model.ensemble_models)
         assert all(
             opt_key == model_key
-            for opt_key, model_key in zip(sorted(self.optimizers.keys()), sorted(self.model.model_keys))
+            for opt_key, model_key in zip(sorted(self.optimizers.keys()), sorted(self.model.ensemble_models.keys()))
         )
 
     def set_optimizer(self, config: Config) -> None:
@@ -122,7 +122,7 @@ class EnsembleClient(BasicClient):
         """
         loss_dict = {}
         for key, pred in preds.items():
-            loss_dict[key] = self.criterion(pred, target)
+            loss_dict[key] = self.criterion(pred.float(), target)
 
         individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
         backward_loss = individual_model_losses

@@ -31,12 +31,7 @@ class EnsembleModel(nn.Module):
         """
         super().__init__()
 
-        # Set attribute for each model in ensemble (nn.Module won't pick up parameters if stored in data structure)
-        self.model_keys = list(ensemble_models.keys())
-        for key in self.model_keys:
-            if not key.isidentifier():
-                raise ValueError("Model name must be valid Python identifier.")
-            setattr(self, key, ensemble_models[key])
+        self.ensemble_models = nn.ModuleDict(ensemble_models)
         self.aggregation_mode = aggregation_mode
 
     def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
@@ -51,13 +46,15 @@ class EnsembleModel(nn.Module):
                 as well as prediction of the ensemble as a whole.
         """
         preds = {}
-        for key in self.model_keys:
-            preds[key] = getattr(self, key)(input).squeeze()
+        for key, model in self.ensemble_models.items():
+            preds[key] = model(input)
 
-        if self.aggregation_mode == EnsembleAggregationMode.AVERAGE:
-            ensemble_pred = self.ensemble_average(list(preds.values()))
-        else:
-            ensemble_pred = self.ensemble_vote(list(preds.values()))
+        # Don't store gradients of when computing ensemble predictions
+        with torch.no_grad():
+            if self.aggregation_mode == EnsembleAggregationMode.AVERAGE:
+                ensemble_pred = self.ensemble_average(list(preds.values()))
+            else:
+                ensemble_pred = self.ensemble_vote(list(preds.values()))
 
         preds["ensemble-pred"] = ensemble_pred
 
@@ -78,14 +75,22 @@ class EnsembleModel(nn.Module):
         assert all(preds.shape == preds_list[0].shape for preds in preds_list)
         preds_dimension = list(preds_list[0].shape)
 
+        # If larger than two dimensions, we map to 2D to perfom voting operation (and reshape later)
         if len(preds_dimension) > 2:
             preds_list = [preds.reshape(-1, preds_dimension[-1]) for preds in preds_list]
 
+        # For each model prediction, compute the argmax of the model over the classes and stack column-wise into matrix
+        # Each row of matrix represents the argmax of each model for a given sample
         argmax_per_model = torch.hstack([torch.argmax(preds, dim=1, keepdim=True) for preds in preds_list])
+        # For each row (sample), compute the unique class predictions and their respective counts
         index_count_list = map(lambda x: torch.unique(x, return_counts=True), argmax_per_model.unbind())
+        # For each element of list (class index, class count) pairing
+        # extract index with the highest count and create tensor
         indices_with_highest_counts = torch.tensor([index[torch.argmax(count)] for index, count in index_count_list])
+        # One hot encode ensemble prediction for each sample
         vote_preds = nn.functional.one_hot(indices_with_highest_counts, num_classes=preds_dimension[-1])
 
+        # If larger than two dimensions, map back to original dimensions
         if len(preds_dimension) > 2:
             vote_preds = vote_preds.reshape(*preds_dimension)
 

@@ -35,9 +35,9 @@ class MnistEnsembleClient(EnsembleClient):
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         ensemble_optimizers: Dict[str, torch.optim.Optimizer] = {
-            "model_0": torch.optim.AdamW(self.model.model_0.parameters(), lr=0.01),  # type: ignore
-            "model_1": torch.optim.AdamW(self.model.model_1.parameters(), lr=0.01),  # type: ignore
-            "model_2": torch.optim.AdamW(self.model.model_2.parameters(), lr=0.01),  # type: ignore
+            "model_0": torch.optim.AdamW(self.model.ensemble_models["model_0"].parameters(), lr=0.01),
+            "model_1": torch.optim.AdamW(self.model.ensemble_models["model_1"].parameters(), lr=0.01),
+            "model_2": torch.optim.AdamW(self.model.ensemble_models["model_2"].parameters(), lr=0.01),
         }
         return ensemble_optimizers
 

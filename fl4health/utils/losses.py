@@ -21,6 +21,8 @@ class Losses:
     def as_dict(self) -> Dict[str, float]:
         loss_dict: Dict[str, float] = {}
         loss_dict["checkpoint"] = float(self.checkpoint.item())
+
+        # backward loss can either be Tensor or dictionary of Tensors
         if isinstance(self.backward, dict):
             backward = {key: loss.item() for key, loss in self.backward.items()}
             loss_dict.update(backward)
