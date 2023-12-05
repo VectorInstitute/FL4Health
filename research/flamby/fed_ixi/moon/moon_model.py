@@ -60,7 +60,6 @@ class BaseUNetFeatureExtractor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
-        x = x.flatten(start_dim=1)
         return x
 
 
