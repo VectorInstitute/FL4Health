@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
@@ -20,7 +20,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -46,7 +46,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(model),
     )
 
-    server = PersonalServer(client_manager, strategy)
+    server = PersonalServer(client_manager, strategy, seed)
 
     fl.server.start_server(
         server=server,
@@ -77,8 +77,15 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address)
+    main(config, args.server_address, args.seed)

@@ -148,7 +148,6 @@ do
             --seed ${SEED} \
             --mu ${CLIENT_MU} \
             --gamma ${CLIENT_GAMMA} \
-            --perfcl_loss\
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

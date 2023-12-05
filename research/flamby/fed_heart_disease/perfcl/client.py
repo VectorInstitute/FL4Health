@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -36,10 +36,7 @@ class FedHeartDiseaseFendaClient(FendaClient):
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        cos_sim_activate: bool = False,
-        contrastive_activate: bool = False,
-        perfcl_activate: bool = False,
-        extra_loss_weight: Union[float, Tuple[float, float]] = 10,
+        extra_loss_weights: Tuple[float, float] = (10, 10),
         seed: Optional[int] = None,
     ) -> None:
         super().__init__(
@@ -52,15 +49,8 @@ class FedHeartDiseaseFendaClient(FendaClient):
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
-        if cos_sim_activate:
-            assert isinstance(extra_loss_weight, float)
-            self.cos_sim_loss_weight = extra_loss_weight
-        if contrastive_activate:
-            assert isinstance(extra_loss_weight, float)
-            self.contrastive_loss_weight = extra_loss_weight
-        if perfcl_activate:
-            assert isinstance(extra_loss_weight, tuple)
-            self.perfcl_loss_weights = extra_loss_weight
+
+        self.perfcl_loss_weights = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -123,9 +113,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
-    parser.add_argument("--cos_sim_loss", action="store_true", help="Activate Cosine Similarity loss")
-    parser.add_argument("--contrastive_loss", action="store_true", help="Activate Contrastive loss")
-    parser.add_argument("--perfcl_loss", action="store_true", help="Activate PerFCL loss")
     parser.add_argument(
         "--no_federated_checkpointing",
         action="store_true",
@@ -176,11 +163,8 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        cos_sim_activate=args.cos_sim_loss,
-        contrastive_activate=args.contrastive_loss,
-        perfcl_activate=args.perfcl_loss,
         seed=args.seed,
-        extra_loss_weight=(args.mu, args.gamma),
+        extra_loss_weights=(args.mu, args.gamma),
     )
 
     fl.client.start_numpy_client(
