@@ -111,7 +111,7 @@ class FedPCAClient(NumPyClient):
         self.initialized = True
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
-        """Evaluate the provided parameters using the locally held dataset.
+        """Evaluate the provided parameters, in this case, principal components.
 
         Parameters
         ----------
@@ -133,12 +133,9 @@ class FedPCAClient(NumPyClient):
             A dictionary mapping arbitrary string keys to values of
             type bool, bytes, float, int, or str. It can be used to
             communicate arbitrary values back to the server.
-
-        Warning
-        -------
-        The previous return type format (int, float, float) and the
-        extended format (int, float, float, Dict[str, Scalar]) have been
-        deprecated and removed since Flower 0.19.
         """
+        # here we opted for returning the cumulative explained variance.
         self.set_parameters(packed_pcs=parameters, config=config)
-        return 0.0, 0, {}
+        pcs, explained_variances = self.pca_packer.unpack(parameters)
+        cumulative_explained_variance = sum(explained_variances)
+        return 0.0, 0, {"cumulative_explained_variance": cumulative_explained_variance}

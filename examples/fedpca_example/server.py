@@ -4,9 +4,9 @@ from typing import Any, Dict
 import flwr as fl
 import yaml
 from flwr.server.client_manager import SimpleClientManager
+from flwr.server.server import Server
 
-from fl4health.PCA.pca import ServerSideMerger
-from fl4health.server.fed_pca_server import FedPCAServer
+from fl4health.strategies.fedpca import FedPCA
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -19,9 +19,9 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 def main(config: Dict[str, Any]) -> None:
 
-    min_num_clients = config["n_clients"]
+    n_clients = config["n_clients"]
 
-    server = FedPCAServer(ServerSideMerger(), SimpleClientManager(), strategy=None, min_num_clients=min_num_clients)
+    server = Server(client_manager=SimpleClientManager(), strategy=FedPCA(min_fit_clients=n_clients))
 
     fl.server.start_server(
         server=server,
