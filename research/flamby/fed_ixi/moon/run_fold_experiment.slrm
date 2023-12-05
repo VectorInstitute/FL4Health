@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 #SBATCH --partition=a40
-#SBATCH --qos=normal
+#SBATCH --qos=m
 #SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
