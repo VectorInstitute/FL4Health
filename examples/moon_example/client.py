@@ -25,8 +25,9 @@ class MnistMoonClient(MoonClient):
         metrics: Sequence[Metric],
         device: torch.device,
         minority_numbers: Set[int],
+        contrastive_weight: float = 10,
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device)
+        super().__init__(data_path=data_path, metrics=metrics, device=device, contrastive_weight=contrastive_weight)
         self.minority_numbers = minority_numbers
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:

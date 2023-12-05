@@ -26,7 +26,7 @@ class MoonClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
-        contrastive_weight: float = 10,
+        contrastive_weight: Optional[float] = None,
         len_old_models_buffer: int = 1,
         seed: Optional[int] = None,
     ) -> None:
@@ -124,9 +124,14 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) == 0:
             return super().compute_loss(preds, features, target)
         loss = self.criterion(preds["prediction"], target)
-        contrastive_loss = self.get_contrastive_loss(
-            features["features"], features["global_features"], features["old_features"]
-        )
-        total_loss = loss + self.contrastive_weight * contrastive_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"contrastive_loss": contrastive_loss})
+        total_loss = loss.clone()
+        additional_losses = {}
+
+        if self.contrastive_weight:
+            contrastive_loss = self.get_contrastive_loss(
+                features["features"], features["global_features"], features["old_features"]
+            )
+            total_loss += self.contrastive_weight * contrastive_loss
+            additional_losses["contrastive_loss"] = contrastive_loss
+        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
         return losses
