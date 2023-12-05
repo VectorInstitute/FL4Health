@@ -31,7 +31,6 @@ class FedHeartDiseaseFedPerClient(MoonClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        contrastive_weight: float = 10,
         checkpointer: Optional[TorchCheckpointer] = None,
         seed: Optional[int] = None,
     ) -> None:
@@ -42,7 +41,6 @@ class FedHeartDiseaseFedPerClient(MoonClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             seed=seed,
-            contrastive_weight=contrastive_weight,
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
