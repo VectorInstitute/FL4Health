@@ -14,7 +14,7 @@ def plot_digits(X: NDArray, title: str) -> None:
 
 
 if __name__ == "__main__":
-    with open("pcs.npy", "rb") as f:
+    with open("examples/fedpca_example/saved_pcs/pcs.npy", "rb") as f:
         principal_components = np.load(f)
 
     print(principal_components.shape)

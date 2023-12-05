@@ -26,7 +26,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset", default="./")
     parser.add_argument("--n_components", action="store", type=int, help="Number of principal components")
-    parser.add_argument("--pc_path", action="store", type=str, help="Path to the local dataset", default="pcs.npy")
+    parser.add_argument(
+        "--pc_path",
+        action="store",
+        type=str,
+        help="Path to the local dataset",
+        default="examples/fedpca_example/saved_pcs/pcs.npy",
+    )
     args = parser.parse_args()
 
     data_path = Path(args.dataset_path)
