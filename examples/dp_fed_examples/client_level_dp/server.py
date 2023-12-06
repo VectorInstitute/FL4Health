@@ -8,6 +8,7 @@ from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -29,14 +30,8 @@ def construct_config(
     local_steps: Optional[int] = None,
 ) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
-    if local_epochs is not None:
-        epochs_or_steps = {"local_epochs": local_epochs}
-    elif local_steps is not None:
-        epochs_or_steps = {"local_steps": local_steps}
-    else:
-        epochs_or_steps = {}
     return {
-        **epochs_or_steps,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
         "current_server_round": current_round,

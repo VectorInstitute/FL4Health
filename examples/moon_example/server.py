@@ -10,6 +10,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.moon_cnn import BaseCnn, HeadCnn, ProjectionCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -30,14 +31,8 @@ def fit_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    if local_epochs is not None:
-        epochs_or_steps = {"local_epochs": local_epochs}
-    elif local_steps is not None:
-        epochs_or_steps = {"local_steps": local_steps}
-    else:
-        epochs_or_steps = {}
     return {
-        **epochs_or_steps,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,

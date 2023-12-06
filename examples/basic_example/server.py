@@ -11,6 +11,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
@@ -28,14 +29,8 @@ def fit_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    if local_epochs is not None:
-        epochs_or_steps = {"local_epochs": local_epochs}
-    elif local_steps is not None:
-        epochs_or_steps = {"local_steps": local_steps}
-    else:
-        epochs_or_steps = {}
     return {
-        **epochs_or_steps,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "current_server_round": current_server_round,
     }

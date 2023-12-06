@@ -11,6 +11,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
@@ -36,15 +37,8 @@ def fit_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    if local_epochs is not None:
-        epochs_or_steps = {"local_epochs": local_epochs}
-    elif local_steps is not None:
-        epochs_or_steps = {"local_steps": local_steps}
-    else:
-        epochs_or_steps = {}
-
     return {
-        **epochs_or_steps,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -57,7 +51,6 @@ def fit_config(
 
 def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],

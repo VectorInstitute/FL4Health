@@ -85,9 +85,13 @@ async def run_smoke_test(
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
     startup_messages = [
-        "FL starting",  # printed by fexprox and apfl
-        "Using Warm Start Strategy. Waiting for clients to be available for polling",  # printed by scaffold
+        # printed by fedprox, apfl, basic_example, fedbn, fedper, fenda, fl_plus_local_ft and moon
+        "FL starting",
+        # printed by scaffold
+        "Using Warm Start Strategy. Waiting for clients to be available for polling",
+        # printed by client_level_dp, client_level_dp_weighted, instance_level_dp and dp_scaffold
         "Polling Clients for sample counts",
+        # printed by federated_eval
         "Federated Evaluation Starting",
     ]
 
@@ -124,8 +128,7 @@ async def run_smoke_test(
 
         client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
         if checkpoint_path is not None:
-            client_args.append("--checkpoint_path")
-            client_args.append(checkpoint_path)
+            client_args.extend(["--checkpoint_path", checkpoint_path])
 
         client_process = await asyncio.create_subprocess_exec(
             "python",
@@ -284,7 +287,7 @@ if __name__ == "__main__":
             server_python_path="examples.basic_example.server",
             client_python_path="examples.basic_example.client",
             config_path="tests/smoke_tests/basic_config.yaml",
-            dataset_path="examples/datasets/cifar10_data/",
+            dataset_path="examples/datasets/cifar_data/",
         )
     )
     loop.run_until_complete(
@@ -292,7 +295,7 @@ if __name__ == "__main__":
             server_python_path="examples.dp_fed_examples.client_level_dp.server",
             client_python_path="examples.dp_fed_examples.client_level_dp.client",
             config_path="tests/smoke_tests/client_level_dp_config.yaml",
-            dataset_path="examples/datasets/cifar10_data/",
+            dataset_path="examples/datasets/cifar_data/",
             skip_assert_client_fl_rounds=True,
         )
     )
@@ -310,7 +313,7 @@ if __name__ == "__main__":
             server_python_path="examples.dp_fed_examples.instance_level_dp.server",
             client_python_path="examples.dp_fed_examples.instance_level_dp.client",
             config_path="tests/smoke_tests/instance_level_dp_config.yaml",
-            dataset_path="examples/datasets/cifar10_data/",
+            dataset_path="examples/datasets/cifar_data/",
             skip_assert_client_fl_rounds=True,
         )
     )
@@ -361,7 +364,7 @@ if __name__ == "__main__":
             server_python_path="examples.fl_plus_local_ft_example.server",
             client_python_path="examples.fl_plus_local_ft_example.client",
             config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
-            dataset_path="examples/datasets/cifar10_data/",
+            dataset_path="examples/datasets/cifar_data/",
         )
     )
     loop.run_until_complete(

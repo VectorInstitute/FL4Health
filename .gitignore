@@ -160,4 +160,3 @@ settings.json
 # model artifacts
 
 **/*.pkl
-/examples/datasets/cifar10_data/
