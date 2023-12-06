@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
@@ -22,10 +22,22 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(
+    batch_size: int,
+    n_server_rounds: int,
+    current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
+) -> Config:
+    if local_epochs is not None:
+        epochs_or_steps = {"local_epochs": local_epochs}
+    elif local_steps is not None:
+        epochs_or_steps = {"local_steps": local_steps}
+    else:
+        epochs_or_steps = {}
     return {
+        **epochs_or_steps,
         "current_server_round": current_round,
-        "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
     }
@@ -35,9 +47,10 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

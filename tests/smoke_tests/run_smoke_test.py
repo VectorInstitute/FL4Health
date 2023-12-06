@@ -15,9 +15,48 @@ logger = logging.getLogger()
 
 
 async def run_smoke_test(
-    config_path: str = "tests/smoke_tests/config.yaml",
-    dataset_path: str = "examples/datasets/mnist_data/",
+    server_python_path: str,
+    client_python_path: str,
+    config_path: str,
+    dataset_path: str,
 ) -> None:
+    """Runs a smoke test for a given server, client, and dataset configuration.
+
+    Uses asyncio to kick off one server instance defined by the `server_python_path` module and N client instances
+    defined by the `client_python_path` module (N is defined by the `n_clients` attribute in the config). Waits for the
+    clients and server to complete execution and then make assertions on their logs to determine they have completed
+    execution successfully.
+
+    Typical usage example:
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            run_smoke_test(
+                server_python_path="examples.fedprox_example.server",
+                client_python_path="examples.fedprox_example.client",
+                config_path="tests/smoke_tests/fedprox_config.yaml",
+                dataset_path="examples/datasets/mnist_data/",
+            )
+        )
+        loop.close()
+
+
+    Args:
+        server_python_path: the path for the executable server module
+        client_python_path: the path for the executable client module
+        config_path: the path for the config yaml file. The following attributes are required by this function:
+            `n_clients`: the number of clients to be started
+            `n_server_rounds`:  the number of rounds to be ran by the server
+            `batch_size`: the size of the batch, to be used by the dataset preloader
+        dataset_path: the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+            to avoid problems when running on different runtimes.
+    """
+    logger.info("Running smoke tests with parameters:")
+    logger.info(f"\tServer : {server_python_path}")
+    logger.info(f"\tClient : {client_python_path}")
+    logger.info(f"\tConfig : {config_path}")
+    logger.info(f"\tDataset: {dataset_path}")
+
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
@@ -28,7 +67,7 @@ async def run_smoke_test(
     server_process = await asyncio.create_subprocess_exec(
         "python",
         "-m",
-        "examples.fedprox_example.server",
+        server_python_path,
         "--config_path",
         config_path,
         stdout=asyncio.subprocess.PIPE,
@@ -38,7 +77,10 @@ async def run_smoke_test(
     # reads lines from the server output in search of the startup log message
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
-    startup_message = "FL starting"
+    startup_messages = [
+        "FL starting",  # printed by fexprox and apfl
+        "Using Warm Start Strategy. Waiting for clients to be available for polling",  # printed by scaffold
+    ]
     output_found = False
     while not output_found:
         try:
@@ -48,7 +90,7 @@ async def run_smoke_test(
             logger.debug(f"Server output: {server_output}")
             full_server_output += server_output
         except asyncio.TimeoutError:
-            logger.error(f"Timeout waiting for server startup message '{startup_message}'")
+            logger.error("Timeout waiting for server startup messages")
             break
 
         return_code = server_process.returncode
@@ -56,12 +98,11 @@ async def run_smoke_test(
             f"Full output:\n{full_server_output}\n" f"[ASSERT ERROR] Server exited with code {return_code}."
         )
 
-        if startup_message in server_output:
+        if any(startup_message in server_output for startup_message in startup_messages):
             output_found = True
 
     assert output_found, (
-        f"Full output:\n{full_server_output}\n"
-        f"[ASSERT_ERROR] Startup log message '{startup_message}' not found in server output."
+        f"Full output:\n{full_server_output}\n" f"[ASSERT_ERROR] Startup log message not found in server output."
     )
 
     logger.info("Server started")
@@ -73,7 +114,7 @@ async def run_smoke_test(
         client_process = await asyncio.create_subprocess_exec(
             "python",
             "-m",
-            "examples.fedprox_example.client",
+            client_python_path,
             "--dataset_path",
             dataset_path,
             stdout=asyncio.subprocess.PIPE,
@@ -182,5 +223,28 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_smoke_test())
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedprox_example.server",
+            client_python_path="examples.fedprox_example.client",
+            config_path="tests/smoke_tests/fedprox_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.scaffold_example.server",
+            client_python_path="examples.scaffold_example.client",
+            config_path="tests/smoke_tests/scaffold_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.apfl_example.server",
+            client_python_path="examples.apfl_example.client",
+            config_path="tests/smoke_tests/apfl_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
     loop.close()
