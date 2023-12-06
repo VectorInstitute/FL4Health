@@ -27,6 +27,37 @@ async def run_smoke_test(
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
 ) -> None:
+    """Runs a smoke test for a given server, client, and dataset configuration.
+
+    Uses asyncio to kick off one server instance defined by the `server_python_path` module and N client instances
+    defined by the `client_python_path` module (N is defined by the `n_clients` attribute in the config). Waits for the
+    clients and server to complete execution and then make assertions on their logs to determine they have completed
+    execution successfully.
+
+    Typical usage example:
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            run_smoke_test(
+                server_python_path="examples.fedprox_example.server",
+                client_python_path="examples.fedprox_example.client",
+                config_path="tests/smoke_tests/fedprox_config.yaml",
+                dataset_path="examples/datasets/mnist_data/",
+            )
+        )
+        loop.close()
+
+
+    Args:
+        server_python_path: the path for the executable server module
+        client_python_path: the path for the executable client module
+        config_path: the path for the config yaml file. The following attributes are required by this function:
+            `n_clients`: the number of clients to be started
+            `n_server_rounds`:  the number of rounds to be ran by the server
+            `batch_size`: the size of the batch, to be used by the dataset preloader
+        dataset_path: the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+            to avoid problems when running on different runtimes.
+    """
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
     logger.info(f"\tClient : {client_python_path}")
@@ -54,8 +85,8 @@ async def run_smoke_test(
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
     startup_messages = [
-        "FL starting",
-        "Using Warm Start Strategy. Waiting for clients to be available for polling",
+        "FL starting",  # printed by fexprox and apfl
+        "Using Warm Start Strategy. Waiting for clients to be available for polling",  # printed by scaffold
         "Polling Clients for sample counts",
         "Federated Evaluation Starting",
     ]
