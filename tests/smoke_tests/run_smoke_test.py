@@ -34,7 +34,7 @@ async def run_smoke_test(
     clients and server to complete execution and then make assertions on their logs to determine they have completed
     execution successfully.
 
-    Typical usage example:
+    Typical usage examples:
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(
@@ -47,16 +47,49 @@ async def run_smoke_test(
         )
         loop.close()
 
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            run_smoke_test(
+                server_python_path="examples.dp_fed_examples.instance_level_dp.server",
+                client_python_path="examples.dp_fed_examples.instance_level_dp.client",
+                config_path="tests/smoke_tests/instance_level_dp_config.yaml",
+                dataset_path="examples/datasets/cifar_data/",
+                skip_assert_client_fl_rounds=True,
+            )
+        )
+        loop.close()
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(
+            run_smoke_test(
+                server_python_path="examples.federated_eval_example.server",
+                client_python_path="examples.federated_eval_example.client",
+                config_path="tests/smoke_tests/federated_eval_config.yaml",
+                dataset_path="examples/datasets/cifar_data/",
+                checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
+                assert_evaluation_logs=True,
+            )
+        )
+        loop.close()
 
     Args:
-        server_python_path: the path for the executable server module
-        client_python_path: the path for the executable client module
-        config_path: the path for the config yaml file. The following attributes are required by this function:
+        server_python_path (str): the path for the executable server module
+        client_python_path (str): the path for the executable client module
+        config_path (str): the path for the config yaml file. The following attributes are required
+            by this function:
             `n_clients`: the number of clients to be started
             `n_server_rounds`:  the number of rounds to be ran by the server
             `batch_size`: the size of the batch, to be used by the dataset preloader
-        dataset_path: the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+        dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
             to avoid problems when running on different runtimes.
+        checkpoint_path (Optional[str]): Optional, default None. If set, it will send that path as a checkpoint model
+            to the client.
+        assert_evaluation_logs (Optional[bool]): Optional, default `False`. Set this to `True` if testing an
+            evaluation model, which produces different log outputs.
+        skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
+            assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
+            (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
+
     """
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
