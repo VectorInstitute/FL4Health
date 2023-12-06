@@ -9,7 +9,7 @@ TextFeatureTransformer = Union[CountVectorizer, TfidfTransformer, TfidfVectorize
 
 # FORMAT_SPECIFIED indicates whether the server has the "source of truth"
 # to be used for feature alignment.
-FORMAT_SPECIFIED = "format_specified"
+SOURCE_SPECIFIED = "source_specified"
 
 # FEATURE_INFO refers to the encoded feature information (source of truth).
 FEATURE_INFO = "feature_info"
