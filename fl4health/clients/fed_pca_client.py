@@ -57,10 +57,7 @@ class FedPCAClient(NumPyClient):
         parameters : NDArrays
             This is unused in the case of PCA.
         config : Dict[str, Scalar]
-            Configuration parameters which allow the
-            server to influence training on the client. It can be used to
-            communicate arbitrary values from the server to the client, for
-            example, to set the number of (local) training epochs.
+            Configuration parameters.
 
         Returns
         -------
@@ -70,8 +67,7 @@ class FedPCAClient(NumPyClient):
             The number of examples used for training.
         metrics : Dict[str, Scalar]
             A dictionary mapping arbitrary string keys to values of type
-            bool, bytes, float, int, or str. It can be used to communicate
-            arbitrary values back to the server.
+            bool, bytes, float, int, or str.
         """
         X = self.get_data_numpy()
         principal_components, eigenvalues = self._pca.compute_pc(X)
@@ -103,11 +99,6 @@ class FedPCAClient(NumPyClient):
             raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
     def setup_client(self, config: Config) -> None:
-        """
-        This method is used to set up all of the required components for the client through the config passed
-        by the server and need only be done once. The Basic Client setup_client overrides this method to setup client
-        by calling the user defined methods and setting the required attributes.
-        """
         self.initialized = True
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
@@ -118,11 +109,7 @@ class FedPCAClient(NumPyClient):
         parameters : NDArrays
             The current (global) model parameters.
         config : Dict[str, Scalar]
-            Configuration parameters which allow the server to influence
-            evaluation on the client. It can be used to communicate
-            arbitrary values from the server to the client, for example,
-            to influence the number of examples used for evaluation.
-
+            Configuration parameters.
         Returns
         -------
         loss : float
@@ -130,11 +117,8 @@ class FedPCAClient(NumPyClient):
         num_examples : int
             The number of examples used for evaluation.
         metrics : Dict[str, Scalar]
-            A dictionary mapping arbitrary string keys to values of
-            type bool, bytes, float, int, or str. It can be used to
-            communicate arbitrary values back to the server.
+            Here we opted for returning the cumulative explained variance.
         """
-        # here we opted for returning the cumulative explained variance.
         self.set_parameters(packed_pcs=parameters, config=config)
         pcs, explained_variances = self.pca_packer.unpack(parameters)
         cumulative_explained_variance = sum(explained_variances)
