@@ -222,7 +222,7 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
-    if "cifar10" in dataset_path:
+    if "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
         load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
         logger.info("Finished preloading CIFAR10 dataset")
