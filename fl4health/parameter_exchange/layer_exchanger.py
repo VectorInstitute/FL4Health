@@ -99,10 +99,11 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         exchange_percentage: float = 0.1,
         normalize: bool = True,
         filter_by_percentage: bool = True,
+        drift_more: bool = True,
     ) -> None:
         """
         This exchanger selects those parameters that at the end of each training round, drift away (in l2 norm)
-        from their initial values (at the beginning of the same round) by more than self.threshold.
+        from their initial values (at the beginning of the same round) by more (or less) than self.threshold.
         """
         self.parameter_packer = ParameterPackerWithLayerNames()
         assert 0 < exchange_percentage <= 1
@@ -111,12 +112,16 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         self.exchange_percentage = exchange_percentage
         self.set_normalization_mode(normalize)
         self.set_filter_mode(filter_by_percentage)
+        self.set_drift_more(drift_more)
 
     def set_filter_mode(self, filter_by_percentage: bool) -> None:
         self.filter_by_percentage = filter_by_percentage
 
     def set_normalization_mode(self, normalize: bool) -> None:
         self.normalize = normalize
+
+    def set_drift_more(self, drift_more: bool) -> None:
+        self.drift_more = drift_more
 
     def _calculate_drift_norm(self, t1: torch.Tensor, t2: torch.Tensor) -> float:
         t_diff = (t1 - t2).float()
@@ -137,9 +142,14 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
         for layer_name, layer_param in model_states.items():
             layer_param_past = initial_model_states[layer_name]
             drift_norm = self._calculate_drift_norm(layer_param, layer_param_past)
-            if drift_norm >= self.threshold:
-                layers_to_transfer.append(layer_param.cpu().numpy())
-                layer_names.append(layer_name)
+            if self.drift_more:
+                if drift_norm >= self.threshold:
+                    layers_to_transfer.append(layer_param.cpu().numpy())
+                    layer_names.append(layer_name)
+            else:
+                if drift_norm < self.threshold:
+                    layers_to_transfer.append(layer_param.cpu().numpy())
+                    layer_names.append(layer_name)
         return layers_to_transfer, layer_names
 
     def set_threshold(self, new_threshold: float) -> None:
@@ -161,9 +171,9 @@ class NormDriftParameterExchanger(ParameterExchangerWithPacking[List[str]]):
 
         total_param_num = len(names_to_norm_drift.keys())
         num_param_exchange = int(math.ceil(total_param_num * self.exchange_percentage))
-        param_to_exchange_names = sorted(names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x])[
-            :(num_param_exchange)
-        ]
+        param_to_exchange_names = sorted(
+            names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x], reverse=self.drift_more
+        )[:(num_param_exchange)]
         return [model_states[name].cpu().numpy() for name in param_to_exchange_names], param_to_exchange_names
 
     def push_parameters(
