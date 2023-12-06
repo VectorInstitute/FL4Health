@@ -338,7 +338,7 @@ if __name__ == "__main__":
             server_python_path="examples.federated_eval_example.server",
             client_python_path="examples.federated_eval_example.client",
             config_path="tests/smoke_tests/federated_eval_config.yaml",
-            dataset_path="examples/datasets/cifar10_data/",
+            dataset_path="examples/datasets/cifar_data/",
             checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
             assert_evaluation_logs=True,
         )
