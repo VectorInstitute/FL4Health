@@ -35,7 +35,7 @@ def test_setup_client() -> None:
     client.setup_client({})
     assert client.parameter_exchanger is not None
     assert client.model is not None
-    assert client.optimizer is not None
+    assert client.optimizers is not None
     assert client.train_loader is not None
     assert client.val_loader is not None
     assert client.num_train_samples is not None
