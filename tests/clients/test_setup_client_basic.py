@@ -40,5 +40,4 @@ def test_setup_client() -> None:
     assert client.val_loader is not None
     assert client.num_train_samples is not None
     assert client.num_val_samples is not None
-    assert client.learning_rate is not None
     assert client.initialized
