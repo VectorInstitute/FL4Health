@@ -45,14 +45,7 @@ class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
         num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
 
         if not testing:
-            loss, metric_values = self.validate()
-            # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-            # calculation results.
-            return (
-                loss,
-                self.num_examples["validation_set"],
-                metric_values,
-            )
+            return super().evaluate(parameters, config)
         else:
             loss, accuracy, f1_scores = self.test(num_classes=num_classes)
             test_res_dict: Dict[str, Scalar] = {f"class {c} f1_score": f1_scores[c] for c in range(len(f1_scores))}
