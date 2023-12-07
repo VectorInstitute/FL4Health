@@ -68,6 +68,7 @@ SERVER_ADDRESS=$6
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+SEEDS=(2021 2022 2023 2024 2025)
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -81,8 +82,10 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-for RUN_NAME in "${RUN_NAMES[@]}";
+for ((i=0; i<${#RUN_NAMES[@]}; i++));
 do
+RUN_NAME="${RUN_NAMES[i]}"
+    SEED="${SEEDS[i]}"
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
     echo "Starting Run and logging artifcats at ${RUN_DIR}"
@@ -117,6 +120,7 @@ do
     nohup python -m research.flamby.fed_ixi.fenda.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
+        --seed ${SEED} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -138,6 +142,7 @@ do
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
+            --seed ${SEED} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 
