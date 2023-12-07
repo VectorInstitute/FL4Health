@@ -1,11 +1,14 @@
 import copy
+from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, NDArrays
+from flwr.common.logger import log
+from flwr.common.typing import Config, NDArrays, Scalar
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -20,6 +23,9 @@ class DynamicWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        adaptive_exchange_percentage: bool = False,
+        exchange_percentage_delta: float = 0.05,
         seed: Optional[int] = None,
     ) -> None:
         """
@@ -34,18 +40,27 @@ class DynamicWeightExchangeClient(BasicClient):
                 each batch. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
+            adaptive_exchange_percentage (bool): Whether the partial exchange rate is adapted throughout training.
+            Only applicable if the dynamic weight exchanger is percentage-based.
+            exchange_rate_delta (float): The amount by which the exchange percentage
+            is changed. Only used if self.adaptive_exchange_percentage is True.
         """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
+            checkpointer=checkpointer,
             seed=seed,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module
         # Parameter exchanger to be used in server-client exchange of dynamic layers.
         self.parameter_exchanger: NormDriftParameterExchanger
+
+        self.adaptive_exchange_percentage = adaptive_exchange_percentage
+        self.exchange_percentage_delta = exchange_percentage_delta
+        self.previous_val_loss: Optional[float] = None
 
     def setup_client(self, config: Config) -> None:
         """
@@ -117,3 +132,23 @@ class DynamicWeightExchangeClient(BasicClient):
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         # stores the values of the new model parameters at the beginning of each client training round.
         self.initial_model.load_state_dict(self.model.state_dict(), strict=True)
+
+    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        loss, num_val_examples, metric_values = super().evaluate(parameters, config)
+        self.maybe_adjust_exchange_percentage(loss)
+        return loss, num_val_examples, metric_values
+
+    def _should_adjust_exchange_percentage(self, comparison_val_loss: float) -> bool:
+        if not self.previous_val_loss:
+            self.previous_val_loss = comparison_val_loss
+            return False
+        else:
+            return comparison_val_loss < self.previous_val_loss
+
+    def maybe_adjust_exchange_percentage(self, comparison_val_loss: float) -> None:
+        if self.parameter_exchanger.filter_by_percentage and self.adaptive_exchange_percentage:
+            if self._should_adjust_exchange_percentage(comparison_val_loss):
+                current_exchange_percentage = self.parameter_exchanger.exchange_percentage
+                new_exchange_percentage = min(1.0, current_exchange_percentage + self.exchange_percentage_delta)
+                self.parameter_exchanger.set_percentage(new_exchange_percentage)
+                log(INFO, f"New exchange percentage: {new_exchange_percentage}.")
