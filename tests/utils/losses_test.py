@@ -84,7 +84,7 @@ def test_loss_accumulation_meter() -> None:
     assert loss_dict["extra_loss"] == pytest.approx(22.0372, rel=0.01)
 
 
-def test_losses_with_mutliple_backward() -> None:
+def test_losses_with_multiple_backward() -> None:
     checkpoint = torch.tensor(4.4930, dtype=torch.float)
     backward_losses_dict = {
         "model-0": torch.tensor(4.1020, dtype=torch.float),

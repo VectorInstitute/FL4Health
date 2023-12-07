@@ -206,6 +206,18 @@ class ScaffoldClient(BasicClient):
         """
         self.update_control_variates(local_steps)
 
+    def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True. Extends the basic client to extract the learning rate
+        from the optimizer and set the learning_rate attribute (used to compute updated control variates).
+
+        Args:
+            config (Config): The config from the server.
+        """
+        super().setup_client(config)
+        self.learning_rate = self.optimizers["global"].defaults["lr"]
+
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
     """

@@ -48,7 +48,7 @@ class FedHeartDiseaseFendaClient(FendaClient):
             checkpointer=checkpointer,
         )
         self.client_number = client_number
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
         if cos_sim_activate:
             self.cos_sim_loss_weight = 100.0
         if contrastive_activate:

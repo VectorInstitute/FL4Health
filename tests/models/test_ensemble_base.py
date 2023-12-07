@@ -10,26 +10,30 @@ from tests.test_utils.models_for_test import SmallCnn
 
 def test_forward_average_mode() -> None:
     models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
-    em = EnsembleModel(models, EnsembleAggregationMode.AVERAGE)
+    ensemble_model = EnsembleModel(models, EnsembleAggregationMode.AVERAGE)
     data = torch.rand((64, 1, 28, 28))
-    ep = em(data)
+    ensemble_predictions = ensemble_model(data)
 
-    assert len(ep) == 3
-    assert "model_0" in ep and ep["model_1"].shape == torch.Size([64, 32])
-    assert "model_0" in ep and ep["model_1"].shape == torch.Size([64, 32])
-    assert "ensemble-pred" in ep and ep["ensemble-pred"].shape == torch.Size([64, 32])
+    assert len(ensemble_predictions) == 3
+    assert "model_0" in ensemble_predictions and ensemble_predictions["model_0"].shape == torch.Size([64, 32])
+    assert "model_1" in ensemble_predictions and ensemble_predictions["model_1"].shape == torch.Size([64, 32])
+    assert "ensemble-pred" in ensemble_predictions and ensemble_predictions["ensemble-pred"].shape == torch.Size(
+        [64, 32]
+    )
 
 
 def test_forward_vote_mode() -> None:
     models: Dict[str, nn.Module] = {"model_0": SmallCnn(), "model_1": SmallCnn()}
-    em = EnsembleModel(models, EnsembleAggregationMode.VOTE)
+    ensemble_model = EnsembleModel(models, EnsembleAggregationMode.VOTE)
     data = torch.rand((64, 1, 28, 28))
-    ep = em(data)
+    ensemble_predictions = ensemble_model(data)
 
-    assert len(ep) == 3
-    assert "model_0" in ep and ep["model_0"].shape == torch.Size([64, 32])
-    assert "model_1" in ep and ep["model_0"].shape == torch.Size([64, 32])
-    assert "ensemble-pred" in ep and ep["ensemble-pred"].shape == torch.Size([64, 32])
+    assert len(ensemble_predictions) == 3
+    assert "model_0" in ensemble_predictions and ensemble_predictions["model_0"].shape == torch.Size([64, 32])
+    assert "model_1" in ensemble_predictions and ensemble_predictions["model_1"].shape == torch.Size([64, 32])
+    assert "ensemble-pred" in ensemble_predictions and ensemble_predictions["ensemble-pred"].shape == torch.Size(
+        [64, 32]
+    )
 
 
 def test_ensemble_vote() -> None:

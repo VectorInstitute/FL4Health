@@ -25,7 +25,7 @@ class MnistEnsembleClient(EnsembleClient):
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
 
-    def get_model(self, config: Config) -> nn.Module:
+    def get_model(self, config: Config) -> EnsembleModel:
         ensemble_models: Dict[str, nn.Module] = {
             "model_0": ConfigurableMnistNet(out_channel_mult=1).to(self.device),
             "model_1": ConfigurableMnistNet(out_channel_mult=2).to(self.device),

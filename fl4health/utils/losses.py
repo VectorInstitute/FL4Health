@@ -13,21 +13,38 @@ class Losses:
         checkpoint: torch.Tensor,
         backward: Union[torch.Tensor, Dict[str, torch.Tensor]],
         additional_losses: Optional[Dict[str, torch.Tensor]] = None,
-    ):
+    ) -> None:
+        """
+        A class to store the checkpoint, backward and additional_losses of a model
+        along with a method to return a dictionary representation.
+
+        Args:
+            checkpoint (torch.Tensor): The loss used to checkpoint model (if checkpointing is enabled).
+            backward (Union[torch.Tensor, Dict[str, torch.Tensor]]): The backward loss or
+                losses to optimize. In the normal case, backward is a Tensor corresponding to the
+                loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
+        """
         self.checkpoint = checkpoint
         self.backward = backward
         self.additional_losses = additional_losses if additional_losses else {}
 
     def as_dict(self) -> Dict[str, float]:
+        """
+        Produces a dictionary representation of the object with all of the losses.
+
+        Returns:
+            Dict[str, float]: A dictionary where each key represents one of the checkpoint,
+                backward or additional losses.
+        """
         loss_dict: Dict[str, float] = {}
         loss_dict["checkpoint"] = float(self.checkpoint.item())
 
         # backward loss can either be Tensor or dictionary of Tensors
         if isinstance(self.backward, dict):
-            backward = {key: loss.item() for key, loss in self.backward.items()}
+            backward = {key: float(loss.item()) for key, loss in self.backward.items()}
             loss_dict.update(backward)
         else:
-            loss_dict.update({"backward": self.backward.item()})
+            loss_dict.update({"backward": float(self.backward.item())})
 
         if self.additional_losses is not None:
             for key, val in self.additional_losses.items():

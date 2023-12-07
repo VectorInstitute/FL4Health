@@ -23,11 +23,7 @@ class EnsembleModel(nn.Module):
         Args:
             ensemble_models (Dict[str, nn.Module]): A dictionary of models that make up the ensemble.
             aggregation_mode (Optional[EnsembleAggregationMode]): The mode in which to aggregate the
-                predictions of indivdual models.
-
-        Raises:
-            ValueError: Keys of the ensemble_dicts must be valid python identifiers.
-
+                predictions of individual models.
         """
         super().__init__()
 
@@ -49,7 +45,7 @@ class EnsembleModel(nn.Module):
         for key, model in self.ensemble_models.items():
             preds[key] = model(input)
 
-        # Don't store gradients of when computing ensemble predictions
+        # Don't store gradients when computing ensemble predictions
         with torch.no_grad():
             if self.aggregation_mode == EnsembleAggregationMode.AVERAGE:
                 ensemble_pred = self.ensemble_average(list(preds.values()))

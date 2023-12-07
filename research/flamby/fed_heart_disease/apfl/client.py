@@ -46,7 +46,7 @@ class FedHeartDiseaseApflClient(ApflClient):
         )
         assert 0 <= client_number < NUM_CLIENTS
 
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
         self.alpha_learning_rate = alpha_learning_rate
         self.client_number = client_number
 

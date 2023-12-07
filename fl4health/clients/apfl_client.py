@@ -102,7 +102,7 @@ class ApflClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         optimizers = self.get_optimizer(config)
-        assert isinstance(optimizers, dict)
+        assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
         self.optimizers = optimizers
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:

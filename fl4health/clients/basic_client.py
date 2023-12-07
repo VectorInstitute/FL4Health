@@ -77,7 +77,7 @@ class BasicClient(NumPyClient):
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.learning_rate: float
+        self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
@@ -106,6 +106,7 @@ class BasicClient(NumPyClient):
         """
         Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
         determine parameters sent.
+
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
@@ -122,6 +123,7 @@ class BasicClient(NumPyClient):
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
         parameters are set. If it's the first time the model is being initialized, we assume the full model is being
         initialized and use the FullParameterExchanger() to set all model weights.
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model but may contain more information than that.
@@ -339,7 +341,7 @@ class BasicClient(NumPyClient):
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
-        Assumes self.model is in train model already.
+        Assumes self.model is in train mode already.
 
         Args:
             input (torch.Tensor): The input to be fed into the model.
@@ -532,10 +534,6 @@ class BasicClient(NumPyClient):
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
-        if "global" in self.optimizers:
-            self.learning_rate = self.optimizers["global"].defaults["lr"]
-        else:
-            self.learning_rate = list(self.optimizers.values())[0].defaults["lr"]
 
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
