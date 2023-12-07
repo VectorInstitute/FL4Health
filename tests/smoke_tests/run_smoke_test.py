@@ -272,10 +272,10 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     logger.info(f"Collecting output for {process_name}...")
     full_output = ""
     try:
+        assert process.stdout
         start_time = datetime.datetime.now()
         while True:
             # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
-            assert process.stdout
             output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=60)
             output = output_in_bytes.decode().replace("\\n", "\n")
             full_output += output
