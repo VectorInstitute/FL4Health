@@ -10,7 +10,7 @@ class BaseLogistic(nn.Module):
 
     def __init__(self, input_dim: int = 13):
         super().__init__()
-        self.linear = torch.nn.Linear(input_dim, 5)
+        self.linear = torch.nn.Linear(input_dim, 10)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.linear(x)
@@ -37,5 +37,5 @@ class HeadClassifier(nn.Module):
 class FedHeartDiseaseFedPerModel(FedPerModel):
     def __init__(self) -> None:
         base_module = BaseLogistic()
-        head_module = HeadClassifier(5)
+        head_module = HeadClassifier(10)
         super().__init__(base_module, head_module)
