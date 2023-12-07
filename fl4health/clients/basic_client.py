@@ -557,7 +557,7 @@ class BasicClient(NumPyClient):
 
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
 
-        self.intialized = True
+        self.initialized = True
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """

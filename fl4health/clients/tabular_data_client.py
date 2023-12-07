@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArray, Scalar
 from sklearn.pipeline import Pipeline
 
 from fl4health.clients.basic_client import BasicClient
-from fl4health.feature_alignment.constants import FEATURE_INFO, FORMAT_SPECIFIED, INPUT_DIMENSION, OUTPUT_DIMENSION
+from fl4health.feature_alignment.constants import FEATURE_INFO, INPUT_DIMENSION, OUTPUT_DIMENSION, SOURCE_SPECIFIED
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.feature_alignment.tab_features_preprocessor import TabularFeaturesPreprocessor
 from fl4health.utils.metrics import Metric
@@ -43,17 +43,17 @@ class TabularDataClient(BasicClient):
         Initialize the client by encoding the information of its tabular data
         and initializing the corresponding TabularFeaturesPreprocessor.
 
-        config[FORMAT_SPECIFIED] indicates whether the server has obtained
+        config[SOURCE_SPECIFIED] indicates whether the server has obtained
         the source of information to perform feature alignment.
         If it is True, it means the server has obtained such information
         (either a priori or by polling a client).
         So the client will encode that information and use it instead
         to perform feature preprocessing.
         """
-        format_specified = self.narrow_config_type(config, FORMAT_SPECIFIED, bool)
+        source_specified = self.narrow_config_type(config, SOURCE_SPECIFIED, bool)
         self.df = self.get_data_frame(config)
 
-        if format_specified:
+        if source_specified:
             # Since the server has obtained its source of information,
             # the client will encode that instead.
             self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.from_json(
@@ -74,7 +74,7 @@ class TabularDataClient(BasicClient):
             # that the first dimension is the number of rows.
             self.input_dimension = self.aligned_features.shape[1]
             self.output_dimension = self.tabular_features_info_encoder.get_target_dimension()
-            log(INFO, f"input dimension: {self.input_dimension}, output_dimension: {self.output_dimension}")
+            log(INFO, f"input dimension: {self.input_dimension}, target dimension: {self.output_dimension}")
 
             super().setup_client(config)
 
@@ -111,8 +111,8 @@ class TabularDataClient(BasicClient):
         """
         if not self.initialized:
             self.setup_client(config)
-        format_specified = self.narrow_config_type(config, FORMAT_SPECIFIED, bool)
-        if not format_specified:
+        source_specified = self.narrow_config_type(config, SOURCE_SPECIFIED, bool)
+        if not source_specified:
             return {
                 FEATURE_INFO: self.tabular_features_info_encoder.to_json(),
             }
