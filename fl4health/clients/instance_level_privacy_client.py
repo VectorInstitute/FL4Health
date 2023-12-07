@@ -26,6 +26,7 @@ class InstanceLevelPrivacyClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -33,6 +34,7 @@ class InstanceLevelPrivacyClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
         )
         self.clipping_bound: float
         self.noise_multiplier: float

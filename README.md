@@ -148,7 +148,7 @@ We use the standard git development flow of branch and merge to main with PRs on
 
 The library dependencies and those for development are listed in the `pyproject.toml` and `requirements.txt` files. You may use whatever virtual environment management tool that you would like. These include conda, poetry, and virtualenv. Poetry is used to produce our releases, which are managed and automated by GitHub.
 
-The easiest way to create and activate a virtual environment is
+The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
 ```bash
 virtualenv "ENV_PATH"
 source "ENV_PATH/bin/activate"

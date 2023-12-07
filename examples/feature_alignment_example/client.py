@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import List, Sequence, Tuple, Union
 
 import flwr as fl
 import numpy as np
@@ -22,9 +22,14 @@ from fl4health.utils.metrics import Accuracy, Metric
 
 class Mimic3TabularDataClient(TabularDataClient):
     def __init__(
-        self, data_path: Path, metrics: Sequence[Metric], device: torch.device, id_column: str, target_column: str
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        id_column: str,
+        targets: Union[str, List[str]],
     ) -> None:
-        super().__init__(data_path, metrics, device, id_column, target_column)
+        super().__init__(data_path, metrics, device, id_column, targets)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -92,7 +97,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     # ham_id is the id column and LOSgroupNum is the target column.
-    client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", "LOSgroupNum")
+    client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", ["LOSgroupNum"])
     # This call demonstrates how the user may specify a particular sklearn pipeline for a specific feature.
     client.preset_specific_pipeline("NumNotes", MaxAbsScaler())
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
