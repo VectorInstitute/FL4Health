@@ -45,6 +45,7 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
+        # Scaffold require vanilla SGD as optimizer
         self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
