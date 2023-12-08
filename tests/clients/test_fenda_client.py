@@ -86,11 +86,11 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
         "aggregated_global_features": aggregated_global_features,
     }
     loss = fenda_client.compute_loss(preds=preds, target=target, features=features)
-    assert isinstance(loss.backward, torch.Tensor)
+    assert isinstance(loss.backward["backward"], torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
-    assert loss.checkpoint.item() != loss.backward.item()
+    assert loss.checkpoint.item() != loss.backward["backward"].item()
 
-    auxiliary_loss_total = (loss.backward - loss.checkpoint).item()
+    auxiliary_loss_total = (loss.backward["backward"] - loss.checkpoint).item()
     contrastive_minimize = loss.additional_losses["contrastive_loss_minimize"].item()
     contrastive_maximize = loss.additional_losses["contrastive_loss_maximize"].item()
     assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)

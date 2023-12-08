@@ -69,7 +69,7 @@ def test_compute_loss(get_client: MoonClient) -> None:  # noqa
     }
 
     loss = moon_client.compute_loss(preds=preds, features=features, target=target)
-    assert isinstance(loss.backward, torch.Tensor)
+    assert isinstance(loss.backward["backward"], torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
     assert pytest.approx(0.837868, abs=0.0001) == loss.additional_losses["contrastive_loss"]
-    assert pytest.approx(0.837868 + 0.8132616, abs=0.0001) == loss.backward.item()
+    assert pytest.approx(0.837868 + 0.8132616, abs=0.0001) == loss.backward["backward"].item()

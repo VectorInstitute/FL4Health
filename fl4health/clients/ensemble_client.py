@@ -95,7 +95,6 @@ class EnsembleClient(BasicClient):
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
 
-        assert isinstance(losses.backward, dict)
         for loss in losses.backward.values():
             loss.backward()
 

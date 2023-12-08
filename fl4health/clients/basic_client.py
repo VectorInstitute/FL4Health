@@ -379,8 +379,7 @@ class BasicClient(NumPyClient):
         losses = self.compute_loss(preds, features, target)
 
         # Compute backward pass and update paramters with optimizer
-        assert isinstance(losses.backward, torch.Tensor)
-        losses.backward.backward()
+        losses.backward["backward"].backward()
         self.optimizers["global"].step()
 
         return losses, preds

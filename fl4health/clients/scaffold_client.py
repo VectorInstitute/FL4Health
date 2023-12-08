@@ -188,8 +188,7 @@ class ScaffoldClient(BasicClient):
         losses = self.compute_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
-        assert isinstance(losses.backward, torch.Tensor)
-        losses.backward.backward()
+        losses.backward["backward"].backward()
         self.modify_grad()
         self.optimizers["global"].step()
 

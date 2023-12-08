@@ -65,8 +65,7 @@ class ApflClient(BasicClient):
         preds, features = self.predict(input)
         # Parameters of local model are updated to minimize loss of personalized model
         losses = self.compute_loss(preds, features, target)
-        assert isinstance(losses.backward, torch.Tensor)
-        losses.backward.backward()
+        losses.backward["backward"].backward()
         self.optimizers["local"].step()
 
         # Return dictionary of predictions where key is used to name respective MetricMeters
