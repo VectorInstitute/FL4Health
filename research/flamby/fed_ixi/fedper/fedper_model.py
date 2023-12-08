@@ -65,7 +65,7 @@ class BaseUNetFeatureExtractor(nn.Module):
 
 class FedIxiFedPerModel(FedPerModel):
     def __init__(
-        self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8, monte_carlo_dropout: float = 0.0
+        self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 12, monte_carlo_dropout: float = 0.0
     ) -> None:
         # FedIXI out_channels_first_layer = 8 is the Baseline model default. So we use it here. The monte carlo dropout
         # is also set to 0 by default for FedIXI
