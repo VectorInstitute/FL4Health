@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 from pathlib import Path
 from typing import Optional
@@ -266,22 +267,36 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
 async def _wait_for_process_to_finish_and_retrieve_logs(
     process: asyncio.subprocess.Process,
     process_name: str,
+    timeout: int = 300,  # timeout for the whole process to complete
 ) -> str:
-    logger.info(f"Waiting for {process_name} to finish execution to collect its output...")
-    # Times out after 5 minutes just so it doesn't hang for a very long timeon some edge cases
-    stdout_bytes, stderr_bytes = await asyncio.wait_for(process.communicate(), timeout=300)
+    logger.info(f"Collecting output for {process_name}...")
+    full_output = ""
+    try:
+        assert process.stdout
+        start_time = datetime.datetime.now()
+        while True:
+            # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
+            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=60)
+            output = output_in_bytes.decode().replace("\\n", "\n")
+            full_output += output
+            return_code = process.returncode
+
+            if output == "" and return_code is not None:
+                break
+
+            elapsed_time = datetime.datetime.now() - start_time
+            if elapsed_time.seconds > timeout:
+                raise Exception(f"Timeout limit of {timeout}s exceeded waiting for {process_name} to finish execution")
+
+    except Exception as ex:
+        logger.error(f"{process_name} output:\n{full_output}")
+        logger.exception(f"Error collecting {process_name} log messages:")
+        raise ex
+
     logger.info(f"Output collected for {process_name}")
-
-    full_output = stdout_bytes.decode().replace("\\n", "\n")
-    logger.debug(f"{process_name} stdout: {full_output}")
-
-    if stderr_bytes is not None and len(stderr_bytes) > 0:
-        stderr = stderr_bytes.decode().replace("\\n", "\n")
-        full_output += stderr
-        logger.error(f"{process_name} stderr: {stderr}")
+    logger.debug(f"{process_name} output:\n{full_output}")
 
     # checking for clients with failure exit codes
-    return_code = process.returncode
     assert return_code is None or (return_code is not None and return_code == 0), (
         f"Full output:\n{full_output}\n" f"[ASSERT ERROR] {process_name} exited with code {return_code}."
     )
