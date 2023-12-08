@@ -51,7 +51,7 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         raise ValueError(f"{str(type)} is not a valid client type")
 
     client.model = model
-    client.optimizer = torch.optim.SGD(client.model.parameters(), lr=0.0001)  # type: ignore
+    client.optimizers = {"global": torch.optim.SGD(client.model.parameters(), lr=0.0001)}  # type: ignore
     client.train_loader = DataLoader(TensorDataset(torch.ones((1000, 28, 28, 1)), torch.ones((1000))))  # type: ignore
     client.initialized = True
     return client
