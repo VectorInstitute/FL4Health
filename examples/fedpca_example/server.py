@@ -10,7 +10,7 @@ from fl4health.strategies.fedpca import FedPCA
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
-    """Load Configuration Dictionairy"""
+    """Load Configuration Dictionary"""
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)

@@ -8,7 +8,7 @@ from flwr.common.typing import NDArray, NDArrays
 from sklearn.decomposition import PCA
 
 
-class ClientSidePCA:
+class ClientPCA:
     def __init__(self, n_components: int) -> None:
         self._pca = PCA(n_components=n_components, random_state=42)
         self.principal_components: NDArray
@@ -19,44 +19,38 @@ class ClientSidePCA:
         components, eigen_vals = self._pca.components_, self._pca.explained_variance_
         return components, eigen_vals
 
-    def update_pcs(self, pcs: NDArray, eigenvalues: NDArray) -> None:
-        self.principal_components = pcs
-        self.eigenvalues = eigenvalues
-
-    def get_pcs(self) -> Tuple[NDArray, NDArray]:
-        return self.principal_components, self.eigenvalues
-
     def pc_projection(self, X: NDArray) -> NDArray:
         return self.principal_components @ X
 
-    def save_pcs(self, pc_path: Path) -> None:
-        pcs, eigenvalues = self.get_pcs()
-        log(INFO, f"principal components shape: {pcs.shape}")
+    def save_principal_components(self, principal_components: NDArray, eigenvalues: NDArray, save_path: Path) -> None:
+        self.principal_components = principal_components
+        self.eigenvalues = eigenvalues
+        log(INFO, f"principal components shape: {principal_components.shape}")
         log(INFO, f"eigenvalues shape: {eigenvalues.shape}")
-        np.save(pc_path, pcs)
+        np.save(save_path, principal_components)
 
 
 class ServerSideMerger:
-    def __init__(self, pcs: NDArrays = [], eigenvals: NDArrays = []) -> None:
-        assert len(pcs) == len(eigenvals)
-        self.client_eigenvals = eigenvals
-        self.client_pcs = pcs
-        self.merged_pcs: NDArray
-        self.merged_eigen_vals: NDArray
+    def __init__(self, principal_components: NDArrays = [], eigenvalues: NDArrays = []) -> None:
+        assert len(principal_components) == len(eigenvalues)
+        self.client_eigenvalues = eigenvalues
+        self.client_principal_components = principal_components
+        self.merged_principal_components: NDArray
+        self.merged_eigenvalues: NDArray
 
-    def set_pcs(self, pcs: NDArrays) -> None:
-        self.client_pcs = pcs
+    def set_pcs(self, principal_components: NDArrays) -> None:
+        self.client_principal_components = principal_components
 
-    def set_eigenvals(self, eigenvals: NDArrays) -> None:
-        self.client_eigenvals = eigenvals
+    def set_eigenvals(self, eigenvalues: NDArrays) -> None:
+        self.client_eigenvalues = eigenvalues
 
     def merge_subspaces(self) -> None:
-        eigen_vals_diag = [np.diag(e_val_vec) for e_val_vec in self.client_eigenvals]
-        X = [U.T @ S for U, S in zip(self.client_pcs, eigen_vals_diag)]
+        eigenvalues_diagonal = [np.diag(eigenvalues_vector) for eigenvalues_vector in self.client_eigenvalues]
+        X = [U.T @ S for U, S in zip(self.client_principal_components, eigenvalues_diagonal)]
         svd_input = np.concatenate(X, axis=1)
-        new_pcs, new_eigen_vals, _ = np.linalg.svd(svd_input)
-        self.merged_pcs = new_pcs
-        self.merged_eigen_vals = new_eigen_vals
+        new_principal_components, new_eigenvalues, _ = np.linalg.svd(svd_input)
+        self.merged_principal_components = new_principal_components
+        self.merged_eigenvalues = new_eigenvalues
 
     def get_principal_components(self) -> Tuple[NDArray, NDArray]:
-        return self.merged_pcs, self.merged_eigen_vals
+        return self.merged_principal_components, self.merged_eigenvalues

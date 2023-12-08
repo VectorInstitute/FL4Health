@@ -7,7 +7,7 @@ from flwr.client.numpy_client import NumPyClient
 from flwr.common import Config, NDArray, NDArrays, Scalar
 
 from fl4health.parameter_exchange.parameter_packer import PrincipalComponentsPacker
-from fl4health.PCA.pca import ClientSidePCA
+from fl4health.PCA.pca import ClientPCA
 
 T = TypeVar("T")
 
@@ -19,7 +19,7 @@ class FedPCAClient(NumPyClient):
         self.initialized = False
         self.data_path = data_path
         self.pc_path = pc_path
-        self._pca = ClientSidePCA(n_components=n_components)
+        self._pca = ClientPCA(n_components=n_components)
 
     def generate_hash(self, length: int = 8) -> str:
         return "".join(random.choice(string.ascii_lowercase) for i in range(length))
@@ -34,7 +34,7 @@ class FedPCAClient(NumPyClient):
         Returns:
             NDArrays: packed principal components and their corresponding eigenvalues.
         """
-        pcs, eigenvals = self._pca.get_pcs()
+        pcs, eigenvals = self._pca.principal_components, self._pca.eigenvalues
         return self.pca_packer.pack(pcs, eigenvals)
 
     def set_parameters(self, packed_pcs: NDArrays, config: Config) -> None:
@@ -45,9 +45,8 @@ class FedPCAClient(NumPyClient):
             packed_pcs (NDArrays): principal components and their corresponding eigenvalues packed together.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-        pcs, eigenvals = self.pca_packer.unpack(packed_pcs)
-        self._pca.update_pcs(pcs, eigenvals)
-        self._pca.save_pcs(self.pc_path)
+        principal_components, eigenvalues = self.pca_packer.unpack(packed_pcs)
+        self._pca.save_principal_components(principal_components, eigenvalues, self.pc_path)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """Compute PCA using the locally held dataset.
