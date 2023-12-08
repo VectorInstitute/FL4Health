@@ -90,7 +90,7 @@ class LossMeter(ABC):
         Compute aggregation of current list of losses if non-empty.
 
         Returns:
-            Losses: New Losses object with average of losses in losses_list.
+            Losses: New Losses object with aggregate of losses in losses_list.
 
         Raises:
             NotImplentedError: To be impemented by child class.

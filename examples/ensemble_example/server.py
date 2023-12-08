@@ -26,12 +26,15 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(
+    sample_percentage: float, local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int
+) -> Config:
     return {
         "current_server_round": current_round,
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
+        "sample_percentage": sample_percentage,
     }
 
 
@@ -39,6 +42,7 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
+        float(config["sample_percentage"]),
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],

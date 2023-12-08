@@ -21,7 +21,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 class MnistEnsembleClient(EnsembleClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=float(config["sample_percentage"]))
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
 
