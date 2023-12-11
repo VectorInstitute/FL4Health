@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union, Callable
 
 import torchvision.transforms as transforms
 from flwr.common.logger import log
@@ -15,17 +15,35 @@ def load_mnist_data(
     data_dir: Path,
     batch_size: int,
     sampler: Optional[LabelBasedSampler] = None,
+    transform: Union[None, Callable] = None,
+    target_transform=None,
+    data_target_transform: Union[
+        None, Callable
+    ] = None,  # set of transorms that are applied on the data and the target
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load MNIST Dataset (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5), (0.5)),
-        ]
+    if transform is None:
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
+    train_ds: BaseDataset = MNISTDataset(
+        data_dir,
+        train=True,
+        transform=transform,
+        target_transform=target_transform,
+        data_target_transform=data_target_transform,
     )
-    train_ds: BaseDataset = MNISTDataset(data_dir, train=True, transform=transform)
-    val_ds: BaseDataset = MNISTDataset(data_dir, train=False, transform=transform)
+    val_ds: BaseDataset = MNISTDataset(
+        data_dir,
+        train=False,
+        transform=transform,
+        target_transform=target_transform,
+        data_target_transform=data_target_transform,
+    )
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)
