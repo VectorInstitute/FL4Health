@@ -1,5 +1,7 @@
+import random
 from pathlib import Path
 
+import numpy as np
 import pytest
 import torch
 import torch.nn as nn
@@ -17,6 +19,16 @@ model = LinearTransform()
 class DummyFLServer(FlServer):
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         return model
+
+
+def test_set_fixing_random_seeds() -> None:  # noqa
+    fl_server = FlServer(PoissonSamplingClientManager(), None, None, None)
+    fl_server._maybe_fix_random_seeds(2023)
+
+    # Check that the random seeds are fixed
+    assert pytest.approx(random.random(), abs=0.0001) == 0.3829
+    assert pytest.approx(np.random.rand(), abs=0.0001) == 0.3219
+    assert pytest.approx(torch.rand(1).item(), abs=0.0001) == 0.4290
 
 
 def test_no_hydration_with_checkpointer(caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:

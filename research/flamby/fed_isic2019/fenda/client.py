@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.fed_isic2019.fenda.fenda_model import FedIsic2019FendaModel
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
@@ -31,19 +31,26 @@ class FedIsic2019FendaClient(FendaClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
+        cos_sim_activate: bool = False,
+        contrastive_activate: bool = False,
+        perfcl_activate: bool = False,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
         )
         self.client_number = client_number
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
+        if cos_sim_activate:
+            self.cos_sim_loss_weight = 100.0
+        if contrastive_activate:
+            self.contrastive_loss_weight = 10.0
+        if perfcl_activate:
+            self.perfcl_loss_weights = (10.0, 10.0)
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -106,6 +113,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
+    parser.add_argument("--cos_sim_loss", action="store_true", help="Activate Cosine Similarity loss")
+    parser.add_argument("--contrastive_loss", action="store_true", help="Activate Contrastive loss")
+    parser.add_argument("--perfcl_loss", action="store_true", help="Activate PerFCL loss")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -124,6 +134,9 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        cos_sim_activate=args.cos_sim_loss,
+        contrastive_activate=args.contrastive_loss,
+        perfcl_activate=args.perfcl_loss,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

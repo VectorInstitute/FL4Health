@@ -18,9 +18,9 @@ class LSTM(nn.Module):
             bidirectional=True,
         )
         self.drop = nn.Dropout(p=0.3)
-        self.fc = nn.Linear(2 * lstm_dimension, 41)
+        self.fc = nn.Linear(2 * lstm_dimension, 4)
 
-    def forward(self, x: torch.Tensor, hidden: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, hidden: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
         text_emb = self.embedding(x)
         out, _ = self.lstm(text_emb, hidden)
 

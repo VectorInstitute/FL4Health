@@ -28,12 +28,12 @@ class InstanceLevelDPServer(FlServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         delta: Optional[float] = None,
+        seed: Optional[int] = None,
     ) -> None:
         """
         Server to be used in case of Instance Level Differential Privacy with Federated Averaging.
         Modified the fit function to poll clients for sample counts prior to the first round of FL.
 
-        Args:
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
@@ -63,6 +63,7 @@ class InstanceLevelDPServer(FlServer):
             strategy=strategy,
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
+            seed=seed,
         )
 
         # Ensure that one of local_epochs and local_steps is passed (and not both)

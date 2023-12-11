@@ -4,8 +4,10 @@ from typing import Dict, List
 import torch
 import torch.nn as nn
 
+from fl4health.model_bases.partial_layer_exchange_model import PartialLayerExchangeModel
 
-class ApflModule(nn.Module):
+
+class ApflModule(PartialLayerExchangeModel):
     def __init__(
         self,
         model: nn.Module,
@@ -21,17 +23,19 @@ class ApflModule(nn.Module):
         self.alpha = alpha
         self.alpha_lr = alpha_lr
 
-    def forward(self, input: torch.Tensor, personal: bool) -> Dict[str, torch.Tensor]:
-        if not personal:
-            global_logits = self.global_model(input)
-            return {"global": global_logits}
+    def global_forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.global_model(input)
 
-        global_logits = self.global_model(input)
-        local_logits = self.local_model(input)
+    def local_forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.local_model(input)
+
+    def forward(self, input: torch.Tensor) -> Dict[str, torch.Tensor]:
+        # Forward return dictionary because APFL has multiple different prediction types
+        global_logits = self.global_forward(input)
+        local_logits = self.local_forward(input)
         personal_logits = self.alpha * local_logits + (1.0 - self.alpha) * global_logits
-        results = {"personal": personal_logits, "local": local_logits}
-
-        return results
+        preds = {"personal": personal_logits, "global": global_logits, "local": local_logits}
+        return preds
 
     def update_alpha(self) -> None:
         # Updates to mixture parameter follow original implementation
@@ -67,5 +71,7 @@ class ApflModule(nn.Module):
         self.alpha = alpha
 
     def layers_to_exchange(self) -> List[str]:
-        layers_to_exchange: List[str] = [layer for layer in self.state_dict().keys() if "global_model" in layer]
+        layers_to_exchange: List[str] = [
+            layer for layer in self.state_dict().keys() if layer.startswith("global_model.")
+        ]
         return layers_to_exchange

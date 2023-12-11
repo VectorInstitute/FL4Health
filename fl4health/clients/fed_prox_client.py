@@ -1,10 +1,10 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -12,7 +12,7 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 
 class FedProxClient(BasicClient):
@@ -28,16 +28,16 @@ class FedProxClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
+            seed=seed,
         )
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking
@@ -96,33 +96,24 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
-        local_epochs, local_steps, current_server_round = self.process_config(config)
+    def compute_loss(
+        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+    ) -> Losses:
+        """
+        Computes loss given predictions of the model and ground truth data. Adds to objective by including
+        proximal loss which is the l2 norm between the initial and final weights of local training.
 
-        if not self.initialized:
-            self.setup_client(config)
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
-        self.set_parameters(parameters, config)
-
-        if local_epochs is not None:
-            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
-        else:
-            assert isinstance(local_steps, int)
-            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
-
-        # Store current loss which is the vanilla loss without the proximal term added in
-        self.current_loss = loss_dict["checkpoint"]
-
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
-        return (
-            self.get_parameters(config),
-            self.num_train_samples,
-            metrics,
-        )
-
-    def compute_loss(self, preds: torch.Tensor, target: torch.Tensor) -> Losses:
-        loss = self.criterion(preds, target)
+        Returns:
+            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Additional losses includes proximal loss.
+        """
+        loss = self.criterion(preds["prediction"], target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss})
@@ -130,3 +121,11 @@ class FedProxClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())
+
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionary.
+        """
+        # Store current loss which is the vanilla loss without the proximal term added in
+        self.current_loss = loss_dict["checkpoint"]

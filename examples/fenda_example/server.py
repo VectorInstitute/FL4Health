@@ -1,15 +1,18 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 
@@ -21,10 +24,15 @@ def get_initial_model_parameters() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int, batch_size: int, n_server_rounds: int, downsampling_ratio: float, current_round: int
+    batch_size: int,
+    n_server_rounds: int,
+    downsampling_ratio: float,
+    current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
     return {
-        "local_epochs": local_epochs,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
@@ -36,10 +44,11 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
         config["downsampling_ratio"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -56,10 +65,13 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_initial_model_parameters(),
     )
 
+    client_manager = SimpleClientManager()
+    server = FlServer(client_manager, strategy)
+
     fl.server.start_server(
+        server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
 
 
