@@ -19,6 +19,7 @@ def get_run_folders(hp_dir: str) -> List[str]:
 
 def get_weighted_loss_from_server_log(run_folder_path: str, experiment_name: str, is_fenda: bool) -> float:
     server_log_path = os.path.join(run_folder_path, "server.out")
+    log(INFO, f"Server Log Path: {server_log_path}")
     with open(server_log_path, "r") as handle:
         files_lines = handle.readlines()
         if experiment_name == "fed_heart_disease":
