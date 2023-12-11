@@ -2,7 +2,6 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
 from torch.utils import model_zoo
@@ -28,14 +27,12 @@ class HeadClassifier(nn.Module):
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
-        self.fc1 = nn.Linear(stack_output_dimension, 64)
-        self.fc2 = nn.Linear(64, 8)
+        self.fc1 = nn.Linear(stack_output_dimension, 8)
         self.dropout = nn.Dropout(0.2)
 
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor:
         x = self.dropout(input_tensor)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = self.fc1(x)
         return x
 
 
@@ -80,7 +77,7 @@ class BaseEfficientNet(nn.Module):
 
 
 class FedIsic2019MoonModel(MoonModel):
-    def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False) -> None:
+    def __init__(self, frozen_blocks: Optional[int] = None, turn_off_bn_tracking: bool = False) -> None:
         base_module = BaseEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         head_module = HeadClassifier(1280)
         super().__init__(base_module, head_module)
