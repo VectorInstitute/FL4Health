@@ -50,3 +50,4 @@ python -m examples.cvae_dim_example.client --dataset_path examples/datasets/MNIS
 Client 1:
 ```
 python -m examples.cvae_dim_example.client --dataset_path examples/datasets/MNIST --condition "1"
+```
