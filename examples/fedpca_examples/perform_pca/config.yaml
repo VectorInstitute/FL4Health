@@ -9,6 +9,7 @@ low_rank: False
 full_svd: False
 rank_estimation: 6
 center_data: True
+num_components: 16
 
 # checkpointing
 checkpoint_path: "examples/basic_example"
