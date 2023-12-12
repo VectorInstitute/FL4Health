@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, Tuple, TypeVar
 
 import numpy as np
-from flwr.common.typing import List, NDArray, NDArrays
+from flwr.common.typing import List, NDArrays
 
 T = TypeVar("T")
 
@@ -73,9 +73,13 @@ class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
         return model_parameters, param_names
 
 
-class PrincipalComponentsPacker:
-    def pack(self, principal_components: NDArray, eigenvalues: NDArray) -> NDArrays:
-        return [principal_components, eigenvalues]
+class ParameterPackerWithIntVar(ParameterPacker[int]):
+    def pack_parameters(self, model_weights: NDArrays, additional_parameters: int) -> NDArrays:
+        return model_weights + [np.array(additional_parameters)]
 
-    def unpack(self, packed_pcs: NDArrays) -> Tuple[NDArray, NDArray]:
-        return packed_pcs[0], packed_pcs[1]
+    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, int]:
+        # The last entry in the parameters list is assumed to be an integer.
+        split_size = len(packed_parameters) - 1
+        model_parameters = packed_parameters[:split_size]
+        int_var = int(packed_parameters[split_size:][0])
+        return model_parameters, int_var
