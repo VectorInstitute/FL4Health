@@ -19,7 +19,7 @@ class PCAModule(nn.Module):
         self.data_mean: Tensor
 
     def forward(self, X: Tensor, center_data: bool) -> Tuple[Tensor, Tensor]:
-        X_prime = self.prepare_data(X, center_data=center_data)
+        X_prime = self.prepare_data_forward(X, center_data=center_data)
         if self.low_rank:
             log(INFO, "Assuming data matrix is low rank, using low-rank PCA implementation.")
             q = min(self.rank_estimation, X_prime.size(0), X_prime.size(1))
@@ -43,13 +43,13 @@ class PCAModule(nn.Module):
             return X.view((dim0, -1)).float()
 
     def set_data_mean(self, X: Tensor) -> None:
-        self.data_mean = torch.mean(X, dim=1)
+        self.data_mean = torch.mean(X, dim=0)
 
     def centre_data(self, X: Tensor) -> Tensor:
         assert self.data_mean is not None
-        return (X.T - self.data_mean).T
+        return X - self.data_mean
 
-    def prepare_data(self, X: Tensor, center_data: bool) -> Tensor:
+    def prepare_data_forward(self, X: Tensor, center_data: bool) -> Tensor:
         X = self.maybe_reshape(X)
         if center_data:
             self.set_data_mean(X)

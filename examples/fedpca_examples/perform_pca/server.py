@@ -46,6 +46,7 @@ def main(config: Dict[str, Any]) -> None:
         config["full_svd"],
         config["rank_estimation"],
         config["center_data"],
+        config["num_components"],
     )
 
     # Initialize FedPCA strategy.

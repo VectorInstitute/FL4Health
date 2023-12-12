@@ -111,9 +111,9 @@ class FedPCAClient(NumPyClient):
             self.narrow_config_type(config, "num_components", int) if "num_components" in config.keys() else None
         )
         val_data_tensor = self.get_data_tensor(self.val_loader)
-        val_data_tensor_centered = self.model.centre_data(val_data_tensor)
-        reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_centered, num_components)
-        projection_variance = self.model.compute_projetion_variance(val_data_tensor_centered, num_components)
+        val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(val_data_tensor))
+        reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components)
+        projection_variance = self.model.compute_projetion_variance(val_data_tensor_prepared, num_components)
         metrics: Dict[str, Scalar] = {}
         metrics["projection_variance"] = projection_variance
         return (reconstruction_loss, self.num_val_samples, metrics)
