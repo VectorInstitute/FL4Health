@@ -48,22 +48,21 @@ class CondAutoEncoderClient(CVAETrainer, BasicClient):
     def get_criterion(self, config: Config) -> _Loss:
         # The base_loss is the loss function used for comparing the original and generated image pixels.
         # In this example, data is in binary scale, therefore binary cross entropy is used.
-        # In self.loss(), the base_loss is added to the kl divergence loss.
+        # In self.loss(), the base_loss is added to the KL divergence loss.
         base_loss = torch.nn.BCELoss(reduction="sum")
-        return self.loss(config["latent_dim"], base_loss)
+        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        return self.loss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        encoder = MnistConditionalEncoder(
-            input_size=784, num_conditions=config["num_conditions"], latent_dim=config["latent_dim"]
-        )
-        decoder = MnistConditionalDecoder(
-            latent_dim=config["latent_dim"], num_conditions=config["num_conditions"], output_size=784
-        )
+        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        num_conditions = self.narrow_config_type(config, "num_conditions", int)
+        encoder = MnistConditionalEncoder(input_size=784, num_conditions=num_conditions, latent_dim=latent_dim)
+        decoder = MnistConditionalDecoder(latent_dim=latent_dim, num_conditions=num_conditions, output_size=784)
         return ConditionalVAE(
-            AutoEncoderType.CONDITIONAL_VAE, num_conditions=config["num_conditions"], encoder=encoder, decoder=decoder
+            AutoEncoderType.CONDITIONAL_VAE, num_conditions=num_conditions, encoder=encoder, decoder=decoder
         )
 
 

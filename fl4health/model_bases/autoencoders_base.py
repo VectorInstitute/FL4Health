@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import Tuple, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -33,15 +34,7 @@ class AutoEncoderBase(nn.Module, ABC):
         self.decoder = decoder
 
     @abstractmethod
-    def encode() -> torch.Tensor():
-        raise NotImplementedError
-
-    @abstractmethod
-    def decode() -> torch.Tensor():
-        raise NotImplementedError
-
-    @abstractmethod
-    def forward() -> torch.Tensor():
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError
 
 
@@ -63,7 +56,7 @@ class VarioationalAE(AutoEncoderBase):
         """
         super().__init__(model_type, encoder, decoder)
 
-    def encode(self, input: torch.Tensor) -> torch.Tensor:
+    def encode(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         mu, logvar = self.encoder(input)
         return mu, logvar
 
@@ -76,7 +69,7 @@ class VarioationalAE(AutoEncoderBase):
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         mu, logvar = self.encode(input)
         z = self.sampling(mu, logvar)
         output = self.decode(z)
@@ -111,7 +104,7 @@ class ConditionalVAE(AutoEncoderBase):
         condition = F.one_hot(condition.to(torch.int64), self.num_conditions).to(condition.device)
         return condition
 
-    def encode(self, input: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
+    def encode(self, input: torch.Tensor, condition: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         input = self.cat_input_condition(input, condition)
         mu, logvar = self.encoder(input)
         return mu, logvar
@@ -126,7 +119,7 @@ class ConditionalVAE(AutoEncoderBase):
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         x = input[:, :-1]  # Exclude the last column (conditions)
         condition = input[:, -1]  # Last column contains conditions
         condition = self.one_hot(condition)
@@ -148,6 +141,6 @@ class Basic_AE(AutoEncoderBase):
         output = self.decoder(latent_vector)
         return output
 
-    def forward(self, input):
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         z = self.encode(input)
         return self.decode(z)

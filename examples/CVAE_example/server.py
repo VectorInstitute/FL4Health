@@ -51,13 +51,13 @@ def main(config: Dict[str, Any]) -> None:
 
     # Initializing the model on the server side
     encoder = MnistConditionalEncoder(
-        input_size=784, num_conditions=config["num_conditions"], latent_dim=config["latent_dim"]
+        input_size=784, num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
     )
     decoder = MnistConditionalDecoder(
-        latent_dim=config["latent_dim"], num_conditions=config["num_conditions"], output_size=784
+        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"]), output_size=784
     )
     model = ConditionalVAE(
-        AutoEncoderType.CONDITIONAL_VAE, num_conditions=config["num_conditions"], encoder=encoder, decoder=decoder
+        AutoEncoderType.CONDITIONAL_VAE, num_conditions=int(config["num_conditions"]), encoder=encoder, decoder=decoder
     )
     model_checkpoint_name = "best_CVAE_model.pkl"
 

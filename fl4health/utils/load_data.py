@@ -16,7 +16,7 @@ def load_mnist_data(
     batch_size: int,
     sampler: Optional[LabelBasedSampler] = None,
     transform: Union[None, Callable] = None,
-    target_transform=None,
+    target_transform: Union[None, Callable] = None,
     data_target_transform: Union[
         None, Callable
     ] = None,  # set of transorms that are applied on the data and the target

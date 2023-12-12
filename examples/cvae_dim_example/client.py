@@ -29,7 +29,7 @@ class VAEDimClient(CVAETrainer, BasicClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        CVAE_model_path = self.narrow_config_type(config, "CVAE_model_path", str)
+        CVAE_model_path = Path(self.narrow_config_type(config, "CVAE_model_path", str))
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         sampler.set_seed(42)
         transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
@@ -51,7 +51,8 @@ class VAEDimClient(CVAETrainer, BasicClient):
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        return MnistNet(config["latent_dim"]).to(self.device)
+        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        return MnistNet(latent_dim).to(self.device)
 
 
 if __name__ == "__main__":

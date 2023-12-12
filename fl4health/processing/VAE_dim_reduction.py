@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Union
 from pathlib import Path
 import torch
 import torch.nn as nn
 import numpy as np
+
+from fl4health.model_bases.autoencoders_base import VarioationalAE, ConditionalVAE
 
 
 class Processing(ABC):
@@ -13,12 +15,18 @@ class Processing(ABC):
 
     def __init__(
         self,
-        checkpoint_path: Path,
+        checkpointing_path: Path,
     ) -> None:
-        self.autoencoder = self.load_autoencoder(checkpoint_path)
+        self.checkpointing_path = checkpointing_path
+        self.DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    def load_autoencoder(self, checkpoint_path: Path) -> nn.Module:
-        autoencoder = torch.load(checkpoint_path)
+    def load_VAE(self) -> VarioationalAE:
+        autoencoder = torch.load(self.checkpointing_path)
+        autoencoder.eval()
+        return autoencoder
+
+    def load_CVAE(self) -> ConditionalVAE:
+        autoencoder = torch.load(self.checkpointing_path)
         autoencoder.eval()
         return autoencoder
 
@@ -31,13 +39,15 @@ class VAEProcessor(Processing):
 
     def __init__(
         self,
-        checkpoint_path: Path,
+        checkpointing_path: Path,
     ) -> None:
-        super().__init__(checkpoint_path)
+        super().__init__(checkpointing_path)
+        self.autoencoder: VarioationalAE = self.load_VAE()
 
-    def __call__(self, sample: np.ndarray) -> torch.Tensor:
+    def __call__(self, sample: torch.Tensor) -> torch.Tensor:
+        # This transformer is called for the input samples after they are transfered into toch tensors.
         mu, logvar = self.autoencoder.encode(sample)
-        return mu
+        return mu.clone().detach()
 
 
 class LabelConditionedProcessor(Processing):
@@ -45,14 +55,15 @@ class LabelConditionedProcessor(Processing):
 
     def __init__(
         self,
-        checkpoint_path: Path,
+        checkpointing_path: Path,
     ) -> None:
-        super().__init__(checkpoint_path)
+        super().__init__(checkpointing_path)
+        self.autoencoder: ConditionalVAE = self.load_CVAE()
 
     def __call__(self, sample: np.ndarray, target: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
-        condition_vector = self.autoencoder.one_hot(torch.tensor(target))
-        mu, logvar = self.autoencoder.encode(sample, condition_vector)
-        return mu, torch.from_numpy(target)
+        condition_vector = self.autoencoder.one_hot(torch.tensor(target).to(self.DEVICE))
+        mu, logvar = self.autoencoder.encode(torch.tensor(sample).to(self.DEVICE), condition_vector)
+        return mu.clone().detach(), torch.from_numpy(target)
 
 
 class ClientConditionedProcessor(Processing):
@@ -60,14 +71,18 @@ class ClientConditionedProcessor(Processing):
 
     def __init__(
         self,
-        checkpoint_path: Path,
+        checkpointing_path: Path,
         condition: int,
     ) -> None:
         self.condition = condition
-        super().__init__(checkpoint_path)
+        super().__init__(checkpointing_path)
+        self.autoencoder: ConditionalVAE = self.load_CVAE()
 
-    def __call__(self, sample: np.ndarray) -> torch.Tensor:
+    def __call__(self, sample: torch.Tensor) -> torch.Tensor:
+        # This transformer is called for the input samples after they are transfered into toch tensors.
         assert self.condition != None
-        condition_vector = self.autoencoder.one_hot(torch.tensor(self.condition))
-        mu, logvar = self.autoencoder.encode(sample, condition_vector)
-        return mu
+        condition_vector = self.autoencoder.one_hot(
+            torch.tensor(self.condition).to(self.DEVICE),
+        )
+        mu, logvar = self.autoencoder.encode(sample.to(self.DEVICE), condition_vector)
+        return mu.clone().detach()

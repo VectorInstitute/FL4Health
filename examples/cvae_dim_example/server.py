@@ -49,7 +49,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    model = MnistNet(config["latent_dim"])
+    model = MnistNet(int(config["latent_dim"]))
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)

@@ -46,14 +46,16 @@ class VAEClient(VAETrainer, BasicClient):
         # In this example, data is in binary scale, therefore binary cross entropy is used.
         # In self.loss(), the base_loss is added to the kl divergence loss.
         base_loss = torch.nn.BCELoss(reduction="sum")
-        return self.loss(config["latent_dim"], base_loss)
+        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        return self.loss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        encoder = MnistVariationalEncoder(input_size=784, latent_dim=config["latent_dim"])
-        decoder = MnistVariationalDecoder(latent_dim=config["latent_dim"], output_size=784)
+        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        encoder = MnistVariationalEncoder(input_size=784, latent_dim=latent_dim)
+        decoder = MnistVariationalDecoder(latent_dim=latent_dim, output_size=784)
         return VarioationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
 
 

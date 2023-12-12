@@ -47,8 +47,8 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    encoder = MnistVariationalEncoder(input_size=784, latent_dim=config["latent_dim"])
-    decoder = MnistVariationalDecoder(latent_dim=config["latent_dim"], output_size=784)
+    encoder = MnistVariationalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
+    decoder = MnistVariationalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
     model = VarioationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
     model_checkpoint_name = "best_VAE_model.pkl"
 

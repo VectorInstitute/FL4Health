@@ -33,7 +33,6 @@ class EvaluateClient(BasicClient):
         model_checkpoint_path: Optional[Path] = None,
         seed: Optional[int] = None,
     ) -> None:
-
         self._maybe_fix_random_seeds(seed)
 
         # EvaluateClient does not call BasicClient constructor and sets attributes
@@ -117,7 +116,6 @@ class EvaluateClient(BasicClient):
     def _handle_logging(  # type: ignore
         self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool
     ) -> None:
-
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
         eval_prefix = "Global Model" if is_global else "Local Model"

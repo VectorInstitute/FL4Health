@@ -18,7 +18,7 @@ class VAETransformer:
         """
         self.condition = condition
 
-    def __call__(self, sample: np.ndarray, target: Optional[np.ndarray] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __call__(self, sample: np.ndarray, target: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
         """Applies the transformation to the input data.
 
         Args:
@@ -34,7 +34,9 @@ class VAETransformer:
             return torch.from_numpy(np.concatenate((sample, target), axis=None)), torch.from_numpy(sample)
         elif self.condition.isdigit():
             # Custom condition from the client
-            return torch.from_numpy(np.concatenate((sample, int(self.condition)), axis=None)), torch.from_numpy(sample)
+            return torch.from_numpy(
+                np.concatenate((sample, torch.tensor(int(self.condition)).numpy()), axis=None)
+            ), torch.from_numpy(sample)
         else:
             # Not conditional
             return torch.from_numpy(sample), torch.from_numpy(sample)
