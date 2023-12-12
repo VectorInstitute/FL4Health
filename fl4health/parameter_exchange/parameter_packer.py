@@ -71,15 +71,3 @@ class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
         model_parameters = packed_parameters[:split_size]
         param_names = packed_parameters[split_size:][0].tolist()
         return model_parameters, param_names
-
-
-class ParameterPackerWithIntVar(ParameterPacker[int]):
-    def pack_parameters(self, model_weights: NDArrays, additional_parameters: int) -> NDArrays:
-        return model_weights + [np.array(additional_parameters)]
-
-    def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, int]:
-        # The last entry in the parameters list is assumed to be an integer.
-        split_size = len(packed_parameters) - 1
-        model_parameters = packed_parameters[:split_size]
-        int_var = int(packed_parameters[split_size:][0])
-        return model_parameters, int_var
