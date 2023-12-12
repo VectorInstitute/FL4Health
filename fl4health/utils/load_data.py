@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union, Callable
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import torchvision.transforms as transforms
 from flwr.common.logger import log

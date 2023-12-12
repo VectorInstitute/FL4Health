@@ -1,11 +1,11 @@
-from abc import ABC, abstractmethod
-from typing import Tuple, Optional, Union
+from abc import ABC
 from pathlib import Path
-import torch
-import torch.nn as nn
-import numpy as np
+from typing import Tuple
 
-from fl4health.model_bases.autoencoders_base import VarioationalAE, ConditionalVAE
+import numpy as np
+import torch
+
+from fl4health.model_bases.autoencoders_base import ConditionalVAE, VarioationalAE
 
 
 class Processing(ABC):
@@ -80,7 +80,6 @@ class ClientConditionedProcessor(Processing):
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
         # This transformer is called for the input samples after they are transfered into toch tensors.
-        assert self.condition != None
         condition_vector = self.autoencoder.one_hot(
             torch.tensor(self.condition).to(self.DEVICE),
         )

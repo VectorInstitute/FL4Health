@@ -9,10 +9,10 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.VAE_example.models import MnistVariationalEncoder, MnistVariationalDecoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, VarioationalAE
+from examples.VAE_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.model_bases.autoencoders_base import AutoEncoderType, VarioationalAE
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config

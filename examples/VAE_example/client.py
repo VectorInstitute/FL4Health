@@ -1,26 +1,23 @@
 import argparse
 from pathlib import Path
-from typing import Tuple, Dict, Optional, Callable, Sequence
+from typing import Sequence, Tuple
 
 import flwr as fl
-from flwr.common.logger import log
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, Scalar
+import torchvision.transforms as transforms
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
 
-from examples.VAE_example.models import MnistVariationalEncoder, MnistVariationalDecoder
+from examples.VAE_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import Metric
-from fl4health.utils.losses import Losses
-from fl4health.utils.sampler import DirichletLabelBasedSampler
-from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.sampler import LabelBasedSampler
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, VarioationalAE
 from fl4health.tasks.autoencoder_trainer import VAETrainer
+from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.metrics import Metric
+from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class VAEClient(VAETrainer, BasicClient):

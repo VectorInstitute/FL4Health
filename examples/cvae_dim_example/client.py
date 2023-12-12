@@ -1,25 +1,22 @@
 import argparse
-import os
 from pathlib import Path
-from typing import Tuple, Optional, Dict, Callable, Sequence
-from logging import INFO
+from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, Scalar
+import torchvision.transforms as transforms
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-import torchvision.transforms as transforms
-from flwr.common.logger import log
 
 from examples.cvae_dim_example.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.metrics import Accuracy, Metric
-from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.sampler import DirichletLabelBasedSampler
 from fl4health.tasks.autoencoder_trainer import CVAETrainer
+from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class VAEDimClient(CVAETrainer, BasicClient):

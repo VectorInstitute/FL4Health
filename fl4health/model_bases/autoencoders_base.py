@@ -1,13 +1,10 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Tuple, Union
+from typing import Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.losses import Losses
-from fl4health.utils.dataset import BaseDataset
 
 
 class AutoEncoderType(Enum):
@@ -18,8 +15,9 @@ class AutoEncoderType(Enum):
 
 class AutoEncoderBase(nn.Module, ABC):
     """The base class for all Encoder-Decoder based models.
-    All we need to define such model is the type of the model, and the structure of the encoder and the decoder modules.
-    This type of model should have the capability to encode data using the encoder module and decode the output of the encoder using the decoder module.
+    All we need to define such model is the type of the model, and the structure
+    of the encoder and the decoder modules. This type of model should have the capability
+    to encode data using the encoder module and decode the output of the encoder using the decoder module.
     """
 
     def __init__(

@@ -42,8 +42,8 @@ After both clients have been started federated learning should commence.
 If you choose to set `--condition 'label'`, don't forget to also adjust the `num_conditions` variable in the config file to correspond to the number of the classes in the data.
 
 ### In this example
-You can use the following commands to run the clients. 
-Client 0:  
+You can use the following commands to run the clients.
+Client 0:
 ```
 python -m examples.cvae_dim_example.client --dataset_path examples/datasets/MNIST --condition "0"
 ```

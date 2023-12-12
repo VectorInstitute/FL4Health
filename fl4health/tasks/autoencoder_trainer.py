@@ -1,18 +1,20 @@
-from typing import Tuple, Callable, Dict
 from pathlib import Path
-from torch.utils.data import DataLoader
+from typing import Callable, Dict, Tuple
+
 import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss
+from torch.utils.data import DataLoader
 
-from fl4health.processing.VAE_dim_reduction import VAEProcessor, ClientConditionedProcessor, LabelConditionedProcessor
+from fl4health.processing.VAE_dim_reduction import ClientConditionedProcessor, LabelConditionedProcessor, VAEProcessor
 from fl4health.processing.VAE_training import VAETransformer
 from fl4health.tasks.loss import VAE_loss
 from fl4health.utils.sampler import LabelBasedSampler
 
 
 class VAETrainer:
-    """This Trainer class can enhance any client class withing this framework by adding the functionality of training a Variational Auto-encoder.
-    Functionalities include prepare_input() which calls the data loader with an specific VAE transformer for VAE training,
+    """This Trainer class can enhance any client class withing this framework by adding the functionality of training
+    a Variational Auto-encoder.Functionalities include prepare_input()
+    which calls the data loader with an specific VAE transformer for VAE training,
     and reduce_dim() which is used to reduce the dimention of data during the pre-processing step with VAEs.
     """
 
@@ -30,7 +32,8 @@ class VAETrainer:
             transform (transforms): Transformation for the data samples.
 
         Returns:
-            Tuple[DataLoader, DataLoader, Dict[str, int]]: Train and validation data loaders and additional information.
+            Tuple[DataLoader, DataLoader, Dict[str, int]]:
+            Train and validation data loaders and additional information.
         """
         train_loader, val_loader, _ = load_data(
             data_dir=data_path,
@@ -61,7 +64,8 @@ class VAETrainer:
             transform (transforms): Transformation for the data samples.
 
         Returns:
-            Tuple[DataLoader, DataLoader, Dict[str, int]]: Train and validation data loaders and additional information.
+            Tuple[DataLoader, DataLoader, Dict[str, int]]:
+            Train and validation data loaders and additional information.
         """
         dim_reduction_processing = VAEProcessor(model_path)
         # dimensionality reduction is applied in the form of a data transformer on only the data samples
@@ -89,8 +93,9 @@ class VAETrainer:
 
 
 class CVAETrainer:
-    """This Trainer class adds the functionality of training a Conditional Variational Auto-encoder to any client class withing this framework.
-    Functionalities include prepare_input() which calls the data loader with an specific conidtional VAE transformer to enable the CVAE training,
+    """This Trainer class adds the functionality of training a Conditional Variational Auto-encoder
+    to any client class withing this framework. Functionalities include prepare_input() which calls
+    the data loader with an specific conidtional VAE transformer to enable the CVAE training,
     and reduce_dim() which enables conditional dimensionality reduction pre-processing with CVAEs.
     """
 
@@ -111,7 +116,8 @@ class CVAETrainer:
             transform (transforms): Transformation for the data samples.
 
         Returns:
-            Tuple[DataLoader, DataLoader, Dict[str, int]]: Train and validation data loaders and additional information.
+            Tuple[DataLoader, DataLoader, Dict[str, int]]:
+            Train and validation data loaders and additional information.
         """
         train_loader, val_loader, _ = load_data(
             data_dir=data_path,
@@ -142,7 +148,8 @@ class CVAETrainer:
             transform (transforms): Transformation for the data samples.
 
         Returns:
-            Tuple[DataLoader, DataLoader, Dict[str, int]]: Train and validation data loaders and additional information.
+            Tuple[DataLoader, DataLoader, Dict[str, int]]:
+            Train and validation data loaders and additional information.
         """
         data_target_dim_reduction = None
         if self.condition == "label":

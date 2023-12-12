@@ -1,5 +1,5 @@
 # Federated Conditional Variational Auto-encoder Example
-This is an example implementation of training a Conditional Variational auto-encoder model on the MNIST dataset. In this example, the model is conditioned based on a client-specific ID that is an integer associated with the client. This lets the model learn a specific mapping of the input to the latent representation while being conditioned on the specific client feature space, potentially leading to more personalized representations. In this example, the client is a basic client, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights. 
+This is an example implementation of training a Conditional Variational auto-encoder model on the MNIST dataset. In this example, the model is conditioned based on a client-specific ID that is an integer associated with the client. This lets the model learn a specific mapping of the input to the latent representation while being conditioned on the specific client feature space, potentially leading to more personalized representations. In this example, the client is a basic client, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights.
 
 ## Running the Example
 In order to run the example, first ensure you have the virtual env of your choice activated and run
@@ -37,13 +37,13 @@ automatically downloaded to the path specified and used in the run.
 
 After both clients have been started federated learning should commence.
 
-**NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data. Another option would be to use the  "label" as the condition, which prompts the clients to condition their data based on the target of each sample. 
+**NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data. Another option would be to use the  "label" as the condition, which prompts the clients to condition their data based on the target of each sample.
 
 If you choose to set `--condition 'label'`, don't forget to also adjust the `num_conditions` variable in the config file to correspond to the number of the classes in the data.
 
 ### In this example
-You can use the following commands to run the clients. 
-Client 0:  
+You can use the following commands to run the clients.
+Client 0:
 ```
 python -m examples.CVAE_example.client --dataset_path examples/datasets/MNIST --condition "0"
 ```

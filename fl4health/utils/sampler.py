@@ -1,9 +1,9 @@
 import math
+import random
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, TypeVar
 
 import numpy as np
-import random
 import torch
 
 from fl4health.utils.dataset import BaseDataset

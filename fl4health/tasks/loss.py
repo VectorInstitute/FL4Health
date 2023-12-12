@@ -1,4 +1,5 @@
 from typing import Tuple
+
 import torch
 from torch.nn.modules.loss import _Loss
 
@@ -6,7 +7,8 @@ from torch.nn.modules.loss import _Loss
 class VAE_loss(_Loss):
     """Implements the loss function used for training CVAEs and VAEs.
     This loss computes the base_loss (defined by the user) between the input and generated output.
-    It then adds the KL divergence between the estimated distribution (represented by mu and logvar) and the standard normal distribution.
+    It then adds the KL divergence between the estimated distribution (represented by mu and logvar)
+    and the standard normal distribution.
     """
 
     def __init__(

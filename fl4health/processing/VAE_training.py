@@ -1,7 +1,7 @@
-from typing import Tuple, Optional
-import torch
-import torch.nn as nn
+from typing import Tuple
+
 import numpy as np
+import torch
 
 
 class VAETransformer:
@@ -23,14 +23,16 @@ class VAETransformer:
 
         Args:
             sample (np.ndarray): Data sample from the dataset.
-            target (Optional[np.ndarray], optional): Target is only necessary in CVAEs conditioned on data label. Defaults to None.
+            target (Optional[np.ndarray], optional): Target is only necessary
+            in CVAEs conditioned on data label. Defaults to None.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: The data format used for training, for self-supervised VAE it is (sample, sample).
-            For CVAE conditioned on an integer it is ([sample, int], sample). For CVAE conditioned on label, it is ([sample, target], sample)
+            Tuple[torch.Tensor, torch.Tensor]: The data format used for training,
+            for self-supervised VAE it is (sample, sample). For CVAE conditioned on
+            an integer it is ([sample, int], sample). For CVAE conditioned on label,
+            it is ([sample, target], sample)
         """
         if self.condition == "label":
-            assert target != None
             return torch.from_numpy(np.concatenate((sample, target), axis=None)), torch.from_numpy(sample)
         elif self.condition.isdigit():
             # Custom condition from the client
