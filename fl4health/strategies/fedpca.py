@@ -101,7 +101,7 @@ class FedPCA(BasicFedAvg):
         singular values for client i, and there are n clients, then merging is done by
         performing SVD on the matrix
 
-        B = [U_1 | U_2 | ... | U_n],
+        B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
 
         where the new (left) singular vectors are returned as the resulting PCs.
 

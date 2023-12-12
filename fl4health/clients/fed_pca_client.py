@@ -61,9 +61,12 @@ class FedPCAClient(NumPyClient):
 
     def get_model(self, config: Config) -> PCAModule:
         """
-        User defined method that returns an instance of the PCAModule.
+        Returns an instance of the PCAModule.
         """
-        raise NotImplementedError
+        low_rank = self.narrow_config_type(config, "low_rank", bool)
+        full_svd = self.narrow_config_type(config, "full_svd", bool)
+        rank_estimation = self.narrow_config_type(config, "rank_estimation", int)
+        return PCAModule(low_rank, full_svd, rank_estimation)
 
     def setup_client(self, config: Config) -> None:
         self.model = self.get_model(config).to(self.device)
@@ -85,33 +88,19 @@ class FedPCAClient(NumPyClient):
     def get_data_tensor(self, data_loader: DataLoader) -> Tensor:
         raise NotImplementedError
 
-    def evaluate_pca_train(self) -> Dict[str, Scalar]:
-        """
-        User defined method that evaluates the locally computed principal components on the training set.
-
-        Returns:
-            metrics (Dict[str, Scalar]): evaluation results.
-        """
-        raise NotImplementedError
-
-    def evaluate_pca_val(self) -> Dict[str, Scalar]:
-        """
-        User defined method that evaluates the merged principal components on the validation set.
-
-        Returns:
-            metrics (Dict[str, Scalar]): evaluation results.
-        """
-        raise NotImplementedError
-
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """Perform PCA using the locally held dataset."""
         if not self.initialized:
             self.setup_client(config)
+        center_data = self.narrow_config_type(config, "center_data", bool)
         train_data_tensor = self.get_data_tensor(self.train_loader)
-        principal_components, singular_values = self.model(train_data_tensor)
+        principal_components, singular_values = self.model(train_data_tensor, center_data)
         self.model.set_principal_components(principal_components, singular_values)
-        metrics = self.evaluate_pca_train()
-
+        metrics: Dict[str, Scalar] = {}
+        cumulative_explained_variance = self.model.compute_cumulative_explained_variance()
+        explained_variance_ratios = self.model.compute_explained_variance_ratios()
+        metrics["cumulative_explained_variance"] = cumulative_explained_variance
+        metrics["top_explained_variance_ratio"] = explained_variance_ratios[0].item()
         return (self.get_parameters(config), self.num_train_samples, metrics)
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
@@ -120,9 +109,11 @@ class FedPCAClient(NumPyClient):
             self.narrow_config_type(config, "num_components", int) if "num_components" in config.keys() else None
         )
         val_data_tensor = self.get_data_tensor(self.val_loader)
-        reconstruction_loss = self.model.compute_reconstruction_loss(val_data_tensor, num_components)
-        metrics = self.evaluate_pca_val()
-
+        val_data_tensor_centered = self.model.centre_data(val_data_tensor)
+        reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_centered, num_components)
+        projection_variance = self.model.compute_projetion_variance(val_data_tensor_centered, num_components)
+        metrics: Dict[str, Scalar] = {}
+        metrics["projection_variance"] = projection_variance
         return (reconstruction_loss, self.num_val_samples, metrics)
 
     def save_model(self) -> None:

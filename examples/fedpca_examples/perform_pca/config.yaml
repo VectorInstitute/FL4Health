@@ -1,0 +1,14 @@
+# Parameters that describe server
+n_server_rounds: 1 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+batch_size: 32 # The batch size for client training
+
+low_rank: False
+full_svd: False
+rank_estimation: 6
+center_data: True
+
+# checkpointing
+checkpoint_path: "examples/basic_example"
