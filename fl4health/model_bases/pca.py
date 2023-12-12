@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Mapping, Tuple
+from typing import Mapping, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -9,13 +9,12 @@ from torch.nn.parameter import Parameter
 
 
 class PCAModule(nn.Module):
-    def __init__(self, num_components: int, low_rank: bool = True, rank_estimation: int = 6) -> None:
+    def __init__(self, low_rank: bool = True, rank_estimation: int = 6) -> None:
         super().__init__()
-        self.num_components = num_components
         self.low_rank = low_rank
         self.rank_estimation = rank_estimation
         self.principal_components: Parameter
-        self.eigenvalues: Parameter
+        self.singular_values: Parameter
 
     def forward(self, X: Tensor, center: bool = True) -> Tuple[Tensor, Tensor]:
         X_prime = self.prepare_data(X, center=center)
@@ -26,12 +25,10 @@ class PCAModule(nn.Module):
             principal_components = V
         else:
             log(INFO, "Performing full SVD on data matrix.")
-            _, S, Vh = torch.linalg.svd(X_prime, full_matrices=True)
+            _, S, Vh = torch.linalg.svd(X_prime, full_matrices=False)
             principal_components = Vh.T
-        # Since singular values are the square roots
-        eigenvalues = (S**2)[: self.num_components]
-        pc_result = principal_components[:, : self.num_components]
-        return pc_result, eigenvalues
+        singular_values = S
+        return principal_components, singular_values
 
     def _maybe_reshape(self, X: Tensor) -> Tensor:
         if len(X.size()) == 2:
@@ -50,15 +47,21 @@ class PCAModule(nn.Module):
             X = self._centre_data(X)
         return X
 
-    def project_lower_dim(self, X: Tensor) -> Tensor:
+    def project_lower_dim(self, X: Tensor, k: Optional[int] = None) -> Tensor:
         X_prime = self._maybe_reshape(X)
-        return torch.matmul(X_prime, self.principal_components)
+        if k:
+            return torch.matmul(X_prime, self.principal_components[:, :k])
+        else:
+            return torch.matmul(X_prime, self.principal_components)
 
-    def project_back(self, X_lower_dim: Tensor) -> Tensor:
+    def project_back(self, X_lower_dim: Tensor, k: Optional[int] = None) -> Tensor:
         X_lower_dim_prime = self._maybe_reshape(X_lower_dim)
-        return torch.matmul(X_lower_dim_prime, self.principal_components.T)
+        if k:
+            return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
+        else:
+            return torch.matmul(X_lower_dim_prime, self.principal_components.T)
 
-    def compute_reconstruction_loss(self, X: Tensor) -> float:
+    def compute_reconstruction_loss(self, X: Tensor, k: Optional[int]) -> float:
         """
         Compute the reconstruction loss of X under PCA reconstruction.
 
@@ -73,19 +76,19 @@ class PCAModule(nn.Module):
         Returns:
             float: reconstruction loss as defined above.
         """
-        return torch.linalg.norm(self.project_back(self.project_lower_dim(X)) - X)
+        return torch.linalg.norm(self.project_back(self.project_lower_dim(X, k), k) - X)
 
     def compute_cumulative_explained_variance(self) -> float:
-        return torch.sum(self.eigenvalues).item()
+        return torch.sum(self.singular_values**2).item()
 
     def compute_explained_variance_ratios(self) -> Tensor:
-        return self.eigenvalues / self.compute_cumulative_explained_variance()
+        return (self.singular_values**2) / self.compute_cumulative_explained_variance()
 
-    def set_principal_components(self, principal_components: Tensor, eigenvalues: Tensor) -> None:
+    def set_principal_components(self, principal_components: Tensor, singular_values: Tensor) -> None:
         self.principal_components = Parameter(data=principal_components, requires_grad=False)
-        self.eigenvalues = Parameter(data=eigenvalues, requires_grad=False)
+        self.singular_values = Parameter(data=singular_values, requires_grad=False)
 
     def load_state_dict(self, state_dict: Mapping[str, Tensor], strict: bool = True) -> None:
         principal_components = state_dict["principal_components"]
-        eigenvalues = state_dict["eigenvalues"]
-        self.set_principal_components(principal_components, eigenvalues)
+        singular_values = state_dict["singular_values"]
+        self.set_principal_components(principal_components, singular_values)

@@ -10,8 +10,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 
 from fl4health.model_bases.pca import PCAModule
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithIntVar
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 
 T = TypeVar("T")
 
@@ -28,20 +27,17 @@ class FedPCAClient(NumPyClient):
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.parameter_exchanger: ParameterExchangerWithPacking[int]
+        self.parameter_exchanger: FullParameterExchanger
 
     def generate_hash(self, length: int = 8) -> str:
         return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
     def get_parameters(self, config: Config) -> NDArrays:
         assert self.model is not None and self.parameter_exchanger is not None
-        model_parameters = self.parameter_exchanger.push_parameters(self.model, config=config)
-        return self.parameter_exchanger.pack_parameters(model_parameters, self.model.num_components)
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        model_parameters, num_components = self.parameter_exchanger.unpack_parameters(parameters)
-        self.model.num_components = num_components
-        self.parameter_exchanger.pull_parameters(model_parameters, self.model, config)
+        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         if config_key not in config:
@@ -53,8 +49,8 @@ class FedPCAClient(NumPyClient):
         else:
             raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchangerWithPacking[int]:
-        return ParameterExchangerWithPacking(ParameterPackerWithIntVar())
+    def get_parameter_exchanger(self, config: Config) -> FullParameterExchanger:
+        return FullParameterExchanger()
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
@@ -65,7 +61,7 @@ class FedPCAClient(NumPyClient):
 
     def get_model(self, config: Config) -> PCAModule:
         """
-        User defined method that returns an uninitialized instance of PCAModule.
+        User defined method that returns an instance of the PCAModule.
         """
         raise NotImplementedError
 
@@ -112,16 +108,19 @@ class FedPCAClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
         train_data_tensor = self.get_data_tensor(self.train_loader)
-        principal_components, eigenvalues = self.model(train_data_tensor)
-        self.model.set_principal_components(principal_components, eigenvalues)
+        principal_components, singular_values = self.model(train_data_tensor)
+        self.model.set_principal_components(principal_components, singular_values)
         metrics = self.evaluate_pca_train()
 
         return (self.get_parameters(config), self.num_train_samples, metrics)
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
         self.set_parameters(parameters, config)
+        num_components = (
+            self.narrow_config_type(config, "num_components", int) if "num_components" in config.keys() else None
+        )
         val_data_tensor = self.get_data_tensor(self.val_loader)
-        reconstruction_loss = self.model.compute_reconstruction_loss(val_data_tensor)
+        reconstruction_loss = self.model.compute_reconstruction_loss(val_data_tensor, num_components)
         metrics = self.evaluate_pca_val()
 
         return (reconstruction_loss, self.num_val_samples, metrics)
