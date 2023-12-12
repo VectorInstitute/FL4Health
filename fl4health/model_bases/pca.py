@@ -9,9 +9,10 @@ from torch.nn.parameter import Parameter
 
 
 class PCAModule(nn.Module):
-    def __init__(self, low_rank: bool = True, rank_estimation: int = 6) -> None:
+    def __init__(self, low_rank: bool = True, full_svd: bool = False, rank_estimation: int = 6) -> None:
         super().__init__()
         self.low_rank = low_rank
+        self.full_svd = full_svd
         self.rank_estimation = rank_estimation
         self.principal_components: Parameter
         self.singular_values: Parameter
@@ -24,8 +25,11 @@ class PCAModule(nn.Module):
             _, S, V = torch.pca_lowrank(X_prime, q=q, center=center)
             principal_components = V
         else:
-            log(INFO, "Performing full SVD on data matrix.")
-            _, S, Vh = torch.linalg.svd(X_prime, full_matrices=False)
+            if self.full_svd:
+                log(INFO, "Performing full SVD on data matrix.")
+            else:
+                log(INFO, "Performing reduced SVD on data matrix.")
+            _, S, Vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
             principal_components = Vh.T
         singular_values = S
         return principal_components, singular_values
