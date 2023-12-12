@@ -46,6 +46,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         accept_failures: bool = True,
         initial_parameters: Optional[Parameters] = None,
+        initialize_parameters_function: Optional[Callable[[], Parameters]] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_aggregation: bool = True,
@@ -80,7 +81,14 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
                 Function used to configure server-side central validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
+            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Mutually exclusive
+                with `initialize_parameters_function`. Defaults to None.
+            initialize_parameters_function (Optional[
+                Callable[[], Parameters]
+            ], optional):
+                A reference to a callable function to make the initial parameters. This is to allow reproducibility
+                when fixing the random seed for the server and/or the client. Mutually exclusive with
+                `initial_parameters`. Defaults to None.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
@@ -92,6 +100,11 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
         """
+        # initial_parameters and initialize_parameters_function can't be both set together
+        assert (
+            initial_parameters is None or initialize_parameters_function is None
+        ), "initial_parameters and initialize_parameters_function are mutually exclusive and can't be set together."
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -108,6 +121,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         )
         self.weighted_aggregation = weighted_aggregation
         self.weighted_eval_losses = weighted_eval_losses
+        self.initialize_parameters_function = initialize_parameters_function
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -305,3 +319,20 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
 
         return loss_aggregated, metrics_aggregated
+
+    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
+        """Initialize global model parameters.
+
+        Will call `self.initialize_parameters_function` if it has been set.
+
+        Args:
+            client_manager (ClientManager): An instance of `ClientManager`.
+
+        Returns:
+            The initialized parameters. Can return None if both `self.inital_parameters` and
+            `self.initialize_parameters_function` are not set.
+        """
+        initial_parameters = super().initialize_parameters(client_manager)
+        if self.initialize_parameters_function is not None:
+            initial_parameters = self.initialize_parameters_function()
+        return initial_parameters

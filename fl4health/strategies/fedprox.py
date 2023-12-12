@@ -5,6 +5,7 @@ import numpy as np
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
+from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
@@ -30,7 +31,8 @@ class FedProx(BasicFedAvg):
         on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         accept_failures: bool = True,
-        initial_parameters: Parameters,
+        initial_parameters: Optional[Parameters] = None,
+        initialize_parameters_function: Optional[Callable[[], Parameters]] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         proximal_weight: float,
@@ -51,7 +53,14 @@ class FedProx(BasicFedAvg):
         Implementation based on https://arxiv.org/abs/1602.05629.
 
         Args:
-            initial_parameters (Parameters): Initial global model parameters.
+            initial_parameters (Parameters): Initial global model parameters. It's mandatory to set either
+                `initial_parameters` or `initialize_parameters_function`, but not both. Optional, defaults to None.
+            initialize_parameters_function (Optional[
+                Callable[[], Parameters]
+            ], optional):
+                A reference to a callable function to make the initial parameters. This is to allow reproducibility
+                when fixing the random seed for the server and/or the client.  It's mandatory to set either
+                `initial_parameters` or `initialize_parameters_function`, but not both. Optional, defaults to None.
             proximal_weight (float): Initial proximal weight (mu). If adaptivity is false, then this is the constant
                 weight used for all clients.
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
@@ -91,6 +100,13 @@ class FedProx(BasicFedAvg):
                 aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the
                 proximal weight in the adaptive setting. Defaults to False.
         """
+        # Either initial_parameters or initialize_parameters_function have to be set, but not both at the same time
+        assert (
+            initial_parameters is not None or initialize_parameters_function is not None
+        ), "Either initial_parameters or initialize_parameters_function have to be set."
+        assert (
+            initial_parameters is None or initialize_parameters_function is None
+        ), "initial_parameters and initialize_parameters_function are mutually exclusive and can't be set together."
 
         self.proximal_weight = proximal_weight
         self.adaptive_proximal_weight = adaptive_proximal_weight
@@ -101,9 +117,6 @@ class FedProx(BasicFedAvg):
             self.proximal_weight_patience_counter: int = 0
 
         self.previous_loss = float("inf")
-
-        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
-        initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(proximal_weight)]).tensors)
 
         super().__init__(
             fraction_fit=fraction_fit,
@@ -116,6 +129,7 @@ class FedProx(BasicFedAvg):
             on_evaluate_config_fn=on_evaluate_config_fn,
             accept_failures=accept_failures,
             initial_parameters=initial_parameters,
+            initialize_parameters_function=initialize_parameters_function,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
             weighted_aggregation=weighted_aggregation,
@@ -123,6 +137,7 @@ class FedProx(BasicFedAvg):
         )
         self.parameter_packer = ParameterPackerFedProx()
         self.weighted_train_losses = weighted_train_losses
+        self.server_model_weights: NDArrays
 
     def aggregate_fit(
         self,
@@ -182,6 +197,29 @@ class FedProx(BasicFedAvg):
 
         parameters = self.parameter_packer.pack_parameters(weights_aggregated, self.proximal_weight)
         return ndarrays_to_parameters(parameters), metrics_aggregated
+
+    def initialize_parameters(self, client_manager: ClientManager) -> Parameters:
+        """Initialize global model parameters.
+
+        Will call `self.initialize_parameters_function` if it has been set. Also initializes
+        `self.server_model_weights` and appends `self.proximal_weight` to the initial parameters.
+
+        Args:
+            client_manager (ClientManager): An instance of `ClientManager`.
+
+        Returns:
+            The initialized parameters.
+        """
+        initial_parameters = super().initialize_parameters(client_manager)
+        if self.initialize_parameters_function is not None:
+            initial_parameters = self.initialize_parameters_function()
+
+        assert initial_parameters is not None, "Initial parameters is None."
+
+        self.server_model_weights = parameters_to_ndarrays(initial_parameters)
+        initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(self.proximal_weight)]).tensors)
+
+        return initial_parameters
 
     def _maybe_update_proximal_weight_param(self, loss: float) -> None:
         """
