@@ -29,7 +29,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
     )
 
     client_manager = SimpleClientManager()
-    model = FedIsic2019FendaModel(frozen_blocks=None, turn_off_bn_tracking=False)
+    model = FedIsic2019FendaModel(frozen_blocks=13, turn_off_bn_tracking=False)
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
