@@ -1,11 +1,13 @@
 import random
 import string
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Tuple, Type, TypeVar
 
 import torch
 from flwr.client.numpy_client import NumPyClient
 from flwr.common import Config, NDArrays, Scalar
+from flwr.common.logger import log
 from torch import Tensor
 from torch.utils.data import DataLoader
 
@@ -30,7 +32,7 @@ class FedPCAClient(NumPyClient):
         self.parameter_exchanger: FullParameterExchanger
 
     def generate_hash(self, length: int = 8) -> str:
-        return "".join(random.choice(string.ascii_lowercase) for i in range(length))
+        return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def get_parameters(self, config: Config) -> NDArrays:
         assert self.model is not None and self.parameter_exchanger is not None
@@ -38,6 +40,7 @@ class FedPCAClient(NumPyClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        self.save_model()
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         if config_key not in config:
@@ -119,4 +122,6 @@ class FedPCAClient(NumPyClient):
         return (reconstruction_loss, self.num_val_samples, metrics)
 
     def save_model(self) -> None:
-        torch.save(self.model.state_dict(), self.model_save_path)
+        final_model_save_path = f"{self.model_save_path}/{self.generate_hash()}_pca"
+        torch.save(self.model.state_dict(), final_model_save_path)
+        log(INFO, f"Model parameters saved to {final_model_save_path}.")

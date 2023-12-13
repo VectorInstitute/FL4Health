@@ -130,11 +130,11 @@ class FedPCA(BasicFedAvg):
         client_singular_vectors = []
         for _, fit_res in results:
             A = parameters_to_ndarrays(fit_res.parameters)
-            singular_vectors, singular_values = A[0], np.sqrt(A[1])
+            singular_vectors, singular_values = A[0], A[1]
             client_singular_vectors.append(singular_vectors)
             client_singular_values.append(singular_values)
 
-        merged_singular_vectors, merged_singular_values = self.merge_subspaces(
+        merged_singular_vectors, merged_singular_values = self.merge_subspaces_svd(
             client_singular_vectors, client_singular_values
         )
         parameters = ndarrays_to_parameters([merged_singular_vectors, merged_singular_values])
@@ -149,11 +149,13 @@ class FedPCA(BasicFedAvg):
 
         return parameters, metrics_aggregated
 
-    def merge_subspaces(
+    def merge_subspaces_svd(
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
     ) -> Tuple[NDArray, NDArray]:
-        eigenvalues_diagonal_matrix = [np.diag(eigenvalue_vector) for eigenvalue_vector in client_singular_values]
-        X = [U.T @ S for U, S in zip(client_singular_vectors, eigenvalues_diagonal_matrix)]
+        singular_values_diagonal_matrix = [
+            np.diag(singular_values_vector) for singular_values_vector in client_singular_values
+        ]
+        X = [U @ S for U, S in zip(client_singular_vectors, singular_values_diagonal_matrix)]
         svd_input = np.concatenate(X, axis=1)
         new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input)
         return new_singular_vectors, new_singular_values
