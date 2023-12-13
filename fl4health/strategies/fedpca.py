@@ -91,22 +91,7 @@ class FedPCA(BasicFedAvg):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """
-        Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
-        belonging to each local dataset.
-        Each clients shares its local PCs, along with their corresponding singular values.
-        Aggregation is then performed by first arranging the local PCs into a block matrix, then perform
-        SVD on this matrix.
-
-        For example, if U_i denotes the matrix of PCs and S_i denotes the diagonal matrix of
-        singular values for client i, and there are n clients, then merging is done by
-        performing SVD on the matrix
-
-        B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
-
-        where the new (left) singular vectors are returned as the resulting PCs.
-
-        For the theoretical justification behind this procedure, see the paper
-        "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
+        Aggregate client parameters. In this case, merge all clients' local principal components.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -152,6 +137,32 @@ class FedPCA(BasicFedAvg):
     def merge_subspaces_svd(
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
     ) -> Tuple[NDArray, NDArray]:
+        """
+        Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
+        belonging to each local dataset.
+        Each clients shares its local PCs, along with their corresponding singular values.
+        Aggregation is then performed by first arranging the local PCs into a block matrix, then perform
+        SVD on this matrix.
+
+        For example, if U_i denotes the matrix of PCs and S_i denotes the diagonal matrix of
+        singular values for client i, and there are n clients, then merging is done by
+        performing SVD on the matrix
+
+        B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
+
+        where the new (left) singular vectors are returned as the resulting PCs.
+
+        For the theoretical justification behind this procedure, see the paper
+        "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
+
+
+        Args:
+            client_singular_vectors (NDArrays): Local PCs.
+            client_singular_values (NDArrays): Singular values corresponding to local PCs.
+
+        Returns:
+            Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+        """
         singular_values_diagonal_matrix = [
             np.diag(singular_values_vector) for singular_values_vector in client_singular_values
         ]
