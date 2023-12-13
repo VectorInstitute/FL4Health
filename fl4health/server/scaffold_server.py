@@ -22,7 +22,6 @@ class ScaffoldServer(FlServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
-        seed: Optional[int] = None,
     ) -> None:
         """
         Custom FL Server for scaffold algorithm to handle warm initialization of control variates
@@ -51,7 +50,6 @@ class ScaffoldServer(FlServer):
             strategy=strategy,
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.warm_start = warm_start
 
@@ -149,7 +147,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,
-        seed: Optional[int] = None,
     ) -> None:
         """
         Custom FL Server for Instance Level Differentially Private Scaffold algorithm as specified in
@@ -191,7 +188,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
             warm_start=warm_start,
-            seed=seed,
         )
         InstanceLevelDPServer.__init__(
             self,
@@ -203,7 +199,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             batch_size=batch_size,
             delta=delta,
             num_server_rounds=num_server_rounds,
-            seed=seed,
         )
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
