@@ -27,11 +27,11 @@ def get_weighted_loss_from_server_log(run_folder_path: str, experiment_name: str
         elif experiment_name == "fed_ixi":
             line_to_convert = files_lines[-1].strip()
         else:
-            if is_fenda:
-                # FENDA doesn't log the same way as other Fed-ISIC methods
-                line_to_convert = files_lines[-1].strip()
-            else:
-                line_to_convert = files_lines[-3].strip()
+            # if is_fenda:
+            # FENDA doesn't log the same way as other Fed-ISIC methods
+            line_to_convert = files_lines[-1].strip()
+            # else:
+            #     line_to_convert = files_lines[-3].strip()
         return float(line_to_convert)
 
 
