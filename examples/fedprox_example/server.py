@@ -64,6 +64,8 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         local_steps=config.get("local_steps"),
     )
 
+    initial_parameters = get_initial_model_information()
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedProx(
         min_fit_clients=config["n_clients"],
@@ -75,7 +77,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initialize_parameters_function=get_initial_model_information,
+        initial_parameters=initial_parameters,
         adaptive_proximal_weight=config["adaptive_proximal_weight"],
         proximal_weight=config["proximal_weight"],
         proximal_weight_delta=config["proximal_weight_delta"],
