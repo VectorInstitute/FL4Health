@@ -14,6 +14,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
+from fl4health.utils.random import set_all_random_seeds
 
 
 def get_initial_model_parameters() -> Parameters:
@@ -81,8 +82,18 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/apfl_example/config.yaml",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     main(config)

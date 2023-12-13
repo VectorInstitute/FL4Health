@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import torch
 import yaml
@@ -12,8 +12,9 @@ from six.moves import urllib
 from examples.fedprox_example.client import MnistFedProxClient
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
+from tests.smoke_tests.checkers import MetricsChecker, MetricType, ProxClientMetricsChecker, ServerMetricsChecker
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -27,6 +28,9 @@ async def run_smoke_test(
     # The param below exists to work around an issue with some clients
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
+    seed: Optional[int] = None,
+    server_metrics_checkers: Optional[List[MetricsChecker]] = None,
+    client_metrics_checkers: Optional[List[MetricsChecker]] = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -44,6 +48,7 @@ async def run_smoke_test(
                 client_python_path="examples.fedprox_example.client",
                 config_path="tests/smoke_tests/fedprox_config.yaml",
                 dataset_path="examples/datasets/mnist_data/",
+                seed=42,
             )
         )
         loop.close()
@@ -90,8 +95,17 @@ async def run_smoke_test(
         skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-
+        seed (Optional[int]): The random seed to be passed in to both the client and the server.
+        server_metrics_checkers (Optional[List[MetricsChecker]]): checkers for additional asserting on the server
+            metrics. Optional, default is None.
+        client_metrics_checkers (Optional[List[MetricsChecker]]): checkers for additional asserting on the client
+            metrics. Optional, default is None.
     """
+    if server_metrics_checkers is None:
+        server_metrics_checkers = []
+    if client_metrics_checkers is None:
+        client_metrics_checkers = []
+
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
     logger.info(f"\tClient : {client_python_path}")
@@ -101,16 +115,17 @@ async def run_smoke_test(
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config)
+    _preload_dataset(dataset_path, config, seed)
 
     # Start the server and capture its process object
     logger.info("Starting server...")
+    server_args = ["-m", server_python_path, "--config_path", config_path]
+    if seed is not None:
+        server_args.extend(["--seed", str(seed)])
+
     server_process = await asyncio.create_subprocess_exec(
         "python",
-        "-m",
-        server_python_path,
-        "--config_path",
-        config_path,
+        *server_args,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
@@ -163,6 +178,8 @@ async def run_smoke_test(
         client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
         if checkpoint_path is not None:
             client_args.extend(["--checkpoint_path", checkpoint_path])
+        if seed is not None:
+            client_args.extend(["--seed", str(seed)])
 
         client_process = await asyncio.create_subprocess_exec(
             "python",
@@ -216,6 +233,10 @@ async def run_smoke_test(
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
+    # Server metrics checkers
+    for server_metrics_checker in server_metrics_checkers:
+        server_metrics_checker.assert_metrics_exist(full_server_output)
+
     # client assertions
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), (
@@ -236,10 +257,14 @@ async def run_smoke_test(
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
+        # Client metrics checkers
+        for client_metrics_checker in client_metrics_checkers:
+            client_metrics_checker.assert_metrics_exist(full_client_outputs[i])
+
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config) -> None:
+def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -256,7 +281,7 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
-    if "cifar" in dataset_path:
+    elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
         load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
         logger.info("Finished preloading CIFAR10 dataset")
@@ -275,8 +300,8 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
         assert process.stdout
         start_time = datetime.datetime.now()
         while True:
-            # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
-            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=60)
+            # giving a timeout here as well just in case it hangs for a long time waiting for a single log line
+            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=timeout)
             output = output_in_bytes.decode().replace("\\n", "\n")
             full_output += output
             return_code = process.returncode
@@ -312,6 +337,19 @@ if __name__ == "__main__":
             client_python_path="examples.fedprox_example.client",
             config_path="tests/smoke_tests/fedprox_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            client_metrics_checkers=[
+                ProxClientMetricsChecker(MetricType.TRAINING, 0.678125, 1.0138534307479858, 1.0138534307479858, 0.0),
+                ProxClientMetricsChecker(MetricType.VALIDATION, 0.7876, 0.8317380547523499, 0.8317380547523499, 0.0),
+            ],
+            server_metrics_checkers=[
+                ServerMetricsChecker(MetricType.TRAINING, 0.203125, 1.9934351444244385),
+                ServerMetricsChecker(MetricType.TRAINING, 0.50625, 1.2648898363113403),
+                ServerMetricsChecker(MetricType.TRAINING, 0.678125, 0.8317380547523499),
+                ServerMetricsChecker(MetricType.VALIDATION, 0.48346666666666666),
+                ServerMetricsChecker(MetricType.VALIDATION, 0.6102666666666666),
+                ServerMetricsChecker(MetricType.VALIDATION, 0.7876),
+            ],
         )
     )
     loop.run_until_complete(
@@ -328,6 +366,7 @@ if __name__ == "__main__":
             client_python_path="examples.apfl_example.client",
             config_path="tests/smoke_tests/apfl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
         )
     )
     loop.run_until_complete(
