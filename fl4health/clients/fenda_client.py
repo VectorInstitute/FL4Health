@@ -11,6 +11,7 @@ from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.model_surgery import ModelSurgery
 
 
 class FendaClient(BasicClient):
@@ -26,6 +27,7 @@ class FendaClient(BasicClient):
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
         seed: Optional[int] = None,
+        model_surgery: Optional[ModelSurgery] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -34,6 +36,7 @@ class FendaClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             seed=seed,
+            model_surgery=model_surgery,
         )
         """This module is used to init fenda client with various auxiliary loss functions.
         These losses will be activated only when their weights are not 0.0.

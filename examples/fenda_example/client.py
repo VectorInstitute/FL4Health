@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Set, Tuple
+from typing import Optional, Sequence, Set, Tuple
 
 import flwr as fl
 import torch
@@ -15,6 +15,7 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.model_surgery import ModelSurgery
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
@@ -25,8 +26,15 @@ class MnistFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         minority_numbers: Set[int],
+        model_surgery: Optional[ModelSurgery] = None,
     ) -> None:
-        super().__init__(data_path=data_path, metrics=metrics, device=device, perfcl_loss_weights=(1.0, 1.0))
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            perfcl_loss_weights=(1.0, 1.0),
+            model_surgery=model_surgery,
+        )
         self.minority_numbers = minority_numbers
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -60,6 +68,8 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistFendaClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
+    client = MnistFendaClient(
+        data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, model_surgery=ModelSurgery()
+    )
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
