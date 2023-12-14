@@ -14,7 +14,7 @@ from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 from tests.smoke_tests.checkers import AccuracyChecker, LossChecker, MetricChecker, MetricScope, MetricType
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -49,6 +49,15 @@ async def run_smoke_test(
                 config_path="tests/smoke_tests/fedprox_config.yaml",
                 dataset_path="examples/datasets/mnist_data/",
                 seed=42,
+                client_metrics_checkers=[
+                    LossChecker(metric_type=MetricType.TRAINING, checkpoint_loss=2.1390, backward_loss=2.1390),
+                    AccuracyChecker(MetricType.TRAINING, 0.371875),
+                    AccuracyChecker(MetricType.VALIDATION, 0.39066666666666666),
+                ],
+                server_metrics_checkers=[
+                    LossChecker(loss=2.2803077697753906),
+                    AccuracyChecker(MetricType.TRAINING, 0.1890625),
+                ],
             )
         )
         loop.close()
@@ -373,6 +382,32 @@ if __name__ == "__main__":
             client_python_path="examples.scaffold_example.client",
             config_path="tests/smoke_tests/scaffold_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            client_metrics_checkers=[
+                LossChecker(
+                    metric_type=MetricType.TRAINING,
+                    checkpoint_loss=2.139054298400879,
+                    backward_loss=2.139054298400879,
+                ),
+                LossChecker(
+                    metric_type=MetricType.VALIDATION,
+                    checkpoint_loss=2.2294695377349854,
+                    backward_loss=2.2294695377349854,
+                ),
+                AccuracyChecker(MetricType.TRAINING, 0.371875),
+                AccuracyChecker(MetricType.VALIDATION, 0.39066666666666666),
+            ],
+            server_metrics_checkers=[
+                LossChecker(loss=2.2803077697753906),
+                LossChecker(loss=2.2633602619171143),
+                LossChecker(loss=2.2294695377349854),
+                AccuracyChecker(MetricType.TRAINING, 0.1890625),
+                AccuracyChecker(MetricType.TRAINING, 0.353125),
+                AccuracyChecker(MetricType.TRAINING, 0.371875),
+                AccuracyChecker(MetricType.VALIDATION, 0.18506666666666666),
+                AccuracyChecker(MetricType.VALIDATION, 0.3108),
+                AccuracyChecker(MetricType.VALIDATION, 0.39066666666666666),
+            ],
         )
     )
     loop.run_until_complete(

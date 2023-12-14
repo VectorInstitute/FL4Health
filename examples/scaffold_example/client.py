@@ -14,6 +14,7 @@ from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.scaffold_client import ScaffoldClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -37,11 +38,21 @@ class MnistScaffoldClient(ScaffoldClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
 
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     client = MnistScaffoldClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
