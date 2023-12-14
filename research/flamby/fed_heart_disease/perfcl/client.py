@@ -22,6 +22,7 @@ from fl4health.checkpointing.checkpointer import (
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFCLModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
@@ -37,7 +38,6 @@ class FedHeartDiseasePerFCLClient(FendaClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         extra_loss_weights: Tuple[float, float] = (10, 10),
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -45,10 +45,9 @@ class FedHeartDiseasePerFCLClient(FendaClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.client_number = client_number
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
 
         self.perfcl_loss_weights = extra_loss_weights
 
@@ -147,6 +146,9 @@ if __name__ == "__main__":
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
 
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
@@ -163,7 +165,6 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        seed=args.seed,
         extra_loss_weights=(args.mu, args.gamma),
     )
 

@@ -22,7 +22,9 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
-#   server_address
+#   server_address \
+#   client_mu \
+#   client_gamma
 #
 # Example:
 # sbatch research/flamby/fed_ixi/perfcl/run_fold_experiment.slrm \
@@ -31,7 +33,9 @@
 #   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
-#   0.0.0.0:8080
+#   0.0.0.0:8080 \
+#   0.1 \
+#   0.1
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.

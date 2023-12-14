@@ -30,7 +30,7 @@ LR_VALUES=( 0.001 0.01 0.1 )
 MU_VALUES=( 0.01 0.1 1 5 )
 GAMMA_VALUES=( 1 5 10 )
 
-SERVER_PORT=8400
+SERVER_PORT=8100
 
 # Create sweep folder
 SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"

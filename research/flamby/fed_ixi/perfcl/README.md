@@ -3,7 +3,7 @@
 To run the hyperparameter sweep you simply run the command
 
 ```bash
-./research/flamby/fed_ixi/fenda/run_hp_sweep.sh \
+./research/flamby/fed_ixi/perfcl/run_hp_sweep.sh \
    path_to_config.yaml \
    path_to_folder_for_artifacts/ \
    path_to_folder_for_dataset/ \
@@ -14,9 +14,9 @@ from the top level directory of the repository
 
 An example is something like
 ``` bash
-./research/flamby/fed_ixi/fenda/run_hp_sweep.sh \
-   research/flamby/fed_ixi/fenda/config.yaml \
-   research/flamby/fed_ixi/fenda/ \
+./research/flamby/fed_ixi/perfcl/run_hp_sweep.sh \
+   research/flamby/fed_ixi/perfcl/config.yaml \
+   research/flamby/fed_ixi/perfcl/ \
    /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```

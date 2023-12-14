@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.logger import log
@@ -9,6 +9,7 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from fl4health.utils.config import load_config
+from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_isic2019.perfcl.perfcl_model import FedIsic2019PerFCLModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
@@ -20,7 +21,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -46,7 +47,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
         initial_parameters=get_initial_model_parameters(model),
     )
 
-    server = PersonalServer(client_manager, strategy, seed)
+    server = PersonalServer(client_manager, strategy)
 
     fl.server.start_server(
         server=server,
@@ -88,4 +89,8 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.seed)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
+    main(config, args.server_address)

@@ -18,6 +18,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, To
 from fl4health.clients.moon_client import MoonClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_heart_disease.fedper.fedper_model import FedHeartDiseaseFedPerModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
@@ -32,7 +33,6 @@ class FedHeartDiseaseFedPerClient(MoonClient):
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -40,10 +40,9 @@ class FedHeartDiseaseFedPerClient(MoonClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.client_number = client_number
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -120,6 +119,9 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
 
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
@@ -131,7 +133,6 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        seed=args.seed,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
