@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Mapping, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -115,8 +115,3 @@ class PCAModule(nn.Module):
     def set_principal_components(self, principal_components: Tensor, singular_values: Tensor) -> None:
         self.principal_components = Parameter(data=principal_components, requires_grad=False)
         self.singular_values = Parameter(data=singular_values, requires_grad=False)
-
-    def load_state_dict(self, state_dict: Mapping[str, Tensor], strict: bool = True) -> None:
-        principal_components = state_dict["principal_components"]
-        singular_values = state_dict["singular_values"]
-        self.set_principal_components(principal_components, singular_values)
