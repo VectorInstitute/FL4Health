@@ -14,7 +14,7 @@ from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 from tests.smoke_tests.checkers import AccuracyChecker, LossChecker, MetricChecker, MetricScope, MetricType
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -367,14 +367,14 @@ if __name__ == "__main__":
             ],
         )
     )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.scaffold_example.server",
-    #         client_python_path="examples.scaffold_example.client",
-    #         config_path="tests/smoke_tests/scaffold_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.scaffold_example.server",
+            client_python_path="examples.scaffold_example.client",
+            config_path="tests/smoke_tests/scaffold_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.apfl_example.server",
@@ -429,97 +429,97 @@ if __name__ == "__main__":
             ],
         )
     )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.basic_example.server",
-    #         client_python_path="examples.basic_example.client",
-    #         config_path="tests/smoke_tests/basic_config.yaml",
-    #         dataset_path="examples/datasets/cifar_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.dp_fed_examples.client_level_dp.server",
-    #         client_python_path="examples.dp_fed_examples.client_level_dp.client",
-    #         config_path="tests/smoke_tests/client_level_dp_config.yaml",
-    #         dataset_path="examples/datasets/cifar_data/",
-    #         skip_assert_client_fl_rounds=True,
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
-    #         client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
-    #         config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
-    #         dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
-    #         skip_assert_client_fl_rounds=True,
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.dp_fed_examples.instance_level_dp.server",
-    #         client_python_path="examples.dp_fed_examples.instance_level_dp.client",
-    #         config_path="tests/smoke_tests/instance_level_dp_config.yaml",
-    #         dataset_path="examples/datasets/cifar_data/",
-    #         skip_assert_client_fl_rounds=True,
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.dp_scaffold_example.server",
-    #         client_python_path="examples.dp_scaffold_example.client",
-    #         config_path="tests/smoke_tests/dp_scaffold_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.fedbn_example.server",
-    #         client_python_path="examples.fedbn_example.client",
-    #         config_path="tests/smoke_tests/fedbn_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.federated_eval_example.server",
-    #         client_python_path="examples.federated_eval_example.client",
-    #         config_path="tests/smoke_tests/federated_eval_config.yaml",
-    #         dataset_path="examples/datasets/cifar_data/",
-    #         checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
-    #         assert_evaluation_logs=True,
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.fedper_example.server",
-    #         client_python_path="examples.fedper_example.client",
-    #         config_path="tests/smoke_tests/fedper_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.fenda_example.server",
-    #         client_python_path="examples.fenda_example.client",
-    #         config_path="tests/smoke_tests/fenda_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.fl_plus_local_ft_example.server",
-    #         client_python_path="examples.fl_plus_local_ft_example.client",
-    #         config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
-    #         dataset_path="examples/datasets/cifar_data/",
-    #     )
-    # )
-    # loop.run_until_complete(
-    #     run_smoke_test(
-    #         server_python_path="examples.moon_example.server",
-    #         client_python_path="examples.moon_example.client",
-    #         config_path="tests/smoke_tests/moon_config.yaml",
-    #         dataset_path="examples/datasets/mnist_data/",
-    #     )
-    # )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.basic_example.server",
+            client_python_path="examples.basic_example.client",
+            config_path="tests/smoke_tests/basic_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.client_level_dp.server",
+            client_python_path="examples.dp_fed_examples.client_level_dp.client",
+            config_path="tests/smoke_tests/client_level_dp_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.client_level_dp_weighted.server",
+            client_python_path="examples.dp_fed_examples.client_level_dp_weighted.client",
+            config_path="tests/smoke_tests/client_level_dp_weighted_config.yaml",
+            dataset_path="examples/datasets/breast_cancer_data/hospital_0.csv",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_fed_examples.instance_level_dp.server",
+            client_python_path="examples.dp_fed_examples.instance_level_dp.client",
+            config_path="tests/smoke_tests/instance_level_dp_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+            skip_assert_client_fl_rounds=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.dp_scaffold_example.server",
+            client_python_path="examples.dp_scaffold_example.client",
+            config_path="tests/smoke_tests/dp_scaffold_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedbn_example.server",
+            client_python_path="examples.fedbn_example.client",
+            config_path="tests/smoke_tests/fedbn_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.federated_eval_example.server",
+            client_python_path="examples.federated_eval_example.client",
+            config_path="tests/smoke_tests/federated_eval_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+            checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
+            assert_evaluation_logs=True,
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedper_example.server",
+            client_python_path="examples.fedper_example.client",
+            config_path="tests/smoke_tests/fedper_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fenda_example.server",
+            client_python_path="examples.fenda_example.client",
+            config_path="tests/smoke_tests/fenda_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fl_plus_local_ft_example.server",
+            client_python_path="examples.fl_plus_local_ft_example.client",
+            config_path="tests/smoke_tests/fl_plus_local_ft_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.moon_example.server",
+            client_python_path="examples.moon_example.client",
+            config_path="tests/smoke_tests/moon_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
     loop.close()
