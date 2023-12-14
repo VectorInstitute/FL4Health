@@ -26,7 +26,6 @@ class InstanceLevelPrivacyClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -34,7 +33,6 @@ class InstanceLevelPrivacyClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.clipping_bound: float
         self.noise_multiplier: float
@@ -63,11 +61,13 @@ class InstanceLevelPrivacyClient(BasicClient):
         # Create DP training objects
         privacy_engine = PrivacyEngine()
         # NOTE: that Opacus make private is NOT idempotent
-        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
+        self.model, optimizer, self.train_loader = privacy_engine.make_private(
             module=self.model,
-            optimizer=self.optimizer,
+            optimizer=self.optimizers["global"],
             data_loader=self.train_loader,
             noise_multiplier=self.noise_multiplier,
             max_grad_norm=self.clipping_bound,
             clipping="flat",
         )
+
+        self.optimizers = {"global": optimizer}
