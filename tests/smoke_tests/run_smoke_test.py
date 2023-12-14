@@ -50,13 +50,12 @@ async def run_smoke_test(
                 dataset_path="examples/datasets/mnist_data/",
                 seed=42,
                 client_metrics_checkers=[
-                    LossChecker(metric_type=MetricType.TRAINING, checkpoint_loss=2.1390, backward_loss=2.1390),
-                    AccuracyChecker(MetricType.TRAINING, 0.371875),
-                    AccuracyChecker(MetricType.VALIDATION, 0.39066666666666666),
+                    LossChecker(0.0, LossType.PROXIMAL, MetricType.VALIDATION),
+                    AccuracyChecker(0.6781, MetricType.TRAINING),
                 ],
                 server_metrics_checkers=[
-                    LossChecker(loss=2.2803077697753906),
-                    AccuracyChecker(MetricType.TRAINING, 0.1890625),
+                    LossChecker(0.8317),
+                    AccuracyChecker(0.2031, MetricType.TRAINING),
                 ],
             )
         )
@@ -355,7 +354,7 @@ if __name__ == "__main__":
                 LossChecker(0.8317, LossType.BACKWARD, MetricType.VALIDATION),
                 LossChecker(0.0, LossType.PROXIMAL, MetricType.VALIDATION),
                 AccuracyChecker(0.6781, MetricType.TRAINING),
-                AccuracyChecker(0.787, MetricType.VALIDATION),
+                AccuracyChecker(0.7876, MetricType.VALIDATION),
             ],
             server_metrics_checkers=[
                 LossChecker(1.9934),

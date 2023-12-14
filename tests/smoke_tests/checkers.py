@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
+
+from pytest import approx
 
 
 class MetricType(Enum):
@@ -76,14 +78,30 @@ class LossChecker(MetricChecker):
         return f"Client {self.metric_type.value} Losses" in log_line
 
     def check(self, log_line: str) -> None:
-        has_loss = False
-        if self.loss_type == LossType.LOSS:
-            has_loss = "losses_distributed" in log_line and str(self.loss) in log_line
-        else:
-            has_loss = f"{self.loss_type.value}: {self.loss}" in log_line
+        losses = self.parse_losses(log_line)
+        has_loss = any([approx(loss, abs=0.0001) == self.loss for loss in losses])
 
         if has_loss:
             self.found_loss = True
+
+    def parse_losses(self, log_line: str) -> List[float]:
+        try:
+            if self.loss_type == LossType.LOSS:
+                keyword = "losses_distributed"
+                if keyword in log_line:
+                    losses_string = log_line.split(keyword)[-1]
+                    losses_list = eval(losses_string)
+                    return [loss_tuple[1] for loss_tuple in losses_list]
+            else:
+                keyword = f"{self.loss_type.value}:"
+                if keyword in log_line:
+                    after_keyword = log_line.split(keyword)[-1]
+                    loss_string = after_keyword[: after_keyword.find("\t")]
+                    return [eval(loss_string)]
+        except Exception:
+            # if any parsing error occurs, return empty
+            return []
+        return []
 
     def to_dict(self) -> Dict[str, Union[str, float]]:
         return {
@@ -116,13 +134,58 @@ class AccuracyChecker(MetricChecker):
         return has_metrics
 
     def check(self, log_line: str) -> None:
-        if self.metric_type == MetricType.TRAINING:
-            has_accuracy = f"train - {self.scope.value} - accuracy" in log_line and str(self.accuracy) in log_line
-        else:
-            has_accuracy = f"val - {self.scope.value} - accuracy" in log_line and str(self.accuracy) in log_line
+        accuracies = self.parse_accuracies(log_line)
+        has_accuracy = any([approx(accuracy, abs=0.0001) == self.accuracy for accuracy in accuracies])
 
         if has_accuracy:
             self.found_accuracy = True
+
+    def parse_accuracies(self, log_line: str) -> List[float]:
+        try:
+            multiple_accuracies = False
+            if self.metric_type == MetricType.TRAINING:
+                if "metrics_distributed_fit" in log_line:
+                    keyword = "metrics_distributed_fit"
+                    multiple_accuracies = True
+                else:
+                    keyword = f"Client {self.metric_type.value} Metrics"
+            else:
+                if "metrics_distributed" in log_line:
+                    keyword = "metrics_distributed"
+                    multiple_accuracies = True
+                else:
+                    keyword = f"Client {self.metric_type.value} Metrics"
+
+            if keyword not in log_line:
+                return []
+
+            if self.metric_type == MetricType.TRAINING:
+                accuracy_type_keyword = f"train - {self.scope.value} - accuracy"
+            else:
+                accuracy_type_keyword = f"val - {self.scope.value} - accuracy"
+
+            if multiple_accuracies:
+                accuracies_string = log_line.split(keyword)[-1]
+                accuracies_dict = eval(accuracies_string)
+
+                if accuracy_type_keyword not in accuracies_dict:
+                    return []
+
+                return [accuracies_tuple[1] for accuracies_tuple in accuracies_dict[accuracy_type_keyword]]
+            else:
+                if accuracy_type_keyword in log_line:
+                    after_keyword = log_line.split(accuracy_type_keyword + ":")[-1]
+                    tab_index = after_keyword.find("\t")
+                    if tab_index != -1:
+                        accuracy_string = after_keyword[:tab_index]
+                    else:
+                        accuracy_string = after_keyword
+                    return [eval(accuracy_string)]
+
+        except Exception:
+            # if any parsing error occurs, return empty
+            return []
+        return []
 
     def found_all_metrics(self) -> bool:
         return self.found_accuracy
