@@ -6,7 +6,7 @@ import torch
 from flwr.common.logger import log
 
 
-class ModelSurgery(ABC):
+class WarmupModule(ABC):
     def __init__(
         self, pretrained_model_dir: Optional[str] = None, load_weights_map: Optional[Dict[str, str]] = None
     ) -> None:

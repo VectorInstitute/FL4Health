@@ -11,11 +11,11 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from fl4health.client_surgery.warmup_module import WarmupModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
-from fl4health.utils.model_surgery import ModelSurgery
 from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
@@ -26,14 +26,14 @@ class MnistFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         minority_numbers: Set[int],
-        model_surgery: Optional[ModelSurgery] = None,
+        warmup_module: Optional[WarmupModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             perfcl_loss_weights=(1.0, 1.0),
-            model_surgery=model_surgery,
+            warmup_module=warmup_module,
         )
         self.minority_numbers = minority_numbers
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
     client = MnistFendaClient(
-        data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, model_surgery=ModelSurgery()
+        data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, warmup_module=WarmupModule()
     )
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
