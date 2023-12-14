@@ -12,10 +12,10 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.client_surgery.warmup_module import WarmupModule
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -60,7 +60,10 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, seed=args.seed, warmup_module=WarmupModule())
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
+    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

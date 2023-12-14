@@ -5,7 +5,6 @@ from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
@@ -34,7 +33,6 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
         warmup_module: Optional[WarmupModule] = None,
     ) -> None:
         """
@@ -52,8 +50,6 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
-
-        self._maybe_fix_random_seeds(seed)
 
         self.data_path = data_path
         self.device = device
@@ -85,23 +81,7 @@ class BasicClient(NumPyClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
-
         self.warmup_module = warmup_module
-
-    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
-        """
-        If seed value is provided, fix random seeds for reproducibility of results.
-
-        Args:
-            seed (int): The seed value to be used for random number generators.
-        """
-        if seed is None:
-            log(INFO, "No seed provided. Using random seed.")
-        else:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """

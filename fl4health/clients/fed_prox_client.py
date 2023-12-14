@@ -30,7 +30,6 @@ class FedProxClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
         warmup_module: Optional[WarmupModule] = None,
     ) -> None:
         super().__init__(
@@ -39,7 +38,6 @@ class FedProxClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
             warmup_module=warmup_module,
         )
         self.initial_tensors: List[torch.Tensor]

@@ -26,7 +26,6 @@ class FendaClient(BasicClient):
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
-        seed: Optional[int] = None,
         warmup_module: Optional[WarmupModule] = None,
     ) -> None:
         super().__init__(
@@ -35,7 +34,6 @@ class FendaClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
             warmup_module=warmup_module,
         )
         """This module is used to init fenda client with various auxiliary loss functions.
