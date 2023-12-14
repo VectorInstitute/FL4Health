@@ -15,6 +15,15 @@ class MetricScope(Enum):
     LOCAL = "local"
 
 
+class LossType(Enum):
+    LOSS = "loss"
+    CHECKPOINT = "checkpoint"
+    BACKWARD = "backward"
+    PROXIMAL = "proximal_loss"
+    GLOBAL = "global"
+    LOCAL = "local"
+
+
 class MetricChecker(ABC):
     def assert_metrics_exist(self, logs: str) -> None:
         log_lines = logs.split("\n")
@@ -46,100 +55,49 @@ class MetricChecker(ABC):
 class LossChecker(MetricChecker):
     def __init__(
         self,
-        loss: Optional[float] = None,
-        checkpoint_loss: Optional[float] = None,
-        backward_loss: Optional[float] = None,
-        proximal_loss: Optional[float] = None,
-        global_loss: Optional[float] = None,
-        local_loss: Optional[float] = None,
+        loss: float,
+        loss_type: LossType = LossType.LOSS,
         metric_type: Optional[MetricType] = None,
     ):
         self.loss = loss
-        self.checkpoint_loss = checkpoint_loss
-        self.backward_loss = backward_loss
-        self.proximal_loss = proximal_loss
-        self.global_loss = global_loss
-        self.local_loss = local_loss
+        self.loss_type = loss_type
         self.metric_type = metric_type
-        self.found_losses = False
+        self.found_loss = False
 
     def found_all_metrics(self) -> bool:
-        return self.found_losses
+        return self.found_loss
 
     def should_check(self, log_line: str) -> bool:
-        has_any_loss = False
-        if self.loss is not None:
-            has_any_loss |= "losses_distributed" in log_line
-        if (
-            self.checkpoint_loss is not None
-            or self.backward_loss is not None
-            or self.global_loss is not None
-            or self.local_loss is not None
-        ):
-            assert self.metric_type is not None
-            has_any_loss |= f"Client {self.metric_type.value} Losses" in log_line
-        return has_any_loss
+        if self.loss_type == LossType.LOSS:
+            return "losses_distributed" in log_line
+
+        # all other loss types:
+        assert self.metric_type is not None
+        return f"Client {self.metric_type.value} Losses" in log_line
 
     def check(self, log_line: str) -> None:
-        if self.loss is not None:
+        has_loss = False
+        if self.loss_type == LossType.LOSS:
             has_loss = "losses_distributed" in log_line and str(self.loss) in log_line
         else:
-            has_loss = True
+            has_loss = f"{self.loss_type.value}: {self.loss}" in log_line
 
-        if self.checkpoint_loss is not None:
-            has_checkpoint_loss = f"checkpoint: {self.checkpoint_loss}" in log_line
-        else:
-            has_checkpoint_loss = True
-
-        if self.backward_loss is not None:
-            has_backward_loss = f"backward: {self.backward_loss}" in log_line
-        else:
-            has_backward_loss = True
-
-        if self.proximal_loss is not None:
-            has_proximal_loss = f"proximal_loss: {self.proximal_loss}" in log_line
-        else:
-            has_proximal_loss = True
-
-        if self.global_loss is not None:
-            has_global_loss = f"global: {self.global_loss}" in log_line
-        else:
-            has_global_loss = True
-
-        if self.local_loss is not None:
-            has_local_loss = f"local: {self.local_loss}" in log_line
-        else:
-            has_local_loss = True
-
-        if all([has_loss, has_checkpoint_loss, has_backward_loss, has_proximal_loss, has_global_loss, has_local_loss]):
-            self.found_losses = True
+        if has_loss:
+            self.found_loss = True
 
     def to_dict(self) -> Dict[str, Union[str, float]]:
-        return_dict: Dict[str, Union[str, float]] = {}
-
-        if self.loss is not None:
-            return_dict["loss"] = self.loss
-        if self.checkpoint_loss is not None:
-            return_dict["checkpoint_loss"] = self.checkpoint_loss
-        if self.backward_loss is not None:
-            return_dict["backward_loss"] = self.backward_loss
-        if self.proximal_loss is not None:
-            return_dict["proximal_loss"] = self.proximal_loss
-        if self.global_loss is not None:
-            return_dict["global_loss"] = self.global_loss
-        if self.local_loss is not None:
-            return_dict["local_loss"] = self.local_loss
-        if self.metric_type is not None:
-            return_dict["metric_type"] = self.metric_type.value
-
-        return return_dict
+        return {
+            "loss": self.loss,
+            "loss_type": self.loss_type.value,
+            "metric_type": self.metric_type.value if self.metric_type is not None else "",
+        }
 
 
 class AccuracyChecker(MetricChecker):
     def __init__(
         self,
-        metric_type: MetricType,
         accuracy: float,
+        metric_type: MetricType,
         scope: MetricScope = MetricScope.PREDICTION,
     ):
         self.metric_type = metric_type
