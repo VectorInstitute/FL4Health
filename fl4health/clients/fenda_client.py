@@ -5,7 +5,7 @@ import torch
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmup_module import WarmupModule
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -26,7 +26,7 @@ class FendaClient(BasicClient):
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
-        warmup_module: Optional[WarmupModule] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -34,7 +34,7 @@ class FendaClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            warmup_module=warmup_module,
+            warmed_up_module=warmed_up_module,
         )
         """This module is used to init fenda client with various auxiliary loss functions.
         These losses will be activated only when their weights are not 0.0.

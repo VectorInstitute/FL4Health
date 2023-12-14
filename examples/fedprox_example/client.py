@@ -12,6 +12,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -53,6 +54,20 @@ if __name__ == "__main__":
         help="Seed for the random number generator",
         required=False,
     )
+    parser.add_argument(
+        "--pretrained_model_dir",
+        action="store",
+        type=str,
+        help="Path to the pretrained model",
+        required=False,
+    )
+    parser.add_argument(
+        "--weights_mapping_dir",
+        action="store",
+        type=str,
+        help="Path to the weights mapping file",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -63,7 +78,11 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
+    # Load the warmed up module
+    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, args.weights_mapping_dir)
+
+    # Start the client
+    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, warmed_up_module=warmed_up_module)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

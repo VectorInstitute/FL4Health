@@ -7,7 +7,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmup_module import WarmupModule
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -30,7 +30,7 @@ class FedProxClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warmup_module: Optional[WarmupModule] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -38,7 +38,7 @@ class FedProxClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            warmup_module=warmup_module,
+            warmed_up_module=warmed_up_module,
         )
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking

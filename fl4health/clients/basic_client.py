@@ -15,7 +15,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmup_module import WarmupModule
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
@@ -33,7 +33,7 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warmup_module: Optional[WarmupModule] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -81,7 +81,7 @@ class BasicClient(NumPyClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
-        self.warmup_module = warmup_module
+        self.warmed_up_module = warmed_up_module
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
@@ -136,8 +136,8 @@ class BasicClient(NumPyClient):
         assert self.model is not None
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
-            if self.warmup_module:
-                self.warmup_module._maybe_load_from_pretrained(self.model)
+            if self.warmed_up_module:
+                self.warmed_up_module.load_from_pretrained(self.model)
         else:
             assert self.parameter_exchanger is not None
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)
