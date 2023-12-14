@@ -2,6 +2,7 @@ black
 flake8
 flwr==1.4.0
 isort
+mock
 mypy
 nltk
 numpy

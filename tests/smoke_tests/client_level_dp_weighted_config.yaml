@@ -1,5 +1,5 @@
 # Server parameters
-n_server_rounds: 3
+n_server_rounds: 2
 
 # NOTE: This multiplier is small, yielding a vacuous epsilon for privacy. It is set to this small value for this
 # example due to the small number of clients (3, see below), which, when combined with the clipping implies that

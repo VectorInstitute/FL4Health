@@ -26,8 +26,7 @@ class ApflClient(BasicClient):
 
         self.model: ApflModule
         self.learning_rate: float
-        self.optimizer: torch.optim.Optimizer
-        self.local_optimizer: torch.optim.Optimizer
+        self.optimizers: Dict[str, torch.optim.Optimizer]
 
     def is_start_of_local_training(self, step: int) -> bool:
         return step == 0
@@ -47,26 +46,26 @@ class ApflClient(BasicClient):
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
 
         # Forward pass on global model and update global parameters
-        self.optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
         global_pred = self.model.global_forward(input)
         global_loss = self.criterion(global_pred, target)
         global_loss.backward()
-        self.optimizer.step()
+        self.optimizers["global"].step()
 
         # Make sure gradients are zero prior to foward passes of global and local model
         # to generate personalized predictions
         # NOTE: We zero the global optimizer grads because they are used (after the backward calculation below)
         # to update the scalar alpha (see update_alpha() where .grad is called.)
-        self.optimizer.zero_grad()
-        self.local_optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
+        self.optimizers["local"].zero_grad()
 
         # Personal predictions are generated as a convex combination of the output
         # of local and global models
         preds, features = self.predict(input)
         # Parameters of local model are updated to minimize loss of personalized model
         losses = self.compute_loss(preds, features, target)
-        losses.backward.backward()
-        self.local_optimizer.step()
+        losses.backward["backward"].backward()
+        self.optimizers["local"].step()
 
         # Return dictionary of predictions where key is used to name respective MetricMeters
         return losses, preds
@@ -101,10 +100,9 @@ class ApflClient(BasicClient):
         return losses
 
     def set_optimizer(self, config: Config) -> None:
-        optimizer_dict = self.get_optimizer(config)
-        assert isinstance(optimizer_dict, dict)
-        self.optimizer = optimizer_dict["global"]
-        self.local_optimizer = optimizer_dict["local"]
+        optimizers = self.get_optimizer(config)
+        assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
+        self.optimizers = optimizers
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
