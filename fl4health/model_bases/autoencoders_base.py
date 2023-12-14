@@ -13,7 +13,7 @@ class AutoEncoderType(Enum):
     CONDITIONAL_VAE = "CONDITIONAL_VAE"
 
 
-class AutoEncoderBase(nn.Module, ABC):
+class AbstractAE(nn.Module, ABC):
     """The base class for all Encoder-Decoder based models.
     All we need to define such model is the type of the model, and the structure
     of the encoder and the decoder modules. This type of model should have the capability
@@ -36,7 +36,7 @@ class AutoEncoderBase(nn.Module, ABC):
         raise NotImplementedError
 
 
-class VarioationalAE(AutoEncoderBase):
+class VariationalAE(AbstractAE):
     """Variational Auto-Encoder model base class."""
 
     def __init__(
@@ -74,7 +74,7 @@ class VarioationalAE(AutoEncoderBase):
         return torch.cat((logvar, mu, output), dim=1)
 
 
-class ConditionalVAE(AutoEncoderBase):
+class ConditionalVAE(AbstractAE):
     def __init__(
         self,
         model_type: AutoEncoderType,
@@ -127,7 +127,7 @@ class ConditionalVAE(AutoEncoderBase):
         return torch.cat((logvar, mu, output), dim=1)
 
 
-class Basic_AE(AutoEncoderBase):
+class BasicAE(AbstractAE):
     def __init__(self, model_type: AutoEncoderType, encoder: nn.Module, decoder: nn.Module) -> None:
         super().__init__(model_type, encoder, decoder)
 

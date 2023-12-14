@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from examples.VAE_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.clients.basic_client import BasicClient
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, VarioationalAE
+from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
 from fl4health.tasks.autoencoder_trainer import VAETrainer
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Metric
@@ -53,7 +53,7 @@ class VAEClient(VAETrainer, BasicClient):
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
         encoder = MnistVariationalEncoder(input_size=784, latent_dim=latent_dim)
         decoder = MnistVariationalDecoder(latent_dim=latent_dim, output_size=784)
-        return VarioationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
+        return VariationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
 
 
 if __name__ == "__main__":

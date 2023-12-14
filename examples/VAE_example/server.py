@@ -12,7 +12,7 @@ from flwr.server.strategy import FedAvg
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from examples.VAE_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, VarioationalAE
+from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
@@ -49,7 +49,7 @@ def main(config: Dict[str, Any]) -> None:
     # Initializing the model on the server side
     encoder = MnistVariationalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
     decoder = MnistVariationalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
-    model = VarioationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
+    model = VariationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
     model_checkpoint_name = "best_VAE_model.pkl"
 
     # To facilitate checkpointing

@@ -5,17 +5,17 @@ import torchvision.transforms as transforms
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.processing.VAE_dim_reduction import ClientConditionedProcessor, LabelConditionedProcessor, VAEProcessor
+from fl4health.processing.VAE_dim_reduction import ClientConditionedProcessor, VAEProcessor
 from fl4health.processing.VAE_training import VAETransformer
 from fl4health.tasks.loss import VAE_loss
 from fl4health.utils.sampler import LabelBasedSampler
 
 
 class VAETrainer:
-    """This Trainer class can enhance any client class withing this framework by adding the functionality of training
-    a Variational Auto-encoder.Functionalities include prepare_input()
+    """This Trainer class can enhance any client class within this framework by adding the functionality of training
+    a Variational Auto-encoder. Functionalities include prepare_input()
     which calls the data loader with an specific VAE transformer for VAE training,
-    and reduce_dim() which is used to reduce the dimention of data during the pre-processing step with VAEs.
+    and reduce_dim() which is used to reduce the dimension of data during the pre-processing step with VAEs.
     """
 
     def prepare_input(
@@ -94,7 +94,7 @@ class VAETrainer:
 
 class CVAETrainer:
     """This Trainer class adds the functionality of training a Conditional Variational Auto-encoder
-    to any client class withing this framework. Functionalities include prepare_input() which calls
+    to any client class within this framework. Functionalities include prepare_input() which calls
     the data loader with an specific conidtional VAE transformer to enable the CVAE training,
     and reduce_dim() which enables conditional dimensionality reduction pre-processing with CVAEs.
     """
@@ -151,22 +151,17 @@ class CVAETrainer:
             Tuple[DataLoader, DataLoader, Dict[str, int]]:
             Train and validation data loaders and additional information.
         """
-        data_target_dim_reduction = None
-        if self.condition == "label":
-            # condition == "label" refers to the setting where model is conditioned on the target of each sample.
-            data_target_dim_reduction = LabelConditionedProcessor(model_path)
-        else:
-            # Condition on a client-specific digit
-            assert self.condition.isdigit()
-            dim_reduction_processing = ClientConditionedProcessor(model_path, int(self.condition))
-            transform = transforms.Compose([transform, dim_reduction_processing])
+
+        # Condition on a client-specific digit
+        assert self.condition.isdigit()
+        dim_reduction_processing = ClientConditionedProcessor(model_path, int(self.condition))
+        transform = transforms.Compose([transform, dim_reduction_processing])
 
         train_loader, val_loader, _ = load_data(
             data_dir=data_path,
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=data_target_dim_reduction,
         )
         return train_loader, val_loader, _
 

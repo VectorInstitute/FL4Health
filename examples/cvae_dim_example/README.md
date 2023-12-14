@@ -37,9 +37,7 @@ automatically downloaded to the path specified and used in the run.
 
 After both clients have been started federated learning should commence.
 
-**NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data. Another option would be to use the  "label" as a condition, which prompts the clients to condition their data based on the target of each sample. In this example, we are just using the CVAE to encode the data, therefore you need to make sure to use the same condition as the one used during the training.
-
-If you choose to set `--condition 'label'`, don't forget to also adjust the `num_conditions` variable in the config file to correspond to the number of the classes in the data.
+**NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data.
 
 ### In this example
 You can use the following commands to run the clients.
