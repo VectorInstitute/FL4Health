@@ -123,5 +123,5 @@ class FedPCAClient(NumPyClient):
 
     def save_model(self) -> None:
         final_model_save_path = f"{self.model_save_path}/{self.generate_hash()}_pca"
-        torch.save(self.model.state_dict(), final_model_save_path)
+        torch.save(self.model, final_model_save_path)
         log(INFO, f"Model parameters saved to {final_model_save_path}.")

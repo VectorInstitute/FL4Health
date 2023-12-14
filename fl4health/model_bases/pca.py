@@ -37,10 +37,10 @@ class PCAModule(nn.Module):
 
     def maybe_reshape(self, X: Tensor) -> Tensor:
         if len(X.size()) == 2:
-            return X.float()
+            return torch.squeeze(X.float())
         else:
             dim0 = X.size(0)
-            return X.view((dim0, -1)).float()
+            return torch.squeeze(X.view(dim0, -1).float())
 
     def set_data_mean(self, X: Tensor) -> None:
         self.data_mean = torch.mean(X, dim=0)
