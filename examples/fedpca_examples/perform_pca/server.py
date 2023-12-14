@@ -13,7 +13,7 @@ from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side. This is not used for computing federated PCA.
+    # Initializing the model parameters on the server side. This is not used for federated PCA.
     return Parameters(tensors=[], tensor_type="numpy.ndarray")
 
 
@@ -23,7 +23,7 @@ def fit_config(
     full_svd: bool,
     rank_estimation: int,
     center_data: bool,
-    num_components: int,
+    num_components_eval: int,
     current_server_round: int,
 ) -> Config:
     return {
@@ -32,7 +32,7 @@ def fit_config(
         "full_svd": full_svd,
         "rank_estimation": rank_estimation,
         "center_data": center_data,
-        "num_components": num_components,
+        "num_components_eval": num_components_eval,
         "current_server_round": current_server_round,
     }
 
@@ -46,7 +46,7 @@ def main(config: Dict[str, Any]) -> None:
         config["full_svd"],
         config["rank_estimation"],
         config["center_data"],
-        config["num_components"],
+        config["num_components_eval"],
     )
 
     # Initialize FedPCA strategy.

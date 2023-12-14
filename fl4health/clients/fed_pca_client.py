@@ -110,13 +110,15 @@ class FedPCAClient(NumPyClient):
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
         self.set_parameters(parameters, config)
-        num_components = (
-            self.narrow_config_type(config, "num_components", int) if "num_components" in config.keys() else None
+        num_components_eval = (
+            self.narrow_config_type(config, "num_components_eval", int)
+            if "num_components_eval" in config.keys()
+            else None
         )
         val_data_tensor = self.get_data_tensor(self.val_loader)
         val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(val_data_tensor))
-        reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components)
-        projection_variance = self.model.compute_projetion_variance(val_data_tensor_prepared, num_components)
+        reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components_eval)
+        projection_variance = self.model.compute_projetion_variance(val_data_tensor_prepared, num_components_eval)
         metrics: Dict[str, Scalar] = {}
         metrics["projection_variance"] = projection_variance
         return (reconstruction_loss, self.num_val_samples, metrics)

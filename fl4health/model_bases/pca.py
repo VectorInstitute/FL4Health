@@ -78,7 +78,7 @@ class PCAModule(nn.Module):
         More precisely, if X is n by d, and U is the matrix whose columns are the
         k principal components of X (thus U is d by k), then the reconstruction loss
         is defined as
-            | X @ U @ U.T - X| ** 2.
+            1 / n * | X @ U @ U.T - X| ** 2.
 
         Args:
             X (Tensor): input data tensor whose rows represent data points.
@@ -87,7 +87,8 @@ class PCAModule(nn.Module):
         Returns:
             float: reconstruction loss as defined above.
         """
-        return (torch.linalg.norm(self.project_back(self.project_lower_dim(X, k), k) - X) ** 2).item()
+        N = X.size(0)
+        return (torch.linalg.norm(self.project_back(self.project_lower_dim(X, k), k) - X) ** 2).item() / N
 
     def compute_projetion_variance(self, X: Tensor, k: Optional[int]) -> float:
         """

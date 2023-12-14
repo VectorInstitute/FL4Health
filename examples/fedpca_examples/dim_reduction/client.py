@@ -49,7 +49,7 @@ class MnistFedPCAClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+        return torch.optim.AdamW(self.model.parameters(), lr=0.0001)
 
     def get_model(self, config: Config) -> nn.Module:
         new_dimension = self.narrow_config_type(config, "new_dimension", int)
