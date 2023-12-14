@@ -29,7 +29,6 @@ class ClientLevelDPFedAvgServer(FlServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         delta: Optional[int] = None,
-        seed: Optional[int] = None,
     ) -> None:
         """
         Server to be used in case of Client Level Differential Privacy with Federated Averaging.
@@ -55,7 +54,6 @@ class ClientLevelDPFedAvgServer(FlServer):
             strategy=strategy,
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier

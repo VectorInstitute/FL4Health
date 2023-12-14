@@ -1,9 +1,6 @@
-import random
 from logging import INFO, WARNING
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
-import numpy as np
-import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
@@ -27,7 +24,6 @@ class FlServer(Server):
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
     ) -> None:
         """
         Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
@@ -45,26 +41,10 @@ class FlServer(Server):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
-        self._maybe_fix_random_seeds(seed)
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = checkpointer
-
-    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
-        """
-        If seed value is provided, fix random seeds for reproducibility of results.
-
-        Args:
-            seed (int): The seed value to be used for random number generators.
-        """
-        if seed is None:
-            log(INFO, "No seed provided. Using random seed.")
-        else:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         history = super().fit(num_rounds, timeout)
@@ -167,7 +147,6 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
@@ -189,7 +168,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, seed)
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
         self.parameter_exchanger = parameter_exchanger

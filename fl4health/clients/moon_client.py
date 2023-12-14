@@ -28,7 +28,6 @@ class MoonClient(BasicClient):
         temperature: float = 0.5,
         contrastive_weight: float = 10,
         len_old_models_buffer: int = 1,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -36,7 +35,6 @@ class MoonClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
         )
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
