@@ -9,6 +9,7 @@ from flwr.common.typing import Config
 from numpy import linalg
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -30,6 +31,7 @@ class NumpyClippingClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -37,6 +39,7 @@ class NumpyClippingClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            warmed_up_module=warmed_up_module,
         )
         self.parameter_exchanger: ParameterExchangerWithPacking[float]
         self.clipping_bound: Optional[float] = None

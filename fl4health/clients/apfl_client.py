@@ -6,6 +6,7 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -21,8 +22,9 @@ class ApflClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, warmed_up_module=warmed_up_module)
 
         self.model: ApflModule
         self.learning_rate: float

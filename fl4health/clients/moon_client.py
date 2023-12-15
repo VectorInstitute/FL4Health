@@ -5,6 +5,7 @@ import torch
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import Losses, LossMeterType
@@ -28,6 +29,7 @@ class MoonClient(BasicClient):
         temperature: float = 0.5,
         contrastive_weight: float = 10,
         len_old_models_buffer: int = 1,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -35,6 +37,7 @@ class MoonClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            warmed_up_module=warmed_up_module,
         )
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)

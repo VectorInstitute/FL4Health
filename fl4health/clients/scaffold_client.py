@@ -6,6 +6,7 @@ import torch
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
@@ -31,6 +32,7 @@ class ScaffoldClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -38,6 +40,7 @@ class ScaffoldClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            warmed_up_module=warmed_up_module,
         )
         self.learning_rate: float  # eta_l in paper
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
