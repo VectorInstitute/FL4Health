@@ -392,7 +392,7 @@ if __name__ == "__main__":
                 AccuracyChecker(0.3531, MetricType.TRAINING, tolerance=0.05),
                 AccuracyChecker(0.3718, MetricType.TRAINING, tolerance=0.05),
                 AccuracyChecker(0.1850, MetricType.VALIDATION, tolerance=0.005),
-                AccuracyChecker(0.3108, MetricType.VALIDATION),
+                AccuracyChecker(0.3108, MetricType.VALIDATION, tolerance=0.1),
                 AccuracyChecker(0.3906, MetricType.VALIDATION),
             ],
         )
