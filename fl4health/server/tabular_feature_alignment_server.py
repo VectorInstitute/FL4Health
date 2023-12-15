@@ -55,14 +55,13 @@ class TabularFeatureAlignmentServer(FlServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
-        seed: Optional[int] = None,
     ) -> None:
         if strategy.on_fit_config_fn is not None:
             log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
             log(WARNING, "strategy.initial_parameters will be overwritten.")
 
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, seed=seed)
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
         # The server performs one or two rounds of polls before the normal federated training.
         # The first one gathers feature information if the server does not already have it,
         # and the second one gathers the input/output dimensions of the model.

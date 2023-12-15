@@ -16,6 +16,7 @@ from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
+from fl4health.utils.random import set_all_random_seeds
 
 
 def get_initial_model_information() -> Parameters:
@@ -49,7 +50,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> None:
+def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -86,7 +87,7 @@ def main(config: Dict[str, Any], server_address: str, seed: Optional[int]) -> No
 
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter, seed=seed)
+    server = FlServer(client_manager, strategy, wandb_reporter)
 
     fl.server.start_server(
         server=server,
@@ -124,4 +125,8 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.seed)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
+    main(config, args.server_address)
