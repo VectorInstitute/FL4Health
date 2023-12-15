@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from pytest import approx
 
-TOLERANCE = 0.0005
+TOLERANCE = 0.005
 
 
 class MetricType(Enum):

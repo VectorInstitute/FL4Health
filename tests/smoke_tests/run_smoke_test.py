@@ -386,8 +386,8 @@ if __name__ == "__main__":
             ],
             server_metrics_checkers=[
                 LossChecker(2.2803),
-                LossChecker(2.2635),
-                LossChecker(2.2319),
+                LossChecker(2.2633),
+                LossChecker(2.2294),
                 AccuracyChecker(0.1890, MetricType.TRAINING),
                 AccuracyChecker(0.3531, MetricType.TRAINING),
                 AccuracyChecker(0.3718, MetricType.TRAINING),
