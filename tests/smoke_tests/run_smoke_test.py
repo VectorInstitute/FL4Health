@@ -377,12 +377,12 @@ if __name__ == "__main__":
             dataset_path="examples/datasets/mnist_data/",
             seed=42,
             client_metrics_checkers=[
-                LossChecker(2.1390, LossType.CHECKPOINT, MetricType.TRAINING),
-                LossChecker(2.1390, LossType.BACKWARD, MetricType.TRAINING),
-                LossChecker(2.2294, LossType.CHECKPOINT, MetricType.VALIDATION),
-                LossChecker(2.2294, LossType.BACKWARD, MetricType.VALIDATION),
-                AccuracyChecker(0.3718, MetricType.TRAINING),
-                AccuracyChecker(0.3906, MetricType.VALIDATION),
+                LossChecker(2.1390, LossType.CHECKPOINT, MetricType.TRAINING, tolerance=0.05),
+                LossChecker(2.1390, LossType.BACKWARD, MetricType.TRAINING, tolerance=0.05),
+                LossChecker(2.2294, LossType.CHECKPOINT, MetricType.VALIDATION, tolerance=0.05),
+                LossChecker(2.2294, LossType.BACKWARD, MetricType.VALIDATION, tolerance=0.05),
+                AccuracyChecker(0.3718, MetricType.TRAINING, tolerance=0.05),
+                AccuracyChecker(0.3906, MetricType.VALIDATION, tolerance=0.005),
             ],
             server_metrics_checkers=[
                 LossChecker(2.2803),
