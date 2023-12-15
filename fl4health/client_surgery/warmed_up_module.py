@@ -16,22 +16,26 @@ class WarmedUpModule(ABC):
         if weights_mapping_dir is not None:
             with open(weights_mapping_dir, "r") as file:
                 self.weights_mapping_dict = json.load(file)
+                log(INFO, f"Loaded weights mapping dict: {self.weights_mapping_dict}")
 
     def get_matching_component(self, key: str) -> Optional[str]:
         if self.weights_mapping_dict is None:
             return key
 
         components = key.split(".")
-        matching_component = components[0]
 
-        for component in components[1:]:
-            matching_component += "." + component
+        for i, component in enumerate(components):
+            if i == 0:
+                matching_component = components[0]
+            else:
+                matching_component += "." + component
             if matching_component in self.weights_mapping_dict:
                 return self.weights_mapping_dict[matching_component] + key[len(matching_component) :]
         return None
 
     def load_from_pretrained(self, model: Any) -> None:
 
+        assert self.pretrained_model_dir is not None
         log(INFO, f"Loading pretrained model from {self.pretrained_model_dir}")
 
         current_model_state = model.state_dict()
