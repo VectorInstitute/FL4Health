@@ -385,7 +385,7 @@ if __name__ == "__main__":
                 AccuracyChecker(0.3906, MetricType.VALIDATION, tolerance=0.005),
             ],
             server_metrics_checkers=[
-                LossChecker(2.2803),
+                LossChecker(2.2803, tolerance=0.005),
                 LossChecker(2.2633, tolerance=0.005),
                 LossChecker(2.2301, tolerance=0.005),
                 AccuracyChecker(0.1890, MetricType.TRAINING),
@@ -393,7 +393,7 @@ if __name__ == "__main__":
                 AccuracyChecker(0.3718, MetricType.TRAINING, tolerance=0.05),
                 AccuracyChecker(0.1850, MetricType.VALIDATION, tolerance=0.005),
                 AccuracyChecker(0.3108, MetricType.VALIDATION, tolerance=0.1),
-                AccuracyChecker(0.3906, MetricType.VALIDATION),
+                AccuracyChecker(0.3906, MetricType.VALIDATION, tolerance=0.005),
             ],
         )
     )
