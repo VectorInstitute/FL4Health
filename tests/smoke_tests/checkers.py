@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from pytest import approx
 
-TOLERANCE = 0.005
+DEFAULT_TOLERANCE = 0.0005
 
 
 class MetricType(Enum):
@@ -62,10 +62,12 @@ class LossChecker(MetricChecker):
         loss: float,
         loss_type: LossType = LossType.LOSS,
         metric_type: Optional[MetricType] = None,
+        tolerance: float = DEFAULT_TOLERANCE,
     ):
         self.loss = loss
         self.loss_type = loss_type
         self.metric_type = metric_type
+        self.tolerance = tolerance
         self.found_loss = False
 
     def found_all_metrics(self) -> bool:
@@ -81,7 +83,7 @@ class LossChecker(MetricChecker):
 
     def check(self, log_line: str) -> None:
         losses = self.parse_losses(log_line)
-        has_loss = any([approx(loss, abs=TOLERANCE) == self.loss for loss in losses])
+        has_loss = any([approx(loss, abs=self.tolerance) == self.loss for loss in losses])
 
         if has_loss:
             self.found_loss = True
@@ -119,10 +121,12 @@ class AccuracyChecker(MetricChecker):
         accuracy: float,
         metric_type: MetricType,
         scope: MetricScope = MetricScope.PREDICTION,
+        tolerance: float = DEFAULT_TOLERANCE,
     ):
         self.metric_type = metric_type
         self.accuracy = accuracy
         self.scope = scope
+        self.tolerance = tolerance
         self.found_accuracy = False
 
     def should_check(self, log_line: str) -> bool:
@@ -137,7 +141,7 @@ class AccuracyChecker(MetricChecker):
 
     def check(self, log_line: str) -> None:
         accuracies = self.parse_accuracies(log_line)
-        has_accuracy = any([approx(accuracy, abs=TOLERANCE) == self.accuracy for accuracy in accuracies])
+        has_accuracy = any([approx(accuracy, abs=self.tolerance) == self.accuracy for accuracy in accuracies])
 
         if has_accuracy:
             self.found_accuracy = True
