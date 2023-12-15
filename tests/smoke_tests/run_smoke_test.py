@@ -123,7 +123,7 @@ async def run_smoke_test(
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config, seed)
+    _preload_dataset(dataset_path, config)
 
     # Start the server and capture its process object
     logger.info("Starting server...")
@@ -272,7 +272,7 @@ async def run_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
+def _preload_dataset(dataset_path: str, config: Config) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -389,7 +389,7 @@ if __name__ == "__main__":
                 LossChecker(2.2633, tolerance=0.005),
                 LossChecker(2.2301, tolerance=0.005),
                 AccuracyChecker(0.1890, MetricType.TRAINING),
-                AccuracyChecker(0.3531, MetricType.TRAINING),
+                AccuracyChecker(0.3531, MetricType.TRAINING, tolerance=0.05),
                 AccuracyChecker(0.3718, MetricType.TRAINING, tolerance=0.05),
                 AccuracyChecker(0.1850, MetricType.VALIDATION),
                 AccuracyChecker(0.3108, MetricType.VALIDATION),

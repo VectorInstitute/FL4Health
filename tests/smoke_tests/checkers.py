@@ -112,6 +112,7 @@ class LossChecker(MetricChecker):
             "loss": self.loss,
             "loss_type": self.loss_type.value,
             "metric_type": self.metric_type.value if self.metric_type is not None else "",
+            "tolerance": self.tolerance,
         }
 
 
@@ -201,4 +202,5 @@ class AccuracyChecker(MetricChecker):
             "accuracy": self.accuracy,
             "metric_type": self.metric_type.value,
             "scope": self.scope.value,
+            "tolerance": self.tolerance,
         }
