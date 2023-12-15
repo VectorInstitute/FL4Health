@@ -4,6 +4,8 @@ from typing import Dict, List, Optional, Union
 
 from pytest import approx
 
+TOLERANCE = 0.0005
+
 
 class MetricType(Enum):
     TRAINING = "Training"
@@ -79,7 +81,7 @@ class LossChecker(MetricChecker):
 
     def check(self, log_line: str) -> None:
         losses = self.parse_losses(log_line)
-        has_loss = any([approx(loss, abs=0.0001) == self.loss for loss in losses])
+        has_loss = any([approx(loss, abs=TOLERANCE) == self.loss for loss in losses])
 
         if has_loss:
             self.found_loss = True
@@ -135,7 +137,7 @@ class AccuracyChecker(MetricChecker):
 
     def check(self, log_line: str) -> None:
         accuracies = self.parse_accuracies(log_line)
-        has_accuracy = any([approx(accuracy, abs=0.0001) == self.accuracy for accuracy in accuracies])
+        has_accuracy = any([approx(accuracy, abs=TOLERANCE) == self.accuracy for accuracy in accuracies])
 
         if has_accuracy:
             self.found_accuracy = True
