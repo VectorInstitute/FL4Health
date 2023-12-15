@@ -6,7 +6,7 @@ from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
 from fl4health.processing.VAE_dim_reduction import ClientConditionedProcessor, VAEProcessor
-from fl4health.processing.VAE_training import VAETransformer
+from fl4health.processing.VAE_training import AETransformer
 from fl4health.tasks.loss import VAE_loss
 from fl4health.utils.sampler import LabelBasedSampler
 
@@ -40,7 +40,7 @@ class VAETrainer:
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=VAETransformer(),
+            data_target_transform=AETransformer(),
         )
         return train_loader, val_loader, _
 
@@ -124,7 +124,7 @@ class CVAETrainer:
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=VAETransformer(self.condition),
+            data_target_transform=AETransformer(self.condition),
         )
         return train_loader, val_loader, _
 

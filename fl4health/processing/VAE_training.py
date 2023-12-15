@@ -4,14 +4,14 @@ import numpy as np
 import torch
 
 
-class VAETransformer:
+class AETransformer:
     """Transform function to replace the target in the dataset with data for
     self-supervised approaches like VAEs. For a conditional model, it can concatenate
     the condition with the data sample.
     """
 
     def __init__(self, condition: str = "") -> None:
-        """Initializes the VAETransformer with an optional condition.
+        """Initializes the AETransformer with an optional condition.
 
         Args:
             condition (str, optional): Condition for the transformation. Defaults to "".
