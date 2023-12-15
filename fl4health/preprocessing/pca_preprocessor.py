@@ -12,6 +12,13 @@ from fl4health.utils.sampler import LabelBasedSampler
 
 class PCAPreprocessor:
     def __init__(self, checkpointing_path: Path) -> None:
+        """
+        Class that leverages pre-computed principal components of
+        a dataset to perform data-preprocessing.
+
+        Args:
+            checkpointing_path (Path): Path to saved principal components.
+        """
         self.checkpointing_path = checkpointing_path
         self.pca_module: PCAModule = self.load_pca_module()
 
@@ -29,6 +36,21 @@ class PCAPreprocessor:
         get_dataset: Callable[..., BaseDataset],
         *args: Any,
     ) -> DataLoader:
+        """
+        Perform dimensionality reduction on a dataset by projecting the data
+        onto a set of pre-computed principal components.
+
+        Args:
+            new_dimension (int): New data dimension after dimensionality reduction. Equals
+            the number of principal components onto which projection is performed.
+            batch_size (int): Batch size.
+            shuffle (bool): Whether the dataloader should be shuffled.
+            sampler (Optional[LabelBasedSampler]): For performing subsampling on the dataset if needed.
+            get_dataset (Callable[..., BaseDataset]): Function that returns an instance of BaseDataset.
+
+        Returns:
+            DataLoader: a dataloader consisting of data with reduced dimension.
+        """
         projection = partial(self.pca_module.project_lower_dim, k=new_dimension)
         dataset = get_dataset(*args)
         if sampler is not None:

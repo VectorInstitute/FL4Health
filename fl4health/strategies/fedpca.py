@@ -40,8 +40,9 @@ class FedPCA(BasicFedAvg):
         weighted_eval_losses: bool = True,
     ) -> None:
         """
-        A generalization of the FedAvg strategy where the server can receive any arbitrary subset of the layers from
-        any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
+        Strategy responsible for performing federated Principal Component Analysis.
+        More specifically, this strategy merges client-computed local principal components
+        to obtain the principal components for all data.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.

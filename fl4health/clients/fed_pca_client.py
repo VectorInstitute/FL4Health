@@ -19,6 +19,9 @@ T = TypeVar("T")
 
 class FedPCAClient(NumPyClient):
     def __init__(self, data_path: Path, device: torch.device, model_save_path: Path) -> None:
+        """
+        Client that facilitates the execution of federated PCA.
+        """
         self.client_name = self.generate_hash()
         self.model: PCAModule
         self.initialized = False
@@ -69,7 +72,7 @@ class FedPCAClient(NumPyClient):
         low_rank = self.narrow_config_type(config, "low_rank", bool)
         full_svd = self.narrow_config_type(config, "full_svd", bool)
         rank_estimation = self.narrow_config_type(config, "rank_estimation", int)
-        return PCAModule(low_rank, full_svd, rank_estimation)
+        return PCAModule(low_rank, full_svd, rank_estimation).to(self.device)
 
     def setup_client(self, config: Config) -> None:
         self.model = self.get_model(config).to(self.device)
@@ -109,6 +112,13 @@ class FedPCAClient(NumPyClient):
         return (self.get_parameters(config), self.num_train_samples, metrics)
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
+        """
+        Evaluate merged principal components on the local validation set.
+
+        Args:
+            parameters (NDArrays): Server-merged principal components.
+            config (Dict[str, Scalar]): Config file.
+        """
         self.set_parameters(parameters, config)
         num_components_eval = (
             self.narrow_config_type(config, "num_components_eval", int)
