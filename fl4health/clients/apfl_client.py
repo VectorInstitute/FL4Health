@@ -6,12 +6,12 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class ApflClient(BasicClient):

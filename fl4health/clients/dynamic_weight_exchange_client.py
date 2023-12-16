@@ -6,12 +6,12 @@ import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class DynamicWeightExchangeClient(BasicClient):

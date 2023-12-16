@@ -9,13 +9,13 @@ from flwr.common.typing import Config
 from numpy import linalg
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class NumpyClippingClient(BasicClient):

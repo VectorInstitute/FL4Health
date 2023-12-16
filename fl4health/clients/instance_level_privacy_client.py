@@ -9,10 +9,10 @@ from opacus import PrivacyEngine
 from opacus.validators import ModuleValidator
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class InstanceLevelPrivacyClient(BasicClient):

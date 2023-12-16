@@ -15,12 +15,12 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 T = TypeVar("T")
 
@@ -136,7 +136,7 @@ class BasicClient(NumPyClient):
         assert self.model is not None
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
-            if self.warmed_up_module:
+            if self.warmed_up_module and self.warmed_up_module.pretrained_model_state is not None:
                 self.warmed_up_module.load_from_pretrained(self.model)
         else:
             assert self.parameter_exchanger is not None

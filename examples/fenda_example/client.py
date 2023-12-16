@@ -11,13 +11,13 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
-from fl4health.client_surgery.warmed_up_module import WarmedUpModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import MinorityLabelBasedSampler
+from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class MnistFendaClient(FendaClient):
