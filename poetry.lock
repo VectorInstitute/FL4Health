@@ -2949,13 +2949,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "portalocker"
-version = "2.7.0"
+version = "2.8.2"
 description = "Wraps the portalocker recipe for easy usage"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.8"
 files = [
-    {file = "portalocker-2.7.0-py2.py3-none-any.whl", hash = "sha256:a07c5b4f3985c3cf4798369631fb7011adb498e2a46d8440efc75a8f29a0f983"},
-    {file = "portalocker-2.7.0.tar.gz", hash = "sha256:032e81d534a88ec1736d03f780ba073f047a06c478b06e2937486f334e955c51"},
+    {file = "portalocker-2.8.2-py3-none-any.whl", hash = "sha256:cfb86acc09b9aa7c3b43594e19be1345b9d16af3feb08bf92f23d4dce513a28e"},
+    {file = "portalocker-2.8.2.tar.gz", hash = "sha256:2b035aa7828e46c58e9b31390ee1f169b98e1066ab10b9a6a861fe7e25ee4f33"},
 ]
 
 [package.dependencies]
@@ -2964,7 +2964,7 @@ pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
 [package.extras]
 docs = ["sphinx (>=1.7.1)"]
 redis = ["redis"]
-tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)"]
+tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)", "types-redis"]
 
 [[package]]
 name = "pre-commit"
@@ -3982,6 +3982,20 @@ develop = ["colorama", "cython (>=0.29.26)", "cython (>=0.29.28,<3.0.0)", "flake
 docs = ["ipykernel", "jupyter-client", "matplotlib", "nbconvert", "nbformat", "numpydoc", "pandas-datareader", "sphinx"]
 
 [[package]]
+name = "tabulate"
+version = "0.9.0"
+description = "Pretty-print tabular data"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tabulate-0.9.0-py3-none-any.whl", hash = "sha256:024ca478df22e9340661486f85298cff5f6dcdba14f3813e8830015b9ed1948f"},
+    {file = "tabulate-0.9.0.tar.gz", hash = "sha256:0095b12bf5966de529c0feb1fa08671671b3368eec77d7ef7ab114be2c068b3c"},
+]
+
+[package.extras]
+widechars = ["wcwidth"]
+
+[[package]]
 name = "tensorboard"
 version = "2.13.0"
 description = "TensorBoard lets you watch Tensors Flow"
@@ -4435,13 +4449,13 @@ tqdm = "*"
 
 [[package]]
 name = "torchtnt"
-version = "0.1.0"
+version = "0.2.1"
 description = "A lightweight library for PyTorch training tools and utilities"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "torchtnt-0.1.0-py3-none-any.whl", hash = "sha256:8155ae9e3ca6449197cd3eaccd23f6d5283c4e0c1e8a0f4cfbb1ac97313a4c72"},
-    {file = "torchtnt-0.1.0.tar.gz", hash = "sha256:dfe80ac3d2c0dc84278dab1fff938a924f065d9f1d18be22c0357e3b507fd92f"},
+    {file = "torchtnt-0.2.1-py3-none-any.whl", hash = "sha256:f980562e5db3094552101f05d57bf8f2291e03702321c966786215b1b9176d3b"},
+    {file = "torchtnt-0.2.1.tar.gz", hash = "sha256:5fcfda38f9d72ed307a645c09a53b33b3ecfcb10062cb9dc37e41d123caba7a1"},
 ]
 
 [package.dependencies]
@@ -4451,13 +4465,14 @@ packaging = "*"
 psutil = "*"
 pyre-extensions = "*"
 setuptools = "*"
+tabulate = "*"
 tensorboard = "*"
 torch = "*"
 tqdm = "*"
 typing-extensions = "*"
 
 [package.extras]
-dev = ["parameterized", "pyre-check", "pytest", "pytest-cov", "torcheval-nightly", "torchsnapshot-nightly"]
+dev = ["parameterized", "pyre-check", "pytest", "pytest-cov", "torchsnapshot-nightly", "torchvision"]
 
 [[package]]
 name = "torchvision"
@@ -5097,4 +5112,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.11"
-content-hash = "1cadb72086795d6afd9d6ec353d77d3e195b4c05065141f039003be702704a2d"
+content-hash = "fb334de8f1276a3a0c73a2d89f96492a7d0f8282138f4005eea36039c0e021b2"

@@ -25,15 +25,17 @@ pycyclops = "0.1.40"
 tensorflow = "2.13"
 nltk = "^3.8.1"
 torchvision = "^0.14.1"
-torchtext = "0.14.1"
-torchdata = "0.5.1"
-torcheval = "^0.0.6"
 torchinfo = "^1.8.0"
 ipykernel = "^6.25.1"
 numpy = "^1.24"
 pandas = "^1.5"
 scikit-learn = "^1.2.2"
 wandb = "^0.16.1"
+
+[tool.poetry.group.dev-local.dependencies]
+torchtext = "0.14.1"
+torchdata = "0.5.1"
+torcheval = "^0.0.6"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"

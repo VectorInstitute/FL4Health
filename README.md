@@ -153,7 +153,7 @@ The easiest way to create and activate a virtual environment is by using the [vi
 virtualenv "ENV_PATH"
 source "ENV_PATH/bin/activate"
 pip install --upgrade pip, poetry
-poetry install --with "dev, test, codestyle"
+poetry install --with "dev, dev-local, test, codestyle"
 ```
 
 ### Coding Guidelines, Formatters, and Checks
