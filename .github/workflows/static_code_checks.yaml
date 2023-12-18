@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: poetry install --with "dev, test, codestyle"
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      - name: Pre-commit checks
+      - name: Pre-commit Checks
         run: |
           source .venv/bin/activate
           pre-commit run --all-files
