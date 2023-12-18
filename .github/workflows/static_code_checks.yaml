@@ -20,10 +20,13 @@ jobs:
         with:
           python-version: 3.9
           cache: 'pip'
-      - name: precommit checks
+      - name: Install Requirements
         run: |
           pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
           poetry install --with "dev, test, codestyle"
+      - name: Pre-commit Checks
+        run:
           pre-commit run --all-files
       - name: Clearing pip for space
         run: pip uninstall -y -r requirements.txt

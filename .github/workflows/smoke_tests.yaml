@@ -26,6 +26,7 @@ jobs:
       - name: Install Requirements
         run: |
           pip install --upgrade pip poetry
+          poetry config virtualenvs.create false
           poetry install --with "dev, test"
       - name: Run Script
         run: python -m tests.smoke_tests.run_smoke_test
