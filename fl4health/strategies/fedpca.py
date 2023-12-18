@@ -165,11 +165,16 @@ class FedPCA(BasicFedAvg):
 
         where the new (left) singular vectors are returned as the merging result.
 
-        This implementation assumes that the *columns* of U_i are the PCs.
+        This implementation assumes that the *columns* of U_i are the PCs. If
+
+        U @ S @ V.T = B
+
+        is the SVD of B, then it turns out that U = A @ U',
+        where the columns of U' are the true principal components of the aggregated data,
+        and A is some unitary transformation.
 
         For the theoretical justification behind this procedure, see the paper
         "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
-
 
         Args:
             client_singular_vectors (NDArrays): Local PCs.
@@ -178,10 +183,7 @@ class FedPCA(BasicFedAvg):
         Returns:
             Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
         """
-        singular_values_diagonal_matrices = [
-            np.diag(singular_values_vector) for singular_values_vector in client_singular_values
-        ]
-        X = [U @ S for U, S in zip(client_singular_vectors, singular_values_diagonal_matrices)]
+        X = [U @ np.diag(S) for U, S in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(X, axis=1)
         new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input, full_matrices=False)
         return new_singular_vectors, new_singular_values
@@ -197,7 +199,9 @@ class FedPCA(BasicFedAvg):
         singular values are also shared.
 
         This implementation can be viewed as a an efficient approximation to
-        the SVD-based merging in that it does not perform SVD on a large matrix. It is based on the two observations:
+        the SVD-based merging in that it does not perform SVD on a large matrix.
+
+        It is based on the two observations:
             1. Each client's singular vectors are already orthonormal.
             2. The right singular vectors do not need to be computed in SVD since
             only the left singular vectors are returned as the merging result.
@@ -223,7 +227,7 @@ class FedPCA(BasicFedAvg):
         else:
             U, S = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
             U_last, S_last = client_singular_vectors[-1], np.diag(client_singular_values[-1])
-            return self.merge_subspaces_qr_helper((U, S), (U_last, S_last))
+            return self.merge_subspaces_qr_helper((U, np.diag(S)), (U_last, S_last))
 
     def merge_subspaces_qr_helper(
         self, subspace1: Tuple[NDArray, NDArray], subspace2: Tuple[NDArray, NDArray]
@@ -235,13 +239,13 @@ class FedPCA(BasicFedAvg):
         Q, R = np.linalg.qr(U2 - U1 @ Z)
 
         d2 = S1.shape[1]
-        d1 = (R @ S2).shape[0]
+        d1 = R.shape[0]
         zeros = np.zeros(shape=(d1, d2))
         A = np.concatenate((S1, zeros), axis=0)
         B = np.concatenate(((Z @ S2), (R @ S2)), axis=0)
         svd_input = np.concatenate((A, B), axis=1)
 
-        U3, S_final, _ = np.linalg.svd(svd_input)
+        U3, S_final, _ = np.linalg.svd(svd_input, full_matrices=False)
 
         U_final = (np.concatenate((U1, Q), axis=1)) @ U3
 
