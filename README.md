@@ -146,7 +146,7 @@ We use the standard git development flow of branch and merge to main with PRs on
 
 ### Development Requirements
 
-For development and testing, we use [Poetry](https://python-poetry.org/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file. You may use whatever virtual environment management tool that you would like. These include c~~onda, poetry itself, and virtualenv. Poetry is also used to produce our releases, which are managed and automated by GitHub.~~
+For development and testing, we use [Poetry](https://python-poetry.org/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file. You may use whatever virtual environment management tool that you would like. These include conda, poetry itself, and virtualenv. Poetry is also used to produce our releases, which are managed and automated by GitHub.~~
 
 The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
 ```bash
