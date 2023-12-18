@@ -22,7 +22,7 @@ jobs:
           cache: 'pip'
       - name: precommit checks
         run: |
-          pip install --upgrade pip, poetry
+          pip install --upgrade pip poetry
           poetry install --with "dev, test, codestyle"
           pre-commit run --all-files
       - name: Clearing pip for space

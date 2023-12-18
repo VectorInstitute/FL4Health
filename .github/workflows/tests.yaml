@@ -25,7 +25,7 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       - name: Install Requirements
         run: |
-          pip install --upgrade pip, poetry
+          pip install --upgrade pip poetry
           poetry install --with "dev, test"
       - name: Run Tests
         run: pytest tests/*
