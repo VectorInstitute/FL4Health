@@ -38,6 +38,7 @@ class FedPCA(BasicFedAvg):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         weighted_aggregation: bool = True,
         weighted_eval_losses: bool = True,
+        svd_merging: bool = True,
     ) -> None:
         """
         Strategy responsible for performing federated Principal Component Analysis.
@@ -69,6 +70,8 @@ class FedPCA(BasicFedAvg):
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
+            svd_merging (bool): Indicates whether merging of client principal components is done by directly performing
+                SVD or using a procedure based on QR decomposition. Defaults to True.
         """
         super().__init__(
             fraction_fit=fraction_fit,
@@ -84,6 +87,7 @@ class FedPCA(BasicFedAvg):
             weighted_aggregation=weighted_aggregation,
             weighted_eval_losses=weighted_eval_losses,
         )
+        self.svd_merging = svd_merging
 
     def aggregate_fit(
         self,
@@ -120,9 +124,15 @@ class FedPCA(BasicFedAvg):
             client_singular_vectors.append(singular_vectors)
             client_singular_values.append(singular_values)
 
-        merged_singular_vectors, merged_singular_values = self.merge_subspaces_svd(
-            client_singular_vectors, client_singular_values
-        )
+        if self.svd_merging:
+            merged_singular_vectors, merged_singular_values = self.merge_subspaces_svd(
+                client_singular_vectors, client_singular_values
+            )
+        else:
+            # use qr merging instead
+            merged_singular_vectors, merged_singular_values = self.merge_subspaces_qr(
+                client_singular_vectors, client_singular_values
+            )
         parameters = ndarrays_to_parameters([merged_singular_vectors, merged_singular_values])
 
         # Aggregate custom metrics if aggregation fn was provided
@@ -141,9 +151,11 @@ class FedPCA(BasicFedAvg):
         """
         Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
         belonging to each local dataset.
-        Each clients shares its local PCs, along with their corresponding singular values.
-        Aggregation is then performed by first arranging the local PCs into a block matrix, then perform
-        SVD on this matrix.
+
+        Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
+        singular values are also shared.
+
+        The server then arranges the local PCs into a block matrix, then perform SVD.
 
         For example, if U_i denotes the matrix of PCs and S_i denotes the diagonal matrix of
         singular values for client i, and there are n clients, then merging is done by
@@ -151,7 +163,9 @@ class FedPCA(BasicFedAvg):
 
         B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
 
-        where the new (left) singular vectors are returned as the resulting PCs.
+        where the new (left) singular vectors are returned as the merging result.
+
+        This implementation assumes that the *columns* of U_i are the PCs.
 
         For the theoretical justification behind this procedure, see the paper
         "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
@@ -164,10 +178,64 @@ class FedPCA(BasicFedAvg):
         Returns:
             Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
         """
-        singular_values_diagonal_matrix = [
+        singular_values_diagonal_matrices = [
             np.diag(singular_values_vector) for singular_values_vector in client_singular_values
         ]
-        X = [U @ S for U, S in zip(client_singular_vectors, singular_values_diagonal_matrix)]
+        X = [U @ S for U, S in zip(client_singular_vectors, singular_values_diagonal_matrices)]
         svd_input = np.concatenate(X, axis=1)
-        new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input)
+        new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input, full_matrices=False)
         return new_singular_vectors, new_singular_values
+
+    def merge_subspaces_qr(
+        self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
+    ) -> Tuple[NDArray, NDArray]:
+        """
+        Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
+        belonging to each local dataset.
+
+        Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
+        singular values are also shared.
+
+        This implementation can be viewed as
+
+        Args:
+            client_singular_vectors (NDArrays): Local PCs.
+            client_singular_values (NDArrays): Singular values corresponding to local PCs.
+
+        Returns:
+            Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+        """
+        assert len(client_singular_values) >= 2
+        if len(client_singular_values) == 2:
+            singular_values_diagonal_matrices = [
+                np.diag(singular_values_vector) for singular_values_vector in client_singular_values
+            ]
+            U1, S1 = client_singular_vectors[0], singular_values_diagonal_matrices[0]
+            U2, S2 = client_singular_vectors[1], singular_values_diagonal_matrices[1]
+            return self.merge_subspaces_qr_helper((U1, S1), (U2, S2))
+        else:
+            U, S = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
+            U_last, S_last = client_singular_vectors[-1], np.diag(client_singular_values[-1])
+            return self.merge_subspaces_qr_helper((U, S), (U_last, S_last))
+
+    def merge_subspaces_qr_helper(
+        self, subspace1: Tuple[NDArray, NDArray], subspace2: Tuple[NDArray, NDArray]
+    ) -> Tuple[NDArray, NDArray]:
+        U1, S1 = subspace1
+        U2, S2 = subspace2
+
+        Z = U1.T @ U2
+        Q, R = np.linalg.qr(U2 - U1 @ Z)
+
+        d2 = S1.shape[1]
+        d1 = (R @ S2).shape[0]
+        zeros = np.zeros(shape=(d1, d2))
+        A = np.concatenate((S1, zeros), axis=0)
+        B = np.concatenate(((Z @ S2), (R @ S2)), axis=0)
+        svd_input = np.concatenate((A, B), axis=1)
+
+        U3, S_final, _ = np.linalg.svd(svd_input)
+
+        U_final = (np.concatenate((U1, Q), axis=1)) @ U3
+
+        return U_final, S_final
