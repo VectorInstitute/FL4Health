@@ -196,7 +196,14 @@ class FedPCA(BasicFedAvg):
         Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
         singular values are also shared.
 
-        This implementation can be viewed as
+        This implementation can be viewed as a an efficient approximation to
+        the SVD-based merging in that it does not perform SVD on a large matrix. It is based on the two observations:
+            1. Each client's singular vectors are already orthonormal.
+            2. The right singular vectors do not need to be computed in SVD since
+            only the left singular vectors are returned as the merging result.
+
+        For theoretical justification behind this approach, see the paper
+        "Subspace Tracking for Latent Semantic Analysis".
 
         Args:
             client_singular_vectors (NDArrays): Local PCs.
