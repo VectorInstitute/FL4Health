@@ -80,8 +80,8 @@ class BasicClient(NumPyClient):
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.learning_rate: Optional[float] = None
         self.warmed_up_module = warmed_up_module
+        self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
@@ -133,25 +133,29 @@ class BasicClient(NumPyClient):
                 model but may contain more information than that.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
+
         assert self.model is not None
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
-            if self.warmed_up_module and self.warmed_up_module.pretrained_model_state is not None:
-                self.warmed_up_module.load_from_pretrained(self.model)
         else:
             assert self.parameter_exchanger is not None
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
-        If this is the first time we're initializing the model weights, we use the FullParameterExchanger to
-        initialize all model components
+        If this is the first time we're initializing the model weights, we check if the client is using a warmed up
+        module or not. If the client is using a warmed up module and the pretrained model state is loaded, we load
+        the pretrained model state into the current model. Otherwise, we use the FullParameterExchangerto initialize
+        all model.
 
         Args:
             parameters (NDArrays): Model parameters to be injected into the client model
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-        FullParameterExchanger().pull_parameters(parameters, self.model, config)
+        if self.warmed_up_module and self.warmed_up_module.pretrained_model_state is not None:
+            self.warmed_up_module.load_from_pretrained(self.model)
+        else:
+            FullParameterExchanger().pull_parameters(parameters, self.model, config)
         self.model_weights_initialized = True
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:

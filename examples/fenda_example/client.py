@@ -79,7 +79,7 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--weights_mapping_dir",
+        "--weights_mapping_file",
         action="store",
         type=str,
         help="Path to the weights mapping file",
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     set_all_random_seeds(args.seed)
 
     # Load the warmed up module
-    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, args.weights_mapping_dir)
+    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, args.weights_mapping_file)
 
     client = MnistFendaClient(
         data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, warmed_up_module=warmed_up_module

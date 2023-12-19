@@ -1,6 +1,6 @@
 import json
 import os
-from logging import ERROR, INFO
+from logging import INFO
 from typing import Optional
 
 import torch
@@ -33,10 +33,17 @@ class WarmedUpModule:
                 self.weights_mapping_dict = json.load(file)
                 log(INFO, f"Weights mapping dict: {self.weights_mapping_dict}")
         else:
+            log(INFO, "Weights mapping dict is not provided. Matching stats directlly, based on currenr model's keys.")
             self.weights_mapping_dict = None
 
     def get_matching_component(self, key: str) -> Optional[str]:
-        """Get the matching component of the key from the weights mapping dict.
+        """Get the matching component of the key from the weights mapping dictionary. Since the provided mapping
+        can contain partial names of the keys, this function is used to split the key of the current model and
+        match it with the partial key in the mapping, returning the complete name of the key in the pretrained model.
+
+        This allows users to provide one mapping for multiple statistics that share the same prefix. For example,
+        if the mapping is {"model": "global_model"} and the input key of the current model is "model.layer1.weight",
+        then the returned matching component is "global_model.layer1.weight".
 
         Args:
             key (str): Key to be matched in pretrained model.
@@ -73,18 +80,22 @@ class WarmedUpModule:
 
         matching_state = {}
         for key in current_model_state.keys():
+            original_state = current_model_state[key]
+
             pretrained_key = self.get_matching_component(key)
             log(INFO, f"Matching: {key} -> {pretrained_key}")
-            original_state = current_model_state[key]
-            if pretrained_key in self.pretrained_model_state.keys():
-                pretrained_state = self.pretrained_model_state[pretrained_key]
-            else:
-                continue
-            if original_state.size() == pretrained_state.size():
-                matching_state[key] = pretrained_state
-            else:
-                log(ERROR, f"Dismatched sizes {original_state.size()} -> {pretrained_state.size()}")
-        log(INFO, f"!!! {len(matching_state)}/{len(current_model_state)} STATS GOT MATCHED !!!")
+            if pretrained_key is not None:
+                if pretrained_key in self.pretrained_model_state.keys():
+                    pretrained_state = self.pretrained_model_state[pretrained_key]
+                    if original_state.size() == pretrained_state.size():
+                        matching_state[key] = pretrained_state
+                        log(INFO, "Succesful stats matching.")
+                    else:
+                        log(INFO, f"Dismatched sizes {original_state.size()} -> {pretrained_state.size()}.")
+                else:
+                    log(INFO, f"Key {pretrained_key} not found in the pretrained model stats.")
+
+        log(INFO, f"{len(matching_state)}/{len(current_model_state)} stats got matched.")
 
         current_model_state.update(matching_state)
         model.load_state_dict(current_model_state)

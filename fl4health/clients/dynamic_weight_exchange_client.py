@@ -114,8 +114,6 @@ class DynamicWeightExchangeClient(BasicClient):
         """
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
-            if self.warmed_up_module:
-                self.warmed_up_module.load_from_pretrained(self.model)
         else:
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         # stores the values of the new model parameters at the beginning of each client training round.
