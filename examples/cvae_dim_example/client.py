@@ -16,6 +16,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.pipeline.autoencoder_pipeline import CVAEPipeline
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -56,6 +57,7 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+    set_all_random_seeds(args.seed)
     client = CVAEDimClient(data_path, [Accuracy("accuracy")], DEVICE, args.condition)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()

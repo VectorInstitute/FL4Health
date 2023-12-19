@@ -1,5 +1,4 @@
 import math
-import random
 from abc import ABC, abstractmethod
 from typing import Any, List, Set, TypeVar
 
@@ -24,12 +23,6 @@ class LabelBasedSampler(ABC):
     @abstractmethod
     def subsample(self, dataset: BaseDataset) -> BaseDataset:
         raise NotImplementedError
-
-    def set_seed(self, seed: int = 42) -> None:
-        np.random.seed(np.int64(seed))
-        random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):

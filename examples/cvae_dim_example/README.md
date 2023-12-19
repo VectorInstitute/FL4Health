@@ -24,6 +24,8 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `latent_dim`: size of the latent vector in the CVAE or VAE model
 * `CVAE_model_path`: path to the saved CVAE model for dimesionality reduction
 
+**NOTE**: Instead of using a global CVAE for all the clients, you can pass personalized CVAE models to each client, but make sure that these models are previously trained in an FL setting, and are not very different, otherwise, that can lead the dimensionality reduction to map the data samples into different latent spaces which might increase the heterogeneity.
+
 ## Starting Clients
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
@@ -38,6 +40,7 @@ automatically downloaded to the path specified and used in the run.
 After both clients have been started federated learning should commence.
 
 **NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data.
+
 
 ### In this example
 You can use the following commands to run the clients.

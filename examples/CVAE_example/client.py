@@ -17,6 +17,7 @@ from fl4health.model_bases.autoencoders_base import AutoEncoderType, Conditional
 from fl4health.pipeline.autoencoder_pipeline import CVAEPipeline
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Metric
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -63,9 +64,14 @@ class CondAutoEncoderClient(BasicClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    parser.add_argument("--condition", action="store", type=str, help="Client ID or 'label' used for CVAE")
+    parser.add_argument(
+        "--condition",
+        action="store",
+        type=str,
+        help="Specify whether to use 'label' or Clinet's ID (ex. '1', '2', etc) for CVAE",
+    )
     args = parser.parse_args()
-
+    set_all_random_seeds(args.seed)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     client = CondAutoEncoderClient(data_path, [], DEVICE, args.condition)
