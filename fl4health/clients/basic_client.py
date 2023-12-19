@@ -602,7 +602,7 @@ class BasicClient(NumPyClient):
         """
         Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
         In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
-        string and optimizer are returned (ie APFL), the use must override this method.
+        string and optimizer are returned (ie APFL), the user must override this method.
 
         Args:
             config (Config): The config from the server.
