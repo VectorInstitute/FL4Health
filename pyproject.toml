@@ -31,13 +31,6 @@ numpy = "^1.24"
 pandas = "^1.5"
 scikit-learn = "^1.2.2"
 wandb = "^0.16.1"
-# pip-audt fixes (alongside with the security report ID number):
-aiohttp = "^3.9.0"  # GHSA-qvrw-v9rv-5rjx and GHSA-q3qx-c6g2-7pw2
-certifi = ">2023.7.22"  # PYSEC-2023-135
-mpmath = "^1.3.0"  # PYSEC-2021-427
-pillow = "^10.0.1"  # PYSEC-2023-175, GHSA-j7hp-h8jx-5ppr and GHSA-56pw-mpj4-fxww
-urllib3 = "^1.26.18"  # PYSEC-2023-192 and PYSEC-2023-212
-werkzeug = "^2.3.8"  # PYSEC-2023-221
 
 [tool.poetry.group.dev-local.dependencies]
 torchtext = "0.14.1"

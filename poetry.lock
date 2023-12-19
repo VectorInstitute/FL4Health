@@ -754,25 +754,26 @@ test = ["pandas[test]", "pre-commit", "pytest", "pytest-cov", "pytest-rerunfailu
 
 [[package]]
 name = "datasets"
-version = "2.14.6"
+version = "2.15.0"
 description = "HuggingFace community-driven open-source library of datasets"
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "datasets-2.14.6-py3-none-any.whl", hash = "sha256:4de857ffce21cfc847236745c69f102e33cd1f0fa8398e7be9964525fd4cd5db"},
-    {file = "datasets-2.14.6.tar.gz", hash = "sha256:97ebbace8ec7af11434a87d1215379927f8fee2beab2c4a674003756ecfe920c"},
+    {file = "datasets-2.15.0-py3-none-any.whl", hash = "sha256:6d658d23811393dfc982d026082e1650bdaaae28f6a86e651966cb072229a228"},
+    {file = "datasets-2.15.0.tar.gz", hash = "sha256:a26d059370bd7503bd60e9337977199a13117a83f72fb61eda7e66f0c4d50b2b"},
 ]
 
 [package.dependencies]
 aiohttp = "*"
 dill = ">=0.3.0,<0.3.8"
 fsspec = {version = ">=2023.1.0,<=2023.10.0", extras = ["http"]}
-huggingface-hub = ">=0.14.0,<1.0.0"
+huggingface-hub = ">=0.18.0"
 multiprocess = "*"
 numpy = ">=1.17"
 packaging = "*"
 pandas = "*"
 pyarrow = ">=8.0.0"
+pyarrow-hotfix = "*"
 pyyaml = ">=5.1"
 requests = ">=2.19.0"
 tqdm = ">=4.62.1"
@@ -782,15 +783,15 @@ xxhash = "*"
 apache-beam = ["apache-beam (>=2.26.0,<2.44.0)"]
 audio = ["librosa", "soundfile (>=0.12.1)"]
 benchmarks = ["tensorflow (==2.12.0)", "torch (==2.0.1)", "transformers (==4.30.1)"]
-dev = ["Pillow (>=6.2.1)", "absl-py", "apache-beam (>=2.26.0,<2.44.0)", "black (>=23.1,<24.0)", "elasticsearch (<8.0.0)", "faiss-cpu (>=1.6.4)", "joblib (<1.3.0)", "joblibspark", "librosa", "lz4", "py7zr", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "pyyaml (>=5.3.1)", "rarfile (>=4.0)", "ruff (>=0.0.241)", "s3fs", "s3fs (>=2021.11.1)", "soundfile (>=0.12.1)", "sqlalchemy (<2.0.0)", "tensorflow (>=2.2.0,!=2.6.0,!=2.6.1)", "tensorflow (>=2.3,!=2.6.0,!=2.6.1)", "tensorflow-macos", "tiktoken", "torch", "transformers", "zstandard"]
+dev = ["Pillow (>=6.2.1)", "absl-py", "apache-beam (>=2.26.0,<2.44.0)", "black (>=23.1,<24.0)", "elasticsearch (<8.0.0)", "faiss-cpu (>=1.6.4)", "jax (>=0.3.14)", "jaxlib (>=0.3.14)", "joblib (<1.3.0)", "joblibspark", "librosa", "lz4", "py7zr", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "pyyaml (>=5.3.1)", "rarfile (>=4.0)", "ruff (>=0.0.241)", "s3fs", "s3fs (>=2021.11.1)", "soundfile (>=0.12.1)", "sqlalchemy (<2.0.0)", "tensorflow (>=2.2.0,!=2.6.0,!=2.6.1)", "tensorflow (>=2.3,!=2.6.0,!=2.6.1)", "tensorflow-macos", "tiktoken", "torch", "transformers", "typing-extensions (>=4.6.1)", "zstandard"]
 docs = ["s3fs", "tensorflow (>=2.2.0,!=2.6.0,!=2.6.1)", "tensorflow-macos", "torch", "transformers"]
-jax = ["jax (>=0.2.8,!=0.3.2,<=0.3.25)", "jaxlib (>=0.1.65,<=0.3.25)"]
+jax = ["jax (>=0.3.14)", "jaxlib (>=0.3.14)"]
 metrics-tests = ["Werkzeug (>=1.0.1)", "accelerate", "bert-score (>=0.3.6)", "jiwer", "langdetect", "mauve-text", "nltk", "requests-file (>=1.5.1)", "rouge-score", "sacrebleu", "sacremoses", "scikit-learn", "scipy", "sentencepiece", "seqeval", "six (>=1.15.0,<1.16.0)", "spacy (>=3.0.0)", "texttable (>=1.6.3)", "tldextract", "tldextract (>=3.1.0)", "toml (>=0.10.1)", "typer (<0.5.0)"]
 quality = ["black (>=23.1,<24.0)", "pyyaml (>=5.3.1)", "ruff (>=0.0.241)"]
 s3 = ["s3fs"]
 tensorflow = ["tensorflow (>=2.2.0,!=2.6.0,!=2.6.1)", "tensorflow-macos"]
 tensorflow-gpu = ["tensorflow-gpu (>=2.2.0,!=2.6.0,!=2.6.1)"]
-tests = ["Pillow (>=6.2.1)", "absl-py", "apache-beam (>=2.26.0,<2.44.0)", "elasticsearch (<8.0.0)", "faiss-cpu (>=1.6.4)", "joblib (<1.3.0)", "joblibspark", "librosa", "lz4", "py7zr", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "s3fs (>=2021.11.1)", "soundfile (>=0.12.1)", "sqlalchemy (<2.0.0)", "tensorflow (>=2.3,!=2.6.0,!=2.6.1)", "tensorflow-macos", "tiktoken", "torch", "transformers", "zstandard"]
+tests = ["Pillow (>=6.2.1)", "absl-py", "apache-beam (>=2.26.0,<2.44.0)", "elasticsearch (<8.0.0)", "faiss-cpu (>=1.6.4)", "jax (>=0.3.14)", "jaxlib (>=0.3.14)", "joblib (<1.3.0)", "joblibspark", "librosa", "lz4", "py7zr", "pyspark (>=3.4)", "pytest", "pytest-datadir", "pytest-xdist", "rarfile (>=4.0)", "s3fs (>=2021.11.1)", "soundfile (>=0.12.1)", "sqlalchemy (<2.0.0)", "tensorflow (>=2.3,!=2.6.0,!=2.6.1)", "tensorflow-macos", "tiktoken", "torch", "transformers", "typing-extensions (>=4.6.1)", "zstandard"]
 torch = ["torch"]
 vision = ["Pillow (>=6.2.1)"]
 
@@ -961,8 +962,10 @@ files = [
 ]
 
 [package.dependencies]
+absl-py = {version = "*", optional = true, markers = "extra == \"etqdm\""}
 importlib_resources = {version = "*", optional = true, markers = "extra == \"epath\""}
 numpy = {version = "*", optional = true, markers = "extra == \"enp\""}
+tqdm = {version = "*", optional = true, markers = "extra == \"etqdm\""}
 typing_extensions = {version = "*", optional = true, markers = "extra == \"epy\""}
 zipp = {version = "*", optional = true, markers = "extra == \"epath\""}
 
@@ -1558,13 +1561,13 @@ files = [
 
 [[package]]
 name = "ipykernel"
-version = "6.25.1"
+version = "6.27.1"
 description = "IPython Kernel for Jupyter"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "ipykernel-6.25.1-py3-none-any.whl", hash = "sha256:c8a2430b357073b37c76c21c52184db42f6b4b0e438e1eb7df3c4440d120497c"},
-    {file = "ipykernel-6.25.1.tar.gz", hash = "sha256:050391364c0977e768e354bdb60cbbfbee7cbb943b1af1618382021136ffd42f"},
+    {file = "ipykernel-6.27.1-py3-none-any.whl", hash = "sha256:dab88b47f112f9f7df62236511023c9bdeef67abc73af7c652e4ce4441601686"},
+    {file = "ipykernel-6.27.1.tar.gz", hash = "sha256:7d5d594b6690654b4d299edba5e872dc17bb7396a8d0609c97cb7b8a1c605de6"},
 ]
 
 [package.dependencies]
@@ -3418,6 +3421,17 @@ files = [
 numpy = ">=1.16.6"
 
 [[package]]
+name = "pyarrow-hotfix"
+version = "0.6"
+description = ""
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "pyarrow_hotfix-0.6-py3-none-any.whl", hash = "sha256:dcc9ae2d220dff0083be6a9aa8e0cdee5182ad358d4931fce825c545e5c89178"},
+    {file = "pyarrow_hotfix-0.6.tar.gz", hash = "sha256:79d3e030f7ff890d408a100ac16d6f00b14d44a502d7897cd9fc3e3a534e9945"},
+]
+
+[[package]]
 name = "pyasn1"
 version = "0.5.0"
 description = "Pure-Python implementation of ASN.1 types and DER/BER/CER codecs (X.208)"
@@ -3870,20 +3884,20 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.29.0"
+version = "2.31.0"
 description = "Python HTTP for Humans."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "requests-2.29.0-py3-none-any.whl", hash = "sha256:e8f3c9be120d3333921d213eef078af392fba3933ab7ed2d1cba3b56f2568c3b"},
-    {file = "requests-2.29.0.tar.gz", hash = "sha256:f2e34a75f4749019bb0e3effb66683630e4ffeaf75819fb51bebef1bf5aef059"},
+    {file = "requests-2.31.0-py3-none-any.whl", hash = "sha256:58cd2187c01e70e6e26505bca751777aa9f2ee0b7f4300988b709f44e013003f"},
+    {file = "requests-2.31.0.tar.gz", hash = "sha256:942c5a758f98d790eaed1a29cb6eefc7ffb0d1cf7af05c3d2791656dbd6ad1e1"},
 ]
 
 [package.dependencies]
 certifi = ">=2017.4.17"
 charset-normalizer = ">=2,<4"
 idna = ">=2.5,<4"
-urllib3 = ">=1.21.1,<1.27"
+urllib3 = ">=1.21.1,<3"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
@@ -4415,13 +4429,13 @@ wrapt = ">=1.11.0"
 
 [[package]]
 name = "tensorflow-datasets"
-version = "4.9.2"
+version = "4.9.3"
 description = "tensorflow/datasets is a library of datasets ready to use with TensorFlow."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "tensorflow-datasets-4.9.2.tar.gz", hash = "sha256:09c6f59cf89b247328ce7b0c623ac37c0d10b7c23d53dfa39a58ecd0e88823e1"},
-    {file = "tensorflow_datasets-4.9.2-py3-none-any.whl", hash = "sha256:aa23fdde1c661f2342fd11d9b373599055899a27b79b1d839adc77fc7daaa15a"},
+    {file = "tensorflow-datasets-4.9.3.tar.gz", hash = "sha256:90390077dde2c9e4e240754ddfc5bb50b482946d421c8a34677c3afdb0463427"},
+    {file = "tensorflow_datasets-4.9.3-py3-none-any.whl", hash = "sha256:09cd60eccab0d5a9d15f53e76ee0f1b530ee5aa3665e42be621a4810d9fa5db6"},
 ]
 
 [package.dependencies]
@@ -4429,7 +4443,7 @@ absl-py = "*"
 array-record = "*"
 click = "*"
 dm-tree = "*"
-etils = {version = ">=0.9.0", extras = ["enp", "epath"]}
+etils = {version = ">=0.9.0", extras = ["enp", "epath", "etree"]}
 numpy = "*"
 promise = "*"
 protobuf = ">=3.20"
@@ -4450,16 +4464,16 @@ c4-wsrs = ["apache-beam"]
 cats-vs-dogs = ["matplotlib"]
 colorectal-histology = ["Pillow"]
 common-voice = ["pydub"]
-dev = ["apache-beam", "conllu", "datasets", "dill", "jax[cpu]", "jupyter", "pandas", "pydub", "pylint (>=2.6.0)", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "tensorflow-io", "yapf"]
+dev = ["apache-beam", "conllu", "datasets", "dill", "jax[cpu]", "jupyter", "pandas", "pydub", "pylint (>=2.6.0)", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "tensorflow-io[tensorflow]", "yapf"]
 duke-ultrasound = ["scipy"]
 eurosat = ["imagecodecs", "scikit-image", "tifffile"]
 groove = ["pretty-midi", "pydub"]
 gtzan = ["pydub"]
-huggingface = ["Pillow", "bs4", "conllu", "datasets", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io", "tifffile", "tldextract", "zarr"]
+huggingface = ["Pillow", "bs4", "conllu", "datasets", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io[tensorflow]", "tifffile", "tldextract", "zarr"]
 imagenet2012-corrupted = ["opencv-python", "scikit-image", "scipy"]
 librispeech = ["pydub"]
 locomotion = ["envlogger"]
-lsun = ["tensorflow-io"]
+lsun = ["tensorflow-io[tensorflow]"]
 matplotlib = ["matplotlib"]
 nsynth = ["crepe (>=0.0.11)", "librosa", "scikit-learn (==0.20.3)"]
 ogbg-molpcba = ["networkx", "pandas"]
@@ -4470,7 +4484,8 @@ smartwatch-gestures = ["pandas"]
 svhn = ["scipy"]
 tensorflow = ["tensorflow (>=2.1)"]
 tensorflow-data-validation = ["tensorflow-data-validation"]
-tests-all = ["Pillow", "apache-beam", "bs4", "conllu", "datasets", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io", "tifffile", "tldextract", "zarr"]
+tests-all = ["Pillow", "apache-beam", "bs4", "conllu", "datasets", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io[tensorflow]", "tifffile", "tldextract", "zarr"]
+tf-nightly = ["tf-nightly"]
 the300w-lp = ["scipy"]
 wider-face = ["Pillow"]
 wiki-dialog = ["apache-beam"]
@@ -5019,19 +5034,19 @@ typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "urllib3"
-version = "1.26.18"
+version = "2.1.0"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
+python-versions = ">=3.8"
 files = [
-    {file = "urllib3-1.26.18-py2.py3-none-any.whl", hash = "sha256:34b97092d7e0a3a8cf7cd10e386f401b3737364026c45e622aa02903dffe0f07"},
-    {file = "urllib3-1.26.18.tar.gz", hash = "sha256:f8ecc1bba5667413457c529ab955bf8c67b45db799d159066261719e328580a0"},
+    {file = "urllib3-2.1.0-py3-none-any.whl", hash = "sha256:55901e917a5896a349ff771be919f8bd99aff50b79fe58fec595eb37bbc56bb3"},
+    {file = "urllib3-2.1.0.tar.gz", hash = "sha256:df7aa8afb0148fa78488e7899b2c59b5f4ffcfa82e6c54ccb9dd37c1d7b52d54"},
 ]
 
 [package.extras]
-brotli = ["brotli (==1.0.9)", "brotli (>=1.0.9)", "brotlicffi (>=0.8.0)", "brotlipy (>=0.6.0)"]
-secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "pyOpenSSL (>=0.14)", "urllib3-secure-extra"]
-socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
+brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
+socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
+zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "virtualenv"
@@ -5118,13 +5133,13 @@ files = [
 
 [[package]]
 name = "werkzeug"
-version = "2.3.8"
+version = "3.0.1"
 description = "The comprehensive WSGI web application library."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "werkzeug-2.3.8-py3-none-any.whl", hash = "sha256:bba1f19f8ec89d4d607a3bd62f1904bd2e609472d93cd85e9d4e178f472c3748"},
-    {file = "werkzeug-2.3.8.tar.gz", hash = "sha256:554b257c74bbeb7a0d254160a4f8ffe185243f52a52035060b761ca62d977f03"},
+    {file = "werkzeug-3.0.1-py3-none-any.whl", hash = "sha256:90a285dc0e42ad56b34e696398b8122ee4c681833fb35b8334a095d82c56da10"},
+    {file = "werkzeug-3.0.1.tar.gz", hash = "sha256:507e811ecea72b18a404947aded4b3390e1db8f826b494d76550ef45bb3b1dcc"},
 ]
 
 [package.dependencies]
@@ -5453,4 +5468,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.11"
-content-hash = "bcc0e4b118d8b11a454ff7797c5f8202af2713b49f88dc5a00af7c9815752408"
+content-hash = "4652f2f48cc9e23b300e8dcdda2a60784404de6bbbb0bc78838eb54d822171b9"
