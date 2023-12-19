@@ -171,7 +171,9 @@ class FedPCA(BasicFedAvg):
 
         where the new (left) singular vectors are returned as the merging result.
 
-        This implementation assumes that the *columns* of U_i are the PCs. If
+        This implementation assumes that the *columns* of U_i are the PCs.
+
+        If
 
         U @ S @ V.T = B
 
@@ -205,7 +207,7 @@ class FedPCA(BasicFedAvg):
         singular values are also shared.
 
         This implementation can be viewed as a more efficient approximation to
-        the SVD-based merging in that it does require performing SVD on a large matrix.
+        the SVD-based merging in that it does not require performing SVD on a large matrix.
 
         Directly performing SVD does not take into account the following two observations, suggesting there are more
         efficient algorithms for merging:
@@ -216,8 +218,8 @@ class FedPCA(BasicFedAvg):
         In contrast, the algorithm here performs a QR decomposition on the large data matrix, which
         is more efficient than SVD, and SVD is only performed on a much smaller matrix.
 
-        Similarly to the SVD-basedmerging, it returns the true principal components of the aggregated data
-        up to the application of some unitary transformation.
+        Similarly to the SVD-based merging, it returns an approximation of the true principal components
+        of the aggregated data up to the multiplication of some unitary matrix.
 
         For the theoretical justification behind this approach, see the paper
         "Subspace Tracking for Latent Semantic Analysis".
