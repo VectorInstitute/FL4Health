@@ -16,7 +16,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 class MnistFedPCAClient(FedPCAClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=1.0)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.5, beta=0.5)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 

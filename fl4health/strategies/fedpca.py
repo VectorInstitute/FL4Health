@@ -1,4 +1,4 @@
-from logging import WARNING
+from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -23,6 +23,8 @@ class FedPCA(BasicFedAvg):
         *,
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
+        min_fit_clients: int = 2,
+        min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: Optional[
             Callable[
@@ -76,6 +78,8 @@ class FedPCA(BasicFedAvg):
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             evaluate_fn=evaluate_fn,
             on_fit_config_fn=on_fit_config_fn,
@@ -125,11 +129,13 @@ class FedPCA(BasicFedAvg):
             client_singular_values.append(singular_values)
 
         if self.svd_merging:
+            log(INFO, "Performing SVD-based merging.")
             merged_singular_vectors, merged_singular_values = self.merge_subspaces_svd(
                 client_singular_vectors, client_singular_values
             )
         else:
             # use qr merging instead
+            log(INFO, "Performing QR-based merging.")
             merged_singular_vectors, merged_singular_values = self.merge_subspaces_qr(
                 client_singular_vectors, client_singular_values
             )

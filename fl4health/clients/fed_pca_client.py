@@ -119,6 +119,10 @@ class FedPCAClient(NumPyClient):
             parameters (NDArrays): Server-merged principal components.
             config (Dict[str, Scalar]): Config file.
         """
+        if not self.initialized:
+            self.setup_client(config)
+            train_data_tensor = self.get_data_tensor(self.train_loader)
+            self.model.set_data_mean(self.model.maybe_reshape(train_data_tensor))
         self.set_parameters(parameters, config)
         num_components_eval = (
             self.narrow_config_type(config, "num_components_eval", int)
@@ -134,6 +138,6 @@ class FedPCAClient(NumPyClient):
         return (reconstruction_loss, self.num_val_samples, metrics)
 
     def save_model(self) -> None:
-        final_model_save_path = f"{self.model_save_path}/{self.generate_hash()}_pca"
+        final_model_save_path = f"{self.model_save_path}/client_{self.generate_hash()}_pca"
         torch.save(self.model, final_model_save_path)
         log(INFO, f"Model parameters saved to {final_model_save_path}.")
