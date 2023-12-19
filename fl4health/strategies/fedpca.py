@@ -185,7 +185,7 @@ class FedPCA(BasicFedAvg):
         """
         X = [U @ np.diag(S) for U, S in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(X, axis=1)
-        new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input, full_matrices=False)
+        new_singular_vectors, new_singular_values, _ = np.linalg.svd(svd_input, full_matrices=True)
         return new_singular_vectors, new_singular_values
 
     def merge_subspaces_qr(
@@ -226,8 +226,8 @@ class FedPCA(BasicFedAvg):
             return self.merge_subspaces_qr_helper((U1, S1), (U2, S2))
         else:
             U, S = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
-            U_last, S_last = client_singular_vectors[-1], np.diag(client_singular_values[-1])
-            return self.merge_subspaces_qr_helper((U, np.diag(S)), (U_last, S_last))
+            U_last, S_last = client_singular_vectors[-1], client_singular_values[-1]
+            return self.merge_subspaces_qr_helper((U, np.diag(S)), (U_last, np.diag(S_last)))
 
     def merge_subspaces_qr_helper(
         self, subspace1: Tuple[NDArray, NDArray], subspace2: Tuple[NDArray, NDArray]
@@ -249,4 +249,6 @@ class FedPCA(BasicFedAvg):
 
         U_final = (np.concatenate((U1, Q), axis=1)) @ U3
 
-        return U_final, S_final
+        m, n = U1.shape[0], U1.shape[1] + U2.shape[1]
+        rank = min(m, n)
+        return U_final[:, :rank], S_final[:rank]
