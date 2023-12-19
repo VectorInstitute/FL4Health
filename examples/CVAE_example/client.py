@@ -71,7 +71,7 @@ if __name__ == "__main__":
         help="Specify whether to use 'label' or Clinet's ID (ex. '1', '2', etc) for CVAE",
     )
     args = parser.parse_args()
-    set_all_random_seeds(args.seed)
+    set_all_random_seeds(42)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     client = CondAutoEncoderClient(data_path, [], DEVICE, args.condition)

@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    set_all_random_seeds(args.seed)
+    set_all_random_seeds(42)
     client = CVAEDimClient(data_path, [Accuracy("accuracy")], DEVICE, args.condition)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
