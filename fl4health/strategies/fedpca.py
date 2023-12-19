@@ -216,7 +216,10 @@ class FedPCA(BasicFedAvg):
         In contrast, the algorithm here performs a QR decomposition on the large data matrix, which
         is more efficient than SVD, and SVD is only performed on a much smaller matrix.
 
-        For theoretical justification behind this approach, see the paper
+        Similarly to the SVD-basedmerging, it returns the true principal components of the aggregated data
+        up to the application of some unitary transformation.
+
+        For the theoretical justification behind this approach, see the paper
         "Subspace Tracking for Latent Semantic Analysis".
 
         Args:
