@@ -128,7 +128,7 @@ class FedPCAClient(NumPyClient):
         val_data_tensor = self.get_data_tensor(self.val_loader)
         val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(val_data_tensor))
         reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components_eval)
-        projection_variance = self.model.compute_projetion_variance(val_data_tensor_prepared, num_components_eval)
+        projection_variance = self.model.compute_projection_variance(val_data_tensor_prepared, num_components_eval)
         metrics: Dict[str, Scalar] = {}
         metrics["projection_variance"] = projection_variance
         return (reconstruction_loss, self.num_val_samples, metrics)

@@ -138,7 +138,7 @@ class PCAModule(nn.Module):
         N = X.size(0)
         return (torch.linalg.norm(self.project_back(self.project_lower_dim(X, k)) - X) ** 2).item() / N
 
-    def compute_projetion_variance(self, X: Tensor, k: Optional[int]) -> float:
+    def compute_projection_variance(self, X: Tensor, k: Optional[int]) -> float:
         """
         Compute the variance of the data matrix X after projection via PCA.
 
