@@ -204,13 +204,17 @@ class FedPCA(BasicFedAvg):
         Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
         singular values are also shared.
 
-        This implementation can be viewed as a an efficient approximation to
-        the SVD-based merging in that it does not perform SVD on a large matrix.
+        This implementation can be viewed as a more efficient approximation to
+        the SVD-based merging in that it does require performing SVD on a large matrix.
 
-        It is based on the two observations:
+        Directly performing SVD does not take into account the following two observations, suggesting there are more
+        efficient algorithms for merging:
             1. Each client's singular vectors are already orthonormal.
-            2. The right singular vectors do not need to be computed in SVD since
+            2. The right singular vectors do not need to be computed since
             only the left singular vectors are returned as the merging result.
+
+        In contrast, the algorithm here performs a QR decomposition on the large data matrix, which
+        is more efficient than SVD, and SVD is only performed on a much smaller matrix.
 
         For theoretical justification behind this approach, see the paper
         "Subspace Tracking for Latent Semantic Analysis".
