@@ -6,7 +6,12 @@ In this demo, APFL is applied to an augmented version of the MNIST dataset that 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
 
 ## Running the Example
-In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
+In order to run the example, first ensure you have the virtual env of your choice activated and run
+```
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+to install all of the dependencies for this project.
 
 ## Starting Server
 
