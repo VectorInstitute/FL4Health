@@ -55,6 +55,7 @@ class BasicClient(NumPyClient):
         self.device = device
         self.metrics = metrics
         self.checkpointer = checkpointer
+        self.warmed_up_module = warmed_up_module
 
         self.client_name = self.generate_hash()
         self.initialized = False  # Whether or not the client has been setup
@@ -80,7 +81,6 @@ class BasicClient(NumPyClient):
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.warmed_up_module = warmed_up_module
         self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
@@ -145,8 +145,8 @@ class BasicClient(NumPyClient):
         """
         If this is the first time we're initializing the model weights, we check if the client is using a warmed up
         module or not. If the client is using a warmed up module and the pretrained model state is loaded, we load
-        the pretrained model state into the current model. Otherwise, we use the FullParameterExchangerto initialize
-        all model.
+        the pretrained model state into the current model. Otherwise, we use the FullParameterExchanger to initialize
+        all model components.
 
         Args:
             parameters (NDArrays): Model parameters to be injected into the client model
