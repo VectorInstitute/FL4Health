@@ -2,12 +2,7 @@
 This example demonstrates the feature alignment capability of the tabular data preprocessing pipeline. In a federated setting, there can be "misalignment" of features between different clients, making it impossible to train a global model. Here, "misalignment" refers to the fact that different tabular datasets can have different columns, and for columns that correspond to categorical features, the categories could be different, resulting in one-hot encodings of different lengths.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Data Information
 The dataset used here is the MIMIC3d aggregated data collected here:

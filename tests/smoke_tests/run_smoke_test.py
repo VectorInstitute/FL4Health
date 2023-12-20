@@ -276,8 +276,9 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
         start_time = datetime.datetime.now()
         while True:
             # giving a smaller timeout here just in case it hangs for a long time waiting for a single log line
-            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=60)
+            output_in_bytes = await asyncio.wait_for(process.stdout.readline(), timeout=timeout)
             output = output_in_bytes.decode().replace("\\n", "\n")
+            logger.debug(f"{process_name} output: {output}")
             full_output += output
             return_code = process.returncode
 
@@ -294,7 +295,6 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
         raise ex
 
     logger.info(f"Output collected for {process_name}")
-    logger.debug(f"{process_name} output:\n{full_output}")
 
     # checking for clients with failure exit codes
     assert return_code is None or (return_code is not None and return_code == 0), (
