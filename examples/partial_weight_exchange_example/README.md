@@ -10,12 +10,7 @@ This example fine-tunes a pre-trained RoBERTa-base encoder to perform text class
 sampling on its training set so we get heterogeneous data distributions across clients.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Information about Dataset
 client_data.py handles all data preprosessiong steps and is responsible for constructing the dataloaders for training and evaluation.
