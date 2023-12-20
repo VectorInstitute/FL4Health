@@ -2,7 +2,7 @@ import json
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
-from cyclops.process.feature.feature import TabularFeatures
+from cyclops.data.df.feature import TabularFeatures
 from flwr.common.typing import Scalar
 from sklearn.feature_extraction.text import CountVectorizer
 
