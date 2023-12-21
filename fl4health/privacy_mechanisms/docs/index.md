@@ -2,7 +2,7 @@
 
 !!! info ""
 
-    A **privacy mechanism** is a randomized algorithm which takes as input a user's data, and through injecting noise to the data, the algorithm produces a privitized version of the users data as ouput, which can subsequently be shared in the clear for tasks such as federated learning.
+    A **privacy mechanism** is a randomized algorithm which takes as input a user's data, and through injecting noise to the data, the algorithm produces a privatized version of the users data as ouput, which can subsequently be shared in the clear for tasks such as federated learning.
 
 The following discrete privacy mechanisms have been implemented to privitize clients' discrete vectors for the cryptographic primitive called secure aggregation (SecAgg) and its variations.
 

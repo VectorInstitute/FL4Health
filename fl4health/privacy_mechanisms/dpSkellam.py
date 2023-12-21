@@ -13,7 +13,7 @@ def skellam_mechanism(query_vector: list[int], skellam_variance: float) -> list[
          https://proceedings.neurips.cc/paper/2021/file/285baacbdf8fda1de94b19282acd23e2-Paper.pdf
 
      Args:
-         query_vector (list[int]): Discritized vector to which noise will be added.
+         query_vector (list[int]): discretized vector to which noise will be added.
          skellam_variance (float): Variance associated with each component of the d-dimensional Skellam distribution.
 
      Raises:
@@ -39,13 +39,13 @@ def skellam_mechanism(query_vector: list[int], skellam_variance: float) -> list[
 
     # mean of Possion variables used to construct a
     # centered Skellam variable S with Var(S) = skellam_variance
-    mean = skellam_variance / 2
-    mean_vector = torch.ones(dim) * mean
+    poisson_mean = skellam_variance / 2
+    poisson_mean_vector = torch.ones(dim) * poisson_mean
 
-    Skellam = torch.poisson(mean_vector) - torch.poisson(mean_vector)
-    Skellam = Skellam.int()  # convert to 32-bit signed integer
+    skellam = torch.poisson(poisson_mean_vector) - torch.poisson(poisson_mean_vector)
+    skellam = skellam.int()  # convert to 32-bit signed integer
 
-    perturbed = torch.tensor(query_vector, dtype=torch.int) + Skellam  # add noise
+    perturbed = torch.tensor(query_vector, dtype=torch.int) + skellam  # add noise
 
     return perturbed.tolist()
 

@@ -1,6 +1,7 @@
 from typing import List
 
 import torch
+from torch.distributions import Binomial
 
 # TODO rename file to binomial.py, move tests to test/
 
@@ -26,7 +27,7 @@ def binomial_mechanism(query_vector: List[int], N: int, p: float, j: int) -> Lis
     dim = len(query_vector)
     assert dim > 0  # nonempty query_vector
 
-    binomial_samples = torch.distributions.Binomial(dim, p * torch.ones(dim)).sample()
+    binomial_samples = Binomial(dim, p * torch.ones(dim)).sample()
     query = torch.tensor(query_vector)
 
     privatized_vector = query + (binomial_samples - N * p) / j

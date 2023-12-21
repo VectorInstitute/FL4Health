@@ -1,7 +1,9 @@
 import math
+from logging import WARNING
 from typing import List
 
 import torch
+from flwr.common.logger import log
 
 # TODO rename file to discrete_gaussian.py, move tests to test/
 
@@ -68,7 +70,11 @@ def discrete_gaussian_sampler(variance: float) -> int:
 
     t = math.floor(math.sqrt(variance)) + 1
 
+    counter = 0
     while True:
+        counter += 1
+        if counter % 100 == 0:
+            log(WARNING, f"Discrete Gaussian Sampling has completed {counter} samples without success.")
         U = torch.randint(0, t, (1,)).item()
         D = bernoulli_exp(U / t)
 
@@ -114,13 +120,12 @@ def discrete_gaussian_mechanism(query_vector: List[int], variance: float) -> Lis
         variance (float): Gaussian noise variance.
 
     Returns:
-        List[int]: Privitized vector.
+        List[int]: privatized vector.
     """
 
-    dim = len(query_vector)
-    assert dim > 0  # query_vector needs to be nonempty
+    assert len(query_vector) > 0  # query_vector needs to be nonempty
 
-    return [query_vector[i] + discrete_gaussian_sampler(variance) for i in range(dim)]
+    return [query_element + discrete_gaussian_sampler(variance) for query_element in query_vector]
 
 
 if __name__ == "__main__":
