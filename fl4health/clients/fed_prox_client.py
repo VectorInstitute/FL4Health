@@ -13,7 +13,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class FedProxClient(BasicClient):
@@ -30,7 +29,6 @@ class FedProxClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -38,7 +36,6 @@ class FedProxClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            warmed_up_module=warmed_up_module,
         )
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking

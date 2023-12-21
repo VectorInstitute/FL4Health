@@ -10,7 +10,12 @@ from flwr.common.logger import log
 class WarmedUpModule:
     """This class is used to load a pretrained model into the current model."""
 
-    def __init__(self, pretrained_model_dir: Optional[str], weights_mapping_dir: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        pretrained_model_dir: Optional[str],
+        pretrained_model_name: Optional[str],
+        weights_mapping_dir: Optional[str] = None,
+    ) -> None:
         """Initialize the WarmedUpModule with the pretrained model stats and weights mapping dict.
 
         Args:
@@ -67,7 +72,7 @@ class WarmedUpModule:
                 return self.weights_mapping_dict[matching_component] + key[len(matching_component) :]
         return None
 
-    def load_from_pretrained(self, model: torch.nn.Module) -> None:
+    def load_from_pretrained(self, model: torch.nn.Module) -> torch.nn.Module:
         """Load the pretrained model into the current model.
 
         Args:
@@ -99,3 +104,4 @@ class WarmedUpModule:
 
         current_model_state.update(matching_state)
         model.load_state_dict(current_model_state)
+        return model

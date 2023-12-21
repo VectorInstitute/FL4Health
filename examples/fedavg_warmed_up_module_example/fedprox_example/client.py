@@ -1,6 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -13,13 +14,28 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.preprocessing.warmed_up_module import WarmedUpModule
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedProxClient(FedProxClient):
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        warmed_up_module: WarmedUpModule,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+        )
+        self.warmed_up_module = warmed_up_module
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -27,7 +43,9 @@ class MnistFedProxClient(FedProxClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return MnistNet().to(self.device)
+        model = self.warmed_up_module.load_from_pretrained(MnistNet()).to(self.device)
+        self.model_weights_initialized = True
+        return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.01)
@@ -53,6 +71,21 @@ if __name__ == "__main__":
         help="Seed for the random number generator",
         required=False,
     )
+    parser.add_argument(
+        "--pretrained_model_dir",
+        action="store",
+        type=str,
+        help="Path to the pretrained model",
+        required=False,
+    )
+    parser.add_argument(
+        "--weights_mapping_file",
+        action="store",
+        type=str,
+        help="Path to the weights mapping file",
+        required=False,
+    )
+
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -63,7 +96,11 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
+    # Load the warmed up module
+    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, args.weights_mapping_file)
+
+    # Start the client
+    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, warmed_up_module=warmed_up_module)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

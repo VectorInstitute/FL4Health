@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
 import torch
 import torch.nn as nn
@@ -11,7 +11,6 @@ from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExcha
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class DynamicWeightExchangeClient(BasicClient):
@@ -21,7 +20,6 @@ class DynamicWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         """
         Dynamic weight exchange client used to exchange a dynamic subset of layers per client.
@@ -41,7 +39,6 @@ class DynamicWeightExchangeClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            warmed_up_module=warmed_up_module,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module

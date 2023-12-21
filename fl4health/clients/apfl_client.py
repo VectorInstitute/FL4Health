@@ -11,7 +11,6 @@ from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.losses import Losses, LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.utils.warmed_up_module import WarmedUpModule
 
 
 class ApflClient(BasicClient):
@@ -22,9 +21,8 @@ class ApflClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, warmed_up_module=warmed_up_module)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
 
         self.model: ApflModule
         self.learning_rate: float

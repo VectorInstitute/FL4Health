@@ -20,7 +20,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
-from fl4health.utils.warmed_up_module import WarmedUpModule
 
 T = TypeVar("T")
 
@@ -33,7 +32,6 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        warmed_up_module: Optional[WarmedUpModule] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -55,7 +53,6 @@ class BasicClient(NumPyClient):
         self.device = device
         self.metrics = metrics
         self.checkpointer = checkpointer
-        self.warmed_up_module = warmed_up_module
 
         self.client_name = self.generate_hash()
         self.initialized = False  # Whether or not the client has been setup
@@ -152,10 +149,8 @@ class BasicClient(NumPyClient):
             parameters (NDArrays): Model parameters to be injected into the client model
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-        if self.warmed_up_module and self.warmed_up_module.pretrained_model_state is not None:
-            self.warmed_up_module.load_from_pretrained(self.model)
-        else:
-            FullParameterExchanger().pull_parameters(parameters, self.model, config)
+
+        FullParameterExchanger().pull_parameters(parameters, self.model, config)
         self.model_weights_initialized = True
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
