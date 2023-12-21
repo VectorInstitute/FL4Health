@@ -143,7 +143,9 @@ class DynamicWeightExchangeClient(BasicClient):
             self.previous_val_loss = comparison_val_loss
             return False
         else:
-            return comparison_val_loss < self.previous_val_loss
+            result = comparison_val_loss > self.previous_val_loss
+            self.previous_val_loss = comparison_val_loss
+            return result
 
     def maybe_adjust_exchange_percentage(self, comparison_val_loss: float) -> None:
         if self.parameter_exchanger.filter_by_percentage and self.adaptive_exchange_percentage:

@@ -26,7 +26,7 @@ def get_initial_model_parameters(num_classes: int) -> Parameters:
 
 def construct_config(
     current_round: int,
-    local_epochs: int,
+    local_steps: int,
     batch_size: int,
     num_classes: int,
     sequence_length: int,
@@ -41,7 +41,7 @@ def construct_config(
     assert 0 < beta
     return {
         "current_server_round": current_round,
-        "local_epochs": local_epochs,
+        "local_steps": local_steps,
         "batch_size": batch_size,
         "num_classes": num_classes,
         "sequence_length": sequence_length,
@@ -55,7 +55,7 @@ def construct_config(
 
 
 def fit_config(
-    local_epochs: int,
+    local_steps: int,
     batch_size: int,
     num_classes: int,
     sequence_length: int,
@@ -69,7 +69,7 @@ def fit_config(
 ) -> Config:
     return construct_config(
         current_round,
-        local_epochs,
+        local_steps,
         batch_size,
         num_classes,
         sequence_length,
@@ -83,7 +83,7 @@ def fit_config(
 
 
 def eval_config(
-    local_epochs: int,
+    local_steps: int,
     batch_size: int,
     num_classes: int,
     sequence_length: int,
@@ -98,7 +98,7 @@ def eval_config(
 ) -> Config:
     config = construct_config(
         current_round,
-        local_epochs,
+        local_steps,
         batch_size,
         num_classes,
         sequence_length,
@@ -117,7 +117,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
+        config["local_steps"],
         config["batch_size"],
         config["num_classes"],
         config["sequence_length"],
@@ -131,7 +131,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     eval_config_fn = partial(
         eval_config,
-        config["local_epochs"],
+        config["local_steps"],
         config["batch_size"],
         config["num_classes"],
         config["sequence_length"],
