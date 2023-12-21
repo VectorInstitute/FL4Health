@@ -10,7 +10,7 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
@@ -32,7 +32,13 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    federated_checkpointing: bool = config.get("federated_checkpointing", True)
+    log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
+    checkpointer = (
+        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        if federated_checkpointing
+        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client_manager = SimpleClientManager()
     model = Baseline()
@@ -60,7 +66,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+    if federated_checkpointing:
+        assert isinstance(checkpointer, BestMetricTorchCheckpointer)
+        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
 
     # Shutdown the server gracefully
     server.shutdown()

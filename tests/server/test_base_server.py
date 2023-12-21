@@ -14,7 +14,7 @@ from tests.test_utils.models_for_test import LinearTransform
 model = LinearTransform()
 
 
-class TestFLServer(FlServer):
+class DummyFLServer(FlServer):
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         return model
 
@@ -48,7 +48,7 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
 
     # Server-side hydration to convert server state to model and checkpointing behavior are both defined, a model
     # should be saved and be loaded successfully.
-    fl_server_both = TestFLServer(PoissonSamplingClientManager(), None, None, checkpointer)
+    fl_server_both = DummyFLServer(PoissonSamplingClientManager(), None, None, checkpointer)
     fl_server_both._maybe_checkpoint(1.0, server_round=5)
     loaded_model = checkpointer.load_best_checkpoint()
     assert isinstance(loaded_model, LinearTransform)

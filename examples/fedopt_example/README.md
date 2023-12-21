@@ -1,45 +1,29 @@
 # FedOpt Federated Learning Example
-This examples expands on the concepts of the first basic example to consider several additional federated learning
-concepts. Foremost, this implements a server side FedAdam optimization strategy. It also implements several expansions
-to the metrics aggregation steps. Finally, the example coordinates a significant amount of communication between the
-server and clients in terms of passing model configurations, trained vocabularies, and label encoders. This is an
-essential part of the example, as the dataset is an NLP task and the local client datasets are "distributed."
-Therefore, the server must provide a unified vocabulary and label encoding scheme.
+This examples expands on the concepts of the first basic example to consider several additional federated learning concepts. Foremost, this implements a server side FedAdam optimization strategy. It also implements several expansions to the metrics aggregation steps. Finally, the example coordinates a significant amount of communication between the server and clients in terms of passing model configurations, trained vocabularies, and label encoders. This is an essential part of the example, as the dataset is an NLP task and the local client datasets are "distributed." Therefore, the server must provide a unified vocabulary and label encoding scheme.
 
-The example also begins to separate out data loader construction and metrics calculations from the client and server
-code in order to begin abstracting such components.
+The example also begins to separate out data loader construction and metrics calculations from the client and server code in order to begin abstracting such components.
 
 _NOTE_: This take a fair bit of time to run on CPU
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Dataset Partitioning
 
-Before starting the example, one needs to partition the original news classification dataset, found under
-`examples/datasets/news_classification/news_dataset.json` into distinct datasets that will be read by each of
-the clients. This is done by running
+Before starting the example, one needs to partition the original news classification dataset, found under `examples/datasets/agnews_data/datasets/AG_NEWS/train.csv` into distinct datasets that will be read by each of the clients. This is done by running
 ```
-python -m examples.datasets.partition_dataset --original_dataset_path /path/to/news_dataset.json
+python -m examples.datasets.partition_dataset --original_dataset_path /path/to/ag_news/train.csv
 --partition_dir /path/to/partition/destination/
---partitioner_config_path examples/datasets/news_classification/partitioner_config.json
+--partitioner_config_path examples/datasets/agnews_data/partitioner_config.json
 --n_partitions 3
 --overwrite
 ```
 These arguments specify the following
-* `original_dataset_path`: Path to the news_dataset.json dataset. This is, by default, housed in the directory specified in
-the beginning of this section
+* `original_dataset_path`: Path to the ag_news train.csv dataset. This is, by default, housed in the directory specified in the beginning of this section
 * `partition_dir`: Path where the dataset partitions should go
-* `partitioner_config_path`: Path to the config file for the partitioner. The default is housed in
-* `examples/datasets/news_classification/partitioner_config.json`
+* `partitioner_config_path`: Path to the config file for the partitioner. The default is housed in `examples/datasets/agnews_data/datasets/AG_NEWS/train.csv`
 * `n_partitions`: Number of distinct partitions to break the original dataset into
-* `overwrite`: Specifies whether to overwrite the directory specified. If the directory already exists and overwrite is
-not specified, the partition script with throw an error.
+* `overwrite`: Specifies whether to overwrite the directory specified. If the directory already exists and overwrite is not specified, the partition script with throw an error.
 
 ## Starting Server
 

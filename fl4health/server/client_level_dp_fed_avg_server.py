@@ -20,10 +20,6 @@ from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
 
 class ClientLevelDPFedAvgServer(FlServer):
-    """
-    Server to be used in case of Client Level Differential Privacy with Federated Averaging.
-    """
-
     def __init__(
         self,
         client_manager: ClientManager,
@@ -34,8 +30,30 @@ class ClientLevelDPFedAvgServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         delta: Optional[int] = None,
     ) -> None:
+        """
+        Server to be used in case of Client Level Differential Privacy with Federated Averaging.
+
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients.
+            server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
+            num_server_rounds (int): Number of rounds of FL training carried out by the server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            delta (Optional[float], optional): The delta value for epislon-delta DP accounting. If None it defaults to
+                being 1/total_samples in the FL run. Defaults to None.
+        """
         super().__init__(
-            client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
         )
         self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier
@@ -43,7 +61,18 @@ class ClientLevelDPFedAvgServer(FlServer):
         self.delta = delta
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
-        """Run federated averaging for a number of rounds."""
+        """
+        Run federated averaging for a number of rounds.
+
+        Args:
+            num_rounds (int): Number of server rounds to run.
+            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+                clients selected to participate in federated training.
+
+        Returns:
+            History: The history object contains the full set of FL training results, including things like aggregated
+                loss and metrics.
+        """
 
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 
@@ -58,6 +87,13 @@ class ClientLevelDPFedAvgServer(FlServer):
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
     def setup_privacy_accountant(self, sample_counts: List[int]) -> None:
+        """
+        Sets up FL Accountant and computes privacy loss based on class attributes and retrieved sample counts.
+
+        Args:
+            sample_counts (List[int]): These should be the total number of training examples fetched from all clients
+                during the sample polling process.
+        """
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
 
         num_clients = len(sample_counts)

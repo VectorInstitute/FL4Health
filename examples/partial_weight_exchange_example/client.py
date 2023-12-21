@@ -1,5 +1,4 @@
 import argparse
-import copy
 from logging import INFO
 from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
@@ -16,32 +15,26 @@ from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
-from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.clients.dynamic_weight_exchange_client import DynamicWeightExchangeClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import Accuracy, Metric
 
 
-class TransformerPartialExchangeClient(BasicClient):
+class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
         )
-        self.initial_model: nn.Module
         self.test_loader: DataLoader
-        self.parameter_exchanger: NormDriftParameterExchanger
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         if not self.initialized:
@@ -72,10 +65,6 @@ class TransformerPartialExchangeClient(BasicClient):
         model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head).to(self.device)
         return model
 
-    def setup_client(self, config: Config) -> None:
-        super().setup_client(config)
-        self.initial_model = copy.deepcopy(self.model).to(self.device)
-
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sequence_length = self.narrow_config_type(config, "sequence_length", int)
@@ -88,42 +77,11 @@ class TransformerPartialExchangeClient(BasicClient):
         self.num_examples = num_examples
         return train_loader, val_loader
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
-        parameter_exchanger = NormDriftParameterExchanger(
-            norm_threshold, exchange_percentage, normalize, filter_by_percentage
-        )
-        return parameter_exchanger
-
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        # Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
-        # determine parameters sent
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
-
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        # parameters are set
-        assert self.model is not None and self.parameter_exchanger is not None
-        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        # stores the values of the model parameters at the beginning of each training round.
-        self._align_model_parameters(self.initial_model, self.model)
-
-    def _align_model_parameters(self, initial_model: nn.Module, target_model: nn.Module) -> None:
-        target_model_states = target_model.state_dict()
-        initial_model_states = initial_model.state_dict()
-        for param_name, param in target_model_states.items():
-            initial_model_states[param_name] = param
-        initial_model.load_state_dict(initial_model_states, strict=True)
 
     def test(self, num_classes: int) -> Tuple[float, float, List[float]]:
         self.model.eval()

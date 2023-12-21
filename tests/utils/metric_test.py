@@ -2,15 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from fl4health.utils.metrics import (
-    F1,
-    ROC_AUC,
-    Accuracy,
-    BalancedAccuracy,
-    BinarySoftDiceCoefficient,
-    MetricAccumulationMeter,
-    MetricAverageMeter,
-)
+from fl4health.utils.metrics import F1, ROC_AUC, Accuracy, BalancedAccuracy, BinarySoftDiceCoefficient, MetricManager
 
 
 def test_accuracy_metric() -> None:
@@ -36,34 +28,6 @@ def test_binary_accuracy() -> None:
     assert accuracy1 == 3.0 / 5.0
 
 
-def test_average_meter() -> None:
-    am = MetricAverageMeter([Accuracy()])
-
-    pred1 = torch.eye(4)
-    pred2 = torch.eye(4)
-    pred3 = torch.eye(4)
-
-    target1 = torch.arange(4)
-    target2 = torch.arange(3, -1, -1)
-    target3 = torch.tensor([0, 1, 1, 1])
-
-    preds = [pred1, pred2, pred3]
-    targets = [target1, target2, target3]
-
-    for pred, target in zip(preds, targets):
-        am.update(pred, target)
-
-    assert am.compute()["accuracy"] == 0.5
-
-    am2 = MetricAverageMeter([Accuracy("global_accuracy"), Accuracy("local_accuracy")])
-
-    for pred, target in zip(preds, targets):
-        am2.update(pred, target)
-
-    assert am2.compute()["global_accuracy"] == 0.5
-    assert am2.compute()["local_accuracy"] == 0.5
-
-
 def test_balanced_accuracy() -> None:
     metric = BalancedAccuracy()
 
@@ -87,69 +51,12 @@ def test_balanced_accuracy() -> None:
     assert metric(logits, target) == 0.5
 
 
-def test_accumulation_meter() -> None:
-    accumulation_meter = MetricAccumulationMeter([BalancedAccuracy()])
-    average_meter = MetricAverageMeter([BalancedAccuracy()])
-
-    logits1 = torch.Tensor(
-        [
-            [0.75, 0.20, 0.05],
-            [0.88, 0.06, 0.06],
-            [0.1, 0.1, 0.8],
-            [0.94, 0.03, 0.03],
-            [0.11, 0.22, 0.67],
-            [0.02, 0.92, 0.06],
-        ]
-    )
-    logits2 = torch.Tensor(
-        [
-            [0.75, 0.20, 0.05],
-            [0.88, 0.06, 0.06],
-            [0.1, 0.1, 0.8],
-            [0.94, 0.03, 0.03],
-            [0.11, 0.22, 0.67],
-            [0.02, 0.92, 0.06],
-            [0.11, 0.22, 0.67],
-            [0.02, 0.06, 0.92],
-        ]
-    )
-    logits3 = torch.Tensor(
-        [
-            [0.75, 0.20, 0.05],
-            [0.08, 0.86, 0.06],
-            [0.1, 0.1, 0.8],
-        ]
-    )
-    target1 = torch.Tensor([0, 1, 2, 0, 1, 2])
-    target2 = torch.Tensor([0, 1, 2, 0, 1, 2, 2, 2])
-    target3 = torch.Tensor([0, 1, 2])
-
-    batch_logits = [logits1, logits2, logits3]
-    batch_targets = [target1, target2, target3]
-
-    for logits, targets in zip(batch_logits, batch_targets):
-        accumulation_meter.update(logits, targets)
-        average_meter.update(logits, targets)
-
-    avg_m_balanced_accuracy = average_meter.compute()["balanced_accuracy"]
-    acc_m_balanced_accuracy = accumulation_meter.compute()["balanced_accuracy"]
-
-    # Balanced accuracy for each batch is (0.5, 1.0, (1.75/3.0) respectively
-    # Batch sizes are (6, 3, 8), respectively.
-    assert pytest.approx(avg_m_balanced_accuracy, abs=0.00001) == (
-        0.5 * (6.0 / 17) + 1.0 * (3.0 / 17) + (1.75 / 3.0) * ((8.0 / 17))
-    )
-    # Accumulating the batches together results in recalls of (1.0, 1/5, 5/7) for 0, 1, 2 classes, these are then
-    # averaged over the number of classes giving the correct balanced accuracy for the whole
-    assert pytest.approx(acc_m_balanced_accuracy, abs=0.00001) == (1.0 + 1.0 / 5.0 + 5.0 / 7.0) / 3.0
-
-
 def test_ROC_AUC_metric() -> None:
     metric = ROC_AUC()
 
     logits1 = torch.Tensor(
         [
-            [3, 1, 2],
+            [3.0, 1.0, 2.0],
             [0.88, 0.06, 0.06],
             [0.1, 0.3, 1.2],
             [0.9, 0.3, 0.1],
@@ -179,7 +86,7 @@ def test_F1_metric() -> None:
 
     logits1 = torch.Tensor(
         [
-            [3, 1, 2],
+            [3.0, 1.0, 2.0],
             [0.88, 0.06, 0.06],
             [0.1, 0.3, 1.2],
             [0.9, 0.3, 1.1],
@@ -187,7 +94,6 @@ def test_F1_metric() -> None:
         ]
     )
     target1 = torch.Tensor([0, 0, 2, 0, 2])
-
     assert metric(logits1, target1) == 0.68
 
 
@@ -251,3 +157,108 @@ def test_binary_soft_dice_coefficient_alt_threshold() -> None:
     union = 0.5 * 1.1 * 1000
     dice_target = intersection / (union + 1e-7)
     pytest.approx(continuous_dice, abs=0.001) == dice_target
+
+
+def test_metric_accumulation() -> None:
+    a = Accuracy()
+
+    pred1 = torch.eye(4)
+    pred2 = torch.eye(4)
+    pred3 = torch.eye(4)
+
+    target1 = torch.arange(4)
+    target2 = torch.arange(3, -1, -1)
+    target3 = torch.tensor([0, 1, 1, 1])
+
+    preds = [pred1, pred2, pred3]
+    targets = [target1, target2, target3]
+
+    for pred, target in zip(preds, targets):
+        a.update(pred, target)
+
+    assert a.compute()["accuracy"] == 0.5
+
+    ba = BalancedAccuracy()
+
+    logits1 = torch.Tensor(
+        [
+            [0.75, 0.20, 0.05],
+            [0.88, 0.06, 0.06],
+            [0.1, 0.1, 0.8],
+            [0.94, 0.03, 0.03],
+            [0.11, 0.22, 0.67],
+            [0.02, 0.92, 0.06],
+        ]
+    )
+
+    logits2 = torch.Tensor(
+        [
+            [0.75, 0.20, 0.05],
+            [0.88, 0.06, 0.06],
+            [0.1, 0.1, 0.8],
+            [0.94, 0.03, 0.03],
+            [0.11, 0.22, 0.67],
+            [0.02, 0.92, 0.06],
+            [0.11, 0.22, 0.67],
+            [0.02, 0.06, 0.92],
+        ]
+    )
+    logits3 = torch.Tensor(
+        [
+            [0.75, 0.20, 0.05],
+            [0.08, 0.86, 0.06],
+            [0.1, 0.1, 0.8],
+        ]
+    )
+    target1 = torch.Tensor([0, 1, 2, 0, 1, 2])
+    target2 = torch.Tensor([0, 1, 2, 0, 1, 2, 2, 2])
+    target3 = torch.Tensor([0, 1, 2])
+
+    batch_logits = [logits1, logits2, logits3]
+    batch_targets = [target1, target2, target3]
+
+    for bl, bt in zip(batch_logits, batch_targets):
+        ba.update(bl, bt)
+
+    acc_m_balanced_accuracy = ba.compute()["balanced_accuracy"]
+
+    # Accumulating the batches together results in recalls of (1.0, 1/5, 5/7) for 0, 1, 2 classes, these are then
+    # averaged over the number of classes giving the correct balanced accuracy for the whole
+    assert pytest.approx(acc_m_balanced_accuracy, abs=0.00001) == (1.0 + 1.0 / 5.0 + 5.0 / 7.0) / 3.0
+
+
+def test_metric_manager() -> None:
+    logits1 = torch.Tensor(
+        [
+            [0.8, 0.05, 0.15],
+            [0.88, 0.06, 0.06],
+            [0.1, 0.3, 0.6],
+            [0.4, 0.1, 0.5],
+            [0.1, 0.6, 0.3],
+        ]
+    )
+    target1 = torch.Tensor([0, 0, 2, 0, 2])
+
+    logits2 = torch.Tensor(
+        [
+            [0.4, 0.5, 0.1],
+            [0.1, 0.2, 0.7],
+            [0.3, 0.3, 0.4],
+            [0.75, 0.15, 0.1],
+            [0.1, 0.6, 0.3],
+        ]
+    )
+    target2 = torch.Tensor([1, 2, 2, 0, 1])
+
+    logits_list = [logits1, logits2]
+    target_list = [target1, target2]
+
+    mm = MetricManager([F1(), Accuracy()], "test")
+
+    for lgts, trgt in zip(logits_list, target_list):
+        preds = {"prediction": lgts}
+        mm.update(preds, trgt)
+    mtrcs = mm.compute()
+
+    assert mtrcs["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
+    assert mtrcs["test - prediction - accuracy"] == 0.8

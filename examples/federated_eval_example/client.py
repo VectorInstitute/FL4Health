@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -13,7 +13,7 @@ from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
+from fl4health.utils.metrics import Accuracy, Metric
 
 
 class CifarClient(EvaluateClient):
@@ -26,17 +26,16 @@ class CifarClient(EvaluateClient):
             device=device,
             model_checkpoint_path=model_checkpoint_path,
             loss_meter_type=LossMeterType.AVERAGE,
-            metric_meter_type=MetricMeterType.AVERAGE,
         )
 
     def initialize_global_model(self, config: Config) -> Optional[nn.Module]:
         # Initialized a global model to be hydrated with a server-side model if the parameters are passed
         return Net().to(self.device)
 
-    def get_data_loader(self, config: Config) -> DataLoader:
+    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         evaluation_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
-        return evaluation_loader
+        return (evaluation_loader,)
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()

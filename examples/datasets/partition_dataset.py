@@ -25,7 +25,9 @@ def load_dataset_and_partition(
     with partitioner_config_path.open() as config_path:
         partitioner_config = json.load(config_path)
     dataset_partitioner = construct_dataset_partitioner(dataset_path, partition_dir, partitioner_config)
-    dataset_partitioner.partition_dataset(n_partitions)
+    dataset_partitioner.partition_dataset(
+        n_partitions, "label", {1: "WORLD", 2: "SPORTS", 3: "BUSINESS", 4: "TECHNOLOGY"}
+    )
 
 
 def main(

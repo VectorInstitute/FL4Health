@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
@@ -8,6 +8,7 @@ from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
@@ -21,10 +22,16 @@ def get_initial_model_parameters() -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def construct_config(current_round: int, local_epochs: int, batch_size: int, adaptive_clipping: bool) -> Config:
+def construct_config(
+    current_round: int,
+    batch_size: int,
+    adaptive_clipping: bool,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
+) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
-        "local_epochs": local_epochs,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "adaptive_clipping": adaptive_clipping,
         "current_server_round": current_round,
@@ -32,17 +39,24 @@ def construct_config(current_round: int, local_epochs: int, batch_size: int, ada
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     adaptive_clipping: bool,
     current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
-    return construct_config(current_round, local_epochs, batch_size, adaptive_clipping)
+    return construct_config(current_round, batch_size, adaptive_clipping, local_epochs, local_steps)
 
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(fit_config, config["local_epochs"], config["batch_size"], config["adaptive_clipping"])
+    fit_config_fn = partial(
+        fit_config,
+        config["batch_size"],
+        config["adaptive_clipping"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
+    )
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()

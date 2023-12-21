@@ -1,28 +1,38 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.model_bases.apfl_base import APFLModule
+from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters() -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = APFLModule(MnistNetWithBnAndFrozen())
+    initial_model = ApflModule(MnistNetWithBnAndFrozen())
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
-def fit_config(local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int) -> Config:
+def fit_config(
+    batch_size: int,
+    n_server_rounds: int,
+    current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
+) -> Config:
     return {
-        "local_epochs": local_epochs,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
+        "current_server_round": current_round,
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
     }
@@ -32,9 +42,10 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -51,10 +62,13 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_initial_model_parameters(),
     )
 
+    client_manager = SimpleClientManager()
+    server = FlServer(client_manager, strategy)
+
     fl.server.start_server(
+        server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
-        strategy=strategy,
     )
 
 

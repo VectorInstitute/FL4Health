@@ -1,7 +1,7 @@
+import copy
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
-import numpy as np
 import torch
 from flwr.common.typing import Config, NDArrays
 
@@ -12,7 +12,7 @@ from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWit
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.utils.metrics import Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -30,8 +30,6 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -39,16 +37,14 @@ class ScaffoldClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
         self.learning_rate: float  # eta_l in paper
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
-        self.server_model_state: Optional[NDArrays] = None  # model state from server
+        # Scaffold require vanilla SGD as optimizer
+        self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
@@ -69,24 +65,35 @@ class ScaffoldClient(BasicClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
-        Assumes that the parameters being passed contain model parameters concatenated with
-        server control variates. They are unpacked for the clients to use in training
+        Assumes that the parameters being passed contain model parameters concatenated with server control variates.
+        They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
+        we assume the full model is being initialized and use the FullParameterExchanger() to set all model weights
+        Args:
+            parameters (NDArrays): Parameters have information about model state to be added to the relevant client
+                model and also the server control variates (initial or after aggregation)
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
         server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
-        self.server_model_state = server_model_state
-        self.parameter_exchanger.pull_parameters(server_model_state, self.model, config)
+
+        super().set_parameters(server_model_state, config)
+
+        # Note that we are restricting to weights that require a gradient here because they are used to compute
+        # control variates
         self.server_model_weights = [
-            model_params.cpu().detach().numpy()
+            model_params.cpu().detach().clone().numpy()
             for model_params in self.model.parameters()
             if model_params.requires_grad
         ]
 
-        # If client control variates do not exist, initialize with zeros as per paper
+        # If client control variates do not exist, initialize them to be the same as the server control variates.
+        # Server variates default to be 0, but as stated in the paper the control variates should be the uniform
+        # average of the client variates. So if server_control_variates are non-zero, this ensures that average
+        # still holds.
         if self.client_control_variates is None:
-            self.client_control_variates = [np.zeros_like(weight) for weight in self.server_control_variates]
+            self.client_control_variates = copy.deepcopy(self.server_control_variates)
 
     def update_control_variates(self, local_steps: int) -> None:
         """
@@ -100,7 +107,9 @@ class ScaffoldClient(BasicClient):
         assert self.learning_rate is not None
 
         # y_i
-        client_model_weights = [val.cpu().detach().numpy() for val in self.model.parameters() if val.requires_grad]
+        client_model_weights = [
+            val.cpu().detach().clone().numpy() for val in self.model.parameters() if val.requires_grad
+        ]
 
         # (x - y_i)
         delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)
@@ -169,18 +178,19 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, torch.Tensor]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
-        preds = self.predict(input)
-        losses = self.compute_loss(preds, target)
+        preds, features = self.predict(input)
+        losses = self.compute_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward.backward()
+        losses.backward["backward"].backward()
         self.modify_grad()
-        self.optimizer.step()
+        self.optimizers["global"].step()
+
         return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -189,8 +199,24 @@ class ScaffoldClient(BasicClient):
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+        """
+        Called after training with the number of local_steps performed over the FL round and
+        the corresponding loss dictionary.
+        """
         self.update_control_variates(local_steps)
+
+    def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True. Extends the basic client to extract the learning rate
+        from the optimizer and set the learning_rate attribute (used to compute updated control variates).
+
+        Args:
+            config (Config): The config from the server.
+        """
+        super().setup_client(config)
+        self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
@@ -206,8 +232,6 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
-        use_wandb_reporter: bool = False,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         ScaffoldClient.__init__(
@@ -216,8 +240,6 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )
 
@@ -227,7 +249,5 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            use_wandb_reporter=use_wandb_reporter,
             checkpointer=checkpointer,
         )

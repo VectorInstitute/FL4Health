@@ -18,10 +18,6 @@ from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 
 class FlServer(Server):
-    """
-    Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
-    """
-
     def __init__(
         self,
         client_manager: ClientManager,
@@ -29,6 +25,23 @@ class FlServer(Server):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+        """
+        Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
+
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+        """
+
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = checkpointer
@@ -45,6 +58,16 @@ class FlServer(Server):
             self.wandb_reporter.shutdown_reporter()
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        """
+        This function is used for converting server parameters into a torch model that can be checkpointed. Note that
+        if an inheriting class wants to do server-side checkpointing this functionality needs to be defined there.
+
+        Raises:
+            NotImplementedError: If this is called by a child class and the behavior is not defined, we throw an error.
+
+        Returns:
+            nn.Module: Should return a torch model to be checkpointed by a torch checkpointer.
+        """
         # This function is used for converting server parameters into a torch model that can be checkpointed
         raise NotImplementedError()
 
@@ -68,6 +91,17 @@ class FlServer(Server):
             log(INFO, "No checkpointer present. Models will not be checkpointed on server-side.")
 
     def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
+        """
+        Poll clients for sample counts from their training set, if you want to use this functionality your strategy
+        needs to inherit from the StrategyWithPolling ABC and implement a configure_poll function.
+
+        Args:
+            timeout (Optional[float]): Timeout for how long the server will wait for clients to report counts. If none
+                then the server waits indefinitely.
+
+        Returns:
+            List[int]: The number of training samples held by each client in the pool of available clients.
+        """
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function
         log(INFO, "Polling Clients for sample counts")
@@ -114,6 +148,26 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+        """
+        This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
+        hydrating the provided server model fully such that it can be checkpointed. For custom checkpointing
+        functionality, one need only override _hydrate_model_for_checkpointing.
+
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
+            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+        """
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
