@@ -20,7 +20,7 @@ $$\mathbb{P}[Z = n] = \frac{e^{ - \frac{(n-\mu)^2}{2\sigma ^2}}}{\sum_{m\in\math
 for each $n \in \mathbb{Z}$. We used **rejection sampling** for drawing samples from the discrete Gaussian distribution. The mechanism is exposed through the following function
 
 ``` py title="dpDiscreteGaussian.py" linenums="1"
-def DiscreteGaussianMechanism(query_vector: List[int],
+def discrete_gaussian_mechanism(query_vector: List[int],
                                 variance: float) -> List[int]:
 
 ```
@@ -33,7 +33,7 @@ def DiscreteGaussianMechanism(query_vector: List[int],
     This is the only non-additive privacy mechanism implemented. It gives an unbiased estimator of the mean.
 
 In the scalar version of this mechanism, a real valued input $x$ is assoicated with a
-binomial random variable $$Z\sim \text{Binom}(m, p(x))$$ where $m$ is the modulus for moular arithmetic used in SecAgg and the success probability $p(x)$ encodes user data $x \in \mathbb{R}$.
+binomial random variable $$Z\sim \text{Binom}(m, p(x))$$ where $m$ is the modulus for modular arithmetic used in SecAgg and the success probability $p(x)$ encodes user data $x \in \mathbb{R}$.
 
 The estimator of the mean
 $$\hat{\mu} = c_1\sum_i{Z}_i + c_2$$
@@ -41,17 +41,17 @@ turns out to be unbiased. Parameters $c_1$, $c_2$ depend on various parameters o
 
 ``` py title="dpPoissonBinomial.py" linenums="1"
 # server side function for Kashin-frame generation
-def Kashin_alternative(dim: int) -> List[List[int]]:
+def kashin_alternative(dim: int) -> List[List[int]]:
 
 # server side function for aggregation
-def PoissonBinomialMechanism_Server(inverse_matrix: List[List[int]],
+def poisson_binomial_server(inverse_matrix: List[List[int]],
                                     radius: float,
                                     modulus: int,
                                     theta: float,
                                     *client_vectors: List[int]) -> List[int]:
 
 # client side function
-def PoissonBinomialMechanism_Client(query_vector: List[float],
+def poisson_binomial_client(query_vector: List[float],
                              radius: float,
                              tight_frame: List[float],
                              theta: float,
@@ -68,7 +68,7 @@ difference of two independent Poisson random variables.
 The entry point to the mechanism is
 
 ``` py title="dpSkellam.py" linenums="1"
-def SkellamMechanism(query_vector: list[int],
+def skellam_mechanism(query_vector: list[int],
                      skellam_variance: float) -> list[int]:
 ```
 
@@ -77,7 +77,7 @@ def SkellamMechanism(query_vector: list[int],
 Additive mechanism $x\mapsto x + (Z - Np)\cdot s$ where $Z\sim \text{Binom}(N, p)$ and $s=\frac{1}{j}$ for some $j\in\mathbb{N}$ is the quantization scale.
 
 ``` py title="dpBinomial.py" linenums="1"
-def BinomialMechanism(query_vector: List[int],
+def binomial_mechanism(query_vector: List[int],
                       N: int, p: float, j: int) -> List[int]:
 ```
 

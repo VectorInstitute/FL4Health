@@ -2,11 +2,16 @@ from typing import List
 
 import torch
 
+# TODO rename file to binomial.py, move tests to test/
 
-# TODO why doesn't mechanism result in output type List[int]
-def BinomialMechanism(query_vector: List[int], N: int, p: float, j: int) -> List[int]:
+
+def binomial_mechanism(query_vector: List[int], N: int, p: float, j: int) -> List[float]:
     """
     Privatization of query_vector via additive binomial noise.
+
+    Reference
+        cpSGD: Communication-efficient and differentially-private distributed SGD
+        https://proceedings.neurips.cc/paper_files/paper/2018/file/21ce689121e39821d07d04faab328370-Paper.pdf
 
     Args:
         query_vector (List[int]): A vector with integer valued components.
@@ -16,10 +21,6 @@ def BinomialMechanism(query_vector: List[int], N: int, p: float, j: int) -> List
 
     Returns:
         List[int]: Privatized query vector via the scaler binomial mechanism applied to each component of query_vector
-
-    Reference
-        cpSGD: Communication-efficient and differentially-private distributed SGD
-        https://proceedings.neurips.cc/paper_files/paper/2018/file/21ce689121e39821d07d04faab328370-Paper.pdf
     """
 
     dim = len(query_vector)
@@ -34,5 +35,5 @@ def BinomialMechanism(query_vector: List[int], N: int, p: float, j: int) -> List
 
 
 if __name__ == "__main__":
-    out = BinomialMechanism([*range(10)], 20, 0.5, 6)
+    out = binomial_mechanism([*range(10)], 20, 0.5, 6)
     print(out, type(out))
