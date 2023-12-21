@@ -130,7 +130,6 @@ class BasicClient(NumPyClient):
                 model but may contain more information than that.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-
         assert self.model is not None
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
@@ -140,16 +139,13 @@ class BasicClient(NumPyClient):
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
-        If this is the first time we're initializing the model weights, we check if the client is using a warmed up
-        module or not. If the client is using a warmed up module and the pretrained model state is loaded, we load
-        the pretrained model state into the current model. Otherwise, we use the FullParameterExchanger to initialize
-        all model components.
+        If this is the first time we're initializing the model weights, we use the FullParameterExchanger to
+        initialize all model components
 
         Args:
             parameters (NDArrays): Model parameters to be injected into the client model
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
-
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
         self.model_weights_initialized = True
 
