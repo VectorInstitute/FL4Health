@@ -43,9 +43,13 @@ class MnistFedProxClient(FedProxClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model1 = MnistNet()
-        model = self.warmed_up_module.load_from_pretrained(model1).to(self.device)
+
+        # Load the pretrained model
+        model = self.warmed_up_module.load_from_pretrained(MnistNet()).to(self.device)
+
+        # To not overwrite the pretrained model with server model weights
         self.model_weights_initialized = True
+
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
