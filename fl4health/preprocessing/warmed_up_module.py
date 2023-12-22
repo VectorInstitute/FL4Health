@@ -12,29 +12,28 @@ class WarmedUpModule:
 
     def __init__(
         self,
-        pretrained_model_dir: Optional[str],
-        pretrained_model_name: Optional[str],
-        weights_mapping_dir: Optional[str] = None,
+        pretrained_model_dir: str,
+        pretrained_model_name: str,
+        weights_mapping_path: Optional[str] = None,
     ) -> None:
         """Initialize the WarmedUpModule with the pretrained model stats and weights mapping dict.
 
         Args:
             pretrained_model_dir (Optional[str]): Directory of the pretrained model
-            weights_mapping_dir (Optional[str], optional): Directory of to json file of the weights mapping dict.
+            pretrained_model_name (Optional[str]): Name of the pretrained model
+            weights_mapping_dir (Optional[str], optional): Path of to json file of the weights mapping dict.
             Defaults to None.
             If models are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
             model to the current model.
         """
+        pretrained_model_path = os.path.join(pretrained_model_dir, pretrained_model_name)
+        assert os.path.exists(pretrained_model_path)
 
-        if pretrained_model_dir is None or not os.path.exists(pretrained_model_dir):
-            log(INFO, "No pretrained model provided")
-            self.pretrained_model_state = None
-        else:
-            log(INFO, f"Loading pretrained model from {pretrained_model_dir}")
-            self.pretrained_model_state = torch.load(pretrained_model_dir).state_dict()
+        log(INFO, f"Loading pretrained model from {pretrained_model_path}")
+        self.pretrained_model_state = torch.load(pretrained_model_path).state_dict()
 
-        if weights_mapping_dir is not None:
-            with open(weights_mapping_dir, "r") as file:
+        if weights_mapping_path is not None:
+            with open(weights_mapping_path, "r") as file:
                 self.weights_mapping_dict = json.load(file)
                 log(INFO, f"Weights mapping dict: {self.weights_mapping_dict}")
         else:

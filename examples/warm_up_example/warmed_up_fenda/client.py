@@ -1,54 +1,59 @@
 import argparse
-from logging import INFO
 from pathlib import Path
-from typing import Sequence
+from typing import Sequence, Set, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.logger import log
-from flwr.common.typing import Config, Tuple
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import MnistNet
-from fl4health.clients.fed_prox_client import FedProxClient
+from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from fl4health.clients.fenda_client import FendaClient
+from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from fl4health.utils.sampler import DirichletLabelBasedSampler
+from fl4health.utils.sampler import MinorityLabelBasedSampler
 
 
-class MnistFedProxClient(FedProxClient):
+class MnistFendaClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        minority_numbers: Set[int],
         warmed_up_module: WarmedUpModule,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
+            perfcl_loss_weights=(1.0, 1.0),
         )
+        self.minority_numbers = minority_numbers
         self.warmed_up_module = warmed_up_module
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
+        downsample_percentage = self.narrow_config_type(config, "downsampling_ratio", float)
+        sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model = self.warmed_up_module.load_from_pretrained(MnistNet()).to(self.device)
+        model: nn.Module = self.warmed_up_module.load_from_pretrained(
+            FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
+        ).to(self.device)
         self.model_weights_initialized = True
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=0.01)
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
@@ -58,11 +63,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     parser.add_argument(
-        "--server_address",
-        action="store",
-        type=str,
-        help="Server Address for the clients to communicate with the server through",
-        default="0.0.0.0:8080",
+        "--minority_numbers", default=[], nargs="*", help="MNIST numbers to be in the minority for the current client"
     )
     parser.add_argument(
         "--seed",
@@ -79,29 +80,37 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--weights_mapping_file",
+        "--client_number",
+        action="store",
+        type=int,
+        help="Number of the client for the loading of the pretrained model",
+        required=True,
+    )
+    parser.add_argument(
+        "--weights_mapping_path",
         action="store",
         type=str,
         help="Path to the weights mapping file",
         required=False,
     )
-
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    log(INFO, f"Device to be used: {DEVICE}")
-    log(INFO, f"Server Address: {args.server_address}")
+    minority_numbers = {int(number) for number in args.minority_numbers}
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
     # Load the warmed up module
-    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, args.weights_mapping_file)
+    pretrained_model_name = f"client_{args.client_number}_latest_model.pkl"
+    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, pretrained_model_name, args.weights_mapping_path)
 
     # Start the client
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, warmed_up_module=warmed_up_module)
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    client = MnistFendaClient(
+        data_path, [Accuracy("accuracy")], DEVICE, minority_numbers, warmed_up_module=warmed_up_module
+    )
+    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
 
     # Shutdown the client gracefully
     client.shutdown()
