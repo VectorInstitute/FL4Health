@@ -100,6 +100,7 @@ class FedPCAClient(NumPyClient):
             self.setup_client(config)
         center_data = self.narrow_config_type(config, "center_data", bool)
         train_data_tensor = self.get_data_tensor(self.train_loader)
+        train_data_tensor = train_data_tensor.to(self.device)
 
         principal_components, singular_values = self.model(train_data_tensor, center_data)
         self.model.set_principal_components(principal_components, singular_values)
@@ -130,7 +131,7 @@ class FedPCAClient(NumPyClient):
             else None
         )
         val_data_tensor = self.get_data_tensor(self.val_loader)
-        val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(val_data_tensor))
+        val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(val_data_tensor)).to(self.device)
         reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components_eval)
         projection_variance = self.model.compute_projection_variance(val_data_tensor_prepared, num_components_eval)
         metrics: Dict[str, Scalar] = {}
