@@ -179,7 +179,7 @@ class FedPCA(BasicFedAvg):
 
         is the SVD of B, then it turns out that U = A @ U',
         where the columns of U' are the true principal components of the aggregated data,
-        and A is some unitary transformation.
+        and A is some block unitary matrix.
 
         For the theoretical justification behind this procedure, see the paper
         "A Distributed and Incremental SVD Algorithm for Agglomerative Data Analysis on Large Networks".
@@ -219,7 +219,7 @@ class FedPCA(BasicFedAvg):
         is more efficient than SVD, and SVD is only performed on a much smaller matrix.
 
         Similarly to the SVD-based merging, it returns an approximation of the true principal components
-        of the aggregated data up to the multiplication of some unitary matrix.
+        of the aggregated data up to the multiplication of some block unitary matrix.
 
         For the theoretical justification behind this approach, see the paper
         "Subspace Tracking for Latent Semantic Analysis".

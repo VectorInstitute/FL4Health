@@ -42,6 +42,6 @@ def test_merging() -> None:
     )
 
     # svd_merge_vectors is only guaranteed to be the same as V up to the application
-    # of a unitary transformation, thus we do not check whether it is close to V.
+    # of a blockwise unitary transformation, thus we do not check whether it is close to V.
     assert np.allclose(svd_merge_singular_values, S)
     assert np.allclose(qr_merged_singular_values, S)
