@@ -6,12 +6,7 @@ training and validation sets. The server has some custom metrics aggregation, bu
 implementation using FedAvg as the server side optimization.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 
