@@ -14,7 +14,8 @@ from torch.utils.data import DataLoader
 from examples.CVAE_example.models import MnistConditionalDecoder, MnistConditionalEncoder
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
-from fl4health.pipeline.autoencoder_pipeline import CVAEPipeline
+from fl4health.preprocessing.loss import VAE_loss
+from fl4health.preprocessing.vae_training import AETransformer
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -24,7 +25,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 class CondAutoEncoderClient(BasicClient):
     def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: str) -> None:
         BasicClient.__init__(self, data_path, metrics, DEVICE)
-        self.training_pipeline = CVAEPipeline(condition)
+        self.condition = condition
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -36,7 +37,7 @@ class CondAutoEncoderClient(BasicClient):
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=self.training_pipeline.training_transform,
+            data_target_transform=AETransformer(self.condition),
         )
 
         return train_loader, val_loader
@@ -46,7 +47,7 @@ class CondAutoEncoderClient(BasicClient):
         # In this example, data is in binary scale, therefore binary cross entropy is used.
         base_loss = torch.nn.BCELoss(reduction="sum")
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
-        return self.training_pipeline.get_AE_loss(base_loss, latent_dim)
+        return VAE_loss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)

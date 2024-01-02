@@ -2,12 +2,7 @@
 In this example, clients first reduce the dimensionality of the data using an already federally trained conditional variational auto-encoder (please refer to the CVAE example). Then, the data in the reduced dimension is used to train a small neural network model (`mnist_model.py`). Clients in this example inherit from a `CVAETrainer` class to use the CVAE processing functionalities i.e. set the client-specific condition and reduce the dimensionality of data via CVAE data pre-processor. Federated training for the main task of MNIST classification can be done with any of the FL approaches by specifying the parent client class. The default parent client class in this example is the `BasicClient` and the server uses Federated Averaging.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 

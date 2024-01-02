@@ -2,12 +2,7 @@
 This is an example implementation of training a Conditional Variational auto-encoder model on the MNIST dataset. In this example, the model is conditioned based on a client-specific ID that is an integer associated with the client. This lets the model learn a specific mapping of the input to the latent representation while being conditioned on the specific client feature space, potentially leading to more personalized representations. In this example, the client is a BasicClient, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 

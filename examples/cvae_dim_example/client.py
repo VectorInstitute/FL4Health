@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from examples.cvae_dim_example.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
-from fl4health.pipeline.autoencoder_pipeline import CVAEPipeline
+from fl4health.preprocessing.vae_dim_reduction import ClientConditionedProcessor
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -23,18 +23,21 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 class CVAEDimClient(BasicClient):
     def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: str):
         BasicClient.__init__(self, data_path, metrics, DEVICE)
-        self.processing = CVAEPipeline(condition)
+        self.condition = condition
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         CVAE_model_path = Path(self.narrow_config_type(config, "CVAE_model_path", str))
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
+        # ClientConditionedProcessor is added to the data transform pipeline to encode the data samples
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
             batch_size=batch_size,
             sampler=sampler,
-            transform=self.processing.get_dim_reduce_transform(transform, CVAE_model_path),
+            transform=transforms.Compose(
+                [transform, ClientConditionedProcessor(CVAE_model_path, int(self.condition))]
+            ),
         )
         return train_loader, val_loader
 
