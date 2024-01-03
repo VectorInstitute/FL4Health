@@ -13,25 +13,39 @@ class WarmedUpModule:
 
     def __init__(
         self,
-        pretrained_model_name: str,
-        pretrained_model_dir: Path,
+        pretrained_model: Optional[torch.nn.Module] = None,
+        pretrained_model_path: Optional[Path] = None,
         weights_mapping_path: Optional[Path] = None,
     ) -> None:
         """Initialize the WarmedUpModule with the pretrained model stats and weights mapping dict.
 
         Args:
-            pretrained_model_dir (Optional[str]): Directory of the pretrained model
-            pretrained_model_name (Optional[str]): Name of the pretrained model
+            pretrained_model (Optional[torch.nn.Module]): Pretrained model.
+                                                          This is mutually exclusive with pretrained_model_path.
+            pretrained_model_path (Optional[Path]): Path of the pretrained model.
+                                                    This is mutually exclusive with pretrained_model.
             weights_mapping_dir (Optional[str], optional): Path of to json file of the weights mapping dict.
-            Defaults to None.
             If models are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
             model to the current model.
         """
-        pretrained_model_path = os.path.join(pretrained_model_dir, pretrained_model_name)
-        assert os.path.exists(pretrained_model_path)
+        if pretrained_model is not None and pretrained_model_path is not None:
+            AssertionError(
+                "pretrained_model_path and pretrained_model is mutually exclusive. Please provide one of them."
+            )
 
-        log(INFO, f"Loading pretrained model from {pretrained_model_path}")
-        self.pretrained_model_state = torch.load(pretrained_model_path).state_dict()
+        elif pretrained_model is not None:
+            log(INFO, "Pretrained model is provided.")
+            self.pretrained_model_state = pretrained_model.state_dict()
+
+        elif pretrained_model_path is not None:
+            assert os.path.exists(
+                pretrained_model_path
+            ), f"Pretrained model path {pretrained_model_path} does not exist."
+            log(INFO, f"Loading pretrained model from {pretrained_model_path}")
+            self.pretrained_model_state = torch.load(pretrained_model_path).state_dict()
+
+        else:
+            raise AssertionError("At least one of pretrained_model_path and pretrained_model should be provided.")
 
         if weights_mapping_path is not None:
             with open(weights_mapping_path, "r") as file:

@@ -1,4 +1,5 @@
 import argparse
+import os
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence
@@ -39,7 +40,10 @@ class MnistFedProxClient(FedProxClient):
 
         # Load the warmed up module
         pretrained_model_name = f"client_{client_number}_latest_model.pkl"
-        self.warmed_up_module = WarmedUpModule(pretrained_model_name, pretrained_model_dir, weights_mapping_path)
+        self.warmed_up_module = WarmedUpModule(
+            pretrained_model_path=Path(os.path.join(pretrained_model_dir, pretrained_model_name)),
+            weights_mapping_path=weights_mapping_path,
+        )
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
