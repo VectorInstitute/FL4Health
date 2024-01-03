@@ -6,12 +6,7 @@ This example assumes that the principal components of MNIST have already been co
 Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 
@@ -26,6 +21,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `new_dimension`: new dimension after reduction.
 * `pca_path`: path to pre-computed principal components.
 * `checkpoint_path`: path where the model weights are saved.
+
 ## Starting Clients
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
