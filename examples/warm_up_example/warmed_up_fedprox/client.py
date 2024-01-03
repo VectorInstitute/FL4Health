@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 import flwr as fl
 import torch
@@ -27,14 +27,19 @@ class MnistFedProxClient(FedProxClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        warmed_up_module: WarmedUpModule,
+        client_number: int,
+        pretrained_model_dir: Path,
+        weights_mapping_path: Optional[Path],
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
         )
-        self.warmed_up_module = warmed_up_module
+
+        # Load the warmed up module
+        pretrained_model_name = f"client_{client_number}_latest_model.pkl"
+        self.warmed_up_module = WarmedUpModule(pretrained_model_name, pretrained_model_dir, weights_mapping_path)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
@@ -107,12 +112,15 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    # Load the warmed up module
-    pretrained_model_name = f"client_{args.client_number}_latest_model.pkl"
-    warmed_up_module = WarmedUpModule(args.pretrained_model_dir, pretrained_model_name, args.weights_mapping_path)
-
     # Start the client
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, warmed_up_module=warmed_up_module)
+    client = MnistFedProxClient(
+        data_path,
+        [Accuracy()],
+        DEVICE,
+        args.client_number,
+        Path(args.pretrained_model_dir),
+        Path(args.weights_mapping_path),
+    )
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully

@@ -1,6 +1,7 @@
 import json
 import os
 from logging import INFO
+from pathlib import Path
 from typing import Optional
 
 import torch
@@ -12,9 +13,9 @@ class WarmedUpModule:
 
     def __init__(
         self,
-        pretrained_model_dir: str,
         pretrained_model_name: str,
-        weights_mapping_path: Optional[str] = None,
+        pretrained_model_dir: Path,
+        weights_mapping_path: Optional[Path] = None,
     ) -> None:
         """Initialize the WarmedUpModule with the pretrained model stats and weights mapping dict.
 
