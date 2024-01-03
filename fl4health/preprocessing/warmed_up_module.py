@@ -52,7 +52,7 @@ class WarmedUpModule:
                 self.weights_mapping_dict = json.load(file)
                 log(INFO, f"Weights mapping dict: {self.weights_mapping_dict}")
         else:
-            log(INFO, "Weights mapping dict is not provided. Matching stats directlly, based on currenr model's keys.")
+            log(INFO, "Weights mapping dict is not provided. Matching stats directlly, based on current model's keys.")
             self.weights_mapping_dict = None
 
     def get_matching_component(self, key: str) -> Optional[str]:
