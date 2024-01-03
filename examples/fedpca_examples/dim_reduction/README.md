@@ -21,13 +21,12 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `new_dimension`: new dimension after reduction.
 * `pca_path`: path to pre-computed principal components.
 * `checkpoint_path`: path where the model weights are saved.
-
 ## Starting Clients
 
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/data --model_save_path /path/to/save/model
+python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/data
 ```
 **NOTE**:
 

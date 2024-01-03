@@ -37,11 +37,19 @@ class MnistFedPCAClient(BasicClient):
         pca_preprocessor = PCAPreprocessor(pca_path)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.6, beta=0.75)
 
+        train_dataset = get_mnist_dataset(data_dir=self.data_path, train=True)
+
+        validation_dataset = get_mnist_dataset(data_dir=self.data_path, train=False)
+
         train_loader = pca_preprocessor.reduce_dimension(
-            new_dimension, batch_size, True, sampler, get_mnist_dataset, self.data_path, True
+            new_dimension=new_dimension, batch_size=batch_size, shuffle=True, sampler=sampler, dataset=train_dataset
         )
         val_loader = pca_preprocessor.reduce_dimension(
-            new_dimension, batch_size, False, sampler, get_mnist_dataset, self.data_path, True
+            new_dimension=new_dimension,
+            batch_size=batch_size,
+            shuffle=False,
+            sampler=sampler,
+            dataset=validation_dataset,
         )
         return train_loader, val_loader
 

@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Optional
 
 import torch
 from torch.utils.data.dataloader import DataLoader
@@ -33,8 +33,7 @@ class PCAPreprocessor:
         batch_size: int,
         shuffle: bool,
         sampler: Optional[LabelBasedSampler],
-        get_dataset: Callable[..., BaseDataset],
-        *args: Any,
+        dataset: BaseDataset,
     ) -> DataLoader:
         """
         Perform dimensionality reduction on a dataset by projecting the data
@@ -52,7 +51,6 @@ class PCAPreprocessor:
             DataLoader: a dataloader consisting of data with reduced dimension.
         """
         projection = partial(self.pca_module.project_lower_dim, k=new_dimension)
-        dataset = get_dataset(*args)
         if sampler is not None:
             dataset = sampler.subsample(dataset)
         dataset.update_transform(projection)
