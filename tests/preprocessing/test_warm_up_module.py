@@ -1,7 +1,7 @@
 import copy
 
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
-from tests.test_utils.models_for_test import SmallCnn, ToyConvNet
+from tests.test_utils.models_for_test import SmallCnn, ToyConvNet, ToyConvNet_2
 
 
 def test_warm_up_module_loading_similar_models_without_mapping() -> None:
@@ -32,3 +32,19 @@ def test_warm_up_module_loading_different_models_without_mapping() -> None:
     # Check if the weights are same with previous model as loading should not have any effect
     for old_model_value, model_value in zip(old_model.state_dict().values(), model.state_dict().values()):
         assert (old_model_value == model_value).any()
+
+
+def test_partial_warm_up_module_loading_different_models_without_mapping() -> None:
+    pretrained_model = ToyConvNet_2()
+    model = ToyConvNet()
+    old_model = copy.deepcopy(model)
+    warmupmodule = WarmedUpModule(pretrained_model=pretrained_model)
+    warmupmodule.load_from_pretrained(model)
+
+    # Check if the weights with same size are loaded from pretrained model and if the weights with different size
+    # are same with previous model as loading should not have any effect
+    for key in model.state_dict().keys():
+        if key == "conv1.weight":
+            assert (model.state_dict()[key] == pretrained_model.state_dict()[key]).all()
+        else:
+            assert (model.state_dict()[key] == old_model.state_dict()[key]).all()
