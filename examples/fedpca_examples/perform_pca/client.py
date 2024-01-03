@@ -35,5 +35,6 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     model_save_path = Path(args.model_save_path)
 
+    torch.manual_seed(47)
     client = MnistFedPCAClient(data_path=data_path, device=DEVICE, model_save_path=model_save_path)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
