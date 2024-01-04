@@ -1,5 +1,5 @@
 import pickle
-from logging import DEBUG
+from logging import DEBUG, INFO, WARN
 from pathlib import Path
 from random import random
 from typing import Dict, Optional, Sequence, Tuple
@@ -12,7 +12,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-from fl4health.security.secure_aggregation import ClientCryptoKit, Event
+from fl4health.security.secure_aggregation import ClientCryptoKit, Event, ShamirSecrets
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
@@ -29,53 +29,132 @@ class SecureAggregationClient(BasicClient):
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
 
-        # handles SecAgg cryptography on the client-side
+        # client-side cryptography for Secure Aggregation
         self.crypto = ClientCryptoKit()
 
-        # federated round
-        self.fl_round = 0
-        self.fl_round_a = 0
-        self.sec_agg_round = 0
         self.parameter_exchanger = SecureAggregationExchanger()
-        self.debugger(f"Parameter exchanger type at init: {type(self.parameter_exchanger)}")
+        log(INFO, f"Client initializes parameter exchange as {type(self.parameter_exchanger)}")
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        """
-        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
-        """
-        return SecureAggregationExchanger()
+    # The 'main' function for client-side secure aggregation.
+    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        """Receiver of server calls for Secure Aggregation Protocol."""
 
-    def get_parameters(self, config: Config) -> NDArrays:
-        """
-        Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
-        determine parameters sent
-        Args:
-            config (Config): The config is sent by the FL server to allow for customization in the function if desired
+        if not self.initialized:
+            self.setup_client(config)
 
-        Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-                parameters to be aggregated, but can contain more information
-        """
+        response_dict = {}
+        match config["event_name"]:
 
-        assert self.model is not None and self.parameter_exchanger is not None
+            case Event.ADVERTISE_KEYS.value:
 
-        self.parameter_exchanger = SecureAggregationExchanger()
+                # NOTE this client integer ID currently persists across SecAgg rounds
+                self.crypto.set_client_integer(integer=config["client_integer"])
 
-        # TODO
-        self.debugger(f"Parameter exchanger type at get_parameters: {type(self.parameter_exchanger)}")
-        assert isinstance(self.parameter_exchanger, SecureAggregationExchanger)
-        v = self.generate_mask()
-        self.debugger("mask vector=====", v[:5])
-        return self.parameter_exchanger.push_parameters(model=self.model, mask=v, config=config)
+                # these determine the number of Shamir shares
+                self.crypto.set_number_of_bobs(integer=config["number_of_bobs"])
+                self.crypto.set_reconstruction_threshold(new_threshold=config["shamir_reconstruction_threshold"])
 
-    def generate_mask(self):
-        dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
-        # computes masking vector; this can only be run after masking seed agreement
-        # modify to add self masking
-        self.debugger(f"client integer {self.crypto.client_integer}", self.crypto.agreed_mask_keys)
-        pair_mask_vect: List[int] = self.crypto.get_pair_mask_sum(vector_dim=dim)
-        return pair_mask_vect
+                # modulus may change at the start of each SecAgg if dropout occurs (refer to documentation)
+                self.crypto.set_arithmetic_modulus(modulus=config["arithmetic_modulus"])
 
+                public_keys = self.crypto.generate_public_keys()
+
+                response_dict = {
+                    # main data
+                    "client_integer": self.crypto.client_integer,
+                    "public_encryption_key": public_keys.encryption_key,
+                    "public_mask_key": public_keys.mask_key,
+                    # for server-side validation
+                    "event_name": Event.ADVERTISE_KEYS.value,
+                }
+
+            case Event.SHARE_KEYS.value:
+
+                unload_keys = pickle.loads(config["bobs_public_keys"])
+                unload_keys.pop(self.crypto.client_integer)  # remove Alice herself
+
+                t = self.crypto.reconstruction_threshold
+                if len(unload_keys) < t:
+
+                    error_msg = f"""
+                    Too many droped out clients (#peers){len(unload_keys)} < threshold {t},
+                    aborting client {self.crypto.client_integer}.
+                    """
+
+                    log(WARN, error_msg)
+
+                    # NOTE open problem | when one client triggers everyone to abort FL,
+                    # how does server know it's not malicious?
+                    exit()
+
+                # key agreement and storage
+                self.crypto.register_bobs_keys(bobs_keys_dict=unload_keys)
+
+                # ****************** debug point (starts) *******************
+
+                # log(DEBUG, self.crypto.agreed_mask_keys)
+                # log(DEBUG, self.crypto.agreed_encryption_keys)
+
+                # ****************** debug point (ends) *********************
+
+                # generate self-mask seed
+                self.crypto.set_self_mask_seed()
+
+                # Shamir shares for 1) self-mask and 2) pairmask secrete key
+                shamir_pair_self = self.crypto.get_encrypted_shamir_shares()
+
+                response_dict = {
+                    "event_name": Event.SHARE_KEYS.value,
+                    "client_integer": self.crypto.client_integer,
+                    "serialized_encrypted_shamir": pickle.dumps(shamir_pair_self),
+                }
+
+            case Event.MASKED_INPUT_COLLECTION.value:
+
+                self.crypto.bob_shamir_secrets = {}
+                received = pickle.loads(config["pickled_message"])  # expects dict
+
+                t = self.crypto.reconstruction_threshold
+                if len(received) < t:
+
+                    error_msg = f"""
+                    Too many droped out clients (#peers){len(received)} < threshold {t},
+                    aborting client {self.crypto.client_integer}.
+                    """
+
+                    log(WARN, error_msg)
+
+                    # NOTE triggers everyone to abort FL,
+                    exit()
+
+                # receive Shamir shares from other clients
+                self.crypto.register_shamir_shares(shamir_shares=received)
+
+                response_dict = {
+                    "event_name": Event.MASKED_INPUT_COLLECTION.value,
+                    "client_integer": self.crypto.client_integer,
+                }
+
+            case Event.UNMASKING.value:
+                # not needed assuming no drop out (hence no self masking)
+                dropout_status = pickle.loads(config["dropout_status"])
+
+                shamir_secrets = {}
+                for id, has_dropped in dropout_status:
+                    secret: ShamirSecrets = self.crypto.bob_shamir_secrets[id]
+                    shamir_secrets[id] = secret.pairwise if has_dropped else secret.individual
+
+                response_dict = {**response_dict, "shamir_secrets": pickle.dumps(shamir_secrets)}
+            case _:
+                response_dict = {
+                    "num_train_samples": self.num_train_samples,
+                    "num_val_samples": self.num_val_samples,
+                    "response": "client served default",
+                }
+
+        return response_dict
+
+    # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         local_epochs, local_steps, current_server_round = self.process_config(config)
         if not self.initialized:
@@ -119,6 +198,43 @@ class SecureAggregationClient(BasicClient):
             metrics,
         )
 
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        """
+        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
+        """
+        return SecureAggregationExchanger()
+
+    def get_parameters(self, config: Config) -> NDArrays:
+        """
+        Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
+        determine parameters sent
+        Args:
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired
+
+        Returns:
+            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
+                parameters to be aggregated, but can contain more information
+        """
+
+        assert self.model is not None and self.parameter_exchanger is not None
+
+        self.parameter_exchanger = SecureAggregationExchanger()
+
+        # TODO
+        self.debugger(f"Parameter exchanger type at get_parameters: {type(self.parameter_exchanger)}")
+        assert isinstance(self.parameter_exchanger, SecureAggregationExchanger)
+        v = self.generate_mask()
+        self.debugger("mask vector=====", v[:5])
+        return self.parameter_exchanger.push_parameters(model=self.model, mask=v, config=config)
+
+    def generate_mask(self):
+        dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
+        # computes masking vector; this can only be run after masking seed agreement
+        # modify to add self masking
+        self.debugger(f"client integer {self.crypto.client_integer}", self.crypto.agreed_mask_keys)
+        pair_mask_vect: List[int] = self.crypto.get_pair_mask_sum(vector_dim=dim)
+        return pair_mask_vect
+
     def constant_parameters(self, n=0) -> None:
         """Sets all parms to constant. For testing and pre-training init (fl_round=0) only."""
         zero_param_dict = self.model.state_dict()
@@ -156,80 +272,6 @@ class SecureAggregationClient(BasicClient):
         self.model.to(torch.float64)
         self.model.load_state_dict(params_dict)
         # self.debugger(self.model.state_dict().values())
-
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
-        """Receiver of server calls for Secure Aggregation Protocol setup."""
-
-        if not self.initialized:
-            self.setup_client(config)
-
-        response_dict = {}
-        match config["event_name"]:
-
-            case Event.ADVERTISE_KEYS.value:
-                self.crypto.set_client_integer(integer=config["client_integer"])
-
-                # this is the number of shamir secret shares generated
-                self.crypto.set_number_of_bobs(integer=config["number_of_bobs"])
-                self.crypto.set_reconstruction_threshold(new_threshold=config["shamir_reconstruction_threshold"])
-
-                self.crypto.set_arithmetic_modulus(modulus=config["arithmetic_modulus"])
-
-                public_keys = self.crypto.generate_public_keys()
-
-                response_dict = {
-                    # main data
-                    "client_integer": self.crypto.client_integer,
-                    "public_encryption_key": public_keys.encryption_key,
-                    "public_mask_key": public_keys.mask_key,
-                    # metadata for server side safety checks
-                    "sender": f"client",
-                    "event_name": Event.ADVERTISE_KEYS.value,
-                }
-
-            case Event.SHARE_KEYS.value:
-
-                unload_keys = pickle.loads(config["bobs_public_keys"])
-                unload_keys.pop(self.crypto.client_integer)  # remove alice
-                assert self.crypto.reconstruction_threshold <= len(unload_keys)
-                self.crypto.register_bobs_keys(bobs_keys_dict=unload_keys)
-
-                # NOTE This is a good debugging point, we can log
-                # log(DEBUG, self.crypto.agreed_mask_keys)
-                # log(DEBUG, self.crypto.agreed_encryption_keys)
-
-                # =========================================================================================
-                # NOTE The following steps protects dropout privacy
-                # It consists of self masking and shamir secret sharing to remove self/pair mask
-
-                # generate self mask seed
-                self.crypto.set_self_mask_seed()
-
-                # secrets shared with other clients for mask removal by the server
-                shamir_pair_self = self.crypto.get_encrypted_shamir_shares()
-
-                response_dict = {
-                    "client_integer": self.crypto.client_integer,
-                    "serialized_encrypted_shamir": pickle.dumps(shamir_pair_self),
-                    **response_dict,
-                }
-                # =========================================================================================
-
-            case Event.MASKED_INPUT_COLLECTION.value:
-                # not needed assuming no drop out
-                pass
-
-            case Event.UNMASKING.value:
-                # not needed assuming no drop out (hence no self masking)
-                pass
-            case _:
-                response_dict = {
-                    "num_train_samples": self.num_train_samples,
-                    "num_val_samples": self.num_val_samples,
-                    "response": "client served default",
-                }
-
-        return response_dict
 
     def debugger(self, *info):
         log(DEBUG, 6 * "\n")

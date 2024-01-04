@@ -1,4 +1,4 @@
-from logging import DEBUG, WARNING
+from logging import DEBUG, INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import (
@@ -152,15 +152,17 @@ class SecureAggregationStrategy(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
+        arithmetic_modulus: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """
-        Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
-        depending on the settings used for the strategy.
+        Aggregate the results (with modular arithmetic) from the federated fit round. This is done with either weighted
+        or unweighted FedAvg, depending on the settings used for the strategy.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
+            arithmetic_modulus (int): modulus for secure aggregation server procedure
             results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side.
             failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
@@ -169,6 +171,7 @@ class SecureAggregationStrategy(BasicFedAvg):
         Returns:
             Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
+
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted

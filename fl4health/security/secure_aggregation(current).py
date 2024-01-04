@@ -141,20 +141,12 @@ class ClientCryptoKit:
         self.shamir_self_masks = {}
         self.shamir_pairwise_masks = {}
 
-    def get_online_clients(self) -> List[ClientId]:
-        """This function can only be run after Shamir secrets have been received by clients."""
-        online_ids = list(self.bob_shamir_secrets.keys())
-        peer_count = len(online_ids) - 1
-        assert peer_count > self.reconstruction_threshold
-        return online_ids
-
-    def get_pair_mask_sum(self, vector_dim: int, allow_dropout=True) -> List[int]:
+    def get_pair_mask_sum(self, vector_dim: int, online_clients: Optional[List[ClientId]] = None) -> List[int]:
         """This function can only be run after masking seed agreement."""
+        # assert self.agreed_mask_keys    # dict should not be empty
         assert self.client_integer not in self.agreed_mask_keys
         sum: ndarray = zeros(shape=vector_dim, dtype=int)
-
-        if allow_dropout:
-            online_clients = self.get_online_clients()
+        if online_clients is not None:
             for id in online_clients:
                 seed = self.agreed_mask_keys[id]
                 vec = self.generate_peudorandom_vector(
@@ -175,11 +167,11 @@ class ClientCryptoKit:
             seed=self.alice_self_mask_seed, arithmetic_modulus=self.arithmetic_modulus, dimension=vector_dim
         ).tolist()
 
-    def get_duo_mask(self, vector_dim: int, allow_dropout=True) -> List[int]:
+    def get_duo_mask(self, vector_dim: int, online_clients: Optional[List[ClientId]] = None) -> List[int]:
         """Gets self & pair mask as the sum of these vectors. Used in dropout case."""
 
         self_mask = array(self.get_self_mask(vector_dim=vector_dim))
-        pair_mask = array(self.get_pair_mask_sum(vector_dim=vector_dim, allow_dropout=allow_dropout))
+        pair_mask = array(self.get_pair_mask_sum(vector_dim=vector_dim, online_clients=online_clients))
 
         combined_mask = self_mask + pair_mask
 
@@ -398,27 +390,25 @@ class ClientCryptoKit:
 
 class ServerCryptoKit:
     def __init__(
-        self, shamir_reconstruction_threshold: Optional[int] = 2, model_integer_range: Optional[int] = 1 << 30
-    ) -> None:
+        self, shamir_reconstruction_threshold: Optional[int] = 2, arithmetic_modulus: Optional[int] = 1 << 30
+    ):
         self.shamir_reconstruction_threshold = shamir_reconstruction_threshold
-        self.arithmetic_modulus = None
-        self.number_of_bobs = None  # clients whom Alice communicates with (number of online clients) - 1
-        self.model_integer_range = model_integer_range
-        # records
+        self.arithmetic_modulus = arithmetic_modulus
+        self.number_of_bobs = None  # (number of online clients) - 1
 
+        # records
+        self.client_table: Dict[ClientIP, ClientId] = {}
         self.client_public_keys: Dict[ClientId, PublicKeyChain] = {}
         self.online_clients: List[ClientId] = []
-
-    def calculate_arithmetic_modulus(self) -> int:
-        # stores and returns modulus of arithmetic
-        self.arithmetic_modulus = (self.number_of_bobs + 1) * (self.model_integer_range - 1) + 1
-        return self.arithmetic_modulus
 
     def clear_cache(self) -> None:
         self.online_clients = []
         self.number_of_bobs = None
-
+        self.client_table = {}
         self.client_public_keys = {}
+
+    def append_client_table(self, client_ip: ClientIP, client_id: ClientId) -> None:
+        self.client_table[client_ip] = client_id
 
     def append_client_public_keys(
         self, client_integer: ClientId, encryption_public_key: bytes, masking_public_key: bytes
@@ -442,8 +432,8 @@ class ServerCryptoKit:
             all_keys[id] = {"encryption_key": public_key_chain.encryption_key, "mask_key": public_key_chain.mask_key}
         return all_keys
 
-    def set_model_integer_range(self, range: int) -> None:
-        self.model_integer_range = range
+    def set_arithmetic_modulus(self, modulus: int) -> None:
+        self.set_arithmetic_modulus = modulus
 
     def set_shamir_threshold(self, threshold: int) -> None:
         self.shamir_reconstruction_threshold = threshold

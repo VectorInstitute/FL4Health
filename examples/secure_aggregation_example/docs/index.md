@@ -1,106 +1,82 @@
-# How Flower Works
+# Secure Aggregation
 
-Flower's `Server` class has a `fit()` method that coordinates $N$ rounds of federated learning.
-Each round is executed by the `fit_round()` method, which works in a three step process
+Implementation based on [Practical Secure Aggregation for Privacy-Preserving Machine Learning (SecAgg)](https://dl.acm.org/doi/10.1145/3133956.3133982){:target="_blank"}.
+Below is a matching of the detailed protocol on Page 1181 and its implementation in `FL4Health`.
 
-1. set up configuration to call clients via `Strategy.config_fit()`
+## Setup
 
-2. broadcasts configurations to clients for local training and receive response via `fit_clients`
+The `SecureAggregationServer` receives
 
-3. construct global model from client updates via `Strategy.aggregate_fit()`
+1. Integer $t\geq 2$ Shamir threshold ([Section 3.1](https://dl.acm.org/doi/pdf/10.1145/3133956.3133982){:target="_blank"} page 1176)
+2. Integer $R_U > 1$ such that each model parameter lies in the interval $[0, R_U-1]$ assuming model parameters have been discretized into integers ([Section 7.1](https://dl.acm.org/doi/pdf/10.1145/3133956.3133982){:target="_blank"} page 1185)
 
-```py title="server.py" linenums="1"
-class Server:
-    def fit():
-        # roughly speaking this is how the server coordinates training
-        for i in range(num_rounds):
-            self.parameters = self.fit_round()
+These are set in `config.yaml`, and can be updated with `SecureAggregationServer` methods `set_shamir_threshold()` and `set_model_integer_range()` which offer type checking and logging.
 
-```
+All other parameters in the `Setup` phase of SecAgg described in the paper are implicitly determined in our implementation:
 
-The counter tracking the federated round is called `server_round` and is a parameter to key methods of the `Strategy` class such as `Strategy.configure_fit()` which is assigns each client
-what updates will be sent to them, and `Strategy.aggregate_fit()` constructs new global model parameters.
+| Parameter   | Name                  | How it is determined               |
+| ----------- | -----------------     | ---------------------------------- |
+| $m$         | model dimension       | from model                         |
+| $n$         | client count          | from client manager                |
+| $R$         | modulus of arithmetic | $R = n(R_U-1) + 1$                 |
 
-The server-to-client messages is stored as a list variable
+As clients may dropout, the modulus $R$ is updated at the begining of each federated round.
 
-```
-client_instructions = Strategy.configure_fit()
-```
+## Round 0 (Advertise Keys)
 
-which each list item is a tuple `(client_proxy, ins)`. The `Server.fit_clients()` method calls the client side function `Client.fit()` for each client identified by `client_proxy`, passing to each client the packet of instruction data `ins`.
+### Server
+The server begins by communicating to each client (Alice) the number of online peers `number_of_bobs` they have on this round of
+SecAgg.
 
-The instructor data `ins` passed to the client by the server has type `FitIns`, defined as
+The client also receives the modulus of arithmetic `arithmetic_modulus` which depends on `number_of_bobs` and has been calculated from the **Setup** stage before.
 
-```py title="flwr/common/typing.py" linenums="1"
-@dataclass
-class FitIns:
-    """Fit instructions for a client."""
+Currently we do not adjust the Shamir reconstruction threshold based on dropout severeness. The client integers we assign as ID to each client also persist across all FL rounds. Future work may explore adjusting these parameters in an adptive fashion before the `advertise_keys()` method of `SecureAggregationServer`, and these updated versions will be automatically communicated to clients without needing to adjust the `advertise_keys()`.
 
-    parameters: Parameters
-    config: Dict[str, Scalar]
-```
+For each client, the server receives two public keys: one for encryption, the other for masking. The server then registers these with the `ServerCryptoKit` to be broadcasted to clients in the next stage.
 
-where `FitIns.parameters` refers to the model parameters and has type
+Server records all dropouts during this stage and verifies the number of online peers remains above Shamir threshold.
 
-```py title="flwr/common/typing.py" linenums="1"
-@dataclass
-class Parameters:
-    """Model parameters."""
+### Client
 
-    tensors: List[bytes]
-    tensor_type: str
-```
+The `SecureAggregationClient` handles server SecAgg instructions via the `get_properties()` method, which is a name standarized in `fl4health/server/polling.py`
+as **the** method on the client side which the server calls for arbitrary communication. If need arises in the future for a client to initiate arbitrary communication with the server, the `polling.py` may be extended accordingly.
 
-and `FitIns.config` is a dictionary that can be customized to pass other parameters to the client besides the model parameters.
+For each SecAgg stage (Setup, AdvertiseKey, ShareKeys, MaskedInputCollection, Unmasking) the
+`get_properties()` method matches with a unique identifier for the stage under the `Event` enum defined in the `secure_aggregation.py` module, leading to execution of the corresponding stage of SecAgg.
 
-Analogously server-to-client communication through `FitIns` the client-to-server communication
-is packaged with the data type `FitRes` defined as
+## Round 1 (Share Keys)
 
-```py title="flwr/common/typing.py" linenums="1"
-@dataclass
-class FitRes:
-    """Fit response from a client."""
+### Server
+Broadcasts public keys for self-masking and pairwise-masking to all online clients (online according to the `ClientManager`). Upon receiving Shamir shares in step 5 of the Client section below, the server forwards these shares to clients.
 
-    status: Status
-    parameters: Parameters
-    num_examples: int
-    metrics: Dict[str, Scalar]
-```
+!!! Note
 
-The limitation is that the `FitRes` response is only returned by client side `Client.fit()` method. It turns out that each client side function is associated with unique `*Ins` and `*Res` types (see `flwr/common/typing.py`). For example what is useful for client-server communication is the `Client.get_property()` method, whose input and reponse type are
+    Server verifies if there are too many dropouts each time it communicates with the clients.
 
-```py title="flwr/common/typing.py" linenums="1"
-@dataclass
-class GetPropertiesIns:
-    """Properties request for a client."""
-
-    config: Config
+### Client
+1. Upon receiving the public key broadcast, each client performs Diffie-Hellman key agreement with each of their peer clients, using  `ClientCryptoKit`.
+2. Each online client generates self-mask seed.
+3. Each client computes Shamir secret shares of their self-mask seed as well as their pair-mask secret.
+4. Each secret share is assigned to a receiver client and is encrypted with the shared key generated during Diffie-Hellman key agreement above.
+5. Clients return these encrypted shares to the server.
 
 
-@dataclass
-class GetPropertiesRes:
-    """Properties response from a client."""
+## Round 2 (Masked Input Collection)
 
-    status: Status
-    properties: Properties
-```
+The `ClientCryptoKit` method `get_duo_mask()` computes the sum of pair-masks and self-mask. Use `get_self_mask()` to get self-mask and
+`get_pair_mask_sum()` to get pair-mask.
 
-Here the types `Config` and `Properties` are both `Dict[str, Scalar]` with `Scalar = Union[bool, bytes, float, int, str]`. The `Status` code is defined
+!!! Note
+    We do not return the masked input vector from each client in this step, but rather when the client `fit()` function is called, this is because we need to post process model parameters and inject privacy noise.
 
-```py title="flwr/common/typing.py" linenums="1"
-@dataclass
-class Status:
-    """Client status."""
+## Round 3 (Consistency Check)
 
-    code: Code
-    message: str
+!!! warning
 
-class Code(Enum):
-    """Client status codes."""
+    We do not implement the public key infrastructure, see red portion of Page 1181. It is designed to provide security in the active-adversary model, and has stronger assumptions than we work with.
 
-    OK = 0
-    GET_PROPERTIES_NOT_IMPLEMENTED = 1
-    GET_PARAMETERS_NOT_IMPLEMENTED = 2
-    FIT_NOT_IMPLEMENTED = 3
-    EVALUATE_NOT_IMPLEMENTED = 4
-```
+    Consequently in the current implementation, once a client
+    drops out, they are lost for the remaining federated rounds: attempting to reconnect a dropped client may open a back door
+    for impersonation attacks, currently there is no implemented mechanism to reauthenticate dropped clients.
+
+## Round 4 (Unmasking)

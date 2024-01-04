@@ -1,4 +1,4 @@
-site_name: Secure Aggregation
+site_name: Documentation
 theme:
   name: material
   palette:
@@ -13,6 +13,7 @@ theme:
   icon:
     admonition:
       <type>: octicons/alert-16
+      annotation: material/arrow-right-circle
 extra:
   generator: false
 extra_javascript:

@@ -20,6 +20,7 @@ from fl4health.utils.config import load_config
 from .utils import generate_config, get_parameters
 
 torch.set_default_dtype(torch.float64)
+DEFAULT_MODEL_INTEGER_RANGE = 1 << 30
 
 if __name__ == "__main__":
     # get configurations from command line
@@ -51,6 +52,8 @@ if __name__ == "__main__":
         initial_parameters=get_parameters(model),
     )
 
+    if "model_integer_range" not in config:
+        config["model_integer_range"] = DEFAULT_MODEL_INTEGER_RANGE
     # configure server
     server = SecureAggregationServer(
         client_manager=SimpleClientManager(),
@@ -59,6 +62,8 @@ if __name__ == "__main__":
         wandb_reporter=None,
         strategy=strategy,
         checkpointer=BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False),
+        shamir_reconstruction_threshold=config["shamir_reconstruction_threshold"],
+        model_integer_range=config["model_integer_range"],
     )
 
     # run server
