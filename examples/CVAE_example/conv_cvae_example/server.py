@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.cvae_example.models import MnistConditionalDecoder, MnistConditionalEncoder
+from examples.cvae_example.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
@@ -50,11 +50,11 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    encoder = MnistConditionalEncoder(
-        input_size=784, num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
+    encoder = ConvConditionalEncoder(
+        num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
     )
-    decoder = MnistConditionalDecoder(
-        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"]), output_size=784
+    decoder = ConvConditionalDecoder(
+        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"])
     )
     model = ConditionalVAE(
         AutoEncoderType.CONDITIONAL_VAE, num_conditions=int(config["num_conditions"]), encoder=encoder, decoder=decoder
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/cvae_example/config.yaml",
+        default="examples/cvae_example/conv_cvae_example/config.yaml",
     )
 
     args = parser.parse_args()

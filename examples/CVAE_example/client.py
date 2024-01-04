@@ -11,7 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.CVAE_example.models import MnistConditionalDecoder, MnistConditionalEncoder
+from examples.cvae_example.models import MnistConditionalDecoder, MnistConditionalEncoder
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
 from fl4health.preprocessing.loss import VAE_loss

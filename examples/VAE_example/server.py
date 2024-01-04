@@ -10,7 +10,7 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.VAE_example.models import MnistVariationalDecoder, MnistVariationalEncoder
+from examples.vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger

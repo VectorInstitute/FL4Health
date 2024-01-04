@@ -102,9 +102,20 @@ class ConditionalVAE(AbstractAE):
         condition = F.one_hot(condition.to(torch.int64), self.num_conditions).to(condition.device)
         return condition
 
+    def maybe_reshape(self, condition_matrix: torch.Tensor) -> torch.Tensor:
+        # Make sure the condition has the right shape.
+        if len(condition_matrix.shape) > 2:
+            # Since the condition is replicated to match the size of the input,
+            #  we need to narrow it back just to one number per sample
+            return condition_matrix[:, 0, 0]
+        else:
+            # Condition was not replicated to match the size of the input.
+            return condition_matrix
+
     def encode(self, input: torch.Tensor, condition: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        input = self.cat_input_condition(input, condition)
-        mu, logvar = self.encoder(input)
+        # User can decide how to use the condition in the encoder,
+        # ex: using the condition in the middle layers of encoder.
+        mu, logvar = self.encoder(input, condition)
         return mu, logvar
 
     def decode(self, latent_vector: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
@@ -118,13 +129,17 @@ class ConditionalVAE(AbstractAE):
         return eps.mul(std).add_(mu)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        x = input[:, :-1]  # Exclude the last column (conditions)
-        condition = input[:, -1]  # Last column contains conditions
-        condition = self.one_hot(condition)
-        mu, logvar = self.encode(x, condition)
+        x = input[:, :-1]  # Exclude the last item (conditions)
+        condition_matrix = input[:, -1]  # Last item contains conditions
+        condition = self.maybe_reshape(condition_matrix)
+        one_hot_condition = self.one_hot(condition)
+        mu, logvar = self.encode(x, one_hot_condition)
         z = self.sampling(mu, logvar)
-        output = self.decode(z, condition)
-        return torch.cat((logvar, mu, output), dim=1)
+        output = self.decode(z, one_hot_condition)
+        # The shape of the flattened_output can be later restored by having the training image shape,
+        # or the decoder structure.
+        flattened_output = output.view(output.shape[0], -1)
+        return torch.cat((logvar, mu, flattened_output), dim=1)
 
 
 class BasicAE(AbstractAE):

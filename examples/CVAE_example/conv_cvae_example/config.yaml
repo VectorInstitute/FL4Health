@@ -7,7 +7,7 @@ local_epochs: 3 # The number of epochs to complete for client (4)
 batch_size: 32 # The batch size for client training
 
 # checkpointing
-checkpoint_path: "examples/cvae_example"
+checkpoint_path: "examples/cvae_example/conv_cvae_example"
 # CVAE
 latent_dim: 16
 num_conditions: 2 #The total number of conditions used for CVAE

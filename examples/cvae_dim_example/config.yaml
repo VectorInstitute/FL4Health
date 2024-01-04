@@ -11,4 +11,4 @@ checkpoint_path: "examples/cvae_dim_example"
 
 # CVAE
 latent_dim: 16
-CVAE_model_path: "examples/CVAE_example/best_CVAE_model.pkl" # Path to the saved CVAE model
+CVAE_model_path: "examples/cvae_example/best_CVAE_model.pkl" # Path to the saved CVAE model

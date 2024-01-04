@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
+from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -11,28 +11,35 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
+from examples.cvae_example.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
 from fl4health.clients.basic_client import BasicClient
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
+from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
 from fl4health.preprocessing.loss import VAE_loss
 from fl4health.preprocessing.vae_training import AETransformer
 from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.metrics import Metric
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-class VAEClient(BasicClient):
+class CondAutoEncoderClient(BasicClient):
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: str) -> None:
+        BasicClient.__init__(self, data_path, metrics, DEVICE)
+        self.condition = condition
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
+        transform = transforms.Compose([transforms.ToTensor()])
         # To train an autoencoder-based model we need to set the data_target_transform.
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=AETransformer(),
+            data_target_transform=AETransformer(condition=self.condition, img_dims=3),
         )
+
         return train_loader, val_loader
 
     def get_criterion(self, config: Config) -> _Loss:
@@ -47,18 +54,27 @@ class VAEClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
-        encoder = MnistVariationalEncoder(input_size=784, latent_dim=latent_dim)
-        decoder = MnistVariationalDecoder(latent_dim=latent_dim, output_size=784)
-        return VariationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
+        num_conditions = self.narrow_config_type(config, "num_conditions", int)
+        encoder = ConvConditionalEncoder(num_conditions=num_conditions, latent_dim=latent_dim)
+        decoder = ConvConditionalDecoder(latent_dim=latent_dim, num_conditions=num_conditions)
+        return ConditionalVAE(
+            AutoEncoderType.CONDITIONAL_VAE, num_conditions=num_conditions, encoder=encoder, decoder=decoder
+        )
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    parser.add_argument(
+        "--condition",
+        action="store",
+        type=str,
+        help="Specify whether to use 'label' or Clinet's ID (ex. '1', '2', etc) for CVAE",
+    )
     args = parser.parse_args()
-
+    set_all_random_seeds(42)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = VAEClient(data_path, [], DEVICE)
+    client = CondAutoEncoderClient(data_path, [], DEVICE, args.condition)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()

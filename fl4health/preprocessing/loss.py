@@ -68,6 +68,6 @@ class VAE_loss(_Loss):
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: Total loss composed of base loss and KL divergence loss.
         """
-        output, mu, logvar = self.unpack_model_output(preds)
+        flattened_output, mu, logvar = self.unpack_model_output(preds)
         kl_loss = self.kl_divergence_loss(mu, logvar)
-        return self.base_loss(output, target) + kl_loss
+        return self.base_loss(flattened_output.view(*target.shape), target) + kl_loss

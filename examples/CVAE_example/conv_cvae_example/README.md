@@ -1,5 +1,6 @@
-# Federated Conditional Variational Auto-encoder Example
-This is an example implementation of training a Conditional Variational auto-encoder model on the MNIST dataset. In this example, the model is conditioned based on a client-specific ID that is an integer associated with the client. This lets the model learn a specific mapping of the input to the latent representation while being conditioned on the specific client feature space, potentially leading to more personalized representations. In this example, the client is a BasicClient, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights.
+# Federated Convolutional CVAE Example
+This example is an extension to the `cvae_example` which is using a convolutional based encoder and decoder.
+
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -8,7 +9,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 
 The next step is to start the server by running
 ```
-python -m examples.cvae_example.server  --config_path /path/to/config.yaml
+python -m examples.cvae_example.conv_cvae_example.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
@@ -24,7 +25,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.cvae_example.client --dataset_path /path/to/data --condition "client's ID number"
+python -m examples.cvae_example.conv_cvae_example.client --dataset_path /path/to/data --condition "client's ID number"
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
@@ -40,9 +41,9 @@ If you choose to set `--condition 'label'`, don't forget to also adjust the `num
 You can use the following commands to run the clients.
 Client 0:
 ```
-python -m examples.cvae_example.client --dataset_path examples/datasets/MNIST --condition "0"
+python -m examples.cvae_example.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "0"
 ```
 Client 1:
 ```
-python -m examples.cvae_example.client --dataset_path examples/datasets/MNIST --condition "1"
+python -m examples.cvae_example.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "1"
 ```
