@@ -23,11 +23,11 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_ixi.perfcl.perfcl_model import FedIxiPerFCLModel
+from research.flamby.fed_ixi.perfcl.perfcl_model import FedIxiPerFclModel
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
-class FedIxiPerFCLClient(FendaClient):
+class FedIxiPerFclClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
@@ -63,7 +63,7 @@ class FedIxiPerFCLClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIxiPerFCLModel().to(self.device)
+        model: nn.Module = FedIxiPerFclModel().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    client = FedIxiPerFCLClient(
+    client = FedIxiPerFclClient(
         data_path=Path(args.dataset_dir),
         metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
         device=DEVICE,

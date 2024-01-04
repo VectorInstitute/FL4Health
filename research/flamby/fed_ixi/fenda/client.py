@@ -51,10 +51,10 @@ class FedIxiFendaClient(FendaClient):
         self.client_number = client_number
         self.learning_rate: float = learning_rate
         if cos_sim_activate:
-            assert isinstance(extra_loss_weights, float)
+            assert extra_loss_weights is not None
             self.cos_sim_loss_weight = extra_loss_weights
         if contrastive_activate:
-            assert isinstance(extra_loss_weights, float)
+            assert extra_loss_weights is not None
             self.contrastive_loss_weight = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS

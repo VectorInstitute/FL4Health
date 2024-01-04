@@ -8,7 +8,7 @@ from research.flamby.fed_ixi.fenda.fenda_feature_extractor import FendaFeatureEx
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
-class PerFCLClassifier(FendaHeadModule):
+class PerFclClassifier(FendaHeadModule):
     def __init__(
         self, join_mode: FendaJoinMode, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0
     ) -> None:
@@ -86,7 +86,7 @@ class GlobalUNetFeatureExtractor(nn.Module):
         return x
 
 
-class FedIxiPerFCLModel(FendaModel):
+class FedIxiPerFclModel(FendaModel):
     def __init__(
         self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8, monte_carlo_dropout: float = 0.0
     ) -> None:
@@ -94,5 +94,5 @@ class FedIxiPerFCLModel(FendaModel):
         # is also set to 0 by default for FedIXI
         local_module = LocalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
         global_module = GlobalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
-        model_head = PerFCLClassifier(FendaJoinMode.CONCATENATE, out_channels_first_layer, monte_carlo_dropout)
+        model_head = PerFclClassifier(FendaJoinMode.CONCATENATE, out_channels_first_layer, monte_carlo_dropout)
         super().__init__(local_module, global_module, model_head)

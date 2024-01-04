@@ -23,11 +23,11 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.perfcl.perfcl_model import FedIsic2019PerFCLModel
+from research.flamby.fed_isic2019.perfcl.perfcl_model import FedIsic2019PerFclModel
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-class FedIsic2019PerFCLClient(FendaClient):
+class FedIsic2019PerFclClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
@@ -63,7 +63,7 @@ class FedIsic2019PerFCLClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIsic2019PerFCLModel(frozen_blocks=13, turn_off_bn_tracking=False).to(self.device)
+        model: nn.Module = FedIsic2019PerFclModel(frozen_blocks=13, turn_off_bn_tracking=False).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    client = FedIsic2019PerFCLClient(
+    client = FedIsic2019PerFclClient(
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         device=DEVICE,

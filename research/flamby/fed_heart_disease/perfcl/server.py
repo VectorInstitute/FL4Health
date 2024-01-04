@@ -10,7 +10,7 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.utils.config import load_config
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFCLModel
+from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFclModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
@@ -30,7 +30,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    model = FedHeartDiseasePerFCLModel()
+    model = FedHeartDiseasePerFclModel()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

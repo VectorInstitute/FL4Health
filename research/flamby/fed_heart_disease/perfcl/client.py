@@ -23,11 +23,11 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFCLModel
+from research.flamby.fed_heart_disease.perfcl.perfcl_model import FedHeartDiseasePerFclModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedHeartDiseasePerFCLClient(FendaClient):
+class FedHeartDiseasePerFclClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
@@ -63,7 +63,7 @@ class FedHeartDiseasePerFCLClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedHeartDiseasePerFCLModel().to(self.device)
+        model: nn.Module = FedHeartDiseasePerFclModel().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    client = FedHeartDiseasePerFCLClient(
+    client = FedHeartDiseasePerFclClient(
         data_path=Path(args.dataset_dir),
         metrics=[Accuracy("FedHeartDisease_accuracy")],
         device=DEVICE,

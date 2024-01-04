@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
 
 
-class PerFCLClassifier(FendaHeadModule):
+class PerFclClassifier(FendaHeadModule):
     def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
@@ -51,9 +51,9 @@ class GlobalLogistic(nn.Module):
         return x
 
 
-class FedHeartDiseasePerFCLModel(FendaModel):
+class FedHeartDiseasePerFclModel(FendaModel):
     def __init__(self) -> None:
         local_module = LocalLogistic()
         global_module = GlobalLogistic()
-        model_head = PerFCLClassifier(FendaJoinMode.CONCATENATE, 5)
+        model_head = PerFclClassifier(FendaJoinMode.CONCATENATE, 5)
         super().__init__(local_module, global_module, model_head)

@@ -23,7 +23,7 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
     return model
 
 
-class PerFCLClassifier(FendaHeadModule):
+class PerFclClassifier(FendaHeadModule):
     def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
@@ -122,9 +122,9 @@ class GlobalEfficientNet(nn.Module):
         return x
 
 
-class FedIsic2019PerFCLModel(FendaModel):
+class FedIsic2019PerFclModel(FendaModel):
     def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False) -> None:
         local_module = LocalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         global_module = GlobalEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
-        model_head = PerFCLClassifier(FendaJoinMode.CONCATENATE, 1280)
+        model_head = PerFclClassifier(FendaJoinMode.CONCATENATE, 1280)
         super().__init__(local_module, global_module, model_head)

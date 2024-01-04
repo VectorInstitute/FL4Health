@@ -16,6 +16,8 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.moon_client import MoonClient
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -41,6 +43,7 @@ class FedIsic2019FedPerClient(MoonClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
+        # Moon contrastive loss weight is set to None by default since we are not using it
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
@@ -64,6 +67,10 @@ class FedIsic2019FedPerClient(MoonClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        assert isinstance(self.model, FedIsic2019FedPerModel)
+        return FixedLayerExchanger(self.model.layers_to_exchange())
 
 
 if __name__ == "__main__":

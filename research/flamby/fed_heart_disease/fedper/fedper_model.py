@@ -6,7 +6,7 @@ from fl4health.model_bases.fedper_base import FedPerModel
 
 
 class BaseLogistic(nn.Module):
-    """Moon feature extractor module"""
+    """FedPer feature extractor module"""
 
     def __init__(self, input_dim: int = 13):
         super().__init__()
@@ -20,7 +20,7 @@ class BaseLogistic(nn.Module):
 
 
 class HeadClassifier(nn.Module):
-    """Moon head module"""
+    """FedPer head module"""
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
