@@ -30,5 +30,3 @@ the dataset already exists at the path specified, it will be loaded from there. 
 automatically downloaded to the path specified and used in the run.
 
 After both clients have been started federated learning should commence.
-
-python -m examples.vae_example.client --dataset_path examples/datasets/MNIST
