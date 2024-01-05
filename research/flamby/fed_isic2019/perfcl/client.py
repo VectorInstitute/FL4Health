@@ -128,14 +128,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weights for Perfcl loss mentioned in paper",
+        help="Weights for the Perfcl loss mentioned in paper",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weights for Perfcl loss mentioned in paper",
+        help="Weights for the Perfcl loss mentioned in paper",
         required=False,
     )
     args = parser.parse_args()
