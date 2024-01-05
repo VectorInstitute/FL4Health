@@ -114,7 +114,7 @@ if __name__ == "__main__":
         "--seed",
         action="store",
         type=int,
-        help="Seed for the random number generator",
+        help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
     args = parser.parse_args()
