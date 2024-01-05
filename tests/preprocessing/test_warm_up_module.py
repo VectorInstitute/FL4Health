@@ -77,7 +77,7 @@ def test_loading_different_models_without_mapping() -> None:
 
     # Check if the weights are same with previous model as loading should not have any effect
     for old_model_value, model_value in zip(old_model.state_dict().values(), model.state_dict().values()):
-        assert (old_model_value == model_value).any()
+        assert (old_model_value == model_value).all()
 
 
 def test_partial_loading_different_models_without_mapping() -> None:

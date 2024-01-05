@@ -59,9 +59,9 @@ class WarmedUpModule:
         can contain partial names of the keys, this function is used to split the key of the target model and
         match it with the partial key in the mapping, returning the complete name of the key in the pretrained model.
 
-        This allows users to provide one mapping for multiple statistics that share the same prefix. For example,
-        if the mapping is {"model": "global_model"} and the input key of the target model is "model.layer1.weight",
-        then the returned matching component is "global_model.layer1.weight".
+        This allows users to provide one mapping for multiple states that share the same prefix. For example,if the
+        mapping is {"model": "global_model"} and the input key of the target model is "model.layer1.weight",then the
+        returned matching component is "global_model.layer1.weight".
 
         Args:
             key (str): Key to be matched in pretrained model.
@@ -111,12 +111,12 @@ class WarmedUpModule:
                     else:
                         log(
                             WARNING,
-                            f"State wont be loaded. Mismatched sizes {original_state.size()}) -> ({pretrained_key}).",
+                            f"State won't be loaded. Mismatched sizes {original_state.size()}) -> ({pretrained_key}).",
                         )
                 else:
                     log(
                         WARNING,
-                        f"state wont be loaded. Key {pretrained_key} not found in the pretrained model states.",
+                        f"state won't be loaded. Key {pretrained_key} not found in the pretrained model states.",
                     )
 
         log(INFO, f"{len(matching_state)}/{len(target_model_state)} states got matched.")
