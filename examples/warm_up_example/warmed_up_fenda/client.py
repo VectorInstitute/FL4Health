@@ -69,6 +69,7 @@ class MnistFendaClient(FendaClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
+    # Overriding the initialize_all_model_weights function is required to load the pretrained model
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         super().initialize_all_model_weights(parameters, config)
         # Load the pretrained model
