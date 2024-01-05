@@ -122,9 +122,8 @@ class BasicClient(NumPyClient):
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized and the model weights have not been
-        initialized, we assume the full model is being initialized and use the FullParameterExchanger() to set all
-        model weights.
+        parameters are set. If it's the first time the model is being initialized, we assume the full model is being
+        initialized and use the FullParameterExchanger() to set all model weights.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
@@ -132,7 +131,6 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         assert self.model is not None
-
         if not self.model_weights_initialized:
             self.initialize_all_model_weights(parameters, config)
         else:

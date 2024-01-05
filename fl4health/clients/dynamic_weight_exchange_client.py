@@ -96,9 +96,9 @@ class DynamicWeightExchangeClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized and model weights have not been
-        loaded, we assume the full model is being initialized and the weights sent correspond to the complete set
-        of weights. Thus we use the FullParameterExchanger() to set all model weights.
+        parameters are set. If it's the first time the model is being initialized, we assume the full model is
+        being initialized and the weights sent correspond to the complete set of weights. Thus we use the
+        FullParameterExchanger() to set all model weights.
 
         Subsequently, this approach uses the threshold parameter exchanger to handle exchanging a dynamic subset of
         model layer weights.
