@@ -30,7 +30,8 @@ conda activate flamby_fl4health
 Install the FL4Health requirements
 ``` bash
 cd <fl4health_repository>
-pip install -r requirements.txt
+pip install --upgrade pip poetry
+poetry install --with "dev, dev-local, test, codestyle"
 cd <FLamby_repository>
 pip install -e ".[all_extra]"
 ```
