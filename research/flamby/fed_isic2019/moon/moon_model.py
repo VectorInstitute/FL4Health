@@ -45,8 +45,8 @@ class BaseEfficientNet(nn.Module):
     [pytorch reimplementation of EfficientNets]
     (https://github.com/lukemelas/EfficientNet-PyTorch).
     When loading the EfficientNet-B0 model, we strip off the FC layer to use the model as a feature extractor.
-    We freeze a subset of the layers in order to make sure that FENDA is not training twice as many parameters as the
-    other approaches.
+    There is an option to freeze a subset of the layers to reduce the number of trainable parameters. However,
+    it is not used in the Moon experiments.
     """
 
     def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):

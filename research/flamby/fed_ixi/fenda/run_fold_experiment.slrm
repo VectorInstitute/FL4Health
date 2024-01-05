@@ -85,7 +85,7 @@ which python
 
 for ((i=0; i<${#RUN_NAMES[@]}; i++));
 do
-RUN_NAME="${RUN_NAMES[i]}"
+    RUN_NAME="${RUN_NAMES[i]}"
     SEED="${SEEDS[i]}"
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"

@@ -55,8 +55,8 @@ for LR_VALUE in "${LR_VALUES[@]}"; do
         ${VENV_PATH} \
         ${LR_VALUE} \
         ${SERVER_ADDRESS}\
-            ${MU_VALUE}\
-            ${GAMMA_VALUE}"
+        ${MU_VALUE}\
+        ${GAMMA_VALUE}"
       echo "Running sbatch command ${SBATCH_COMMAND}"
       sbatch ${SBATCH_COMMAND}
       ((SERVER_PORT=SERVER_PORT+1))

@@ -48,8 +48,7 @@ for LR_VALUE in "${LR_VALUES[@]}";do
     ${DATASET_DIR} \
     ${VENV_PATH} \
     ${LR_VALUE} \
-    ${SERVER_ADDRESS} \
-    ${MU_VALUE}"
+    ${SERVER_ADDRESS}"
   echo "Running sbatch command ${SBATCH_COMMAND}"
   sbatch ${SBATCH_COMMAND}
   ((SERVER_PORT=SERVER_PORT+1))
