@@ -8,7 +8,7 @@ import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, NDArrays
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -29,7 +29,6 @@ class MnistFendaClient(FendaClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        client_number: int,
         pretrained_model_dir: Path,
         weights_mapping_path: Optional[Path],
     ) -> None:
@@ -41,7 +40,7 @@ class MnistFendaClient(FendaClient):
         )
 
         # Load the warmed up module
-        pretrained_model_name = f"client_{client_number}_latest_model.pkl"
+        pretrained_model_name = f"client_{self.client_name}_latest_model.pkl"
         self.warmed_up_module = WarmedUpModule(
             pretrained_model_path=Path(os.path.join(pretrained_model_dir, pretrained_model_name)),
             weights_mapping_path=weights_mapping_path,
@@ -70,6 +69,11 @@ class MnistFendaClient(FendaClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
+    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
+        super().initialize_all_model_weights(parameters, config)
+        # Load the pretrained model
+        self.warmed_up_module.load_from_pretrained(self.model)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
@@ -96,13 +100,6 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--client_number",
-        action="store",
-        type=int,
-        help="Number of the client for the loading of the pretrained model",
-        required=True,
-    )
-    parser.add_argument(
         "--weights_mapping_path",
         action="store",
         type=str,
@@ -124,7 +121,6 @@ if __name__ == "__main__":
         data_path,
         [Accuracy("accuracy")],
         DEVICE,
-        args.client_number,
         Path(args.pretrained_model_dir),
         Path(args.weights_mapping_path),
     )

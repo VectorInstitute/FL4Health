@@ -57,7 +57,6 @@ class BasicClient(NumPyClient):
         self.client_name = self.generate_hash()
         self.initialized = False  # Whether or not the client has been setup
         self.model_weights_initialized = False
-        self.first_parameters_set = False  # Whether or not the client has received parameters from the server
 
         # Loss and Metric management
         self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
@@ -134,10 +133,8 @@ class BasicClient(NumPyClient):
         """
         assert self.model is not None
 
-        if not self.first_parameters_set:
-            if not self.model_weights_initialized:
-                self.initialize_all_model_weights(parameters, config)
-            self.first_parameters_set = True
+        if not self.model_weights_initialized:
+            self.initialize_all_model_weights(parameters, config)
         else:
             assert self.parameter_exchanger is not None
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)

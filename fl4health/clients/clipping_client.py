@@ -99,13 +99,11 @@ class NumpyClippingClient(BasicClient):
         server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
         self.clipping_bound = clipping_bound
 
-        if not self.first_parameters_set:
-            if not self.model_weights_initialized:
-                # Initialize all model weights as this is the first time things have been set
-                self.initialize_all_model_weights(server_model_parameters, config)
-                # Extract only the initial weights that we care about clipping and exchanging
-                self.initial_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
-            self.first_parameters_set = True
+        if not self.model_weights_initialized:
+            # Initialize all model weights as this is the first time things have been set
+            self.initialize_all_model_weights(server_model_parameters, config)
+            # Extract only the initial weights that we care about clipping and exchanging
+            self.initial_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
         else:
             # Store the starting parameters without clipping bound before client optimization steps
             self.initial_weights = server_model_parameters

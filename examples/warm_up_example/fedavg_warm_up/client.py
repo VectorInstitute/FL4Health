@@ -1,6 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -15,12 +16,29 @@ from examples.models.cnn_model import MnistNet
 from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedAvgClient(BasicClient):
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        checkpoint_dir: str,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+        )
+
+        # Checkpointing is crucial for the warm up process
+        checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
+        self.checkpointer = LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -61,13 +79,6 @@ if __name__ == "__main__":
         help="Path to the directory where the checkpoints are stored",
         required=True,
     )
-    parser.add_argument(
-        "--client_number",
-        action="store",
-        type=int,
-        help="Client number",
-        required=True,
-    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -78,12 +89,8 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    # Checkpointing is crucial for the warm up process
-    checkpoint_name = f"client_{args.client_number}_latest_model.pkl"
-    checkpointer = LatestTorchCheckpointer(args.checkpoint_dir, checkpoint_name)
-
     # Start the client
-    client = MnistFedAvgClient(data_path, [Accuracy()], DEVICE, checkpointer=checkpointer)
+    client = MnistFedAvgClient(data_path, [Accuracy()], DEVICE, checkpoint_dir=args.checkpoint_dir)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully
