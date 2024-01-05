@@ -34,14 +34,18 @@ def test_merging() -> None:
     client_singular_vectors = [V1, V2, V3, V4]
     client_singular_values = [S1, S2, S3, S4]
 
-    svd_merge_vectors, svd_merge_singular_values = strategy.merge_subspaces_svd(
+    svd_merged_vectors, svd_merged_singular_values = strategy.merge_subspaces_svd(
         client_singular_vectors, client_singular_values
     )
     qr_merged_vectors, qr_merged_singular_values = strategy.merge_subspaces_qr(
         client_singular_vectors, client_singular_values
     )
 
-    # svd_merge_vectors is only guaranteed to be the same as V up to the application
+    # svd_merged_vectors is only guaranteed to be the same as V up to the application
     # of a blockwise unitary transformation, thus we do not check whether it is close to V.
-    assert np.allclose(svd_merge_singular_values, S)
+    assert np.allclose(svd_merged_singular_values, S)
     assert np.allclose(qr_merged_singular_values, S)
+
+    # Instead, we verify that the merging results are unitary matrices.
+    assert np.allclose(svd_merged_vectors.T @ svd_merged_vectors, np.identity(svd_merged_vectors.shape[1]))
+    assert np.allclose(qr_merged_vectors.T @ qr_merged_vectors, np.identity(qr_merged_vectors.shape[1]))
