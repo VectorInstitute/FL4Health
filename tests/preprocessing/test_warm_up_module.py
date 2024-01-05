@@ -1,10 +1,53 @@
 import copy
+import json
+import os
+from pathlib import Path
 
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
 from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn, ToyConvNet, ToyConvNet_2
+
+
+def test_initializing_warm_up_module(tmp_path: Path) -> None:
+    # Temporary path to write pkl to, will be cleaned up at the end of the test.
+    checkpoint_dir = tmp_path.joinpath("resources")
+    checkpoint_dir.mkdir()
+
+    # Save a temporary model using checkpointer
+    saved_model = SmallCnn()
+    checkpointer = BestMetricTorchCheckpointer(str(checkpoint_dir), "best_model.pkl", True)
+    checkpointer.maybe_checkpoint(saved_model, 0.7)
+
+    # Save a temporary weights mapping dict
+    weights_mapping_path = tmp_path.joinpath("data.json")
+    saved_weights_mapping_dict = {
+        "base_module.conv1": "conv1",
+        "base_module.conv2": "conv2",
+        "head_module.fc1": "fc1",
+    }
+    with open(weights_mapping_path, "w") as fp:
+        json.dump(saved_weights_mapping_dict, fp)
+
+    # Load the saved model using warmup module
+    warmup_module = WarmedUpModule(
+        pretrained_model_path=Path(os.path.join(checkpoint_dir, "best_model.pkl")),
+        weights_mapping_path=weights_mapping_path,
+    )
+
+    # Check if the pretrained model state is loaded correctly
+    assert warmup_module.pretrained_model_state is not None
+    for saved_model_value, pretrained_model_value in zip(
+        saved_model.state_dict().values(), warmup_module.pretrained_model_state.values()
+    ):
+        assert (saved_model_value == pretrained_model_value).all()
+
+    # Check if the weights mapping dict is loaded correctly
+    assert warmup_module.weights_mapping_dict is not None
+    for key in warmup_module.weights_mapping_dict.keys():
+        assert warmup_module.weights_mapping_dict[key] == saved_weights_mapping_dict[key]
 
 
 def test_loading_similar_models_without_mapping() -> None:
