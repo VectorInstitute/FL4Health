@@ -121,21 +121,21 @@ if __name__ == "__main__":
         "--seed",
         action="store",
         type=int,
-        help="Seed for the random number generator",
+        help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
     parser.add_argument(
         "--mu",
         action="store",
         type=float,
-        help="Weight for the contrastive loss",
+        help="Weights for Perfcl loss mentioned in paper",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weight for the contrastive loss",
+        help="Weights for Perfcl loss mentioned in paper",
         required=False,
     )
     args = parser.parse_args()
