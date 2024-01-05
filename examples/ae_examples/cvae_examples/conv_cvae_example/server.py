@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.cvae_example.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
+from examples.ae_examples.cvae_examples.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/cvae_example/conv_cvae_example/config.yaml",
+        default="examples/ae_examples/cvae_examples/conv_cvae_example/config.yaml",
     )
 
     args = parser.parse_args()

@@ -43,9 +43,9 @@ class AETransformer:
         if self.img_dims > 1:
             # Replicate the condition tensor to match the shape of the matrix tensor.
             expanded_condition = condition.expand_as(torch.from_numpy(sample))
-
-        # Combine the expanded number tensor and the matrix tensor along a new dimension.
-        return torch.cat((torch.from_numpy(sample), expanded_condition)), torch.from_numpy(sample)
+            # Combine the expanded number tensor and the matrix tensor along a new dimension.
+            return torch.cat((torch.from_numpy(sample), expanded_condition)), torch.from_numpy(sample)
+        return torch.cat((torch.from_numpy(sample), condition.view(-1))), torch.from_numpy(sample)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"

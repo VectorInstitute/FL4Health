@@ -9,10 +9,10 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.cvae_example.models import MnistConditionalDecoder, MnistConditionalEncoder
+from examples.ae_examples.vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
+from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
@@ -27,14 +27,12 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     latent_dim: int,
-    num_conditions: int,
     current_server_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "latent_dim": latent_dim,
-        "num_conditions": num_conditions,
         "current_server_round": current_server_round,
     }
 
@@ -46,20 +44,13 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["latent_dim"],
-        config["num_conditions"],
     )
 
     # Initializing the model on the server side
-    encoder = MnistConditionalEncoder(
-        input_size=784, num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
-    )
-    decoder = MnistConditionalDecoder(
-        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"]), output_size=784
-    )
-    model = ConditionalVAE(
-        AutoEncoderType.CONDITIONAL_VAE, num_conditions=int(config["num_conditions"]), encoder=encoder, decoder=decoder
-    )
-    model_checkpoint_name = "best_CVAE_model.pkl"
+    encoder = MnistVariationalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
+    decoder = MnistVariationalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
+    model = VariationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
+    model_checkpoint_name = "best_VAE_model.pkl"
 
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
@@ -95,7 +86,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/cvae_example/config.yaml",
+        default="examples/ae_examples/vae_example/config.yaml",
     )
 
     args = parser.parse_args()

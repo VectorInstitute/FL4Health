@@ -1,5 +1,5 @@
 # Federated Convolutional CVAE Example
-This example is an extension to the `cvae_example` which is using a convolutional based encoder and decoder.
+This example is an extension to the `cvae_example` that is using a convolutional based encoder and decoder.
 
 
 ## Running the Example
@@ -9,7 +9,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 
 The next step is to start the server by running
 ```
-python -m examples.cvae_example.conv_cvae_example.server  --config_path /path/to/config.yaml
+python -m examples.ae_examples.cvae_examples.conv_cvae_example.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
@@ -41,9 +41,9 @@ If you choose to set `--condition 'label'`, don't forget to also adjust the `num
 You can use the following commands to run the clients.
 Client 0:
 ```
-python -m examples.cvae_example.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "0"
+python -m examples.ae_examples.cvae_examples.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "0"
 ```
 Client 1:
 ```
-python -m examples.cvae_example.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "1"
+python -m examples.ae_examples.cvae_examples.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition "1"
 ```
