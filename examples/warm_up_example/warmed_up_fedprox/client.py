@@ -79,7 +79,7 @@ if __name__ == "__main__":
         "--seed",
         action="store",
         type=int,
-        help="Seed for the random number generator",
+        help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
     parser.add_argument(
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to the pretrained model",
-        required=False,
+        required=True,
     )
     parser.add_argument(
         "--weights_mapping_path",
@@ -100,6 +100,8 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
+    pretrained_model_dir = Path(args.pretrained_model_dir)
+    weights_mapping_path = Path(args.weights_mapping_path) if args.weights_mapping_path else None
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
@@ -111,8 +113,8 @@ if __name__ == "__main__":
         data_path,
         [Accuracy()],
         DEVICE,
-        Path(args.pretrained_model_dir),
-        Path(args.weights_mapping_path),
+        pretrained_model_dir,
+        weights_mapping_path,
     )
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 

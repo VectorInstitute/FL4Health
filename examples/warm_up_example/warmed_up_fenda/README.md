@@ -3,7 +3,7 @@ This example provides an example of training a FENDA type model on a non-IID sub
 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
 
-After the warm-up training, clients can load their warmed-up models and continue training with the FENDA algorithm. To maintain consistency in the data loader between both runs, it is crucial to set a fixed seed for both clients and the server, ensuring uniformity in random data points across consecutive runs. Therefore, we ensure a fixed seed is set for these consecutive runs in both the `client.py` and `server.py` files. Additionally, to load the warmed-up models, it's important provide the path to the pretrained models and unique number of each client. In this particular scenario, we assigned a unique number between 1 and 3 to each client, ensuring that we can load the trained local model for each client from the previous example as a warmed-up model. Since models in the two runs can be different, loading weights from the pretrained model requires providing a mapping between the pretrained model and the model used in FL training. This mapping is accomplished through the `weights_mapping.json` file, which contains the names of the pretrained model's layers and the corresponding names of the layers in the model used in FL training.
+After the warm-up training, clients can load their warmed-up models and continue training with the Fenda algorithm. To maintain consistency in the data loader between both runs, it is crucial to set a fixed seed for both clients and the server, ensuring uniformity in random data points across consecutive runs. Therefore, we ensure a fixed seed is set for these consecutive runs in both the `client.py` and `server.py` files. Additionally, to load the warmed-up models, it's important provide the path to the pretrained models based on client's unique name, ensuring that we can load the trained local model for each client from the previous example as a warmed-up model. Since models in the two runs can be different, loading weights from the pretrained model requires providing a mapping between the pretrained model and the model used in FL training. This mapping is accomplished through the `weights_mapping.json` file, which contains the names of the pretrained model's layers and the corresponding names of the layers in the model used in FL training. In this particular example, we load the FedAvg model weights both in local and global submodules of the Fenda model.
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -25,10 +25,10 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the three
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_dir /path/to/checkpointing/directory  --weights_mapping_path /path/to/weights/mapping/file --client_number "CLIENT_NUMBER (1, 2, or 3)"
+python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/to/data --seed "SEED" --pretrained_model_dir /path/to/checkpointing/directory  --weights_mapping_path /path/to/weights/mapping/file
 ```
-**NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
-the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
-automatically downloaded to the path specified and used in the run.
+**NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be automatically downloaded to the path specified and used in the run.
+
+**NOTE**: "SEED" above should match that of the warm up run if you want to ensure the datasets are split consistently.
 
 After both clients have been started federated learning should commence.
