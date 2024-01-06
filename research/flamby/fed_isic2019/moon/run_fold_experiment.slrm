@@ -123,6 +123,8 @@ do
 
     nohup python -m research.flamby.fed_isic2019.moon.server \
         --config_path ${SERVER_CONFIG_PATH} \
+        --artifact_dir ${ARTIFACT_DIR} \
+        --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
