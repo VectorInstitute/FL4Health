@@ -1,0 +1,8 @@
+{
+    "local_module.conv1":"conv1",
+    "local_module.conv2": "conv2",
+    "local_module.fc1": "fc1",
+    "global_module.conv1":"conv1",
+    "global_module.conv2": "conv2",
+    "global_module.fc1": "fc1"
+}
