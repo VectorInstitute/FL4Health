@@ -50,7 +50,10 @@ class ClientLevelDPFedAvgServer(FlServer):
                 being 1/total_samples in the FL run. Defaults to None.
         """
         super().__init__(
-            client_manager=client_manager, strategy=strategy, wandb_reporter=wandb_reporter, checkpointer=checkpointer
+            client_manager=client_manager,
+            strategy=strategy,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
         )
         self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier

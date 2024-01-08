@@ -13,9 +13,9 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.feature_alignment.constants import (
     CURRENT_SERVER_ROUND,
     FEATURE_INFO,
-    FORMAT_SPECIFIED,
     INPUT_DIMENSION,
     OUTPUT_DIMENSION,
+    SOURCE_SPECIFIED,
 )
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.reporting.fl_wanb import ServerWandBReporter
@@ -69,11 +69,11 @@ class TabularFeatureAlignmentServer(FlServer):
         self.tab_features_info = tabular_features_source_of_truth
         self.config = config
         self.initialize_parameters = initialize_parameters
-        self.format_info_gathered = False
+        self.source_info_gathered = False
         self.dimension_info: Dict[str, int] = {}
         # ensure that self.strategy has type BasicFedAvg so its on_fit_config_fn can be specified.
         assert isinstance(self.strategy, BasicFedAvg)
-        self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
+        self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.source_info_gathered)
 
     def _set_dimension_info(self, input_dimension: int, output_dimension: int) -> None:
         self.dimension_info[INPUT_DIMENSION] = input_dimension
@@ -109,9 +109,9 @@ class TabularFeatureAlignmentServer(FlServer):
 
             # the feature information is sent to clients through the config parameter.
             self.config[FEATURE_INFO] = feature_info_source
-            self.format_info_gathered = True
+            self.source_info_gathered = True
 
-            self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.format_info_gathered)
+            self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.source_info_gathered)
 
             # Now the server waits until feature alignment is performed on the clients' side
             # and subsequently requests the input and output dimensions, which are needed for initializing
@@ -157,7 +157,7 @@ class TabularFeatureAlignmentServer(FlServer):
         return input_dimension, output_dimension
 
 
-def fit_config(config: Config, format_specified: bool, current_server_round: int) -> Config:
-    config[FORMAT_SPECIFIED] = format_specified
+def fit_config(config: Config, source_specified: bool, current_server_round: int) -> Config:
+    config[SOURCE_SPECIFIED] = source_specified
     config[CURRENT_SERVER_ROUND] = current_server_round
     return config

@@ -41,6 +41,7 @@ class FlServer(Server):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
+
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = checkpointer

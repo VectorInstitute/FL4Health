@@ -3,9 +3,9 @@ import pytest
 import torch
 
 from fl4health.clients.apfl_client import ApflClient
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
-from tests.clients.fixtures import get_apfl_client, get_numpy_fl_client  # noqa
+from tests.clients.fixtures import get_apfl_client, get_basic_client  # noqa
 from tests.test_utils.models_for_test import SingleLayerWithSeed, ToyConvNet
 
 
@@ -14,8 +14,8 @@ def to_numpy_clone(a: torch.Tensor) -> np.ndarray:
 
 
 @pytest.mark.parametrize("model", [ToyConvNet()])
-def test_set_parameters_numpy_fl_client(get_numpy_fl_client: NumpyFlClient) -> None:  # noqa
-    client = get_numpy_fl_client
+def test_set_parameters_basic_client(get_basic_client: BasicClient) -> None:  # noqa
+    client = get_basic_client
     client_state_dict = client.model.state_dict()
     old_model_state = [to_numpy_clone(state) for state in client_state_dict.values()]
     new_model_state_dict = ToyConvNet().state_dict()

@@ -56,7 +56,7 @@ def test_dp_scaffold_client(get_client: DPScaffoldClient) -> None:  # noqa
     client.setup_opacus_objects()
 
     assert isinstance(client.model, GradSampleModule)
-    assert isinstance(client.optimizer, DPOptimizer)
+    assert isinstance(client.optimizers["global"], DPOptimizer)
     assert isinstance(client.train_loader, DataLoader)
 
     assert hasattr(client, "client_control_variates")

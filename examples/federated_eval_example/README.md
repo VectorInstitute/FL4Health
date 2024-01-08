@@ -2,12 +2,7 @@
 This example provides a simple implementation of a federated evaluation setup on the CIFAR dataset and two model checkpoints trained on that dataset. The federated evaluation server expects two clients to be spun up (i.e. it will wait until two clients report in before starting evaluation), as specified in the config.yaml under n_clients. Each client has the same "local" dataset. I.e. they each load the complete CIFAR test dataset and therefore have the same evaluation sets. The server performs uniform averaging of the client metrics, which are, in this case, accuracy and model loss. Note that since this is federated evaluation, no training occurs, therefore no strategy is implemented and no "server rounds" are processed. The server simply asks each client to evaluate a global and/or local model on the CIFAR test set and report the metrics back to the central server for aggregation. A global model checkpoint can be provided to the server, if one exists, representing a global model for all clients. It is passed through the parameter exchanger to the clients to be loaded. In `examples/assets` there are two checkpoint files representing two trained `Net()` models from `examples/models/cnn_model.py`. These models can be used to run this example by providing their relative path to the server and/or the clients.
 
 ## Running the Example
-In order to run the example, first ensure you have the virtual env of your choice activated and run
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-to install all of the dependencies for this project.
+In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 

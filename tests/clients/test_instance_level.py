@@ -14,5 +14,5 @@ def test_instance_level_client(get_client: InstanceLevelPrivacyClient) -> None: 
     client.setup_opacus_objects()
 
     assert isinstance(client.model, GradSampleModule)
-    assert isinstance(client.optimizer, DPOptimizer)
+    assert isinstance(client.optimizers["global"], DPOptimizer)
     assert isinstance(client.train_loader, DataLoader)

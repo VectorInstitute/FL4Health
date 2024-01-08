@@ -43,7 +43,8 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        self.optimizer: torch.optim.SGD  # Scaffold require vanilla SGD as optimizer
+        # Scaffold require vanilla SGD as optimizer
+        self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
@@ -179,16 +180,16 @@ class ScaffoldClient(BasicClient):
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward.backward()
+        losses.backward["backward"].backward()
         self.modify_grad()
-        self.optimizer.step()
+        self.optimizers["global"].step()
 
         return losses, preds
 
@@ -201,9 +202,21 @@ class ScaffoldClient(BasicClient):
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
-        the corresponding loss dictionairy.
+        the corresponding loss dictionary.
         """
         self.update_control_variates(local_steps)
+
+    def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True. Extends the basic client to extract the learning rate
+        from the optimizer and set the learning_rate attribute (used to compute updated control variates).
+
+        Args:
+            config (Config): The config from the server.
+        """
+        super().setup_client(config)
+        self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore

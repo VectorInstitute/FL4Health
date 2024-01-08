@@ -20,6 +20,6 @@ In the directory of your choice run
 module load python/3.9.10
 python3.9 -m venv <name_of_env>
 source <name_of_env>/bin/activate
-pip install --upgrade pip
-pip install -r <path/to/FL4Health/requirements.txt>
+pip install --upgrade pip poetry
+poetry install --with "dev, dev-local, test, codestyle"
 ```

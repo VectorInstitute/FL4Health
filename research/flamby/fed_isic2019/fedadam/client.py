@@ -41,7 +41,7 @@ class FedIsic2019FedAdamClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.client_number = client_number
-        self.learning_rate = learning_rate
+        self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")

@@ -61,3 +61,36 @@ def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # n
     contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
 
     assert contrastive_loss == pytest.approx(0.6931, rel=0.01)
+
+
+@pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
+def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
+    torch.manual_seed(42)
+    fenda_client = get_fenda_client
+    fenda_client.temperature = 0.5
+    fenda_client.perfcl_loss_weights = (1.0, 1.0)
+    fenda_client.criterion = torch.nn.CrossEntropyLoss()
+
+    local_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
+    global_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
+    old_local_features = torch.tensor([[0, 0, 0], [0, 0, 0]]).float()
+    old_global_features = torch.tensor([[0, 0, 0], [0, 0, 0]]).float()
+    aggregated_global_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
+    preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
+    target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+    features = {
+        "local_features": local_features,
+        "old_local_features": old_local_features,
+        "global_features": global_features,
+        "old_global_features": old_global_features,
+        "aggregated_global_features": aggregated_global_features,
+    }
+    loss = fenda_client.compute_loss(preds=preds, target=target, features=features)
+    assert isinstance(loss.backward["backward"], torch.Tensor)
+    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
+    assert loss.checkpoint.item() != loss.backward["backward"].item()
+
+    auxiliary_loss_total = (loss.backward["backward"] - loss.checkpoint).item()
+    contrastive_minimize = loss.additional_losses["contrastive_loss_minimize"].item()
+    contrastive_maximize = loss.additional_losses["contrastive_loss_maximize"].item()
+    assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)

@@ -1,7 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
@@ -11,10 +11,12 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
+from fl4health.utils.random import set_all_random_seeds
 
 
 def get_initial_model_information() -> Parameters:
@@ -26,7 +28,6 @@ def get_initial_model_information() -> Parameters:
 
 
 def fit_config(
-    local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
     reporting_enabled: bool,
@@ -34,9 +35,11 @@ def fit_config(
     group_name: str,
     entity: str,
     current_round: int,
+    local_epochs: Optional[int] = None,
+    local_steps: Optional[int] = None,
 ) -> Config:
     return {
-        "local_epochs": local_epochs,
+        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
@@ -51,7 +54,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
         config["reporting_config"].get("enabled", False),
@@ -59,6 +61,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["reporting_config"].get("project_name", ""),
         config["reporting_config"].get("group_name", ""),
         config["reporting_config"].get("entity", ""),
+        local_epochs=config.get("local_epochs"),
+        local_steps=config.get("local_steps"),
     )
 
     initial_parameters = get_initial_model_information()
@@ -110,8 +114,19 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
+
     main(config, args.server_address)

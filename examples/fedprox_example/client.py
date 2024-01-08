@@ -15,6 +15,7 @@ from examples.models.cnn_model import MnistNet
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -45,12 +46,22 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generator",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     client = MnistFedProxClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
