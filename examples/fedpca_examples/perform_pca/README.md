@@ -1,9 +1,9 @@
 # Federated Principal Component Analysis Example
-This example performs federated principal component analysis. The goal is to compute the principal components of a subset of the MNIST dataset, under the condition that the data is distributed across two distinct clients.
+This example performs federated principal component analysis. The goal is to compute the principal components of a subset of the MNIST dataset, under the condition that the data is distributed across four distinct clients.
 
 This is achieved by each client performing PCA locally at first, then the principal components are sent to a central server to be merged.
 
-Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets. This is done to ensure that local principal compoents are distinct enough across different clients.
+Each client performs Dirichlet subsampling on the whole dataset to produce heterogeneous local datasets. This is done to ensure that local principal compoents are distinct across different clients.
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -21,14 +21,14 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `full_svd`: determines whether full SVD or reduced SVD is performed by each client.
 * `rank_estimation`: an estimation of the rank of the data matrix. This is only used if `low_rank` is set to True.
 * `center_data`: if set to True, the mean of data will be subtracted from all data points before local PCA is performed.
-* `num_components`: by default, after merging is completed, each client will use the merged principal components to compute the reconstruction error on its validation set. This parameter specify the number of principal components that are used in this evaluation process.
+* `num_components`: by default, after merging is completed, each client will use the merged principal components to compute the reconstruction error on its validation set. This parameter specifies the number of principal components that are used in this evaluation process.
 
 ## Starting Clients
 
-Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
+Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the four
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/data --model_save_path /path/to/save/model
+python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/data --components_save_path /path/to/save/components
 ```
 **NOTE**:
 
@@ -36,6 +36,6 @@ python -m examples.fedpca_examples.perform_pca.client --dataset_path /path/to/da
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
 automatically downloaded to the path specified and used in the run.
 
-* The argument `model_save_path` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `exampes/fedpca_examples/dim_reduction`.
+* The argument `components_save_path` specifies the directory in which the merged principal components will be saved, so they can be leveraged for other downstream tasks. An example of dimensionality reduction can be found at `exampes/fedpca_examples/dim_reduction`.
 
-After both clients have been started federated pca should commence.
+After the clients have been started federated pca should commence.

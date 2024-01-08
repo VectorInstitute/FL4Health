@@ -46,8 +46,9 @@ def main(config: Dict[str, Any]) -> None:
 
     # Initializing the model on the server side
     model = MnistNet(input_dim=config["new_dimension"])
-    # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
+
+    # To facilitate checkpointing
     checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

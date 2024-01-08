@@ -41,7 +41,7 @@ class BaseDataset(Dataset):
             self.target_transform = g
 
 
-class MNISTDataset(BaseDataset):
+class MnistDataset(BaseDataset):
     def __init__(
         self,
         data_path: Path,

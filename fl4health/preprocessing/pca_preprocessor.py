@@ -10,7 +10,7 @@ from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.sampler import LabelBasedSampler
 
 
-class PCAPreprocessor:
+class PcaPreprocessor:
     def __init__(self, checkpointing_path: Path) -> None:
         """
         Class that leverages pre-computed principal components of

@@ -23,7 +23,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `checkpoint_path`: path where the model weights are saved.
 ## Starting Clients
 
-Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
+Once the server has started and logged "FL starting," the next step, in separate terminals, is to start three
 clients. This is done by simply running (remembering to activate your environment)
 ```
 python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/data
@@ -34,4 +34,4 @@ python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
 automatically downloaded to the path specified and used in the run.
 
-After both clients have been started federated learning should commence.
+After the clients have been started federated learning should commence.

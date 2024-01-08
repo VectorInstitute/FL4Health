@@ -13,28 +13,29 @@ from torchvision.transforms import transforms
 
 from examples.fedpca_examples.dim_reduction.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
-from fl4health.preprocessing.pca_preprocessor import PCAPreprocessor
-from fl4health.utils.dataset import MNISTDataset
+from fl4health.preprocessing.pca_preprocessor import PcaPreprocessor
+from fl4health.utils.dataset import MnistDataset
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-def get_mnist_dataset(data_dir: Path, train: bool) -> MNISTDataset:
+def get_mnist_dataset(data_dir: Path, train: bool) -> MnistDataset:
     transform = transforms.Compose(
         [
             transforms.ToTensor(),
             transforms.Normalize((0.5), (0.5)),
         ]
     )
-    return MNISTDataset(data_dir, train=train, transform=transform)
+    return MnistDataset(data_dir, train=train, transform=transform)
 
 
-class MnistFedPCAClient(BasicClient):
+class MnistFedPcaClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         pca_path = Path(self.narrow_config_type(config, "pca_path", str))
         new_dimension = self.narrow_config_type(config, "new_dimension", int)
-        pca_preprocessor = PCAPreprocessor(pca_path)
+        pca_preprocessor = PcaPreprocessor(pca_path)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.6, beta=0.75)
 
         train_dataset = get_mnist_dataset(data_dir=self.data_path, train=True)
@@ -72,7 +73,7 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
-    torch.manual_seed(47)
-    client = MnistFedPCAClient(data_path, [Accuracy("accuracy")], DEVICE)
+    set_all_random_seeds()
+    client = MnistFedPcaClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
