@@ -140,7 +140,8 @@ class BasicClient(NumPyClient):
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
         If this is the first time we're initializing the model weights, we use the FullParameterExchanger to
-        initialize all model components
+        initialize all model components.
+        Subclasses that require custom model initialization can override this.
 
         Args:
             parameters (NDArrays): Model parameters to be injected into the client model

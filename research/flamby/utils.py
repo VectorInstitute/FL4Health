@@ -98,8 +98,8 @@ def evaluate_model_on_dataset(
             if is_apfl:
                 preds = model(input)["personal"]
             else:
-                preds = model(input)
-            preds = preds if isinstance(preds, dict) else {"predictions": preds}
+                preds = model(input)[0]
+            preds = preds if isinstance(preds, dict) else {"prediction": preds}
             meter.update(preds, target)
     return meter
 
@@ -109,8 +109,8 @@ def evaluate_fed_isic_model(
 ) -> float:
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
-    assert "test_meter_FedIsic2019_balanced_accuracy" in computed_metrics
-    balanced_accuracy = computed_metrics["test_meter_FedIsic2019_balanced_accuracy"]
+    assert "test_meter - prediction - FedIsic2019_balanced_accuracy" in computed_metrics
+    balanced_accuracy = computed_metrics["test_meter - prediction - FedIsic2019_balanced_accuracy"]
     assert isinstance(balanced_accuracy, float)
     return balanced_accuracy
 
@@ -121,8 +121,8 @@ def evaluate_fed_heart_disease_model(
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
 
     computed_metrics = meter.compute()
-    assert "test_meter_FedHeartDisease_accuracy" in computed_metrics
-    accuracy = computed_metrics["test_meter_FedHeartDisease_accuracy"]
+    assert "test_meter - prediction - FedHeartDisease_accuracy" in computed_metrics
+    accuracy = computed_metrics["test_meter - prediction - FedHeartDisease_accuracy"]
     assert isinstance(accuracy, float)
     return accuracy
 
@@ -132,8 +132,8 @@ def evaluate_fed_ixi_model(
 ) -> float:
     meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
     computed_metrics = meter.compute()
-    assert "test_meter_FedIXI_dice" in computed_metrics
-    dice = computed_metrics["test_meter_FedIXI_dice"]
+    assert "test_meter - prediction - FedIXI_dice" in computed_metrics
+    dice = computed_metrics["test_meter - prediction - FedIXI_dice"]
     assert isinstance(dice, float)
     return dice
 
