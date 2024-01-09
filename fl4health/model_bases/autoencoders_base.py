@@ -71,7 +71,10 @@ class VariationalAE(AbstractAE):
         mu, logvar = self.encode(input)
         z = self.sampling(mu, logvar)
         output = self.decode(z)
-        return torch.cat((logvar, mu, output), dim=1)
+        # The shape of the flattened_output can be later restored by having the training image shape,
+        # or the decoder structure.
+        flattened_output = output.view(output.shape[0], -1)
+        return torch.cat((logvar, mu, flattened_output), dim=1)
 
 
 class ConditionalVAE(AbstractAE):

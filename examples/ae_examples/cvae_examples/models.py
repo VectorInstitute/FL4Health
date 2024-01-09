@@ -19,12 +19,8 @@ class MnistConditionalEncoder(nn.Module):
         self.fc_mu = nn.Linear(256, latent_dim)
         self.fc_logvar = nn.Linear(256, latent_dim)
 
-    def cat_input_condition(self, input: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
-        input_cond = torch.cat((input, condition), dim=-1)
-        return input_cond
-
     def forward(self, input: torch.Tensor, condition: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        input = self.cat_input_condition(input, condition)
+        input = torch.cat((input, condition), dim=-1)
         x = F.relu(self.fc1(input))
         x = F.relu(self.fc2(x))
         return self.fc_mu(x), self.fc_logvar(x)
