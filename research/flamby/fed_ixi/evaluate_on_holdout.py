@@ -105,7 +105,7 @@ def main(
 
     if eval_global_model:
         # Next we test server checkpointed best model on pooled test data
-        pooled_test_dataset = FedIXITiny(center=0, train=False, pooled=True)
+        pooled_test_dataset = FedIXITiny(center=0, train=False, pooled=True, data_path=dataset_dir)
         pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         test_metrics = []

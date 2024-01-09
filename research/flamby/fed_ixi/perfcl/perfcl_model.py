@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from flamby.datasets.fed_ixi.model import ConvolutionalBlock
 
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
-from research.flamby.fed_ixi.fenda.fenda_feature_extractor import FendaFeatureExtactor
+from research.flamby.fed_ixi.perfcl.perfcl_feature_extractor import PerFclFeatureExtactor
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
@@ -32,7 +32,7 @@ class PerFclClassifier(FendaHeadModule):
         # Standard UNet concatenates the channels from the first conv layer (residual connection) and the upsampled
         # embeddings from the full-forward process of the U-Net.
         single_stack_in_channels = 2 * out_channels_first_layer
-        # For a FENDA feature extractor, we take the outputs of the global and local stacks and we concatenate them
+        # For a PerFCL feature extractor, we take the outputs of the global and local stacks and we concatenate them
         # along the channels. So if each has in_channel dimension of 4, the classifier actually processes 8 channels
         self.classifier = ConvolutionalBlock(
             dimensions,
@@ -55,13 +55,13 @@ class PerFclClassifier(FendaHeadModule):
 
 class LocalUNetFeatureExtractor(nn.Module):
     """
-    Local FENDA module: We use a UNet with the classifier head stripped off to extract a set of features on which each
+    Local PerFCL module: We use a UNet with the classifier head stripped off to extract a set of features on which each
     pixel of the image is classified.
     """
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = PerFclFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -71,13 +71,13 @@ class LocalUNetFeatureExtractor(nn.Module):
 
 
 class GlobalUNetFeatureExtractor(nn.Module):
-    """Global FENDA module: We use a UNet with the classifier head stripped off to extract a set of features on which each
+    """Global PerFCL module: We use a UNet with the classifier head stripped off to extract a set of features on which each
     pixel of the image is classified.
     """
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = PerFclFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
