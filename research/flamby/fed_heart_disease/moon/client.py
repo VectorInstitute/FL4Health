@@ -18,6 +18,7 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, To
 from fl4health.clients.moon_client import MoonClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_heart_disease.moon.moon_model import FedHeartDiseaseMoonModel
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
@@ -31,6 +32,7 @@ class FedHeartDiseaseMoonClient(MoonClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        contrastive_weight: float = 10,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -39,6 +41,7 @@ class FedHeartDiseaseMoonClient(MoonClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            contrastive_weight=contrastive_weight,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -104,12 +107,29 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
+    parser.add_argument(
+        "--mu",
+        action="store",
+        type=float,
+        help="Weight for the contrastive loss",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
@@ -122,6 +142,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        contrastive_weight=args.mu,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
