@@ -8,7 +8,7 @@ from torch import Tensor
 from torch.nn.parameter import Parameter
 
 
-class PCAModule(nn.Module):
+class PcaModule(nn.Module):
     def __init__(self, low_rank: bool = True, full_svd: bool = False, rank_estimation: int = 6) -> None:
         """
         PyTorch module for performing Principal Component Analysis.

@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.fedpca_examples.dim_reduction.mnist_model import MnistNet
+from examples.models.mnist_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger

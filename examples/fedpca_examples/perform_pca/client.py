@@ -32,12 +32,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--components_save_path", action="store", type=str, help="Path to saving merged principal components."
     )
+    parser.add_argument("--seed", action="store", type=int, help="Random seed for this client.")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     components_save_path = Path(args.components_save_path)
+    seed = args.seed
 
-    set_all_random_seeds()
+    set_all_random_seeds(seed)
     client = MnistFedPCAClient(data_path=data_path, device=DEVICE, model_save_path=components_save_path)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

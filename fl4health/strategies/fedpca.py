@@ -91,6 +91,8 @@ class FedPCA(BasicFedAvg):
             weighted_aggregation=weighted_aggregation,
             weighted_eval_losses=weighted_eval_losses,
         )
+        # Since federated PCA does not use initial parameters, we fix it here.
+        self.initial_parameters = Parameters(tensors=[], tensor_type="numpy.ndarray")
         self.svd_merging = svd_merging
 
     def aggregate_fit(

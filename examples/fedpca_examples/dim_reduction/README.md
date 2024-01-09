@@ -23,8 +23,8 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `checkpoint_path`: path where the model weights are saved.
 ## Starting Clients
 
-Once the server has started and logged "FL starting," the next step, in separate terminals, is to start three
-clients. This is done by simply running (remembering to activate your environment)
+Once the server has started and logged "FL starting," the next step is to start three
+clients in separate terminals. This is done by simply running (remembering to activate your environment)
 ```
 python -m examples.fedpca_examples.dim_reduction.client --dataset_path /path/to/data
 ```

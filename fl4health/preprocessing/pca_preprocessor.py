@@ -1,13 +1,10 @@
 from functools import partial
 from pathlib import Path
-from typing import Optional
 
 import torch
-from torch.utils.data.dataloader import DataLoader
 
-from fl4health.model_bases.pca import PCAModule
+from fl4health.model_bases.pca import PcaModule
 from fl4health.utils.dataset import BaseDataset
-from fl4health.utils.sampler import LabelBasedSampler
 
 
 class PcaPreprocessor:
@@ -20,9 +17,9 @@ class PcaPreprocessor:
             checkpointing_path (Path): Path to saved principal components.
         """
         self.checkpointing_path = checkpointing_path
-        self.pca_module: PCAModule = self.load_pca_module()
+        self.pca_module: PcaModule = self.load_pca_module()
 
-    def load_pca_module(self) -> PCAModule:
+    def load_pca_module(self) -> PcaModule:
         pca_module = torch.load(self.checkpointing_path)
         pca_module.eval()
         return pca_module
@@ -30,28 +27,23 @@ class PcaPreprocessor:
     def reduce_dimension(
         self,
         new_dimension: int,
-        batch_size: int,
-        shuffle: bool,
-        sampler: Optional[LabelBasedSampler],
         dataset: BaseDataset,
-    ) -> DataLoader:
+    ) -> BaseDataset:
         """
         Perform dimensionality reduction on a dataset by projecting the data
         onto a set of pre-computed principal components.
 
+        (Note that PyTorch dataloaders perform lazy application of transforms.
+        So in reality, dimensionality reduction is applied in real-time as the user
+        iterates through the dataloader created from the dataset returned here.)
+
         Args:
             new_dimension (int): New data dimension after dimensionality reduction. Equals
             the number of principal components onto which projection is performed.
-            batch_size (int): Batch size.
-            shuffle (bool): Whether the dataloader should be shuffled.
-            sampler (Optional[LabelBasedSampler]): For performing subsampling on the dataset if needed.
-            get_dataset (Callable[..., BaseDataset]): Function that returns an instance of BaseDataset.
-
+            dataset (BaseDataset): Dataset containing data whose dimension is to be reduced.
         Returns:
-            DataLoader: a dataloader consisting of data with reduced dimension.
+            BaseDataset: Dataset consisting of data with reduced dimension.
         """
         projection = partial(self.pca_module.project_lower_dim, k=new_dimension)
-        if sampler is not None:
-            dataset = sampler.subsample(dataset)
         dataset.update_transform(projection)
-        return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+        return dataset

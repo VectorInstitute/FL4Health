@@ -3,18 +3,13 @@ from functools import partial
 from typing import Any, Dict
 
 import flwr as fl
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.server import Server
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.strategies.fedpca import FedPCA
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side. This is not used for federated PCA.
-    return Parameters(tensors=[], tensor_type="numpy.ndarray")
 
 
 def fit_config(
@@ -59,12 +54,14 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
         svd_merging=False,
     )
 
     # We use the default flwr server here.
     server = Server(client_manager=SimpleClientManager(), strategy=strategy)
+
+    # Federated PCA only executes for 1 round.
+    assert config["n_server_rounds"] == 1
 
     fl.server.start_server(
         server=server,
