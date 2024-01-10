@@ -33,4 +33,4 @@ class FedPerModel(MoonModel, PartialLayerExchangeModel):
         self.flatten_features = flatten_features
 
     def layers_to_exchange(self) -> List[str]:
-        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("base_model.")]
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("base_module.")]
