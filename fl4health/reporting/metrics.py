@@ -1,7 +1,8 @@
 import datetime
 import json
 import os
-from logging import DEBUG, ERROR, INFO
+import uuid
+from logging import INFO
 from typing import Any, Dict, Optional
 
 from flwr.common.logger import log
@@ -10,15 +11,17 @@ from flwr.common.logger import log
 class MetricsReporter:
     def __init__(
         self,
-        run_id: str = "default",
+        run_id: Optional[str] = None,
         output_folder: str = "metrics",
-        num_rounds: Optional[int] = None,
         dump_at_every_step: bool = False,
     ):
         # TODO docstrings
-        self.run_id = run_id
+        if run_id is not None:
+            self.run_id = run_id
+        else:
+            self.run_id = str(uuid.uuid4())
+
         self.output_folder = output_folder
-        self.num_rounds = num_rounds
         self.dump_at_every_step = dump_at_every_step
         self.metrics: Dict[str, Any] = {}
 
@@ -31,21 +34,13 @@ class MetricsReporter:
 
     def add_to_metrics_at_round(self, round: int, data: Dict[str, Any]) -> None:
         # TODO docstrings
-        if self.num_rounds is None:
-            log(DEBUG, "MetricsReporter: num_rounds is None, adding metrics to a new round every time")
-            if "rounds" not in self.metrics:
-                self.metrics["rounds"] = []
+        if "rounds" not in self.metrics:
+            self.metrics["rounds"] = {}
 
-            self.metrics["rounds"].add(data)
-        else:
-            if "rounds" not in self.metrics:
-                self.metrics["rounds"] = [{}] * self.num_rounds
+        if round not in self.metrics["rounds"]:
+            self.metrics["rounds"][round] = {}
 
-            if round - 1 < 0:
-                log(ERROR, f"MetricsReporter: round value is invalid ({round})")
-                return
-
-            self.metrics["rounds"][round - 1].update(data)
+        self.metrics["rounds"][round].update(data)
 
         if self.dump_at_every_step:
             self.dump()

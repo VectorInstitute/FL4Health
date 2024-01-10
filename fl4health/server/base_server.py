@@ -57,8 +57,7 @@ class FlServer(Server):
             self.metrics_reporter = MetricsReporter()
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
-        self.metrics_reporter.num_rounds = num_rounds
-        self.metrics_reporter.add_to_metrics({"fit_start": datetime.datetime.now()})
+        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
 
         history = super().fit(num_rounds, timeout)
         if self.wandb_reporter:

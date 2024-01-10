@@ -14,6 +14,7 @@ from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, 
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 
@@ -65,7 +66,14 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_initial_model_parameters(model),
     )
 
-    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
+    server = FlServerWithCheckpointing(
+        SimpleClientManager(),
+        model,
+        parameter_exchanger,
+        strategy=strategy,
+        checkpointer=checkpointer,
+        metrics_reporter=MetricsReporter(dump_at_every_step=True),
+    )
 
     fl.server.start_server(
         server=server,

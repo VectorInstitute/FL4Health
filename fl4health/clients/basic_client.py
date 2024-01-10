@@ -1,4 +1,5 @@
 import copy
+import datetime
 import random
 import string
 from logging import INFO
@@ -18,6 +19,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
@@ -32,6 +34,7 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -48,11 +51,17 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
+        # TODO docstrings
 
         self.data_path = data_path
         self.device = device
         self.metrics = metrics
         self.checkpointer = checkpointer
+
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter()
 
         self.client_name = self.generate_hash()
         self.initialized = False  # Whether or not the client has been setup
@@ -182,6 +191,8 @@ class BasicClient(NumPyClient):
         if self.wandb_reporter:
             self.wandb_reporter.shutdown_reporter()
 
+        self.metrics_reporter.add_to_metrics({"shutdown": datetime.datetime.now()})
+
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
@@ -234,6 +245,11 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
+        self.metrics_reporter.add_to_metrics_at_round(
+            current_server_round,
+            data={"fit_start": datetime.datetime.now()},
+        )
+
         self.set_parameters(parameters, config)
 
         if local_epochs is not None:
@@ -246,6 +262,14 @@ class BasicClient(NumPyClient):
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
+
+        self.metrics_reporter.add_to_metrics_at_round(
+            current_server_round,
+            data={
+                "metrics": metrics,
+                "loss_dict": loss_dict,
+            },
+        )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -270,8 +294,23 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
+        _, _, current_server_round = self.process_config(config)
+        self.metrics_reporter.add_to_metrics_at_round(
+            current_server_round,
+            data={"evaluate_start": datetime.datetime.now()},
+        )
+
         self.set_parameters(parameters, config)
         loss, metric_values = self.validate()
+
+        self.metrics_reporter.add_to_metrics_at_round(
+            current_server_round,
+            data={
+                "metrics": metric_values,
+                "loss": loss,
+            },
+        )
+
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -540,6 +579,8 @@ class BasicClient(NumPyClient):
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
+
+        self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
 
         self.initialized = True
 
