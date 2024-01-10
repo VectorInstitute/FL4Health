@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
@@ -31,6 +32,7 @@ class EvaluateClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
 
         # EvaluateClient does not call BasicClient constructor and sets attributes
@@ -56,6 +58,11 @@ class EvaluateClient(BasicClient):
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
         self.wandb_reporter = None
+
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter()
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -95,6 +102,9 @@ class EvaluateClient(BasicClient):
             self.global_model = None
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+
+        # TODO check if we should collect metrics here
+
         if not self.initialized:
             self.setup_client(config)
 

@@ -12,7 +12,6 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
-from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
@@ -40,11 +39,6 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarClient(
-        data_path=data_path,
-        metrics=[Accuracy("accuracy")],
-        device=DEVICE,
-        metrics_reporter=MetricsReporter(dump_at_every_step=True),
-    )
+    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()

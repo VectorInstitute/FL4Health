@@ -41,6 +41,9 @@ class EvaluateServer(Server):
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
                 Defaults to 1.
         """
+
+        # TODO check if we should collect metrics here
+
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path
