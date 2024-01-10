@@ -163,7 +163,7 @@ class FedPCA(BasicFedAvg):
         Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
         singular values are also shared.
 
-        The server then arranges the local PCs into a block matrix, then perform SVD.
+        The server then arranges the local PCs into a block matrix, then performs SVD.
 
         For example, if U_i denotes the matrix of PCs and S_i denotes the diagonal matrix of
         singular values for client i, and there are n clients, then merging is done by
@@ -235,18 +235,15 @@ class FedPCA(BasicFedAvg):
         """
         assert len(client_singular_values) >= 2
         if len(client_singular_values) == 2:
-            singular_values_diagonal_matrices = [
-                np.diag(singular_values_vector) for singular_values_vector in client_singular_values
-            ]
-            U1, S1 = client_singular_vectors[0], singular_values_diagonal_matrices[0]
-            U2, S2 = client_singular_vectors[1], singular_values_diagonal_matrices[1]
-            return self.merge_subspaces_qr_helper((U1, S1), (U2, S2))
+            U1, S1 = client_singular_vectors[0], np.diag(client_singular_values[0])
+            U2, S2 = client_singular_vectors[1], np.diag(client_singular_values[1])
+            return self.merge_two_subspaces_qr((U1, S1), (U2, S2))
         else:
             U, S = self.merge_subspaces_qr(client_singular_vectors[:-1], client_singular_values[:-1])
             U_last, S_last = client_singular_vectors[-1], client_singular_values[-1]
-            return self.merge_subspaces_qr_helper((U, np.diag(S)), (U_last, np.diag(S_last)))
+            return self.merge_two_subspaces_qr((U, np.diag(S)), (U_last, np.diag(S_last)))
 
-    def merge_subspaces_qr_helper(
+    def merge_two_subspaces_qr(
         self, subspace1: Tuple[NDArray, NDArray], subspace2: Tuple[NDArray, NDArray]
     ) -> Tuple[NDArray, NDArray]:
         U1, S1 = subspace1
