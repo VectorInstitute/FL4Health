@@ -58,14 +58,20 @@ class FlServer(Server):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         self.metrics_reporter.num_rounds = num_rounds
-        self.metrics_reporter.add_to_metrics(fit_start=datetime.datetime.now())
+        self.metrics_reporter.add_to_metrics({"fit_start": datetime.datetime.now()})
 
         history = super().fit(num_rounds, timeout)
         if self.wandb_reporter:
             # report history to W and B
             self.wandb_reporter.report_metrics(num_rounds, history)
 
-        self.metrics_reporter.add_to_metrics(fit_end=datetime.datetime.now())
+        self.metrics_reporter.add_to_metrics(
+            data={
+                "fit_end": datetime.datetime.now(),
+                "metrics_centralized": history.metrics_centralized,
+                "losses_centralized": history.losses_centralized,
+            }
+        )
 
         return history
 
@@ -74,7 +80,7 @@ class FlServer(Server):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
-        self.metrics_reporter.add_to_metrics_at_round(server_round, fit_start=datetime.datetime.now())
+        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"fit_start": datetime.datetime.now()})
 
         fit_round_results = super().fit_round(server_round, timeout)
 
@@ -82,8 +88,10 @@ class FlServer(Server):
             _, metrics_aggregated, _ = fit_round_results
             self.metrics_reporter.add_to_metrics_at_round(
                 server_round,
-                metrics_aggregated=metrics_aggregated,
-                fit_end=datetime.datetime.now(),
+                data={
+                    "metrics_aggregated": metrics_aggregated,
+                    "fit_end": datetime.datetime.now(),
+                },
             )
 
         return fit_round_results
@@ -159,7 +167,7 @@ class FlServer(Server):
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
 
-        self.metrics_reporter.add_to_metrics_at_round(server_round, evaluate_start=datetime.datetime.now())
+        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"evaluate_start": datetime.datetime.now()})
 
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
@@ -172,9 +180,11 @@ class FlServer(Server):
 
             self.metrics_reporter.add_to_metrics_at_round(
                 server_round,
-                metrics_aggregated=metrics_aggregated,
-                loss_aggregated=loss_aggregated,
-                evaluate_end=datetime.datetime.now(),
+                data={
+                    "metrics_aggregated": metrics_aggregated,
+                    "loss_aggregated": loss_aggregated,
+                    "evaluate_end": datetime.datetime.now(),
+                },
             )
 
         return eval_round_results
