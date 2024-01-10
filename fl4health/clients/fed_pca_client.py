@@ -42,6 +42,11 @@ class FedPCAClient(NumPyClient):
         return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        """
+        Sets the merged principal components transfered from the server.
+        Since federated PCA only runs for one round, the principal components obtained here
+        are in fact the final result, so they are saved locally by each client for downstream tasks.
+        """
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         self.save_model()
 
@@ -98,11 +103,12 @@ class FedPCAClient(NumPyClient):
         principal_components, singular_values = self.model(self.train_data_tensor, center_data)
         self.model.set_principal_components(principal_components, singular_values)
 
-        metrics: Dict[str, Scalar] = {}
         cumulative_explained_variance = self.model.compute_cumulative_explained_variance()
         explained_variance_ratios = self.model.compute_explained_variance_ratios()
-        metrics["cumulative_explained_variance"] = cumulative_explained_variance
-        metrics["top_explained_variance_ratio"] = explained_variance_ratios[0].item()
+        metrics: Dict[str, Scalar] = {
+            "cumulative_explained_variance": cumulative_explained_variance,
+            "top_explained_variance_ratio": explained_variance_ratios[0].item(),
+        }
         return (self.get_parameters(config), self.num_train_samples, metrics)
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]) -> Tuple[float, int, Dict[str, Scalar]]:
@@ -122,13 +128,12 @@ class FedPCAClient(NumPyClient):
             if "num_components_eval" in config.keys()
             else None
         )
-        val_data_tensor_prepared = self.model.centre_data(self.model.maybe_reshape(self.val_data_tensor)).to(
+        val_data_tensor_prepared = self.model.center_data(self.model.maybe_reshape(self.val_data_tensor)).to(
             self.device
         )
         reconstruction_loss = self.model.compute_reconstruction_error(val_data_tensor_prepared, num_components_eval)
         projection_variance = self.model.compute_projection_variance(val_data_tensor_prepared, num_components_eval)
-        metrics: Dict[str, Scalar] = {}
-        metrics["projection_variance"] = projection_variance
+        metrics: Dict[str, Scalar] = {"projection_variance": projection_variance}
         return (reconstruction_loss, self.num_val_samples, metrics)
 
     def save_model(self) -> None:

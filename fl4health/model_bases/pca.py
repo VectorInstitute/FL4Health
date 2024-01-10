@@ -1,4 +1,4 @@
-from logging import INFO
+from logging import INFO, WARNING
 from typing import Optional, Tuple
 
 import torch
@@ -9,17 +9,45 @@ from torch.nn.parameter import Parameter
 
 
 class PcaModule(nn.Module):
-    def __init__(self, low_rank: bool = True, full_svd: bool = False, rank_estimation: int = 6) -> None:
+    def __init__(self, low_rank: bool = False, full_svd: bool = False, rank_estimation: int = 6) -> None:
         """
         PyTorch module for performing Principal Component Analysis.
 
         Args:
-            low_rank (bool, optional): Indicates whether the data matrix is low-rank. If the user has
-             prior knowledge that it is, then this parameter can be set to True to allow for more efficient
-              computation of SVD. Defaults to True.
+            low_rank (bool, optional): Indicates whether the data matrix can be well-approximated
+            by a low-rank singular value decomposition. If the user has
+            good reasons to believe so, then this parameter can be set to True to allow for more efficient
+            computations. Defaults to False.
             full_svd (bool, optional): Indicates whether full SVD or reduced SVD is performed. Defaults to False.
-            rank_estimation (int, optional): An estimation of the rank of the data matrix.
+            rank_estimation (int, optional): A slight overestimation of the rank of the data matrix.
             Only used if self.low_rank is True. Defaults to 6.
+
+            Notes:
+              1. If low_rank is set to True, then a value q for rank_estimation is required
+              (either specified by the user or via its default value).
+              If q is too far away from the actual rank k of the data matrix, then the resulting
+              rank-q svd approximation is not guaranteed to be a good approximation of the data matrix.
+
+              2. If low_rank is set to True, then a value q for rank_estimation can be choosen
+              according to the following criteria:
+                in general,
+                k <= q <= min(2*k, m, n). For large low-rank
+                matrices, take q = k + l, where 5 <= l <= 10.
+                If k is relatively small compared to min(m, n), choosing
+                l = 0, 1, 2 may be sufficient.
+
+              3. If low_rank is set to True and rank_estimation is set to q, then the module will
+              utilize a randomized algorithm to compute a rank-q approximation of the data matrix via SVD.
+
+              For more details on this, see:
+                https://pytorch.org/docs/stable/generated/torch.svd_lowrank.html
+
+                and
+
+                https://pytorch.org/docs/stable/generated/torch.pca_lowrank.html
+
+                As per the official documentation of PyTorch, in general, the user should set low_rank to False.
+                Setting it to True would be useful for huge sparse matrices.
         """
         super().__init__()
         self.low_rank = low_rank
@@ -35,32 +63,39 @@ class PcaModule(nn.Module):
 
         Args:
             X (Tensor): Data matrix.
-            center_data (bool): If true, then the data mean will be subtracted from all data points prior to
-            performing PCA.
+            center_data (bool): If true, then the data mean will be subtracted
+            from all data points prior to performing PCA. If center_data is false,
+            it is expected that the data has already been centered and an exception
+            will be thrown if it is not.
 
         Returns:
-            Tuple[Tensor, Tensor]: The principal components (i.e., left singular vectors) and their corresponding
-            singular values.
+            Tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
+            and their corresponding singular values.
+
+        Note: the algorithm assumes that the first dimension of X is the "batch" dimension,
+        so the principal components, which are the eigenvectors of X.T @ X, are the right singular vectors.
         """
         X_prime = self.prepare_data_forward(X, center_data=center_data)
         if self.low_rank:
             log(INFO, "Assuming data matrix is low rank, using low-rank PCA implementation.")
-            q = min(self.rank_estimation, X_prime.size(0), X_prime.size(1))
-            _, S, V = torch.pca_lowrank(X_prime, q=q, center=False)
-            principal_components = V
+            m, n = X_prime.size(0), X_prime.size(1)
+            if self.rank_estimation > m or self.rank_estimation > n:
+                log(WARNING, "Estimate of data rank given by user is larger than the actual rank.")
+            q = min(self.rank_estimation, m, n)
+            _, singular_values, principal_components = torch.pca_lowrank(X_prime, q=q, center=False)
         else:
             if self.full_svd:
                 log(INFO, "Performing full SVD on data matrix.")
             else:
                 log(INFO, "Performing reduced SVD on data matrix.")
-            _, S, Vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
+            _, singular_values, Vh = torch.linalg.svd(X_prime, full_matrices=self.full_svd)
             principal_components = Vh.T
-        singular_values = S
         return principal_components, singular_values
 
     def maybe_reshape(self, X: Tensor) -> Tensor:
         """
-        Reshape input tensor X as needed so SVD can be computed.
+        Reshape input tensor X as needed so SVD can be computed. Reshaping is required
+        when each data point is an N-dimensional tensor because PCA requires X to be a 2D data matrix.
         """
         if len(X.size()) == 2:
             return torch.squeeze(X.float())
@@ -76,7 +111,7 @@ class PcaModule(nn.Module):
         """
         self.data_mean = torch.mean(X, dim=0)
 
-    def centre_data(self, X: Tensor) -> Tensor:
+    def center_data(self, X: Tensor) -> Tensor:
         assert self.data_mean is not None
         return X - self.data_mean
 
@@ -87,11 +122,11 @@ class PcaModule(nn.Module):
         X = self.maybe_reshape(X)
         if center_data:
             self.set_data_mean(X)
-            return self.centre_data(X)
+            return self.center_data(X)
         else:
             return X
 
-    def project_lower_dim(self, X: Tensor, k: Optional[int] = None) -> Tensor:
+    def project_lower_dim(self, X: Tensor, k: Optional[int] = None, center_data: bool = False) -> Tensor:
         """
         Project input data X onto the top k principal components.
 
@@ -100,11 +135,16 @@ class PcaModule(nn.Module):
             k (Optional[int], optional): The number of principal components
             onto which projection is done. If none, then all principal components will
             be used in the projection. Defaults to None.
+            center_data (bool): If true, then the *training* data mean (learned in the forward pass)
+            will be subtracted from all data points prior to projection.
+            If center_data is false, it is expected that the data has already been centered in this manner.
 
         Returns:
             Tensor: Projection result.
         """
         X_prime = self.maybe_reshape(X)
+        if center_data:
+            X_prime = self.center_data(X)
         if k:
             return torch.matmul(X_prime, self.principal_components[:, :k])
         else:
