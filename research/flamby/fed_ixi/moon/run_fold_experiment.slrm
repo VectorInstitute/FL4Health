@@ -7,10 +7,11 @@
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 #SBATCH --partition=a40
-#SBATCH --qos=normal
+#SBATCH --qos=m
 #SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
+#SBATCH --time=12:00:00
 
 ###############################################
 # Usage:
@@ -21,7 +22,8 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
-#   server_address
+#   server_address \
+#   client_mu
 #
 # Example:
 # sbatch research/flamby/fed_ixi/moon/run_fold_experiment.slrm \
@@ -30,7 +32,8 @@
 #   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
-#   0.0.0.0:8080
+#   0.0.0.0:8080 \
+#   0.1
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -63,11 +66,13 @@ DATASET_DIR=$3
 VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
+CLIENT_MU=$7
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+SEEDS=(2021 2022 2023 2024 2025)
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -81,8 +86,10 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-for RUN_NAME in "${RUN_NAMES[@]}";
+for ((i=0; i<${#RUN_NAMES[@]}; i++));
 do
+    RUN_NAME="${RUN_NAMES[i]}"
+    SEED="${SEEDS[i]}"
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
     echo "Starting Run and logging artifcats at ${RUN_DIR}"
@@ -116,7 +123,10 @@ do
 
     nohup python -m research.flamby.fed_ixi.moon.server \
         --config_path ${SERVER_CONFIG_PATH} \
+        --artifact_dir ${ARTIFACT_DIR} \
+        --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
+        --seed ${SEED} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -138,6 +148,8 @@ do
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
+            --seed ${SEED} \
+            --mu ${CLIENT_MU} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

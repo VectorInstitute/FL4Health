@@ -8,7 +8,7 @@ where $\Vert \cdot \Vert_2$ is the $l_2$ norm. This term essentially restricts t
 
 In this demo, FedProx is applied to a modified version of the MNIST dataset that is non--IID. The FL server expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client has it's own modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties of the clients training/validation data. In theory, the models should be able to perform well on their local data while learning from other clients data that has different statistical properties. The proportion of labels at each client is determined by dirichlet distribtuion across the classes. The lower the beta parameter is for each class, the higher the degree of the label heterogeneity.
 
-The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization.
+The server has some custom metrics aggregation and uses FedProx as its server-side optimization.
 
 ### Weights and Biases Reporting
 

@@ -36,6 +36,18 @@ class ToyConvNet(nn.Module):
             self.bn1 = nn.BatchNorm1d(10)
 
 
+class ToyConvNet_2(nn.Module):
+    def __init__(self, include_bn: bool = False) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 8, 5, bias=False)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(8, 32, 5, bias=False)
+        self.fc1 = nn.Linear(32 * 4 * 4, 120, bias=False)
+        self.fc2 = nn.Linear(240, 64, bias=False)
+        if include_bn:
+            self.bn1 = nn.BatchNorm1d(10)
+
+
 class SmallCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()

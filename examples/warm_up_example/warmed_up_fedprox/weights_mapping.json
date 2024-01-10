@@ -1,0 +1,6 @@
+{
+    "conv1":"conv1",
+    "conv2": "conv2",
+    "fc1": "fc1",
+    "fc2": "fc2"
+}

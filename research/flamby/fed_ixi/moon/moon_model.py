@@ -10,6 +10,8 @@ from research.flamby.utils import shutoff_batch_norm_tracking
 
 class HeadClassifier(nn.Module):
     def __init__(self, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0) -> None:
+        super().__init__()
+
         # We're doing 3D segmentation, so hardcode
         dimensions = 3
         # Binary segmentation so out_classes = 2
@@ -27,11 +29,11 @@ class HeadClassifier(nn.Module):
         # Classifier
         # Standard UNet concatenates the channels from the first conv layer (residual connection) and the upsampled
         # embeddings from the full-forward process of the U-Net.
-        single_stack_in_channels = out_channels_first_layer
+        single_stack_in_channels = 2 * out_channels_first_layer
 
         self.classifier = ConvolutionalBlock(
             dimensions,
-            in_channels=2 * single_stack_in_channels,
+            in_channels=single_stack_in_channels,
             out_channels=out_classes,
             kernel_size=1,
             activation=None,
@@ -58,13 +60,12 @@ class BaseUNetFeatureExtractor(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.base_model(x)
-        x = x.flatten(start_dim=1)
         return x
 
 
 class FedIxiMoonModel(MoonModel):
     def __init__(
-        self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8, monte_carlo_dropout: float = 0.0
+        self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 12, monte_carlo_dropout: float = 0.0
     ) -> None:
         # FedIXI out_channels_first_layer = 8 is the Baseline model default. So we use it here. The monte carlo dropout
         # is also set to 0 by default for FedIXI
