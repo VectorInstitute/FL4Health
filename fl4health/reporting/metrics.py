@@ -43,6 +43,7 @@ class MetricsReporter:
 
             if round - 1 < 0:
                 log(ERROR, f"MetricsReporter: round value is invalid ({round})")
+                return
 
             self.metrics["rounds"][round - 1].update(data)
 
