@@ -50,8 +50,9 @@ class BasicClient(NumPyClient):
                 each batch. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
-        # TODO docstrings
 
         self.data_path = data_path
         self.device = device

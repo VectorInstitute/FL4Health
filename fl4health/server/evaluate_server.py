@@ -43,10 +43,9 @@ class EvaluateServer(Server):
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
                 Defaults to 1.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
-
-        # TODO docstrings
-
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
         self.model_checkpoint_path = model_checkpoint_path
