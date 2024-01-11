@@ -72,8 +72,10 @@ class PcaModule(nn.Module):
             Tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
             and their corresponding singular values.
 
-        Note: the algorithm assumes that the first dimension of X is the "batch" dimension,
-        so the principal components, which are the eigenvectors of X.T @ X, are the right singular vectors.
+        Note: the algorithm assumes that the first dimension of the data matrix is the "batch" dimension.
+        That is, the rows of X_prime are the data points.
+        Consequently, the principal components, which are the eigenvectors of X_prime.T @ X_prime,
+        are the right singular vectors in the SVD of X_prime.
         """
         X_prime = self.prepare_data_forward(X, center_data=center_data)
         if self.low_rank:
