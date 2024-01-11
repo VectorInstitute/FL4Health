@@ -1,19 +1,4 @@
-#    Copyright 2020 Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany
-#
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
-from research.picai.single_threaded_augmenter import SingleThreadedAugmenter
-from research.picai.multi_threaded_augmenter import MultiThreadedAugmenter
+from batchgenerators.dataloading.data_loader import DataLoader
 from batchgenerators.transforms.abstract_transforms import Compose
 from batchgenerators.transforms.color_transforms import BrightnessMultiplicativeTransform, ContrastAugmentationTransform, BrightnessTransform
 from batchgenerators.transforms.color_transforms import GammaTransform
@@ -21,13 +6,12 @@ from batchgenerators.transforms.noise_transforms import GaussianNoiseTransform, 
 from batchgenerators.transforms.resample_transforms import SimulateLowResolutionTransform
 from batchgenerators.transforms.spatial_transforms import SpatialTransform, MirrorTransform
 from batchgenerators.transforms.utility_transforms import NumpyToTensor
-try:
-    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
-except ImportError:
-    NonDetMultiThreadedAugmenter = None
 
 import numpy as np
+from typing import Dict, Optional, Sequence, Union
 
+from research.picai.single_threaded_augmenter import SingleThreadedAugmenter
+from research.picai.multi_threaded_augmenter import MultiThreadedAugmenter
 
 default_3D_augmentation_params = {
 
@@ -62,13 +46,30 @@ default_3D_augmentation_params = {
 }
 
 
-def apply_augmentations(dataloader, params=default_3D_augmentation_params, patch_size=None, num_threads=1,
-                        border_val_seg=-1, seeds_train=None, seeds_val=None, order_seg=1, order_data=3, disable=False,
-                        pin_memory=False, use_multithreading=True, use_nondetMultiThreadedAugmenter: bool = False):
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+def apply_augmentations(dataloader: DataLoader, params: Dict = default_3D_augmentation_params, patch_size: Optional[int] = None, num_threads: int = 1,
+                        border_val_seg: int = -1, seeds_train: Optional[Sequence[int]] = None, order_seg: int = 1, order_data: int = 3, disable: bool = False,
+                        pin_memory: bool = False, use_multithreading: bool = True) -> Union[SingleThreadedAugmenter, MultiThreadedAugmenter]:
+    """
+    Apply augmentions to an already initialized batchgenerators DataLoader instance and return the resulting DataLoader.
+
+    Args:
+        dataloader (DataLoader): batchgenerator DataLoader.
+        params (Dict[str, Any]): Dictionary of parameters that configure the transformations to be applied.
+        patch_size (Optional[int]): TODO: Figure out what this is.
+        num_threads (int): The number of threads to dedicated to loading data.
+        border_val_seg (int): TODO: Figure out what this is.
+        seeds_train (Optional[List[int]]): A list of seeds to sample from training.
+        order_seg (int): TODO: Figure what this is.
+        order_data (int): TODO: Figure what this is.
+        disable (bool): TODO Figure what this is.
+        pin_memory (bool): Whether or not to put fetched tensors into pinned memory (enables faster data transfer to CUDA-enabled GPUs).
+        use_multithreading (book) Whether or not to use multithreading in data loading.
+
+    Returns: 
+       Union[SingleThreadedAugmenter, MultiThreadedAugmenter]: A batch generator generated from the DataLoader with the specified transformations applied.
+    """
     # initialize list for train-time transforms
     tr_transforms = []
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
     if not disable:
         # morphological spatial transforms
         tr_transforms.append(SpatialTransform(patch_size,
@@ -94,7 +95,7 @@ def apply_augmentations(dataloader, params=default_3D_augmentation_params, patch
                                               p_scale_per_sample=params.get("p_scale"),
                                               p_rot_per_sample=params.get("p_rot"),
                                               independent_scale_for_each_axis=params.get("independent_scale_factor_for_each_axis")))
-        # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
         # intensity transforms
         tr_transforms.append(GaussianNoiseTransform(p_per_sample=0.1))
         tr_transforms.append(GaussianBlurTransform((0.5, 1.), different_sigma_per_channel=True, p_per_sample=0.2, p_per_channel=0.5))
@@ -118,29 +119,20 @@ def apply_augmentations(dataloader, params=default_3D_augmentation_params, patch
             tr_transforms.append(
                 GammaTransform(params.get("gamma_range"), False, True, retain_stats=params.get("gamma_retain_stats"),
                                p_per_sample=params["p_gamma"]))
-        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+
         # flipping transform (reserved for last in order)
         if params.get("do_mirror") or params.get("mirror"):
             tr_transforms.append(MirrorTransform(params.get("mirror_axes")))
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # convert NumPy -> PyTorch tensors
+
+    # convert from numpy to torch 
     tr_transforms.append(NumpyToTensor(['data', 'seg'], 'float'))
     tr_transforms = Compose(tr_transforms)
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-    # multi-threaded augmenter (non-deterministic, if available)
+
+    # Determine if using SingleThreadedAugmenter or MultThreadedAugmenter
     if use_multithreading and num_threads > 1:
-        if use_nondetMultiThreadedAugmenter:
-            if NonDetMultiThreadedAugmenter is None:
-                raise RuntimeError('NonDetMultiThreadedAugmenter is not yet available')
-            batchgenerator_train = NonDetMultiThreadedAugmenter(dataloader, tr_transforms, num_threads,
-                                                                num_threads, seeds=seeds_train,
-                                                                pin_memory=pin_memory)
-        else:
-            batchgenerator_train = MultiThreadedAugmenter(dataloader, tr_transforms, num_threads,
+        batchgenerator_train = MultiThreadedAugmenter(dataloader, tr_transforms, num_threads,
                                                           num_threads, seeds=seeds_train, 
                                                           pin_memory=pin_memory)
     else:
         batchgenerator_train = SingleThreadedAugmenter(dataloader, tr_transforms)
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
     return batchgenerator_train
-    # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
