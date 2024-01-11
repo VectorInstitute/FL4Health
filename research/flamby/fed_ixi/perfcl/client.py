@@ -113,11 +113,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--no_federated_checkpointing",
-        action="store_true",
-        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -137,6 +132,11 @@ if __name__ == "__main__":
         type=float,
         help="Weights for the Perfcl loss mentioned in paper",
         required=False,
+    )
+    parser.add_argument(
+        "--no_federated_checkpointing",
+        action="store_true",
+        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
     )
     args = parser.parse_args()
 
