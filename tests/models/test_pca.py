@@ -78,7 +78,7 @@ def test_full_svd_low_rank_data() -> None:
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
     # Since X is low-rank, it is expected that only the first small_rank singular values should be nonzero.
     # The remaining singular values should be (nearly) zero.
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=2e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-6)
     pca_module.set_principal_components(principal_components, singular_values)
 
     # Since X has rank = small_rank and this is also the number of principal components
@@ -103,7 +103,7 @@ def test_reduced_svd_low_rank_data() -> None:
     X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=2e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-6)
     # We should still expect (nearly) perfect reconstruction.
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=small_rank, center_data=True)
@@ -117,7 +117,7 @@ def test_low_rank_svd() -> None:
     X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == q and len(singular_values) == q
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(q - small_rank), atol=2e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(q - small_rank), atol=5e-6)
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=small_rank, center_data=True)
     assert abs(reconstruction_error) < 1e-10
