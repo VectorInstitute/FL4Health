@@ -79,7 +79,6 @@ def main():
         optimizer = torch.optim.Adam(params=model.parameters(), lr=args.base_lr, amsgrad=True)
         # --------------------------------------------------------------------------------------------------------------------------
         # training loop
-        writer = SummaryWriter()
 
         # resume or restart training model, based on whether checkpoint exists
         model, optimizer, tracking_metrics = resume_or_restart_training(
