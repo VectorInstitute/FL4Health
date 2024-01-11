@@ -152,35 +152,55 @@ class PcaModule(nn.Module):
         else:
             return torch.matmul(X_prime, self.principal_components)
 
-    def project_back(self, X_lower_dim: Tensor) -> Tensor:
+    def project_back(self, X_lower_dim: Tensor, add_mean: bool = False) -> Tensor:
         """
         Project low-dimensional principal representations back into the original space
         to recover the reconstruction of data points.
+
+        Args:
+            X_lower_dim (Tensor): Matrix whose rows are low-dimensional principal representations
+            of the original data.
+            add_mean (bool, optional): Indicates whether the training data mean should be
+            added to the projection result. This can be set to True if the user centered
+            the data prior to dimensionality reduction and now wish to
+            add back the data mean. Defaults to False.
+
+        Returns:
+            Tensor: Reconstruction of data points.
         """
         X_lower_dim_prime = self.maybe_reshape(X_lower_dim)
         k = X_lower_dim.size(1)
-        return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
+        if add_mean:
+            assert self.data_mean is not None
+            return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T) + self.data_mean
+        else:
+            return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
 
-    def compute_reconstruction_error(self, X: Tensor, k: Optional[int]) -> float:
+    def compute_reconstruction_error(self, X: Tensor, k: Optional[int], center_data: bool = False) -> float:
         """
         Compute the reconstruction error of X under PCA reconstruction.
 
-        More precisely, if X is n by d, and U is the matrix whose columns are the
+        More precisely, if X is N by d, and U is the matrix whose columns are the
         k principal components of X (thus U is d by k), then the reconstruction loss
         is defined as
-            1 / n * | X @ U @ U.T - X| ** 2.
+            1 / N * | X @ U @ U.T - X| ** 2.
 
         Args:
-            X (Tensor): input data tensor whose rows represent data points.
-            k (Optional[int]): the number of principal components onto which
+            X (Tensor): Input data tensor whose rows represent data points.
+            k (Optional[int]): The number of principal components onto which
                 projection is applied.
+            center_data (bool): Indicates whether to subtract data mean prior to
+            projecting the data into a lower-dimensional subspace, and whether to add
+            the data mean after projecting back.
         Returns:
             float: reconstruction loss as defined above.
         """
         N = X.size(0)
-        return (torch.linalg.norm(self.project_back(self.project_lower_dim(X, k)) - X) ** 2).item() / N
+        X_lower_dim = self.project_lower_dim(X, k, center_data=center_data)
+        reconstruction = self.project_back(X_lower_dim, add_mean=center_data)
+        return (torch.linalg.norm(reconstruction - X) ** 2).item() / N
 
-    def compute_projection_variance(self, X: Tensor, k: Optional[int]) -> float:
+    def compute_projection_variance(self, X: Tensor, k: Optional[int], center_data: bool = False) -> float:
         """
         Compute the variance of the data matrix X after projection via PCA.
 
@@ -195,7 +215,7 @@ class PcaModule(nn.Module):
         Returns:
             float: variance after projection as defined above.
         """
-        return (torch.linalg.norm(self.project_lower_dim(X, k)) ** 2).item()
+        return (torch.linalg.norm(self.project_lower_dim(X, k, center_data)) ** 2).item()
 
     def compute_cumulative_explained_variance(self) -> float:
         return torch.sum(self.singular_values**2).item()
