@@ -1,20 +1,7 @@
-# Copyright 2021 Division of Medical Image Computing, German Cancer Research Center (DKFZ)
-# and Applied Computer Vision Lab, Helmholtz Imaging Platform
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+from __future__ import annotations
+import torch
 import traceback
-from typing import List, Union
+from typing import List, Union, Callable, Any
 import threading
 from multiprocessing import Process, Queue
 from queue import Queue as thrQueue
@@ -24,14 +11,47 @@ import logging
 from multiprocessing import Event
 from time import sleep, time
 from threadpoolctl import threadpool_limits
+from batchgenerators.data_loading.data_loader import DataLoader
 
-try:
-    import torch
-except ImportError:
-    torch = None
+# TODO: Clean up documentation and return types.
+class SingleThreadedAugmenter(object):
+    def __init__(self, data_loader: DataLoader, transform: Callable) -> None:
+        """
+        Simple Single Threaded Batch Generator that loads data in main process (does not spawn background processes). 
+        The SingleThreadedAugmenter is useful for debugging purposes. If you want a generator that uses background
+        processes, use MultiThreadedAugmenter.
 
+        Args:
+            data_loader (generator or DataLoaderBase instance): Your data loader. Must have a .next() function and return
+            a dict that complies with our data structure
+            transform (Transform instance): Any of our transformations. If you want to use multiple transformations then
+            use our Compose transform! Can be None (in that case no transform will be applied)
+        """
+        self.data_loader = data_loader
+        self.transform = transform
 
-def producer(queue, data_loader, transform, thread_id, seed, abort_event, wait_time: float = 0.02):
+    def __iter__(self) -> SingleThreadedAugmenter:
+        return self
+
+    def __next__(self) -> Any:
+        item = next(self.data_loader)
+        if self.transform is not None:
+            item = self.transform(**item)
+        return item
+
+    def next(self) -> None:
+        """
+        Returns the next batch of data in the data_loader iterable.
+
+        Returns:
+            Any: Batch of data.
+        """
+        return self.__next__()
+
+def producer(queue: thrQueue, data_loader: DataLoader, transform: Callable, thread_id: int, seed: int, abort_event: bool, wait_time: float = 0.02):
+    """
+    Maintain a queue of threads that apply transformations to data as its loaded.
+    """
     np.random.seed(seed)
     data_loader.set_thread_id(thread_id)
     item = None
@@ -67,8 +87,13 @@ def producer(queue, data_loader, transform, thread_id, seed, abort_event, wait_t
         return
 
 
+# TODO: Refine type annotations and documentation.
 def results_loop(in_queues: List[Queue], out_queue: thrQueue, abort_event: Event, pin_memory: bool,
                  gpu: Union[int, None], wait_time: float, worker_list: list):
+    """
+    Loop through dataloader, spawn threads to fetch data and apply transformations and store results.
+    """
+
     do_pin_memory = torch is not None and pin_memory and gpu is not None and torch.cuda.is_available()
 
     if do_pin_memory:
@@ -126,31 +151,32 @@ def results_loop(in_queues: List[Queue], out_queue: thrQueue, abort_event: Event
             abort_event.set()
             raise KeyboardInterrupt
 
-
+# TODO: Refine documentation and type annotations.
 class MultiThreadedAugmenter(object):
-    """ Makes your pipeline multi threaded. Yeah!
-    If seeded we guarantee that batches are retunred in the same order and with the same augmentation every time this
-    is run. This is realized internally by using une queue per worker and querying the queues one ofter the other.
-    Args:
-        data_loader (generator or DataLoaderBase instance): Your data loader. Must have a .next() function and return
-        a dict that complies with our data structure
-        transform (Transform instance): Any of our transformations. If you want to use multiple transformations then
-        use our Compose transform! Can be None (in that case no transform will be applied)
-        num_processes (int): number of processes
-        num_cached_per_queue (int): number of batches cached per process (each process has its own
-        multiprocessing.Queue). We found 2 to be ideal.
-        seeds (list of int): one seed for each worker. Must have len(num_processes).
-        If None then seeds = range(num_processes)
-        pin_memory (bool): set to True if all torch tensors in data_dict are to be pinned. Pytorch only.
-        timeout (int): How long do we wait for the background workers to do stuff? If timeout seconds have passed and
-        self.__get_next_item still has not gotten an item from the workers we will perform a check whether all
-        background workers are still alive. If all are alive we wait, if not we set the abort flag.
-        wait_time (float): set this to be lower than the time you need per iteration. Don't set this to 0,
-        that will come with a performance penalty. Default is 0.02 which will be fine for 50 iterations/s
-    """
+    def __init__(self, data_loader: DataLoader, transform: Callable, num_processes: int, num_cached_per_queue: int = 2, seeds: List[int] = None, pin_memory: bool = False,
+                 timeout: int = 10, wait_time: float = 0.02) -> None:
+        """
+        Makes specified DataLoading pipeline multithreaded.
+        If seeded we guarantee that batches are retunred in the same order and with the same augmentation every time this
+        is run. This is realized internally by using une queue per worker and querying the queues one ofter the other.
 
-    def __init__(self, data_loader, transform, num_processes, num_cached_per_queue=2, seeds=None, pin_memory=False,
-                 timeout=10, wait_time=0.02):
+        Args:
+            data_loader (generator or DataLoaderBase instance): Your data loader. Must have a .next() function and return
+                a dict that complies with our data structure
+            transform (Callable): Any of our transformations. If you want to use multiple transformations then
+                use our Compose transform! Can be None (in that case no transform will be applied)
+            num_processes (int): number of processes
+            num_cached_per_queue (int): number of batches cached per process (each process has its own
+            multiprocessing.Queue). We found 2 to be ideal.
+            seeds (Sequence[int]): one seed for each worker. Must have len(num_processes).
+                If None then seeds = range(num_processes)
+            pin_memory (bool): set to True if all torch tensors in data_dict are to be pinned. Pytorch only.
+            timeout (int): How long do we wait for the background workers to do stuff? If timeout seconds have passed and
+                self.__get_next_item still has not gotten an item from the workers we will perform a check whether all
+                background workers are still alive. If all are alive we wait, if not we set the abort flag.
+            wait_time (float): set this to be lower than the time you need per iteration. Don't set this to 0,
+                that will come with a performance penalty. Default is 0.02 which will be fine for 50 iterations/s
+        """
         self.timeout = timeout
         self.pin_memory = pin_memory
         self.transform = transform
@@ -172,13 +198,13 @@ class MultiThreadedAugmenter(object):
         self.wait_time = wait_time
         self.was_initialized = False
 
-    def __iter__(self):
+    def __iter__(self) -> MultiThreadedAugmenter:
         return self
 
-    def next(self):
+    def next(self) -> Any:
         return self.__next__()
 
-    def __get_next_item(self):
+    def __get_next_item(self) -> Any:
         item = None
 
         while item is None:
@@ -192,7 +218,7 @@ class MultiThreadedAugmenter(object):
 
         return item
 
-    def __next__(self):
+    def __next__(self) -> Any:
         if not self.was_initialized:
             self._start()
 
@@ -217,7 +243,7 @@ class MultiThreadedAugmenter(object):
             self._finish()
             raise KeyboardInterrupt
 
-    def _start(self):
+    def _start(self) -> None:
         if not self.was_initialized:
             self._finish()
             self.abort_event.clear()
@@ -257,7 +283,7 @@ class MultiThreadedAugmenter(object):
             logging.debug("MultiThreadedGenerator Warning: start() has been called but it has already been "
                           "initialized previously")
 
-    def _finish(self, timeout=10):
+    def _finish(self, timeout: float = 10) -> None:
         self.abort_event.set()
 
         start = time()
@@ -281,11 +307,11 @@ class MultiThreadedAugmenter(object):
             del self.pin_memory_queue
         self.was_initialized = False
 
-    def restart(self):
+    def restart(self) -> None:
         self._finish()
         self._start()
 
 # << Not Required in Dockerized Setup >>
-    def __del__(self):
+    def __del__(self) -> None:
         logging.debug("MultiThreadedGenerator: destructor was called")
         self._finish()
