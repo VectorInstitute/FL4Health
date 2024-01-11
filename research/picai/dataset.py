@@ -1,14 +1,3 @@
-# Copyright 2020 - 2021 MONAI Consortium
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#     http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 from typing import Any, Callable, Optional, Sequence
 import numpy as np
 from torch.utils.data import Dataset
@@ -22,14 +11,6 @@ from numpy import typing as npt
 
 class SimpleITKDataset(Dataset, Randomizable):
     """
-    Loads image/segmentation pairs of files from the given filename lists. Transformations can be specified
-    for the image and segmentation arrays separately.
-    The difference between this dataset and `ArrayDataset` is that this dataset can apply transform chain to images
-    and segs and return both the images and metadata, and no need to specify transform to load images from files.
-    For more information, please see the image_dataset demo in the MONAI tutorial repo,
-    https://github.com/Project-MONAI/tutorials/blob/master/modules/image_dataset.ipynb
-
-    Also performs instance-wise z-score normalization of all MRI sequences before concatenation.
     """
 
     def __init__(
@@ -39,23 +20,23 @@ class SimpleITKDataset(Dataset, Randomizable):
         labels: Optional[Sequence[float]] = None,
         transform: Optional[Callable] = None,
         seg_transform: Optional[Callable] = None,
-        dtype: DtypeLike = np.float32,
 
     ) -> None:
         """
-        Initializes the dataset with the image and segmentation filename lists. The transform `transform` is applied
-        to the images and `seg_transform` to the segmentations.
+        Loads image/segmentation pairs of files from the given filename lists. Transformations canbe specified for the image and segmentation arrays separately. The difference between thisdataset and `ArrayDataset` is that this dataset can apply transform chain to images
+        and segs and return both the images and metadata, and no need to specify transform to loadimages from files. For more information, please see the image_dataset demo in the MONAI tutorial repo, https://github.com/Project-MONAI/tutorials/blob/master/modules/image_dataset.ipynb. Also performs instance-wise z-score normalization of all MRI sequences before concatenation. Initializes the dataset with the image and segmentation filename lists. The transform `transform` is applied to the images and `seg_transform` to the segmentations.
 
         Args:
-            image_files: list of image filenames
-            seg_files: if in segmentation task, list of segmentation filenames
-            labels: if in classification task, list of classification labels
-            transform: transform to apply to image arrays
-            seg_transform: transform to apply to segmentation arrays
-            dtype: if not None convert the loaded image to this data type
+            image_files (Sequence[str]): List of image filenames.
+            seg_files (Optional[Sequence[str]]): List of segmentation filenames.
+                If not None, presume segmentation task.
+            labels (Optional[Sequence[float]]: List of classification labels.
+                If not None, presume classification task.
+            transform (Callable): Transform to apply to image arrays.
+            seg_transform (Callable): Transform to apply to segmentation arrays
 
         Raises:
-            ValueError: When ``seg_files`` length differs from ``image_files``
+            ValueError: When seg_files length differs from image_files.
 
         """
 
@@ -74,19 +55,53 @@ class SimpleITKDataset(Dataset, Randomizable):
         self._seed = 0  # transform synchronization seed
 
     def __len__(self) -> int:
+        """
+        Returns length of the dataset.
+
+        Returns:
+            int: Length of dataset.
+        """
         return len(self.image_files)
 
     def randomize(self, data: Optional[Any] = None) -> None:
+        """
+        Samples and sets random seed for Dataset.
+
+        Args:
+            data (Optional[Any]]): Unused argument for compatibiliy
+                with Randomizable whih this class extends.
+        """
         self._seed = self.R.randint(MAX_SEED, dtype="uint32")
 
     def prepare_scan(self, path: str) -> "npt.NDArray[Any]":
+        """
+        Loads ITK image given by path into a Numpy Array with desired
+        type and dimensionality.
+
+        Args:
+            path (str): Path to the ITK data.
+
+        Returns:
+            "npt.NDArray[Any]": Numpy Array representing ITK Image.
+        """
         return np.expand_dims(
             sitk.GetArrayFromImage(
                 sitk.ReadImage(path)
             ).astype(np.float32), axis=(0, 1)
         )
 
-    def __getitem__(self, index: int):
+    # TODO: Pin down return type once accepted types have been established. 
+    def __getitem__(self, index: int) -> Any:
+        """
+        Loads data, and label if applicable, corresponding to the index argument,
+        applies transformations and returns sample.
+
+        Args:
+            index (int): Index of sample to retrieve.
+
+        Returns:
+            Any: Sample with optional corresponding segmentation mask and label.
+        """
         self.randomize()
         seg, label = None, None
 
