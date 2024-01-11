@@ -40,6 +40,9 @@ if __name__ == "__main__":
     components_save_path = Path(args.components_save_path)
     seed = args.seed
 
+    # If the user wants to ensure that this example uses the same data as
+    # the data used in the dim_reduction example, then both examples
+    # should use the same random seed.
     set_all_random_seeds(seed)
     client = MnistFedPCAClient(data_path=data_path, device=DEVICE, model_save_path=components_save_path)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)

@@ -73,6 +73,9 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     seed = args.seed
 
+    # If the user wants to ensure that this example uses the same data as
+    # the data used in the perform_pca example, then both examples
+    # should use the same random seed.
     set_all_random_seeds(seed)
     client = MnistFedPcaClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
