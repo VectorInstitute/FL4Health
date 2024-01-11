@@ -173,8 +173,6 @@ class FedPCA(BasicFedAvg):
 
         where the new (left) singular vectors are returned as the merging result.
 
-        This implementation assumes that the *columns* of U_i are the PCs.
-
         If
 
         U @ S @ V.T = B
@@ -192,6 +190,19 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+
+        Note:
+            This method assumes that the *columns* of U_i's are the local principal components.
+            Thus, after performing SVD on the matrix B (defined above), the merging result is the
+            *left* singular vectors.
+
+            This is in contrast with the client-side implementation of PCA
+            (contained in class PcaModule), which assumes that the *rows* of the
+            input data matrix are the data points.
+            Hence, in PcaModule, the *right* singular vectors of the SVD of
+            each client's data matrix are the principal components.
+
+            (In a nutshell, the input data matrices in these two cases are "transposes" of each other.)
         """
         X = [U @ np.diag(S) for U, S in zip(client_singular_vectors, client_singular_values)]
         svd_input = np.concatenate(X, axis=1)
@@ -232,6 +243,10 @@ class FedPCA(BasicFedAvg):
 
         Returns:
             Tuple[NDArray, NDArray]: merged PCs and corresponding singular values.
+
+        Note:
+            Similar to merge_subspaces_svd, this method assumes that the *columns* of U_i's are
+            the local principal components.
         """
         assert len(client_singular_values) >= 2
         if len(client_singular_values) == 2:

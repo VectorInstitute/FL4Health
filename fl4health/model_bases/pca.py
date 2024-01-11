@@ -72,8 +72,7 @@ class PcaModule(nn.Module):
             Tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
             and their corresponding singular values.
 
-        Note: the algorithm assumes that the first dimension of the data matrix is the "batch" dimension.
-        That is, the rows of X_prime are the data points.
+        Note: the algorithm assumes that the rows of X_prime are the data points.
         Consequently, the principal components, which are the eigenvectors of X_prime.T @ X_prime,
         are the right singular vectors in the SVD of X_prime.
         """
@@ -133,16 +132,21 @@ class PcaModule(nn.Module):
         Project input data X onto the top k principal components.
 
         Args:
-            X (Tensor): Input Data.
+            X (Tensor): Input data matrix whose rows are the data points.
             k (Optional[int], optional): The number of principal components
-            onto which projection is done. If none, then all principal components will
+            onto which projection is done. If k is None, then all principal components will
             be used in the projection. Defaults to None.
             center_data (bool): If true, then the *training* data mean (learned in the forward pass)
             will be subtracted from all data points prior to projection.
-            If center_data is false, it is expected that the data has already been centered in this manner.
+            If center_data is false, it is expected that the data has already been centered in this manner by the user.
 
         Returns:
             Tensor: Projection result.
+
+        Note:
+            The result of projection (after centering) is X @ U because this method
+            assumes that the rows of X are the data points while the columns
+            of U are the principal components.
         """
         X_prime = self.maybe_reshape(X)
         if center_data:
@@ -180,9 +184,9 @@ class PcaModule(nn.Module):
         """
         Compute the reconstruction error of X under PCA reconstruction.
 
-        More precisely, if X is N by d, and U is the matrix whose columns are the
-        k principal components of X (thus U is d by k), then the reconstruction loss
-        is defined as
+        More precisely, if X is an N by d data matrix whose *rows* are the data points,
+        and U is the matrix whose *columns* are the principal components of X, then the reconstruction
+        loss is defined as
             1 / N * | X @ U @ U.T - X| ** 2.
 
         Args:
@@ -194,6 +198,10 @@ class PcaModule(nn.Module):
             the data mean after projecting back.
         Returns:
             float: reconstruction loss as defined above.
+
+        Note:
+            The reconstruction (after centering) is X @ U @ U.T because this method assumes that the rows
+            of X are the data points while the columns of U are the principal components.
         """
         N = X.size(0)
         X_lower_dim = self.project_lower_dim(X, k, center_data=center_data)
