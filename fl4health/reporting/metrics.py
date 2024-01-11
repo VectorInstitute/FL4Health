@@ -13,7 +13,6 @@ class MetricsReporter:
         self,
         run_id: Optional[str] = None,
         output_folder: str = "metrics",
-        dump_at_every_step: bool = False,
     ):
         # TODO docstrings
         if run_id is not None:
@@ -22,15 +21,11 @@ class MetricsReporter:
             self.run_id = str(uuid.uuid4())
 
         self.output_folder = output_folder
-        self.dump_at_every_step = dump_at_every_step
         self.metrics: Dict[str, Any] = {}
 
     def add_to_metrics(self, data: Dict[str, Any]) -> None:
         # TODO docstrings
         self.metrics.update(data)
-
-        if self.dump_at_every_step:
-            self.dump()
 
     def add_to_metrics_at_round(self, round: int, data: Dict[str, Any]) -> None:
         # TODO docstrings
@@ -41,9 +36,6 @@ class MetricsReporter:
             self.metrics["rounds"][round] = {}
 
         self.metrics["rounds"][round].update(data)
-
-        if self.dump_at_every_step:
-            self.dump()
 
     def dump(self) -> None:
         output_file_path = os.path.join(self.output_folder, f"{self.run_id}.json")

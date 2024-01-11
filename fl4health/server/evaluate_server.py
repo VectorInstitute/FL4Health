@@ -1,3 +1,4 @@
+import datetime
 import timeit
 from logging import INFO, WARNING
 from pathlib import Path
@@ -13,6 +14,7 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, Server, evaluate_clients
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.reporting.metrics import MetricsReporter
 
 
 class EvaluateServer(Server):
@@ -25,6 +27,7 @@ class EvaluateServer(Server):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         accept_failures: bool = True,
         min_available_clients: int = 1,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         Args:
@@ -42,7 +45,7 @@ class EvaluateServer(Server):
                 Defaults to 1.
         """
 
-        # TODO check if we should collect metrics here
+        # TODO docstrings
 
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
@@ -61,6 +64,11 @@ class EvaluateServer(Server):
                 f"Fraction Evaluate is {self.fraction_evaluate}. "
                 "Thus, some clients may not participate in evaluation",
             )
+
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter()
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path
@@ -84,6 +92,8 @@ class EvaluateServer(Server):
         Returns:
             History: This object will hold the aggregated metrics returned from the clients.
         """
+        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
+
         history = History()
 
         # Run Federated Evaluation
@@ -97,6 +107,12 @@ class EvaluateServer(Server):
             _, evaluate_metrics_fed, _ = res_fed
             if evaluate_metrics_fed:
                 history.add_metrics_distributed(server_round=0, metrics=evaluate_metrics_fed)
+                self.metrics_reporter.add_to_metrics(
+                    {
+                        "metrics": evaluate_metrics_fed,
+                        "fit_end": datetime.datetime.now(),
+                    }
+                )
 
         # Bookkeeping
         end_time = timeit.default_timer()

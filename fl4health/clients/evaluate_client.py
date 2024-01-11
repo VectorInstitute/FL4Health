@@ -1,3 +1,4 @@
+import datetime
 from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
@@ -44,6 +45,11 @@ class EvaluateClient(BasicClient):
         self.metrics = metrics
         self.initialized = False
 
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter()
+
         # This data loader should be instantiated as the one on which to run evaluation
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
         self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
@@ -58,11 +64,6 @@ class EvaluateClient(BasicClient):
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
         self.wandb_reporter = None
-
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter()
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
@@ -86,6 +87,9 @@ class EvaluateClient(BasicClient):
 
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
+
+        self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
+
         self.initialized = True
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -102,17 +106,25 @@ class EvaluateClient(BasicClient):
             self.global_model = None
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
-
-        # TODO check if we should collect metrics here
-
         if not self.initialized:
             self.setup_client(config)
+
+        self.metrics_reporter.add_to_metrics({"evaluate_start": datetime.datetime.now()})
 
         self.set_parameters(parameters, config)
         # Make sure at least one of local or global model is not none (i.e. there is something to evaluate)
         assert self.local_model or self.global_model
 
         loss, metric_values = self.validate()
+
+        self.metrics_reporter.add_to_metrics(
+            {
+                "metrics": metric_values,
+                "loss": loss,
+                "evaluate_end": datetime.datetime.now(),
+            }
+        )
+
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
