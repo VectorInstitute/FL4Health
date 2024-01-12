@@ -1,7 +1,7 @@
 import datetime
 from pathlib import Path
 from typing import Dict, Optional, Tuple, Union
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 import torch
 from flwr.common import Config, NDArrays, Scalar
@@ -15,7 +15,7 @@ from fl4health.clients.basic_client import BasicClient
 
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_setup_client() -> None:
-    fl_client = MockBasicClient(mock_setup_client=False)
+    fl_client = MockBasicClient()
     fl_client.setup_client({})
 
     assert fl_client.metrics_reporter.metrics == {
@@ -44,6 +44,8 @@ def test_metrics_reporter_fit() -> None:
     fl_client.fit([], {"current_server_round": test_current_server_round, "local_epochs": 0})
 
     assert fl_client.metrics_reporter.metrics == {
+        "type": "client",
+        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
         "rounds": {
             test_current_server_round: {
                 "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
@@ -64,6 +66,8 @@ def test_metrics_reporter_evaluate() -> None:
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
 
     assert fl_client.metrics_reporter.metrics == {
+        "type": "client",
+        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
         "rounds": {
             test_current_server_round: {
                 "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
@@ -80,9 +84,8 @@ class MockBasicClient(BasicClient):
         loss_dict: Optional[Dict[str, float]] = None,
         metrics: Optional[Dict[str, Scalar]] = None,
         loss: Optional[float] = None,
-        mock_setup_client: Optional[bool] = True,
     ):
-        super().__init__(Path(""), [], torch.device(0)),
+        super().__init__(Path(""), [], torch.device(0))
 
         if loss_dict is not None:
             self.loss_dict = loss_dict
@@ -93,16 +96,9 @@ class MockBasicClient(BasicClient):
         if loss is not None:
             self.loss = loss
 
-        self.mock_setup_client = mock_setup_client
-
         self.train_loader = []  # type: ignore
         self.num_train_samples = 0
         self.num_val_samples = 0
-
-    def setup_client(self, config: Config) -> None:
-        if self.mock_setup_client:
-            return
-        super().setup_client(config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         pass
@@ -124,10 +120,10 @@ class MockBasicClient(BasicClient):
         return self.loss, self.mock_metrics
 
     def get_model(self, config: Config) -> nn.Module:
-        return Mock()
+        return MagicMock()
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, ...]:
-        mock_data_loader = Mock()
+        mock_data_loader = MagicMock()
         mock_data_loader.dataset = []
         return mock_data_loader, mock_data_loader
 
@@ -135,4 +131,4 @@ class MockBasicClient(BasicClient):
         pass
 
     def get_criterion(self, config: Config) -> _Loss:
-        return Mock()
+        return MagicMock()
