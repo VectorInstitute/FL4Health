@@ -5,7 +5,6 @@ from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
@@ -33,7 +32,6 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        seed: Optional[int] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -50,8 +48,6 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
         """
-
-        self._maybe_fix_random_seeds(seed)
 
         self.data_path = data_path
         self.device = device
@@ -77,27 +73,12 @@ class BasicClient(NumPyClient):
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
         self.model: nn.Module
-        self.optimizer: torch.optim.Optimizer
+        self.optimizers: Dict[str, torch.optim.Optimizer]
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.num_train_samples: int
         self.num_val_samples: int
-        self.learning_rate: float
-
-    def _maybe_fix_random_seeds(self, seed: Optional[int] = None) -> None:
-        """
-        If seed value is provided, fix random seeds for reproducibility of results.
-
-        Args:
-            seed (int): The seed value to be used for random number generators.
-        """
-        if seed is None:
-            log(INFO, "No seed provided. Using random seed.")
-        else:
-            log(INFO, f"Setting seed to {seed}")
-            random.seed(seed)
-            np.random.seed(seed)
-            torch.manual_seed(seed)
+        self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
@@ -126,6 +107,7 @@ class BasicClient(NumPyClient):
         """
         Determines which parameters are sent back to the server for aggregation. This uses a parameter exchanger to
         determine parameters sent.
+
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
@@ -142,6 +124,7 @@ class BasicClient(NumPyClient):
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
         parameters are set. If it's the first time the model is being initialized, we assume the full model is being
         initialized and use the FullParameterExchanger() to set all model weights.
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model but may contain more information than that.
@@ -157,7 +140,8 @@ class BasicClient(NumPyClient):
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
         If this is the first time we're initializing the model weights, we use the FullParameterExchanger to
-        initialize all model components
+        initialize all model components.
+        Subclasses that require custom model initialization can override this.
 
         Args:
             parameters (NDArrays): Model parameters to be injected into the client model
@@ -359,7 +343,7 @@ class BasicClient(NumPyClient):
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
-        Assumes self.model is in train model already.
+        Assumes self.model is in train mode already.
 
         Args:
             input (torch.Tensor): The input to be fed into the model.
@@ -370,15 +354,15 @@ class BasicClient(NumPyClient):
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
+        self.optimizers["global"].zero_grad()
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
 
         # Compute backward pass and update paramters with optimizer
-        losses.backward.backward()
-        self.optimizer.step()
+        losses.backward["backward"].backward()
+        self.optimizers["global"].step()
 
         return losses, preds
 
@@ -551,7 +535,7 @@ class BasicClient(NumPyClient):
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
-        self.learning_rate = self.optimizer.defaults["lr"]
+
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
@@ -627,7 +611,7 @@ class BasicClient(NumPyClient):
         """
         optimizer = self.get_optimizer(config)
         assert not isinstance(optimizer, dict)
-        self.optimizer = optimizer
+        self.optimizers = {"global": optimizer}
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
         """Clone and freeze model for use in various loss calculation.

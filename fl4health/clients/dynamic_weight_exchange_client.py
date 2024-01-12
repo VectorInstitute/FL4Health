@@ -26,7 +26,6 @@ class DynamicWeightExchangeClient(BasicClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         adaptive_exchange_percentage: bool = False,
         exchange_percentage_delta: float = 0.05,
-        seed: Optional[int] = None,
     ) -> None:
         """
         Dynamic weight exchange client used to exchange a dynamic subset of layers per client.
@@ -51,7 +50,6 @@ class DynamicWeightExchangeClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            seed=seed,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module

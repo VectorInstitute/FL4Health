@@ -31,10 +31,7 @@ class EvaluateClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
-        seed: Optional[int] = None,
     ) -> None:
-
-        self._maybe_fix_random_seeds(seed)
 
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
@@ -53,11 +50,12 @@ class EvaluateClient(BasicClient):
 
         # The attributes to be set in setup_client
         # Models corresponding to client-side and server-side checkpoints,
-        # if they exist, to be evaluated on the clients dataset.
+        # if they exist, to be evaluated on the client's dataset.
         self.data_loader: DataLoader
         self.criterion: _Loss
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
+        self.wandb_reporter = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")

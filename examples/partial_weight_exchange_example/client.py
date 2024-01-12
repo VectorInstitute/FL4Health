@@ -31,7 +31,6 @@ class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         adaptive_exchange_percentage: bool = False,
         exchange_percentage_delta: float = 0.05,
-        seed: Optional[int] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -41,7 +40,6 @@ class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
             checkpointer=checkpointer,
             adaptive_exchange_percentage=adaptive_exchange_percentage,
             exchange_percentage_delta=exchange_percentage_delta,
-            seed=seed,
         )
         self.test_loader: DataLoader
 
