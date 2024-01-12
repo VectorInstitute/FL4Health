@@ -267,7 +267,7 @@ class BasicClient(NumPyClient):
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={
-                "metrics": metrics,
+                "fit_metrics": metrics,
                 "loss_dict": loss_dict,
             },
         )
@@ -307,7 +307,7 @@ class BasicClient(NumPyClient):
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={
-                "metrics": metric_values,
+                "evaluate_metrics": metric_values,
                 "loss": loss,
             },
         )
