@@ -42,8 +42,9 @@ class MnistFedPcaClient(BasicClient):
         train_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=True)
         validation_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=False)
         train_dataset = sampler.subsample(dataset=train_dataset)
+        validation_dataset = sampler.subsample(dataset=validation_dataset)
 
-        # Apply dimensionality reduction/.
+        # Apply dimensionality reduction.
         train_dataset = pca_preprocessor.reduce_dimension(new_dimension=new_dimension, dataset=train_dataset)
         validation_dataset = pca_preprocessor.reduce_dimension(new_dimension=new_dimension, dataset=validation_dataset)
 

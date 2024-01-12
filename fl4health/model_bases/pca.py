@@ -18,7 +18,9 @@ class PcaModule(nn.Module):
             by a low-rank singular value decomposition. If the user has
             good reasons to believe so, then this parameter can be set to True to allow for more efficient
             computations. Defaults to False.
-            full_svd (bool, optional): Indicates whether full SVD or reduced SVD is performed. Defaults to False.
+            full_svd (bool, optional): Indicates whether full SVD or reduced SVD is performed.
+            If low_rank is set to True, then an alternative implementation of SVD will be used and
+            this argument is ignored. Defaults to False.
             rank_estimation (int, optional): A slight overestimation of the rank of the data matrix.
             Only used if self.low_rank is True. Defaults to 6.
 
@@ -72,9 +74,9 @@ class PcaModule(nn.Module):
             Tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
             and their corresponding singular values.
 
-        Note: the algorithm assumes that the rows of X_prime are the data points.
-        Consequently, the principal components, which are the eigenvectors of X_prime.T @ X_prime,
-        are the right singular vectors in the SVD of X_prime.
+        Note: the algorithm assumes that the rows of X are the data points (after reshaping as needed).
+        Consequently, the principal components, which are the eigenvectors of X.T @ X,
+        are the right singular vectors in the SVD of X.
         """
         X_prime = self.prepare_data_forward(X, center_data=center_data)
         if self.low_rank:
@@ -119,12 +121,26 @@ class PcaModule(nn.Module):
     def prepare_data_forward(self, X: Tensor, center_data: bool) -> Tensor:
         """
         Prepare input data X for PCA by reshaping and centering it as needed.
+
+        Args:
+            X (Tensor): Data matrix.
+            center_data (bool): If true, then the data mean will be subtracted
+            from all data points prior to performing PCA. If center_data is false,
+            it is expected that the data has already been centered and an exception
+            will be thrown if it is not.
+
+        Returns:
+            Tensor: Prepared data matrix.
         """
         X = self.maybe_reshape(X)
         if center_data:
             self.set_data_mean(X)
             return self.center_data(X)
         else:
+            # Check if the mean of X is already (nearly) zero.
+            # Throw an exception if it is not.
+            data_mean = torch.mean(X, dim=0)
+            assert torch.allclose(torch.zeros(data_mean.size()), data_mean, atol=1e-6)
             return X
 
     def project_lower_dim(self, X: Tensor, k: Optional[int] = None, center_data: bool = False) -> Tensor:

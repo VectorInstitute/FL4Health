@@ -157,23 +157,27 @@ class FedPCA(BasicFedAvg):
         self, client_singular_vectors: NDArrays, client_singular_values: NDArrays
     ) -> Tuple[NDArray, NDArray]:
         """
-        Produce the principal components (PCs) for all the data distributed across clients by merging the PCs
-        belonging to each local dataset.
+        Produce the principal components for all the data distributed across clients by merging
+        the principal components belonging to each local dataset.
 
-        Each clients sends a matrix whose columns are the local principal components to the server. The corresponding
-        singular values are also shared.
+        Each clients sends a matrix whose columns are its local principal components to the server.
+        The corresponding singular values are also shared.
 
-        The server then arranges the local PCs into a block matrix, then performs SVD.
+        The server arranges the local principal components into a block matrix, then performs SVD.
 
-        For example, if U_i denotes the matrix of PCs and S_i denotes the diagonal matrix of
-        singular values for client i, and there are n clients, then merging is done by
+        More precisely, if U_i denotes the matrix of the principal components of client i, and S_i denotes
+        the corresponding diagonal matrix of singular values, and there are n clients, then merging is done by
         performing SVD on the matrix
 
         B = [U_1 @ S_1 | U_2 @ S_2 | ... | U_n @ S_n],
 
-        where the new (left) singular vectors are returned as the merging result.
+        where the new left singular vectors are returned as the merging result.
 
-        If
+        Notes:
+
+        1. If U_i @ S_i is of size d by N_i, then B has size d by N, where N = N_1 + N_2 + ... + N_n.
+
+        2. If
 
         U @ S @ V.T = B
 
