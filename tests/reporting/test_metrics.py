@@ -1,5 +1,6 @@
 import datetime
 import json
+import os
 from unittest.mock import Mock, patch
 
 from fl4health.reporting.metrics import MetricsReporter
@@ -65,6 +66,7 @@ def test_metrics_reporter_dump() -> None:
     test_date = datetime.datetime.now()
     test_folder = "tests/reporting"
     test_run_id = "test"
+    test_json_file_name = f"{test_folder}/{test_run_id}.json"
 
     metrics_reporter = MetricsReporter(run_id=test_run_id, output_folder=test_folder)
     metrics_reporter.add_to_metrics(test_data_1)
@@ -72,7 +74,7 @@ def test_metrics_reporter_dump() -> None:
     metrics_reporter.add_to_metrics_at_round(2, test_data_2)
     metrics_reporter.dump()
 
-    with open(f"{test_folder}/{test_run_id}.json", "r") as file:
+    with open(test_json_file_name, "r") as file:
         json_data = json.load(file)
 
     assert json_data == {
@@ -82,3 +84,5 @@ def test_metrics_reporter_dump() -> None:
             "2": test_data_2,
         },
     }
+
+    os.remove(test_json_file_name)
