@@ -1,0 +1,17 @@
+# Parameters that describe server.
+n_server_rounds: 3 # The number of rounds to run FL.
+
+# Parameters that describe clients.
+n_clients: 3 # The number of clients in the FL experiment.
+local_epochs: 2 # The number of epochs to complete for client.
+batch_size: 64 # The batch size for client training.
+new_dimension: 12 # The new dimension of data after dimensionality reduction.
+
+# checkpointing
+
+# pca_path is the path to the pre-computed principal components, which are used in
+# this example for reducing data dimensions.
+pca_path: "examples/fedpca_examples/perform_pca/model_parameters/client_cpadjzdj_pca.pt"
+
+# checkpoint_path is the path to the model weights obtained throughout FL training.
+checkpoint_path: "examples/fedpca_examples/dim_reduction"
