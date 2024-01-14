@@ -1,93 +1,70 @@
-
+import os
 import json
 from pathlib import Path
-from typing import List, Any, Optional, Tuple, Callable
-import torch
-from batchgenerators.dataloading.data_loader import DataLoader
-from collections import OrderedDict
+from typing import Any, Optional, Tuple
 import numpy as np
-from numpy import typing as npt
+import torch
+from monai.transforms import Transform
 from monai.transforms.compose import Compose
-from monai.transforms.utility.array import EnsureType
+from monai.transforms.utility.array import EnsureChannelFirst, EnsureType
+from monai.transforms import RandRotate
+from monai.transforms.intensity.array import AdjustContrast, ScaleIntensity
+from monai.data.image_dataset import ImageDataset
+from monai.data.dataloader import DataLoader
 
-from research.picai.dataset import SimpleITKDataset
-
-
-# TODO: Pin type annotations to Union of expected types once decide on accepted inputs.
-def default_collate(batch: List[Any]) -> Any:
-    """
-    Function that groups set of data into a batch based on type of data in batch and
-    structure that its stored.
-
-    Args:
-        batch (List[Any]): A list of data in which every entry is associated with a sample
-        (or corresponding label) in the batch.
-
-    Returns:
-        Any: Batch of data.
-
-    """
-    if isinstance(batch[0], np.ndarray):
-        return np.vstack(batch)
-    elif isinstance(batch[0], (int, np.int64)):
-        return np.array(batch).astype(np.int32)
-    elif isinstance(batch[0], (float, np.float32)):
-        return np.array(batch).astype(np.float32)
-    elif isinstance(batch[0], (np.float64,)):
-        return np.array(batch).astype(np.float64)
-    elif isinstance(batch[0], (dict, OrderedDict)):
-        return {key: default_collate([d[key] for d in batch]) for key in batch[0]}
-    elif isinstance(batch[0], (tuple, list)):
-        transposed = zip(*batch)
-        return [default_collate(samples) for samples in transposed]
-    elif isinstance(batch[0], str):
-        return batch
-    elif isinstance(batch[0], torch.Tensor):
-        return torch.vstack(batch)
-    else:
-        raise TypeError('unknown type for batch:', type(batch))
+augmentation_params = {
+    "rotation_x": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
+    "rotation_y": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
+    "rotation_z": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
+    "p_rot": 0.2,
+    "scale_range": (0.7, 1.4),
+    "independent_scale_factor_for_each_axis": False,
+    "p_scale": 0.2,
+    "gamma_retain_stats": True,
+    "gamma_range": (0.7, 1.5),
+    "p_gamma": 0.3,
+}
 
 
-# TODO: Pin type annotations to Union of expected types once decide on accepted inputs.
-class DataLoaderFromDataset(DataLoader):
-    def __init__(self, data: SimpleITKDataset, batch_size: int, num_threads: int, seed_for_shuffle: int = 1, collate_fn: Callable = default_collate,
-                 return_incomplete: bool = False, shuffle: bool = True, infinite: bool = False) -> None:
-        """
-        Extends batchgenerators DataLoader class by implementing generate_train_batch method to yield a valid
-        PyTorch DataLoader in which augemntations can be applied following its creation.
+class MoveDim(Transform):
+    def __init__(self, source_dim: int, target_dim: int) -> None:
+        self.source_dim = source_dim
+        self.target_dim = target_dim
 
-        Args:
-            data (SimpleITKDataset): The dataset the DataLoader is being created for.
-            batch_size (int): Size of the batch for the DataLoader.
-            num_threads (int): Number of threads used to load data.
-            seed_for_shuffle (int): The random used for shuffling data.
-            collate_fn (Callable): Function that yields groups a set of data into a batch.
-        """
+    def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        data = torch.movedim(data, self.source_dim, self.target_dim)
+        return data
 
-        super(DataLoaderFromDataset, self).__init__(data, batch_size, num_threads, seed_for_shuffle,
-                                                    return_incomplete=return_incomplete, shuffle=shuffle,
-                                                    infinite=infinite)
-        self.collate_fn = collate_fn
-        self.indices = np.arange(len(data))
 
-    def generate_train_batch(self) -> Any:
-        """
-        Generates a batch by sampling indices equal to the batch size, indexing into the data and labels, inserting them into 
-        into a sample wise dictionary and grouping in a list. 
+class ZScoreNormalization(Transform):
+    def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        data = z_score_norm(data)
+        return data
 
-        Returns:
-            Any: A batch of data that has been created via the collate fn. 
-        """
-        # randomly select N samples (N = batch size)
-        indices = self.get_indices()
 
-        # create dictionary per sample
-        batch = [{'data': self._data[i][0].numpy(),
-                  'seg': self._data[i][1].numpy()} for i in indices]
+def get_img_transform() -> Compose:
+    transforms = [
+        EnsureType(),
+        EnsureChannelFirst(),
+        ZScoreNormalization(),
+        RandRotate(),
+        ScaleIntensity(minv=augmentation_params["scale_range"][0], maxv=augmentation_params["scale_range"][1]),
+        AdjustContrast(gamma=1.0),
+        MoveDim(-1, 1)
+    ]
+    return Compose(transforms)
 
-        return self.collate_fn(batch)
 
-def z_score_norm(image: "npt.NDArray[Any]", percentile: Optional[float] = None) -> "npt.NDArray[Any]":
+def get_seg_transform() -> Compose:
+    transforms = [
+        EnsureType(),
+        EnsureChannelFirst(),
+        MoveDim(-1, 1)
+    ]
+    return Compose(transforms)
+
+
+def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch.Tensor:
     """
     Function that performs instance wise Z-score normalization (mean=0; stdev=1), where intensities
     below or above the given percentile are discarded.
@@ -100,24 +77,25 @@ def z_score_norm(image: "npt.NDArray[Any]", percentile: Optional[float] = None) 
     Returns:
        npt.NDArray[Any]: Z-Score Normalized vesrion of input that is clipped if a percentile is specified. 
     """
-    image = image.astype(np.float32)
+    image = image.float()
 
-    if percentile is not None:
-        assert (percentile >= 0 and percentile <= 50)
+    if quantile is not None:
+        assert (quantile >= 0.0 and quantile <= 0.5)
         # clip distribution of intensity values
-        lower_bnd = np.percentile(image, 100-percentile)
-        upper_bnd = np.percentile(image, percentile)
-        image = np.clip(image, lower_bnd, upper_bnd)
+        lower_bnd = torch.quantile(image, 1.0 - quantile)
+        upper_bnd = torch.quantile(image, quantile)
+        image = torch.clip(image, lower_bnd, upper_bnd)
 
     # perform z-score normalization
-    mean = np.mean(image)
-    std = np.std(image)
+    mean = torch.mean(image)
+    std = torch.std(image).item()
     if std > 0:
         return (image - mean) / std
     else:
         return image * 0.
 
-def get_dataloaders(overview_dir: str, batch_size: int, num_threads: int, fold_id: int) -> Tuple[DataLoader, DataLoader, "npt.NDArray[np.float32]"]:
+
+def get_dataloaders(overview_dir: str, base_dir: str, batch_size: int, num_threads: int, fold_id: int) -> Tuple[DataLoader, DataLoader, "npt.NDArray[np.float32]"]:
     """
     Function that initializes and returns the train and validation DataLoader along with proportion of samples
     with each label.
@@ -131,40 +109,53 @@ def get_dataloaders(overview_dir: str, batch_size: int, num_threads: int, fold_i
     Returns:
        Tuple[DataLoader, DataLoader, np.array]: The Training DataLoader, Validation Loader and Numpy Array
        with the proportion of samples in each class.
-        
+
     """
     # load datasheets
     with open(Path(overview_dir) / f'PI-CAI_train-fold-{fold_id}.json') as fp:
         train_json = json.load(fp)
     with open(Path(overview_dir) / f'PI-CAI_val-fold-{fold_id}.json') as fp:
-        valid_json = json.load(fp)
-
+        val_json = json.load(fp)
     # load paths to images and labels
-    train_data = [np.array(train_json['image_paths']), np.array(train_json['label_paths'])]
-    valid_data = [np.array(valid_json['image_paths']), np.array(valid_json['label_paths'])]
+    train_img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in train_json["image_paths"]]
+    train_seg_paths = [os.path.join(base_dir, path) for path in train_json["label_paths"]]
+    val_img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in val_json["image_paths"]]
+    val_seg_paths = [os.path.join(base_dir, path) for path in val_json["label_paths"]]
+    train_data = [train_img_paths, train_seg_paths]
+    val_data = [val_img_paths, val_seg_paths]
 
     # use case-level class balance to deduce required train-time class weights
-    class_ratio_t = [int(np.sum(train_json['case_label'])), int(len(train_data[0])-np.sum(train_json['case_label']))]
-    class_ratio_v = [int(np.sum(valid_json['case_label'])), int(len(valid_data[0])-np.sum(valid_json['case_label']))]
-    class_weights = (class_ratio_t / np.sum(class_ratio_t))
+    class_ratio_t = [int(np.sum(train_json['case_label'])), int(len(train_data[0]) - np.sum(train_json['case_label']))]
+    class_ratio_v = [int(np.sum(val_json['case_label'])), int(len(val_data[0]) - np.sum(val_json['case_label']))]
+    class_proportions = (class_ratio_t / np.sum(class_ratio_t))
 
     # log dataset definition
-    print('Dataset Definition:', "-"*80)
+    print('Dataset Definition:', "-" * 80)
     print(f'Fold Number: {fold_id}')
     print('Data Classes:', list(np.unique(train_json['case_label'])))
-    print(f'Train-Time Class Weights: {class_weights}')
+    print(f'Train-Time Class Weights: {class_proportions}')
     print(f'Training Samples [-:{class_ratio_t[1]};+:{class_ratio_t[0]}]: {len(train_data[1])}')
-    print(f'Validation Samples [-:{class_ratio_v[1]};+:{class_ratio_v[0]}]: {len(valid_data[1])}')
+    print(f'Validation Samples [-:{class_ratio_v[1]};+:{class_ratio_v[0]}]: {len(val_data[1])}')
 
-    # actual dataloaders used at train-time
-    pretx = [EnsureType()]
-    train_ds = SimpleITKDataset(image_files=str(train_data[0]), seg_files=str(train_data[1]),
-                                transform=Compose(pretx),  seg_transform=Compose(pretx))
-    valid_ds = SimpleITKDataset(image_files=str(valid_data[0]), seg_files=str(valid_data[1]),
-                                transform=Compose(pretx),  seg_transform=Compose(pretx))
-    train_loader = DataLoaderFromDataset(train_ds, 
-        batch_size=batch_size, num_threads=num_threads, infinite=True, shuffle=True)
-    val_loader = DataLoaderFromDataset(valid_ds, 
-        batch_size=batch_size, num_threads=num_threads, infinite=False, shuffle=False)
+    train_transform_img = get_img_transform()
+    train_transform_seg = get_seg_transform()
+    train_ds = ImageDataset(
+        image_files=train_data[0],
+        seg_files=train_data[1],
+        transform=train_transform_img,
+        seg_transform=train_transform_seg,
+    )
 
-    return train_loader, val_loader, class_weights.astype(np.float32)
+    val_transform_img = get_img_transform()
+    val_transform_seg = get_seg_transform()
+    val_ds = ImageDataset(
+        image_files=val_data[0],
+        seg_files=val_data[1],
+        transform=val_transform_img,
+        seg_transform=val_transform_seg,
+    )
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=True)
+
+    return train_loader, val_loader, torch.from_numpy(class_proportions)
