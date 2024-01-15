@@ -1,17 +1,13 @@
 import datetime
 import math
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Union
 from unittest.mock import MagicMock
 
 import pytest
 import torch
-from flwr.common import Config
 from flwr.common.typing import Scalar
 from freezegun import freeze_time
-from torch import nn as nn
-from torch.nn.modules.loss import _Loss
-from torch.utils.data import DataLoader
 
 from fl4health.clients.evaluate_client import EvaluateClient
 from tests.clients.fixtures import get_basic_client, get_evaluation_client  # noqa
@@ -117,22 +113,12 @@ class MockEvaluateClient(EvaluateClient):
     def __init__(self, loss: Optional[float] = None, metrics: Optional[Dict[str, Scalar]] = None):
         super().__init__(Path(""), [], torch.device(0))
 
-        if loss is not None:
-            self.loss = loss
-
-        if metrics is not None:
-            self.mock_metrics = metrics
-
-    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
-        mock_data_loader = MagicMock()
+        # Mocking methods
+        self.get_data_loader = MagicMock()  # type: ignore
+        mock_data_loader = MagicMock()  # type: ignore
         mock_data_loader.dataset = []
-        return (mock_data_loader,)
-
-    def get_criterion(self, config: Config) -> _Loss:
-        return MagicMock()
-
-    def get_local_model(self, config: Config) -> Optional[nn.Module]:
-        return MagicMock()
-
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-        return self.loss, self.mock_metrics
+        self.get_data_loader.return_value = (mock_data_loader,)
+        self.get_criterion = MagicMock()  # type: ignore
+        self.get_local_model = MagicMock()  # type: ignore
+        self.validate = MagicMock()  # type: ignore
+        self.validate.return_value = loss, metrics
