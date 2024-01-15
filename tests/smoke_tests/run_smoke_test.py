@@ -1,12 +1,16 @@
 import asyncio
 import datetime
+import json
 import logging
+import os
+from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import torch
 import yaml
 from flwr.common.typing import Config
+from pytest import approx
 from six.moves import urllib
 
 from examples.fedprox_example.client import MnistFedProxClient
@@ -27,6 +31,9 @@ async def run_smoke_test(
     # The param below exists to work around an issue with some clients
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
+    seed: Optional[int] = None,
+    server_metrics_to_assert: Optional[Dict[str, Any]] = None,
+    client_metrics_to_assert: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -90,8 +97,10 @@ async def run_smoke_test(
         skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-
+        # TODO add docstring
     """
+    clear_metrics_folder()
+
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
     logger.info(f"\tClient : {client_python_path}")
@@ -105,12 +114,13 @@ async def run_smoke_test(
 
     # Start the server and capture its process object
     logger.info("Starting server...")
+    server_args = ["-m", server_python_path, "--config_path", config_path]
+    if seed is not None:
+        server_args.extend(["--seed", str(seed)])
+
     server_process = await asyncio.create_subprocess_exec(
         "python",
-        "-m",
-        server_python_path,
-        "--config_path",
-        config_path,
+        *server_args,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
@@ -163,6 +173,8 @@ async def run_smoke_test(
         client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
         if checkpoint_path is not None:
             client_args.extend(["--checkpoint_path", checkpoint_path])
+        if seed is not None:
+            client_args.extend(["--seed", str(seed)])
 
         client_process = await asyncio.create_subprocess_exec(
             "python",
@@ -216,6 +228,8 @@ async def run_smoke_test(
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
+    _assert_metrics(MetricType.SERVER, server_metrics_to_assert)
+
     # client assertions
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), (
@@ -235,6 +249,8 @@ async def run_smoke_test(
                 f"Full client output:\n{full_client_outputs[i]}\n"
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
+
+        _assert_metrics(MetricType.CLIENT, client_metrics_to_assert)
 
     logger.info("All checks passed. Test finished.")
 
@@ -304,6 +320,69 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     return full_output
 
 
+class MetricType(Enum):
+    SERVER = "server"
+    CLIENT = "client"
+
+
+DEFAULT_METRICS_FOLDER = "metrics"
+DEFAULT_TOLERANCE = 0.0005
+
+
+def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[str, Any]] = None) -> None:
+    if metrics_to_assert is None:
+        return
+
+    metrics_found = False
+    for file in os.listdir(DEFAULT_METRICS_FOLDER):
+        file_path = os.path.join(DEFAULT_METRICS_FOLDER, file)
+        if not os.path.isfile(file_path) or not file.endswith(".json"):
+            continue
+
+        with open(file_path) as f:
+            metrics = json.load(f)
+
+        if metrics["type"] != metric_type.value:
+            continue
+
+        metrics_found = True
+        _assert_metrics_dict(metrics_to_assert, metrics)
+
+    assert metrics_found, f"Metrics of type {metric_type.value} not found."
+
+
+def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> None:
+    def _assert(value: Any, saved_value: Any) -> None:
+        tolerance = DEFAULT_TOLERANCE
+        if isinstance(value, tuple):
+            value, tolerance = value
+
+        assert approx(value, abs=tolerance) == saved_value, (
+            f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested"
+            f"value ({value}) within requested tolerance ({tolerance})."
+        )
+
+    for metric_key in metrics_to_assert:
+        assert metric_key in metrics_saved, f"Metric '{metric_key}' not found in saved metrics."
+
+        if isinstance(metrics_to_assert[metric_key], dict):
+            _assert_metrics_dict(metrics_to_assert[metric_key], metrics_saved[metric_key])
+            continue
+
+        if isinstance(metrics_to_assert[metric_key], list) and len(metrics_to_assert[metric_key]) > 0:
+            for i in range(len(metrics_to_assert)):
+                _assert(metrics_to_assert[metric_key][i], metrics_saved[metric_key][i])
+            continue
+
+        _assert(metrics_to_assert[metric_key], metrics_saved[metric_key])
+
+
+def clear_metrics_folder() -> None:
+    for f in os.listdir(DEFAULT_METRICS_FOLDER):
+        if os.path.isfile(os.path.join(DEFAULT_METRICS_FOLDER, f)) and f.endswith(".json"):
+            os.remove(os.path.join(DEFAULT_METRICS_FOLDER, f))
+
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
@@ -312,6 +391,57 @@ if __name__ == "__main__":
             client_python_path="examples.fedprox_example.client",
             config_path="tests/smoke_tests/fedprox_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics_to_assert={
+                "rounds": {
+                    "1": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.48346666666666666},
+                        "loss_aggregated": 1.9934351444244385,
+                    },
+                    "2": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.6102666666666666},
+                        "loss_aggregated": 1.2648898363113403,
+                    },
+                    "3": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.7876},
+                        "loss_aggregated": 0.8317379951477051,
+                    },
+                },
+            },
+            client_metrics_to_assert={
+                "rounds": {
+                    "1": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.203125},
+                        "loss_dict": {
+                            "checkpoint": 2.1439507007598877,
+                            "backward": 2.1439507007598877,
+                            "proximal_loss": 0.0,
+                        },
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.48346666666666666},
+                        "loss": 1.9934351444244385,
+                    },
+                    "2": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.50625},
+                        "loss_dict": {
+                            "checkpoint": 1.7729852199554443,
+                            "backward": 1.7729852199554443,
+                            "proximal_loss": 0.0,
+                        },
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.6102666666666666},
+                        "loss": 1.2648898363113403,
+                    },
+                    "3": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.678125},
+                        "loss_dict": {
+                            "checkpoint": 1.0138534307479858,
+                            "backward": 1.0138534307479858,
+                            "proximal_loss": 0.0,
+                        },
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.7876},
+                        "loss": 0.8317379951477051,
+                    },
+                },
+            },
         )
     )
     loop.run_until_complete(
@@ -320,6 +450,49 @@ if __name__ == "__main__":
             client_python_path="examples.scaffold_example.client",
             config_path="tests/smoke_tests/scaffold_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics_to_assert={
+                "rounds": {
+                    "1": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.185066666666666661},
+                        "loss_aggregated": 2.28030776977539061,
+                    },
+                    "2": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.31081},
+                        "loss_aggregated": 2.26336026191711431,
+                    },
+                    "3": {
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.390666666666666661},
+                        "loss_aggregated": 2.22946953773498541,
+                    },
+                },
+            },
+            client_metrics_to_assert={
+                "rounds": {
+                    "0": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.196875},
+                        "loss_dict": {"checkpoint": 2.260310173034668, "backward": 2.260310173034668},
+                    },
+                    "1": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.1890625},
+                        "loss_dict": {"checkpoint": 2.267695903778076, "backward": 2.267695903778076},
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.18506666666666666},
+                        "loss": 2.2803077697753906,
+                    },
+                    "2": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.353125},
+                        "loss_dict": {"checkpoint": 2.1741182804107666, "backward": 2.1741182804107666},
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.3108},
+                        "loss": 2.2633602619171143,
+                    },
+                    "3": {
+                        "fit_metrics": {"train - prediction - accuracy": 0.371875},
+                        "loss_dict": {"checkpoint": 2.139054298400879, "backward": 2.139054298400879},
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.39066666666666666},
+                        "loss": 2.2294695377349854,
+                    },
+                },
+            },
         )
     )
     loop.run_until_complete(
@@ -328,6 +501,96 @@ if __name__ == "__main__":
             client_python_path="examples.apfl_example.client",
             config_path="tests/smoke_tests/apfl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics_to_assert={
+                "rounds": {
+                    "1": {
+                        "metrics_aggregated": {
+                            "val - personal - accuracy": 0.7069333333333333,
+                            "val - global - accuracy": 0.6961333333333334,
+                            "val - local - accuracy": 0.6716,
+                        },
+                        "loss_aggregated": 1.347744107246399,
+                    },
+                    "2": {
+                        "metrics_aggregated": {
+                            "val - personal - accuracy": 0.7936,
+                            "val - global - accuracy": 0.7956,
+                            "val - local - accuracy": 0.7609333333333334,
+                        },
+                        "loss_aggregated": 0.6121808290481567,
+                    },
+                    "3": {
+                        "metrics_aggregated": {
+                            "val - personal - accuracy": 0.7509333333333333,
+                            "val - global - accuracy": 0.8454666666666667,
+                            "val - local - accuracy": 0.5494666666666667,
+                        },
+                        "loss_aggregated": 0.7558644413948059,
+                    },
+                },
+            },
+            client_metrics_to_assert={
+                "rounds": {
+                    "1": {
+                        "fit_metrics": {
+                            "train - personal - accuracy": 0.6703125,
+                            "train - global - accuracy": 0.7015625,
+                            "train - local - accuracy": 0.53125,
+                        },
+                        "loss_dict": {
+                            "checkpoint": 1.2816627025604248,
+                            "backward": 1.2816627025604248,
+                            "global": 1.1172425746917725,
+                            "local": 1.5267385244369507,
+                        },
+                        "evaluate_metrics": {
+                            "val - personal - accuracy": 0.7069333333333333,
+                            "val - global - accuracy": 0.6961333333333334,
+                            "val - local - accuracy": 0.6716,
+                        },
+                        "loss": 1.347744107246399,
+                    },
+                    "2": {
+                        "fit_metrics": {
+                            "train - personal - accuracy": 0.878125,
+                            "train - global - accuracy": 0.8828125,
+                            "train - local - accuracy": 0.8453125,
+                        },
+                        "loss_dict": {
+                            "checkpoint": 0.36877745389938354,
+                            "backward": 0.36877745389938354,
+                            "global": 0.3495636582374573,
+                            "local": 0.45446300506591797,
+                        },
+                        "evaluate_metrics": {
+                            "val - personal - accuracy": 0.7936,
+                            "val - global - accuracy": 0.7956,
+                            "val - local - accuracy": 0.7609333333333334,
+                        },
+                        "loss": 0.6121808290481567,
+                    },
+                    "3": {
+                        "fit_metrics": {
+                            "train - personal - accuracy": 0.8953125,
+                            "train - global - accuracy": 0.896875,
+                            "train - local - accuracy": 0.8671875,
+                        },
+                        "loss_dict": {
+                            "checkpoint": 0.3044434189796448,
+                            "backward": 0.3044434189796448,
+                            "global": 0.27094000577926636,
+                            "local": 0.43397602438926697,
+                        },
+                        "evaluate_metrics": {
+                            "val - personal - accuracy": 0.7509333333333333,
+                            "val - global - accuracy": 0.8454666666666667,
+                            "val - local - accuracy": 0.5494666666666667,
+                        },
+                        "loss": 0.7558644413948059,
+                    },
+                },
+            },
         )
     )
     loop.run_until_complete(
