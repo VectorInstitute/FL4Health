@@ -26,8 +26,22 @@ class BaseDataset(Dataset):
     def __len__(self) -> int:
         return len(self.targets)
 
+    def update_transform(self, f: Callable) -> None:
+        if self.transform:
+            original_transform = self.transform
+            self.transform = lambda *x: f(original_transform(*x))
+        else:
+            self.transform = f
 
-class MNISTDataset(BaseDataset):
+    def update_target_transform(self, g: Callable) -> None:
+        if self.target_transform:
+            original_target_transform = self.target_transform
+            self.target_transform = lambda *x: g(original_target_transform(*x))
+        else:
+            self.target_transform = g
+
+
+class MnistDataset(BaseDataset):
     def __init__(
         self,
         data_path: Path,

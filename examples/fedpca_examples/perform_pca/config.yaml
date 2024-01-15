@@ -1,0 +1,17 @@
+# Parameters that describe server
+n_server_rounds: 1 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 4 # The number of clients in the FL experiment
+batch_size: 32 # The batch size used for dataloader creation. (This parameter is otherwise not used in the execution of federated PCA.)
+
+# The following are relevant technical parameters related to performing PCA.
+low_rank: False # Indicates whether the user wishes to assume the input data has low rank.
+full_svd: False # Indicates whether to perform full SVD or reduced SVD.
+rank_estimation: 6 # Indicates the estimated rank of the data matrix. Only used if low_rank is True.
+center_data: True # Indicates whether the PCA module should center the data before performing PCA.
+
+# Indicates the number of principal components used during evaluation when computing reconstruction error.
+# If this parameter is not present in the config file, then it will default to None
+# and all principal components will be used during evaluation.
+num_components_eval: 16

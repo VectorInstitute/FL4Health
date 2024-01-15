@@ -98,7 +98,9 @@ def evaluate_model_on_dataset(
             if is_apfl:
                 preds = model(input)["personal"]
             else:
-                preds = model(input)[0]
+                preds = model(input)
+                if isinstance(preds, tuple):
+                    preds = preds[0]
             preds = preds if isinstance(preds, dict) else {"prediction": preds}
             meter.update(preds, target)
     return meter
