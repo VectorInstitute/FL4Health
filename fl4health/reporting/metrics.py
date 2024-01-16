@@ -1,8 +1,8 @@
 import datetime
 import json
-import os
 import uuid
 from logging import INFO
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from flwr.common.logger import log
@@ -16,7 +16,7 @@ class MetricsReporter:
     def __init__(
         self,
         run_id: Optional[str] = None,
-        output_folder: str = "metrics",
+        output_folder: Path = Path("metrics"),
     ):
         """
         Args:
@@ -32,6 +32,9 @@ class MetricsReporter:
 
         self.output_folder = output_folder
         self.metrics: Dict[str, Any] = {}
+
+        self.output_folder.mkdir(exist_ok=True)
+        assert self.output_folder.is_dir(), f"Output folder '{self.output_folder}' is not a valid directory."
 
     def add_to_metrics(self, data: Dict[str, Any]) -> None:
         """
@@ -62,11 +65,8 @@ class MetricsReporter:
         """
         Dumps the current metrics to a JSON file at {self.output_folder}/{self.run_id}.json
         """
-        output_file_path = os.path.join(self.output_folder, f"{self.run_id}.json")
+        output_file_path = Path(self.output_folder, self.run_id).with_suffix(".json")
         log(INFO, f"Dumping metrics to {output_file_path}")
-
-        if not os.path.isdir(self.output_folder):
-            os.mkdir(self.output_folder)
 
         with open(output_file_path, "w") as output_file:
             json.dump(self.metrics, output_file, indent=4, cls=DateTimeEncoder)

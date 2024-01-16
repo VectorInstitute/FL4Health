@@ -59,12 +59,13 @@ class BasicClient(NumPyClient):
         self.metrics = metrics
         self.checkpointer = checkpointer
 
+        self.client_name = self.generate_hash()
+
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
         else:
-            self.metrics_reporter = MetricsReporter()
+            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
-        self.client_name = self.generate_hash()
         self.initialized = False  # Whether or not the client has been setup
         self.model_weights_initialized = False
 
@@ -295,7 +296,7 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
-        _, _, current_server_round = self.process_config(config)
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={"evaluate_start": datetime.datetime.now()},

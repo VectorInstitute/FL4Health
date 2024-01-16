@@ -48,7 +48,7 @@ class EvaluateClient(BasicClient):
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
         else:
-            self.metrics_reporter = MetricsReporter()
+            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         # This data loader should be instantiated as the one on which to run evaluation
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)

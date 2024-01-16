@@ -174,7 +174,7 @@ class FlServer(Server):
         # updated prior to this function being called.
         eval_round_results = super().evaluate_round(server_round, timeout)
         if eval_round_results:
-            loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
+            loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, server_round)
 
