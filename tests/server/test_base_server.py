@@ -1,11 +1,16 @@
+import datetime
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 import torch
 import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
+from flwr.server.history import History
+from freezegun import freeze_time
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
@@ -78,3 +83,67 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(updated_model.linear.weight, loaded_model.linear.weight)
+
+
+@patch("fl4health.server.base_server.Server.fit")
+@freeze_time("2012-12-12 12:12:12")
+def test_metrics_reporter_fit(mock_fit: Mock) -> None:
+    test_history = History()
+    test_history.metrics_centralized = {"test metrics centralized": [(123, "loss")]}
+    test_history.losses_centralized = [(123, 123.123)]
+    mock_fit.return_value = test_history
+
+    fl_server = FlServer(SimpleClientManager())
+    fl_server.fit(3, None)
+
+    assert fl_server.metrics_reporter.metrics == {
+        "type": "server",
+        "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
+        "fit_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+        "metrics_centralized": test_history.metrics_centralized,
+        "losses_centralized": test_history.losses_centralized,
+    }
+
+
+@patch("fl4health.server.base_server.Server.fit_round")
+@freeze_time("2012-12-12 12:12:12")
+def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
+    test_round = 2
+    test_metrics_aggregated = "test metrics aggregated"
+    mock_fit_round.return_value = (None, test_metrics_aggregated, None)
+
+    fl_server = FlServer(SimpleClientManager())
+    fl_server.fit_round(test_round, None)
+
+    assert fl_server.metrics_reporter.metrics == {
+        "rounds": {
+            test_round: {
+                "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
+                "metrics_aggregated": test_metrics_aggregated,
+                "fit_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+            },
+        },
+    }
+
+
+@patch("fl4health.server.base_server.Server.evaluate_round")
+@freeze_time("2012-12-12 12:12:12")
+def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
+    test_round = 2
+    test_loss_aggregated = "test loss aggregated"
+    test_metrics_aggregated = "test metrics aggregated"
+    mock_evaluate_round.return_value = (test_loss_aggregated, test_metrics_aggregated, (None, None))
+
+    fl_server = FlServer(SimpleClientManager())
+    fl_server.evaluate_round(test_round, None)
+
+    assert fl_server.metrics_reporter.metrics == {
+        "rounds": {
+            test_round: {
+                "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
+                "loss_aggregated": test_loss_aggregated,
+                "metrics_aggregated": test_metrics_aggregated,
+                "evaluate_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+            },
+        },
+    }

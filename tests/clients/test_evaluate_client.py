@@ -1,8 +1,13 @@
+import datetime
 import math
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional, Union
+from unittest.mock import MagicMock
 
 import pytest
+import torch
 from flwr.common.typing import Scalar
+from freezegun import freeze_time
 
 from fl4health.clients.evaluate_client import EvaluateClient
 from tests.clients.fixtures import get_basic_client, get_evaluation_client  # noqa
@@ -73,3 +78,47 @@ def test_evaluating_only_global_models(get_evaluation_client: EvaluateClient) ->
     assert "local_loss_checkpoint" not in metrics
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.43826544285
     assert pytest.approx(metrics["global_eval_manager - prediction - accuracy"], abs=0.0001) == 0.0
+
+
+@freeze_time("2012-12-12 12:12:12")
+def test_metrics_reporter_setup_client() -> None:
+    evaluate_client = MockEvaluateClient()
+    evaluate_client.setup_client({})
+
+    assert evaluate_client.metrics_reporter.metrics == {
+        "type": "client",
+        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    }
+
+
+@freeze_time("2012-12-12 12:12:12")
+def test_metrics_reporter_evaluate() -> None:
+    test_loss = 123.123
+    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
+
+    evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics)
+    evaluate_client.evaluate([], {})
+
+    assert evaluate_client.metrics_reporter.metrics == {
+        "type": "client",
+        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+        "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
+        "loss": test_loss,
+        "metrics": test_metrics,
+        "evaluate_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    }
+
+
+class MockEvaluateClient(EvaluateClient):
+    def __init__(self, loss: Optional[float] = None, metrics: Optional[Dict[str, Scalar]] = None):
+        super().__init__(Path(""), [], torch.device(0))
+
+        # Mocking methods
+        self.get_data_loader = MagicMock()  # type: ignore
+        mock_data_loader = MagicMock()  # type: ignore
+        mock_data_loader.dataset = []
+        self.get_data_loader.return_value = (mock_data_loader,)
+        self.get_criterion = MagicMock()  # type: ignore
+        self.get_local_model = MagicMock()  # type: ignore
+        self.validate = MagicMock()  # type: ignore
+        self.validate.return_value = loss, metrics
