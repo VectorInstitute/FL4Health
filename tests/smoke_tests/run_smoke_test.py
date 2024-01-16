@@ -488,7 +488,7 @@ if __name__ == "__main__":
                         "fit_metrics": {"train - prediction - accuracy": (0.3718, 0.05)},
                         "loss_dict": {"checkpoint": (2.1390, 0.005), "backward": (2.1390, 0.005)},
                         "evaluate_metrics": {"val - prediction - accuracy": (0.3906, 0.005)},
-                        "loss": 2.2294,
+                        "loss": (2.2294, 0.05),
                     },
                 },
             },
