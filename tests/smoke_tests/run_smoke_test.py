@@ -353,6 +353,7 @@ def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[
     def _assert(value: Any, saved_value: Any) -> None:
         tolerance = DEFAULT_TOLERANCE
         if isinstance(value, tuple):
+            # if the value is a tuple, the first one is the actual value and the second one is the tolerance
             value, tolerance = value
 
         assert approx(value, abs=tolerance) == saved_value, (
@@ -394,16 +395,16 @@ if __name__ == "__main__":
             server_metrics_to_assert={
                 "rounds": {
                     "1": {
-                        "metrics_aggregated": {"val - prediction - accuracy": 0.4834},
-                        "loss_aggregated": 1.9934,
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.4744},
+                        "loss_aggregated": 2.001,
                     },
                     "2": {
-                        "metrics_aggregated": {"val - prediction - accuracy": 0.6102},
-                        "loss_aggregated": 1.2648,
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.6026},
+                        "loss_aggregated": 1.2596,
                     },
                     "3": {
-                        "metrics_aggregated": {"val - prediction - accuracy": 0.7876},
-                        "loss_aggregated": 0.8317,
+                        "metrics_aggregated": {"val - prediction - accuracy": 0.7870},
+                        "loss_aggregated": 0.8278,
                     },
                 },
             },
@@ -412,32 +413,32 @@ if __name__ == "__main__":
                     "1": {
                         "fit_metrics": {"train - prediction - accuracy": 0.2031},
                         "loss_dict": {
-                            "checkpoint": 2.1439,
-                            "backward": 2.1439,
-                            "proximal_loss": 0.0,
+                            "checkpoint": 2.1473,
+                            "backward": 2.1736,
+                            "proximal_loss": 0.0263,
                         },
-                        "evaluate_metrics": {"val - prediction - accuracy": 0.4834},
-                        "loss": 1.9934,
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.4744},
+                        "loss": 2.0011,
                     },
                     "2": {
-                        "fit_metrics": {"train - prediction - accuracy": 0.5062},
+                        "fit_metrics": {"train - prediction - accuracy": 0.5},
                         "loss_dict": {
-                            "checkpoint": 1.7729,
-                            "backward": 1.7729,
+                            "checkpoint": 1.7772,
+                            "backward": 1.7772,
                             "proximal_loss": 0.0,
                         },
-                        "evaluate_metrics": {"val - prediction - accuracy": 0.6102},
-                        "loss": 1.2648,
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.6026},
+                        "loss": 1.2596,
                     },
                     "3": {
-                        "fit_metrics": {"train - prediction - accuracy": 0.6781},
+                        "fit_metrics": {"train - prediction - accuracy": 0.6734},
                         "loss_dict": {
-                            "checkpoint": 1.0138,
-                            "backward": 1.0138,
+                            "checkpoint": 1.0223,
+                            "backward": 1.0223,
                             "proximal_loss": 0.0,
                         },
-                        "evaluate_metrics": {"val - prediction - accuracy": 0.7876},
-                        "loss": 0.8317,
+                        "evaluate_metrics": {"val - prediction - accuracy": 0.7870},
+                        "loss": 0.8278,
                     },
                 },
             },
