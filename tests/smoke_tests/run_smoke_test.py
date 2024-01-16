@@ -31,8 +31,8 @@ async def run_smoke_test(
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
     seed: Optional[int] = None,
-    server_metrics_to_assert: Optional[Dict[str, Any]] = None,
-    client_metrics_to_assert: Optional[Dict[str, Any]] = None,
+    server_metrics: Optional[Dict[str, Any]] = None,
+    client_metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -75,6 +75,23 @@ async def run_smoke_test(
                 dataset_path="examples/datasets/cifar_data/",
                 checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
                 assert_evaluation_logs=True,
+                seed=42,
+                server_metrics={
+                    "rounds": {
+                        "1": {
+                            "metrics_aggregated": {"val - prediction - accuracy": 0.4744},
+                            "loss_aggregated": (2.001, 0.05), # to override default tolerance, pass it in as a tuple
+                        },
+                    },
+                },
+                client_metrics={
+                    "rounds": {
+                        "2": {
+                            "fit_metrics": {"train - prediction - accuracy": (0.2031, 0.005)},
+                            "loss_dict": {"checkpoint": 2.1473, "backward": 2.1736}
+                        },
+                    },
+                },
             )
         )
         loop.close()
@@ -96,7 +113,13 @@ async def run_smoke_test(
         skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-        # TODO add docstring
+        seed (Optional[int]): The random seed to be passed in to both the client and the server.
+        server_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+            saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            Default is None.
+        client_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+            saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            Default is None.
     """
     clear_metrics_folder()
 
@@ -227,7 +250,7 @@ async def run_smoke_test(
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
-    _assert_metrics(MetricType.SERVER, server_metrics_to_assert)
+    _assert_metrics(MetricType.SERVER, server_metrics)
 
     # client assertions
     for i in range(len(full_client_outputs)):
@@ -249,7 +272,7 @@ async def run_smoke_test(
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
-        _assert_metrics(MetricType.CLIENT, client_metrics_to_assert)
+        _assert_metrics(MetricType.CLIENT, client_metrics)
 
     logger.info("All checks passed. Test finished.")
 
@@ -392,7 +415,7 @@ if __name__ == "__main__":
             config_path="tests/smoke_tests/fedprox_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
             seed=42,
-            server_metrics_to_assert={
+            server_metrics={
                 "rounds": {
                     "1": {
                         "metrics_aggregated": {"val - prediction - accuracy": 0.4744},
@@ -408,7 +431,7 @@ if __name__ == "__main__":
                     },
                 },
             },
-            client_metrics_to_assert={
+            client_metrics={
                 "rounds": {
                     "1": {
                         "fit_metrics": {"train - prediction - accuracy": 0.2031},
@@ -451,7 +474,7 @@ if __name__ == "__main__":
             config_path="tests/smoke_tests/scaffold_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
             seed=42,
-            server_metrics_to_assert={
+            server_metrics={
                 "rounds": {
                     "1": {
                         "metrics_aggregated": {"val - prediction - accuracy": (0.1850, 0.005)},
@@ -467,7 +490,7 @@ if __name__ == "__main__":
                     },
                 },
             },
-            client_metrics_to_assert={
+            client_metrics={
                 "rounds": {
                     "0": {
                         "fit_metrics": {"train - prediction - accuracy": 0.1968},
@@ -502,7 +525,7 @@ if __name__ == "__main__":
             config_path="tests/smoke_tests/apfl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
             seed=42,
-            server_metrics_to_assert={
+            server_metrics={
                 "rounds": {
                     "1": {
                         "metrics_aggregated": {
@@ -530,7 +553,7 @@ if __name__ == "__main__":
                     },
                 },
             },
-            client_metrics_to_assert={
+            client_metrics={
                 "rounds": {
                     "1": {
                         "fit_metrics": {
