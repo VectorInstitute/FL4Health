@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import json
 import logging
-import os
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -17,7 +16,7 @@ from examples.fedprox_example.client import MnistFedProxClient
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.DEBUG, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
 
 
@@ -325,7 +324,7 @@ class MetricType(Enum):
     CLIENT = "client"
 
 
-DEFAULT_METRICS_FOLDER = "metrics"
+DEFAULT_METRICS_FOLDER = Path("metrics")
 DEFAULT_TOLERANCE = 0.0005
 
 
@@ -334,12 +333,11 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[st
         return
 
     metrics_found = False
-    for file in os.listdir(DEFAULT_METRICS_FOLDER):
-        file_path = os.path.join(DEFAULT_METRICS_FOLDER, file)
-        if not os.path.isfile(file_path) or not file.endswith(".json"):
+    for file in DEFAULT_METRICS_FOLDER.iterdir():
+        if not file.is_file() or not str(file).endswith(".json"):
             continue
 
-        with open(file_path) as f:
+        with open(file) as f:
             metrics = json.load(f)
 
         if metrics["type"] != metric_type.value:
@@ -378,9 +376,10 @@ def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[
 
 
 def clear_metrics_folder() -> None:
-    for f in os.listdir(DEFAULT_METRICS_FOLDER):
-        if os.path.isfile(os.path.join(DEFAULT_METRICS_FOLDER, f)) and f.endswith(".json"):
-            os.remove(os.path.join(DEFAULT_METRICS_FOLDER, f))
+    DEFAULT_METRICS_FOLDER.mkdir(exist_ok=True)
+    for f in DEFAULT_METRICS_FOLDER.iterdir():
+        if f.is_file() and str(f).endswith(".json"):
+            f.unlink()
 
 
 if __name__ == "__main__":
