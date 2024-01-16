@@ -23,6 +23,7 @@ ClientIP = str
 ShamirSecret = List[bytes]
 EncryptedShamirSecret = List[bytes]
 AgreedSecret = bytes
+Seed = int | bytes
 
 
 class Event(Enum):
@@ -144,8 +145,8 @@ class ClientCryptoKit:
     def get_online_clients(self) -> List[ClientId]:
         """This function can only be run after Shamir secrets have been received by clients."""
         online_ids = list(self.bob_shamir_secrets.keys())
-        peer_count = len(online_ids) - 1
-        assert peer_count > self.reconstruction_threshold
+        peer_count = len(online_ids)
+        assert peer_count >= self.reconstruction_threshold
         return online_ids
 
     def get_pair_mask_sum(self, vector_dim: int, allow_dropout=True) -> List[int]:
@@ -372,7 +373,7 @@ class ClientCryptoKit:
         return randrange(start=0, stop=sample_size)
 
     @staticmethod
-    def generate_peudorandom_vector(seed: int | bytes, arithmetic_modulus: int, dimension: int) -> ndarray:
+    def generate_peudorandom_vector(seed: Seed, arithmetic_modulus: int, dimension: int) -> ndarray:
         "Used to compute self mask and pairwise mask, also used by server for unmasking."
 
         if isinstance(seed, int):
@@ -405,9 +406,9 @@ class ServerCryptoKit:
         self.number_of_bobs = None  # clients whom Alice communicates with (number of online clients) - 1
         self.model_integer_range = model_integer_range
         # records
-
         self.client_public_keys: Dict[ClientId, PublicKeyChain] = {}
         self.online_clients: List[ClientId] = []
+        self.model_dimension = None
 
     def calculate_arithmetic_modulus(self) -> int:
         # stores and returns modulus of arithmetic
@@ -469,6 +470,11 @@ class ServerCryptoKit:
         key: EllipticCurvePrivateKey = ServerCryptoKit.deserialize_private_key(private_key)
         return ClientCryptoKit.key_agreement(private_key=key, peer_public_key_bytes=bob_public_key)
 
+    def recover_mask_vector(self, seed: Seed) -> ndarray:
+        return self.generate_peudorandom_vector(
+            seed=seed, arithmetic_modulus=self.arithmetic_modulus, dim=self.model_dimension
+        )
+
     @staticmethod
     def shamir_reconstruct_secret(shares: List[ShamirSecret], reconstruction_threshold: int) -> bytes:
         assert len(shares) >= reconstruction_threshold > 1
@@ -496,7 +502,7 @@ class ServerCryptoKit:
         )
 
     @staticmethod
-    def generate_peudorandom_vector(seed: int | bytes, arithmetic_modulus: int, dimension: int) -> ndarray:
+    def generate_peudorandom_vector(seed: Seed, arithmetic_modulus: int, dimension: int) -> ndarray:
         "Used to compute self mask and pairwise mask, also used by server for unmasking."
 
         if isinstance(seed, int):
@@ -509,7 +515,7 @@ class ServerCryptoKit:
 
         return np_generator.integers(low=0, high=arithmetic_modulus, size=dimension)
 
-    def reconstruct_mask(self, seed: int | bytes, dim: int):
+    def reconstruct_mask(self, seed: Seed, dim: int):
         return self.generate_peudorandom_vector(seed, self.arithmetic_modulus, dim)
 
 

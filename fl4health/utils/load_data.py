@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple
 
 import torchvision.transforms as transforms
 from flwr.common.logger import log
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 from torchvision.datasets import CIFAR10
 
 from fl4health.utils.dataset import BaseDataset, MNISTDataset
@@ -79,6 +79,35 @@ def load_cifar10_data(
 
     train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True)
     validation_loader = DataLoader(validation_set, batch_size=batch_size)
+    num_examples = {
+        "train_set": len(training_set),
+        "validation_set": len(validation_set),
+    }
+    return train_loader, validation_loader, num_examples
+
+
+def secure_aggregation_poisson_data_sampler(
+    data_dir: Path, batch_size: int, number_of_samples: int
+) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+    """Load CIFAR-10 (training and validation set)."""
+    log(INFO, f"Data directory: {str(data_dir)}")
+    transform = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        ]
+    )
+    training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
+    validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
+
+    poisson_sampler_training = RandomSampler(
+        data_source=training_set, replacement=False, num_samples=number_of_samples
+    )
+    poisson_sampler_validataion = RandomSampler(
+        data_source=validation_set, replacement=False, num_samples=number_of_samples
+    )
+    train_loader = DataLoader(training_set, batch_size=batch_size, shuffle=True, sampler=poisson_sampler_training)
+    validation_loader = DataLoader(validation_set, batch_size=batch_size, sampler=poisson_sampler_validataion)
     num_examples = {
         "train_set": len(training_set),
         "validation_set": len(validation_set),

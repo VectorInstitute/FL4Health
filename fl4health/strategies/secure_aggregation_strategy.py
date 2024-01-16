@@ -129,8 +129,8 @@ class SecureAggregationStrategy(BasicFedAvg):
 
     def aggregate_sum(self, client_models: List[NDArrays]):
 
-        # hard coded modulus
-        MODULUS = 1 << 30
+        # # hard coded modulus
+        # MODULUS = 1 << 30
 
         # number of layers per model
         N = len(client_models[0])
@@ -152,10 +152,11 @@ class SecureAggregationStrategy(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        arithmetic_modulus: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+        arithmetic_modulus: int = 1,
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+
         """
         Aggregate the results (with modular arithmetic) from the federated fit round. This is done with either weighted
         or unweighted FedAvg, depending on the settings used for the strategy.
@@ -178,6 +179,10 @@ class SecureAggregationStrategy(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
+        # # NOTE for debug only
+        # def echo(x):
+        #     self.debugger(f'the number of examples is {x}')
+        #     return x
         # Convert results
         weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
@@ -186,24 +191,35 @@ class SecureAggregationStrategy(BasicFedAvg):
         # compute sum right away
         # at each index is the layers of that client
         params = [param_dict for param_dict, _ in weights_results]
-        # all layers of the first client
-        sum_list = [arr for arr in params[0]]
+        # initalized to model layers of the first client
+        sum_list = params.pop(0)
         nlayers = len(sum_list)
 
-        for client in params[1:]:
+        for client in params:
             for layer in range(nlayers):
                 sum_list[layer] += client[layer]
+                sum_list[layer] %= arithmetic_modulus
+
+        training_set_size = sum([weight for _, weight in weights_results])
+        self.debugger("training_set_size", training_set_size)
+        assert training_set_size > 0
+        assert isinstance(training_set_size, int)
+        average_list = [layer / training_set_size for layer in sum_list]
+        self.debugger("the averaged list", average_list)
+
         # self.debugger(f"Server round {server_round}, dtype {sum_list[0].dtype}", sum_list)
 
         global_sum = self.aggregate_sum(self.get_client_models(results))
-        self.debugger("global_sum", global_sum)
+        # self.debugger("global_sum", global_sum)
 
         # Aggregate them in a weighted or unweighted fashion based on settings.
-        aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
+        # self.weighted_aggregation = False   # for SecAgg
+        # aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
         # self.debugger(aggregated_arrays)
         # Convert back to parameters
         # parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
 
+        # we return Parameters instead of NDArrarys to be consistent and avoid errors
         parameters_aggregated = ndarrays_to_parameters(global_sum)
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
@@ -219,3 +235,18 @@ class SecureAggregationStrategy(BasicFedAvg):
         log(DEBUG, 6 * "\n")
         for item in info:
             log(DEBUG, item)
+
+
+class ServerProprocessor:
+    def __init__(self):
+        pass
+
+
+class DiscreteGaussianProcessing:
+    def __init__(self):
+        pass
+
+
+class ServerDP:
+    def __init__(self):
+        pass

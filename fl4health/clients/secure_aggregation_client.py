@@ -12,7 +12,8 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-from fl4health.security.secure_aggregation import ClientCryptoKit, Event, ShamirSecrets
+from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
+from fl4health.security.secure_aggregation import ClientCryptoKit, ClientId, Event, ShamirSecret, ShamirSecrets
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
@@ -31,9 +32,21 @@ class SecureAggregationClient(BasicClient):
 
         # client-side cryptography for Secure Aggregation
         self.crypto = ClientCryptoKit()
+        self.dropout_mode = None
 
         self.parameter_exchanger = SecureAggregationExchanger()
         log(INFO, f"Client initializes parameter exchange as {type(self.parameter_exchanger)}")
+
+        # TODO set differential privacy parameters
+        self.privacy_settings = {
+            "dp_mechanism": PrivacyMechanismIndex.DiscreteGaussian.value,
+            "noise_scale": 1,
+            "granularity": 1,
+            "clipping_threshold": 10,
+            "bias": 0.5,
+        }
+
+        assert 0 <= self.privacy_settings["bias"] < 1
 
     # The 'main' function for client-side secure aggregation.
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
@@ -42,7 +55,6 @@ class SecureAggregationClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)
 
-        response_dict = {}
         match config["event_name"]:
 
             case Event.ADVERTISE_KEYS.value:
@@ -56,6 +68,8 @@ class SecureAggregationClient(BasicClient):
 
                 # modulus may change at the start of each SecAgg if dropout occurs (refer to documentation)
                 self.crypto.set_arithmetic_modulus(modulus=config["arithmetic_modulus"])
+
+                self.dropout_mode = config["dropout_mode"]
 
                 public_keys = self.crypto.generate_public_keys()
 
@@ -136,15 +150,28 @@ class SecureAggregationClient(BasicClient):
                 }
 
             case Event.UNMASKING.value:
-                # not needed assuming no drop out (hence no self masking)
-                dropout_status = pickle.loads(config["dropout_status"])
+                # this case is not executed if we assume no dropouts (hence no need for mask removal)
 
-                shamir_secrets = {}
-                for id, has_dropped in dropout_status:
-                    secret: ShamirSecrets = self.crypto.bob_shamir_secrets[id]
-                    shamir_secrets[id] = secret.pairwise if has_dropped else secret.individual
+                # NOTE we do not check U4 is a subset of U3
+                # since we opt out of Round 3 (Consistency Check) of SecAgg
+                self.debugger("oh my good santa")
+                pairmask_shamir_secrets: Dict[ClientId, ShamirSecret] = {}
+                for id in pickle.loads(config["pickled_dropout_clients"]):
+                    # NOTE these secrets should be unencrypted
+                    pairmask_shamir_secrets[id] = self.crypto.bob_shamir_secrets[id].pairwise
 
-                response_dict = {**response_dict, "shamir_secrets": pickle.dumps(shamir_secrets)}
+                selfmask_shamir_secrets: Dict[ClientId, ShamirSecret] = {}
+                for id in pickle.loads(config["pickled_online_clients"]):
+                    # NOTE these secrets should be unencrypted
+                    selfmask_shamir_secrets[id] = self.crypto.bob_shamir_secrets[id].individual
+
+                response_dict = {
+                    "event_name": Event.UNMASKING.value,
+                    "current_fl_round": config["current_fl_round"],
+                    "pickled_pairmask_shamir_secrets": pickle.dumps(pairmask_shamir_secrets),
+                    "pickled_selfmask_shamir_secrets": pickle.dumps(selfmask_shamir_secrets),
+                }
+                self.debugger("oh my good santa end")
             case _:
                 response_dict = {
                     "num_train_samples": self.num_train_samples,
@@ -192,8 +219,19 @@ class SecureAggregationClient(BasicClient):
         # self.constant_parameters(n=0)
         # self.debugger(self.model.state_dict().values())
         # self.constant_parameters(n=8)
+        self.debugger(DEBUG, f"the number of training examples is {self.num_train_samples}")
+
+        if self.privacy_settings["dp_mechanism"] == PrivacyMechanismIndex.DiscreteGaussian.value:
+            m = self.crypto.arithmetic_modulus
+            assert isinstance(m, int) and m > 1
+            self.privacy_settings["arithmetic_modulus"] = m
+        else:
+            dp_kind = self.privacy_settings["dp_mechanism"]
+            log(WARN, f"The DP-mechanism you chose {dp_kind} is not yet implemented. Aborting FL.")
+            exit()
+
         return (
-            self.get_parameters(config),
+            self.get_scaled_masked_noised_parameters(config),
             self.num_train_samples,
             metrics,
         )
@@ -204,12 +242,13 @@ class SecureAggregationClient(BasicClient):
         """
         return SecureAggregationExchanger()
 
-    def get_parameters(self, config: Config) -> NDArrays:
+    def get_scaled_masked_noised_parameters(self, config: Config) -> NDArrays:
         """
         Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
         determine parameters sent
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired
+            scalar (int): Usually the number of training data points.
 
         Returns:
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
@@ -221,17 +260,23 @@ class SecureAggregationClient(BasicClient):
         self.parameter_exchanger = SecureAggregationExchanger()
 
         # TODO
-        self.debugger(f"Parameter exchanger type at get_parameters: {type(self.parameter_exchanger)}")
+        self.debugger(f"Parameter exchanger type at get_scaled_parameters: {type(self.parameter_exchanger)}")
         assert isinstance(self.parameter_exchanger, SecureAggregationExchanger)
         v = self.generate_mask()
         self.debugger("mask vector=====", v[:5])
-        return self.parameter_exchanger.push_parameters(model=self.model, mask=v, config=config)
+        return self.parameter_exchanger.push_parameters(
+            model=self.model, mask=v, scalar=self.num_train_samples, dp_setting=self.privacy_settings, config=config
+        )
 
     def generate_mask(self):
         dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
         # computes masking vector; this can only be run after masking seed agreement
         # modify to add self masking
         self.debugger(f"client integer {self.crypto.client_integer}", self.crypto.agreed_mask_keys)
+
+        if self.dropout_mode:
+            return self.crypto.get_duo_mask()
+
         pair_mask_vect: List[int] = self.crypto.get_pair_mask_sum(vector_dim=dim)
         return pair_mask_vect
 

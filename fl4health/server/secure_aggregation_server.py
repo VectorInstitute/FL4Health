@@ -1,13 +1,15 @@
 import pickle
 import timeit
 from dataclasses import dataclass
+from itertools import product
 from logging import DEBUG, INFO, WARN
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import numpy as np
-from flwr.common import GetPropertiesIns, Parameters
+import torch
+from flwr.common import GetPropertiesIns, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
-from flwr.common.typing import Scalar
+from flwr.common.typing import NDArrays, Scalar
 from flwr.server.client_manager import ClientManager, ClientProxy
 from flwr.server.history import History
 from flwr.server.server import FitResultsAndFailures, fit_clients
@@ -15,11 +17,25 @@ from torch.nn import Module
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
+from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
+    generate_sign_diagonal_matrix,
+    generate_walsh_hadamard_matrix,
+)
+from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.reporting.secure_aggregation_blackbox import BlackBox
-from fl4health.security.secure_aggregation import ClientId, DestinationClientId, Event, ServerCryptoKit, ShamirOwnerId
+from fl4health.security.secure_aggregation import (
+    ClientId,
+    DestinationClientId,
+    EllipticCurvePrivateKey,
+    Event,
+    Seed,
+    ServerCryptoKit,
+    ShamirOwnerId,
+)
 from fl4health.server.base_server import ExchangerType, FlServerWithCheckpointing
 from fl4health.server.polling import poll_clients
+from fl4health.server.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 
 
@@ -46,15 +62,18 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # secure aggregation params
         shamir_reconstruction_threshold: int = 2,
         model_integer_range: int = 1 << 30,
+        dropout_mode=False,
     ) -> None:
 
         assert isinstance(strategy, SecureAggregationStrategy)
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
         self.timeout = timeout
+        self.dropout_mode = dropout_mode
 
         self.crypto = ServerCryptoKit()
         self.set_shamir_threshold(shamir_reconstruction_threshold)
         self.set_model_integer_range(model_integer_range)
+        self.crypto.model_dimension = get_model_dimension(model)
 
         self.blackbox = BlackBox()
 
@@ -62,8 +81,17 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.id_proxy_table: Dict[ClientId, ClientProxy] = {}
         self.cid_to_id_table: Dict[str, ClientId] = {}
 
-        # did client dropout ?
+        # did client dropout
         self.id_status_table: Dict[ClientId, Status] = {}
+
+        # differential privacy
+        self.privacy_settings = {
+            "dp_mechanism": PrivacyMechanismIndex.DiscreteGaussian.value,
+            "noise_scale": 1,
+            "granularity": 1,
+            "clipping_threshold": 10,
+            "bias": 0.5,
+        }
 
     # the 'main' function; orchestrates FL
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
@@ -92,16 +120,11 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # Perform federated learning rounds under the Secure Aggregation Protocol.
         for current_round in range(1, 1 + num_rounds):
 
-            res_fit = self.secure_aggregation(current_round, timeout)
+            metrics = self.secure_aggregation(current_round, timeout)
 
             # Record distributed (and not centralized) loss / metrics.
             history = History()
-            if res_fit:
-                parameters_prime, fit_metrics, _ = res_fit
-                if parameters_prime:
-                    # TODO If necessary, handle dropouts before updating global parameters.
-                    self.parameters = parameters_prime
-                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
+            history.add_metrics_distributed_fit(server_round=current_round, metrics=metrics)
 
             # Evaluate model on a sample of available clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
@@ -114,18 +137,51 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # Bookkeeping
         end_time = timeit.default_timer()
         elapsed = end_time - start_time
-        log(INFO, "...FL finished in %s", elapsed)
+        log(INFO, "FL finished in %s", elapsed)
 
         if self.wandb_reporter:
             self.wandb_reporter.report_metrics(num_rounds, history)
         return history
 
     def secure_aggregation(self, current_round, timeout) -> Any:
+        """Returns metrics"""
         self.setup(current_round)
         self.advertise_keys(current_round)
         self.share_keys(current_round)
-        self.masked_input_collection(current_round=current_round, timeout=timeout)
-        return self.unmasking(current_round=current_round, timeout=timeout, model_vect=0)
+
+        params, metrics, responded_clients, dropped_clients = self.masked_input_collection(
+            current_round=current_round, timeout=timeout, arithmetic_modulus=self.crypto.arithmetic_modulus
+        )
+
+        self.parameters = params
+        self.parameter_exchanger.pull_parameters(
+            parameters=parameters_to_ndarrays(self.parameters), model=self.server_model
+        )
+
+        # server procedure to undiscretize aggregate
+        model_vector = vectorize_model(self.server_model)
+        half_m = self.crypto.arithmetic_modulus / 2
+        for i in range(model_vector.numel()):
+            if model_vector[i] > 0:
+                model_vector[i] = half_m - model_vector[i]
+            else:
+                model_vector[i] = -model_vector[i] - half_m
+
+        sign_diagonal_matrix = generate_sign_diagonal_matrix(self.crypto.model_dimension)
+        exponent = torch.ceil(torch.log2(self.crypto.model_dimension))
+        # the matrix is its inverse
+        inverse_welsh_hadamard = generate_walsh_hadamard_matrix(exponent)
+
+        # TODO matke the matrix multiplication more efficient (i.e. turn into matrix-vector mult)
+        undiscretized_vector = self.privacy_settings["granularity"] * sign_diagonal_matrix
+        undiscretized_vector = torch.matmul(undiscretized_vector, inverse_welsh_hadamard)
+
+        if self.dropout_mode:
+            unmaksed_params = self.unmasking(
+                round=current_round, timeout=timeout, responded=responded_clients, dropped=dropped_clients
+            )
+
+        return metrics
 
     def initialize_tables(self):
 
@@ -183,6 +239,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             "number_of_bobs": self.crypto.number_of_bobs,  # peer count
             "arithmetic_modulus": self.crypto.arithmetic_modulus,
             "shamir_reconstruction_threshold": self.crypto.shamir_reconstruction_threshold,
+            "dropout_mode": self.dropout_mode,
         }
 
         all_requests = []
@@ -297,18 +354,19 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # ---------------------- second round (ends) --------------------------
 
-    def masked_input_collection(self, current_round, timeout):
-
-        params, metircs, online_dropouts = self.fit_round(server_round=current_round, timeout=timeout)
+    def masked_input_collection(self, current_round, timeout, arithmetic_modulus):
+        params, metircs, responded_and_dropouts = self.secure_aggregation_fit_round(
+            server_round=current_round, timeout=timeout, arithmetic_modulus=arithmetic_modulus
+        )
 
         # record dropouts
         online_clients = self.get_online_clients()
         responded_clients = set()
-        online, _ = online_dropouts
-        for proxy, _ in online:
-            id = self.cid_to_id_table(proxy.cid)
+        responded, _ = responded_and_dropouts
+        for proxy, _ in responded:
+            id = self.cid_to_id_table[proxy.cid]
             responded_clients.add(id)
-        dropouts = online_dropouts.difference(responded_clients)
+        dropouts = online_clients.difference(responded_clients)
         for client in dropouts:
             self.set_dropout(client)
 
@@ -316,50 +374,137 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         peer_count = len(self.get_online_clients()) - 1
         t = self.crypto.shamir_reconstruction_threshold
         if peer_count < t:
-            error_msg = f"""
-                Too many dropouts on round {current_round} during Masked Input Collection:
-                online peers {peer_count} < {t} threshold, aborting FL.
-            """
+            error_msg = f"""Too many dropouts on round {current_round} during Masked Input Collection:
+                online peers {peer_count} < {t} threshold, aborting FL."""
             log(WARN, error_msg)
             exit()
 
-        all_dropouts = self.get_dropout_clients()
-        return params, metircs, all_dropouts
+        dropped_clients = self.get_dropout_clients()
+        return params, metircs, responded_clients, dropped_clients
 
-    def unmasking(self, model_vect: np.ndarray, round: int):
-        """Outputs sum of masks to be removed (subtracted)."""
+    def unmasking(self, round: int, responded: List[ClientId], dropped: List[ClientId], timeout: float):
+        """Outputs sum of masks to be removed (subtracted).
+
+        responded: clients who contributed to model_vect during FedAvg
+        dropped: clients who did not contribut to model_vect, but whose pairwise masks have been included
+        """
 
         # if bob has dropped out, the pair mask Shamir secret will be shared by alice
         # if bob is online, the self mask Shamir secret will be shared by alice
 
-        requests = []
-        for id, status in self.id_status_table.items():
-            req = (id, status.dropout)
-            requests.append(req)
+        online_clients: Set[ClientId] = self.get_online_clients()
 
-        res = self.api(request_dict={"dropout_status": pickle.dumps(requests)}, event_name=Event.UNMASKING.value)
-
-        shamir_secrets = {id: [] for id in self.id_status_table.keys()}
-
-        for res_dict in res:
-            secrets = pickle.loads(res_dict["shamir_secrets"])
-            for id, secret in secrets:
-                shamir_secrets[id].append(secret)
-
-        seeds = map(
-            lambda shares: self.crypto.shamir_reconstruct_secret(shares, self.crypto.shamir_reconstruction_threshold),
-            [shares for shares in shamir_secrets.values()],
+        message = GetPropertiesIns(
+            {
+                "pickled_dropout_clients": pickle.dumps(dropped),
+                "pickled_online_clients": pickle.dumps(online_clients),
+                "event_name": Event.UNMASKING.value,
+                "current_fl_round": round,
+            }
         )
 
-        dim = model_vect.size()
+        # only send message to online clients
+        requests: List[Tuple[ClientProxy, GetPropertiesIns]] = [
+            (self.id_proxy_table[id], message) for id in self.id_proxy_table.keys() if id not in dropped
+        ]
 
-        masks = np.zeros(dim)
-        for seed in seeds:
-            masks += self.crypto.reconstruct_mask(seed, dim)
+        online, dropouts = poll_clients(client_instructions=requests, max_workers=self.max_workers, timeout=timeout)
 
-        return model_vect - masks
+        # verify
+        peer_count = len(online) - 1
+        t = self.crypto.shamir_reconstruction_threshold
+        if peer_count < t:
+            log(
+                WARN,
+                f"Insufficient Shamir shares {peer_count} < {t} received on federated round {round} for unmasking, aborting FL.",
+            )
+            exit()
 
-        # server performs shamir reconstruction of the seeds and generation and summation of masks
+        # record dropouts
+        responded_clients: Set[ClientId] = set()
+        for proxy, _ in online:
+            id = self.cid_to_id_table[proxy.cid]
+            responded_clients.add(id)
+
+        droped_after_communication: Set[ClientId] = online.difference(responded_clients)
+        self.set_dropout_from_list(list(droped_after_communication))
+
+        # -------------------------------- Shamir reconstruction (start) ------------------------------------------
+        # NOTE be very careful of the sign during mask removal: they should be opposite to the masking procedure
+
+        # maps ClientID to an array of ShamirSecret
+        pair_mask_shamir_dict = {}
+        self_mask_shamir_dict = {}
+
+        responses_list = [res.properties for _, res in online]
+        for client_dict in responses_list:
+            # verify we have the right information
+            assert client_dict["event_name"] == Event.UNMASKING.value and client_dict["current_fl_round"] == round
+
+            # dictionary mapping ClientId to ShamirSecret.
+            pairmask_shamir_secrets = pickle.loads(client_dict["pickled_pairmask_shamir_secrets"])
+            for id, shamir_secret in pairmask_shamir_secrets.items():
+                if id in pair_mask_shamir_dict:
+                    pair_mask_shamir_dict[id].append(shamir_secret)
+                    continue
+                # init array
+                pair_mask_shamir_dict[id] = [shamir_secret]
+
+            # dictionary mapping ClientId to ShamirSecret.
+            selfmask_shamir_secrets = pickle.loads(client_dict["selfmask_shamir_secrets"])
+            for id, shamir_secret in selfmask_shamir_secrets.items():
+                if id in pair_mask_shamir_dict:
+                    self_mask_shamir_dict[id].append(shamir_secret)
+                    continue
+                # init array
+                self_mask_shamir_dict[id] = [shamir_secret]
+
+        self_mask_seeds = list(
+            map(
+                lambda secrets_array: self.crypto.reconstruct_self_mask_seed(secrets_array),
+                self_mask_shamir_dict.values(),
+            )
+        )
+
+        # maps (responded, dropout) to their mutual seed
+        pair_mask_seeds: Dict[Tuple[ClientId, ClientId], bytes] = {}
+        for i, j in product(responded, dropped):
+            pair_mask_seeds[(i, j)] = self.crypto.reconstruct_pair_mask(
+                alice_shamir_shares=pair_mask_shamir_dict[j], bob_public_key=self.crypto.client_public_keys[i].mask_key
+            )
+        # -------------------------------- Shamir reconstruction (end) ------------------------------------------
+
+        # ---------------------------------------------- Unmasking (start) ----------------------------------------
+
+        # NOTE inappropriate dtype may cause slient overflow errors
+        unmasking_vector = np.zeros(self.crypto.model_dimension, dtype=np.longlong)
+
+        # process self masks
+        for seed in self_mask_seeds:
+            unmasking_vector -= self.crypto.recover_mask_vector(seed)
+
+        # process pair masks
+        for pair, seed in pair_mask_seeds.items():
+            responded_id, dropout_id = pair
+
+            # the responded client needs to reverse the mask by reversing the sign.
+            # NOTE it is important to get the sign correct here
+            if responded_id < dropout_id:
+                unmasking_vector += self.crypto.recover_mask_vector(seed)
+            elif responded_id > dropout_id:
+                unmasking_vector -= self.crypto.recover_mask_vector(seed)
+            else:
+                log(WARN, "The responded ID should not equal dropout ID, something is wrong, aborting FL.")
+                exit()
+
+        unmasked_vector = torch.from_numpy(unmasking_vector) + vectorize_model(model=self.server_model)
+
+        self.server_model = unvectorize_model(model=self.server_model, parameter_vector=unmasked_vector)
+        self.parameters = ndarrays_to_parameters(
+            [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
+        )
+
+        # ---------------------------------------------- Unmasking (end) ----------------------------------------
 
     def api(
         self,
@@ -530,6 +675,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         """
         assert isinstance(self.strategy, SecureAggregationStrategy)
 
+        # broadcast global model parameters to clients
         client_instructions = self.strategy.configure_fit(
             server_round=server_round,
             parameters=self.parameters,
@@ -539,8 +685,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             log(WARN, f"SecAgg fit round {server_round}: no clients selected, aborting.")
             exit()
 
-        # to be returend
-        all_online_clients = list(self.proxys_to_ids(proxy_list=self._client_manager.all().values()))
+        all_online_clients = self.proxys_to_ids(proxy_list=self._client_manager.all().values())
 
         # Get 100% clients for SecAgg (SecAgg+ samples < 100%)
         sample_count = len(client_instructions)
@@ -552,6 +697,16 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             max_workers=self.max_workers,
             timeout=timeout,
         )
+
+        peer_count = self.get_peer_number()
+        t = self.crypto.shamir_reconstruction_threshold
+        if peer_count < t:
+            error_message = f"""
+                Too many dropouts on round {round} during Masked Input Collection:
+                online peers {peer_count} < {t} threshold, aborting FL.
+            """
+            log(WARN, error_message)
+            exit()
 
         responded = self.proxys_to_ids(proxy_list=[proxy for proxy, _ in results])
 
@@ -568,10 +723,12 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         )
 
         # Aggregate training results
-        aggregated_result: Tuple[
-            Optional[Parameters],
-            Dict[str, Scalar],
-        ] = self.strategy.aggregate_fit(server_round, self.crypto.arithmetic_modulus, results, failures)
+        aggregated_result: Tuple[Optional[Parameters], Dict[str, Scalar],] = self.strategy.aggregate_fit(
+            server_round=server_round,
+            arithmetic_modulus=self.crypto.arithmetic_modulus,
+            results=results,
+            failures=failures,
+        )
 
         parameters_aggregated, metrics_aggregated = aggregated_result
         return parameters_aggregated, metrics_aggregated, (results, failures)
