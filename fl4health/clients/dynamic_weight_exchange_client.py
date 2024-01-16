@@ -124,10 +124,11 @@ class DynamicWeightExchangeClient(BasicClient):
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
         """
-        if not self.model_weights_initialized:
-            self.initialize_all_model_weights(parameters, config)
-        else:
-            self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        # if not self.model_weights_initialized:
+        #     self.initialize_all_model_weights(parameters, config)
+        # else:
+        #     self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         # stores the values of the new model parameters at the beginning of each client training round.
         self.initial_model.load_state_dict(self.model.state_dict(), strict=True)
 

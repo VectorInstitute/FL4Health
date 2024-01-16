@@ -11,17 +11,23 @@ from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
 
 
 def get_initial_model_parameters(num_classes: int) -> Parameters:
+    parameter_packer = ParameterPackerWithLayerNames()
     # Initializing the model parameters on the server side.
     classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
     initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
+    param_names = []
+    model_weights = []
+    for name, val in initial_model.state_dict().items():
+        param_names.append(name)
+        model_weights.append(val.cpu().numpy())
+    return ndarrays_to_parameters(parameter_packer.pack_parameters(model_weights, param_names))
 
 
 def construct_config(
