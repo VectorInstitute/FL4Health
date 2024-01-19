@@ -1,0 +1,28 @@
+{
+    "rounds": {
+        "1": {
+            "metrics_aggregated": {
+                "val - personal - accuracy": 0.7069,
+                "val - global - accuracy": 0.6961,
+                "val - local - accuracy": 0.6716
+            },
+            "loss_aggregated": 1.3477
+        },
+        "2": {
+            "metrics_aggregated": {
+                "val - personal - accuracy": 0.7936,
+                "val - global - accuracy": 0.7956,
+                "val - local - accuracy": 0.76093
+            },
+            "loss_aggregated": 0.6121
+        },
+        "3": {
+            "metrics_aggregated": {
+                "val - personal - accuracy": 0.7509,
+                "val - global - accuracy": 0.8454,
+                "val - local - accuracy": 0.5494
+            },
+            "loss_aggregated": 0.7558
+        }
+    }
+}
