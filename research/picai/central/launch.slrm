@@ -1,0 +1,13 @@
+#!/bin/bash
+#SBATCH -t 8:00:00
+#SBATCH --qos normal 
+#SBATCH --gres=gpu:a40:1
+#SBATCH -c 8
+#SBATCH --mem=64GB
+#SBATCH --job-name=picai
+#SBATCH --output=picai%j.log
+
+# activate the environment 
+source ~/.bashrc
+source ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.9/bin/activate
+python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ~/picai_experiments/ --fold 0
