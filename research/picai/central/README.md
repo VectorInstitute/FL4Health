@@ -1,6 +1,6 @@
 # Running Centralized Example 
 
-To run a simple U-Net model on the Preprocessed Dataset described in the [main PICAI README.md](/research/picai/README.md), simply submit the `launch.slrm` job to the cluster using:
+To train and validate a simple U-Net model on the Preprocessed Dataset described in the [PICAI Documentation](/research/picai/README.md) using a centralized setup, simply submit the `launch.slrm` job to the cluster using:
 ```
 sbatch launch.slrm
 ```

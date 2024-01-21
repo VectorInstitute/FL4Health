@@ -56,10 +56,10 @@ class PicaiFedAvgClient(BasicClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument(
-        "--dataset_dir",
+        "--base_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed PICAI Dataset (ex. path/to/fedisic2019)",
+        help="Path to base directory containing PICAI dataset", 
         default="/ssd003/projects/aieng/public/PICAI/",
     )
     parser.add_argument(
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         average="macro", num_labels=2, thresholds=3).to(DEVICE))]
 
     client = PicaiFedAvgClient(
-        data_path=Path(args.dataset_dir),
+        data_path=Path(args.base_dir),
         metrics=metrics,
         device=DEVICE,
         overviews_dir=args.overviews_dir
