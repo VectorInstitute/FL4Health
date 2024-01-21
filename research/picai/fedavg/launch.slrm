@@ -1,0 +1,35 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
+#SBATCH --gres=gpu:a40:1
+#SBATCH --mem=64G
+#SBATCH --qos=normal
+#SBATCH --job-name=picai_fedavg
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+
+
+source ~/.bashrc
+source ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.9/bin/activate
+
+SERVER_OUTPUT_FILE="server.out"
+
+# Launch server and redirect output to server output file
+nohup python ~/FL4Health/research/picai/fedavg/server.py --config_path ~/FL4Health/research/picai/fedavg/config.yaml > ${SERVER_OUTPUT_FILE} 2>&1 &
+
+sleep 30
+
+# Loop through and launch clients, each redirecting output to client specific files
+n_clients=3
+for (( c=0; c<${n_clients}; c++ )) 
+do 
+	CLIENT_OUTPUT_FILE="client_${c}.out"
+	nohup python ~/FL4Health/research/picai/fedavg/client.py > ${CLIENT_OUTPUT_FILE} 2>&1 &
+done
+
+wait
+
+echo "All Done"

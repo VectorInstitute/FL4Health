@@ -1,80 +1,76 @@
 import argparse
-import ast
 
 import torch
+from torchmetrics.classification import MultilabelAveragePrecision, MultilabelAccuracy
+from fl4health.utils.metrics import MetricManager, TorchMetric
 from research.picai.losses import FocalLoss
-from research.picai.train_utils import train, validate
 from research.picai.model_utils import get_model
-from research.picai.data_utils import get_dataloaders
+from research.picai.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
+from research.picai.single_node_trainer import SingleNodeTrainer
 
 
 def main():
     # command line arguments for hyperparameters and I/O paths
     parser = argparse.ArgumentParser(description='Command Line Arguments for Training Script')
 
-    # data I/0 + experimental setup
-    parser.add_argument('--base_dir', type=str, default='/ssd003/projects/aieng/public/PICAI/')
-    parser.add_argument('--weights_dir', type=str, required=True,
-                        help="Path to export model checkpoints")
-    parser.add_argument('--overviews_dir', type=str, required=True,
+    # Data related arguments
+    parser.add_argument('--base_dir', type=str, default='/ssd003/projects/aieng/public/PICAI/',
+                        help="Path to PICAI dataset")
+    parser.add_argument('--overviews_dir', type=str,
+                        default='/ssd003/projects/aieng/public/PICAI/workdir/results/UNet/overviews/Task2203_picai_baseline/',
                         help="Base path to training/validation data sheets")
-    parser.add_argument('--folds', type=int, nargs='+', required=True,
-                        help="Folds selected for training/validation run")
+    parser.add_argument('--fold', type=int, required=True, help="Which fold to perform experiment")
+
+    # Model related arguments
+    parser.add_argument('--num_channels', type=int, default=3, help="Number of input channels/sequences")
+    parser.add_argument('--num_classes', type=int, default=2, help="Number of classes at train-time")
 
     # training hyperparameters
-    parser.add_argument('--image_shape', type=int, nargs="+", default=[20, 256, 256],
-                        help="Input image shape (z, y, x)")
-    parser.add_argument('--num_channels', type=int, default=3,
-                        help="Number of input channels/sequences")
-    parser.add_argument('--num_threads', type=int, default=3,
-                        help="Number of threads for dataloading")
-    parser.add_argument('--num_classes', type=int, default=2,
-                        help="Number of classes at train-time")
-    parser.add_argument('--num_epochs', type=int, default=100,
-                        help="Number of training epochs")
-
-    # neural network-specific hyperparameters
-
-    parser.add_argument('--model_type', type=str, default='unet',
-                        help="string representation of model architecture")
-    parser.add_argument('--channels_per_layer', type=str, default='[32, 64, 128, 256, 512, 1024]',
-                        help="Neural network: number of encoder channels (as string representation)")
-    parser.add_argument('--strides', type=str, default='[(2, 2, 2), (1, 2, 2), (1, 2, 2), (1, 2, 2), (2, 2, 2)]',
-                        help="Neural network: convolutional strides (as string representation)")
-    parser.add_argument('--batch_size', type=int, default=8,
-                        help="Mini-batch size")
+    parser.add_argument('--num_epochs', type=int, default=5, help="Number of training epochs")
+    parser.add_argument('--checkpoint_dir', type=str, required=True, help="Path to save model checkpoints")
+    parser.add_argument('--batch_size', type=int, default=8, help="Mini-batch size")
 
     args = parser.parse_args()
-    args.strides = ast.literal_eval(args.strides)
-    args.channels_per_layer = ast.literal_eval(args.channels_per_layer)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
-    # for each fold
-    for f in args.folds:
+    # Initialize dataloaders, model, loss and optimizer to creater trainer
+    train_img_paths, train_seg_paths, train_class_proportions = get_img_and_seg_paths(
+        args.overviews_dir, args.base_dir, fold_id=args.fold, train=True)
+    train_loader = get_dataloader(train_img_paths, train_seg_paths, args.batch_size,
+                                  get_img_transform(), get_seg_transform(), num_workers=1)
+    val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(
+        args.overviews_dir, args.base_dir, fold_id=args.fold, train=False)
+    val_loader = get_dataloader(val_img_paths, val_seg_paths, args.batch_size,
+                                get_img_transform(), get_seg_transform(), num_workers=1)
 
-        # derive dataLoaders
-        train_loader, val_loader, class_proportions = get_dataloaders(
-            overview_dir=args.overviews_dir,
-            base_dir=args.base_dir,
-            batch_size=args.batch_size,
-            num_threads=args.num_threads,
-            fold_id=f
-        )
+    model = get_model(
+        device=device,
+        spatial_dims=3,
+        in_channels=args.num_channels,
+        out_channels=args.num_classes
+    )
 
-        # model definition
-        model = get_model(
-            model_type=args.model_type,
-            spatial_dims=len(args.image_shape),
-            in_channels=args.num_channels,
-            out_channels=args.num_classes,
-            strides=args.strides,
-            channels=args.channels_per_layer,
-            device=device
-        )
-        criterion = FocalLoss(alpha=class_proportions[-1])
-        optimizer = torch.optim.Adam(params=model.parameters(), amsgrad=True)
-        train(model, train_loader, criterion, optimizer, device)
-        validate(model, val_loader, criterion, device)
+    criterion = FocalLoss(alpha=train_class_proportions[-1].item())
+    optimizer = torch.optim.Adam(params=model.parameters(), amsgrad=True)
+
+    trainer = SingleNodeTrainer(
+        train_loader=train_loader,
+        val_loader=val_loader,
+        model=model,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        checkpoint_stub=args.checkpoint_dir,
+        run_name="test_run",
+    )
+
+    # Define train and validation metrics and corresponding managers
+    metrics = [TorchMetric(name="MLAP", metric=MultilabelAveragePrecision(
+        average="macro", num_labels=2, thresholds=3).to(device))]
+    train_metric_manager = MetricManager(metrics, "train")
+    val_metric_manager = MetricManager(metrics, "val")
+
+    trainer.train_by_epochs(args.num_epochs, train_metric_manager, val_metric_manager)
 
 
 if __name__ == '__main__':

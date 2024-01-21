@@ -4,9 +4,10 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
+from torchmetrics import Metric as TMetric
+from torchmetrics.classification import MultilabelAveragePrecision
 from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
-
 
 class Metric(ABC):
     def __init__(self, name: str) -> None:
@@ -61,6 +62,21 @@ class Metric(ABC):
         """
         raise NotImplementedError
 
+class TorchMetric(Metric):
+    def __init__(self, name: str, metric: TMetric) -> None:
+        super().__init__(name)
+        self.metric = metric
+
+    def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
+        self.metric(input, target.long())
+
+    def compute(self, name: Optional[str]) -> Metrics:
+        result_key = f"{name} - {self.name}" if name is not None else self.name
+        result = self.metric.compute().item()
+        return {result_key: result}
+
+    def clear(self) -> None:
+        self.metric.reset()
 
 class SimpleMetric(Metric, ABC):
     def __init__(self, name: str) -> None:

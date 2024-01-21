@@ -1,17 +1,17 @@
 import torch
 import torch.nn as nn
-from typing import Tuple
+from typing import Sequence, Tuple
 from monai.networks.nets.unet import UNet
 
 
 def get_model(
-    model_type: str,
-    spatial_dims: int,
-    in_channels: int,
-    out_channels: int,
-    strides: Tuple[int, ...],
-    channels: Tuple[int, ...],
-    device: torch.device
+    device: torch.device,
+    model_type: str = "unet",
+    spatial_dims: int = 3,
+    in_channels: int = 3,
+    out_channels: int = 2,
+    channels: Sequence[int] = [32, 64, 128, 256, 512, 1024],
+    strides: Sequence[Tuple[int, ...]] = [(2, 2, 2), (1, 2, 2), (1, 2, 2), (1, 2, 2), (2, 2, 2)],
 ) -> nn.Module:
     """Select neural network architecture for given run"""
 

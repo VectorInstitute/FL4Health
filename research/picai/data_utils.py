@@ -1,9 +1,11 @@
 import os
+import random
 import json
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Callable, Optional, Tuple, Sequence
 import numpy as np
 import torch
+import torch.nn.functional as F
 from monai.transforms import Transform
 from monai.transforms.compose import Compose
 from monai.transforms.utility.array import EnsureChannelFirst, EnsureType
@@ -13,16 +15,8 @@ from monai.data.image_dataset import ImageDataset
 from monai.data.dataloader import DataLoader
 
 augmentation_params = {
-    "rotation_x": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
-    "rotation_y": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
-    "rotation_z": (-30. / 360 * 2. * np.pi, 30. / 360 * 2. * np.pi),
-    "p_rot": 0.2,
     "scale_range": (0.7, 1.4),
-    "independent_scale_factor_for_each_axis": False,
-    "p_scale": 0.2,
-    "gamma_retain_stats": True,
-    "gamma_range": (0.7, 1.5),
-    "p_gamma": 0.3,
+    "gamma": 1.0
 }
 
 
@@ -30,10 +24,20 @@ class MoveDim(Transform):
     def __init__(self, source_dim: int, target_dim: int) -> None:
         self.source_dim = source_dim
         self.target_dim = target_dim
+        super().__init__()
 
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
         data = torch.movedim(data, self.source_dim, self.target_dim)
         return data
+
+
+class OneHotEncode(Transform):
+    def __init__(self, num_classes: int = 2) -> None:
+        self.num_classes = num_classes
+        super().__init__()
+
+    def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        return F.one_hot(data.squeeze().long(), num_classes=self.num_classes)
 
 
 class ZScoreNormalization(Transform):
@@ -59,7 +63,9 @@ def get_seg_transform() -> Compose:
     transforms = [
         EnsureType(),
         EnsureChannelFirst(),
-        MoveDim(-1, 1)
+        MoveDim(-1, 1),
+        OneHotEncode(num_classes=2),
+        MoveDim(-1, 0)
     ]
     return Compose(transforms)
 
@@ -95,7 +101,47 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
         return image * 0.
 
 
-def get_dataloaders(overview_dir: str, base_dir: str, batch_size: int, num_threads: int, fold_id: int) -> Tuple[DataLoader, DataLoader, "npt.NDArray[np.float32]"]:
+def get_img_and_seg_paths(overviews_dir : str, base_dir: str, fold_id: int, train: bool) -> Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]:
+
+    # load datasheets
+    file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
+    file_path = os.path.join(overviews_dir, file_name)
+    with open(Path(file_path)) as fp:
+        file_json = json.load(fp)
+
+    # load paths to images and labels
+    img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in file_json["image_paths"]]
+    seg_paths = [os.path.join(base_dir, path) for path in file_json["label_paths"]]
+
+    # Determine class proportions
+    class_ratio = [int(np.sum(file_json['case_label'])), int(len(img_paths) - np.sum(file_json['case_label']))]
+    class_proportions = (class_ratio / np.sum(class_ratio))
+
+    # Log dataset information
+    dataset_name = "Train" if train else "Validation"
+    print('Dataset Definition:', "-" * 80)
+    print(f'Fold Number: {fold_id}')
+    print('Data Classes:', list(np.unique(file_json['case_label'])))
+    print(f'{dataset_name} Class Weights: {class_proportions}')
+    print(f'{dataset_name} Samples [-:{class_ratio[1]};+:{class_ratio[0]}]: {len(seg_paths)}')
+
+    return img_paths, seg_paths, torch.from_numpy(class_proportions)
+
+
+def split_img_and_seg_paths(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], splits: int) -> Tuple[Sequence[Sequence[Sequence[str]]], Sequence[Sequence[str]]]:
+    assert len(img_paths) == len(seg_paths)
+
+    client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
+    client_img_paths = [[] for _ in range(splits)]
+    client_seg_paths = [[] for _ in range(splits)]
+    for i, assignment in enumerate(client_assignments):
+        client_img_paths[assignment].append(img_paths[i])
+        client_seg_paths[assignment].append(seg_paths[i])
+
+    return client_img_paths, client_seg_paths
+
+
+def get_dataloader(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], batch_size: int, img_transform: Callable, seg_transform: Callable, shuffle: bool = False, num_workers: int =2) -> DataLoader:
     """
     Function that initializes and returns the train and validation DataLoader along with proportion of samples
     with each label.
@@ -111,51 +157,14 @@ def get_dataloaders(overview_dir: str, base_dir: str, batch_size: int, num_threa
        with the proportion of samples in each class.
 
     """
-    # load datasheets
-    with open(Path(overview_dir) / f'PI-CAI_train-fold-{fold_id}.json') as fp:
-        train_json = json.load(fp)
-    with open(Path(overview_dir) / f'PI-CAI_val-fold-{fold_id}.json') as fp:
-        val_json = json.load(fp)
-    # load paths to images and labels
-    train_img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in train_json["image_paths"]]
-    train_seg_paths = [os.path.join(base_dir, path) for path in train_json["label_paths"]]
-    val_img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in val_json["image_paths"]]
-    val_seg_paths = [os.path.join(base_dir, path) for path in val_json["label_paths"]]
-    train_data = [train_img_paths, train_seg_paths]
-    val_data = [val_img_paths, val_seg_paths]
 
-    # use case-level class balance to deduce required train-time class weights
-    class_ratio_t = [int(np.sum(train_json['case_label'])), int(len(train_data[0]) - np.sum(train_json['case_label']))]
-    class_ratio_v = [int(np.sum(val_json['case_label'])), int(len(val_data[0]) - np.sum(val_json['case_label']))]
-    class_proportions = (class_ratio_t / np.sum(class_ratio_t))
-
-    # log dataset definition
-    print('Dataset Definition:', "-" * 80)
-    print(f'Fold Number: {fold_id}')
-    print('Data Classes:', list(np.unique(train_json['case_label'])))
-    print(f'Train-Time Class Weights: {class_proportions}')
-    print(f'Training Samples [-:{class_ratio_t[1]};+:{class_ratio_t[0]}]: {len(train_data[1])}')
-    print(f'Validation Samples [-:{class_ratio_v[1]};+:{class_ratio_v[0]}]: {len(val_data[1])}')
-
-    train_transform_img = get_img_transform()
-    train_transform_seg = get_seg_transform()
-    train_ds = ImageDataset(
-        image_files=train_data[0],
-        seg_files=train_data[1],
-        transform=train_transform_img,
-        seg_transform=train_transform_seg,
+    ds = ImageDataset(
+        image_files=img_paths,
+        seg_files=seg_paths,
+        transform=img_transform,
+        seg_transform=seg_transform,
     )
 
-    val_transform_img = get_img_transform()
-    val_transform_seg = get_seg_transform()
-    val_ds = ImageDataset(
-        image_files=val_data[0],
-        seg_files=val_data[1],
-        transform=val_transform_img,
-        seg_transform=val_transform_seg,
-    )
+    loader = DataLoader(ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=True)
-
-    return train_loader, val_loader, torch.from_numpy(class_proportions)
+    return loader

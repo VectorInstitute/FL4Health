@@ -1,10 +1,12 @@
 import os
 from logging import INFO
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
+from torch.optim import Optimizer
 from flwr.common.logger import log
+from fl4health.utils.metrics import MetricManager
 
 
 class TorchCheckpointer:
@@ -16,6 +18,22 @@ class TorchCheckpointer:
 
     def load_best_checkpoint(self) -> nn.Module:
         return torch.load(self.best_checkpoint_path)
+
+
+class PerEpochCheckpointer:
+    def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
+        self.checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
+
+    def save_checkpoint(self, model: nn.Module, optimizer: Optimizer, epoch: int) -> None:
+        torch.save({
+            "epoch": epoch,
+            "optimizer": optimizer,
+            "model": model,
+        }, self.checkpoint_path)
+
+    def load_checkpoint(self) -> Tuple[nn.Module, Optimizer, int]:
+        ckpt = torch.load(self.checkpoint_path)
+        return ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
 
 class LatestTorchCheckpointer(TorchCheckpointer):
