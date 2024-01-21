@@ -1,8 +1,23 @@
-# Overview
+#  Overview
 
-The [PI-CAI](https://pi-cai.grand-challenge.org/) (Prostate Imaging: Cancer AI) is a collection of 10,000 prostate MRI exams to train and vaildate AI algorithms for detection of Clinically Significant Prostate Cancer Detection (csPCa).
+The [PI-CAI](https://pi-cai.grand-challenge.org/) (Prostate Imaging: Cancer AI) is a collection of MRI exams to train and vaildate AI algorithms for detection of Clinically Significant Prostate Cancer Detection (csPCa). This folder is focused on providing examples and utilities for performing experiments on the PICAI dataset for csPCa using both centralized and a federated setup. The federated learning examples heavily leverage the [fl4health package](/README.md) to conveniently apply state-of-the-art FL techniques to real world datasets. To this end, there is currently two examples: 
+- [U-Net on PICAI with Centralized Setup](/research/picai/central) 
+- [U-Net on PICAI with Federated Setup with FedAvg](/research/picai/fedavg)
 
-## Raw Dataset
+## Development Requirements
+
+For development and testing, we use [Poetry](https://python-poetry.org/) for dependency management. The library dependencies and those for development and testing are listed in the `pyproject.toml` file. You may use whatever virtual environment management tool that you would like. These include conda, poetry itself, and virtualenv. Poetry is also used to produce our releases, which are managed and automated by GitHub.
+
+The easiest way to create and activate a virtual environment is by using the [virtualenv](https://pypi.org/project/virtualenv/) package:
+```bash
+virtualenv "ENV_PATH"
+source "ENV_PATH/bin/activate"
+pip install --upgrade pip poetry
+poetry install --with "dev, dev-local, test, codestyle, picai"
+```
+
+## Data
+### Raw Dataset
 
 The dataset is partitioned into multiple splits corresponding to the different phases of the PICAI competition. The Public Training and Development Dataset, and preprocessed variants, are available on the cluster at the following path:
 ```
@@ -15,7 +30,7 @@ For each patient exam in this dataset, the following information is available:
 - bpMRI Scans: acquired using Siemens Healthineers or Philips Medical Systems-based scanners with surface coils.
 - Annotations: Human or AI Derived Annotations of csPCa lesions (if any) in MR Sequences
 
-### Imaging
+#### Imaging
 
 Imaging consists of the following sequences:
 - Axial, sagittal and coronal T2-weighted imaging (T2W).
@@ -46,7 +61,7 @@ and
 /ssd003/projects/aieng/public/PICAI/input/images/10417/10417_1000425_t2w.mha
 ```
 
-### Annotations 
+#### Annotations 
 Out of the 1500 cases shared in the Public Training and Development Dataset, 1075 cases have benign tissue or indolent PCa (i.e. their labels should be empty or full of 0s) and 425 cases have csPCa (i.e. their labels should have lesion blobs of value 2, 3, 4 or 5). Out of these 425 positive cases, only 220 cases carry an annotation derived by a human expert. The remaining 205 positive cases have not been annotated. In other words, only 17% (220/1295) of the annotations provided in should have csPCa lesion annotations, while the remaining 83% (1075/1295) of annotations should be empty. AI-derived annotation have been made available for practitioners that want to work with fully labeled dataset. Alternatively, practitioners can opt to leverage the samples without csPCa annotation in alternative ways if they wish to do so.
 
 The human expert annotations are available on the cluster at: 
@@ -66,7 +81,7 @@ The raw annotations differ in spatial resolution across annotators. Specifically
 
 For more information on the raw dataset (imaging or labels) or splits other than the Public Training and Development Dataset, refer to the [PICAI competition documentation](https://pi-cai.grand-challenge.org/DATA/). 
 
-## Preprocessed Dataset
+### Preprocessed Dataset
 In addition to to Raw Dataset, a Preprocessed Dataset has been provided on the cluster that was generated using the [picai_baseline package](https://github.com/DIAGNijmegen/picai_baseline). This package was provided by the PICAI competition to give a starting point for practitioners to preprocess the data from the Public Training and Development Dataset and train a simple model for the csPCa task.
 
 ### Preprocessing
