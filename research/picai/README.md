@@ -62,7 +62,7 @@ and
 ```
 
 #### Annotations 
-Out of the 1500 cases shared in the Public Training and Development Dataset, 1075 cases have benign tissue or indolent PCa (i.e. their labels should be empty or full of 0s) and 425 cases have csPCa (i.e. their labels should have lesion blobs of value 2, 3, 4 or 5). Out of these 425 positive cases, only 220 cases carry an annotation derived by a human expert. The remaining 205 positive cases have not been annotated. In other words, only 17% (220/1295) of the annotations provided in should have csPCa lesion annotations, while the remaining 83% (1075/1295) of annotations should be empty. AI-derived annotation have been made available for practitioners that want to work with fully labeled dataset. Alternatively, practitioners can opt to leverage the samples without csPCa annotation in alternative ways if they wish to do so.
+Out of the 1500 cases shared in the Public Training and Development Dataset, 1075 cases have benign tissue or indolent PCa and 425 cases have csPCa. Out of these 425 positive cases, only 220 cases carry an annotation derived by a human expert. The remaining 205 positive cases have not been annotated. AI-derived annotation have been made available for practitioners that want to work with fully labeled dataset. Alternatively, practitioners can opt to leverage the samples without csPCa annotation in alternative ways if they wish to do so.
 
 The human expert annotations are available on the cluster at: 
 ```
