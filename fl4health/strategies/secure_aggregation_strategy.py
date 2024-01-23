@@ -178,49 +178,30 @@ class SecureAggregationStrategy(BasicFedAvg):
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
+        
+        local_models = [parameters_to_ndarrays(client_response.parameters) for _, client_response in results]
+        aggregate_data_size = sum([client_response.num_examples for _, client_response in results])
+        log(INFO, f'Training data size: {aggregate_data_size}')
 
-        # # NOTE for debug only
-        # def echo(x):
-        #     self.debugger(f'the number of examples is {x}')
-        #     return x
-        # Convert results
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
-        ]
-
-        # compute sum right away
-        # at each index is the layers of that client
-        params = [param_dict for param_dict, _ in weights_results]
         # initalized to model layers of the first client
-        sum_list = params.pop(0)
-        nlayers = len(sum_list)
+        global_model_layers = local_models.pop(0)
 
-        for client in params:
-            for layer in range(nlayers):
-                sum_list[layer] += client[layer]
-                sum_list[layer] %= arithmetic_modulus
+        # if server_round == 0:
+        #     return ndarrays_to_parameters(global_model_layers), {}
 
-        training_set_size = sum([weight for _, weight in weights_results])
-        self.debugger("training_set_size", training_set_size)
-        assert training_set_size > 0
-        assert isinstance(training_set_size, int)
-        average_list = [layer / training_set_size for layer in sum_list]
-        self.debugger("the averaged list", average_list)
+        num_layers = len(global_model_layers)
 
-        # self.debugger(f"Server round {server_round}, dtype {sum_list[0].dtype}", sum_list)
+        # NOTE secure aggregation (mask is removed in summation)
+        for local_model_layers in local_models:
+            for k in range(num_layers):
+                global_model_layers[k] += local_model_layers[k]
+                global_model_layers[k] %= arithmetic_modulus
+        
+        log(DEBUG, f'round {server_round}')
+        log(DEBUG, global_model_layers)
 
-        global_sum = self.aggregate_sum(self.get_client_models(results))
-        # self.debugger("global_sum", global_sum)
+        parameters_aggregated = ndarrays_to_parameters(global_model_layers)
 
-        # Aggregate them in a weighted or unweighted fashion based on settings.
-        # self.weighted_aggregation = False   # for SecAgg
-        # aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
-        # self.debugger(aggregated_arrays)
-        # Convert back to parameters
-        # parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
-
-        # we return Parameters instead of NDArrarys to be consistent and avoid errors
-        parameters_aggregated = ndarrays_to_parameters(global_sum)
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
         if self.fit_metrics_aggregation_fn:
@@ -229,7 +210,11 @@ class SecureAggregationStrategy(BasicFedAvg):
         elif server_round == 1:  # Only log this warning once
             log(WARNING, "No fit_metrics_aggregation_fn provided")
 
-        return parameters_aggregated, metrics_aggregated
+        # TODO this is a work around for sampling clients on round 0
+        if server_round == 0:
+            return parameters_aggregated, metrics_aggregated
+
+        return parameters_aggregated, metrics_aggregated, aggregate_data_size
 
     def debugger(self, *info):
         log(DEBUG, 6 * "\n")

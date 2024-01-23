@@ -63,11 +63,19 @@ Broadcasts public keys for self-masking and pairwise-masking to all online clien
 
 ## Round 2 (Masked Input Collection)
 
+### Client
 The `ClientCryptoKit` method `get_duo_mask()` computes the sum of pair-masks and self-mask. Use `get_self_mask()` to get self-mask and
 `get_pair_mask_sum()` to get pair-mask.
 
 !!! Note
-    We do not return the masked input vector from each client in this step, but rather when the client `fit()` function is called, this is because we need to post process model parameters and inject privacy noise.
+    We do not return the masked input vector from `get_properties()`, but rather from client `fit()` function. This is because we need to post process model parameters and inject privacy noise.
+
+When client calls `fit()` it receives the global model, and preceeds with local training. Then 
+the model is post processed with `process_model_post_training()`. Depending on the context, post
+processing may entail privacy treatments (dp-SGD clipping or privacy noise injection) or security 
+encryption (masking, quantization, transformation). 
+
+
 
 ## Round 3 (Consistency Check)
 

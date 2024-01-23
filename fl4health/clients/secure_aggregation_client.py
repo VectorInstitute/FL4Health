@@ -17,6 +17,18 @@ from fl4health.security.secure_aggregation import ClientCryptoKit, ClientId, Eve
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, MetricMeterType
 
+from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
+    discrete_gaussian_noise_vector,
+    generate_random_sign_vector,
+    generate_walsh_hadamard_matrix,
+    pad_zeros,
+    randomized_rounding,
+    clip_vector,
+    get_exponent
+)
+from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
+from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model
+
 
 class SecureAggregationClient(BasicClient):
     def __init__(
@@ -36,6 +48,10 @@ class SecureAggregationClient(BasicClient):
 
         self.parameter_exchanger = SecureAggregationExchanger()
         log(INFO, f"Client initializes parameter exchange as {type(self.parameter_exchanger)}")
+
+        # set after model initialization
+        self.model_dim = None
+        self.padded_model_dim = None
 
         # TODO set differential privacy parameters
         self.privacy_settings = {
@@ -186,10 +202,19 @@ class SecureAggregationClient(BasicClient):
         local_epochs, local_steps, current_server_round = self.process_config(config)
         if not self.initialized:
             self.setup_client(config)
+
+        # local model <- global model
         self.set_parameters(parameters, config)
 
+        # TODO round 0 is a temporary work around for server to sample clients
         if current_server_round == 0:
+            # set all local model parameters to 0
             self.constant_parameters(n=0)
+
+            # set dimension
+            self.model_dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
+            self.padded_model_dim = 2**get_exponent(self.model_dim)
+
             # NOTE this is a full exchanger, needs to be modified for any partial exchanger
             parmeters = [val.cpu().numpy() for _, val in self.model.state_dict().items()]
             metrics = {}
@@ -209,17 +234,10 @@ class SecureAggregationClient(BasicClient):
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
 
-        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
-        # calculation results.
+        # NOTE uncomment for debugging
+        # pickle.dump(self.model.state_dict(), open(f"examples/secure_aggregation_example/local_models/{random()}.pkl", "wb"))
 
-        # add mask and privacy noise
-        # self.modify_parmeters()
-
-        # pickle.dump(self.model.state_dict(), open(f"examples/secure_aggregation_example/{random()}.pkl", "wb"))
-        # self.constant_parameters(n=0)
-        # self.debugger(self.model.state_dict().values())
-        # self.constant_parameters(n=8)
-        self.debugger(DEBUG, f"the number of training examples is {self.num_train_samples}")
+        log(INFO, f'Number of training examples: {self.num_train_samples}')
 
         if self.privacy_settings["dp_mechanism"] == PrivacyMechanismIndex.DiscreteGaussian.value:
             m = self.crypto.arithmetic_modulus
@@ -231,42 +249,59 @@ class SecureAggregationClient(BasicClient):
             exit()
 
         return (
-            self.get_scaled_masked_noised_parameters(config),
+            self.process_model_post_training(weight=self.num_train_samples),
             self.num_train_samples,
             metrics,
         )
 
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        """
-        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
-        """
-        return SecureAggregationExchanger()
-
-    def get_scaled_masked_noised_parameters(self, config: Config) -> NDArrays:
-        """
-        Determines which weights are sent back to the server for aggregation. This uses a parameter exchanger to
-        determine parameters sent
-        Args:
-            config (Config): The config is sent by the FL server to allow for customization in the function if desired
-            scalar (int): Usually the number of training data points.
-
-        Returns:
-            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
-                parameters to be aggregated, but can contain more information
-        """
+    def process_model_post_training(self, weight: int) -> NDArrays:
+        """See Algorithm 1 in 
+        Ref
+            The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
+            https://arxiv.org/pdf/2102.06387.pdf"""
 
         assert self.model is not None and self.parameter_exchanger is not None
-
         self.parameter_exchanger = SecureAggregationExchanger()
 
-        # TODO
-        self.debugger(f"Parameter exchanger type at get_scaled_parameters: {type(self.parameter_exchanger)}")
-        assert isinstance(self.parameter_exchanger, SecureAggregationExchanger)
-        v = self.generate_mask()
-        self.debugger("mask vector=====", v[:5])
-        return self.parameter_exchanger.push_parameters(
-            model=self.model, mask=v, scalar=self.num_train_samples, dp_setting=self.privacy_settings, config=config
+        # reshape model tensors and concatenate into a vector
+        vector = vectorize_model(self.model)
+
+        # TODO adjust clip to weighting
+        vector *= weight # weight for FedAvg, server divides out sum of client weights
+
+        c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+
+        # adjust for scaling of model vector by the weight (often the train data size)
+        weighted_clip = c * weight
+        vector = clip_vector(vector=vector, clip=weighted_clip, granularity=g)
+
+        # x'' = H(Dx')
+        vector = torch.mul(vector, generate_random_sign_vector(dim=self.model_dim)) # hadamard product
+        vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+        vector = torch.matmul(
+            input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
+            other=vector
         )
+
+        b = self.privacy_settings['bias']
+        vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
+
+        # discrete Gaussian noise 
+        v = (self.privacy_settings['noise_scale'] / g) ** 2
+        vector += discrete_gaussian_noise_vector(d=self.padded_model_dim, variance=v)
+
+        # TODO if dropout is turned on, then add selfmask below
+        vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+
+        processed = []
+        i = 0
+        for layer in self.model.state_dict.values():
+            j = i + layer.numel()
+            tensor = vector[i: j].reshape(layer.size()) # de-vectorize
+            processed.append(tensor.cpu.numpy())
+            i = j
+
+        return processed
 
     def generate_mask(self):
         dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
@@ -317,6 +352,13 @@ class SecureAggregationClient(BasicClient):
         self.model.to(torch.float64)
         self.model.load_state_dict(params_dict)
         # self.debugger(self.model.state_dict().values())
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        """
+        Returns Full Parameter Exchangers. Subclasses that require custom Parameter Exchangers can override this.
+        """
+        return SecureAggregationExchanger()
+    
 
     def debugger(self, *info):
         log(DEBUG, 6 * "\n")

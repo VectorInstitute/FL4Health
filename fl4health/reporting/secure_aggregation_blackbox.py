@@ -1,4 +1,5 @@
 from typing import Dict
+import json 
 
 ROUND = int
 
@@ -9,6 +10,7 @@ class BlackBox:
         self.client_count_record: Dict[ROUND, int] = {}
         self.model_integer_range_record: Dict[ROUND, int] = {}
         self.modulus_record: Dict[ROUND, int] = {}
+        self.report = {}
 
     def record_setup(
         self,
@@ -27,6 +29,10 @@ class BlackBox:
 
     def __repr__(self):
         return "A blackbox for federated learning with secure aggregation. Records key internal states."
+
+    def save(self, path):
+        with open('report.json', 'w') as json_file:
+            json.dump(self.report, json_file)
 
 
 r = BlackBox()

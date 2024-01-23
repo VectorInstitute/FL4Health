@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 import torch
 from flwr.common.logger import log
-
+from torch.linalg import vector_norm
 
 def bernoulli_exp(gamma: float) -> int:
     """
@@ -129,7 +129,7 @@ def discrete_gaussian_mechanism(query_vector: List[int], variance: float) -> Lis
 
 def discrete_gaussian_noise_vector(d: int, variance: float) -> torch.Tensor:
     """d-dimensional centered discrete Gaussian random vector with independent components of given variance."""
-    # TODO Q: how to make this rv generation more efficient
+    # TODO paralleize this loop more efficiently
     return torch.tensor([discrete_gaussian_sampler(variance) for _ in range(d)])
 
 
@@ -142,16 +142,24 @@ def generate_sign_diagonal_matrix(dim: int, sampling_probability=0.5, seed=0) ->
     torch.manual_seed(seed)
     return torch.diag(random_sign_vector(dim=dim, sampling_probability=0.5))
 
+def generate_random_sign_vector(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
+    torch.manual_seed(seed)
+    return random_sign_vector(dim=dim, sampling_probability=0.5)
 
-def pad_zeros(vector: torch.Tensor) -> torch.Tensor:
+
+def pad_zeros(vector: torch.Tensor, dim=None) -> torch.Tensor:
     """Elongate vector dimension to next power of two."""
     assert vector.dim() == 1
-    dim = torch.tensor(vector.numel())
-    exp = torch.ceil(torch.log2(dim))
+    if dim is None:
+        dim = vector.numel()
+    exp = get_exponent(dim)
     pad_len = torch.pow(torch.tensor(2), exp) - dim
     pad_len = pad_len.to(int).item()
     return torch.cat((vector, torch.zeros(pad_len)))
 
+def get_exponent(n: int) -> int:
+    """Get exponent of the least power of two greater than or equal to n."""
+    return math.ceil(math.log2(n))
 
 def generate_walsh_hadamard_matrix(exponent: int) -> torch.Tensor:
     """The dimension of the matrix is 2^exponent. This matrix is its inverse."""
@@ -169,29 +177,53 @@ def generate_walsh_hadamard_matrix(exponent: int) -> torch.Tensor:
     return torch.from_numpy(sylvester(exponent) / np.sqrt(2**exponent))
 
 
-def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, dim: int, bias: float) -> torch.Tensor:
+def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, unpadded_model_dim: int, bias: float) -> torch.Tensor:
     """Random rounding for SecAgg client procedure.
 
     Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
     """
     r = clip / granularity
-    s = math.sqrt(dim)
-    upper_bound_1 = (r + s) ** 2
-    upper_bound_2 = r**2 + dim / 4 + math.sqrt(-2 * math.log(bias)) * (r + s / 2)
+    padded_dim = 2**get_exponent(unpadded_model_dim)
+    s = math.sqrt(padded_dim)
+
+    upper_bound_1 = r + s
+    upper_bound_2 = r**2 + padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * (r + s/2)
+    upper_bound_2 = math.sqrt(upper_bound_2)
+
     upper_bound = min(upper_bound_1, upper_bound_2)
 
-    def round(vector, prob, dim) -> torch.Tensor:
-        rounding_instructions = torch.bernoulli(prob)
+    def round(vector, round_down_probabilities, dim) -> torch.Tensor:
+        rounding_instructions = torch.bernoulli(round_down_probabilities)
 
+        # TODO how to paralleize this for loop?
         for i in range(dim):
-            if rounding_instructions[i] == 0:
+            if rounding_instructions[i] == 1:
+                # if true round down
                 vector[i] = torch.floor(vector[i])
                 continue
             vector[i] = torch.ceil(vector[i])
         return vector
 
+    down_probs = torch.ceil(vector) - vector
+
     rounded_vector = vector
-    round_up_prob = vector - torch.floor(vector)
-    while torch.linalg.vector_norm(rounded_vector, ord=2) ** 2 > upper_bound:
-        rounded_vector = round(rounded_vector, round_up_prob, dim)
+    while torch.linalg.vector_norm(rounded_vector, ord=2) > upper_bound:
+        rounded_vector = round(rounded_vector, down_probs, unpadded_model_dim)
     return rounded_vector
+
+
+def clip_vector(vector: torch.Tensor, granularity: float, clip: float) -> torch.Tensor:
+    assert vector.dim() == 1  
+    if vector.dtype is not torch.float64:
+        vector = vector.to(dtype=torch.float64)
+    scalar = min(1, clip/vector_norm(vector)) / granularity
+    return scalar * vector
+
+if __name__ == '__main__':
+    # v = torch.tensor([3,4])
+    # clipped = clip_vector(v, 10, 0.5)
+    # print(clipped)
+
+    for i in range(1, 17):
+        print(i, get_exponent(i))
+

@@ -1,6 +1,7 @@
 examples/datasets/cifar-10*
 fl4health/security/playground.py
 examples/secure_aggregation_example/log/
+examples/secure_aggregation_example/plots/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

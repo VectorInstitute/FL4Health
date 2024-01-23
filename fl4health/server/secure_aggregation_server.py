@@ -18,8 +18,9 @@ from torch.nn import Module
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    generate_sign_diagonal_matrix,
+    generate_random_sign_vector,
     generate_walsh_hadamard_matrix,
+    get_exponent
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.reporting.fl_wanb import ServerWandBReporter
@@ -38,6 +39,7 @@ from fl4health.server.polling import poll_clients
 from fl4health.server.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 
 @dataclass
 class Status:
@@ -149,32 +151,44 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.advertise_keys(current_round)
         self.share_keys(current_round)
 
-        params, metrics, responded_clients, dropped_clients = self.masked_input_collection(
+        params, metrics, responded_clients, dropped_clients, train_size = \
+        self.masked_input_collection(
             current_round=current_round, timeout=timeout, arithmetic_modulus=self.crypto.arithmetic_modulus
         )
 
-        self.parameters = params
-        self.parameter_exchanger.pull_parameters(
-            parameters=parameters_to_ndarrays(self.parameters), model=self.server_model
+        # server procedure to post-process sum
+        global_model_layers = tuple(map(
+            lambda np_layer: torch.flatten(torch.from_numpy(np_layer)),
+            parameters_to_ndarrays(params)
+        ))
+        vector = torch.cat(global_model_layers) # padded vector
+        vector.map_(
+            vector, 
+            lambda component, _ : component - self.crypto.arithmetic_modulus/2     
+        )   
+
+        # y = (gamma D)(H^T z')
+        vector = torch.matmul(
+            # the inverse matrix is itself
+            generate_walsh_hadamard_matrix(exponent=get_exponent(vector.numel())), 
+            vector
         )
 
-        # server procedure to undiscretize aggregate
-        model_vector = vectorize_model(self.server_model)
-        half_m = self.crypto.arithmetic_modulus / 2
-        for i in range(model_vector.numel()):
-            if model_vector[i] > 0:
-                model_vector[i] = half_m - model_vector[i]
-            else:
-                model_vector[i] = -model_vector[i] - half_m
+        # Hadamard product
+        vector = torch.mul(
+            self.privacy_settings['granularity'] * generate_random_sign_vector(dim=vector.numel(), seed=0),
+            vector
+        )
 
-        sign_diagonal_matrix = generate_sign_diagonal_matrix(self.crypto.model_dimension)
-        exponent = torch.ceil(torch.log2(self.crypto.model_dimension))
-        # the matrix is its inverse
-        inverse_welsh_hadamard = generate_walsh_hadamard_matrix(exponent)
+        # remove padding zeros and divide to average
+        vector = vector[:self.crypto.model_dimension] / train_size
 
-        # TODO matke the matrix multiplication more efficient (i.e. turn into matrix-vector mult)
-        undiscretized_vector = self.privacy_settings["granularity"] * sign_diagonal_matrix
-        undiscretized_vector = torch.matmul(undiscretized_vector, inverse_welsh_hadamard)
+        # set global model
+        self.server_model = unvectorize_model(self.server_model, vector)
+
+        self.parameters = ndarrays_to_parameters(
+            [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
+        )
 
         if self.dropout_mode:
             unmaksed_params = self.unmasking(
@@ -355,7 +369,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # ---------------------- second round (ends) --------------------------
 
     def masked_input_collection(self, current_round, timeout, arithmetic_modulus):
-        params, metircs, responded_and_dropouts = self.secure_aggregation_fit_round(
+        params, metircs, responded_and_dropouts, train_size = self.secure_aggregation_fit_round(
             server_round=current_round, timeout=timeout, arithmetic_modulus=arithmetic_modulus
         )
 
@@ -380,7 +394,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             exit()
 
         dropped_clients = self.get_dropout_clients()
-        return params, metircs, responded_clients, dropped_clients
+        return params, metircs, responded_clients, dropped_clients, train_size
 
     def unmasking(self, round: int, responded: List[ClientId], dropped: List[ClientId], timeout: float):
         """Outputs sum of masks to be removed (subtracted).
@@ -664,7 +678,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
     def secure_aggregation_fit_round(
         self, server_round: int, timeout: Optional[float], arithmetic_modulus: int
-    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures, int]]:
         """Performs one FedAvg round with modular arithmetic and post processing for secure aggregation.
 
         Reference
@@ -730,8 +744,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             failures=failures,
         )
 
-        parameters_aggregated, metrics_aggregated = aggregated_result
-        return parameters_aggregated, metrics_aggregated, (results, failures)
+        parameters_aggregated, metrics_aggregated, aggregate_data_size = aggregated_result
+        return parameters_aggregated, metrics_aggregated, (results, failures), aggregate_data_size
 
     def proxys_to_ids(self, proxy_list: List[ClientProxy]) -> Set[ClientId]:
         ids = set()
