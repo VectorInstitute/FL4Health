@@ -2,7 +2,7 @@
 # cao bin, HKUST, China, binjacobcao@gmail.com
 # free to charge for academic communication
 
-from typing import List, Optional
+from typing import Optional
 
 import torch
 from qpth.qp import QPFunction
@@ -12,24 +12,26 @@ class MKMMDLoss(torch.nn.Module):
     def __init__(
         self,
         device: torch.device,
-        gamma_list: List[float] = [
-            2,
-            1,
-            1 / 2,
-            1 / 4,
-            1 / 8,
-        ],
+        gamma_list: Optional[torch.Tensor] = None,
         min_distance: Optional[bool] = False,
     ) -> None:
         """Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains.
         Args:
 
+            device (torch.device): device to use for computation
             gamma_list (List[float]): list of length scales for rbf kernels
+            min_distance (bool): if True, the MK-MMD is computed as the minimum distance between the source and
+            target domains. If False, the MK-MMD is computed as the maximum distance between the source and
+            target domains.
         """
         super().__init__()
 
-        self.kernel_num = len(gamma_list)
-        self.gamma_list = torch.tensor(gamma_list)
+        if gamma_list is None:
+            self.gamma_list = torch.tensor([2, 1, 1 / 2]).to(device)
+        else:
+            self.gamma_list = gamma_list
+
+        self.kernel_num = len(self.gamma_list)
         self.device = device
         if min_distance:
             self.sign = -1
@@ -43,10 +45,9 @@ class MKMMDLoss(torch.nn.Module):
         Args:
             X1 (torch tensor): shape (n_samples1, n_features)
             X2 (torch tensor): shape (n_samples2, n_features)
-            gamma (torch tensor): the kernel parameters
 
         Returns:
-            K (torch.tensor): shape (n_samples1, n_samples2), the RBF kernel matrix
+            K (torch.tensor): shape (self.kernel_num, n_samples1, n_samples2), the RBF kernel matrix
         """
 
         # Calculate the pairwise squared Euclidean distances
@@ -69,7 +70,7 @@ class MKMMDLoss(torch.nn.Module):
 
         return XX.mean(dim=(1, 2)) + YY.mean(dim=(1, 2)) - XY.mean(dim=(1, 2)) - YX.mean(dim=(1, 2))
 
-    def estimate_η_k(
+    def estimate_n_k(
         self,
         XX: torch.Tensor,
         YY: torch.Tensor,
@@ -77,14 +78,14 @@ class MKMMDLoss(torch.nn.Module):
         XY: torch.Tensor,
     ) -> torch.Tensor:
 
-        η_k_vector: torch.Tensor = torch.zeros((1, self.kernel_num)).to(self.device)
+        n_k_vector: torch.Tensor = torch.zeros((1, self.kernel_num)).to(self.device)
         batch_num = len(XX[0])
 
         for i in range(0, batch_num, 2):
 
-            η_k_vector += XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]
+            n_k_vector += XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]
 
-        return 2 * η_k_vector / batch_num
+        return 2 * n_k_vector / batch_num
 
     def estimate_qk_vector(
         self,
@@ -117,7 +118,7 @@ class MKMMDLoss(torch.nn.Module):
             Xt (torch.Tensor): Target domain data, shape (n_samples, n_features)
 
         Returns:
-            Tuple[torch.Tensor,torch.Tensor]: MK-MMD, weights of kernels (beta)
+            torch.Tensor: MK-MMD value
         """
 
         # cal weights for each rbf kernel
@@ -127,7 +128,7 @@ class MKMMDLoss(torch.nn.Module):
         XY = self.rbf_multi_kernel(Xs, Xt)
 
         # vector η_k, Eq.(2)
-        η_p_k = self.estimate_η_k(XX, YY, YX, XY)
+        n_p_k = self.estimate_n_k(XX, YY, YX, XY)
 
         # Eq.(7)
         Q_p_k = self.estimate_qk_vector(XX, YY, YX, XY)
@@ -137,7 +138,7 @@ class MKMMDLoss(torch.nn.Module):
         Q = 2 * Q_p_k + 1e-5 * torch.eye(self.kernel_num).to(self.device)  # λm = 1e-5
 
         # p = -sign*η_k ， maximum η_k * beta in QB
-        p = -1 * η_p_k.reshape(-1, 1).float().squeeze(1)
+        p = -1 * n_p_k.reshape(-1, 1).float().squeeze(1)
 
         # sign*beta >= 0
         G = -1 * self.sign * torch.eye(self.kernel_num).to(self.device)
@@ -170,8 +171,8 @@ class MKMMDLoss(torch.nn.Module):
         beta = self.sign * QPFunction(verbose=False)(Q, p, G, h, A, b)
 
         # two rows above section 2.2 Empirical estimate of the MMD, asymptotic distribution, and test
-        η_k = self.compute_mmd(XX, YY, YX, XY)
+        n_k = self.compute_mmd(XX, YY, YX, XY)
 
-        MK_MMD = torch.matmul(η_k.float(), beta.squeeze().detach())
+        MK_MMD = torch.matmul(n_k.float(), beta.squeeze().detach())
 
         return MK_MMD
