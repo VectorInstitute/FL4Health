@@ -66,8 +66,6 @@ class MKMMDLoss(torch.nn.Module):
         YX: torch.Tensor,
         XY: torch.Tensor,
     ) -> torch.Tensor:
-        # cal MMD for one rbf kernel
-        # Eq.(1) in paper
 
         return XX.mean(dim=(1, 2)) + YY.mean(dim=(1, 2)) - XY.mean(dim=(1, 2)) - YX.mean(dim=(1, 2))
 
@@ -78,13 +76,11 @@ class MKMMDLoss(torch.nn.Module):
         YX: torch.Tensor,
         XY: torch.Tensor,
     ) -> torch.Tensor:
-        # cal MMD for one rbf kernel
-        # Eq.(1) in paper
 
         η_k_vector: torch.Tensor = torch.zeros((1, self.kernel_num)).to(self.device)
-        # cal vector q_k(x,x'), contains m**2 terms
         batch_num = len(XX[0])
-        for i in range(0, batch_num, 2):  # Use len(Xs) - 1 to avoid index out of range
+
+        for i in range(0, batch_num, 2):
 
             η_k_vector += XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]
 
@@ -100,8 +96,8 @@ class MKMMDLoss(torch.nn.Module):
 
         Q_k_vector: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         batch_num = len(XX[0])
-        # cal vector q_k(x,x'), contains m**2 terms
-        for i in range(0, batch_num, 4):  # Use len(Xs) - 1 to avoid index out of range
+
+        for i in range(0, batch_num, 4):
 
             h_d = (XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]) - (
                 XX[:, i + 2, i + 3] + YY[:, i + 2, i + 3] - XY[:, i + 2, i + 3] - YX[:, i + 2, i + 3]
