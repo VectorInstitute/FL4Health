@@ -2,7 +2,9 @@ from typing import List
 
 import numpy as np
 import pytest
+import torch
 from flwr.common.typing import NDArrays
+from torch import Tensor
 
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
@@ -10,6 +12,7 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
     ParameterPackerWithLayerNames,
+    SparseCooParameterPacker,
 )
 
 
@@ -17,6 +20,15 @@ from fl4health.parameter_exchange.parameter_packer import (
 def get_ndarrays(layer_sizes: List[List[int]]) -> NDArrays:
     ndarrays = [np.ones(tuple(size)) for size in layer_sizes]
     return ndarrays
+
+
+@pytest.fixture
+def get_sparse_tensors(num_tensors: int) -> List[Tensor]:
+    tensors = []
+    for _ in range(num_tensors):
+        x = torch.tensor([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4], [5, 0, 0, 0]])
+        tensors.append(x)
+    return tensors
 
 
 @pytest.mark.parametrize("layer_sizes", [[[3, 3] for _ in range(6)]])
@@ -116,3 +128,46 @@ def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # n
 
     assert weights_names == unpacked_weights_names
     assert len(weights_names) == len(model_weights)
+
+
+@pytest.mark.parametrize("num_tensors", [6])
+def test_sparse_coo_parameter_packer(get_sparse_tensors: List[Tensor]) -> None:
+    model_parameters = get_sparse_tensors
+    parameter_names = ["param1", "param2", "param3", "param4", "param5", "param6"]
+    parameter_nonzero_values = []
+    parameter_indices = []
+    parameter_shapes = []
+
+    for param in model_parameters:
+        nonzero_values = param[torch.nonzero(param, as_tuple=True)]
+        nonzero_indices = torch.nonzero(param, as_tuple=False)
+        param_shape = np.array(list(param.shape))
+
+        parameter_nonzero_values.append(nonzero_values.numpy())
+        parameter_indices.append(nonzero_indices.numpy())
+        parameter_shapes.append(param_shape)
+
+    packer = SparseCooParameterPacker()
+
+    packed_params = packer.pack_parameters(
+        model_parameters=parameter_nonzero_values,
+        additional_parameters=(parameter_indices, parameter_shapes, parameter_names),
+    )
+
+    assert len(packed_params) == 3 * len(parameter_nonzero_values) + 1
+
+    correct_packed_params = (
+        parameter_nonzero_values + parameter_indices + parameter_shapes + [np.array(parameter_names)]
+    )
+
+    for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
+        assert (packed_param == correct_packed_param).all()
+
+    unpacked_param_nonzero_values, unpacked_additional_info = packer.unpack_parameters(packed_params)
+
+    unpacked_parameter_indices, unpacked_parameter_shapes, unpacked_parameter_names = unpacked_additional_info
+
+    assert unpacked_parameter_indices == parameter_indices
+    assert unpacked_parameter_shapes == parameter_shapes
+    assert unpacked_parameter_names == parameter_names
+    assert unpacked_param_nonzero_values == parameter_nonzero_values
