@@ -6,6 +6,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.losses.mkmmd_loss import MKMMDLoss
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -25,6 +26,7 @@ class FendaClient(BasicClient):
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
+        mkmmd_loss_weight: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -46,12 +48,15 @@ class FendaClient(BasicClient):
             Each value associate with one of two contrastive losses in perfcl loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
+            mkmmd_loss_weight: Weight to be used for mkmmd loss.
         """
         self.perfcl_loss_weights = perfcl_loss_weights
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
+        self.mkmmd_loss_weight = mkmmd_loss_weight
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
+        self.mkmmd_loss = MKMMDLoss(device=self.device, min_distance=True).to(self.device)
         self.temperature = temperature
 
         # Need to save previous local module, global module and aggregated global module at each communication round
@@ -119,6 +124,14 @@ class FendaClient(BasicClient):
         """
         assert len(local_features) == len(global_features)
         return torch.abs(self.cos_sim(local_features, global_features)).mean()
+
+    def get_mkmmd_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
+        """
+        Cosine similarity loss aims to minimize the similarity among current local features and current global
+        features of fenda model.
+        """
+        assert len(local_features) == len(global_features)
+        return self.mkmmd_loss(local_features, global_features)
 
     def compute_contrastive_loss(
         self, features: torch.Tensor, positive_pairs: torch.Tensor, negative_pairs: torch.Tensor
@@ -216,6 +229,14 @@ class FendaClient(BasicClient):
             )
             total_loss += self.cos_sim_loss_weight * cos_sim_loss
             additional_losses["cos_sim_loss"] = cos_sim_loss
+
+        if self.mkmmd_loss_weight:
+            mkmmd_loss = self.get_mkmmd_loss(
+                local_features=features["local_features"],
+                global_features=features["global_features"],
+            )
+            total_loss -= self.mkmmd_loss_weight * mkmmd_loss
+            additional_losses["mkmmd_loss"] = mkmmd_loss
 
         # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
         if self.contrastive_loss_weight and "old_local_features" in features:
