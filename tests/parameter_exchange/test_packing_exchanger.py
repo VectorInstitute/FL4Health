@@ -1,3 +1,4 @@
+import copy
 from typing import List
 
 import numpy as np
@@ -14,6 +15,11 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithLayerNames,
     SparseCooParameterPacker,
 )
+from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import (
+    SparseCooParameterExchanger,
+    largest_final_magnitude_scores,
+)
+from tests.test_utils.models_for_test import ConstantConvNet
 
 
 @pytest.fixture
@@ -132,42 +138,73 @@ def test_parameter_packer_with_layer_names(get_ndarrays: NDArrays) -> None:  # n
 
 @pytest.mark.parametrize("num_tensors", [6])
 def test_sparse_coo_parameter_packer(get_sparse_tensors: List[Tensor]) -> None:
-    model_parameters = get_sparse_tensors
-    parameter_names = ["param1", "param2", "param3", "param4", "param5", "param6"]
+    model_tensors = get_sparse_tensors
+    tensor_names = ["tensor1", "tensor2", "tensor3", "tensor4", "tensor5", "tensor6"]
     parameter_nonzero_values = []
     parameter_indices = []
-    parameter_shapes = []
+    tensor_shapes = []
 
-    for param in model_parameters:
-        nonzero_values = param[torch.nonzero(param, as_tuple=True)]
-        nonzero_indices = torch.nonzero(param, as_tuple=False)
-        param_shape = np.array(list(param.shape))
+    for tensor in model_tensors:
+        nonzero_values = tensor[torch.nonzero(tensor, as_tuple=True)]
+        nonzero_indices = torch.nonzero(tensor, as_tuple=False)
+        tensor_shape = np.array(list(tensor.shape))
 
         parameter_nonzero_values.append(nonzero_values.numpy())
         parameter_indices.append(nonzero_indices.numpy())
-        parameter_shapes.append(param_shape)
+        tensor_shapes.append(tensor_shape)
 
     packer = SparseCooParameterPacker()
 
     packed_params = packer.pack_parameters(
         model_parameters=parameter_nonzero_values,
-        additional_parameters=(parameter_indices, parameter_shapes, parameter_names),
+        additional_parameters=(parameter_indices, tensor_shapes, tensor_names),
     )
 
     assert len(packed_params) == 3 * len(parameter_nonzero_values) + 1
 
-    correct_packed_params = (
-        parameter_nonzero_values + parameter_indices + parameter_shapes + [np.array(parameter_names)]
-    )
+    correct_packed_params = parameter_nonzero_values + parameter_indices + tensor_shapes + [np.array(tensor_names)]
 
     for packed_param, correct_packed_param in zip(packed_params, correct_packed_params):
         assert (packed_param == correct_packed_param).all()
 
     unpacked_param_nonzero_values, unpacked_additional_info = packer.unpack_parameters(packed_params)
 
-    unpacked_parameter_indices, unpacked_parameter_shapes, unpacked_parameter_names = unpacked_additional_info
+    unpacked_parameter_indices, unpacked_tensor_shapes, unpacked_tensor_names = unpacked_additional_info
 
     assert unpacked_parameter_indices == parameter_indices
-    assert unpacked_parameter_shapes == parameter_shapes
-    assert unpacked_parameter_names == parameter_names
+    assert unpacked_tensor_shapes == tensor_shapes
+    assert unpacked_tensor_names == tensor_names
     assert unpacked_param_nonzero_values == parameter_nonzero_values
+
+
+def test_sparse_coo_parameter_exchanger() -> None:
+    initial_model = ConstantConvNet(constants=[0.1, 2, 3.2, 5])
+    model = ConstantConvNet(constants=[1.5, 2.5, 3.5, 4.5])
+
+    parameter_exchanger = SparseCooParameterExchanger(
+        sparsity_level=0.1, score_gen_function=largest_final_magnitude_scores
+    )
+
+    # Test parameter selection.
+    nonzero_vals, indices, shapes, tensor_names = parameter_exchanger.select_parameters(model, initial_model)
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 4.5).all()
+    assert len(indices[0]) == 64
+    assert (shapes[0] == np.array([4, 16])).all()
+    assert tensor_names[0] == "fc2.weight"
+
+    # Test parameter loading
+    new_nonzero_vals = [np.full(shape=nonzero_vals[0].shape, fill_value=6.6)]
+
+    packed_parameters = parameter_exchanger.pack_parameters(
+        model_weights=new_nonzero_vals, additional_parameters=(indices, shapes, tensor_names)
+    )
+
+    model_copy = copy.deepcopy(model)
+
+    parameter_exchanger.pull_parameters(packed_parameters, model_copy)
+
+    assert (model_copy.conv1.weight == 1.5).all()
+    assert (model_copy.conv2.weight == 2.5).all()
+    assert (model_copy.fc1.weight == 3.5).all()
+    assert (model_copy.fc2.weight == 6.6).all()
