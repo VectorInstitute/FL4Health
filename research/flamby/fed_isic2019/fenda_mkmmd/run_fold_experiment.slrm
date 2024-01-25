@@ -146,6 +146,7 @@ do
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --mu ${MU} \
+            --mk_mmd_loss \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 
