@@ -119,7 +119,7 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_isic2019.fenda.server \
+    nohup python -m research.flamby.fed_isic2019.fenda_mkmmd.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
@@ -137,7 +137,7 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.fenda.client \
+        nohup python -m research.flamby.fed_isic2019.fenda_mkmmd.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
