@@ -88,8 +88,8 @@ class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, 
         tensor_names_to_masks = self.create_masks(model, initial_model)
         model_states = model.state_dict()
 
-        parameter_nonzero_values = []
-        parameter_indices = []
+        selected_parameters_all_tensors = []
+        selected_indices_all_tensors = []
         tensor_shapes = []
         tensor_names = list(tensor_names_to_masks.keys())
 
@@ -99,33 +99,33 @@ class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, 
             model_tensor = model_states[tensor_name]
             assert model_tensor.shape == tensor_mask.shape
             sparse_tensor = torch.multiply(model_tensor, tensor_mask)
-            nonzero_values = model_tensor[torch.nonzero(sparse_tensor, as_tuple=True)]
-            nonzero_indices = torch.nonzero(sparse_tensor, as_tuple=False)
+            selected_parameters = model_tensor[torch.nonzero(sparse_tensor, as_tuple=True)]
+            selected_indices = torch.nonzero(sparse_tensor, as_tuple=False)
             tensor_shape = np.array(list(model_tensor.shape))
 
-            parameter_nonzero_values.append(nonzero_values.cpu().numpy())
-            parameter_indices.append(nonzero_indices.numpy())
+            selected_parameters_all_tensors.append(selected_parameters.cpu().numpy())
+            selected_indices_all_tensors.append(selected_indices.cpu().numpy())
             tensor_shapes.append(tensor_shape)
 
-        return (parameter_nonzero_values, parameter_indices, tensor_shapes, tensor_names)
+        return (selected_parameters_all_tensors, selected_indices_all_tensors, tensor_shapes, tensor_names)
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
-        parameter_nonzero_values, parameter_indices, tensor_shapes, tensor_names = self.select_parameters(
+        selected_parameters, parameter_indices, tensor_shapes, tensor_names = self.select_parameters(
             model, initial_model
         )
         return self.pack_parameters(
-            model_weights=parameter_nonzero_values,
+            model_weights=selected_parameters,
             additional_parameters=(parameter_indices, tensor_shapes, tensor_names),
         )
 
     def pull_parameters(self, parameters: NDArrays, model: Module, config: Optional[Config] = None) -> None:
-        nonzero_values, additional_info = self.parameter_packer.unpack_parameters(parameters)
+        selected_parameters, additional_info = self.parameter_packer.unpack_parameters(parameters)
         indices, shapes, names = additional_info
         current_state = model.state_dict()
 
-        for param_values, param_indices, param_shape, param_name in zip(nonzero_values, indices, shapes, names):
+        for param_values, param_indices, param_shape, param_name in zip(selected_parameters, indices, shapes, names):
             # Use parameter values, indices, and shape to create
             # a sparse coo tensor, which is then converted to a dense tensor
             # to allow for loading.
