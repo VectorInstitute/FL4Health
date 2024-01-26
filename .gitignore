@@ -160,4 +160,8 @@ settings.json
 # model artifacts
 
 **/*.pkl
+<<<<<<< HEAD
 **/*.png
+=======
+/metrics/
+>>>>>>> origin/main

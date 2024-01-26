@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -18,7 +19,12 @@ from fl4health.utils.metrics import Accuracy, Metric
 
 class CifarClient(EvaluateClient):
     def __init__(
-        self, data_path: Path, metrics: Sequence[Metric], device: torch.device, model_checkpoint_path: Optional[Path]
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        model_checkpoint_path: Optional[Path],
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -26,6 +32,7 @@ class CifarClient(EvaluateClient):
             device=device,
             model_checkpoint_path=model_checkpoint_path,
             loss_meter_type=LossMeterType.AVERAGE,
+            metrics_reporter=metrics_reporter,
         )
 
     def initialize_global_model(self, config: Config) -> Optional[nn.Module]:

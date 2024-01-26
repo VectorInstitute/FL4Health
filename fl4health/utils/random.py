@@ -1,12 +1,13 @@
 import random
 from logging import INFO
+from typing import Optional
 
 import numpy as np
 import torch
 from flwr.common.logger import log
 
 
-def set_all_random_seeds(seed: int = 42) -> None:
+def set_all_random_seeds(seed: Optional[int] = 42) -> None:
     """Set seeds for python random, numpy random, and pytorch random.
 
     Will no-op if seed is `None`.

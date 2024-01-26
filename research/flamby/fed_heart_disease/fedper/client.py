@@ -14,7 +14,11 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import (
+    BestMetricTorchCheckpointer,
+    LatestTorchCheckpointer,
+    TorchCheckpointer,
+)
 from fl4health.clients.moon_client import MoonClient
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -119,19 +123,30 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--no_federated_checkpointing",
+        action="store_true",
+        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
+    log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = (
+        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        if federated_checkpointing
+        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedHeartDiseaseFedPerClient(
         data_path=Path(args.dataset_dir),

@@ -13,6 +13,7 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
+from fl4health.utils.random import set_all_random_seeds
 
 
 def get_initial_model_parameters(initial_model: nn.Module) -> Parameters:
@@ -63,6 +64,8 @@ def main(config: Dict[str, Any]) -> None:
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
+    server.metrics_reporter.dump()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
@@ -73,8 +76,18 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/scaffold_example/config.yaml",
     )
+    parser.add_argument(
+        "--seed",
+        action="store",
+        type=int,
+        help="Seed for the random number generators across python, torch, and numpy",
+        required=False,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
+
+    # Set the random seed for reproducibility
+    set_all_random_seeds(args.seed)
 
     main(config)

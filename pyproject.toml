@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.1.9"
+version = "0.1.10"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
 license = "Apache-2.0"
@@ -41,6 +41,7 @@ torcheval = "^0.0.6"
 pytest = "^7.4.3"
 mock = "^5.1.0"
 pytest-cov = "^4.1.0"
+freezegun = "^1.4.0"
 
 [tool.poetry.group.codestyle.dependencies]
 black = "^22.12.0"

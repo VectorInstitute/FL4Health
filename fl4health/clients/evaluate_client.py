@@ -1,3 +1,4 @@
+import datetime
 from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
@@ -12,6 +13,7 @@ from torch.utils.data import DataLoader
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import Losses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
@@ -31,6 +33,7 @@ class EvaluateClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
@@ -40,6 +43,11 @@ class EvaluateClient(BasicClient):
         self.model_checkpoint_path = model_checkpoint_path
         self.metrics = metrics
         self.initialized = False
+
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         # This data loader should be instantiated as the one on which to run evaluation
         self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
@@ -78,6 +86,9 @@ class EvaluateClient(BasicClient):
 
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
+
+        self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
+
         self.initialized = True
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
@@ -97,11 +108,22 @@ class EvaluateClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)
 
+        self.metrics_reporter.add_to_metrics({"evaluate_start": datetime.datetime.now()})
+
         self.set_parameters(parameters, config)
         # Make sure at least one of local or global model is not none (i.e. there is something to evaluate)
         assert self.local_model or self.global_model
 
         loss, metric_values = self.validate()
+
+        self.metrics_reporter.add_to_metrics(
+            {
+                "metrics": metric_values,
+                "loss": loss,
+                "evaluate_end": datetime.datetime.now(),
+            }
+        )
+
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
