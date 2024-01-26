@@ -39,7 +39,7 @@ class FedIsic2019FendaClient(FendaClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         cos_sim_activate: bool = False,
         contrastive_activate: bool = False,
-        mk_mmd_activate: bool = False,
+        mkmmd_activate: bool = False,
         extra_loss_weights: Optional[float] = None,
     ) -> None:
         super().__init__(
@@ -57,9 +57,9 @@ class FedIsic2019FendaClient(FendaClient):
         if contrastive_activate:
             assert extra_loss_weights is not None
             self.contrastive_loss_weight = extra_loss_weights
-        if mk_mmd_activate:
+        if mkmmd_activate:
             assert extra_loss_weights is not None
-            self.mk_mmd_loss_weight = extra_loss_weights
+            self.mkmmd_loss_weight = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--cos_sim_loss", action="store_true", help="Activate Cosine Similarity loss")
     parser.add_argument("--contrastive_loss", action="store_true", help="Activate Contrastive loss")
-    parser.add_argument("--mk_mmd_loss", action="store_true", help="Activate MK-MMD loss")
+    parser.add_argument("--mkmmd_loss", action="store_true", help="Activate MK-MMD loss")
     parser.add_argument(
         "--mu",
         action="store",
@@ -173,7 +173,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
         cos_sim_activate=args.cos_sim_loss,
         contrastive_activate=args.contrastive_loss,
-        mk_mmd_activate=args.mk_mmd_loss,
+        mkmmd_activate=args.mkmmd_loss,
         extra_loss_weights=args.mu,
     )
 
