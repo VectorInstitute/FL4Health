@@ -81,7 +81,7 @@ class MKMMDLoss(torch.nn.Module):
         n_k_vector: torch.Tensor = torch.zeros((1, self.kernel_num)).to(self.device)
         batch_num = len(XX[0])
 
-        for i in range(0, batch_num, 2):
+        for i in range(0, batch_num - 1, 2):
 
             n_k_vector += XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]
 
@@ -98,7 +98,7 @@ class MKMMDLoss(torch.nn.Module):
         Q_k_vector: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         batch_num = len(XX[0])
 
-        for i in range(0, batch_num, 4):
+        for i in range(0, batch_num - 3, 4):
 
             h_d = (XX[:, i, i + 1] + YY[:, i, i + 1] - XY[:, i, i + 1] - YX[:, i, i + 1]) - (
                 XX[:, i + 2, i + 3] + YY[:, i + 2, i + 3] - XY[:, i + 2, i + 3] - YX[:, i + 2, i + 3]
