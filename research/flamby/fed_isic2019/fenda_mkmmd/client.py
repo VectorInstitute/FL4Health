@@ -173,6 +173,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
         cos_sim_activate=args.cos_sim_loss,
         contrastive_activate=args.contrastive_loss,
+        mk_mmd_activate=args.mk_mmd_loss,
         extra_loss_weights=args.mu,
     )
 
