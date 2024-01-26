@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 
@@ -84,11 +84,6 @@ class LossMeterType(Enum):
     ACCUMULATION = "ACCUMULATION"
 
 
-class LossType(Enum):
-    BACKWARD = "BACKWARD"
-    ADDITIONAL = "ADDITIONAL"
-
-
 class LossMeter(ABC):
     @abstractmethod
     def update(self, losses: Losses) -> None:
@@ -146,8 +141,8 @@ class LossMeter(ABC):
 
     @classmethod
     def aggregate_loss_by_type(
-        cls, losses_list: Sequence[Losses], loss_type: LossType, loss_meter_type: LossMeterType
-    ) -> Dict[str, torch.Tensor]:
+        cls, losses_list: Sequence[Losses], loss_meter_type: LossMeterType
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Class method that aggregates a loss by loss_type (ie backward, checkpoint, additional).
 
@@ -157,27 +152,33 @@ class LossMeter(ABC):
             loss_meter_type (LossMeterType): The type of LossMeter (ie average or accumulation).
 
         Returns:
-            Dict[str, torch.Tensor]: The dictionary of aggregated losses.
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: Two dictionaries with the aggregated losses.
+                The first one is the additional losses and the second one is the backward losses (or None if the losses
+                are not a subclass of TrainLosses)
         """
 
-        if loss_type == LossType.BACKWARD:
-            assert all([isinstance(losses, TrainLosses) for losses in losses_list])
-            loss_list = [losses.backward for losses in losses_list]
-        else:
-            loss_list = [losses.additional_losses for losses in losses_list]
+        aggregated_loss_list = [losses.additional_losses for losses in losses_list]
+        backward_loss_list = None
+        # Assuming the losses are all the same type, check for the type of the first one only
+        if len(losses_list) > 0 and isinstance(losses_list[0], TrainLosses):
+            backward_loss_list = [losses.backward for losses in losses_list]  # type: ignore
 
-        # We don't know the keys of the dict (backward or additional losses) beforehand. We obtain them
-        # from the first entry because we know all of the losses will have the same keys
-        loss_keys = loss_list[0].keys()
-        num_losses = len(loss_list)
-        loss_dict: Dict[str, torch.Tensor] = {}
-        for key in loss_keys:
-            loss = torch.sum(torch.FloatTensor([loss[key] for loss in loss_list]))
-            if loss_meter_type == LossMeterType.AVERAGE:
-                loss = loss / num_losses
-            loss_dict[key] = loss
+        for loss_list in [aggregated_loss_list, backward_loss_list]:
+            if loss_list is None:
+                continue
 
-        return loss_dict
+            # We don't know the keys of the dict (backward or additional losses) beforehand. We obtain them
+            # from the first entry because we know all of the losses will have the same keys
+            loss_keys = loss_list[0].keys()
+            num_losses = len(loss_list)
+            loss_dict: Dict[str, torch.Tensor] = {}
+            for key in loss_keys:
+                loss = torch.sum(torch.FloatTensor([loss[key] for loss in loss_list]))
+                if loss_meter_type == LossMeterType.AVERAGE:
+                    loss = loss / num_losses
+                loss_dict[key] = loss
+
+        return aggregated_loss_list, backward_loss_list  # type: ignore
 
 
 class LossAverageMeter(LossMeter):
@@ -214,14 +215,14 @@ class LossAverageMeter(LossMeter):
         num_losses = len(self.losses_list)
         # Compute average checkpoint and backward losses across list
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list])) / num_losses
-        backward_loss = LossMeter.aggregate_loss_by_type(
-            self.losses_list, loss_type=LossType.BACKWARD, loss_meter_type=LossMeterType.AVERAGE
+        additional_loss, backward_loss = LossMeter.aggregate_loss_by_type(
+            self.losses_list,
+            loss_meter_type=LossMeterType.AVERAGE,
         )
-        additional_loss = LossMeter.aggregate_loss_by_type(
-            self.losses_list, loss_type=LossType.ADDITIONAL, loss_meter_type=LossMeterType.AVERAGE
-        )
-        losses = TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
-        return losses
+        if backward_loss is None:
+            return Losses(checkpoint=checkpoint_loss, additional_losses=additional_loss)
+
+        return TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
 
 
 class LossAccumulationMeter(LossMeter):
@@ -257,11 +258,11 @@ class LossAccumulationMeter(LossMeter):
 
         # Compute average checkpoint and backward losses across list
         checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in self.losses_list]))
-        backward_loss = LossMeter.aggregate_loss_by_type(
-            self.losses_list, loss_type=LossType.BACKWARD, loss_meter_type=LossMeterType.ACCUMULATION
+        additional_loss, backward_loss = LossMeter.aggregate_loss_by_type(
+            self.losses_list,
+            loss_meter_type=LossMeterType.ACCUMULATION,
         )
-        additional_loss = LossMeter.aggregate_loss_by_type(
-            self.losses_list, loss_type=LossType.ADDITIONAL, loss_meter_type=LossMeterType.ACCUMULATION
-        )
-        losses = TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
-        return losses
+        if backward_loss is None:
+            return Losses(checkpoint=checkpoint_loss, additional_losses=additional_loss)
+
+        return TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
