@@ -11,6 +11,41 @@ class Losses:
     def __init__(
         self,
         checkpoint: torch.Tensor,
+        additional_losses: Optional[Dict[str, torch.Tensor]] = None,
+    ) -> None:
+        """
+        A class to store the checkpoint and additional_losses of a model
+        along with a method to return a dictionary representation.
+
+        Args:
+            checkpoint (torch.Tensor): The loss used to checkpoint model (if checkpointing is enabled).
+            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+        """
+        self.checkpoint = checkpoint
+        self.additional_losses = additional_losses if additional_losses else {}
+
+    def as_dict(self) -> Dict[str, float]:
+        """
+        Produces a dictionary representation of the object with all of the losses.
+
+        Returns:
+            Dict[str, float]: A dictionary with the checkpoint loss, plus each one of the keys in
+                additional losses if they exist.
+        """
+        loss_dict: Dict[str, float] = {}
+        loss_dict["checkpoint"] = float(self.checkpoint.item())
+
+        if self.additional_losses is not None:
+            for key, val in self.additional_losses.items():
+                loss_dict[key] = float(val.item())
+
+        return loss_dict
+
+
+class TrainLosses(Losses):
+    def __init__(
+        self,
+        checkpoint: torch.Tensor,
         backward: Union[torch.Tensor, Dict[str, torch.Tensor]],
         additional_losses: Optional[Dict[str, torch.Tensor]] = None,
     ) -> None:
@@ -25,27 +60,21 @@ class Losses:
                 loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
             additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
         """
-        self.checkpoint = checkpoint
+        super().__init__(checkpoint, additional_losses)
         self.backward = backward if isinstance(backward, dict) else {"backward": backward}
-        self.additional_losses = additional_losses if additional_losses else {}
 
     def as_dict(self) -> Dict[str, float]:
         """
         Produces a dictionary representation of the object with all of the losses.
 
         Returns:
-            Dict[str, float]: A dictionary where each key represents one of the checkpoint,
-                backward or additional losses.
+            Dict[str, float]: A dictionary where each key represents one of the checkpoint and
+                backward losses, plus additional losses if they exist.
         """
-        loss_dict: Dict[str, float] = {}
-        loss_dict["checkpoint"] = float(self.checkpoint.item())
+        loss_dict = super().as_dict()
 
         backward = {key: float(loss.item()) for key, loss in self.backward.items()}
         loss_dict.update(backward)
-
-        if self.additional_losses is not None:
-            for key, val in self.additional_losses.items():
-                loss_dict[key] = float(val.item())
 
         return loss_dict
 
@@ -132,6 +161,7 @@ class LossMeter(ABC):
         """
 
         if loss_type == LossType.BACKWARD:
+            assert all([isinstance(losses, TrainLosses) for losses in losses_list])
             loss_list = [losses.backward for losses in losses_list]
         else:
             loss_list = [losses.additional_losses for losses in losses_list]
@@ -177,7 +207,7 @@ class LossAverageMeter(LossMeter):
         Compute average of current list of losses if non-empty.
 
         Returns:
-            Losses: New Losses object with average of losses in losses_list.
+            TrainLosses: New TrainLosses object with average of losses in losses_list.
         """
         assert len(self.losses_list) > 0
 
@@ -190,7 +220,7 @@ class LossAverageMeter(LossMeter):
         additional_loss = LossMeter.aggregate_loss_by_type(
             self.losses_list, loss_type=LossType.ADDITIONAL, loss_meter_type=LossMeterType.AVERAGE
         )
-        losses = Losses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
+        losses = TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
         return losses
 
 
@@ -221,7 +251,7 @@ class LossAccumulationMeter(LossMeter):
         Compute sum of current list of losses if non-empty.
 
         Returns:
-            Losses: New Losses object with sum of losses in losses_list.
+            TrainLosses: New TrainLosses object with sum of losses in losses_list.
         """
         assert len(self.losses_list) > 0
 
@@ -233,5 +263,5 @@ class LossAccumulationMeter(LossMeter):
         additional_loss = LossMeter.aggregate_loss_by_type(
             self.losses_list, loss_type=LossType.ADDITIONAL, loss_meter_type=LossMeterType.ACCUMULATION
         )
-        losses = Losses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
+        losses = TrainLosses(backward=backward_loss, checkpoint=checkpoint_loss, additional_losses=additional_loss)
         return losses
