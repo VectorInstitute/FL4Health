@@ -10,8 +10,10 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from fl4health.utils.config import load_config
-from fl4health.server.base_server import FlServer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.checkpointing.checkpointer import ServerPerEpochCheckpointer
 
+from research.picai.picai_server import PicaiServer
 from research.picai.model_utils import get_model
 from research.picai.fl_utils import (
     evaluate_metrics_aggregation_fn,
@@ -32,7 +34,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    model = get_model(device=torch.device("cpu"))
+    model = get_model(device=torch.device("gpu"))
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -48,7 +50,14 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(model),
     )
 
-    server = FlServer(client_manager, strategy)
+    per_epoch_checkpointer = ServerPerEpochCheckpointer(args.artifact_dir, "server.pt")
+    server = PicaiServer(
+        client_manager=client_manager,
+        model=model,
+        parameter_exchanger=FullParameterExchanger(),
+        strategy=strategy,
+        per_epoch_checkpointer=per_epoch_checkpointer
+    )
 
     fl.server.start_server(
         server=server,
@@ -62,6 +71,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--artifact_dir",
+        action="store",
+        type=str,
+        help="Path to dir to store run artifacts",
+        required=True
+    )
     parser.add_argument(
         "--config_path",
         action="store",

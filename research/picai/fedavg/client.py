@@ -1,4 +1,6 @@
 import argparse
+import random
+import string
 from logging import INFO
 import torch
 import torch.nn as nn
@@ -13,23 +15,27 @@ from monai.data.dataloader import DataLoader
 
 from fl4health.utils.metrics import Metric
 from fl4health.utils.metrics import TorchMetric
-from fl4health.clients.basic_client import BasicClient
+from fl4health.checkpointing.checkpointer import ClientPerEpochCheckpointer
 
+from research.picai.picai_client import PicaiClient
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
 from research.picai.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
 
+def generate_hash(length: int = 8) -> str: 
+        return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
-class PicaiFedAvgClient(BasicClient):
+class PicaiFedAvgClient(PicaiClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        overviews_dir: Path
+        per_epoch_checkpointer: ClientPerEpochCheckpointer,
+        overviews_dir: Path,
     ) -> None:
 
-        super().__init__(data_path, metrics, device)
+        super().__init__(data_path, metrics, device, per_epoch_checkpointer=per_epoch_checkpointer)
         self.overviews_dir = overviews_dir
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -55,6 +61,13 @@ class PicaiFedAvgClient(BasicClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
+    parser.add_argument(
+        "--artifact_dir", 
+        action="store",
+        type=str,
+        help="Path to dir to store run artifacts",
+        required=True
+    )
     parser.add_argument(
         "--base_dir",
         action="store",
@@ -85,10 +98,13 @@ if __name__ == "__main__":
     metrics = [TorchMetric(name="MLAP", metric=MultilabelAveragePrecision(
         average="macro", num_labels=2, thresholds=3).to(DEVICE))]
 
+    per_epoch_checkpointer = ClientPerEpochCheckpointer(args.artifact_dir, f"client_{generate_hash()}.pt")
+
     client = PicaiFedAvgClient(
         data_path=Path(args.base_dir),
         metrics=metrics,
         device=DEVICE,
+        per_epoch_checkpointer=per_epoch_checkpointer,
         overviews_dir=args.overviews_dir
     )
 

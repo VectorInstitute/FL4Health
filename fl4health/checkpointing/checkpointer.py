@@ -1,11 +1,14 @@
 import os
+from abc import ABC, abstractmethod
 from logging import INFO
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, Dict, Any
 
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer
 from flwr.common.logger import log
+from flwr.server.history import History
+
 from fl4health.utils.metrics import MetricManager
 
 
@@ -18,22 +21,6 @@ class TorchCheckpointer:
 
     def load_best_checkpoint(self) -> nn.Module:
         return torch.load(self.best_checkpoint_path)
-
-
-class PerEpochCheckpointer:
-    def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
-        self.checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
-
-    def save_checkpoint(self, model: nn.Module, optimizer: Optimizer, epoch: int) -> None:
-        torch.save({
-            "epoch": epoch,
-            "optimizer": optimizer,
-            "model": model,
-        }, self.checkpoint_path)
-
-    def load_checkpoint(self) -> Tuple[nn.Module, Optimizer, int]:
-        ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
 
 class LatestTorchCheckpointer(TorchCheckpointer):
@@ -82,3 +69,63 @@ class BestMetricTorchCheckpointer(TorchCheckpointer):
                 f"Not checkpointing the model: Current metric ({comparison_metric}) is not "
                 f"{self.comparison_str} Best metric ({self.best_metric})",
             )
+
+
+class PerEpochCheckpointer:
+    def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
+        self.checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
+
+    @abstractmethod
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Any]) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def load_checkpoint(self) -> Tuple[Any, ...]:
+        return NotImplementedError
+
+    def checkpoint_exists(self) -> bool:
+        return os.path.exists(self.checkpoint_path)
+
+
+class CentralPerEpochCheckpointer(PerEpochCheckpointer):
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Optimizer, int]]) -> None:
+        assert "epoch" in checkpoint_dict and isinstance(checkpoint_dict["epoch"], int)
+        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
+        assert "optimizer" in checkpoint_dict and isinstance(checkpoint_dict["optimizer"], Optimizer)
+
+        torch.save(checkpoint_dict, self.checkpoint_path)
+
+    def load_checkpoint(self) -> Tuple[nn.Module, Optimizer, int]:
+        assert self.checkpoint_exists()
+
+        ckpt = torch.load(self.checkpoint_path)
+        return ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
+
+
+class ClientPerEpochCheckpointer(PerEpochCheckpointer):
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer]]]) -> None:
+        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
+        assert "optimizers" in checkpoint_dict and isinstance(checkpoint_dict["optimizers"], dict)
+
+        torch.save(checkpoint_dict, self.checkpoint_path)
+
+    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer]]:
+        assert self.checkpoint_exists()
+
+        ckpt = torch.load(self.checkpoint_path)
+        return ckpt["model"], ckpt["optimizers"]
+
+
+class ServerPerEpochCheckpointer(PerEpochCheckpointer):
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, History, int]]) -> None:
+        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
+        assert "history" in checkpoint_dict and isinstance(checkpoint_dict["history"], History)
+        assert "server_round" in checkpoint_dict and isinstance(checkpoint_dict["server_round"], int)
+
+        torch.save(checkpoint_dict, self.checkpoint_path)
+
+    def load_checkpoint(self) -> Tuple[nn.Module, History, int]:
+        assert self.checkpoint_exists()
+
+        ckpt = torch.load(self.checkpoint_path)
+        return ckpt["model"], ckpt["history"], ckpt["server_round"]

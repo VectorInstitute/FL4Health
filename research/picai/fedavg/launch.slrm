@@ -18,7 +18,7 @@ source ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.9/bin/activate
 SERVER_OUTPUT_FILE="server.out"
 
 # Launch server and redirect output to server output file
-nohup python ~/FL4Health/research/picai/fedavg/server.py --config_path ~/FL4Health/research/picai/fedavg/config.yaml > ${SERVER_OUTPUT_FILE} 2>&1 &
+nohup python ~/FL4Health/research/picai/fedavg/server.py --artifact_dir ~/results --config_path ~/FL4Health/research/picai/fedavg/config.yaml > ${SERVER_OUTPUT_FILE} 2>&1 &
 
 sleep 30
 
@@ -27,7 +27,7 @@ n_clients=3
 for (( c=0; c<${n_clients}; c++ )) 
 do 
 	CLIENT_OUTPUT_FILE="client_${c}.out"
-	nohup python ~/FL4Health/research/picai/fedavg/client.py > ${CLIENT_OUTPUT_FILE} 2>&1 &
+	nohup python ~/FL4Health/research/picai/fedavg/client.py --artifact_dir ~/results > ${CLIENT_OUTPUT_FILE} 2>&1 &
 done
 
 wait

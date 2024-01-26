@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
 
-from fl4health.checkpointing.checkpointer import PerEpochCheckpointer
+from fl4health.checkpointing.checkpointer import CentralPerEpochCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -29,7 +29,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "ckpt.pkl"
-        self.checkpointer = PerEpochCheckpointer(checkpoint_dir, checkpoint_name)
+        self.per_epoch_checkpointer = CentralPerEpochCheckpointer(checkpoint_dir, checkpoint_name)
 
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -37,13 +37,16 @@ class SingleNodeTrainer:
         self.criterion = criterion
         self.optimizer = optimizer
         self.device = device
-
         self.epoch: int
-        if not os.path.exists(checkpoint_dir):
-            os.mkdir(checkpoint_dir)
 
-        if not os.path.exists(os.path.join(checkpoint_dir, checkpoint_name)):
-            self.checkpointer.save_checkpoint(self.model, self.optimizer, 0)
+        if not self.per_epoch_checkpointer.checkpoint_exists():
+            self.per_epoch_checkpointer.save_checkpoint({
+                "model": self.model,
+                "optimizer": self.optimizer,
+                "epoch": 0
+            })
+
+        self.model, self.optimizer, self.epoch = self.per_epoch_checkpointer.load_checkpoint()
 
     def _handle_reporting(
         self,
@@ -77,11 +80,7 @@ class SingleNodeTrainer:
         val_metric_mngr: MetricManager
     ) -> None:
 
-        while True:
-            self.model, self.optimizer, self.epoch = self.checkpointer.load_checkpoint()
-            if epochs <= self.epoch:
-                break
-
+        for epoch in range(self.epoch, epochs):
             train_metric_mngr.clear()
             val_metric_mngr.clear()
 
@@ -92,7 +91,7 @@ class SingleNodeTrainer:
                 running_loss += batch_loss.item()
                 train_metric_mngr.update(preds, target)
 
-            log(INFO, f"Local Epoch: {str(self.epoch)}")
+            log(INFO, f"Local Epoch: {str(epoch)}")
             running_loss = running_loss / len(self.train_loader)
             metrics = train_metric_mngr.compute()
             self._handle_reporting(running_loss, metrics)
@@ -100,7 +99,11 @@ class SingleNodeTrainer:
             # After each epoch run a validation pass
             self.validate(val_metric_mngr)
 
-            self.checkpointer.save_checkpoint(self.model, self.optimizer, self.epoch + 1)
+            self.per_epoch_checkpointer.save_checkpoint({
+                "model": self.model,
+                "optimizer": self.optimizer,
+                "epoch": epoch + 1
+            })
 
     def validate(self, val_metric_mngr: MetricManager) -> None:
         self.model.eval()

@@ -1,7 +1,7 @@
 import argparse
 
 import torch
-from torchmetrics.classification import MultilabelAveragePrecision, MultilabelAccuracy
+from torchmetrics.classification import MultilabelAveragePrecision
 from fl4health.utils.metrics import MetricManager, TorchMetric
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
