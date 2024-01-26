@@ -1,7 +1,6 @@
 import math
 from typing import Callable, Dict, List, Optional, Tuple
 
-import numpy as np
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
@@ -99,12 +98,12 @@ class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, 
             model_tensor = model_states[tensor_name]
             assert model_tensor.shape == tensor_mask.shape
             sparse_tensor = torch.multiply(model_tensor, tensor_mask)
-            selected_parameters = model_tensor[torch.nonzero(sparse_tensor, as_tuple=True)]
-            selected_indices = torch.nonzero(sparse_tensor, as_tuple=False)
-            tensor_shape = np.array(list(model_tensor.shape))
+            selected_parameters, selected_indices, tensor_shape = self.parameter_packer.extract_coo_info_from_dense(
+                sparse_tensor
+            )
 
-            selected_parameters_all_tensors.append(selected_parameters.cpu().numpy())
-            selected_indices_all_tensors.append(selected_indices.cpu().numpy())
+            selected_parameters_all_tensors.append(selected_parameters)
+            selected_indices_all_tensors.append(selected_indices)
             tensor_shapes.append(tensor_shape)
 
         return (selected_parameters_all_tensors, selected_indices_all_tensors, tensor_shapes, tensor_names)

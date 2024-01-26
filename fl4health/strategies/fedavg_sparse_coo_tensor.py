@@ -3,7 +3,6 @@ from functools import reduce
 from logging import WARNING
 from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Union
 
-import numpy as np
 import torch
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
@@ -141,13 +140,12 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         tensor_shapes = []
 
         for tensor_name, aggregated_tensor in aggregated_tensors.items():
-            selected_parameters = aggregated_tensor[torch.nonzero(aggregated_tensor, as_tuple=True)]
-            selected_indices = torch.nonzero(aggregated_tensor, as_tuple=False)
-            tensor_shape = np.array(list(aggregated_tensor.shape))
-
+            selected_parameters, selected_indices, tensor_shape = self.parameter_packer.extract_coo_info_from_dense(
+                aggregated_tensor
+            )
             tensor_names.append(tensor_name)
-            selected_parameters_all_tensors.append(selected_parameters.cpu().numpy())
-            selected_indices_all_tensors.append(selected_indices.cpu().numpy())
+            selected_parameters_all_tensors.append(selected_parameters)
+            selected_indices_all_tensors.append(selected_indices)
             tensor_shapes.append(tensor_shape)
 
         packed_parameters = self.parameter_packer.pack_parameters(

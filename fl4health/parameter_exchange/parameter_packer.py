@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Generic, Tuple, TypeVar
 
 import numpy as np
-from flwr.common.typing import List, NDArrays
+import torch
+from flwr.common.typing import List, NDArray, NDArrays
+from torch import Tensor
 
 T = TypeVar("T")
 
@@ -88,3 +90,23 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         tensor_shapes = packed_parameters[(2 * split_size) : (3 * split_size)]
         tensor_names = packed_parameters[(3 * split_size) :][0].tolist()
         return model_parameters, (parameter_indices, tensor_shapes, tensor_names)
+
+    def extract_coo_info_from_dense(self, x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
+        """
+        Take a dense tensor x and extract the information required
+        (namely, its nonzero values, their indices within the tensor, and the shape of x)
+        in order to represent it in the sparse coo format.
+
+        The results are converted to numpy arrays.
+
+        Args:
+            x (Tensor): Input dense tensor.
+
+        Returns:
+            Tuple[NDArray, NDArray, NDArray]: The nonzero values of x,
+            the indices of those values within x, and the shape of x.
+        """
+        selected_parameters = x[torch.nonzero(x, as_tuple=True)].cpu().numpy()
+        selected_indices = torch.nonzero(x, as_tuple=False).cpu().numpy()
+        tensor_shape = np.array(list(x.shape))
+        return selected_parameters, selected_indices, tensor_shape
