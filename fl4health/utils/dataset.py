@@ -12,7 +12,6 @@ class BaseDataset(Dataset):
         self.targets: torch.Tensor
         self.transform: Union[Callable, None]
         self.target_transform: Union[Callable, None]
-        self.data_target_transform: Union[Callable, None]
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data, target = self.data[index], self.targets[index]
@@ -21,9 +20,6 @@ class BaseDataset(Dataset):
             data = self.transform(data.numpy())
         if self.target_transform is not None:
             target = self.target_transform(target.numpy())
-        if self.data_target_transform is not None:
-            data, target = self.data_target_transform(data.numpy(), target.numpy())
-
         return data, target
 
     def __len__(self) -> int:
@@ -37,11 +33,9 @@ class MNISTDataset(BaseDataset):
         train: bool,
         transform: Union[None, Callable] = None,
         target_transform: Union[None, Callable] = None,
-        data_target_transform: Union[None, Callable] = None,
     ):
         mnist_dataset = MNIST(data_path, train=train, download=True)
         self.data = mnist_dataset.data
         self.targets = mnist_dataset.targets
         self.transform = transform
         self.target_transform = target_transform
-        self.data_target_transform = data_target_transform

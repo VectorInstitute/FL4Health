@@ -11,11 +11,11 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.ae_examples.cvae_examples.models import MnistConditionalDecoder, MnistConditionalEncoder
+from examples.ae_examples.cvae_examples.mlp_cvae_example.models import MnistConditionalDecoder, MnistConditionalEncoder
 from fl4health.clients.basic_client import BasicClient
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
-from fl4health.preprocessing.autoencoders.loss import VAE_loss
-from fl4health.preprocessing.autoencoders.vae_training import AETransformer
+from fl4health.model_bases.autoencoders_base import ConditionalVae
+from fl4health.preprocessing.autoencoders.loss import VaeLoss
+from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -23,21 +23,29 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class CondAutoEncoderClient(BasicClient):
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: str) -> None:
+    def __init__(
+        self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: torch.Tensor
+    ) -> None:
         BasicClient.__init__(self, data_path, metrics, DEVICE)
-        self.condition = condition
+        # In this example, condition is based on client ID.
+        self.condition_vector = condition
+        # To train an autoencoder-based model we need to define a data converter that prepares the data
+        # for self-supervised learning, concatenates the inputs and condition (packing) to let the data
+        # fit into the training pipeline, and unpacks the input from condition for the model inference.
+        # You can optionally pass a custom converter function to this class.
+        self.autoencoder_converter = AutoEncoderDatasetConverter(self.condition_vector)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
+        # Flattening the image data to match the input shape of the model.
         transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
-        # To train an autoencoder-based model we need to set the data_target_transform.
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
             batch_size=batch_size,
             sampler=sampler,
             transform=transform,
-            data_target_transform=AETransformer(self.condition),
+            dataset_converter=self.autoencoder_converter,
         )
 
         return train_loader, val_loader
@@ -47,19 +55,16 @@ class CondAutoEncoderClient(BasicClient):
         # In this example, data is in binary scale, therefore binary cross entropy is used.
         base_loss = torch.nn.BCELoss(reduction="sum")
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
-        return VAE_loss(latent_dim, base_loss)
+        return VaeLoss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
-        num_conditions = self.narrow_config_type(config, "num_conditions", int)
-        encoder = MnistConditionalEncoder(input_size=784, num_conditions=num_conditions, latent_dim=latent_dim)
-        decoder = MnistConditionalDecoder(latent_dim=latent_dim, num_conditions=num_conditions, output_size=784)
-        return ConditionalVAE(
-            AutoEncoderType.CONDITIONAL_VAE, num_conditions=num_conditions, encoder=encoder, decoder=decoder
-        )
+        encoder = MnistConditionalEncoder(input_size=784, latent_dim=latent_dim)
+        decoder = MnistConditionalDecoder(latent_dim=latent_dim, output_size=784)
+        return ConditionalVae(encoder=encoder, decoder=decoder, converter=self.autoencoder_converter)
 
 
 if __name__ == "__main__":
@@ -68,13 +73,24 @@ if __name__ == "__main__":
     parser.add_argument(
         "--condition",
         action="store",
-        type=str,
-        help="Specify whether to use 'label' or Clinet's ID (ex. '1', '2', etc) for CVAE",
+        type=int,
+        help="Condition is the clinet's ID (ex. '1', '2', etc)",
+    )
+    parser.add_argument(
+        "--num_conditions",
+        action="store",
+        type=int,
+        help="Total number of conditions to create the condition vector. Total number of clients in this example.",
     )
     args = parser.parse_args()
     set_all_random_seeds(42)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CondAutoEncoderClient(data_path, [], DEVICE, args.condition)
+    # Create the condition vector.
+    # In this example, condition is based on client ID.
+    # Client should decide how they want to create their condition vector.
+    # Here we use simple one_hot_encoding but it can be any vector.
+    condition_vector = torch.nn.functional.one_hot(torch.tensor(args.condition), num_classes=args.num_conditions)
+    client = CondAutoEncoderClient(data_path, [], DEVICE, condition_vector)
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()

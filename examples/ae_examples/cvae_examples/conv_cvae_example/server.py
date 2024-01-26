@@ -12,7 +12,7 @@ from flwr.server.strategy import FedAvg
 from examples.ae_examples.cvae_examples.conv_cvae_example.models import ConvConditionalDecoder, ConvConditionalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
+from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
@@ -27,14 +27,12 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     latent_dim: int,
-    num_conditions: int,
     current_server_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "latent_dim": latent_dim,
-        "num_conditions": num_conditions,
         "current_server_round": current_server_round,
     }
 
@@ -46,19 +44,12 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["latent_dim"],
-        config["num_conditions"],
     )
 
     # Initializing the model on the server side
-    encoder = ConvConditionalEncoder(
-        num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
-    )
-    decoder = ConvConditionalDecoder(
-        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"])
-    )
-    model = ConditionalVAE(
-        AutoEncoderType.CONDITIONAL_VAE, num_conditions=int(config["num_conditions"]), encoder=encoder, decoder=decoder
-    )
+    encoder = ConvConditionalEncoder(latent_dim=int(config["latent_dim"]))
+    decoder = ConvConditionalDecoder(latent_dim=int(config["latent_dim"]))
+    model = ConditionalVae(encoder=encoder, decoder=decoder)
     model_checkpoint_name = "best_CVAE_model.pkl"
 
     # To facilitate checkpointing

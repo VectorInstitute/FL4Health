@@ -4,7 +4,7 @@ import torch
 from torch.nn.modules.loss import _Loss
 
 
-class VAE_loss(_Loss):
+class VaeLoss(_Loss):
     """Implements the loss function used for training CVAEs and VAEs.
     This loss computes the base_loss (defined by the user) between the input and generated output.
     It then adds the KL divergence between the estimated distribution (represented by mu and logvar)
@@ -50,6 +50,10 @@ class VAE_loss(_Loss):
         Returns:
             Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Unpacked output containing predictions, mu, and logvar.
         """
+        # This methods assumes "preds" are batch first, and preds are 2D dimensional (already flattened).
+        assert (
+            preds.dim() == 2
+        ), f"Expected a 2D tensor for VaeLoss, but got {preds.dim()}D tensor with shape {preds.shape}."
         # The order of logvar and mu in the output tensor is important.
         # For each model output, the first self.latent_dim indices are used to store the log variance,
         # the next self.latent_dim indices are allocated to mu, and the remaining indices store the model predictions.
@@ -58,7 +62,7 @@ class VAE_loss(_Loss):
         preds = preds[:, 2 * self.latent_dim :]
         return preds, mu, logvar
 
-    def forward(self, preds: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, preds: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         """Calculates the total loss.
 
         Args:
@@ -66,8 +70,10 @@ class VAE_loss(_Loss):
             target (torch.Tensor): Target values.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: Total loss composed of base loss and KL divergence loss.
+            torch.Tensor: Total loss composed of base loss and KL divergence loss.
         """
         flattened_output, mu, logvar = self.unpack_model_output(preds)
+        # print("loss unpack pred",flattened_output.shape)
         kl_loss = self.kl_divergence_loss(mu, logvar)
+        # print("target", target.shape)
         return self.base_loss(flattened_output.view(*target.shape), target) + kl_loss

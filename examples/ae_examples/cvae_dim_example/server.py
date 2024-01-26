@@ -9,7 +9,7 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.cvae_dim_example.mnist_model import MnistNet
+from examples.models.mnist_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -26,14 +26,14 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     latent_dim: int,
-    CVAE_model_path: str,
+    cvae_model_path: str,
     current_server_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "latent_dim": latent_dim,
-        "CVAE_model_path": CVAE_model_path,
+        "cvae_model_path": cvae_model_path,
         "current_server_round": current_server_round,
     }
 
@@ -45,7 +45,7 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["latent_dim"],
-        config["CVAE_model_path"],
+        config["cvae_model_path"],
     )
 
     # Initializing the model on the server side
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/cvae_dim_example/config.yaml",
+        default="examples/ae_examples/cvae_dim_example/config.yaml",
     )
 
     args = parser.parse_args()

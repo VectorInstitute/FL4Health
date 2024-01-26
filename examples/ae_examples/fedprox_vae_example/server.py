@@ -7,14 +7,14 @@ import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
-from examples.ae_examples.cvae_examples.models import MnistConditionalDecoder, MnistConditionalEncoder
+from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, ConditionalVAE
+from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
 
 
@@ -27,14 +27,12 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     latent_dim: int,
-    num_conditions: int,
     current_server_round: int,
 ) -> Config:
     return {
         "local_epochs": local_epochs,
         "batch_size": batch_size,
         "latent_dim": latent_dim,
-        "num_conditions": num_conditions,
         "current_server_round": current_server_round,
     }
 
@@ -46,27 +44,20 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
         config["latent_dim"],
-        config["num_conditions"],
     )
 
     # Initializing the model on the server side
-    encoder = MnistConditionalEncoder(
-        input_size=784, num_conditions=int(config["num_conditions"]), latent_dim=int(config["latent_dim"])
-    )
-    decoder = MnistConditionalDecoder(
-        latent_dim=int(config["latent_dim"]), num_conditions=int(config["num_conditions"]), output_size=784
-    )
-    model = ConditionalVAE(
-        AutoEncoderType.CONDITIONAL_VAE, num_conditions=int(config["num_conditions"]), encoder=encoder, decoder=decoder
-    )
-    model_checkpoint_name = "best_CVAE_model.pkl"
+    encoder = MnistVariationalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
+    decoder = MnistVariationalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
+    model = VariationalAe(encoder=encoder, decoder=decoder)
+    model_checkpoint_name = "best_VAE_model.pkl"
 
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name, maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedProx(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -77,6 +68,8 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(model),
+        adaptive_proximal_weight=config["adaptive_proximal_weight"],
+        proximal_weight=config["proximal_weight"],
     )
 
     server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
@@ -95,7 +88,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/ae_examples/cvae_examples/config.yaml",
+        default="examples/ae_examples/fedprox_vae_example/config.yaml",
     )
 
     args = parser.parse_args()

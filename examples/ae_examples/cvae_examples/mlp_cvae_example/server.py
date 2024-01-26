@@ -9,10 +9,10 @@ from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.ae_examples.vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
+from examples.ae_examples.cvae_examples.mlp_cvae_example.models import MnistConditionalDecoder, MnistConditionalEncoder
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.model_bases.autoencoders_base import AutoEncoderType, VariationalAE
+from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
@@ -47,10 +47,10 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    encoder = MnistVariationalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
-    decoder = MnistVariationalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
-    model = VariationalAE(AutoEncoderType.VARIATIONAL_AE, encoder=encoder, decoder=decoder)
-    model_checkpoint_name = "best_VAE_model.pkl"
+    encoder = MnistConditionalEncoder(input_size=784, latent_dim=int(config["latent_dim"]))
+    decoder = MnistConditionalDecoder(latent_dim=int(config["latent_dim"]), output_size=784)
+    model = ConditionalVae(encoder=encoder, decoder=decoder)
+    model_checkpoint_name = "best_CVAE_model.pkl"
 
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/ae_examples/vae_example/config.yaml",
+        default="examples/ae_examples/cvae_examples/mlp_cvae_example/config.yaml",
     )
 
     args = parser.parse_args()

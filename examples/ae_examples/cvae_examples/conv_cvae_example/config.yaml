@@ -6,8 +6,8 @@ n_clients: 2 # The number of clients in the FL experiment
 local_epochs: 3 # The number of epochs to complete for client (4)
 batch_size: 32 # The batch size for client training
 
-# checkpointing
+# Checkpointing
 checkpoint_path: "examples/ae_examples/cvae_examples/conv_cvae_example"
+
 # CVAE
 latent_dim: 16
-num_conditions: 2 #The total number of conditions used for CVAE

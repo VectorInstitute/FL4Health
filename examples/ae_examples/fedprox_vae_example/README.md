@@ -1,5 +1,5 @@
-# Federated Variational Auto-encoder Example
-This is an example implementation of training a Variational Auto_encoder model on the MNIST dataset. In this example, the client is a basic client, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights. The structure of the encoder and decoder models are defined in 'models.py'.
+# FedProx Federated Variational Auto-encoder Example
+This is an example implementation of training a Variational Auto-encoder model on the MNIST dataset. This example used the FedProx strategy to train personalized variational autoencoders with adaptive proximal weight. The server uses Federated Averaging to aggregate the VAE model weights. The structure of the encoder and decoder models are defined in `models.py``.
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
@@ -8,7 +8,7 @@ In order to run the example, first ensure you have [installed the dependencies i
 
 The next step is to start the server by running
 ```
-python -m examples.ae_examples.vae_example.server  --config_path /path/to/config.yaml
+python -m examples.ae_examples.fedprox_vae_example.server  --config_path /path/to/config.yaml
 ```
 from the FL4Health directory. The following arguments must be present in the specified config file:
 * `n_clients`: number of clients the server waits for in order to run the FL training
@@ -23,7 +23,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.ae_examples.vae_example.client --dataset_path /path/to/data
+python -m examples.ae_examples.fedprox_vae_example.client --dataset_path /path/to/data
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
@@ -34,5 +34,5 @@ After both clients have been started federated learning should commence.
 ### In this example
 You can use the following commands to run the clients.
 ```
-python -m examples.ae_examples.vae_example.client --dataset_path examples/datasets/MNIST
+python -m examples.ae_examples.fedprox_vae_example.client --dataset_path examples/datasets/MNIST
 ```
