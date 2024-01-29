@@ -6,7 +6,7 @@
 #SBATCH -c 8
 #SBATCH --time=2:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=96GB
+#SBATCH --mem=128GB
 #SBATCH --qos=normal
 
 # Note:

@@ -1,19 +1,13 @@
 # Running FedAvg Example
 
-To train and validate a simple U-Net model on the Preprocessed PICAI Dataset described in the [PICAI Documentation](/research/picai/README.md) in a federated manner using FedAvg, simply submit the `launch.slrm` job to the cluster using:
+The following instructions outline training and validating a simple U-Net model on the Preprocessed PICAI Dataset described in the [PICAI Documentation](/research/picai/README.md) in a federated manner across two clients using FedAvg. Due to the heavy data loading pipelines associated with PICAI, it is recommended to conduct FL experiments in which the server and each client are on seperate machines. The main script `run_fl_cluster.sh` is used to orchestrate the submission of the server and client jobs to the cluster via the SLURM scripts `run_server.slrm` and `run_client.slrm`. An example of the usage is below. Note that the script needs to be run from the top level of the FL4Health repository. Moreover, a python environment with the required libraries must already exist.  See the main PICAI documentation Cluster [PICAI Documentation](/research/picai/README.md) for instructions on creating and activating environment required to exectute the following code. The commands below should be run from the top level directory:
+
+```bash
+./research/picai/fedavg/run_fl_cluster.sh server_port_number path_to_config.yaml folder_for_server_logs/ folder_for_client_logs/ path_to_desired_venv/
 ```
-submit launch.slrm
+__An example__
+```bash
+./research/picai/fedavg/run_fl_cluster.sh 8111 research/picai/fedavg/config.yaml research/picai/fedavg/server_logs/ research/picai/fedavg/client_logs/ /h/jewtay/fl4health_env/
 ```
 
-This script will request compute resources, launch a FL sever and subsequently 3 FL clients, each with its own copy of the dataset. To streamline the experimentation process, the launched server and clients will reside on the same machine. Under the hood, the `launch.slrm` script will execute the `server.py` to start the server and subsequently the `client.py` for each participating client. 
-
-`server.py` takes the following arguments: 
-- **--config_path** (str): Path to configuration file for FL Experiments. Default `./config.yaml`.
-- **--sever_adress** (str): Server IP Address used to communicate with clients. Default `0.0.0.0:8080`.
-
-On the other hand, `client.py` takes the following arguments:
-- **--base_dir** (str): Base path to the PICAI dataset. Defaults to the current location on the cluster. 
-- **--overviews_dir** (str): Path to the directory containing overview files for the train and validation dataset of each split. Defaults to current location on the cluster. 
-- **--sever_adress** (str): Server IP Address. Default `0.0.0.0:8080`.
-
-The FL experiment can be modified by changing the arguments passed to `server.py` and `client.py` in the `launch.slrm` script or changing the values of the configuration (ie number of FL rounds, number of local epochs, batch size, etc).
+__Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/demerson/vector_repositories/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.  

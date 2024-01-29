@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from logging import INFO
 from typing import Dict, Tuple
 
@@ -9,7 +10,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
 
-from fl4health.checkpointing.checkpointer import CentralPerEpochCheckpointer
+from fl4health.checkpointing.checkpointer import CentralPerRoundCheckpointer 
 from fl4health.utils.metrics import MetricManager
 
 
@@ -29,7 +30,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = CentralPerEpochCheckpointer(checkpoint_dir, checkpoint_name)
+        self.per_epoch_checkpointer = CentralPerRoundCheckpointer(Path(checkpoint_dir), Path(checkpoint_name))
 
         self.train_loader = train_loader
         self.val_loader = val_loader
