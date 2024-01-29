@@ -6,7 +6,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
-from fl4health.losses.mkmmd_loss import MKMMDLoss
+from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -56,7 +56,7 @@ class FendaClient(BasicClient):
         self.mkmmd_loss_weight = mkmmd_loss_weight
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        self.mkmmd_loss = MKMMDLoss(device=self.device, min_distance=True).to(self.device)
+        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.temperature = temperature
 
         # Need to save previous local module, global module and aggregated global module at each communication round
