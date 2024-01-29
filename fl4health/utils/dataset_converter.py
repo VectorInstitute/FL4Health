@@ -33,7 +33,7 @@ class DatasetConverter(ABC, BaseDataset):
         (i.e. during the dataloader creation step)."""
         # Dataset can be added/changed at any point in the pipeline.
         self.dataset = dataset
-        # Returning this object as the converted dataset as this class overrides
+        # Returning this object as the converted dataset since this class overrides
         # the __getitem__ function of BaseDataset.
         return self
 
@@ -50,10 +50,16 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         self,
         condition: Union[None, str, torch.Tensor],
         custom_converter_function: Optional[Callable] = None,
-        data_shape: Optional[torch.Size] = None,
     ):
         self.condition = condition
-        self.data_shape = data_shape
+        if isinstance(self.condition, torch.Tensor):
+            # Condition should be a ready to use 1D tensor set in the client.
+            assert (
+                self.condition.dim() == 1
+            ), f"Error: condition should be a 1D vector instead of {self.condition.dim()}D tensor."
+        # self.data_shape is initialized with zero as we still haven't converted any dataset.
+        # Will be set in convert_dataset.
+        self.data_shape = torch.Size([0])
         # If no converter function is passed, it should be defined here.
         if custom_converter_function is None:
             self.converter_function = self._setup_converter_function()
@@ -63,18 +69,19 @@ class AutoEncoderDatasetConverter(DatasetConverter):
 
     def convert_dataset(self, dataset: BaseDataset) -> BaseDataset:
         self.dataset = dataset
-        if self.data_shape is None:
-            # Data shape is saved to be used in the pack-unpack process.
-            # This is the shape of the data after getting treansformed by torch transforms.
-            data, _ = self.dataset[0]
-            self.data_shape = data.shape
+        # if self.data_shape is None:
+        #     # Data shape is saved to be used in the pack-unpack process.
+        #     # This is the shape of the data after getting treansformed by torch transforms.
+        data, _ = self.dataset[0]
+        self.data_shape = data.shape
         return self
 
     def get_condition_vector_size(self) -> int:
-        assert self.condition is not None, "Error: condition is None."
-        if self.condition == "label":
+        if self.condition is None:
+            return 0
+        elif self.condition == "label":
             assert self.dataset is not None, "Error: no dataset is passed to the converter."
-            return torch.unique(self.dataset.targets)
+            return len(torch.unique(self.dataset.targets))
         elif isinstance(self.condition, torch.Tensor):
             return self.condition.size(0)
         else:
@@ -94,10 +101,6 @@ class AutoEncoderDatasetConverter(DatasetConverter):
                 # Condition depends on the target.
                 converter_function = self._cat_input_label
             elif isinstance(self.condition, torch.Tensor):
-                # Condition is a ready to use 1D tensor set in the client.
-                assert (
-                    self.condition.dim() == 1
-                ), f"Error: condition should be a 1D vector instead of {self.condition.dim()}D tensor."
                 converter_function = self._cat_input_condition
             else:
                 raise NotImplementedError("Error: support for this type of condition is not added.")
@@ -121,7 +124,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         """
         # We can flatten the data since self.data_shape is already saved.
         # Target should be the original data.
-        assert isinstance(self.condition, torch.Tensor)
+        assert isinstance(self.condition, torch.Tensor), "Error: condition should be a torch tensor"
         return torch.cat([data.view(-1), self.condition]), data
 
     def _cat_input_label(self, data: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -130,7 +133,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         """
         num_conditions = self.get_condition_vector_size()
         # Create the condition vector by getting the one_hot encoded target.
-        one_hot_target = torch.nn.functional.one_hot(torch.tensor(target), num_classes=num_conditions)
+        one_hot_target = torch.nn.functional.one_hot(target, num_classes=num_conditions)
         # Concatenate the data and target (target is the condition)
         # We can flatten the data since self.data_shape is already saved.
         # Target should be the original data.

@@ -646,3 +646,34 @@ def get_downsampling_layer(dimensions: int, pooling_type: str, kernel_size: int 
     class_name = "{}Pool{}d".format(pooling_type.capitalize(), dimensions)
     class_ = getattr(nn, class_name)
     return class_(kernel_size)
+
+
+# Autoencder: encder and decoder units
+class VariationalEncoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.fc_mu = nn.Linear(100 + condition_vector_size, embedding_size)
+            self.fc_logvar = nn.Linear(100 + condition_vector_size, embedding_size)
+        else:
+            self.fc_mu = nn.Linear(100, embedding_size)
+            self.fc_logvar = nn.Linear(100, embedding_size)
+
+    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        if condition is not None:
+            return self.fc_mu(torch.cat((x, condition), dim=-1)), self.fc_logvar(torch.cat((x, condition), dim=-1))
+        return self.fc_mu(x), self.fc_logvar(x)
+
+
+class VariationalDecoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.linear = nn.Linear(embedding_size + condition_vector_size, 100)
+        else:
+            self.linear = nn.Linear(embedding_size, 100)
+
+    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if condition is not None:
+            return self.linear(torch.cat((x, condition), dim=-1))
+        return self.linear(x)

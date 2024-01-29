@@ -28,8 +28,9 @@ class VaeLoss(_Loss):
         # Latent dimension is used to unpack the model output
         self.latent_dim = latent_dim
 
-    def kl_divergence_loss(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
-        """Calculates the KL divergence loss.
+    def standard_kl_divergence_loss(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
+        """Calculates the analytical KL divergence between the normal standard distribution
+        and the estimated distribution.
 
         Args:
             mu (torch.Tensor): Mean of the estimated distribution.
@@ -74,6 +75,6 @@ class VaeLoss(_Loss):
         """
         flattened_output, mu, logvar = self.unpack_model_output(preds)
         # print("loss unpack pred",flattened_output.shape)
-        kl_loss = self.kl_divergence_loss(mu, logvar)
+        kl_loss = self.standard_kl_divergence_loss(mu, logvar)
         # print("target", target.shape)
         return self.base_loss(flattened_output.view(*target.shape), target) + kl_loss

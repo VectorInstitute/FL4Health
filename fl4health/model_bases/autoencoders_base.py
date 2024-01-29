@@ -126,15 +126,11 @@ class ConditionalVae(AbstractAe):
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         assert self.converter is not None
         input, condition = self.converter.unpack_input_condition(input)
-        # print("In forward input", input.shape)
-        # print("In forward condition", condition.shape)
         mu, logvar = self.encode(input, condition)
         z = self.sampling(mu, logvar)
         output = self.decode(z, condition)
         # Output (reconstruction) is flattened to be concatenated with mu and logvar vectors.
         # The shape of the flattened_output can be later restored by having the training data shape,
         # or the decoder structure.
-        # print("output size", output.shape)
-        # print("mu and logvar size", mu.shape, logvar.shape)
         flattened_output = output.view(output.shape[0], -1)
         return torch.cat((logvar, mu, flattened_output), dim=1)
