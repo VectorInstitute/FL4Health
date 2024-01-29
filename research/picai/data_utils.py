@@ -22,31 +22,83 @@ augmentation_params = {
 
 class MoveDim(Transform):
     def __init__(self, source_dim: int, target_dim: int) -> None:
+        """
+        MONAI transform that moves source dimension to a target dimension.
+
+        Args:
+            source_dim (int): The index of the source dimension.
+            target_dim (int): The index of the target dimension.
+        """
+
         self.source_dim = source_dim
         self.target_dim = target_dim
         super().__init__()
 
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        """
+        Moves data's source dim to target dim.
+
+        Args:
+            data (torch.Tensor): Data to be transformed.
+
+        Returns:
+            torch.Tensor: Data with moved dimensions.
+        """
         data = torch.movedim(data, self.source_dim, self.target_dim)
         return data
 
 
 class OneHotEncode(Transform):
     def __init__(self, num_classes: int = 2) -> None:
+        """
+        MONAI transform to one hot encode labels.
+
+        Args:
+            num_classes (int): The number of classes to encode.
+        """
         self.num_classes = num_classes
         super().__init__()
 
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        """
+        One hot encode input data.
+
+        Args:
+            data (torch.Tensor): Data to be transformed.
+
+        Returns:
+            torch.Tensor: One hot encoded data.
+        """
         return F.one_hot(data.squeeze().long(), num_classes=self.num_classes)
 
 
 class ZScoreNormalization(Transform):
+    """
+    MONAI transform to perform z score normalization and optional clipping.
+    """
+
     def __call__(self, data: torch.Tensor) -> torch.Tensor:
+        """
+        Z-score normalize input data.
+
+        Args:
+            data (torch.Tensor): Input data to be normalized.
+
+        Returns:
+            torch.Tensor: Normalized data.
+        """
         data = z_score_norm(data)
         return data
 
 
 def get_img_transform() -> Compose:
+    """
+    Basic transformation pipeline for images that includes ensuring type and shape of data,
+    performing z score normalization, random roation, intensity scaling and adjusting contrast.
+
+    Returns:
+        Compose: Image transformation pipeline.
+    """
     transforms = [
         EnsureType(),
         EnsureChannelFirst(),
@@ -60,6 +112,13 @@ def get_img_transform() -> Compose:
 
 
 def get_seg_transform() -> Compose:
+    """
+    Basic transformation pipeline for labels that includes ensuring type and shape of data,
+    along with One-Hot-Encoding.
+
+    Returns:
+        Compose: Segmentation label transformation pipeline.
+    """
     transforms = [
         EnsureType(),
         EnsureChannelFirst(),
@@ -141,7 +200,7 @@ def split_img_and_seg_paths(img_paths: Sequence[Sequence[str]], seg_paths: Seque
     return client_img_paths, client_seg_paths
 
 
-def get_dataloader(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], batch_size: int, img_transform: Callable, seg_transform: Callable, shuffle: bool = False, num_workers: int =2) -> DataLoader:
+def get_dataloader(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], batch_size: int, img_transform: Callable, seg_transform: Callable, shuffle: bool = False, num_workers: int = 2) -> DataLoader:
     """
     Function that initializes and returns the train and validation DataLoader along with proportion of samples
     with each label.

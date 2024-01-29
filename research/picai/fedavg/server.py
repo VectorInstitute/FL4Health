@@ -3,7 +3,6 @@ from functools import partial
 from logging import INFO
 from typing import Any, Dict
 
-import torch
 import flwr as fl
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
@@ -11,7 +10,6 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.utils.config import load_config
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.checkpointing.checkpointer import ServerPerEpochCheckpointer
 
 from research.picai.picai_server import PicaiServer
 from research.picai.model_utils import get_model
@@ -50,13 +48,12 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_initial_model_parameters(model),
     )
 
-    per_epoch_checkpointer = ServerPerEpochCheckpointer(args.artifact_dir, "server.pt")
     server = PicaiServer(
         client_manager=client_manager,
         model=model,
         parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
-        per_epoch_checkpointer=per_epoch_checkpointer
+        intermediate_checkpoint_dir=args.artifact_dir
     )
 
     fl.server.start_server(
