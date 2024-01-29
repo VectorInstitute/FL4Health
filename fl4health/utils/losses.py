@@ -158,16 +158,17 @@ class LossMeter(ABC):
                 The first one is the additional losses and the second one is the backward losses (or None if the losses
                 are not a subclass of TrainLosses)
         """
-
-        aggregated_loss_list = [losses.additional_losses for losses in losses_list]
+        additional_loss_list = [losses.additional_losses for losses in losses_list]
         backward_loss_list = None
         # Assuming the losses are all the same type, check for the type of the first one only
         if len(losses_list) > 0 and isinstance(losses_list[0], TrainLosses):
             backward_loss_list = [losses.backward for losses in losses_list]  # type: ignore
 
-        for loss_list in [aggregated_loss_list, backward_loss_list]:
+        def _aggregate_loss_list_by_type(
+            loss_list: List[Dict[str, torch.Tensor]],
+        ) -> Union[Dict[str, torch.Tensor], None]:
             if loss_list is None:
-                continue
+                return None
 
             # We don't know the keys of the dict (backward or additional losses) beforehand. We obtain them
             # from the first entry because we know all of the losses will have the same keys
@@ -180,7 +181,9 @@ class LossMeter(ABC):
                     loss = loss / num_losses
                 loss_dict[key] = loss
 
-        return aggregated_loss_list, backward_loss_list  # type: ignore
+            return loss_dict
+
+        return _aggregate_loss_list_by_type(additional_loss_list), _aggregate_loss_list_by_type(backward_loss_list)
 
 
 class LossAverageMeter(LossMeter):
