@@ -64,20 +64,22 @@ class PicaiServer(FlServerWithCheckpointing):
         model, history, server_round = self.per_epoch_checkpointer.load_checkpoint()
         self.parameters = get_initial_model_parameters(model)
 
-        log(INFO, "Evaluating initial parameters")
-        res = self.strategy.evaluate(0, parameters=self.parameters)
-        if res is not None:
-            log(
-                INFO,
-                "initial parameters (loss, other metrics): %s, %s",
-                res[0],
-                res[1],
-            )
-            history.add_loss_centralized(server_round=0, loss=res[0])
-            history.add_metrics_centralized(server_round=0, metrics=res[1])
+        if server_round == 1:
+            log(INFO, "Evaluating initial parameters")
+            res = self.strategy.evaluate(0, parameters=self.parameters)
+            if res is not None:
+                log(
+                    INFO,
+                    "initial parameters (loss, other metrics): %s, %s",
+                    res[0],
+                    res[1],
+                )
+                history.add_loss_centralized(server_round=0, loss=res[0])
+                history.add_metrics_centralized(server_round=0, metrics=res[1])
 
-        # Run federated learning for num_rounds
-        log(INFO, "FL starting")
+            # Run federated learning for num_rounds
+            log(INFO, "FL starting")
+
         start_time = timeit.default_timer()
 
         for current_round in range(server_round, num_rounds + 1):

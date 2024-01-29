@@ -1,8 +1,12 @@
 from typing import Tuple, List
 import torch.nn as nn
-from flwr.common.typing import Parameters, Metrics, Config
+from flwr.common.typing import Parameters, Metrics, Config, NDArrays
 from flwr.common.parameter import ndarrays_to_parameters
 from research.picai.simple_metric_aggregation import normalize_metrics, metric_aggregation
+
+
+def get_initial_model_ndarrays(client_model: nn.Module) -> NDArrays:
+    return [val.cpu().numpy() for _, val in client_model.state_dict().items()]
 
 
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:

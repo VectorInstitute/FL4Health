@@ -8,6 +8,8 @@ from fl4health.utils.metrics import Metric
 from fl4health.checkpointing.checkpointer import TorchCheckpointer, ClientPerEpochCheckpointer
 from fl4health.clients.basic_client import BasicClient
 
+from research.picai.fl_utils import get_initial_model_ndarrays
+
 
 class PicaiClient(BasicClient):
     def __init__(
@@ -17,11 +19,11 @@ class PicaiClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        per_epoch_checkpointer: ClientPerEpochCheckpointer = ClientPerEpochCheckpointer(
-            checkpoint_dir="./", checkpoint_name="ckpt.pt")
+        intermediate_checkpoint_dir: Path = Path("./")
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
-        self.per_epoch_checkpointer = per_epoch_checkpointer
+        self.per_epoch_checkpointer = ClientPerEpochCheckpointer(
+            intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt"))
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
@@ -50,6 +52,8 @@ class PicaiClient(BasicClient):
                     "model": self.model,
                     "optimizers": self.optimizers
                 })
+
+                parameters = get_initial_model_ndarrays(self.model)
 
         self.set_parameters(parameters, config)
 

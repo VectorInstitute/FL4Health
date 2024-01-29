@@ -34,7 +34,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    model = get_model(device=torch.device("gpu"))
+    model = get_model()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

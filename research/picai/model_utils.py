@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
-from typing import Sequence, Tuple
+from typing import Sequence, Tuple, Optional
 from monai.networks.nets.unet import UNet
 
 
 def get_model(
-    device: torch.device,
+    device: Optional[torch.device] = None,
     model_type: str = "unet",
     spatial_dims: int = 3,
     in_channels: int = 3,
@@ -25,7 +25,8 @@ def get_model(
         )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
-
-    model = model.to(device)
+    
+    if device is not None:
+        model = model.to(device)
     print("Loaded Neural Network Arch.:", model_type)
     return model
