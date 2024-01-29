@@ -141,7 +141,9 @@ class LossMeter(ABC):
 
     @classmethod
     def aggregate_loss_by_type(
-        cls, losses_list: Sequence[Losses], loss_meter_type: LossMeterType
+        cls,
+        losses_list: Sequence[Losses],
+        loss_meter_type: LossMeterType,
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Class method that aggregates a loss by loss_type (ie backward, checkpoint, additional).
@@ -208,7 +210,7 @@ class LossAverageMeter(LossMeter):
         Compute average of current list of losses if non-empty.
 
         Returns:
-            TrainLosses: New TrainLosses object with average of losses in losses_list.
+            Losses: New Losses object with average of losses in losses_list.
         """
         assert len(self.losses_list) > 0
 
@@ -252,7 +254,7 @@ class LossAccumulationMeter(LossMeter):
         Compute sum of current list of losses if non-empty.
 
         Returns:
-            TrainLosses: New TrainLosses object with sum of losses in losses_list.
+            Losses: New Losses object with sum of losses in losses_list.
         """
         assert len(self.losses_list) > 0
 

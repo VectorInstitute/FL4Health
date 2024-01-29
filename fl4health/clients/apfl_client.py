@@ -93,10 +93,9 @@ class ApflClient(BasicClient):
                 Optional, default is True.
 
         Returns:
-            Union[Losses, TrainLosses]: If is_train is True, an instance of TrainLosses containing checkpoint loss,
-                backward loss and additional losses indexed by name. Otherwise, an instance of Losses containing
-                checkpoint loss and additional losses indexed by name. Additional losses include global
-                and local losses.
+            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
+                additional losses indexed by name. Additional losses include global and local losses.
         """
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)
@@ -104,11 +103,9 @@ class ApflClient(BasicClient):
         local_loss = self.criterion(preds["local"], target)
         additional_losses = {"global": global_loss, "local": local_loss}
         if is_train:
-            losses = TrainLosses(checkpoint=personal_loss, backward=personal_loss, additional_losses=additional_losses)
-        else:
-            losses = Losses(checkpoint=personal_loss, additional_losses=additional_losses)
+            return TrainLosses(checkpoint=personal_loss, backward=personal_loss, additional_losses=additional_losses)
 
-        return losses
+        return Losses(checkpoint=personal_loss, additional_losses=additional_losses)
 
     def set_optimizer(self, config: Config) -> None:
         optimizers = self.get_optimizer(config)

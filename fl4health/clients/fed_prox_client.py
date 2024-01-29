@@ -11,7 +11,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -95,7 +95,11 @@ class FedProxClient(BasicClient):
         ]
 
     def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+        is_train: bool = True,
     ) -> Losses:
         """
         Computes loss given predictions of the model and ground truth data. Adds to objective by including
@@ -106,16 +110,24 @@ class FedProxClient(BasicClient):
                 All predictions included in dictionary will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
+                Optional, default is True.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses includes proximal loss.
+            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
+                additional losses indexed by name. Additional losses includes proximal loss.
         """
         loss = self.criterion(preds["prediction"], target)
         proximal_loss = self.get_proximal_loss()
         total_loss = loss + proximal_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss})
-        return losses
+
+        if is_train:
+            return TrainLosses(
+                checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss}
+            )
+
+        return Losses(checkpoint=loss, additional_losses={"proximal_loss": proximal_loss})
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

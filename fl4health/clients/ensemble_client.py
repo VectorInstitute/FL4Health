@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.typing import Config
@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -94,6 +94,7 @@ class EnsembleClient(BasicClient):
 
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
+        assert isinstance(losses, TrainLosses)
 
         for loss in losses.backward.values():
             loss.backward()
@@ -104,7 +105,11 @@ class EnsembleClient(BasicClient):
         return losses, preds
 
     def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+        is_train: bool = True,
     ) -> Losses:
         """
         Computes loss given predictions (and potentially features) of the model and ground truth data.
@@ -115,20 +120,25 @@ class EnsembleClient(BasicClient):
                 in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
+                Optional, default is True.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
+                additional losses indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():
             loss_dict[key] = self.criterion(pred.float(), target)
 
-        individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
-        backward_loss = individual_model_losses
         checkpoint_loss = loss_dict["ensemble-pred"]
 
-        losses = Losses(checkpoint=checkpoint_loss, backward=backward_loss)
-        return losses
+        if is_train:
+            individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
+            return TrainLosses(checkpoint=checkpoint_loss, backward=individual_model_losses)
+
+        return Losses(checkpoint=checkpoint_loss)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
