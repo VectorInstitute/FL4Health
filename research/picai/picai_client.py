@@ -65,11 +65,12 @@ class PicaiClient(BasicClient):
             self.setup_client(config)
 
             if self.per_round_checkpointer.checkpoint_exists():
-                self.model, self.optimzers = self.per_round_checkpointer.load_checkpoint()
+                self.model, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
             else:
                 self.per_round_checkpointer.save_checkpoint({
                     "model": self.model,
-                    "optimizers": self.optimizers
+                    "optimizers": self.optimizers,
+                    "client_name": self.client_name
                 })
 
                 parameters = get_initial_model_ndarrays(self.model)
@@ -89,7 +90,8 @@ class PicaiClient(BasicClient):
 
         self.per_round_checkpointer.save_checkpoint({
             "model": self.model,
-            "optimizers": self.optimizers
+            "optimizers": self.optimizers,
+            "client_name": self.client_name
         })
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics

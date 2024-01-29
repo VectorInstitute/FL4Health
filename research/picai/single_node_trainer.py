@@ -10,7 +10,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
 
-from fl4health.checkpointing.checkpointer import CentralPerRoundCheckpointer 
+from fl4health.checkpointing.checkpointer import CentralPerRoundCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 

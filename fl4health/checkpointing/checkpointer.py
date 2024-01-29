@@ -88,7 +88,7 @@ class PerRoundCheckpointer(ABC):
     def save_checkpoint(self, checkpoint_dict: Dict[str, Any]) -> None:
         """
         Saves checkpoint_dict to checkpoint path.
-        
+
         Args:
             checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type 
                 Any representing the state to checkpoint.
@@ -105,7 +105,7 @@ class PerRoundCheckpointer(ABC):
 
         Returns:
             Tuple[Any, ...]: A tuple where each entry is an element of the checkpointed state.
-        
+
         Raises:
             NotImplementedError: To be implemented by child classes.
         """
@@ -125,7 +125,7 @@ class CentralPerRoundCheckpointer(PerRoundCheckpointer):
     def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Optimizer, int]]) -> None:
         """
         Saves checkpoint_dict consisting of model, optimizer and round to checkpoint path.
-        
+
         Args:
             checkpoint_dict (Dict[str, Union[nn.Module, Optimizer, int]]): A dictionary with string keys and values of
                 type nn.Module (model), Optimizer (optimizer) and int (round).
@@ -150,30 +150,33 @@ class CentralPerRoundCheckpointer(PerRoundCheckpointer):
 
 
 class ClientPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer]]]) -> None:
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer], str]]) -> None:
         """
-        Saves checkpoint_dict consisting of model and an optimizer.
-        
+        Saves checkpoint_dict consisting of model, optimizer and client name.
+
         Args:
-            checkpoint_dict (Dict[str, Union[nn.Module, Optimizer, int]]): A dictionary with string keys and values of
-                type nn.Module (model) and a dictionary of optimizers indexed by string keys.
+            checkpoint_dict (Dict[str, Union[nn.Module, Dict[str, Optimizer], str]]): A dictionary with string keys
+                and values of type nn.Module (model), a dictionary of optimizers indexed by string keys and a
+                string representing the client name.
         """
         assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
         assert "optimizers" in checkpoint_dict and isinstance(checkpoint_dict["optimizers"], dict)
+        assert "client_name" in checkpoint_dict and isinstance(checkpoint_dict["client_name"], str)
 
         torch.save(checkpoint_dict, self.checkpoint_path)
 
-    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer]]:
+    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer], str]:
         """
         Loads and returns the most recent checkpoint if it exists.
 
         Returns:
-            Tuple[nn.Module, Dict[str, Optimizer]] A tuple consisting of the model and the dictionary of optimizers.
+            Tuple[nn.Module, Dict[str, Optimizer], str] A tuple consisting of the model, the dictionary of optimizers
+            and the client name
         """
         assert self.checkpoint_exists()
 
         ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["optimizers"]
+        return ckpt["model"], ckpt["optimizers"], ckpt["client_name"]
 
 
 class ServerPerRoundCheckpointer(PerRoundCheckpointer):
@@ -181,7 +184,7 @@ class ServerPerRoundCheckpointer(PerRoundCheckpointer):
         """
         Saves checkpoint_dict consisting of model, a history of losses and metrics through validation and the server
         round.
-        
+
         Args:
             checkpoint_dict (Dict[str, Union[nn.Module, History, int]]): A dictionary with string keys and values of
                 type nn.Module (model), History (losses and metrics) and int (server round).
