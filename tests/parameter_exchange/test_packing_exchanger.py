@@ -186,7 +186,8 @@ def test_sparse_coo_parameter_exchanger() -> None:
     )
 
     # Test parameter selection.
-    nonzero_vals, indices, shapes, tensor_names = parameter_exchanger.select_parameters(model, initial_model)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model, initial_model)
+    indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
     assert (nonzero_vals[0] == 4.5).all()
     assert len(indices[0]) == 64

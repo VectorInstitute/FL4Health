@@ -7,11 +7,11 @@ from flwr.common.typing import Config, NDArrays
 from torch import Tensor
 from torch.nn.modules import Module
 
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import SparseCooParameterPacker
+from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
 
-class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, NDArrays, List[str]]]):
+class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDArrays, List[str]]]):
     def __init__(self, sparsity_level: float, score_gen_function: Callable[..., Dict[str, Tensor]]) -> None:
         """
         Parameter exchanger for sparse tensors.
@@ -83,7 +83,7 @@ class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, 
 
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
-    ) -> Tuple[NDArrays, NDArrays, NDArrays, List[str]]:
+    ) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
         tensor_names_to_masks = self.create_masks(model, initial_model)
         model_states = model.state_dict()
 
@@ -106,17 +106,15 @@ class SparseCooParameterExchanger(ParameterExchangerWithPacking[Tuple[NDArrays, 
             selected_indices_all_tensors.append(selected_indices)
             tensor_shapes.append(tensor_shape)
 
-        return (selected_parameters_all_tensors, selected_indices_all_tensors, tensor_shapes, tensor_names)
+        return (selected_parameters_all_tensors, (selected_indices_all_tensors, tensor_shapes, tensor_names))
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
-        selected_parameters, parameter_indices, tensor_shapes, tensor_names = self.select_parameters(
-            model, initial_model
-        )
+        selected_parameters, additional_parameters = self.select_parameters(model, initial_model)
         return self.pack_parameters(
             model_weights=selected_parameters,
-            additional_parameters=(parameter_indices, tensor_shapes, tensor_names),
+            additional_parameters=additional_parameters,
         )
 
     def pull_parameters(self, parameters: NDArrays, model: Module, config: Optional[Config] = None) -> None:
