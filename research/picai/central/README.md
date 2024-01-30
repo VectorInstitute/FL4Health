@@ -7,7 +7,7 @@ The following instructions outline training and validating a simple U-Net model 
 ```
 __An example__
 ```bash
-./research/picai/central/launch.slrm research/picai/central/logs/ /h/jewtay/fl4health_env/ 0
+./research/picai/central/launch.slrm research/picai/central/artifacts/ /h/jewtay/fl4health_env/ 0
 ```
 
-__Note__: The `logs/` folder must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/jewtay/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.
+__Note__: The `artifacts/` folder must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/jewtay/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.

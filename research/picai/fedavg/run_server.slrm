@@ -1,10 +1,11 @@
 #!/bin/bash
-#SBATCH -c 8
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --time=8:00:00
 #SBATCH --mem=32GB
-#SBATCH --partition=t4v2
-#SBATCH --qos=m
+#SBATCH --qos=normal
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -14,6 +15,7 @@
 # export NCCL_DEBUG=INFO
 # NCCL backend to communicate between GPU workers is not provided in vector's cluster.
 # Disable this option in slurm.
+
 export NCCL_IB_DISABLE=1
 
 if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
