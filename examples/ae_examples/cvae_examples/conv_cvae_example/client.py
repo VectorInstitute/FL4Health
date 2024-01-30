@@ -37,6 +37,7 @@ class CondConvAutoEncoderClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
+        # To make sure pixels stay in the range [0.0, 1.0].
         transform = transforms.Compose([transforms.ToTensor()])
         # To train an autoencoder-based model we need to set the data converter.
         train_loader, val_loader, _ = load_mnist_data(

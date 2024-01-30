@@ -38,8 +38,10 @@ class CondAutoEncoderClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
+        # ToTensor transform is used to make sure pixels stay in the range [0.0, 1.0].
         # Flattening the image data to match the input shape of the model.
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
+        flatten_transform = transforms.Lambda(lambda x: torch.flatten(x))
+        transform = transforms.Compose([transforms.ToTensor(), flatten_transform])
         train_loader, val_loader, _ = load_mnist_data(
             data_dir=self.data_path,
             batch_size=batch_size,

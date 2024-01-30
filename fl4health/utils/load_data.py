@@ -22,12 +22,13 @@ def load_mnist_data(
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load MNIST Dataset (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5), (0.5)),
-        ]
-    )
+    if transform is None:
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
     train_ds: BaseDataset = MnistDataset(data_dir, train=True, transform=transform)
     val_ds: BaseDataset = MnistDataset(data_dir, train=False, transform=transform)
 

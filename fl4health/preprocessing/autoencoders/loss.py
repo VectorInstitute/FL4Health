@@ -75,4 +75,5 @@ class VaeLoss(_Loss):
         """
         flattened_output, mu, logvar = self.unpack_model_output(preds)
         kl_loss = self.standard_kl_divergence_loss(mu, logvar)
+        # Reshaping the flattened output to its original shape.
         return self.base_loss(flattened_output.view(*target.shape), target) + kl_loss
