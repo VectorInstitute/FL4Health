@@ -103,7 +103,6 @@ def get_img_transform() -> Compose:
         EnsureType(),
         EnsureChannelFirst(),
         ZScoreNormalization(),
-        RandRotate(),
         ScaleIntensity(minv=augmentation_params["scale_range"][0], maxv=augmentation_params["scale_range"][1]),
         AdjustContrast(gamma=1.0),
         MoveDim(-1, 1)
@@ -135,12 +134,12 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
     below or above the given percentile are discarded.
 
     Args:
-        image (npt.Ndarray[Any]): N-dimensional image to be normalized and optionally clipped. 
-        percentile (Optional[float]): Percentile used to set threshold to clip activations.
-            If None, no clipping occurs. If a percentile is specified, must be 0 =< 50
+        image (torch.Tensor): N-dimensional image to be normalized and optionally clipped.
+        quantile (Optional[float]): Quantile used to set threshold to clip activations.
+            If None, no clipping occurs. If a quantile is specified, must be 0 =< 0.5
 
     Returns:
-       npt.NDArray[Any]: Z-Score Normalized vesrion of input that is clipped if a percentile is specified. 
+       torch.Tensor: Z-Score Normalized vesrion of input that is clipped if a quantile is specified.
     """
     image = image.float()
 
@@ -160,7 +159,29 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
         return image * 0.
 
 
-def get_img_and_seg_paths(overviews_dir : str, base_dir: str, fold_id: int, train: bool) -> Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]:
+def get_img_and_seg_paths(
+    overviews_dir : Path,
+    base_dir: Path,
+    fold_id: int,
+    train: bool
+) -> Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]:
+    """
+    Gets the image paths, segmentation paths and label proportions for the specified fold.
+
+    Args:
+        overviews_dir (Path): A path to the directory containing the marksheets that specify the
+            image and segmentation paths for each fold.
+        base_dir (Path): The base path of the PICAI dataset.
+        fold_id (int): The id of the fold to fetch the image segmentation paths for.
+        train (bool): Whether to load the train dataset or the validation dataset.
+
+    Returns:
+        Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
+            is a list of list of strings where the outer list represents a list of file paths corresponding
+            to the diffferent MR Sequences for a given patient exam. The second element is a list of strings
+            representing the associated segmentation labels. The final element of the returned tuple is a 
+            torch tensor that give the class proportions.
+    """
 
     # load datasheets
     file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
@@ -187,7 +208,22 @@ def get_img_and_seg_paths(overviews_dir : str, base_dir: str, fold_id: int, trai
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
 
 
-def split_img_and_seg_paths(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], splits: int) -> Tuple[Sequence[Sequence[Sequence[str]]], Sequence[Sequence[str]]]:
+def split_img_and_seg_paths(
+    img_paths: Sequence[Sequence[str]],
+    seg_paths: Sequence[str],
+    splits: int
+) -> Tuple[Sequence[Sequence[Sequence[str]]], Sequence[Sequence[str]]]:
+    """
+    Split image and segmentation paths into a number of mutually exclusive sets.
+
+    img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a list of file paths corresponding
+            to the diffferent MR Sequences for a given patient exam.
+    seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
+    splits (int): The number of splits to partition the dataset.
+
+    Returns:
+        Tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for images and segmentation labels.
+    """
     assert len(img_paths) == len(seg_paths)
 
     client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
@@ -200,21 +236,29 @@ def split_img_and_seg_paths(img_paths: Sequence[Sequence[str]], seg_paths: Seque
     return client_img_paths, client_seg_paths
 
 
-def get_dataloader(img_paths: Sequence[Sequence[str]], seg_paths: Sequence[str], batch_size: int, img_transform: Callable, seg_transform: Callable, shuffle: bool = False, num_workers: int = 2) -> DataLoader:
+def get_dataloader(
+    img_paths: Sequence[Sequence[str]],
+    seg_paths: Sequence[str],
+    batch_size: int,
+    img_transform: Compose,
+    seg_transform: Compose,
+    shuffle: bool = False,
+    num_workers: int = 2
+) -> DataLoader:
     """
-    Function that initializes and returns the train and validation DataLoader along with proportion of samples
-    with each label.
-
+    Initializes and returns MONAI Dataloader.
     Args:
-        overview_dir (str): The path to the directory that houses the datasheets for the train and validation data.
+        img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
+            list of file paths corresponding to the diffferent MR Sequences for a given patient exam.
+        seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
         batch_size (str): The number of samples per batch yielded by the DataLoader.
-        num_threads (int): The number of threads used by the DataLoader. 
-        fold_id (int): The cross validation fold to use to create the DataLoader.
+        img_transorm (Compose): The series of transformations applied to input images during dataloading.
+        seg_transform (Compose): The series of transformations applied to the segmentation labels during dataloading.
+        shuffle (bool): Whether or not to shuffle the dataset.
+        num_workers (int): The number of workers used by the DataLoader.
 
     Returns:
-       Tuple[DataLoader, DataLoader, np.array]: The Training DataLoader, Validation Loader and Numpy Array
-       with the proportion of samples in each class.
-
+       DataLoader: MONAI dataloader.
     """
 
     ds = ImageDataset(
