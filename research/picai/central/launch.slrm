@@ -7,7 +7,26 @@
 #SBATCH --job-name=picai
 #SBATCH --output=picai%j.log
 
-# activate the environment 
-source ~/.bashrc
-source ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.9/bin/activate
-python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ~/picai_experiments/ --fold 0
+# Process inputs
+LOG_DIR=$1
+VENV_PATH=$2
+FOLD_ID=$3
+
+echo "Config Path: ${CONFIG_PATH}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Fold ID: ${FOLD_ID}"
+
+LOG_PATH="${LOG_DIR}client_${JOB_HASH}.log"
+
+echo "Placing logs in: ${LOG_DIR}"
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment:"
+which python
+
+python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID}
