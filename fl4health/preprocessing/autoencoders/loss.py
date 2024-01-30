@@ -74,7 +74,5 @@ class VaeLoss(_Loss):
             torch.Tensor: Total loss composed of base loss and KL divergence loss.
         """
         flattened_output, mu, logvar = self.unpack_model_output(preds)
-        # print("loss unpack pred",flattened_output.shape)
         kl_loss = self.standard_kl_divergence_loss(mu, logvar)
-        # print("target", target.shape)
         return self.base_loss(flattened_output.view(*target.shape), target) + kl_loss
