@@ -1,0 +1,15 @@
+# Parameters that describe server
+n_server_rounds: 10 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)
+batch_size: 64 # The batch size for client training (NOT USED FOR FLAMBY)
+local_steps: 100 # The number of local training steps to perform.
+federated_checkpointing: True # Indicates whether intermediate or latest checkpointing is used on the server side
+
+normalize: True # specifies whether division by the tensor's dimension is performed when computing its drift norm.
+filter_by_percentage: True # this argument toggles between the two mechanisms for selecting the tensors to be exchanged.
+
+norm_threshold: 24.5 # if a tensor's drift norm exceeds this threshold, then it will be sent to the server. Only applicable when filter_by_percentage is False
+exchange_percentage: 0.5 # if a tensor has a drift norm that is falls in the top percentile specified by this argument, then it will be sent to the server. Only applicable when filter_by_percentage is True
