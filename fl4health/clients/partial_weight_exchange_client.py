@@ -1,14 +1,16 @@
 import copy
 from pathlib import Path
-from typing import Sequence
+from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -20,6 +22,8 @@ class PartialWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         Client that only exchanges a subset of its parameters with the server in each communication round.
@@ -42,6 +46,8 @@ class PartialWeightExchangeClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
+            checkpointer=checkpointer,
+            metrics_reporter=metrics_reporter,
         )
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module
