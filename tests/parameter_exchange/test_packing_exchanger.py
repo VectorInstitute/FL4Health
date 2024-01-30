@@ -15,9 +15,16 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithLayerNames,
     SparseCooParameterPacker,
 )
-from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
+from fl4health.parameter_exchange.parameter_selection_criteria import (
+    largest_final_magnitude_scores,
+    largest_increase_in_magnitude_scores,
+    largest_magnitude_change_scores,
+    smallest_final_magnitude_scores,
+    smallest_increase_in_magnitude_scores,
+    smallest_magnitude_change_scores,
+)
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
-from tests.test_utils.models_for_test import ConstantConvNet
+from tests.test_utils.models_for_test import ConstantConvNet, ToyConvNet
 
 
 @pytest.fixture
@@ -175,16 +182,36 @@ def test_sparse_coo_parameter_packer(get_sparse_tensors: List[Tensor]) -> None:
     assert unpacked_param_nonzero_values == parameter_nonzero_values
 
 
-def test_sparse_coo_parameter_exchanger() -> None:
-    initial_model = ConstantConvNet(constants=[0.1, 2, 3.2, 5])
-    model = ConstantConvNet(constants=[1.5, 2.5, 3.5, 4.5])
+def test_sparse_coo_parameter_exchanger_sparsity_level() -> None:
+    torch.manual_seed(42)
+    toy_convnet = ToyConvNet(include_bn=False)
+    toy_convnet_initial = ToyConvNet(include_bn=False)
 
     parameter_exchanger = SparseCooParameterExchanger(
         sparsity_level=0.1, score_gen_function=largest_final_magnitude_scores
     )
 
-    # Test parameter selection.
-    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model, initial_model)
+    total_params_number = sum(p.numel() for p in toy_convnet.parameters())
+
+    # Test that the parameter exchanger only selects 10 percent of the parameters.
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(toy_convnet, toy_convnet_initial)
+    selected_params_number = sum(len(t) for t in nonzero_vals)
+    assert selected_params_number * 10 == total_params_number
+    indices, _, _ = additional_parameters
+    for non_zero_vals_one_tensor, indices_one_tensor in zip(nonzero_vals, indices):
+        assert len(non_zero_vals_one_tensor) == len(indices_one_tensor)
+
+
+def test_sparse_coo_parameter_exchanger() -> None:
+    initial_model_const = ConstantConvNet(constants=[0.1, 2, 3.2, 5])
+    model_const = ConstantConvNet(constants=[1.5, 2.5, 3.5, 4.5])
+
+    parameter_exchanger = SparseCooParameterExchanger(
+        sparsity_level=0.001, score_gen_function=largest_final_magnitude_scores
+    )
+
+    # Test parameter selection (with the largest_final_magnitude_scores as criterion).
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
     assert (nonzero_vals[0] == 4.5).all()
@@ -199,7 +226,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
         model_weights=new_nonzero_vals, additional_parameters=(indices, shapes, tensor_names)
     )
 
-    model_copy = copy.deepcopy(model)
+    model_copy = copy.deepcopy(model_const)
 
     parameter_exchanger.pull_parameters(packed_parameters, model_copy)
 
@@ -207,3 +234,49 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (model_copy.conv2.weight == 2.5).all()
     assert (model_copy.fc1.weight == 3.5).all()
     assert (model_copy.fc2.weight == 6.6).all()
+
+    # Test parameter selection with other criteria
+    parameter_exchanger.set_score_gen_function(largest_magnitude_change_scores)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
+    indices, shapes, tensor_names = additional_parameters
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 1.5).all()
+    assert len(indices[0]) == 150
+    assert (shapes[0] == np.array([6, 1, 5, 5])).all()
+    assert tensor_names[0] == "conv1.weight"
+
+    parameter_exchanger.set_score_gen_function(largest_increase_in_magnitude_scores)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
+    indices, shapes, tensor_names = additional_parameters
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 1.5).all()
+    assert len(indices[0]) == 150
+    assert (shapes[0] == np.array([6, 1, 5, 5])).all()
+    assert tensor_names[0] == "conv1.weight"
+
+    parameter_exchanger.set_score_gen_function(smallest_final_magnitude_scores)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
+    indices, shapes, tensor_names = additional_parameters
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 1.5).all()
+    assert len(indices[0]) == 150
+    assert (shapes[0] == np.array([6, 1, 5, 5])).all()
+    assert tensor_names[0] == "conv1.weight"
+
+    parameter_exchanger.set_score_gen_function(smallest_magnitude_change_scores)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
+    indices, shapes, tensor_names = additional_parameters
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 3.5).all()
+    assert len(indices[0]) == 4096
+    assert (shapes[0] == np.array([16, 256])).all()
+    assert tensor_names[0] == "fc1.weight"
+
+    parameter_exchanger.set_score_gen_function(smallest_increase_in_magnitude_scores)
+    nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
+    indices, shapes, tensor_names = additional_parameters
+    assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
+    assert (nonzero_vals[0] == 4.5).all()
+    assert len(indices[0]) == 64
+    assert (shapes[0] == np.array([4, 16])).all()
+    assert tensor_names[0] == "fc2.weight"

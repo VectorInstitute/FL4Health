@@ -27,8 +27,8 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             generating a score for every parameter inside a model in order to facilitate parameter selection.
 
             In most cases, this function takes as inputs a current model and an initial model,
-            and it returns a dictionary that maps the names of a model's tensors to another tensor
-            which contains the parameter scores.
+            and it returns a dictionary that maps the name of each of the current model's tensors to
+            another tensor which contains the parameter scores.
         """
         assert 0 < sparsity_level <= 1
         self.set_sparsity_level(sparsity_level)
@@ -56,7 +56,8 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         Next, these scores are used to produce masks.
         A threshold is determined according to the desired sparsity level,
         then parameters whose scores are less than this threshold are assigned a mask value of 0,
-        while parameters whose scores are greater than this threshold are assigned a mask value of 1.
+        while parameters whose scores are greater than or equal to this threshold are
+        assigned a mask value of 1.
 
         Args:
             model (nn.Module): Current model.
@@ -69,13 +70,13 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])
         # Sorting all scores and determining the threshold.
         sorted_scores, _ = torch.sort(all_scores, descending=True)
-        top_scores = sorted_scores[: math.ceil(len(sorted_scores) * self.sparsity_level) + 1]
+        top_scores = sorted_scores[: math.ceil(len(sorted_scores) * self.sparsity_level)]
         score_threshold = top_scores[-1].item()
 
         names_to_masks = {}
         for name, param_scores in all_parameter_scores.items():
             # Use score_threshold to produce masks.
-            threshold_result = torch.threshold(param_scores, threshold=score_threshold, value=0)
+            threshold_result = torch.where(param_scores >= score_threshold, input=param_scores, other=0)
             mask = torch.where(threshold_result == 0, input=threshold_result, other=1)
             # Tensor whose mask values are all zero will not be exchanged, so we
             # do not return them.
@@ -86,6 +87,21 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
     ) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
+        """
+        Generate masks for model's parameters and select those with mask values 1
+        for exchange. Also extract all the information required to represent
+        the selected parameters in the sparse COO tensor format. More specifically,
+        the information consists of the indices of the parameters within the tensor
+        to which they belong, the shape of that tensor, and also the name of it.
+
+        Args:
+            model (nn.Module): Current model.
+            initial_model (Optional[nn.Module], optional): Initial model. Defaults to None.
+
+        Returns:
+            Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]: the selected parameters
+            and other information, as detailed above.
+        """
         tensor_names_to_masks = self.create_masks(model, initial_model)
         model_states = model.state_dict()
 

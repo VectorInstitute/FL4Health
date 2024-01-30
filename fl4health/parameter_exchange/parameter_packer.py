@@ -76,6 +76,13 @@ class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):
 
 
 class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[str]]]):
+    """
+    This parameter packer is responsible for selecting an arbitrary set of parameters
+    and then representing them in the sparse COO tensor format, which requires knowing
+    the indices of the parameters within the tensor to which they belong,
+    the shape of that tensor, and also the name of it.
+    """
+
     def pack_parameters(
         self, model_parameters: NDArrays, additional_parameters: Tuple[NDArrays, NDArrays, List[str]]
     ) -> NDArrays:

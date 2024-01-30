@@ -36,6 +36,8 @@ class CifarSparseCooTensorClient(PartialWeightExchangeClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         sparsity_level = self.narrow_config_type(config, "sparsity_level", float)
+        # The user may pass in a different score_gen_function to allow for alternative
+        # selection criterion.
         parameter_exchanger = SparseCooParameterExchanger(
             sparsity_level=sparsity_level,
             score_gen_function=largest_final_magnitude_scores,

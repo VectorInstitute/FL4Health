@@ -107,6 +107,9 @@ class PartialWeightExchangeClient(BasicClient):
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
         """
+        # Since PartialWeightExchangeClient may exchange different sets parameters
+        # across different training round, the full parameter exchanger is only used
+        # if a client is selected to participate in the first *fitting* round.
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
         fl_fit_round = self.narrow_config_type(config, "fl_fit_round", bool)
         if (not self.model_weights_initialized) and current_server_round == 1 and fl_fit_round:
@@ -114,5 +117,5 @@ class PartialWeightExchangeClient(BasicClient):
         else:
             self.model_weights_initialized = True
             self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        # stores the values of the new model parameters at the beginning of each client training round.
+        # Stores the values of the new model parameters at the beginning of each client training round.
         self.initial_model.load_state_dict(self.model.state_dict(), strict=True)

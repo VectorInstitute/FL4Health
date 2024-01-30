@@ -41,7 +41,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         """
         A generalization of the FedAvg strategy where the server can receive any arbitrary subset of parameters from
         any arbitrary subset of the clients.
-        Weighted average for parameters belonging to each received layer is performed independently.
+        Weighted average for parameters belonging to each received tensor is performed independently.
 
         Note that this strategy differs from FedAvgDynamicLayer in that it does not
         require clients to send entire layers (tensors).
@@ -111,7 +111,6 @@ class FedAvgSparseCooTensor(BasicFedAvg):
             3. Perform averaging on the dense tensors (can be weighted or unweighted).
             4. For every aggregated dense tensor, discard the zero values and retain all information needed
             to represent it in the sparse COO format.
-            (i.e., the four parts mentioned above) as the final result.)
 
         Args:
             server_round (int): Indicates the server round we're currently on.
@@ -208,9 +207,6 @@ class FedAvgSparseCooTensor(BasicFedAvg):
             2. For tensors that have the same name, construct the sparse COO tensors and convert them to dense tensors.
             3. Perform weighted averaging on the dense tensors according to
             the number of training examples each client has.
-            4. For every aggregated dense tensor, discard the zero values and retain all
-            information needed to represent it in the sparse COO format
-            (i.e., the four parts mentioned above) as the final result.
 
         Note: this method performs weighted averaging.
 
