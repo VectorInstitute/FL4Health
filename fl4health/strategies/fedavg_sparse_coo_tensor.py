@@ -20,6 +20,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         *,
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
+        min_fit_clients: int = 2,
+        min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: Optional[
             Callable[
@@ -49,6 +51,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
+            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Optional[
                 Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
@@ -75,6 +79,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             evaluate_fn=evaluate_fn,
             on_fit_config_fn=on_fit_config_fn,

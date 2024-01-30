@@ -1,8 +1,10 @@
 import math
+from logging import INFO
 from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 from torch import Tensor
 from torch.nn.modules import Module
@@ -106,6 +108,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             selected_indices_all_tensors.append(selected_indices)
             tensor_shapes.append(tensor_shape)
 
+        log(INFO, f"Sparsity level used to select parameters for exchange: {self.sparsity_level}")
         return (selected_parameters_all_tensors, (selected_indices_all_tensors, tensor_shapes, tensor_names))
 
     def push_parameters(

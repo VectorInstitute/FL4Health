@@ -107,7 +107,9 @@ class PartialWeightExchangeClient(BasicClient):
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
         """
-        if not self.model_weights_initialized and config["current_server_round"] == 1:
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        fl_fit_round = self.narrow_config_type(config, "fl_fit_round", bool)
+        if (not self.model_weights_initialized) and current_server_round == 1 and fl_fit_round:
             self.initialize_all_model_weights(parameters, config)
         else:
             self.model_weights_initialized = True
