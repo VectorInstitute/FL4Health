@@ -7,13 +7,13 @@ import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.layer_exchanger import NormDriftParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
-class DynamicWeightExchangeClient(BasicClient):
+class PartialWeightExchangeClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
@@ -22,7 +22,10 @@ class DynamicWeightExchangeClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
     ) -> None:
         """
-        Dynamic weight exchange client used to exchange a dynamic subset of layers per client.
+        Client that only exchanges a subset of its parameters with the server in each communication round.
+
+        The strategy for selecting which parameters to exchange is determined by self.parameter_exchanger,
+        which must be a subclass of PartialParameterExchanger.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -43,7 +46,7 @@ class DynamicWeightExchangeClient(BasicClient):
         # Initial model parameters to be used in calculating weight shifts during training
         self.initial_model: nn.Module
         # Parameter exchanger to be used in server-client exchange of dynamic layers.
-        self.parameter_exchanger: NormDriftParameterExchanger
+        self.parameter_exchanger: PartialParameterExchanger
 
     def setup_client(self, config: Config) -> None:
         """
@@ -59,7 +62,9 @@ class DynamicWeightExchangeClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
-        This method configures and instantiates a NormDriftParameterExchanger to be used in dynamic weight exchange.
+        This method configures and instantiates a PartialParameterExchanger and should be
+        implemented by the user since there are various strategies to select
+        parameters to be exchanged.
 
         Args:
             config (Config): Configuration used to setup the weight exchanger properties for dynamic exchange
@@ -68,14 +73,7 @@ class DynamicWeightExchangeClient(BasicClient):
             ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
                 federated training
         """
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
-        parameter_exchanger = NormDriftParameterExchanger(
-            norm_threshold, exchange_percentage, normalize, filter_by_percentage
-        )
-        return parameter_exchanger
+        raise NotImplementedError
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -109,9 +107,6 @@ class DynamicWeightExchangeClient(BasicClient):
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
         """
-        if not self.model_weights_initialized:
-            self.initialize_all_model_weights(parameters, config)
-        else:
-            self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         # stores the values of the new model parameters at the beginning of each client training round.
         self.initial_model.load_state_dict(self.model.state_dict(), strict=True)

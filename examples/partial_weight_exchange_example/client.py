@@ -15,12 +15,18 @@ from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
-from fl4health.clients.dynamic_weight_exchange_client import DynamicWeightExchangeClient
+from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
+from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.parameter_exchange.parameter_selection_criteria import (
+    select_layers_by_percentage,
+    select_layers_by_threshold,
+)
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 
 
-class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
+class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
     def __init__(
         self,
         data_path: Path,
@@ -82,6 +88,33 @@ class TransformerPartialExchangeClient(DynamicWeightExchangeClient):
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        """
+        This method configures and instantiates a NormDriftParameterExchanger to be used in dynamic weight exchange.
+
+        Args:
+            config (Config): Configuration used to setup the weight exchanger properties for dynamic exchange
+
+        Returns:
+            ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
+                federated training
+        """
+        normalize = self.narrow_config_type(config, "normalize", bool)
+        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
+        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
+        exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
+        select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
+        selection_function = select_layers_by_percentage if filter_by_percentage else select_layers_by_threshold
+        parameter_exchanger = DynamicLayerExchanger(
+            layer_selection_function=selection_function,
+            norm_threshold=norm_threshold,
+            exchange_percentage=exchange_percentage,
+            normalize=normalize,
+            filter_by_percentage=filter_by_percentage,
+            select_drift_more=select_drift_more,
+        )
+        return parameter_exchanger
 
     def test(self, num_classes: int) -> Tuple[float, float, List[float]]:
         self.model.eval()
@@ -150,7 +183,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = TransformerPartialExchangeClient(data_path, [Accuracy("accuracy")], DEVICE)
+    client = TransformerDynamicLayerExchangeClient(data_path, [Accuracy("accuracy")], DEVICE)
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
     # of larger messages would still be blocked.

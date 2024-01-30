@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from torchinfo import summary
 
 from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.utils.metrics import Metric, MetricManager
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -38,9 +39,20 @@ def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
 def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
-    # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+    # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in client_model.parameters() if val.requires_grad]
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
+
+
+def get_initial_model_info_with_param_names(client_model: nn.Module) -> Parameters:
+    # Initializing the model parameters on the server side.
+    parameter_packer = ParameterPackerWithLayerNames()
+    param_names = []
+    model_weights = []
+    for name, val in client_model.state_dict().items():
+        param_names.append(name)
+        model_weights.append(val.cpu().numpy())
+    return ndarrays_to_parameters(parameter_packer.pack_parameters(model_weights, param_names))
 
 
 def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
