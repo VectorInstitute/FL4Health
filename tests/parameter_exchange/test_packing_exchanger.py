@@ -15,10 +15,8 @@ from fl4health.parameter_exchange.parameter_packer import (
     ParameterPackerWithLayerNames,
     SparseCooParameterPacker,
 )
-from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import (
-    SparseCooParameterExchanger,
-    largest_final_magnitude_scores,
-)
+from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
+from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
 from tests.test_utils.models_for_test import ConstantConvNet
 
 
