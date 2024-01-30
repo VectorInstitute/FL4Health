@@ -1,18 +1,21 @@
+import datetime
 from logging import INFO, WARNING
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 import torch.nn as nn
+from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
-from flwr.server.server import EvaluateResultsAndFailures, Server
+from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
@@ -24,6 +27,7 @@ class FlServer(Server):
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
@@ -40,18 +44,57 @@ class FlServer(Server):
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = checkpointer
 
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter()
+
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
+
         history = super().fit(num_rounds, timeout)
         if self.wandb_reporter:
             # report history to W and B
             self.wandb_reporter.report_metrics(num_rounds, history)
+
+        self.metrics_reporter.add_to_metrics(
+            data={
+                "fit_end": datetime.datetime.now(),
+                "metrics_centralized": history.metrics_centralized,
+                "losses_centralized": history.losses_centralized,
+            }
+        )
+
         return history
+
+    def fit_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"fit_start": datetime.datetime.now()})
+
+        fit_round_results = super().fit_round(server_round, timeout)
+
+        if fit_round_results is not None:
+            _, metrics_aggregated, _ = fit_round_results
+            self.metrics_reporter.add_to_metrics_at_round(
+                server_round,
+                data={
+                    "metrics_aggregated": metrics_aggregated,
+                    "fit_end": datetime.datetime.now(),
+                },
+            )
+
+        return fit_round_results
 
     def shutdown(self) -> None:
         if self.wandb_reporter:
@@ -123,14 +166,26 @@ class FlServer(Server):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+
+        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"evaluate_start": datetime.datetime.now()})
+
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
         eval_round_results = super().evaluate_round(server_round, timeout)
         if eval_round_results:
-            loss_aggregated, metrics_aggregated, (results, failures) = eval_round_results
+            loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, server_round)
+
+            self.metrics_reporter.add_to_metrics_at_round(
+                server_round,
+                data={
+                    "metrics_aggregated": metrics_aggregated,
+                    "loss_aggregated": loss_aggregated,
+                    "evaluate_end": datetime.datetime.now(),
+                },
+            )
 
         return eval_round_results
 
@@ -147,6 +202,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
@@ -168,7 +224,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
         """
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
         self.parameter_exchanger = parameter_exchanger

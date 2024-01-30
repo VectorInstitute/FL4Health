@@ -1,12 +1,15 @@
 import asyncio
 import datetime
+import json
 import logging
+from enum import Enum
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import torch
 import yaml
 from flwr.common.typing import Config
+from pytest import approx
 from six.moves import urllib
 
 from examples.fedprox_example.client import MnistFedProxClient
@@ -27,6 +30,9 @@ async def run_smoke_test(
     # The param below exists to work around an issue with some clients
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
+    seed: Optional[int] = None,
+    server_metrics: Optional[Dict[str, Any]] = None,
+    client_metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -69,6 +75,27 @@ async def run_smoke_test(
                 dataset_path="examples/datasets/cifar_data/",
                 checkpoint_path="examples/assets/best_checkpoint_fczjmljm.pkl",
                 assert_evaluation_logs=True,
+                seed=42,
+                server_metrics={
+                    "rounds": {
+                        "1": {
+                            "metrics_aggregated": {"val - prediction - accuracy": 0.4744},
+                             # to override default tolerance, pass it in as a dictionary:
+                            "loss_aggregated": {"target_value": 2.001, "custom_tolerance": 0.05},
+                        },
+                    },
+                },
+                client_metrics={
+                    "rounds": {
+                        "2": {
+                            "fit_metrics": {"train - prediction - accuracy": (0.2031, 0.005)},
+                            "loss_dict": {
+                                "checkpoint": {"target_value": 2.1473, "custom_tolerance": 0.05},
+                                "backward": 2.1736,
+                            }
+                        },
+                    },
+                },
             )
         )
         loop.close()
@@ -90,8 +117,16 @@ async def run_smoke_test(
         skip_assert_client_fl_rounds (Optional[str]): Optional, default `False`. If set to `True`, will skip the
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
-
+        seed (Optional[int]): The random seed to be passed in to both the client and the server.
+        server_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+            saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            Default is None.
+        client_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
+            saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+            Default is None.
     """
+    clear_metrics_folder()
+
     logger.info("Running smoke tests with parameters:")
     logger.info(f"\tServer : {server_python_path}")
     logger.info(f"\tClient : {client_python_path}")
@@ -105,12 +140,13 @@ async def run_smoke_test(
 
     # Start the server and capture its process object
     logger.info("Starting server...")
+    server_args = ["-m", server_python_path, "--config_path", config_path]
+    if seed is not None:
+        server_args.extend(["--seed", str(seed)])
+
     server_process = await asyncio.create_subprocess_exec(
         "python",
-        "-m",
-        server_python_path,
-        "--config_path",
-        config_path,
+        *server_args,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
@@ -163,6 +199,8 @@ async def run_smoke_test(
         client_args = ["-m", client_python_path, "--dataset_path", dataset_path]
         if checkpoint_path is not None:
             client_args.extend(["--checkpoint_path", checkpoint_path])
+        if seed is not None:
+            client_args.extend(["--seed", str(seed)])
 
         client_process = await asyncio.create_subprocess_exec(
             "python",
@@ -216,6 +254,8 @@ async def run_smoke_test(
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
+    _assert_metrics(MetricType.SERVER, server_metrics)
+
     # client assertions
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), (
@@ -235,6 +275,8 @@ async def run_smoke_test(
                 f"Full client output:\n{full_client_outputs[i]}\n"
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
+
+        _assert_metrics(MetricType.CLIENT, client_metrics)
 
     logger.info("All checks passed. Test finished.")
 
@@ -304,6 +346,85 @@ async def _wait_for_process_to_finish_and_retrieve_logs(
     return full_output
 
 
+class MetricType(Enum):
+    SERVER = "server"
+    CLIENT = "client"
+
+
+DEFAULT_METRICS_FOLDER = Path("metrics")
+DEFAULT_TOLERANCE = 0.0005
+
+
+def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[str, Any]] = None) -> None:
+    if metrics_to_assert is None:
+        return
+
+    metrics_found = False
+    for file in DEFAULT_METRICS_FOLDER.iterdir():
+        if not file.is_file() or not str(file).endswith(".json"):
+            continue
+
+        with open(file) as f:
+            metrics = json.load(f)
+
+        if metrics["type"] != metric_type.value:
+            continue
+
+        metrics_found = True
+        _assert_metrics_dict(metrics_to_assert, metrics)
+
+    assert metrics_found, f"Metrics of type {metric_type.value} not found."
+
+
+def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> None:
+    def _assert(value: Any, saved_value: Any) -> None:
+        # helper function to avoid code repetition
+        tolerance = DEFAULT_TOLERANCE
+        if isinstance(value, dict):
+            # if the value is a dictionary, extract the target value and the custom tolerance
+            tolerance = value["custom_tolerance"]
+            value = value["target_value"]
+
+        assert approx(value, abs=tolerance) == saved_value, (
+            f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested"
+            f"value ({value}) within requested tolerance ({tolerance})."
+        )
+
+    for metric_key in metrics_to_assert:
+        assert metric_key in metrics_saved, f"Metric '{metric_key}' not found in saved metrics."
+
+        value_to_assert = metrics_to_assert[metric_key]
+
+        if isinstance(value_to_assert, dict):
+            if "target_value" not in value_to_assert and "custom_tolerance" not in value_to_assert:
+                # if it's a dictionary, call this function recursively
+                # except when the dictionary has "target_value" and "custom_tolerance", which should
+                # be treated as a regular dictionary
+                _assert_metrics_dict(value_to_assert, metrics_saved[metric_key])
+                continue
+
+        if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
+            # if it's a list, call an assertion for each element of the list
+            for i in range(len(value_to_assert)):
+                _assert(value_to_assert[i], metrics_saved[metric_key][i])
+            continue
+
+        # if it's just a regular value, perform the assertion
+        _assert(value_to_assert, metrics_saved[metric_key])
+
+
+def clear_metrics_folder() -> None:
+    DEFAULT_METRICS_FOLDER.mkdir(exist_ok=True)
+    for f in DEFAULT_METRICS_FOLDER.iterdir():
+        if f.is_file() and str(f).endswith(".json"):
+            f.unlink()
+
+
+def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
+    with open(file_path, "r") as f:
+        return json.load(f)
+
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
@@ -312,6 +433,9 @@ if __name__ == "__main__":
             client_python_path="examples.fedprox_example.client",
             config_path="tests/smoke_tests/fedprox_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
         )
     )
     loop.run_until_complete(
@@ -320,6 +444,9 @@ if __name__ == "__main__":
             client_python_path="examples.scaffold_example.client",
             config_path="tests/smoke_tests/scaffold_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
         )
     )
     loop.run_until_complete(
@@ -328,6 +455,9 @@ if __name__ == "__main__":
             client_python_path="examples.apfl_example.client",
             config_path="tests/smoke_tests/apfl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
         )
     )
     loop.run_until_complete(

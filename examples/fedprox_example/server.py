@@ -97,6 +97,8 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # Shutdown the server gracefully
     server.shutdown()
 
+    server.metrics_reporter.dump()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
@@ -118,7 +120,7 @@ if __name__ == "__main__":
         "--seed",
         action="store",
         type=int,
-        help="Seed for the random number generator",
+        help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
     args = parser.parse_args()

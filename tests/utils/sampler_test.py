@@ -2,7 +2,7 @@ from pathlib import Path
 
 from scipy.stats import chisquare
 
-from fl4health.utils.dataset import MNISTDataset
+from fl4health.utils.dataset import MnistDataset
 from fl4health.utils.sampler import DirichletLabelBasedSampler, MinorityLabelBasedSampler
 
 
@@ -14,7 +14,7 @@ def test_minority_sampler() -> None:
     )
 
     # Training
-    ds = MNISTDataset(data_path=Path("examples/datasets/MNIST"), train=True)
+    ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=True)
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     ds_new = sampler.subsample(ds)
@@ -27,7 +27,7 @@ def test_minority_sampler() -> None:
     assert len(ds_new) == sum(new_samples_per_class)
 
     # Testing
-    ds = MNISTDataset(data_path=Path("examples/datasets/MNIST"), train=False)
+    ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=False)
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     ds_new = sampler.subsample(ds)
@@ -45,7 +45,7 @@ def test_dirichlet_sampler() -> None:
     sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
     # Training
-    ds = MNISTDataset(data_path=Path("examples/datasets/MNIST"), train=True)
+    ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=True)
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     new_ds = sampler.subsample(ds)
@@ -57,7 +57,7 @@ def test_dirichlet_sampler() -> None:
     assert p_val < 0.01
 
     # Testing
-    ds = MNISTDataset(data_path=Path("examples/datasets/MNIST"), train=False)
+    ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=False)
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     new_ds = sampler.subsample(ds)

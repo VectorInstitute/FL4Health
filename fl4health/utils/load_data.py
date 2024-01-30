@@ -7,7 +7,7 @@ from flwr.common.logger import log
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
-from fl4health.utils.dataset import BaseDataset, MNISTDataset
+from fl4health.utils.dataset import BaseDataset, MnistDataset
 from fl4health.utils.sampler import LabelBasedSampler
 
 
@@ -24,8 +24,8 @@ def load_mnist_data(
             transforms.Normalize((0.5), (0.5)),
         ]
     )
-    train_ds: BaseDataset = MNISTDataset(data_dir, train=True, transform=transform)
-    val_ds: BaseDataset = MNISTDataset(data_dir, train=False, transform=transform)
+    train_ds: BaseDataset = MnistDataset(data_dir, train=True, transform=transform)
+    val_ds: BaseDataset = MnistDataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)

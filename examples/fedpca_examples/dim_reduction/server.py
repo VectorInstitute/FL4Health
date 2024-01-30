@@ -1,53 +1,55 @@
 import argparse
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen
+from examples.models.mnist_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.server.base_server import FlServer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
-from fl4health.utils.random import set_all_random_seeds
 
 
-def get_initial_model_parameters() -> Parameters:
+def get_initial_model_parameters(model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = ApflModule(MnistNetWithBnAndFrozen())
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
 
 
 def fit_config(
+    local_epochs: int,
     batch_size: int,
-    n_server_rounds: int,
-    current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    new_dimension: int,
+    pca_path: str,
+    current_server_round: int,
 ) -> Config:
     return {
-        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
-        "current_server_round": current_round,
+        "local_epochs": local_epochs,
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
+        "new_dimension": new_dimension,
+        "pca_path": pca_path,
+        "current_server_round": current_server_round,
     }
 
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
-        fit_config,
-        config["batch_size"],
-        config["n_server_rounds"],
-        local_epochs=config.get("local_epochs"),
-        local_steps=config.get("local_steps"),
+        fit_config, config["local_epochs"], config["batch_size"], config["new_dimension"], config["pca_path"]
     )
+
+    # Initializing the model on the server side
+    model = MnistNet(input_dim=config["new_dimension"])
+    parameter_exchanger = FullParameterExchanger()
+
+    # To facilitate checkpointing
+    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -60,19 +62,16 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_initial_model_parameters(model),
     )
 
-    client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy)
+    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
-    server.metrics_reporter.dump()
 
 
 if __name__ == "__main__":
@@ -82,20 +81,10 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/apfl_example/config.yaml",
-    )
-    parser.add_argument(
-        "--seed",
-        action="store",
-        type=int,
-        help="Seed for the random number generators across python, torch, and numpy",
-        required=False,
+        default="examples/basic_example/config.yaml",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
-    # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
 
     main(config)
