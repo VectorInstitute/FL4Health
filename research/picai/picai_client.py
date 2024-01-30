@@ -8,8 +8,6 @@ from fl4health.utils.metrics import Metric
 from fl4health.checkpointing.checkpointer import TorchCheckpointer, ClientPerRoundCheckpointer
 from fl4health.clients.basic_client import BasicClient
 
-from research.picai.fl_utils import get_initial_model_ndarrays
-
 
 class PicaiClient(BasicClient):
     def __init__(
@@ -45,7 +43,7 @@ class PicaiClient(BasicClient):
         """
         Processes config, initializes client (if first round or restarting from pre-emption) and performs
         training based on the passed config. Overrides method in parent class to add support for client
-        side checkpointing of a model thats resilient to pre-emptions. On initialization the client checks 
+        side checkpointing of a model thats resilient to pre-emptions. On initialization the client checks
         if a checkpointed client state exists to load and at the end of each round the client state is saved.
 
         Args:
@@ -64,16 +62,10 @@ class PicaiClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)
 
+            # If checkpoint exists load it and set proper optimizer and client attributes.
+            # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer.checkpoint_exists():
-                self.model, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
-            else:
-                self.per_round_checkpointer.save_checkpoint({
-                    "model": self.model,
-                    "optimizers": self.optimizers,
-                    "client_name": self.client_name
-                })
-
-                parameters = get_initial_model_ndarrays(self.model)
+                _, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
 
         self.set_parameters(parameters, config)
 
@@ -88,6 +80,7 @@ class PicaiClient(BasicClient):
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
 
+        # After local client training has finished, checkpoint model, optimizer and client name
         self.per_round_checkpointer.save_checkpoint({
             "model": self.model,
             "optimizers": self.optimizers,
