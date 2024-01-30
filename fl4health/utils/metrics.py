@@ -5,7 +5,6 @@ from typing import Dict, List, Sequence, Tuple
 import numpy as np
 import torch
 from torchmetrics import Metric as TMetric
-from torchmetrics.classification import MultilabelAveragePrecision
 from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 
@@ -64,13 +63,38 @@ class Metric(ABC):
 
 class TorchMetric(Metric):
     def __init__(self, name: str, metric: TMetric) -> None:
+        """
+        Thin wrapper on TorchMetric to make it compatible with out Metric interface.
+
+        Args:
+            name (str): The name of the metric.
+            metric (TMetric): TorchMetric class based metric
+        """
         super().__init__(name)
         self.metric = metric
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
-        self.metric(input, target.long())
+        """
+        Updates the state of the underlying TorchMetric.
+
+        Args:
+            input (torch.Tensor): The predictions of the model to be evaluated.
+            target (torch.Tensor): The ground truth target to evaluate predictions against.
+        """
+        self.metric.update(input, target.long())
 
     def compute(self, name: Optional[str]) -> Metrics:
+        """
+        Compute value of underlying TorchMetric.
+
+        Args:
+            name (Optional[str]): Optional name used in conjunction with class attribute name
+                to define key in metrics dictionary.
+
+        Returns:
+           Metrics: A dictionary of string and Scalar representing the computed metric
+                and its associated key.
+        """
         result_key = f"{name} - {self.name}" if name is not None else self.name
         result = self.metric.compute().item()
         return {result_key: result}

@@ -1,12 +1,9 @@
 #!/bin/bash
 
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --ntasks-per-node=1
-#SBATCH -c 8
-#SBATCH --time=2:00:00
+#SBATCH -c 8 
+#SBATCH --time=8:00:00
 #SBATCH --gres=gpu:1
-#SBATCH --mem=128GB
+#SBATCH --mem=152GB
 #SBATCH --qos=normal
 
 # Note:
@@ -26,8 +23,6 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
     echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
     export NCCL_SOCKET_IFNAME=bond0
 fi
-
-ulimit -n 8192 
 
 # Process inputs
 SERVER_ADDRESS=$1

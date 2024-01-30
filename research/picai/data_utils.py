@@ -103,8 +103,8 @@ def get_img_transform() -> Compose:
         EnsureType(),
         EnsureChannelFirst(),
         ZScoreNormalization(),
-        ScaleIntensity(minv=augmentation_params["scale_range"][0], maxv=augmentation_params["scale_range"][1]),
-        AdjustContrast(gamma=1.0),
+        # ScaleIntensity(minv=augmentation_params["scale_range"][0], maxv=augmentation_params["scale_range"][1]),
+        # AdjustContrast(gamma=1.0),
         MoveDim(-1, 1)
     ]
     return Compose(transforms)

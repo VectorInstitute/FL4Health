@@ -39,11 +39,11 @@ class PicaiFedAvgClient(PicaiClient):
         train_img_paths, train_seg_paths, _ = get_img_and_seg_paths(
             self.overviews_dir, self.data_path, int(config["fold_id"]), True)
         train_loader = get_dataloader(train_img_paths, train_seg_paths, int(
-            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=1)
+            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=0)
         val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(
             self.overviews_dir, self.data_path, int(config["fold_id"]), True)
         val_loader = get_dataloader(val_img_paths, val_seg_paths, int(
-            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=1)
+            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=0)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:

@@ -92,17 +92,14 @@ class PicaiServer(FlServerWithCheckpointing):
         # Initialize parameters
         log(INFO, "Initializing global parameters")
 
-        if not self.per_round_checkpointer.checkpoint_exists():
+        # if checkpoint exists, update history, server round and model accordingly
+        if self.per_round_checkpointer.checkpoint_exists():
+            model, history, server_round = self.per_round_checkpointer.load_checkpoint()
+            self.parameters = get_initial_model_parameters(model)
+        else:
             self.parameters = self._get_initial_parameters(timeout)
-            self._hydrate_model_for_checkpointing()
-            self.per_round_checkpointer.save_checkpoint({
-                "model": self.server_model,
-                "history": History(),
-                "server_round": 1
-            })
-
-        model, history, server_round = self.per_round_checkpointer.load_checkpoint()
-        self.parameters = get_initial_model_parameters(model)
+            history = History()
+            server_round = 1
 
         if server_round == 1:
             log(INFO, "Evaluating initial parameters")
@@ -164,6 +161,7 @@ class PicaiServer(FlServerWithCheckpointing):
                         server_round=current_round, metrics=evaluate_metrics_fed
                     )
 
+            # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
             self.per_round_checkpointer.save_checkpoint({
                 "model": self.server_model,
