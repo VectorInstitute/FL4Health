@@ -247,7 +247,7 @@ class MkMmdLoss(torch.nn.Module):
             unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
             return (1.0 / torch.sum(unnormalized_betas)) * unnormalized_betas
         else:
-            # If we're trying to maximize the type II error, then we are trying to maximize a concave function over a
+            # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
             return self.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
 
