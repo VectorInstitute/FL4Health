@@ -1,4 +1,4 @@
-# Basic Federated Learning Example
+# Sparse Tensor Federated Learning Example
 This example demonstrates the usage of the sparse tensor parameter exchanger. At the end of each training round, each client selects an arbitrary set of its model parameters to be exchanged with the server.
 
 On the server side, parameters belonging to the same tensor are first grouped together, then weighted averaging is performed in a per-tensor fashion.
