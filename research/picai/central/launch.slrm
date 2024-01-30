@@ -15,7 +15,7 @@
 # Usage:
 #
 # sbatch research/picai/central/launch.slrm folder_for_artifacts / \
-#  path_to_desired_env/ fold_id 
+#  path_to_desired_env/ fold_id
 #
 # Example:
 # sbatch research/picai/fedavg/launch.slrm \

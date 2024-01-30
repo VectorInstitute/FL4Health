@@ -13,8 +13,20 @@ The easiest way to create and activate a virtual environment is by using the [vi
 virtualenv "ENV_PATH"
 source "ENV_PATH/bin/activate"
 pip install --upgrade pip poetry
-poetry install --with "dev, dev-local, test, codestyle, picai"
+poetry install --with "picai"
 ```
+
+This will setup an environment with the proper dependencies to run the provided scripts out of the box.
+
+If you wish to also be able to reproduce the pre-processing described in subsequent sections, you can modify the aforementioned series of commands as follows:
+```bash
+virtualenv "ENV_PATH"
+source "ENV_PATH/bin/activate"
+pip install --upgrade pip poetry
+poetry install --with "picai, picai-preprocessing"
+```
+
+For more information about environment configuration, please refer to the [main documentation](/README.md).
 
 ## Data
 ### Raw Dataset
