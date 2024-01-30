@@ -631,7 +631,7 @@ class BasicClient(NumPyClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
         is_train: bool = True,
-    ) -> Union[Losses, TrainLosses]:
+    ) -> Losses:
         """
         Computes loss given predictions (and potentially features) of the model and ground truth data.
 
@@ -644,17 +644,15 @@ class BasicClient(NumPyClient):
                 Optional, default is True.
 
         Returns:
-            Union[Losses, TrainLosses]: If is_train is True, an instance of TrainLosses containing checkpoint loss,
-                backward loss and additional losses indexed by name. Otherwise, an instance of Losses containing
-                checkpoint loss and additional losses indexed by name.
+            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
+                additional losses indexed by name.
         """
         loss = self.criterion(preds["prediction"], target)
         if is_train:
-            losses = TrainLosses(checkpoint=loss, backward=loss)
-        else:
-            losses = Losses(checkpoint=loss)
+            return TrainLosses(checkpoint=loss, backward=loss)
 
-        return losses
+        return Losses(checkpoint=loss)
 
     def set_optimizer(self, config: Config) -> None:
         """

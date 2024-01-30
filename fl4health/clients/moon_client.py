@@ -7,7 +7,7 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -104,7 +104,11 @@ class MoonClient(BasicClient):
         self.global_model = self.clone_and_freeze_model(self.model)
 
     def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+        is_train: bool = True,
     ) -> Losses:
         """
         Computes loss given predictions and features of the model and ground truth data. Loss includes
@@ -115,9 +119,13 @@ class MoonClient(BasicClient):
                 All predictions included in dictionary will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
+                Optional, default is True.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
+                additional losses indexed by name.
         """
         if len(self.old_models_list) == 0:
             return super().compute_loss(preds, features, target)
@@ -131,5 +139,8 @@ class MoonClient(BasicClient):
             )
             total_loss += self.contrastive_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
-        return losses
+
+        if is_train:
+            return TrainLosses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
+
+        return Losses(checkpoint=loss, additional_losses=additional_losses)
