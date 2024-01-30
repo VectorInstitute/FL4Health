@@ -1,23 +1,18 @@
+import json
 import os
 import random
-import json
 from pathlib import Path
-from typing import Callable, Optional, Tuple, Sequence
+from typing import List, Optional, Sequence, Tuple
+
 import numpy as np
 import torch
 import torch.nn.functional as F
+from monai.data.dataloader import DataLoader
+from monai.data.image_dataset import ImageDataset
 from monai.transforms import Transform
 from monai.transforms.compose import Compose
-from monai.transforms.utility.array import EnsureChannelFirst, EnsureType
-from monai.transforms import RandRotate
 from monai.transforms.intensity.array import AdjustContrast, ScaleIntensity
-from monai.data.image_dataset import ImageDataset
-from monai.data.dataloader import DataLoader
-
-augmentation_params = {
-    "scale_range": (0.7, 1.4),
-    "gamma": 1.0
-}
+from monai.transforms.utility.array import EnsureChannelFirst, EnsureType
 
 
 class MoveDim(Transform):
@@ -103,9 +98,9 @@ def get_img_transform() -> Compose:
         EnsureType(),
         EnsureChannelFirst(),
         ZScoreNormalization(),
-        # ScaleIntensity(minv=augmentation_params["scale_range"][0], maxv=augmentation_params["scale_range"][1]),
-        # AdjustContrast(gamma=1.0),
-        MoveDim(-1, 1)
+        ScaleIntensity(minv=0.7, maxv=1.4),
+        AdjustContrast(gamma=1.0),
+        MoveDim(-1, 1),
     ]
     return Compose(transforms)
 
@@ -118,13 +113,7 @@ def get_seg_transform() -> Compose:
     Returns:
         Compose: Segmentation label transformation pipeline.
     """
-    transforms = [
-        EnsureType(),
-        EnsureChannelFirst(),
-        MoveDim(-1, 1),
-        OneHotEncode(num_classes=2),
-        MoveDim(-1, 0)
-    ]
+    transforms = [EnsureType(), EnsureChannelFirst(), MoveDim(-1, 1), OneHotEncode(num_classes=2), MoveDim(-1, 0)]
     return Compose(transforms)
 
 
@@ -144,7 +133,7 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
     image = image.float()
 
     if quantile is not None:
-        assert (quantile >= 0.0 and quantile <= 0.5)
+        assert quantile >= 0.0 and quantile <= 0.5
         # clip distribution of intensity values
         lower_bnd = torch.quantile(image, 1.0 - quantile)
         upper_bnd = torch.quantile(image, quantile)
@@ -156,14 +145,11 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
     if std > 0:
         return (image - mean) / std
     else:
-        return image * 0.
+        return image * 0.0
 
 
 def get_img_and_seg_paths(
-    overviews_dir : Path,
-    base_dir: Path,
-    fold_id: int,
-    train: bool
+    overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
 ) -> Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]:
     """
     Gets the image paths, segmentation paths and label proportions for the specified fold.
@@ -179,7 +165,7 @@ def get_img_and_seg_paths(
         Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
             to the diffferent MR Sequences for a given patient exam. The second element is a list of strings
-            representing the associated segmentation labels. The final element of the returned tuple is a 
+            representing the associated segmentation labels. The final element of the returned tuple is a
             torch tensor that give the class proportions.
     """
 
@@ -194,41 +180,40 @@ def get_img_and_seg_paths(
     seg_paths = [os.path.join(base_dir, path) for path in file_json["label_paths"]]
 
     # Determine class proportions
-    class_ratio = [int(np.sum(file_json['case_label'])), int(len(img_paths) - np.sum(file_json['case_label']))]
-    class_proportions = (class_ratio / np.sum(class_ratio))
+    class_ratio = [int(np.sum(file_json["case_label"])), int(len(img_paths) - np.sum(file_json["case_label"]))]
+    class_proportions = class_ratio / np.sum(class_ratio)
 
     # Log dataset information
     dataset_name = "Train" if train else "Validation"
-    print('Dataset Definition:', "-" * 80)
-    print(f'Fold Number: {fold_id}')
-    print('Data Classes:', list(np.unique(file_json['case_label'])))
-    print(f'{dataset_name} Class Weights: {class_proportions}')
-    print(f'{dataset_name} Samples [-:{class_ratio[1]};+:{class_ratio[0]}]: {len(seg_paths)}')
+    print("Dataset Definition:", "-" * 80)
+    print(f"Fold Number: {fold_id}")
+    print("Data Classes:", list(np.unique(file_json["case_label"])))
+    print(f"{dataset_name} Class Weights: {class_proportions}")
+    print(f"{dataset_name} Samples [-:{class_ratio[1]};+:{class_ratio[0]}]: {len(seg_paths)}")
 
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
 
 
 def split_img_and_seg_paths(
-    img_paths: Sequence[Sequence[str]],
-    seg_paths: Sequence[str],
-    splits: int
+    img_paths: List[List[str]], seg_paths: List[str], splits: int
 ) -> Tuple[Sequence[Sequence[Sequence[str]]], Sequence[Sequence[str]]]:
     """
     Split image and segmentation paths into a number of mutually exclusive sets.
 
-    img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a list of file paths corresponding
-            to the diffferent MR Sequences for a given patient exam.
+    img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents
+        a list of file paths corresponding to the diffferent MR Sequences for a given patient exam.
     seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
     splits (int): The number of splits to partition the dataset.
 
     Returns:
-        Tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for images and segmentation labels.
+        Tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
+        images and segmentation labels.
     """
     assert len(img_paths) == len(seg_paths)
 
     client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
-    client_img_paths = [[] for _ in range(splits)]
-    client_seg_paths = [[] for _ in range(splits)]
+    client_img_paths: List[List[List[str]]] = [[] for _ in range(splits)]
+    client_seg_paths: List[List[str]] = [[] for _ in range(splits)]
     for i, assignment in enumerate(client_assignments):
         client_img_paths[assignment].append(img_paths[i])
         client_seg_paths[assignment].append(seg_paths[i])
@@ -243,7 +228,7 @@ def get_dataloader(
     img_transform: Compose,
     seg_transform: Compose,
     shuffle: bool = False,
-    num_workers: int = 2
+    num_workers: int = 2,
 ) -> DataLoader:
     """
     Initializes and returns MONAI Dataloader.
@@ -262,7 +247,7 @@ def get_dataloader(
     """
 
     ds = ImageDataset(
-        image_files=img_paths,
+        image_files=img_paths,  # type: ignore
         seg_files=seg_paths,
         transform=img_transform,
         seg_transform=seg_transform,

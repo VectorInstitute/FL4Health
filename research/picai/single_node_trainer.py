@@ -1,14 +1,14 @@
 import os
-from pathlib import Path
 from logging import INFO
+from pathlib import Path
 from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
-from torch.optim import Optimizer
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
+from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import CentralPerRoundCheckpointer
 from fl4health.utils.metrics import MetricManager
@@ -41,11 +41,7 @@ class SingleNodeTrainer:
         self.epoch: int
 
         if not self.per_epoch_checkpointer.checkpoint_exists():
-            self.per_epoch_checkpointer.save_checkpoint({
-                "model": self.model,
-                "optimizer": self.optimizer,
-                "epoch": 0
-            })
+            self.per_epoch_checkpointer.save_checkpoint({"model": self.model, "optimizer": self.optimizer, "epoch": 0})
 
         self.model, self.optimizer, self.epoch = self.per_epoch_checkpointer.load_checkpoint()
 
@@ -74,12 +70,7 @@ class SingleNodeTrainer:
 
         return loss, {"predictions": preds}
 
-    def train_by_epochs(
-        self,
-        epochs: int,
-        train_metric_mngr: MetricManager,
-        val_metric_mngr: MetricManager
-    ) -> None:
+    def train_by_epochs(self, epochs: int, train_metric_mngr: MetricManager, val_metric_mngr: MetricManager) -> None:
 
         for epoch in range(self.epoch, epochs):
             train_metric_mngr.clear()
@@ -100,11 +91,9 @@ class SingleNodeTrainer:
             # After each epoch run a validation pass
             self.validate(val_metric_mngr)
 
-            self.per_epoch_checkpointer.save_checkpoint({
-                "model": self.model,
-                "optimizer": self.optimizer,
-                "epoch": epoch + 1
-            })
+            self.per_epoch_checkpointer.save_checkpoint(
+                {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
+            )
 
     def validate(self, val_metric_mngr: MetricManager) -> None:
         self.model.eval()

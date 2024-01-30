@@ -1,12 +1,13 @@
 from pathlib import Path
-from typing import Optional, Sequence, Dict, Tuple
-import torch
+from typing import Dict, Optional, Sequence, Tuple
 
-from flwr.common.typing import Scalar, NDArrays, Config
+import torch
+from flwr.common.typing import Config, NDArrays, Scalar
+
+from fl4health.checkpointing.checkpointer import ClientPerRoundCheckpointer, TorchCheckpointer
+from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.checkpointing.checkpointer import TorchCheckpointer, ClientPerRoundCheckpointer
-from fl4health.clients.basic_client import BasicClient
 
 
 class PicaiClient(BasicClient):
@@ -17,7 +18,7 @@ class PicaiClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        intermediate_checkpoint_dir: Path = Path("./")
+        intermediate_checkpoint_dir: Path = Path("./"),
     ) -> None:
         """
         A simple extension of the Base FL client that adds tolerance to pre-emptions by checkpointing
@@ -37,7 +38,8 @@ class PicaiClient(BasicClient):
         """
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
         self.per_round_checkpointer = ClientPerRoundCheckpointer(
-            intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt"))
+            intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
+        )
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
@@ -81,11 +83,9 @@ class PicaiClient(BasicClient):
         self.update_after_train(local_steps, loss_dict)
 
         # After local client training has finished, checkpoint model, optimizer and client name
-        self.per_round_checkpointer.save_checkpoint({
-            "model": self.model,
-            "optimizers": self.optimizers,
-            "client_name": self.client_name
-        })
+        self.per_round_checkpointer.save_checkpoint(
+            {"model": self.model, "optimizers": self.optimizers, "client_name": self.client_name}
+        )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

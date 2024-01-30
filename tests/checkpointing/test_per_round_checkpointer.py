@@ -1,34 +1,30 @@
 import tempfile
-from typing import Dict
 from pathlib import Path
+from typing import Dict
+
 import torch
-from torch.optim import Optimizer
 from flwr.server.history import History
+from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import (
     CentralPerRoundCheckpointer,
     ClientPerRoundCheckpointer,
-    ServerPerRoundCheckpointer
+    ServerPerRoundCheckpointer,
 )
 from tests.test_utils.models_for_test import LinearModel
 
 
 def test_central_checkpointer() -> None:
-    model = LinearModel()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+    model: torch.nn.Module = LinearModel()
+    optimizer: Optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     with tempfile.TemporaryDirectory() as results_dir:
         central_checkpointer = CentralPerRoundCheckpointer(
-            checkpoint_dir=Path(results_dir),
-            checkpoint_name=Path("ckpt.pt")
+            checkpoint_dir=Path(results_dir), checkpoint_name=Path("ckpt.pt")
         )
 
         assert not central_checkpointer.checkpoint_exists()
 
-        central_checkpointer.save_checkpoint({
-            "model": model,
-            "optimizer": optimizer,
-            "epoch": 0
-        })
+        central_checkpointer.save_checkpoint({"model": model, "optimizer": optimizer, "epoch": 0})
 
         assert central_checkpointer.checkpoint_exists()
 
@@ -40,21 +36,16 @@ def test_central_checkpointer() -> None:
 
 
 def test_server_checkpointer() -> None:
-    model = LinearModel()
+    model: torch.nn.Module = LinearModel()
     history = History()
     with tempfile.TemporaryDirectory() as results_dir:
         server_checkpointer = ServerPerRoundCheckpointer(
-            checkpoint_dir=Path(results_dir),
-            checkpoint_name=Path("ckpt.pt")
+            checkpoint_dir=Path(results_dir), checkpoint_name=Path("ckpt.pt")
         )
 
         assert not server_checkpointer.checkpoint_exists()
 
-        server_checkpointer.save_checkpoint({
-            "model": model,
-            "history": history,
-            "server_round": 0
-        })
+        server_checkpointer.save_checkpoint({"model": model, "history": history, "server_round": 0})
 
         assert server_checkpointer.checkpoint_exists()
 
@@ -66,23 +57,16 @@ def test_server_checkpointer() -> None:
 
 
 def test_client_checkpointer() -> None:
-    model = LinearModel()
-    optimizers: Dict[str, Optimizer] = {
-        "optimizer": torch.optim.SGD(model.parameters(), lr=0.01)
-    }
+    model: torch.nn.Module = LinearModel()
+    optimizers: Dict[str, Optimizer] = {"optimizer": torch.optim.SGD(model.parameters(), lr=0.01)}
     with tempfile.TemporaryDirectory() as results_dir:
         client_checkpointer = ClientPerRoundCheckpointer(
-            checkpoint_dir=Path(results_dir),
-            checkpoint_name=Path("ckpt.pt")
+            checkpoint_dir=Path(results_dir), checkpoint_name=Path("ckpt.pt")
         )
 
         assert not client_checkpointer.checkpoint_exists()
 
-        client_checkpointer.save_checkpoint({
-            "model": model,
-            "optimizers": optimizers,
-            "client_name": "bob"
-        })
+        client_checkpointer.save_checkpoint({"model": model, "optimizers": optimizers, "client_name": "bob"})
 
         assert client_checkpointer.checkpoint_exists()
 

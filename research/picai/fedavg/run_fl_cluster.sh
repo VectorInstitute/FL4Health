@@ -23,7 +23,7 @@ echo "Python Venv Path: ${VENV_PATH}"
 echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
-  research/picai/fedavg/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH}" 
+  research/picai/fedavg/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
 echo "Server Job ID: ${JOB_ID}"

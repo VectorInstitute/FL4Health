@@ -1,6 +1,7 @@
+from typing import Optional, Sequence, Tuple
+
 import torch
 import torch.nn as nn
-from typing import Sequence, Tuple, Optional
 from monai.networks.nets.unet import UNet
 
 
@@ -15,17 +16,17 @@ def get_model(
 ) -> nn.Module:
     """Select neural network architecture for given run"""
 
-    if model_type == 'unet':
+    if model_type == "unet":
         model = UNet(
             spatial_dims=spatial_dims,
             in_channels=in_channels,
             out_channels=out_channels,
-            strides=strides,
-            channels=channels
+            strides=strides,  # type: ignore
+            channels=channels,
         )
     else:
         raise ValueError(f"Unknown model type: {model_type}")
-    
+
     if device is not None:
         model = model.to(device)
     print("Loaded Neural Network Arch.:", model_type)

@@ -1,25 +1,24 @@
 import argparse
 from logging import INFO
+from pathlib import Path
+from typing import Sequence, Tuple
+
+import flwr as fl
 import torch
 import torch.nn as nn
-from torchmetrics.classification import MultilabelAveragePrecision
-from torch.optim import Optimizer
-from typing import Sequence, Tuple
-from pathlib import Path
-import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from monai.data.dataloader import DataLoader
+from torch.optim import Optimizer
+from torchmetrics.classification import MultilabelAveragePrecision
 
-from fl4health.utils.metrics import Metric
-from fl4health.utils.metrics import TorchMetric
-
-from research.picai.picai_client import PicaiClient
+from fl4health.utils.metrics import Metric, TorchMetric
+from research.picai.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
-from research.picai.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
+from research.picai.picai_client import PicaiClient
 
-torch.multiprocessing.set_sharing_strategy('file_system')
+torch.multiprocessing.set_sharing_strategy("file_system")
 
 
 class PicaiFedAvgClient(PicaiClient):
@@ -28,7 +27,7 @@ class PicaiFedAvgClient(PicaiClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        intermediate_checkpoint_dir: Path ,
+        intermediate_checkpoint_dir: Path,
         overviews_dir: Path,
     ) -> None:
 
@@ -37,19 +36,33 @@ class PicaiFedAvgClient(PicaiClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_img_paths, train_seg_paths, _ = get_img_and_seg_paths(
-            self.overviews_dir, self.data_path, int(config["fold_id"]), True)
-        train_loader = get_dataloader(train_img_paths, train_seg_paths, int(
-            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=0)
+            self.overviews_dir, self.data_path, int(config["fold_id"]), True
+        )
+        train_loader = get_dataloader(
+            train_img_paths,
+            train_seg_paths,
+            int(config["batch_size"]),
+            get_img_transform(),
+            get_seg_transform(),
+            num_workers=0,
+        )
         val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(
-            self.overviews_dir, self.data_path, int(config["fold_id"]), True)
-        val_loader = get_dataloader(val_img_paths, val_seg_paths, int(
-            config["batch_size"]), get_img_transform(), get_seg_transform(), num_workers=0)
+            self.overviews_dir, self.data_path, int(config["fold_id"]), True
+        )
+        val_loader = get_dataloader(
+            val_img_paths,
+            val_seg_paths,
+            int(config["batch_size"]),
+            get_img_transform(),
+            get_seg_transform(),
+            num_workers=0,
+        )
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
         return get_model(device=self.device)
 
-    def get_criterion(self, config: Config):
+    def get_criterion(self, config: Config) -> nn.Module:  # type: ignore
         return FocalLoss(alpha=0.75)
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -59,11 +72,7 @@ class PicaiFedAvgClient(PicaiClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument(
-        "--artifact_dir",
-        action="store",
-        type=str,
-        help="Path to dir to store run artifacts",
-        required=True
+        "--artifact_dir", action="store", type=str, help="Path to dir to store run artifacts", required=True
     )
     parser.add_argument(
         "--base_dir",
@@ -92,15 +101,18 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    metrics = [TorchMetric(name="MLAP", metric=MultilabelAveragePrecision(
-        average="macro", num_labels=2, thresholds=3).to(DEVICE))]
+    metrics = [
+        TorchMetric(
+            name="MLAP", metric=MultilabelAveragePrecision(average="macro", num_labels=2, thresholds=3).to(DEVICE)
+        )
+    ]
 
     client = PicaiFedAvgClient(
         data_path=Path(args.base_dir),
         metrics=metrics,
         device=DEVICE,
         intermediate_checkpoint_dir=args.artifact_dir,
-        overviews_dir=args.overviews_dir
+        overviews_dir=args.overviews_dir,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

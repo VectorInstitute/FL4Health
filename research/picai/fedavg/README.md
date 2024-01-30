@@ -10,4 +10,4 @@ __An example__
 ./research/picai/fedavg/run_fl_cluster.sh 8111 research/picai/fedavg/config.yaml research/picai/fedavg/server_logs/ research/picai/fedavg/client_logs/ /h/jewtay/fl4health_env/
 ```
 
-__Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/jewtay/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.  
+__Note__: The `server_logs/` and `client_logs/` folders must already exist and this is where the python logs will be placed, capturing outputs of the training/evaluation on the servers and clients, respectively. The path `/h/jewtay/fl4health_env/` is a full path to the python venv we want to activate for the server and client python executions on each node.

@@ -4,9 +4,10 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
-from torchmetrics import Metric as TMetric
 from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
+from torchmetrics import Metric as TMetric
+
 
 class Metric(ABC):
     def __init__(self, name: str) -> None:
@@ -61,6 +62,7 @@ class Metric(ABC):
         """
         raise NotImplementedError
 
+
 class TorchMetric(Metric):
     def __init__(self, name: str, metric: TMetric) -> None:
         """
@@ -101,6 +103,7 @@ class TorchMetric(Metric):
 
     def clear(self) -> None:
         self.metric.reset()
+
 
 class SimpleMetric(Metric, ABC):
     def __init__(self, name: str) -> None:

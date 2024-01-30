@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha: float = 1.0, gamma: float = 1.0, reduction="sum"):
+    def __init__(self, alpha: float = 1.0, gamma: float = 1.0, reduction: str = "sum") -> None:
         """
         Focal Loss for binary segmentation task. The Focal Loss is simply a dynamically scaled cross entropy loss,
         where the scaling factor decays to zero as the confidence in the correct class increases.

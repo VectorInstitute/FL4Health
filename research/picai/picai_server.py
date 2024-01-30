@@ -1,18 +1,18 @@
-from pathlib import Path
-from logging import INFO
 import timeit
-import torch.nn as nn
+from logging import INFO
+from pathlib import Path
 from typing import Optional
+
+import torch.nn as nn
 from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
-from flwr.server.strategy import Strategy
 from flwr.server.history import History
+from flwr.server.strategy import Strategy
 
+from fl4health.checkpointing.checkpointer import ServerPerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.server.base_server import FlServerWithCheckpointing
-from fl4health.checkpointing.checkpointer import TorchCheckpointer, ServerPerRoundCheckpointer
 from fl4health.reporting.fl_wanb import ServerWandBReporter
-
+from fl4health.server.base_server import FlServerWithCheckpointing
 from research.picai.fl_utils import get_initial_model_parameters
 
 
@@ -25,7 +25,7 @@ class PicaiServer(FlServerWithCheckpointing):
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        intermediate_checkpoint_dir: Path = Path("./")
+        intermediate_checkpoint_dir: Path = Path("./"),
     ) -> None:
         """
         A simple extension of the FlServerWithCheckpointing that adds tolerance to pre-emptions by checkpointing
@@ -53,7 +53,7 @@ class PicaiServer(FlServerWithCheckpointing):
             parameter_exchanger=parameter_exchanger,
             strategy=strategy,
             wandb_reporter=wandb_reporter,
-            checkpointer=checkpointer
+            checkpointer=checkpointer,
         )
         self.per_round_checkpointer = ServerPerRoundCheckpointer(intermediate_checkpoint_dir, Path("server.ckpt"))
 
@@ -126,9 +126,7 @@ class PicaiServer(FlServerWithCheckpointing):
                 parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
                 if parameters_prime:
                     self.parameters = parameters_prime
-                history.add_metrics_distributed_fit(
-                    server_round=current_round, metrics=fit_metrics
-                )
+                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
 
             # Evaluate model using strategy implementation
             res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
@@ -143,31 +141,21 @@ class PicaiServer(FlServerWithCheckpointing):
                     timeit.default_timer() - start_time,
                 )
                 history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-                history.add_metrics_centralized(
-                    server_round=current_round, metrics=metrics_cen
-                )
+                history.add_metrics_centralized(server_round=current_round, metrics=metrics_cen)
 
             # Evaluate model on a sample of available clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
-                    history.add_loss_distributed(
-                        server_round=current_round, loss=loss_fed
-
-
-                    )
-                    history.add_metrics_distributed(
-                        server_round=current_round, metrics=evaluate_metrics_fed
-                    )
+                    history.add_loss_distributed(server_round=current_round, loss=loss_fed)
+                    history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
 
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
-            self.per_round_checkpointer.save_checkpoint({
-                "model": self.server_model,
-                "history": history,
-                "server_round": current_round
-            })
+            self.per_round_checkpointer.save_checkpoint(
+                {"model": self.server_model, "history": history, "server_round": current_round}
+            )
 
         # Bookkeeping
         end_time = timeit.default_timer()

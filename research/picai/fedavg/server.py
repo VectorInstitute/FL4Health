@@ -8,17 +8,16 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.utils.config import load_config
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-
-from research.picai.picai_server import PicaiServer
-from research.picai.model_utils import get_model
+from fl4health.utils.config import load_config
 from research.picai.fl_utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
     fit_metrics_aggregation_fn,
     get_initial_model_parameters,
 )
+from research.picai.model_utils import get_model
+from research.picai.picai_server import PicaiServer
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:
@@ -53,7 +52,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         model=model,
         parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
-        intermediate_checkpoint_dir=args.artifact_dir
+        intermediate_checkpoint_dir=args.artifact_dir,
     )
 
     fl.server.start_server(
@@ -69,11 +68,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
     parser.add_argument(
-        "--artifact_dir",
-        action="store",
-        type=str,
-        help="Path to dir to store run artifacts",
-        required=True
+        "--artifact_dir", action="store", type=str, help="Path to dir to store run artifacts", required=True
     )
     parser.add_argument(
         "--config_path",

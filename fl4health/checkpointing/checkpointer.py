@@ -1,16 +1,14 @@
 import os
-from pathlib import Path
 from abc import ABC, abstractmethod
 from logging import INFO
-from typing import Optional, Tuple, Union, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-from torch.optim import Optimizer
 from flwr.common.logger import log
 from flwr.server.history import History
-
-from fl4health.utils.metrics import MetricManager
+from torch.optim import Optimizer
 
 
 class TorchCheckpointer:
@@ -90,7 +88,7 @@ class PerRoundCheckpointer(ABC):
         Saves checkpoint_dict to checkpoint path.
 
         Args:
-            checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type 
+            checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type
                 Any representing the state to checkpoint.
 
         Raises:
@@ -109,7 +107,7 @@ class PerRoundCheckpointer(ABC):
         Raises:
             NotImplementedError: To be implemented by child classes.
         """
-        return NotImplementedError
+        raise NotImplementedError
 
     def checkpoint_exists(self) -> bool:
         """

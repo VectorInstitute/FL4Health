@@ -1,8 +1,10 @@
-from typing import Tuple, List
+from typing import List, Tuple
+
 import torch.nn as nn
-from flwr.common.typing import Parameters, Metrics, Config, NDArrays
 from flwr.common.parameter import ndarrays_to_parameters
-from examples.simple_metric_aggregation import normalize_metrics, metric_aggregation
+from flwr.common.typing import Config, Metrics, NDArrays, Parameters
+
+from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 
 
 def get_initial_model_ndarrays(client_model: nn.Module) -> NDArrays:

@@ -3,6 +3,6 @@ n_server_rounds: 2 # The number of rounds to run FL
 
 # Parameters that describe clients
 fold_id: 0
-local_epochs: 1 # The number of epochs to complete for client 
-batch_size: 4 # The batch size for client training 
+local_epochs: 1 # The number of epochs to complete for client
+batch_size: 4 # The batch size for client training
 n_clients: 2 # The number of clients in FL experiments
