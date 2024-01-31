@@ -48,7 +48,7 @@ def test_contrastive_loss(get_client: MoonClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_compute_loss(get_client: MoonClient) -> None:  # noqa
+def test_compute_loss_and_additional_losses(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
     # Dummy to ensure the compute loss function in the moon client is executed
@@ -68,8 +68,7 @@ def test_compute_loss(get_client: MoonClient) -> None:  # noqa
         "old_features": previous_local_features.reshape(1, len(previous_local_features), -1),
     }
 
-    loss = moon_client.compute_loss(preds=preds, features=features, target=target)
-    assert isinstance(loss.backward["backward"], torch.Tensor)
-    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
-    assert pytest.approx(0.837868, abs=0.0001) == loss.additional_losses["contrastive_loss"]
-    assert pytest.approx(0.837868 + 0.8132616, abs=0.0001) == loss.backward["backward"].item()
+    loss, additional_losses = moon_client.compute_loss_and_additional_losses(preds, features, target)
+    assert isinstance(loss, torch.Tensor)
+    assert pytest.approx(0.8132616, abs=0.0001) == loss.item()
+    assert pytest.approx(0.837868, abs=0.0001) == additional_losses["contrastive_loss"]

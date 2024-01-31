@@ -93,7 +93,7 @@ class EnsembleClient(BasicClient):
             optimizer.zero_grad()
 
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
         for loss in losses.backward.values():
             loss.backward()

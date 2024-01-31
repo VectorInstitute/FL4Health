@@ -233,3 +233,28 @@ class FendaClient(BasicClient):
             additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
         return total_loss, additional_losses
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions of the model and ground truth data. Optionally computes
+        additional loss components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on
+        client attributes set from server config.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
+        """
+        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        loss = self.criterion(preds["prediction"], target)
+        return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)

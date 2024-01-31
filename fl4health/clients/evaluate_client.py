@@ -157,7 +157,7 @@ class EvaluateClient(BasicClient):
             for inputs, targets in self.data_loader:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 preds = {"prediction": model(inputs)}
-                losses = self.compute_loss(preds, {}, targets)
+                losses = self.compute_evaluation_loss(preds, {}, targets)
 
                 metric_meter.update(preds, targets)
                 loss_meter.update(losses)

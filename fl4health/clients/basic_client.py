@@ -424,7 +424,7 @@ class BasicClient(NumPyClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict(input)
-            losses = self.compute_loss(preds, features, target, is_train=False)
+            losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
 

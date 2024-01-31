@@ -184,7 +184,7 @@ class ScaffoldClient(BasicClient):
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
         losses.backward["backward"].backward()
