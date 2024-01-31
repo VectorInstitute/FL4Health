@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
+from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -253,7 +253,8 @@ class FendaClient(BasicClient):
 
         Returns:
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
-                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
+                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss
+                and perfcl_loss.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         loss = self.criterion(preds["prediction"], target)

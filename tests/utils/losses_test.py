@@ -151,4 +151,4 @@ def test_training_losses_with_multiple_backward() -> None:
     assert losses_dict["model-0"] == pytest.approx(4.1020, rel=0.01)
     assert losses_dict["model-1"] == pytest.approx(6.1020, rel=0.01)
     assert losses_dict["model-2"] == pytest.approx(8.1020, rel=0.01)
-    assert len(losses_dict) == 4
+    assert len(losses_dict) == 3

@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -11,7 +11,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -124,8 +124,10 @@ class FedProxClient(BasicClient):
             TrainingLosses: an instance of TrainingLosses containing checkpoint loss, backward loss and
                 additional losses indexed by name. Additional losses includes proximal loss.
         """
-        loss, additional_losses = self.criterion(preds["prediction"], target)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         total_loss = loss + additional_losses["proximal_loss"]
+        # adding the vanilla loss to the additional losses to be used by update_after_train
+        additional_losses["loss"] = loss
         return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -137,4 +139,4 @@ class FedProxClient(BasicClient):
         the corresponding loss dictionary.
         """
         # Store current loss which is the vanilla loss without the proximal term added in
-        self.current_loss = loss_dict["checkpoint"]
+        self.current_loss = loss_dict["loss"]
