@@ -35,7 +35,6 @@ class EvaluateClient(BasicClient):
         model_checkpoint_path: Optional[Path] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
-
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
         self.client_name = self.generate_hash()
@@ -136,7 +135,6 @@ class EvaluateClient(BasicClient):
     def _handle_logging(  # type: ignore
         self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool
     ) -> None:
-
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
         eval_prefix = "Global Model" if is_global else "Local Model"

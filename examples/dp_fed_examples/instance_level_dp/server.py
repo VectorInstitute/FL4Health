@@ -3,23 +3,15 @@ from functools import partial
 from typing import Any, Dict, Optional
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.utils.functions import make_dict_with_epochs_or_steps
+from examples.utils.functions import get_all_model_parameters, make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters() -> Parameters:
-    # The server-side strategy requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def construct_config(
@@ -63,6 +55,8 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
+    initial_model = Net()
+
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
@@ -78,7 +72,7 @@ def main(config: Dict[str, Any]) -> None:
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_all_model_parameters(initial_model),
     )
 
     server = InstanceLevelDPServer(

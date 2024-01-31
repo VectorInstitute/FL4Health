@@ -4,26 +4,14 @@ from typing import Any, Dict
 
 import flwr as fl
 import torch.nn as nn
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.ensemble_cnn import ConfigurableMnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from examples.utils.functions import get_all_model_parameters
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    ensemble_models: Dict[str, nn.Module] = {
-        "model_0": ConfigurableMnistNet(out_channel_mult=1),
-        "model_1": ConfigurableMnistNet(out_channel_mult=2),
-        "model_2": ConfigurableMnistNet(out_channel_mult=3),
-    }
-    initial_model = EnsembleModel(ensemble_models)
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
 
 
 def fit_config(
@@ -48,6 +36,13 @@ def main(config: Dict[str, Any]) -> None:
         config["n_server_rounds"],
     )
 
+    ensemble_models: Dict[str, nn.Module] = {
+        "model_0": ConfigurableMnistNet(out_channel_mult=1),
+        "model_1": ConfigurableMnistNet(out_channel_mult=2),
+        "model_2": ConfigurableMnistNet(out_channel_mult=3),
+    }
+    initial_model = EnsembleModel(ensemble_models)
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -59,7 +54,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_all_model_parameters(initial_model),
     )
 
     fl.server.start_server(
