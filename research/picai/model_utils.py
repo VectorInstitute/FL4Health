@@ -17,6 +17,8 @@ def get_model(
     """Select neural network architecture for given run"""
 
     if model_type == "unet":
+        # ignore typing for strides argument because Sequence[Tuple[int, ...]] is valid input type
+        # https://docs.monai.io/en/stable/networks.html#unet
         model = UNet(
             spatial_dims=spatial_dims,
             in_channels=in_channels,

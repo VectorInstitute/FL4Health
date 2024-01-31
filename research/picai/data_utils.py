@@ -245,7 +245,9 @@ def get_dataloader(
     Returns:
        DataLoader: MONAI dataloader.
     """
-
+    # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
+    # list of files interpreted as multi-parametric sequnce. Supported by image loader used by ImageDataset
+    # https://docs.monai.io/en/stable/transforms.html#loadimage
     ds = ImageDataset(
         image_files=img_paths,  # type: ignore
         seg_files=seg_paths,
