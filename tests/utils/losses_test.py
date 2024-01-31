@@ -68,7 +68,6 @@ def test_training_loss_average_meter() -> None:
     computed_losses = loss_avg_meter.compute()
     loss_dict = computed_losses.as_dict()
 
-    assert loss_dict["checkpoint"] == pytest.approx(3.09278, rel=0.01)
     assert loss_dict["backward"] == pytest.approx(3.83582, rel=0.01)
     assert loss_dict["extra_loss"] == pytest.approx(4.40744, rel=0.01)
 
@@ -137,13 +136,11 @@ def test_training_loss_accumulation_meter() -> None:
     computed_losses = loss_accum_meter.compute()
     loss_dict = computed_losses.as_dict()
 
-    assert loss_dict["checkpoint"] == pytest.approx(15.4639, rel=0.01)
     assert loss_dict["backward"] == pytest.approx(19.1791, rel=0.01)
     assert loss_dict["extra_loss"] == pytest.approx(22.0372, rel=0.01)
 
 
 def test_training_losses_with_multiple_backward() -> None:
-    checkpoint = torch.tensor(4.4930, dtype=torch.float)
     backward_losses_dict = {
         "model-0": torch.tensor(4.1020, dtype=torch.float),
         "model-1": torch.tensor(6.1020, dtype=torch.float),
@@ -154,5 +151,4 @@ def test_training_losses_with_multiple_backward() -> None:
     assert losses_dict["model-0"] == pytest.approx(4.1020, rel=0.01)
     assert losses_dict["model-1"] == pytest.approx(6.1020, rel=0.01)
     assert losses_dict["model-2"] == pytest.approx(8.1020, rel=0.01)
-    assert losses_dict["checkpoint"] == pytest.approx(4.4930, rel=0.01)
     assert len(losses_dict) == 4

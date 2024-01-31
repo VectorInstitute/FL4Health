@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import torch
 
@@ -83,7 +83,10 @@ class EvaluationLosses(Losses):
         Returns:
             EvaluationLosses: An instance of EvaluationLosses with the aggregated losses.
         """
-        checkpoint_loss = torch.sum(torch.FloatTensor([losses.checkpoint for losses in loss_meter.losses_list]))
+        assert all([isinstance(losses, EvaluationLosses) for losses in loss_meter.losses_list])
+        checkpoint_loss = torch.sum(
+            torch.FloatTensor([losses.checkpoint for losses in loss_meter.losses_list])  # type: ignore
+        )
         if loss_meter.get_type() == LossMeterType.AVERAGE:
             checkpoint_loss /= len(loss_meter.losses_list)
 
@@ -138,18 +141,21 @@ class TrainingLosses(Losses):
         Returns:
             TrainingLosses: An instance of TrainingLosses with the aggregated losses.
         """
+        assert all([isinstance(losses, TrainingLosses) for losses in loss_meter.losses_list])
+
         additional_losses_list = [losses.additional_losses for losses in loss_meter.losses_list]
         additional_losses_dict = _aggregate_losses_dict(additional_losses_list, loss_meter.get_type())
 
-        backward_losses_list = [losses.backward_losses for losses in loss_meter.losses_list]
+        backward_losses_list = [losses.backward for losses in loss_meter.losses_list]  # type: ignore
         if len(backward_losses_list) > 0 and isinstance(backward_losses_list[0], dict):
             # if backward losses is a dictionary, aggregate the dictionary keys
-            backward_losses = _aggregate_losses_dict(backward_losses_list, loss_meter.get_type())
-        else:
-            # otherwise, calculate the average tensor
-            backward_losses = torch.sum(torch.FloatTensor(backward_losses_list))
-            if loss_meter.get_type() == LossMeterType.AVERAGE:
-                backward_losses /= len(loss_meter.losses_list)
+            backward_losses_dict = _aggregate_losses_dict(backward_losses_list, loss_meter.get_type())
+            return TrainingLosses(backward=backward_losses_dict, additional_losses=additional_losses_dict)
+
+        # otherwise, calculate the average tensor
+        backward_losses = torch.sum(torch.FloatTensor(backward_losses_list))
+        if loss_meter.get_type() == LossMeterType.AVERAGE:
+            backward_losses /= len(loss_meter.losses_list)
 
         return TrainingLosses(backward=backward_losses, additional_losses=additional_losses_dict)
 

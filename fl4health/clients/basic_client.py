@@ -456,8 +456,7 @@ class BasicClient(NumPyClient):
                 self.total_steps += 1
                 local_step += 1
             metrics = self.train_metric_manager.compute()
-            losses = self.train_loss_meter.compute()
-            loss_dict = losses.as_dict()
+            loss_dict = self.train_loss_meter.compute().as_dict()
 
             # Log results and maybe report via WANDB
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
@@ -502,8 +501,7 @@ class BasicClient(NumPyClient):
             self.update_after_step(step)
             self.total_steps += 1
 
-        losses = self.train_loss_meter.compute()
-        loss_dict = losses.as_dict()
+        loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
@@ -530,8 +528,7 @@ class BasicClient(NumPyClient):
                 self.val_metric_manager.update(preds, target)
 
         # Compute losses and metrics over validation set
-        losses = self.val_loss_meter.compute()
-        loss_dict = losses.as_dict()
+        loss_dict = self.val_loss_meter.compute().as_dict()
         metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 

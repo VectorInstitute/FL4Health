@@ -1,7 +1,7 @@
 import datetime
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, cast
 
 import torch
 import torch.nn as nn
@@ -14,7 +14,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
 
@@ -134,7 +134,7 @@ class EvaluateClient(BasicClient):
         )
 
     def _handle_logging(  # type: ignore
-        self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool
+        self, losses: EvaluationLosses, metrics_dict: Dict[str, Scalar], is_global: bool
     ) -> None:
 
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
@@ -148,7 +148,7 @@ class EvaluateClient(BasicClient):
 
     def validate_on_model(
         self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, is_global: bool
-    ) -> Tuple[Losses, Dict[str, Scalar]]:
+    ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
@@ -163,15 +163,15 @@ class EvaluateClient(BasicClient):
                 loss_meter.update(losses)
 
         metrics = metric_meter.compute()
-        losses = loss_meter.compute()
+        losses = cast(EvaluationLosses, loss_meter.compute())
         self._handle_logging(losses, metrics, is_global)
         return losses, metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-        local_loss: Optional[Losses] = None
+        local_loss: Optional[EvaluationLosses] = None
         local_metrics: Optional[Dict[str, Scalar]] = None
 
-        global_loss: Optional[Losses] = None
+        global_loss: Optional[EvaluationLosses] = None
         global_metrics: Optional[Dict[str, Scalar]] = None
 
         if self.local_model:
