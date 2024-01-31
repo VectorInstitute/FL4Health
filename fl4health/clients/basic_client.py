@@ -624,6 +624,15 @@ class BasicClient(NumPyClient):
         else:
             raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
+        # TODO docstrings
+        return self.criterion(preds["prediction"], target), None
+
     def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
@@ -643,8 +652,8 @@ class BasicClient(NumPyClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
                 indexed by name.
         """
-        loss = self.criterion(preds["prediction"], target)
-        return TrainingLosses(backward=loss)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return TrainingLosses(backward=loss, additional_losses=additional_losses)
 
     def compute_evaluation_loss(
         self,
@@ -653,7 +662,7 @@ class BasicClient(NumPyClient):
         target: torch.Tensor,
     ) -> EvaluationLosses:
         """
-        Computes evaluiation loss given predictions (and potentially features) of the model and ground truth data.
+        Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
@@ -665,8 +674,8 @@ class BasicClient(NumPyClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
                 indexed by name.
         """
-        loss = self.criterion(preds["prediction"], target)
-        return EvaluationLosses(checkpoint=loss)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
 
     def set_optimizer(self, config: Config) -> None:
         """

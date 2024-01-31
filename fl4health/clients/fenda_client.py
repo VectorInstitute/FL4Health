@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -185,32 +185,13 @@ class FendaClient(BasicClient):
 
         return contrastive_loss_minimize, contrastive_loss_maximize
 
-    def compute_loss(
+    def compute_loss_and_additional_losses(
         self,
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-        is_train: bool = True,
-    ) -> Losses:
-        """
-        Computes loss given predictions of the model and ground truth data. Optionally computes additional loss
-        components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on client attributes
-        set from server config.
-
-        Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-                All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
-            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
-                Optional, default is True.
-
-        Returns:
-            Losses: Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
-                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
-                additional losses indexed by name. Additional losses may include cosine_similarity_loss,
-                contrastive_loss and perfcl_loss.
-        """
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        # TODO docstrings
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
@@ -251,7 +232,4 @@ class FendaClient(BasicClient):
             additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
             additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
-        if is_train:
-            return TrainLosses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
-
-        return Losses(checkpoint=loss, additional_losses=additional_losses)
+        return total_loss, additional_losses

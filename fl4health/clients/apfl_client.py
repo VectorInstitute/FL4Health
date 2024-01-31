@@ -9,7 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -63,8 +63,7 @@ class ApflClient(BasicClient):
         # of local and global models
         preds, features = self.predict(input)
         # Parameters of local model are updated to minimize loss of personalized model
-        losses = self.compute_loss(preds, features, target)
-        assert isinstance(losses, TrainLosses)
+        losses = self.compute_training_loss(preds, features, target)
 
         losses.backward["backward"].backward()
         self.optimizers["local"].step()
@@ -75,37 +74,21 @@ class ApflClient(BasicClient):
     def get_parameter_exchanger(self, config: Config) -> FixedLayerExchanger:
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def compute_loss(
+    def compute_loss_and_additional_losses(
         self,
         preds: Union[torch.Tensor, Dict[str, torch.Tensor]],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-        is_train: bool = True,
-    ) -> Union[Losses, TrainLosses]:
-        """
-        Computes loss given predictions of the model and ground truth data.
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        # TODO docstrings
 
-        Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
-            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
-                Optional, default is True.
-
-        Returns:
-            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
-                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
-                additional losses indexed by name. Additional losses include global and local losses.
-        """
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)
         global_loss = self.criterion(preds["global"], target)
         local_loss = self.criterion(preds["local"], target)
         additional_losses = {"global": global_loss, "local": local_loss}
-        if is_train:
-            return TrainLosses(checkpoint=personal_loss, backward=personal_loss, additional_losses=additional_losses)
 
-        return Losses(checkpoint=personal_loss, additional_losses=additional_losses)
+        return personal_loss, additional_losses
 
     def set_optimizer(self, config: Config) -> None:
         optimizers = self.get_optimizer(config)
