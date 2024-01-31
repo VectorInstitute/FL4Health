@@ -20,7 +20,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType, TrainLosses
+from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 
 T = TypeVar("T")
@@ -380,7 +380,7 @@ class BasicClient(NumPyClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
@@ -391,7 +391,7 @@ class BasicClient(NumPyClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[Losses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
@@ -399,8 +399,7 @@ class BasicClient(NumPyClient):
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
-        assert isinstance(losses, TrainLosses)
+        losses = self.compute_training_loss(preds, features, target)
 
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
@@ -408,7 +407,7 @@ class BasicClient(NumPyClient):
 
         return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
@@ -418,7 +417,7 @@ class BasicClient(NumPyClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[Losses, Dict[str, torch.Tensor]]: The losses object from the val step along with
+            Tuple[EvaluationLosses, Dict[str, torch.Tensor]]: The losses object from the val step along with
             a dictionary of the predictions produced by the model.
         """
 
@@ -625,34 +624,49 @@ class BasicClient(NumPyClient):
         else:
             raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
-    def compute_loss(
+    def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-        is_train: bool = True,
-    ) -> Losses:
+    ) -> TrainingLosses:
         """
-        Computes loss given predictions (and potentially features) of the model and ground truth data.
+        Computes training loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
-            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
-                Optional, default is True.
 
         Returns:
-            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
-                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
-                additional losses indexed by name.
+            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+                indexed by name.
         """
         loss = self.criterion(preds["prediction"], target)
-        if is_train:
-            return TrainLosses(checkpoint=loss, backward=loss)
+        return TrainingLosses(backward=loss)
 
-        return Losses(checkpoint=loss)
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluiation loss given predictions (and potentially features) of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name.
+        """
+        loss = self.criterion(preds["prediction"], target)
+        return EvaluationLosses(checkpoint=loss)
 
     def set_optimizer(self, config: Config) -> None:
         """

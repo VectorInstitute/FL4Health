@@ -128,7 +128,7 @@ class TrainingLosses(Losses):
         return loss_dict
 
     @staticmethod
-    def aggregate(loss_meter: LossMeter) -> EvaluationLosses:
+    def aggregate(loss_meter: LossMeter) -> TrainingLosses:
         """
         Aggregates the losses in the given LossMeter into an instance of TrainingLosses
 
@@ -136,7 +136,7 @@ class TrainingLosses(Losses):
             loss_meter (LossMeter): The loss meter object with the collected losses.
 
         Returns:
-            EvaluationLosses: An instance of TrainingLosses with the aggregated losses.
+            TrainingLosses: An instance of TrainingLosses with the aggregated losses.
         """
         additional_losses_list = [losses.additional_losses for losses in loss_meter.losses_list]
         additional_losses_dict = _aggregate_losses_dict(additional_losses_list, loss_meter.get_type())
@@ -151,7 +151,7 @@ class TrainingLosses(Losses):
             if loss_meter.get_type() == LossMeterType.AVERAGE:
                 backward_losses /= len(loss_meter.losses_list)
 
-        return EvaluationLosses(backward=backward_losses, additional_losses=additional_losses_dict)
+        return TrainingLosses(backward=backward_losses, additional_losses=additional_losses_dict)
 
 
 class LossMeterType(Enum):

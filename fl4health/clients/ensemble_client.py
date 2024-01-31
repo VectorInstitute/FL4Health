@@ -8,7 +8,7 @@ from torch.optim import Optimizer
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
-from fl4health.utils.losses import Losses, LossMeterType, TrainLosses
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -73,7 +73,7 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -86,7 +86,7 @@ class EnsembleClient(BasicClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[Losses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         for optimizer in self.optimizers.values():
@@ -94,7 +94,6 @@ class EnsembleClient(BasicClient):
 
         preds, features = self.predict(input)
         losses = self.compute_loss(preds, features, target)
-        assert isinstance(losses, TrainLosses)
 
         for loss in losses.backward.values():
             loss.backward()
@@ -104,15 +103,14 @@ class EnsembleClient(BasicClient):
 
         return losses, preds
 
-    def compute_loss(
+    def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-        is_train: bool = True,
-    ) -> Losses:
+    ) -> TrainingLosses:
         """
-        Computes loss given predictions (and potentially features) of the model and ground truth data.
+        Computes training loss given predictions (and potentially features) of the model and ground truth data.
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
@@ -120,25 +118,44 @@ class EnsembleClient(BasicClient):
                 in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
-            is_train (bool): Will produce an instance of TrainLosses if True, and of Losses if False.
-                Optional, default is True.
 
         Returns:
-            Losses: If is_train is True, an instance of TrainLosses containing checkpoint loss, backward loss and
-                additional losses indexed by name. Otherwise, an instance of Losses containing checkpoint loss and
-                additional losses indexed by name.
+            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+                indexed by name.
+        """
+        loss_dict = {}
+        for key, pred in preds.items():
+            loss_dict[key] = self.criterion(pred.float(), target)
+
+        individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
+        return TrainingLosses(backward=individual_model_losses)
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
+        Since the ensemble client has more than one model, there are multiple backward losses that exist.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name.
         """
         loss_dict = {}
         for key, pred in preds.items():
             loss_dict[key] = self.criterion(pred.float(), target)
 
         checkpoint_loss = loss_dict["ensemble-pred"]
-
-        if is_train:
-            individual_model_losses = {key: loss for key, loss in loss_dict.items() if key != "ensemble-pred"}
-            return TrainLosses(checkpoint=checkpoint_loss, backward=individual_model_losses)
-
-        return Losses(checkpoint=checkpoint_loss)
+        return EvaluationLosses(checkpoint=checkpoint_loss)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
