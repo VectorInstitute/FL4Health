@@ -26,7 +26,7 @@ pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
 ```
 
-Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is install with each of these options.
+Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.
 
 ## Coding Guidelines, Formatters, and Checks
 
