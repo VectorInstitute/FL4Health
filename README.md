@@ -86,7 +86,7 @@ This method strictly considers the effect of continuing local training on each c
 [FedBN](https://arxiv.org/abs/2102.07623)
 </td>
 <td>
-FedBN implements a very light version of personalization wherein clients exhange all parameters in their model except for anything related to batch normalization layers, which are only learned locally
+FedBN implements a very light version of personalization wherein clients exchange all parameters in their model except for anything related to batch normalization layers, which are only learned locally.
 </tr>
 <tr>
 <td>
@@ -146,7 +146,7 @@ Contains modules associated with basic checkpointing. Currently only supports ch
 
 ### Client Managers
 
-Houses modules associated with custom functionality on top of Flower"s client managers. Client managers are responsible for, among other things, coordinating and sampling clients to participate in server rounds. We support several ways to sample clients in each round, including Poisson based sampling.
+Houses modules associated with custom functionality on top of Flower's client managers. Client managers are responsible for, among other things, coordinating and sampling clients to participate in server rounds. We support several ways to sample clients in each round, including Poisson based sampling.
 
 ### Clients
 
@@ -154,7 +154,7 @@ Here, implementations for specific FL strategies that affect client-side trainin
 
 ### Feature Alignment
 
-A common problem when working with distributed datasets is a lack of feature alignment. That is, some datasets may contain extra features that others do not, or vice versa. Even if the feature columns are completely shared, there may be issues associated with disjoint feature values. Consider the setting of a categorical feature where a client has more categoires than another. When one-hot encoding these features, there can be a dimensionality mismatch or ordering mismatch in the one-hot representations if the clients are left to independently encode these features. The code in this folder facilitates automatic alignment through an initial communication round between the server and clients. Current there are two supported alignment approaches.
+A common problem when working with distributed datasets is a lack of feature alignment. That is, some datasets may contain extra features that others do not, or vice versa. Even if the feature columns are completely shared, there may be issues associated with disjoint feature values. Consider the setting of a categorical feature where a client has more categories than another. When one-hot encoding these features, there can be a dimensionality mismatch or ordering mismatch in the one-hot representations if the clients are left to independently encode these features. The code in this folder facilitates automatic alignment through an initial communication round between the server and clients. Current there are two supported alignment approaches.
 1) The server can provide "oracle" instructions to the clients around how to encode their features.
 2) The server samples a client from the pool to provide such a mapping for the feature space and uses that to inform other clients about how to map their own features.
 
@@ -186,7 +186,7 @@ This section also contains functionality associated with metrics tracking during
 
 ### Server
 
-Certain FL methods, such as Client-Level DP and SCAFFOLD with Warm Up, require special server-side flows to ensure that everything is properly handled. This code also establishes initialization communication between the client and server. For example, one can poll each of the clients to obtain the size of each client"s dataset before proceeding to FL training. More complex examples of this communication are found in implementations like the feature alignment server.
+Certain FL methods, such as Client-Level DP and SCAFFOLD with Warm Up, require special server-side flows to ensure that everything is properly handled. This code also establishes initialization communication between the client and server. For example, one can poll each of the clients to obtain the size of each client's dataset before proceeding to FL training. More complex examples of this communication are found in implementations like the feature alignment server.
 
 This section also contains functionality that facilitates running **evaluation only** FL (Federated Evaluation) without performing any training etc. That is useful, for example, if you want to consider the generalization performance across distributed datasets of a model.
 

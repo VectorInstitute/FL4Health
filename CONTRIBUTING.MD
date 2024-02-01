@@ -108,6 +108,6 @@ If you use VS Code for development, you can setup the tests with the testing int
 }
 ```
 
-In addition to the unit and integration tests through `pytest` a number of **smoke tests** have been implemented and are run remotely on github as well. These tests are housed in `tests/smoke_tests`. All of these smoke tests must also pass for a PR to be eligible for merging to main. These smoke tests ensure that changes to note unintentially break or alter the current functionality of many of our examples. This helps to ensure that code changes do not have unintended side-effects on already tested and/or working code.
+In addition to the unit and integration tests through `pytest` a number of **smoke tests** have been implemented and are run remotely on github as well. These tests are housed in `tests/smoke_tests`. All of these smoke tests must also pass for a PR to be eligible for merging to main. These smoke tests ensure that changes to note unintentionally break or alter the current functionality of many of our examples. This helps to ensure that code changes do not have unintended side-effects on already tested and/or working code.
 
 __NOTE__: The contents of the tests folder is not packed with the FL4Health library on release to PyPi
