@@ -9,11 +9,11 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.mnist_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.utils.functions import get_all_model_parameters
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def fit_config(

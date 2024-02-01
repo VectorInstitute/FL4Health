@@ -9,11 +9,11 @@ from flwr.common.typing import Config
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.utils.functions import get_all_model_parameters
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def construct_config(

@@ -9,10 +9,11 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from examples.utils.functions import get_all_model_parameters, make_dict_with_epochs_or_steps
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def fit_config(

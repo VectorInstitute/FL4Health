@@ -15,9 +15,9 @@ from sklearn.model_selection import train_test_split
 from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, get_local_data, word_tokenize
 from examples.fedopt_example.metrics import Outcome, ServerMetrics
 from examples.models.lstm_model import LSTM
-from examples.utils.functions import get_all_model_parameters
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
