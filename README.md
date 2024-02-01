@@ -29,11 +29,10 @@ The library source code is housed in the `fl4health` folder. This library is bui
 ## Summary of Approaches
 
 The present set of FL approaches implemented in the library are:
-<table border="1">
+<table>
 <tr>
-<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> Non-Personalized FL </th>
-<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> <div style="width:50px"></div> </th>
-<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> Personal FL </th>
+<th style="text-align: center; width: 250px"> Non-Personalized FL </th>
+<th style="text-align: center; width: 250px"> Personal FL </th>
 </tr>
 <tr>
 <td style="border-left: none; border-right: none; border-collapse: collapse;">
@@ -54,8 +53,7 @@ The present set of FL approaches implemented in the library are:
     - [DP-Scaffold](https://arxiv.org/abs/2111.09278)
 - [MOON](https://arxiv.org/abs/2103.16257)
 </td>
-<td style="border-left: none; border-right: none; border-collapse: collapse;"></td>
-<td style="border-left: none; border-right: none; border-collapse: collapse;">
+<td>
 
 - [Personal FL](https://arxiv.org/abs/2205.13692)
 - [FedBN](https://arxiv.org/abs/2102.07623)
@@ -88,7 +86,7 @@ Contains modules associated with basic checkpointing. Currently only supports ch
 
 ### Client Managers
 
-Houses modules associated with custom functionality on top of Flower's client managers. Client managers are responsible for, among other things, coordinating and sampling clients to participate in server rounds. We support several ways to sample clients in each round, including Poisson based sampling.
+Houses modules associated with custom functionality on top of Flower"s client managers. Client managers are responsible for, among other things, coordinating and sampling clients to participate in server rounds. We support several ways to sample clients in each round, including Poisson based sampling.
 
 ### Clients
 
@@ -128,7 +126,7 @@ This section also contains functionality associated with metrics tracking during
 
 ### Server
 
-Certain FL methods, such as Client-Level DP and SCAFFOLD with Warm Up, require special server-side flows to ensure that everything is properly handled. This code also establishes initialization communication between the client and server. For example, one can poll each of the clients to obtain the size of each client's dataset before proceeding to FL training. More complex examples of this communication are found in implementations like the feature alignment server.
+Certain FL methods, such as Client-Level DP and SCAFFOLD with Warm Up, require special server-side flows to ensure that everything is properly handled. This code also establishes initialization communication between the client and server. For example, one can poll each of the clients to obtain the size of each client"s dataset before proceeding to FL training. More complex examples of this communication are found in implementations like the feature alignment server.
 
 This section also contains functionality that facilitates running **evaluation only** FL (Federated Evaluation) without performing any training etc. That is useful, for example, if you want to consider the generalization performance across distributed datasets of a model.
 
