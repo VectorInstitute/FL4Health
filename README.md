@@ -4,7 +4,6 @@
 
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
 <!-- TOC -->
-<!-- TOC -->
 
 - [FL4Health](#fl4health)
     - [Summary of Approaches](#summary-of-approaches)
@@ -13,6 +12,20 @@ Principally, this repository contains the federated learning (FL) engine aimed a
         - [Checkpointing](#checkpointing)
         - [Client Managers](#client-managers)
         - [Clients](#clients)
+        - [Feature Alignment](#feature-alignment)
+        - [Model Bases](#model-bases)
+        - [Parameter Exchange](#parameter-exchange)
+        - [Preprocessing](#preprocessing)
+        - [Privacy](#privacy)
+        - [Reporting](#reporting)
+        - [Server](#server)
+        - [Strategies](#strategies)
+    - [Examples](#examples)
+    - [Research Code](#research-code)
+    - [Contributing](#contributing)
+    - [Citation](#citation)
+
+<!-- /TOC -->
         - [Model Bases](#model-bases)
         - [Parameter Exchange](#parameter-exchange)
         - [Privacy](#privacy)
@@ -152,32 +165,9 @@ The research folder houses code associated with various research being conducted
 
 __NOTE__: The contents of the research folder is not packed with the FL4Health library on release to PyPi
 
-## Tests
+## Contributing
 
-All tests for the library are housed in the tests folder. The unit and integration tests are run using `pytest`, see [Running Tests](./CONTRIBUTING.MD#running-tests) in the contribution markdown. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are are fixed.
-
-If you use VS Code for development, you can setup the tests with the testing integration so that you can run debugging and other IDE features. Setup will vary depending on your VS Code environment, but in your .vscode folder your `settings.json` might look something like
-
-``` JSON
-{
-    "python.testing.unittestArgs": [
-        "-v",
-        "-s",
-        ".",
-        "-p",
-        "test_*.py"
-    ],
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestArgs": [
-        "."
-    ]
-}
-```
-
-We also have automatic smoke tests that run remotely on github in `tests/smoke_tests`. These tests ensure that unintended side-effects are not merged into the library.
-
-__NOTE__: The contents of the tests folder is not packed with the FL4Health library on release to PyPi
+If you are interested in contributing to the library, please see [CONTRIBUTION.MD](CONTRIBUTING.MD). This file contains many details around contributing to the code base, including are development practices, code checks, tests, and more.
 
 ## Citation
 

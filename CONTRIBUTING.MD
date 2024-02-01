@@ -11,7 +11,7 @@ To submit PRs, please fill out the PR template along with the PR. If the PR fixe
     - [Development Requirements](#development-requirements)
     - [Coding Guidelines, Formatters, and Checks](#coding-guidelines-formatters-and-checks)
     - [Code Documentation](#code-documentation)
-    - [Running Tests](#running-tests)
+    - [Tests](#tests)
 
 <!-- /TOC -->
 
@@ -81,10 +81,11 @@ If you are using VS Code a very helpful integration is available to facilitate t
 }
 ```
 
-## Running Tests
+## Tests
 
-We use pytest for our unit and integration testing in the tests folder. These tests are automatically run on GitHub for PRs targeting the main branch. All tests need to pass before merging can happen. To run all tests in the tests folder one only run (with the venv active)
+All tests for the library are housed in the tests folder. The unit and integration tests are run using `pytest`. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are are fixed.
 
+To run all tests in the tests folder one only needs to run (with the venv active)
 ```bash
 pytest .
 ```
@@ -92,6 +93,26 @@ To run a specific test with pytest, one runs
 ```bash
 pytest tests/checkpointing/test_best_checkpointer.py
 ```
-where the path is the relative one from the root directory. If you're using  VS Code, you can use the integrated debugger from the test suite if you properly configure your project. The settings will depend on your specific environment, but a potential setup is shown above in the [Tests Section](./README.md#tests) of the README.MD.
+
+If you use VS Code for development, you can setup the tests with the testing integration so that you can run debugging and other IDE features. Setup will vary depending on your VS Code environment, but in your .vscode folder your `settings.json` might look something like
+
+``` JSON
+{
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        ".",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "."
+    ]
+}
+```
 
 In addition to the unit and integration tests through `pytest` a number of **smoke tests** have been implemented and are run remotely on github as well. These tests are housed in `tests/smoke_tests`. All of these smoke tests must also pass for a PR to be eligible for merging to main. These smoke tests ensure that changes to note unintentially break or alter the current functionality of many of our examples. This helps to ensure that code changes do not have unintended side-effects on already tested and/or working code.
+
+__NOTE__: The contents of the tests folder is not packed with the FL4Health library on release to PyPi
