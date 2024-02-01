@@ -29,14 +29,14 @@ The library source code is housed in the `fl4health` folder. This library is bui
 ## Summary of Approaches
 
 The present set of FL approaches implemented in the library are:
-<table border="0">
+<table border="1">
 <tr>
-<th style='text-align: center'> Non-Personalized FL </th>
-<th style='text-align: center'> <div style="width:50px"></div> </th>
-<th style='text-align: center'> Personal FL </th>
+<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> Non-Personalized FL </th>
+<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> <div style="width:50px"></div> </th>
+<th style="text-align: center; border-left: none; border-right: none; border-collapse: collapse;"> Personal FL </th>
 </tr>
-<tr style="border-left: none; border-right: none; border-collapse: collapse;">
-<td>
+<tr>
+<td style="border-left: none; border-right: none; border-collapse: collapse;">
 
 - [FedAvg](https://arxiv.org/abs/1602.05629)
     - Weighted
@@ -54,8 +54,8 @@ The present set of FL approaches implemented in the library are:
     - [DP-Scaffold](https://arxiv.org/abs/2111.09278)
 - [MOON](https://arxiv.org/abs/2103.16257)
 </td>
-<td></td>
-<td>
+<td style="border-left: none; border-right: none; border-collapse: collapse;"></td>
+<td style="border-left: none; border-right: none; border-collapse: collapse;">
 
 - [Personal FL](https://arxiv.org/abs/2205.13692)
 - [FedBN](https://arxiv.org/abs/2102.07623)
