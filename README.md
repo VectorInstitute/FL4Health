@@ -29,7 +29,7 @@ The library source code is housed in the `fl4health` folder. This library is bui
 ## Summary of Approaches
 
 The present set of FL approaches implemented in the library are:
-<table>
+<table border="0">
 <tr>
 <th style='text-align: center'> Non-Personalized FL </th>
 <th style='text-align: center'> <div style="width:50px"></div> </th>
