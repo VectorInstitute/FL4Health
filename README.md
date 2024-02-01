@@ -55,7 +55,7 @@ The present set of FL approaches implemented in the library are:
 - [MOON](https://arxiv.org/abs/2103.16257)
 </td>
 <td"></td>
-<td">
+<td>
 
 - [Personal FL](https://arxiv.org/abs/2205.13692)
 - [FedBN](https://arxiv.org/abs/2102.07623)
