@@ -11,13 +11,13 @@ N = 2048
 N_small = 128
 seed = 83
 small_rank = 16
-set_all_random_seeds(seed)
 
 
 def create_full_rank_data() -> Tensor:
     # Create a full-rank data matrix of size (N, data_dimension).
     # Since torch.rand() is very likely to return a full-rank matrix,
     # we use it to achieve this (after setting seed).
+    set_all_random_seeds(seed)
     X = torch.rand(N, data_dimension)
     assert torch.linalg.matrix_rank(X) == data_dimension
     return X
@@ -25,6 +25,7 @@ def create_full_rank_data() -> Tensor:
 
 def create_low_rank_data() -> Tensor:
     # Create a low-rank data matrix of size (N, data_dimension) and rank = low_rank.
+    set_all_random_seeds(seed)
     A = torch.rand(small_rank - 1, data_dimension)
     assert torch.linalg.matrix_rank(A) == small_rank - 1
     B = torch.ones(N - small_rank + 1, data_dimension)
