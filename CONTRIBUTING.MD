@@ -4,16 +4,11 @@ Thanks for your interest in contributing to the FL4Health library!
 
 To submit PRs, please fill out the PR template along with the PR. If the PR fixes an issue, please include a link to the PR to the issue, if possible. Below are some details around important things to consider before contributing to the library. A table of contents also appears below for navigation.
 
-<!-- TOC -->
-
-- [Contributing to FL4Health](#contributing-to-fl4health)
-    - [Development Practices](#development-practices)
-    - [Development Requirements](#development-requirements)
-    - [Coding Guidelines, Formatters, and Checks](#coding-guidelines-formatters-and-checks)
-    - [Code Documentation](#code-documentation)
-    - [Tests](#tests)
-
-<!-- /TOC -->
+- [Development Practices](#development-practices)
+- [Development Requirements](#development-requirements)
+- [Coding Guidelines, Formatters, and Checks](#coding-guidelines-formatters-and-checks)
+- [Code Documentation](#code-documentation)
+- [Tests](#tests)
 
 ## Development Practices
 

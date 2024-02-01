@@ -3,39 +3,14 @@
 # FL4Health
 
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
-<!-- TOC -->
 
-- [FL4Health](#fl4health)
-    - [Summary of Approaches](#summary-of-approaches)
-    - [Privacy Capabilities](#privacy-capabilities)
-    - [Components](#components)
-        - [Checkpointing](#checkpointing)
-        - [Client Managers](#client-managers)
-        - [Clients](#clients)
-        - [Feature Alignment](#feature-alignment)
-        - [Model Bases](#model-bases)
-        - [Parameter Exchange](#parameter-exchange)
-        - [Preprocessing](#preprocessing)
-        - [Privacy](#privacy)
-        - [Reporting](#reporting)
-        - [Server](#server)
-        - [Strategies](#strategies)
-    - [Examples](#examples)
-    - [Research Code](#research-code)
-    - [Contributing](#contributing)
-    - [Citation](#citation)
-
-<!-- /TOC -->
-        - [Model Bases](#model-bases)
-        - [Parameter Exchange](#parameter-exchange)
-        - [Privacy](#privacy)
-        - [Reporting](#reporting)
-        - [Server](#server)
-        - [Strategies](#strategies)
-    - [Examples](#examples)
-    - [Research Code](#research-code)
-    - [Tests](#tests)
-    - [Citation](#citation)
+- [Summary of Approaches](#summary-of-approaches)
+- [Privacy Capabilities](#privacy-capabilities)
+- [Components](#components)
+- [Examples](#examples)
+- [Research Code](#research-code)
+- [Contributing](#contributing)
+- [Citation](#citation)
 
 The library source code is housed in the `fl4health` folder. This library is built on the foundational components of [Flower](https://flower.dev/), an open-source FL library in its own right. The documentation is [here](https://flower.dev/docs/framework/index.html). This library contains a number of unique components that extend the functionality of Flower in a number of directions.
 
