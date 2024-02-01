@@ -78,7 +78,7 @@ If you are using VS Code a very helpful integration is available to facilitate t
 
 ## Tests
 
-All tests for the library are housed in the tests folder. The unit and integration tests are run using `pytest`. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are are fixed.
+All tests for the library are housed in the tests folder. The unit and integration tests are run using `pytest`. These tests are automatically run through GitHub integrations on PRs to the main branch of this repository. PRs that fail any of the tests will not be eligible to be merged until they are fixed.
 
 To run all tests in the tests folder one only needs to run (with the venv active)
 ```bash
