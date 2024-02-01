@@ -36,7 +36,7 @@ Pre-commit hooks apply [black](https://black.readthedocs.io/en/stable/the_black_
 
 We also use [flake8](https://flake8.pycqa.org/en/latest/) and [pylint](https://pylint.pycqa.org/en/stable/) for further static code analysis. The pre-commit hooks show errors which you need to fix before submitting a PR.
 
-Last but not the least, we use type hints in our code which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be mergeable.
+Last but not least, we use type hints in our code which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be mergeable.
 
 The settings for `mypy` are in the `mypy.ini`, settings for `flake8` are contained in the `.flake8` file. Settings for `black` and `isort` come from the `pyproject.toml` and some standard checks are defined directly in the `.pre-commit-config.yaml` settings.
 
