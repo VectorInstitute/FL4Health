@@ -36,7 +36,7 @@ The present set of FL approaches implemented in the library are:
 <th style='text-align: center'> Personal FL </th>
 </tr>
 <tr>
-<td border-left: none; border-right: none;>
+<td style="border-left: none; border-right: none;">
 
 - [FedAvg](https://arxiv.org/abs/1602.05629)
     - Weighted
@@ -54,8 +54,8 @@ The present set of FL approaches implemented in the library are:
     - [DP-Scaffold](https://arxiv.org/abs/2111.09278)
 - [MOON](https://arxiv.org/abs/2103.16257)
 </td>
-<td border-left: none; border-right: none;></td>
-<td border-left: none; border-right: none;>
+<td style="border-left: none; border-right: none;"></td>
+<td style="border-left: none; border-right: none;">
 
 - [Personal FL](https://arxiv.org/abs/2205.13692)
 - [FedBN](https://arxiv.org/abs/2102.07623)
