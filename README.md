@@ -54,7 +54,7 @@ The present set of FL approaches implemented in the library are:
     - [DP-Scaffold](https://arxiv.org/abs/2111.09278)
 - [MOON](https://arxiv.org/abs/2103.16257)
 </td>
-<td></td>
+<td border-left: none; border-right: none;></td>
 <td border-left: none; border-right: none;>
 
 - [Personal FL](https://arxiv.org/abs/2205.13692)
