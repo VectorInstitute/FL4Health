@@ -222,12 +222,33 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     default_mkmmd = MkMmdLoss(DEVICE)
     # First sample is from a zero mean gaussian with unit covariance (dimension 5)
     p = MultivariateNormal(torch.zeros(5), torch.eye(5))
-    X = p.sample((100,))
+    X = p.sample(
+        torch.Size(
+            [
+                100,
+            ]
+        )
+    )
     # Second sample is a mixture of two gaussian with zero mean except the first has mean 1.0 in the first coordinate
     # and the second has mean 1.0 in the second coordinate
     q_1 = MultivariateNormal(torch.tensor([1.0, 0, 0, 0, 0]), torch.eye(5))
     q_2 = MultivariateNormal(torch.tensor([0, 1.0, 0, 0, 0]), torch.eye(5))
-    Y = (q_1.sample((100,)) + q_2.sample((100,))) / 2.0
+    Y = (
+        q_1.sample(
+            torch.Size(
+                [
+                    100,
+                ]
+            )
+        )
+        + q_2.sample(
+            torch.Size(
+                [
+                    100,
+                ]
+            )
+        )
+    ) / 2.0
     all_h_u_per_vi_local = default_mkmmd.compute_all_h_u_per_v_i(X, Y)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_vi_local)
     mkmmd_before_opt = default_mkmmd(X, Y)

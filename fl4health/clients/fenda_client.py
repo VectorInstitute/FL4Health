@@ -116,6 +116,26 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
+        if self.mkmmd_loss_weight:
+            self.set_optimized_betas()
+
+    def set_optimized_betas(self) -> None:
+        """Set the optimized betas for the MK-MMD loss."""
+        assert isinstance(self.model, FendaModel)
+
+        local_dist = []
+        global_dist = []
+
+        # Compute the local and global features for the train loader
+        self.model.eval()
+        with torch.no_grad():
+            for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
+                _, features = self.predict(input)
+                local_dist.append(features["local_features"])
+                global_dist.append(features["global_features"])
+
+        self.mkmmd_loss.optimize_betas(X=torch.cat(local_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5)
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
