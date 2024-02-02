@@ -3,8 +3,7 @@ from functools import partial
 from typing import Any, Dict, Optional
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -13,13 +12,7 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters() -> Parameters:
-    # The server-side strategy requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def construct_config(
@@ -58,6 +51,8 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
+    initial_model = Net()
+
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
@@ -72,7 +67,7 @@ def main(config: Dict[str, Any]) -> None:
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_all_model_parameters(initial_model),
         adaptive_clipping=config["adaptive_clipping"],
         server_learning_rate=config["server_learning_rate"],
         clipping_learning_rate=config["clipping_learning_rate"],

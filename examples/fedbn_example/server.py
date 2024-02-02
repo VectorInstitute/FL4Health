@@ -5,8 +5,7 @@ from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
@@ -15,13 +14,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_information() -> Parameters:
-    # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def fit_config(
@@ -49,7 +42,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_parameters = get_initial_model_information()
+    initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
@@ -62,7 +55,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=initial_parameters,
+        initial_parameters=get_all_model_parameters(initial_model),
         weighted_aggregation=True,
         weighted_eval_losses=True,
     )
