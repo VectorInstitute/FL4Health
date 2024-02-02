@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
+from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     discrete_gaussian_noise_vector,
     generate_sign_diagonal_matrix,
     generate_walsh_hadamard_matrix,

@@ -3,7 +3,7 @@ from logging import DEBUG, INFO, WARN
 from pathlib import Path
 from random import random
 from typing import Dict, Optional, Sequence, Tuple
-import time
+
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, List, NDArrays, Scalar
@@ -26,16 +26,12 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     clip_vector,
     get_exponent
 )
-from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    generate_discrete_gaussian_vector,
-    fwht
-)
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
-class SecureAggregationClient(BasicClient):
+class SecurePrivateClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
@@ -61,9 +57,9 @@ class SecureAggregationClient(BasicClient):
         # TODO set differential privacy parameters
         self.privacy_settings = {
             "dp_mechanism": PrivacyMechanismIndex.DiscreteGaussian.value,
-            "noise_scale": 10,
+            "noise_scale": 1,
             "granularity": 1,
-            "clipping_threshold": 89134,
+            "clipping_threshold": 10,
             "bias": 0.5,
         }
 
@@ -229,11 +225,9 @@ class SecureAggregationClient(BasicClient):
                 metrics,
             )
         if local_epochs is not None:
-            log(INFO, 'Training by epochs')
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
         elif local_steps is not None:
-            log(INFO, 'Training by steps')
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
@@ -265,7 +259,9 @@ class SecureAggregationClient(BasicClient):
         """See Algorithm 1 in 
         Ref
             The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
-            https://arxiv.org/pdf/2102.06387.pdf"""
+            https://arxiv.org/pdf/2102.06387.pdf
+        Only Secure Aggregation
+        """
 
         assert self.model is not None and self.parameter_exchanger is not None
         self.parameter_exchanger = SecureAggregationExchanger()
@@ -273,51 +269,38 @@ class SecureAggregationClient(BasicClient):
         # reshape model tensors and concatenate into a vector
         vector = vectorize_model(self.model)
 
-        # TODO adjust clip to weighting
-        vector *= weight # weight for FedAvg, server divides out sum of client weights
+        # TODO just for debugging mask cancellation
+        # weight = 0 
 
-        c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+        # TODO just for debugging mask cancellation
+        vector = torch.ones(self.model_dim) 
+        weight = 0
+        vector *= weight
 
-        # adjust for scaling of model vector by the weight (often the train data size)
-        weighted_clip = c * weight
-        vector = clip_vector(vector=vector, clip=weighted_clip, granularity=g)
+        # vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+        vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.model_dim, allow_dropout=False))
 
-        # x'' = H(Dx')
-        vector = torch.mul(vector, generate_random_sign_vector(dim=self.model_dim)) # hadamard product
-        vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
-        log(DEBUG, f'Starting Welsh Hadamard Transform')
-        t0 = time.perf_counter()
-        vector = fwht(vector)
-        t1 = time.perf_counter()
-        log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0}')
-        # vector = torch.matmul(
-        #     input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
-        #     other=vector
-        # )
-        # log(DEBUG, f'Starting randomized rounding')
+        sigma = self.privacy_settings['noise_scale']
+        gamma = self.privacy_settings['granularity']
 
-        # b = self.privacy_settings['bias']
-        # vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
-        # log(DEBUG, f'Done rounding')
+        variance = (sigma/gamma)**2
+        log(INFO, f'privacy noise variance is {variance}')
 
-        # discrete Gaussian noise 
-        v = (self.privacy_settings['noise_scale'] / g) ** 2
-        log(DEBUG, f'Adding noise')
-        vector += torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device="cuda")
-        log(DEBUG, f'Adding mask')
+        vector += discrete_gaussian_noise_vector(d=self.model_dim, variance=variance)
 
-        # TODO if dropout is turned on, then add selfmask below
-        vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+        processed = []
+        i = 0
+        for layer in self.model.state_dict().values():
+            j = i + layer.numel()
+            tensor = vector[i: j].reshape(layer.size()) # de-vectorize
+            processed.append(tensor.cpu().numpy())
+            i = j
 
-        # processed = []
-        # i = 0
-        # for layer in self.model.state_dict().values():
-        #     j = i + layer.numel()
-        #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
-        #     processed.append(tensor.cpu().numpy())
-        #     i = j
-
-        return [vector.cpu().numpy()]
+        # padded_zeros
+        # processed.append(vector[i:].cpu().numpy())
+        log(DEBUG, f'post processing')
+        log(DEBUG, processed)
+        return processed
 
     def generate_mask(self):
         dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
@@ -405,68 +388,3 @@ class SecureAggregationClient(BasicClient):
         if event_name:
             metadata["event_name"] = event_name
         return metadata
-
-    def train_by_epochs(
-        self, epochs: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
-        """These are cutomized for Poisson subsampling"""
-        self.model.train()
-        local_step = 0
-        for local_epoch in range(epochs):
-            self.train_metric_meter_mngr.clear()
-            self.train_loss_meter.clear()
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                losses, preds = self.train_step(input, target)
-                self.train_loss_meter.update(losses)
-                self.train_metric_meter_mngr.update(preds, target)
-                self.update_after_step(local_step)
-                self.total_steps += 1
-                local_step += 1
-            metrics = self.train_metric_meter_mngr.compute()
-            losses = self.train_loss_meter.compute()
-            loss_dict = losses.as_dict()
-
-            # Log results and maybe report via WANDB
-            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
-            self._handle_reporting(loss_dict, metrics, current_round=current_round)
-
-        # Return final training metrics
-        return loss_dict, metrics
-
-    def train_by_steps(
-        self, steps: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
-        """These are cutomized for Poisson subsampling"""
-
-        self.model.train()
-
-        # Pass loader to iterator so we can step through train loader
-        train_iterator = iter(self.train_loader)
-
-        self.train_loss_meter.clear()
-        self.train_metric_meter_mngr.clear()
-        for step in range(steps):
-            try:
-                input, target = next(train_iterator)
-            except StopIteration:
-                # StopIteration is thrown if dataset ends
-                # reinitialize data loader
-                train_iterator = iter(self.train_loader)
-                input, target = next(train_iterator)
-            input, target = input.to(self.device), target.to(self.device)
-            losses, preds = self.train_step(input, target)
-            self.train_loss_meter.update(losses)
-            self.train_metric_meter_mngr.update(preds, target)
-            self.update_after_step(step)
-            self.total_steps += 1
-
-        losses = self.train_loss_meter.compute()
-        loss_dict = losses.as_dict()
-        metrics = self.train_metric_meter_mngr.compute()
-
-        # Log results and maybe report via WANDB
-        self._handle_logging(loss_dict, metrics, current_round=current_round)
-        self._handle_reporting(loss_dict, metrics, current_round=current_round)
-
-        return loss_dict, metrics

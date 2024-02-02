@@ -8,9 +8,9 @@
 #SBATCH --mem=32G
 #SBATCH --partition=cpu
 #SBATCH --qos=normal
-#SBATCH --job-name=fl_five_fold_exp
-#SBATCH --output=%j_%x.out
-#SBATCH --error=%j_%x.err
+#SBATCH --job-name=DDP
+#SBATCH --output="log_error/%j_%x.out"
+#SBATCH --error="log_error/%j_%x.err"
 
 ###############################################
 # Usage:
@@ -65,7 +65,7 @@ CLIENT_LR=$5
 SERVER_ADDRESS=$6
 
 # Create the artifact directory
-mkdir "${ARTIFACT_DIR}"
+mkdir -p "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
 

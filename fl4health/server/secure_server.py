@@ -22,9 +22,6 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     generate_walsh_hadamard_matrix,
     get_exponent
 )
-from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    fwht
-)
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.reporting.secure_aggregation_blackbox import BlackBox
@@ -52,7 +49,7 @@ class Status:
     dropout: bool
 
 
-class SecureAggregationServer(FlServerWithCheckpointing):
+class SecureServer(FlServerWithCheckpointing):
 
     """
     Server supporting secure aggregation.
@@ -163,33 +160,20 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         )
 
         # server procedure to post-process sum
-        # global_model_layers = tuple(map(
-        #     lambda np_layer: torch.flatten(torch.from_numpy(np_layer)),
-        #     parameters_to_ndarrays(params)
-        # ))
-        # vector = torch.cat(global_model_layers) # padded vector
-        # vector.map_(
-        #     vector, 
-        #     lambda component, _ : component - self.crypto.arithmetic_modulus/2     
-        # )   
+        global_model_layers = tuple(map(
+            lambda np_layer: torch.flatten(torch.from_numpy(np_layer)),
+            parameters_to_ndarrays(params)
+        ))
+        vector = torch.cat(global_model_layers) # padded vector
 
-        # y = (gamma D)(H^T z')
-        # vector = torch.matmul(
-        #     # the inverse matrix is itself
-        #     generate_walsh_hadamard_matrix(exponent=get_exponent(vector.numel())), 
-        #     vector
-        # )
-        vector = fwht(torch.from_numpy(params).to(device='cuda'))
-        # Hadamard product
-        vector = torch.mul(
-            self.privacy_settings['granularity'] * generate_random_sign_vector(dim=vector.numel(), seed=0),
-            vector
-        )
         # remove padding zeros and divide to average
         vector = vector[:self.crypto.model_dimension] / train_size
+        log(DEBUG, 'averaged model vector on server')
+        log(DEBUG, vector[:2**7])
         # set global model
         self.server_model = unvectorize_model(self.server_model, vector)
-
+        log(DEBUG, 'averaged model itself on server')
+        log(DEBUG, self.server_model.state_dict().values())
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
         )

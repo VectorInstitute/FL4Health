@@ -271,7 +271,7 @@ class ClientCryptoKit:
         # assert self.number_of_bobs is not None
         # assert self.reconstruction_threshold is not None
         # 16 bytes
-        secret_byte = self.alice_self_mask_seed.to_bytes(length=16)
+        secret_byte = self.alice_self_mask_seed.to_bytes(length=16, byteorder='big')
 
         return ClientCryptoKit.generate_shamir_shares(
             secret=secret_byte,
@@ -379,7 +379,7 @@ class ClientCryptoKit:
         if isinstance(seed, int):
             np_generator = default_rng(seed)
         elif isinstance(seed, bytes):
-            integer_seed = int.from_bytes(seed)
+            integer_seed = int.from_bytes(seed, byteorder='big')
             np_generator = default_rng(integer_seed)
         else:
             raise Exception("Seed must be integer or bytes")
@@ -456,7 +456,7 @@ class ServerCryptoKit:
         secret_byte = ServerCryptoKit.shamir_reconstruct_secret(
             shares=shamir_shares, reconstruction_threshold=self.shamir_reconstruction_threshold
         )
-        return int.from_bytes(secret_byte)
+        return int.from_bytes(secret_byte, byteorder='big')
 
     def reconstruct_pair_mask(self, alice_shamir_shares: [ShamirSecret], bob_public_key: bytes) -> bytes:
         """
@@ -508,7 +508,7 @@ class ServerCryptoKit:
         if isinstance(seed, int):
             np_generator = default_rng(seed)
         elif isinstance(seed, bytes):
-            integer_seed = int.from_bytes(seed)
+            integer_seed = int.from_bytes(seed, byteorder='big')
             np_generator = default_rng(integer_seed)
         else:
             raise Exception("Seed must be integer or bytes")

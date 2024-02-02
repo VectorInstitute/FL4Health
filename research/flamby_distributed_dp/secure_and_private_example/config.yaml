@@ -1,0 +1,14 @@
+# YAML parser's must-have configs
+n_server_rounds: 4
+
+# must have at least 3 clients
+n_clients: 3    # set this parameter in run.sh as well
+batch_size: 16
+shamir_reconstruction_threshold: 2
+
+# # optional parameter
+# model_integer_range: 9999
+
+# Other configs
+local_epochs: 1
+checkpoint_path: "examples/secure_aggregation_example"

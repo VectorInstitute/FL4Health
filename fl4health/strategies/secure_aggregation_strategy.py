@@ -172,35 +172,72 @@ class SecureAggregationStrategy(BasicFedAvg):
         Returns:
             Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
-
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
         
-        local_models = [parameters_to_ndarrays(client_response.parameters) for _, client_response in results]
+        if server_round==0:
+            local_models = [parameters_to_ndarrays(client_response.parameters) for _, client_response in results]
+            aggregate_data_size = sum([client_response.num_examples for _, client_response in results])
+            log(INFO, f'Training data size: {aggregate_data_size}')
+
+            # initalized to model layers of the first client
+            global_model_layers = local_models.pop(0)
+
+            # if server_round == 0:
+            #     return ndarrays_to_parameters(global_model_layers), {}
+
+            num_layers = len(global_model_layers)
+
+            # NOTE secure aggregation (mask is removed in summation)
+            for local_model_layers in local_models:
+                for k in range(num_layers):
+                    global_model_layers[k] += local_model_layers[k]
+                    global_model_layers[k] %= arithmetic_modulus
+
+            parameters_aggregated = ndarrays_to_parameters(global_model_layers)
+
+            # Aggregate custom metrics if aggregation fn was provided
+            metrics_aggregated = {}
+            if self.fit_metrics_aggregation_fn:
+                fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+                metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+            elif server_round == 1:  # Only log this warning once
+                log(WARNING, "No fit_metrics_aggregation_fn provided")
+
+            return parameters_aggregated, metrics_aggregated
+        
+        local_models = [parameters_to_ndarrays(client_response.parameters)[0] for _, client_response in results]
         aggregate_data_size = sum([client_response.num_examples for _, client_response in results])
         log(INFO, f'Training data size: {aggregate_data_size}')
 
-        # initalized to model layers of the first client
-        global_model_layers = local_models.pop(0)
+        global_model_vector = local_models.pop(0)
+        for vect in local_models:
+            global_model_vector += vect
 
+        global_model_vector %= arithmetic_modulus
+        # parameters_aggregated = ndarrays_to_parameters([global_model_vector])
+        parameters_aggregated = global_model_vector
         # if server_round == 0:
         #     return ndarrays_to_parameters(global_model_layers), {}
 
-        num_layers = len(global_model_layers)
+        # num_layers = len(global_model_layers)
 
-        # NOTE secure aggregation (mask is removed in summation)
-        for local_model_layers in local_models:
-            for k in range(num_layers):
-                global_model_layers[k] += local_model_layers[k]
-                global_model_layers[k] %= arithmetic_modulus
+        # # NOTE secure aggregation (mask is removed in summation)
+        # for local_model_layers in local_models:
+        #     for k in range(num_layers):
+        #         global_model_layers[k] += local_model_layers[k]
+        #         global_model_layers[k] %= arithmetic_modulus
         
-        log(DEBUG, f'round {server_round}')
-        log(DEBUG, global_model_layers)
+        # log(DEBUG, f'round {server_round} in strategy aggregate fit')
 
-        parameters_aggregated = ndarrays_to_parameters(global_model_layers)
+
+
+        # log(DEBUG, global_model_layers)
+
+        # parameters_aggregated = ndarrays_to_parameters(global_model_layers)
 
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}

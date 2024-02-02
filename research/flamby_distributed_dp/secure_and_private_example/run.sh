@@ -5,17 +5,19 @@
 # rm examples/secure_aggregation_example/*.pkl
 
 source .venv/bin/activate
+WORKING_DIR=research/flamby_distributed_dp/secure_and_private_example
+BASE_MODULE="research.flamby_distributed_dp.secure_and_private_example"
 
-mkdir -p examples/secure_aggregation_example/log
+mkdir -p "$WORKING_DIR/log"
 
 num_clients=3
 
 clean()
 {
     echo "killing processes"
-    cat < examples/secure_aggregation_example/log/running_pid.txt
+    cat < "$WORKING_DIR/log/running_pid.txt"
 
-    PIDFile="examples/secure_aggregation_example/log/running_pid.txt"
+    PIDFile="$WORKING_DIR/log/running_pid.txt"
     kill $(<"$PIDFile")
 }
 
@@ -40,17 +42,17 @@ else
 
     array=()    # PID
 
-    nohup python -m examples.secure_aggregation_example.server > examples/secure_aggregation_example/log/server.out 2>&1 & array[${#array[@]}]=$!
+    nohup python -m "$BASE_MODULE.server" > "$WORKING_DIR/log/server.out" 2>&1 & array[${#array[@]}]=$!
     sleep 10
 
     for (( i=1; i<=${num_clients}; i++ ))
     do
-        log_path="examples/secure_aggregation_example/log/client_${i}.out"
-        nohup python -m examples.secure_aggregation_example.client > ${log_path} 2>&1 & array[${#array[@]}]=$!
+        log_path="$WORKING_DIR/log/client_${i}.out"
+        nohup python -m "$BASE_MODULE.client" > ${log_path} 2>&1 & array[${#array[@]}]=$!
     done
     echo "saving pid to file"
     echo "${array[*]}"
-    echo "${array[*]}" > examples/secure_aggregation_example/log/running_pid.txt
+    echo "${array[*]}" > "$WORKING_DIR/log/running_pid.txt"
     read -p "Press y to terminate session >>> " input
     if [ "$input" = "y" ]
     then

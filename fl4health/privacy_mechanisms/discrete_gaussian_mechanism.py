@@ -1,229 +1,148 @@
-import math
-from logging import WARNING
-from typing import List
-
 import numpy as np
+from numba import jit, prange
+import time, math 
+from typing import List
 import torch
-from flwr.common.logger import log
-from torch.linalg import vector_norm
 
-def bernoulli_exp(gamma: float) -> int:
+"""References
+    [DGDP] The Discrete Gaussian for Differential Privacy
+    https://proceedings.neurips.cc/paper/2020/file/b53b3a3d6ab90ce0268229151c9bde11-Paper.pdf
+"""
+
+
+
+@jit(nopython=True)
+def bernoulli_exp(negative_gamma: float) -> int:
+    """Draws Bernoulli sample with probability exp(negative_gamma).
+    Used in discrete Gaussian sampler. See [DGDP].
     """
-    Draws a sample from Bernoulli(exp(-gamma))
+    g = -negative_gamma
+    assert g >= 0
 
-    Reference:
-        Algorithm 2 of "The Discrete Gaussian for Differential Privacy"
-        https://proceedings.neurips.cc/paper/2020/file/b53b3a3d6ab90ce0268229151c9bde11-Paper.pdf
-
-    Args:
-        gamma (float)
-
-    Returns:
-        int: A Bernoulli sample, either 0 or 1
-
-    """
-
-    assert gamma >= 0  # ensures probabiity is not over 1
-
-    if gamma <= 1:
-        K, g = 1, torch.tensor(float(gamma))
-        sample_A = torch.bernoulli(g)
-
-        while sample_A == 1:
+    if g <= 1:
+        K = 1
+        while np.random.binomial(n=1, p=g/K):
             K += 1
-            sample_A = torch.bernoulli(g / K)
-
         return K % 2
-
-    # if gamma > 1
-    G, p = math.floor(gamma), torch.exp(torch.tensor(-1))
-
-    for _ in range(G):
-        sample_B = bernoulli_exp(p.item())
-        if sample_B == 0:
-            return 0
-
-    delta = G - gamma  # delta is in [0, 1]
-
-    p = torch.exp(torch.tensor(delta))
-
-    return bernoulli_exp(p.item())  # sample_C
-
-
+    else:
+        for _ in prange(int(np.floor(g))):
+            if bernoulli_exp(-1) == 0:
+                return 0
+        return bernoulli_exp(np.floor(g)-g)
+    
+@jit(nopython=True)
 def discrete_gaussian_sampler(variance: float) -> int:
+    """Draw a sample from discrete Gaussian random variable with given variance.
+    See [DGDP].
     """
-    Takes a sample from the centered discrete Gaussian distribution with given variance, using rejection sampling.
-
-    Reference
-        Algorithm 1 in "The Discrete Gaussian for Differential Privacy"
-        https://proceedings.neurips.cc/paper/2020/file/b53b3a3d6ab90ce0268229151c9bde11-Paper.pdf
-
-    Args:
-        variance (float): Variance.
-
-    Returns:
-        int: An integer sample from the centered discrete Gaussian distribution with given variance.
-    """
-
-    assert variance > 0  # Requires variance > 0
-
-    t = math.floor(math.sqrt(variance)) + 1
-
-    counter = 0
+    assert variance > 0
+    t = 1 + int(np.floor(np.sqrt(variance)))
     while True:
-        counter += 1
-        if counter % 100 == 0:
-            log(WARNING, f"Discrete Gaussian Sampling has completed {counter} samples without success.")
-        U = torch.randint(0, t, (1,)).item()
-        D = bernoulli_exp(U / t)
-
-        if D == 0:
-            continue  # reject
-
-        # generate V from Geometric(1 − 1/e)
+        U = np.random.randint(low=0, high=t)
+        if bernoulli_exp(-U/t) == 0:
+            continue
         V = 0
-        while True:
-            sample_A = bernoulli_exp(1)
-            if sample_A == 0:
-                break
+        while bernoulli_exp(-1):
             V += 1
-
-        sample_B = torch.bernoulli(torch.tensor(0.5))
-
-        if sample_B == 1 and U == 0 and V == 0:
-            continue  # reject
-
-        Z = (1 - 2 * sample_B) * (U + t * V)  # discrete Laplace
-
-        gamma = (torch.abs(Z) - variance / t) ** 2 / (2 * variance)
-
-        sample_C = bernoulli_exp(gamma.item())
-
-        if sample_C == 0:
-            continue  # reject
-
-        # EXIT LOOP
-        return int(Z.item())
+        B = np.random.randint(low=0, high=2)
+        if B and not U and not V:
+            continue
+        Z = (1-2*B) * (U+t*V)
+        gamma = (np.absolute(Z)-variance/t)**2 / (2*variance)
+        if not bernoulli_exp(-gamma):
+            continue 
+        return Z
+    
+@jit(nopython=True, parallel=True)
+def generate_discrete_gaussian_vector(dim: int, variance: float) -> np.array:
+    """Assume dim is a power of 2."""
+    return np.array([discrete_gaussian_sampler(variance) for _ in prange(dim)])
 
 
-def discrete_gaussian_mechanism(query_vector: List[int], variance: float) -> List[int]:
-    """
-    Applies additive discrete Gaussian noise to query_vector.
-
-    Reference
-        The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
-        http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
-
-    Args:
-        query_vector (List[int]): This is the discretized gradient vector in the SecAgg context.
-        variance (float): Gaussian noise variance.
-
-    Returns:
-        List[int]: privatized vector.
-    """
-
-    assert len(query_vector) > 0  # query_vector needs to be nonempty
-
-    return [query_element + discrete_gaussian_sampler(variance) for query_element in query_vector]
 
 
-def discrete_gaussian_noise_vector(d: int, variance: float) -> torch.Tensor:
-    """d-dimensional centered discrete Gaussian random vector with independent components of given variance."""
-    # TODO paralleize this loop more efficiently
-    return torch.tensor([discrete_gaussian_sampler(variance) for _ in range(d)])
+@jit(nopython=True)
+def wiki_fwht(a) -> None:
+    """In-place Fast Walsh–Hadamard Transform of array a."""
+    h = 1
+    while h < len(a):
+        # perform FWHT
+        for i in prange(0, len(a), h * 2):
+            for j in prange(i, i + h):
+                x = a[j]
+                y = a[j + h]
+                a[j] = x + y
+                a[j + h] = x - y
+        # normalize and increment
+        a /= math.sqrt(2)
+        h *= 2
+    return a
+
+def fwht(x):
+    dim=x.size()[0]
+    assert math.log2(dim).is_integer()
+    log2 = int(math.ceil(math.log2(dim)))
+    h_2x2 = torch.tensor([[1.0, 1.0], [1.0, -1.0]])
+    permutation = torch.tensor([0,2,1])
+
+    def _hadamard_step(x, dim):
+        x_shape = x.size()
+        x = x.reshape(-1, 2)
+        #print(x)
+        x = torch.matmul(x, h_2x2)
+        x = x.view(-1, x_shape[0] // 2, 2)
+        x = torch.transpose(x,2,1)
+        x = x.reshape(x_shape)
+        #print(x)
+        return x 
+
+    #x = x.reshape(-1, 2, dim // 2)
+    index = torch.tensor(0)
+    def cond(i, x):
+        return i < log2
+
+    def body(i, x):
+        return i + 1, _hadamard_step(x, dim)
+
+    while cond(index,log2):
+        index,x = body(index,x)
+        
+    xt2 = x.view(-1, dim)
+    return xt2[0] / torch.sqrt(torch.tensor(dim))
+    # xt2 = xt2.tolist()[0]
+    
 
 
-def random_sign_vector(dim: int, sampling_probability: float) -> torch.Tensor:
-    """A random tensor of +/- ones used on the client-side as part of the discrete Gaussian mechanism."""
-    return 2 * torch.bernoulli(sampling_probability * torch.ones(dim)) - torch.ones(dim)
+# dimen = 27
+# x = torch.rand(2**dimen)
+# # print('here is x', x)
+# z = fwht(x) 
+# # print('here is fwht', z)
+
+# # print('here is x', x)
+# y = x.numpy()
+# # print('here is y', y)
+# wiki_fwht(y)
+# y = torch.from_numpy(y)
+# # print('here is tranformed by wiki', y)
+# # print('here is x', x)
 
 
-def generate_sign_diagonal_matrix(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    torch.manual_seed(seed)
-    return torch.diag(random_sign_vector(dim=dim, sampling_probability=0.5))
-
-def generate_random_sign_vector(dim: int, sampling_probability=0.5, seed=0) -> torch.Tensor:
-    torch.manual_seed(seed)
-    return random_sign_vector(dim=dim, sampling_probability=0.5)
+# print(torch.max(y-z))
 
 
-def pad_zeros(vector: torch.Tensor, dim=None) -> torch.Tensor:
-    """Elongate vector dimension to next power of two."""
-    assert vector.dim() == 1
-    if dim is None:
-        dim = vector.numel()
-    exp = get_exponent(dim)
-    pad_len = torch.pow(torch.tensor(2), exp) - dim
-    pad_len = pad_len.to(int).item()
-    return torch.cat((vector, torch.zeros(pad_len)))
 
-def get_exponent(n: int) -> int:
-    """Get exponent of the least power of two greater than or equal to n."""
-    return math.ceil(math.log2(n))
-
-def generate_walsh_hadamard_matrix(exponent: int) -> torch.Tensor:
-    """The dimension of the matrix is 2^exponent. This matrix is its inverse."""
-
-    assert isinstance(exponent, int) and exponent >= 0
-
-    def sylvester(exponent: int) -> np.ndarray:
-        if exponent == 0:
-            return np.ones(1, dtype=int)
-
-        block = sylvester(exponent - 1)
-
-        return np.block([[block, block], [block, -block]])
-
-    return torch.from_numpy(sylvester(exponent) / np.sqrt(2**exponent))
+# for i in prange(3):
+#     t0 = time.perf_counter()
+#     # on dim = 2^28 the run time is 1 min.
+#     a = generate_discrete_gaussian_vector(dim=2**28, variance=100)
+#     t1 = time.perf_counter()
+#     print(t1-t0)
 
 
-def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, unpadded_model_dim: int, bias: float) -> torch.Tensor:
-    """Random rounding for SecAgg client procedure.
-
-    Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
-    """
-    r = clip / granularity
-    padded_dim = 2**get_exponent(unpadded_model_dim)
-    s = math.sqrt(padded_dim)
-
-    upper_bound_1 = r + s
-    upper_bound_2 = r**2 + padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * (r + s/2)
-    upper_bound_2 = math.sqrt(upper_bound_2)
-
-    upper_bound = min(upper_bound_1, upper_bound_2)
-
-    def round(vector, round_down_probabilities, dim) -> torch.Tensor:
-        rounding_instructions = torch.bernoulli(round_down_probabilities)
-
-        # TODO how to paralleize this for loop?
-        for i in range(dim):
-            if rounding_instructions[i] == 1:
-                # if true round down
-                vector[i] = torch.floor(vector[i])
-                continue
-            vector[i] = torch.ceil(vector[i])
-        return vector
-
-    down_probs = torch.ceil(vector) - vector
-
-    rounded_vector = vector
-    while torch.linalg.vector_norm(rounded_vector, ord=2) > upper_bound:
-        rounded_vector = round(rounded_vector, down_probs, unpadded_model_dim)
-    return rounded_vector
 
 
-def clip_vector(vector: torch.Tensor, granularity: float, clip: float) -> torch.Tensor:
-    assert vector.dim() == 1  
-    if vector.dtype is not torch.float64:
-        vector = vector.to(dtype=torch.float64)
-    scalar = min(1, clip/vector_norm(vector)) / granularity
-    return scalar * vector
+        
 
-if __name__ == '__main__':
-    # v = torch.tensor([3,4])
-    # clipped = clip_vector(v, 10, 0.5)
-    # print(clipped)
 
-    for i in range(1, 17):
-        print(i, get_exponent(i))
-
+        

@@ -240,7 +240,6 @@ class BasicClient(NumpyFlClient):
                 # reinitialize data loader
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
-
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
