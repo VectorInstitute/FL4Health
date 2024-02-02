@@ -30,8 +30,8 @@
 # sbatch research/flamby/fed_isic2019/perfcl/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/perfcl/config.yaml \
 #   research/flamby/fed_isic2019/perfcl/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /Users/jdoe/Desktop/FLambyDatasets/fedisic2019/ \
+#   /h/jsmith/repositories/fl4health_env/ \
 #   0.0001 \
 #   0.0.0.0:8080\
 #   0.1\
@@ -50,7 +50,7 @@
 
 # Set NCCL options
 # export NCCL_DEBUG=INFO
-# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# NCCL backend to communicate between GPU workers is not provided in the cluster.
 # Disable this option in slurm.
 export NCCL_IB_DISABLE=1
 

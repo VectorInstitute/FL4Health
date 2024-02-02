@@ -11,8 +11,8 @@
 # Example:
 # ./research/flamby/fed_ixi/local/run_all_clients.sh \
 #   research/flamby/fed_ixi/local/ \
-#   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /Users/jdoe/Desktop/FLambyDatasets/fed_ixi/ \
+#   /h/jsmith/repositories/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

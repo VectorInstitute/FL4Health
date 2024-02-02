@@ -17,8 +17,8 @@ An example is something like
 ./research/flamby/fed_ixi/moon/run_hp_sweep.sh \
    research/flamby/fed_ixi/moon/config.yaml \
    research/flamby/fed_ixi/moon/ \
-   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/jdoe/Desktop/FLambyDatasets/fed_ixi/ \
+   /h/jsmith/repositories/fl4health_env/
 ```
 
 In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, or `mu` in the `run_hp_sweep.sh` script directly. These represent the client-side learning rate and the contrastive loss weight respectively.

@@ -19,8 +19,8 @@ An example is something like
 ```bash
 ./research/flamby/fed_heart_disease/local/run_all_clients.sh \
    research/flamby/fed_heart_disease/local/ \
-   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
-   /h/demerson/vector_repositories/fl4health_env/
+   /Users/jdoe/Desktop/FLambyDatasets/fed_heart_disease/ \
+   /h/jsmith/repositories/fl4health_env/
 ```
 
 ### Large Model Experiments

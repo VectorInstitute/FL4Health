@@ -13,8 +13,8 @@
 # ./research/flamby/fed_heart_disease/fedper/run_hp_sweep.sh \
 #   research/flamby/fed_heart_disease/fedper/config.yaml \
 #   research/flamby/fed_heart_disease/fedper/ \
-#   /Users/david/Desktop/FLambyDatasets/fed_heart_disease/ \
-#   /h/demerson/vector_repositories/fl4health_env/
+#   /Users/jdoe/Desktop/FLambyDatasets/fed_heart_disease/ \
+#   /h/jsmith/repositories/fl4health_env/
 #
 # Notes:
 # 1) The bash command above should be run from the top level directory of the repository.

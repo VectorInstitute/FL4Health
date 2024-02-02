@@ -109,7 +109,7 @@ __NOTE__: The contents of the examples folder is not packed with the FL4Health l
 
 ## Research Code
 
-The research folder houses code associated with various research being conducted by the team at Vector. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
+The research folder houses code associated with various research being conducted by the team. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
 
 - [FENDA-FL]() FLamby Experiments. There is a README in that folder that provides details on how to run the hyper-parameter sweeps, evaluations, and other experiments.
 
@@ -219,8 +219,5 @@ where the path is the relative one from the root directory. If you're using VSCo
 
 ## Citation
 
-Reference to cite when you use FL4Health in a project or a research paper:
-```
-D.B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
-
+WITHELD
 ```
