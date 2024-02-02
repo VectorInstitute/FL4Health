@@ -53,7 +53,6 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-
         # Load the pretrained model
         model: nn.Module = self.warmed_up_module.load_from_pretrained(
             FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
