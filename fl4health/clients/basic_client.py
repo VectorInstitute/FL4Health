@@ -70,8 +70,8 @@ class BasicClient(NumPyClient):
         self.model_weights_initialized = False
 
         # Loss and Metric management
-        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.train_loss_meter = LossMeter[TrainingLosses](loss_meter_type, TrainingLosses)
+        self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
 

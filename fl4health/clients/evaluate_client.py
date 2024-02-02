@@ -1,7 +1,7 @@
 import datetime
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, cast
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -50,9 +50,9 @@ class EvaluateClient(BasicClient):
             self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         # This data loader should be instantiated as the one on which to run evaluation
-        self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.global_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
-        self.local_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.local_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
 
         # The attributes to be set in setup_client
@@ -161,7 +161,7 @@ class EvaluateClient(BasicClient):
                 loss_meter.update(losses)
 
         metrics = metric_meter.compute()
-        losses = cast(EvaluationLosses, loss_meter.compute())
+        losses = loss_meter.compute()
         self._handle_logging(losses, metrics, is_global)
         return losses, metrics
 

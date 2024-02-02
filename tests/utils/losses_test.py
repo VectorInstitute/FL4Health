@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from fl4health.utils.losses import EvaluationLosses, LossAccumulationMeter, LossAverageMeter, TrainingLosses
+from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 
 
 def test_evaluation_loss_average_meter() -> None:
@@ -27,7 +27,7 @@ def test_evaluation_loss_average_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_avg_meter = LossAverageMeter()
+    loss_avg_meter = LossMeter[EvaluationLosses](LossMeterType.AVERAGE, EvaluationLosses)
     for loss in losses:
         loss_avg_meter.update(loss)
 
@@ -61,7 +61,7 @@ def test_training_loss_average_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_avg_meter = LossAverageMeter()
+    loss_avg_meter = LossMeter[TrainingLosses](LossMeterType.AVERAGE, TrainingLosses)
     for loss in losses:
         loss_avg_meter.update(loss)
 
@@ -95,7 +95,7 @@ def test_evaluation_loss_accumulation_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_accum_meter = LossAccumulationMeter()
+    loss_accum_meter = LossMeter[EvaluationLosses](LossMeterType.ACCUMULATION, EvaluationLosses)
     for loss in losses:
         loss_accum_meter.update(loss)
 
@@ -129,7 +129,7 @@ def test_training_loss_accumulation_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_accum_meter = LossAccumulationMeter()
+    loss_accum_meter = LossMeter[TrainingLosses](LossMeterType.ACCUMULATION, TrainingLosses)
     for loss in losses:
         loss_accum_meter.update(loss)
 
