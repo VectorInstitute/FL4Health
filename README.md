@@ -118,7 +118,7 @@ PerFCL extends MOON to consider separate globally and locally trained feature ex
 <tr>
 <td>
 
-[FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf)
+[FENDA-FL]()
 </td>
 <td>
 FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The constrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
@@ -208,7 +208,7 @@ __NOTE__: The contents of the examples folder is not packed with the FL4Health l
 
 The research folder houses code associated with various research being conducted by the team. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
 
-- [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby Experiments. There is a README in that folder that provides details on how to run the hyper-parameter sweeps, evaluations, and other experiments.
+- [FENDA-FL]() FLamby Experiments. There is a README in that folder that provides details on how to run the hyper-parameter sweeps, evaluations, and other experiments.
 
 __NOTE__: The contents of the research folder is not packed with the FL4Health library on release to PyPi
 
@@ -219,4 +219,3 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 ## Citation
 
 WITHELD
-```
