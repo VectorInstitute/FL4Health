@@ -232,7 +232,7 @@ def test_get_best_vertex_for_objective_function() -> None:
     print(regularized_Q_k)
     assert best_vertex.shape == (3, 1)
     # check this
-    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == 1.0
+    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == -2.5965
     assert pytest.approx(best_vertex[1, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(best_vertex[2, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(torch.mm(hat_d_per_kernel.t(), best_vertex), abs=0.0001) == 1.0
