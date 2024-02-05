@@ -71,22 +71,27 @@ class FedProxClient(BasicClient):
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
         return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with proximal weight. They are
-        unpacked for the clients to use in training. If it's the first time the model is being initialized, we assume
-        the full model is being  initialized and use the FullParameterExchanger() to set all model weights
+        unpacked for the clients to use in training. In the first fitting round, we assume the full model is being
+        initialized and use the FullParameterExchanger() to set all model weights.
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the proximal weight to be applied during training.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning
+                round is a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
         server_model_state, self.proximal_weight = self.parameter_exchanger.unpack_parameters(parameters)
         log(INFO, f"Proximal weight received from the server: {self.proximal_weight}")
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FedProx loss.

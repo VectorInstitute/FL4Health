@@ -103,9 +103,9 @@ class FendaClient(BasicClient):
 
         return super().get_parameters(config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         # Set the parameters of the model
-        super().set_parameters(parameters, config)
+        super().set_parameters(parameters, config, fitting_round)
 
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, FendaModel)

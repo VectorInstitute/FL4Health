@@ -92,7 +92,8 @@ class EvaluateClient(BasicClient):
 
         self.initialized = True
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+        assert not fitting_round
         # Sets the global model parameters transfered from the server using a parameter exchanger to coordinate how
         # parameters are set
         if len(parameters) > 0:
@@ -111,7 +112,7 @@ class EvaluateClient(BasicClient):
 
         self.metrics_reporter.add_to_metrics({"evaluate_start": datetime.datetime.now()})
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=False)
         # Make sure at least one of local or global model is not none (i.e. there is something to evaluate)
         assert self.local_model or self.global_model
 

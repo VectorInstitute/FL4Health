@@ -97,31 +97,28 @@ class PartialWeightExchangeClient(BasicClient):
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized, we assume the full model is
-        being initialized and the weights sent correspond to the complete set of weights. Thus we use the
-        FullParameterExchanger() to set all model weights.
+        parameters are set.
 
-        Subsequently, this approach uses the threshold parameter exchanger to handle exchanging a dynamic subset of
-        model layer weights.
+        In the first fitting round, we assume the full model is being
+        initialized and use the FullParameterExchanger() to set all model weights.
+
+        In other times, this approach uses a partial weight exchanger to set model weights.
 
         Args:
             parameters (NDArrays): parameters is the set of weights and their corresponding model component names,
                 corresponding to the state dict names. These are woven together in the NDArrays object. These are
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is
+                a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling
+                parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round. Otherwise, use a PartialParameterExchanger.
         """
-        # Since PartialWeightExchangeClient may exchange different sets parameters
-        # across different training round, the full parameter exchanger is only used
-        # if a client is selected to participate in the first *fitting* round.
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        fl_fit_round = self.narrow_config_type(config, "fl_fit_round", bool)
-        if (not self.model_weights_initialized) and current_server_round == 1 and fl_fit_round:
-            self.initialize_all_model_weights(parameters, config)
-        else:
-            self.model_weights_initialized = True
-            self.parameter_exchanger.pull_parameters(parameters, self.model, config)
+        super().set_parameters(parameters, config, fitting_round)
         # Stores the values of the new model parameters at the beginning of each client training round.
         self.initial_model.load_state_dict(self.model.state_dict(), strict=True)

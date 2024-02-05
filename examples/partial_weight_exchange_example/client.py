@@ -46,7 +46,7 @@ class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
         if not self.initialized:
             self.setup_client(config)
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=False)
         testing = self.narrow_config_type(config, "testing", bool)
         num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
 

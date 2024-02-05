@@ -14,11 +14,11 @@ from tests.test_utils.models_for_test import FeatureCnn, HeadCnn
 def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
     new_params = [layer_weights + 0.1 for layer_weights in params]
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=True)
 
     old_model_params = [val.cpu().numpy() for _, val in moon_client.old_models_list[-1].state_dict().items()]
     global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
