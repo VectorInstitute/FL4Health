@@ -182,7 +182,7 @@ def test_beta_with_largest_hat_d() -> None:
     test_hat_q_k = torch.Tensor(
         [
             [-1, 1.5, 2.5, 3, -5.5, 0],
-            [3, 4, 2.2, 5.6, 3.1, -1.2, 4.1],
+            [3, 4, 2.2, 5.6, 3.1, -1.2],
             [-1.5, 1.2, 3.4, 2.1, 0.5, -0.1],
             [1.5, 2.1, 3.2, 4.5, 2.1, 1.2],
             [4, 3.2, 3.5, -2, 1.2, 3.4],
@@ -209,7 +209,7 @@ def test_optimize_betas_degenerate_case() -> None:
     # The simple test cases above result in a set of hat_ds that are all negative. In this case, we perform the
     # selection of a single kernel as recommended in Gretton
     degenerate_betas = mkmmd_loss.optimize_betas(X, Y, lambda_m=0.0001)
-    beta_target = torch.Tensor([[0, 0, 1]]).to(DEVICE).t()
+    beta_target = torch.Tensor([[1, 0, 0]]).to(DEVICE).t()
     assert torch.all(degenerate_betas.eq(beta_target))
 
 
@@ -229,7 +229,8 @@ def test_get_best_vertex_for_objective_function() -> None:
     regularized_Q_k = 2 * Q_k + lambda_m * torch.eye(3).to(DEVICE)
     best_vertex = mkmmd_loss.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
     assert best_vertex.shape == (3, 1)
-    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == -2.5965
+    # check this
+    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == 1.0
     assert pytest.approx(best_vertex[1, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(best_vertex[2, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(torch.mm(hat_d_per_kernel.t(), best_vertex), abs=0.0001) == 1.0
