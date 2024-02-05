@@ -17,8 +17,8 @@ def test_contrastive_loss() -> None:  # noqa
 
     contrastive_loss = contrastive_loss(
         features=local_features.reshape(len(local_features), -1),
-        global_features=global_features.reshape(1, len(global_features), -1),
-        old_features=previous_local_features.reshape(1, len(previous_local_features), -1),
+        positive_pairs=global_features.reshape(1, len(global_features), -1),
+        negative_pairs=previous_local_features.reshape(1, len(previous_local_features), -1),
     )
 
     assert pytest.approx(0.837868, abs=0.0001) == contrastive_loss
