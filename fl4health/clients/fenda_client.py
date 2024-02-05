@@ -57,7 +57,7 @@ class FendaClient(BasicClient):
         self.mkmmd_loss_weight = mkmmd_loss_weight
         self.temperature = temperature
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
-        self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature).to(self.device)
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=self.temperature).to(self.device)
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
 
         # Need to save previous local module, global module and aggregated global module at each communication round
@@ -127,7 +127,7 @@ class FendaClient(BasicClient):
         local_dist = []
         aggregated_dist = []
 
-        # Compute the local and global features for the train loader
+        # Compute the local and aggregated features for the train loader
         self.model.eval()
         with torch.no_grad():
             for input, target in self.train_loader:
@@ -150,8 +150,8 @@ class FendaClient(BasicClient):
 
     def get_mkmmd_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
-        Cosine similarity loss aims to minimize the similarity among current local features and current global
-        features of fenda model.
+        MK-MMD loss aims to compute the distance among distribtution of current local features
+        and current global features of fenda model.
         """
         assert len(local_features) == len(global_features)
         return self.mkmmd_loss(local_features, global_features)

@@ -90,27 +90,28 @@ class MoonClient(BasicClient):
             self.set_optimized_betas(self.mkmmd_loss, self.old_models_list[-1], self.global_model)
 
     def set_optimized_betas(
-        self, mkmmd_loss: MkMmdLoss, source_model: torch.nn.Module, target_model: torch.nn.Module
+        self, mkmmd_loss: MkMmdLoss, old_model: torch.nn.Module, global_model: torch.nn.Module
     ) -> None:
         """Set the optimized betas for the MK-MMD loss."""
-        assert isinstance(source_model, MoonModel)
-        assert isinstance(target_model, MoonModel)
+        assert isinstance(old_model, MoonModel)
+        assert isinstance(global_model, MoonModel)
 
-        local_dist = []
-        aggregated_dist = []
+        old_dist = []
+        global_dist = []
 
-        # Compute the local and global features for the train loader
-        self.model.eval()
+        # Compute the old features before aggregation and global features
+        old_model.eval()
+        global_model.eval()
         with torch.no_grad():
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                _, source_features = source_model(input)
-                _, target_features = target_model(input)
-                local_dist.append(source_features["features"])
-                aggregated_dist.append(target_features["features"])
+                _, old_features = old_model(input)
+                _, global_features = global_model(input)
+                old_dist.append(old_features["features"])
+                global_dist.append(global_features["features"])
 
         mkmmd_loss.betas = mkmmd_loss.optimize_betas(
-            X=torch.cat(local_dist, dim=0), Y=torch.cat(aggregated_dist, dim=0), lambda_m=1e-5
+            X=torch.cat(old_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5
         )
 
     def compute_loss(
