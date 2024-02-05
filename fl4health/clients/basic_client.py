@@ -627,7 +627,20 @@ class BasicClient(NumPyClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
     ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
-        # TODO docstrings
+        """
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the loss
+                - A dictionary of additional losses with their names and values, or None if
+                    there are no additional losses.
+        """
         return self.criterion(preds["prediction"], target), None
 
     def compute_training_loss(

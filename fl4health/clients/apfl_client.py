@@ -80,7 +80,20 @@ class ApflClient(BasicClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # TODO docstrings
+        """
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For APFL, the loss will be the personal loss and the additional losses are the global and local loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the personal loss
+                - A dictionary of with `global_loss` and `local_loss` keys and their calculated values
+        """
 
         assert isinstance(preds, dict)
         personal_loss = self.criterion(preds["personal"], target)

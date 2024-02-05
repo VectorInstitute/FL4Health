@@ -191,7 +191,23 @@ class FendaClient(BasicClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # TODO docstrings
+        """
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
+        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
+                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
+                    keys and their respective calculated values.
+        """
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()

@@ -109,7 +109,20 @@ class MoonClient(BasicClient):
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # TODO docstrings
+        """
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For MOON, the loss is the total loss and the additional losses are the loss, contrastive loss, and total loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `contrastive_loss` and `total loss` keys and their calculated values.
+        """
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
