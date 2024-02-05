@@ -113,7 +113,9 @@ class MoonClient(BasicClient):
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
-        additional_losses = {}
+        additional_losses = {
+            "loss": loss,
+        }
 
         if self.contrastive_weight:
             contrastive_loss = self.get_contrastive_loss(
@@ -122,7 +124,9 @@ class MoonClient(BasicClient):
             total_loss += self.contrastive_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
 
-        return loss, additional_losses
+        additional_losses["total_loss"] = total_loss
+
+        return total_loss, additional_losses
 
     def compute_training_loss(
         self,
@@ -173,6 +177,5 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) == 0:
             return super().compute_evaluation_loss(preds, features, target)
 
-        loss = self.criterion(preds["prediction"], target)
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
+        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

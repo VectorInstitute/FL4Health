@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import torch
 from flwr.common.logger import log
@@ -94,16 +94,6 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def compute_loss_and_additional_losses(
-        self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        loss = self.criterion(preds["prediction"], target)
-        proximal_loss = self.get_proximal_loss()
-        return loss, {"proximal_loss": proximal_loss}
-
     def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
@@ -125,10 +115,15 @@ class FedProxClient(BasicClient):
                 additional losses indexed by name. Additional losses includes proximal loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        total_loss = loss + additional_losses["proximal_loss"]
+        if additional_losses is None:
+            additional_losses = {}
+
+        proximal_loss = self.get_proximal_loss()
+        additional_losses["proximal_loss"] = proximal_loss
         # adding the vanilla loss to the additional losses to be used by update_after_train
         additional_losses["loss"] = loss
-        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
+
+        return TrainingLosses(backward=loss + proximal_loss, additional_losses=additional_losses)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())

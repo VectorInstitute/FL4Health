@@ -195,7 +195,7 @@ class FendaClient(BasicClient):
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
-        additional_losses = {}
+        additional_losses = {"loss": loss}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
@@ -232,6 +232,8 @@ class FendaClient(BasicClient):
             additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
             additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
+        additional_losses["total_loss"] = total_loss
+
         return total_loss, additional_losses
 
     def compute_evaluation_loss(
@@ -257,5 +259,4 @@ class FendaClient(BasicClient):
                 and perfcl_loss.
         """
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        loss = self.criterion(preds["prediction"], target)
-        return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
+        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)
