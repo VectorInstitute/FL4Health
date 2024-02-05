@@ -133,10 +133,9 @@ class TabularFeaturesPreprocessor:
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)
         # After filling in missing columns, apply the feature alignment transform.
-        return (
-            self.data_column_transformer.fit_transform(df_filled[self.feature_columns]),
-            self.target_column_transformer.fit_transform(df_filled[self.target_columns]),
-        )
+        return self.data_column_transformer.fit_transform(
+            df_filled[self.feature_columns]
+        ), self.target_column_transformer.fit_transform(df_filled[self.target_columns])
 
     def fill_in_missing_columns(self, df: pd.DataFrame) -> pd.DataFrame:
         """
