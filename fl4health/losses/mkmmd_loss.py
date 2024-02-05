@@ -197,7 +197,7 @@ class MkMmdLoss(torch.nn.Module):
             if objective_value > maximum_value:
                 maximum_value = objective_value
                 best_index = i
-        best_vertex[best_index, 0] = 1.0
+        best_vertex[best_index, 0] = vertices_weights[best_index, 0]
         return best_vertex
 
     def form_and_solve_qp(self, hat_d_per_kernel: torch.Tensor, regularized_Q_k: torch.Tensor) -> torch.Tensor:

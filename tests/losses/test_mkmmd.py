@@ -228,6 +228,8 @@ def test_get_best_vertex_for_objective_function() -> None:
     lambda_m = 0.0001
     regularized_Q_k = 2 * Q_k + lambda_m * torch.eye(3).to(DEVICE)
     best_vertex = mkmmd_loss.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
+    print(hat_d_per_kernel)
+    print(regularized_Q_k)
     assert best_vertex.shape == (3, 1)
     # check this
     assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == 1.0
