@@ -43,28 +43,7 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # noqa
-    torch.manual_seed(42)
-    fenda_client = get_fenda_client
-    fenda_client.temperature = 0.5
-
-    features = torch.tensor([[1, 1, 1]]).float()
-    positive_pairs = torch.tensor([[1, 1, 1]]).float()
-    negative_pairs = torch.tensor([[0, 0, 0]]).float()
-    contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
-
-    assert contrastive_loss == pytest.approx(0.1269, rel=0.01)
-
-    features = torch.tensor([[0, 0, 0]]).float()
-    positive_pairs = torch.tensor([[1, 1, 1]]).float()
-    negative_pairs = torch.tensor([[0, 0, 0]]).float()
-    contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
-
-    assert contrastive_loss == pytest.approx(0.6931, rel=0.01)
-
-
-@pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
+def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
     fenda_client.temperature = 0.5
@@ -91,6 +70,6 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
     assert loss.checkpoint.item() != loss.backward["backward"].item()
 
     auxiliary_loss_total = (loss.backward["backward"] - loss.checkpoint).item()
-    contrastive_minimize = loss.additional_losses["contrastive_loss_minimize"].item()
-    contrastive_maximize = loss.additional_losses["contrastive_loss_maximize"].item()
-    assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)
+    global_contrastive_loss = loss.additional_losses["global_contrastive_loss"].item()
+    local_contrastive_loss = loss.additional_losses["local_contrastive_loss"].item()
+    assert pytest.approx(auxiliary_loss_total, abs=0.001) == (global_contrastive_loss + local_contrastive_loss)

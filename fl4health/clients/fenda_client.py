@@ -6,6 +6,7 @@ from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.losses.contrastive_loss import ContrastiveLoss
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -22,7 +23,7 @@ class FendaClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        temperature: Optional[float] = 0.5,
+        temperature: float = 0.5,
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
@@ -54,10 +55,10 @@ class FendaClient(BasicClient):
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
         self.mkmmd_loss_weight = mkmmd_loss_weight
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
-        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
-        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.temperature = temperature
+        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature).to(self.device)
+        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
@@ -117,14 +118,14 @@ class FendaClient(BasicClient):
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
         if self.mkmmd_loss_weight:
-            self.set_optimized_betas()
+            self.set_optimized_betas(self.mkmmd_loss)
 
-    def set_optimized_betas(self) -> None:
+    def set_optimized_betas(self, mkmmd_loss: MkMmdLoss) -> None:
         """Set the optimized betas for the MK-MMD loss."""
         assert isinstance(self.model, FendaModel)
 
         local_dist = []
-        global_dist = []
+        aggregated_dist = []
 
         # Compute the local and global features for the train loader
         self.model.eval()
@@ -133,9 +134,11 @@ class FendaClient(BasicClient):
                 input, target = input.to(self.device), target.to(self.device)
                 _, features = self.predict(input)
                 local_dist.append(features["local_features"])
-                global_dist.append(features["global_features"])
+                aggregated_dist.append(features["global_features"])
 
-        self.mkmmd_loss.optimize_betas(X=torch.cat(local_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5)
+        mkmmd_loss.betas = mkmmd_loss.optimize_betas(
+            X=torch.cat(local_dist, dim=0), Y=torch.cat(aggregated_dist, dim=0), lambda_m=1e-5
+        )
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
@@ -153,25 +156,6 @@ class FendaClient(BasicClient):
         assert len(local_features) == len(global_features)
         return self.mkmmd_loss(local_features, global_features)
 
-    def compute_contrastive_loss(
-        self, features: torch.Tensor, positive_pairs: torch.Tensor, negative_pairs: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Contrastive loss aims to enhance the similarity between the features and their positive pairs
-        while reducing the similarity between the features and their negative pairs.
-        """
-        assert self.temperature is not None
-        assert len(features) == len(positive_pairs)
-        posi = self.cos_sim(features, positive_pairs)
-        logits = posi.reshape(-1, 1)
-        assert len(features) == len(negative_pairs)
-        nega = self.cos_sim(features, negative_pairs)
-        logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        logits /= self.temperature
-        labels = torch.zeros(features.size(0)).to(self.device).long()
-
-        return self.ce_criterion(logits, labels)
-
     def get_contrastive_loss(
         self, local_features: torch.Tensor, old_local_features: torch.Tensor, global_features: torch.Tensor
     ) -> torch.Tensor:
@@ -179,10 +163,10 @@ class FendaClient(BasicClient):
         Compute contrastive over current local features (z_p) with old local features (hat{z_p}) as positive pairs
         and current global features (z_s) as negative pairs.
         """
-        return self.compute_contrastive_loss(
+        return self.contrastive_loss(
             features=local_features,  # (z_p)
-            positive_pairs=old_local_features,  # (\hat{z_p})
-            negative_pairs=global_features,  # (z_s)
+            positive_pairs=old_local_features.unsqueeze(0),  # (\hat{z_p})
+            negative_pairs=global_features.unsqueeze(0),  # (z_s)
         )
 
     def get_perfcl_loss(
@@ -205,18 +189,18 @@ class FendaClient(BasicClient):
         aggregated lobal features (z_g) as negative pairs.
         """
 
-        contrastive_loss_minimize = self.compute_contrastive_loss(
+        global_contrastive_loss = self.contrastive_loss(
             features=global_features,  # (z_s)
-            positive_pairs=aggregated_global_features,  # (z_g)
-            negative_pairs=old_global_features,  # (\hat{z_s})
+            positive_pairs=aggregated_global_features.unsqueeze(0),  # (z_g)
+            negative_pairs=old_global_features.unsqueeze(0),  # (\hat{z_s})
         )
-        contrastive_loss_maximize = self.compute_contrastive_loss(
+        local_contrastive_loss = self.contrastive_loss(
             features=local_features,  # (z_p)
-            positive_pairs=old_local_features,  # (\hat{z_p})
-            negative_pairs=aggregated_global_features,  # (z_g)
+            positive_pairs=old_local_features.unsqueeze(0),  # (\hat{z_p})
+            negative_pairs=aggregated_global_features.unsqueeze(0),  # (z_g)
         )
 
-        return contrastive_loss_minimize, contrastive_loss_maximize
+        return global_contrastive_loss, local_contrastive_loss
 
     def compute_loss(
         self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
@@ -270,7 +254,7 @@ class FendaClient(BasicClient):
 
         # Optimal perfcl_loss_weights for FedIsic dataset is [10.0, 10.0]
         if self.perfcl_loss_weights and "old_local_features" in features and "old_global_features" in features:
-            contrastive_loss_minimize, contrastive_loss_maximize = self.get_perfcl_loss(
+            global_contrastive_loss, local_contrastive_loss = self.get_perfcl_loss(
                 local_features=features["local_features"],
                 old_local_features=features["old_local_features"],
                 global_features=features["global_features"],
@@ -278,11 +262,11 @@ class FendaClient(BasicClient):
                 aggregated_global_features=features["aggregated_global_features"],
             )
             total_loss += (
-                self.perfcl_loss_weights[0] * contrastive_loss_minimize
-                + self.perfcl_loss_weights[1] * contrastive_loss_maximize
+                self.perfcl_loss_weights[0] * global_contrastive_loss
+                + self.perfcl_loss_weights[1] * local_contrastive_loss
             )
-            additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
-            additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
+            additional_losses["global_contrastive_loss"] = global_contrastive_loss
+            additional_losses["local_contrastive_loss"] = local_contrastive_loss
 
         losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
 

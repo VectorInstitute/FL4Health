@@ -163,6 +163,12 @@ class MkMmdLoss(torch.nn.Module):
         beta_one_hot[largest_kernel_index] = 1.0
         return beta_one_hot
 
+    def beta_with_smallest_hat_d(self, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
+        largest_kernel_index = torch.argmin(hat_d_per_kernel)
+        beta_one_hot = torch.zeros_like(hat_d_per_kernel)
+        beta_one_hot[largest_kernel_index] = 1.0
+        return beta_one_hot
+
     def compute_vertices(self, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
         return 1.0 / hat_d_per_kernel
 
@@ -221,7 +227,7 @@ class MkMmdLoss(torch.nn.Module):
         # QPFunction returns betas in the shape 1 x num_kernels to we take the transpose for consistency
         return QPFunction(verbose=False, solver=QPSolvers.CVXPY)(regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b).t()
 
-    def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float) -> torch.Tensor:
+    def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: Optional[float] = 1e-5) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
         all_h_u_per_v_i = self.compute_all_h_u_per_v_i(X, Y)
 
@@ -231,12 +237,22 @@ class MkMmdLoss(torch.nn.Module):
         # with largest hat_d, similar to the suggestion of Gretton et al. in "Optimal Kernel Choice for Large-Scale
         # Two-Sample Tests", 2012
         if not torch.any(hat_d_per_kernel > 0):
-            log(
-                INFO,
-                f"None of the estimates for hat_d are positive: {hat_d_per_kernel}. Rather than optimizing, we select "
-                "a single kernel with largest hat_d_k",
-            )
-            return self.beta_with_largest_hat_d(hat_d_per_kernel)
+            if self.minimize_type_two_error:
+                log(
+                    INFO,
+                    f"None of the estimates for hat_d are positive: {hat_d_per_kernel}."
+                    "Rather than optimizing, we select "
+                    "a single kernel with largest hat_d_k",
+                )
+                return self.beta_with_largest_hat_d(hat_d_per_kernel)
+            else:
+                log(
+                    INFO,
+                    f"None of the estimates for hat_d are positive: {hat_d_per_kernel}."
+                    "Rather than optimizing, we select "
+                    "a single kernel with smallest hat_d_k",
+                )
+                return self.beta_with_smallest_hat_d(hat_d_per_kernel)
 
         # shape of hat_Q_k is number of kernels x number of kernels
         hat_Q_k = self.compute_hat_Q_k(all_h_u_per_v_i)
