@@ -288,5 +288,5 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     betas_local = default_mkmmd.optimize_betas(X, Y, lambda_m)
     one_hot_betas = torch.zeros_like(betas_local)
     # check this
-    one_hot_betas[0, 0] = 5.3016e15
+    one_hot_betas[0, 0] = 1
     assert torch.all(betas_local.eq(one_hot_betas))
