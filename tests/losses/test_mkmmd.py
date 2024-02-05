@@ -179,11 +179,30 @@ def test_compute_hat_Q_k() -> None:
 
 def test_beta_with_largest_hat_d() -> None:
     test_hat_d = torch.Tensor([[-1.2, 1.3, 2.1, 0.45, -6.5, -0.33]]).to(DEVICE).t()
+    test_hat_q_k = torch.Tensor(
+        [
+            [-1, 1.5, 2.5, 3, -5.5, 0],
+            [3, 4, 2.2, 5.6, 3.1, -1.2, 4.1],
+            [-1.5, 1.2, 3.4, 2.1, 0.5, -0.1],
+            [1.5, 2.1, 3.2, 4.5, 2.1, 1.2],
+            [4, 3.2, 3.5, -2, 1.2, 3.4],
+            [1.2, 3.4, 2.1, 1.2, 3.4, 2.1],
+        ]
+    ).to(DEVICE)
     assert test_hat_d.shape == (6, 1)
-    one_hot_beta = mkmmd_loss.beta_with_largest_hat_d(test_hat_d)
-    beta_target = torch.Tensor([[0, 0, 1, 0, 0, 0]]).to(DEVICE).t()
-    assert one_hot_beta.shape == (6, 1)
-    assert torch.all(one_hot_beta.eq(beta_target))
+    one_hot_beta_max = mkmmd_loss.beta_with_extreme_kernel_base_values(
+        test_hat_d, test_hat_q_k, minimize_type_two_error=True
+    )
+    beta_target_max = torch.Tensor([[1, 0, 0, 0, 0, 0]]).to(DEVICE).t()
+    assert one_hot_beta_max.shape == (6, 1)
+    assert torch.all(one_hot_beta_max.eq(beta_target_max))
+
+    one_hot_beta_min = mkmmd_loss.beta_with_extreme_kernel_base_values(
+        test_hat_d, test_hat_q_k, minimize_type_two_error=False
+    )
+    beta_target_min = torch.Tensor([[0, 0, 0, 0, 1, 0]]).to(DEVICE).t()
+    assert one_hot_beta_min.shape == (6, 1)
+    assert torch.all(one_hot_beta_min.eq(beta_target_min))
 
 
 def test_optimize_betas_degenerate_case() -> None:

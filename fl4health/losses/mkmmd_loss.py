@@ -157,14 +157,24 @@ class MkMmdLoss(torch.nn.Module):
         # Q_k_matrix has shape number of kernels x number of kernels
         return Q_k_matrix / len_w_is
 
-    def beta_with_largest_hat_d(self, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
-        largest_kernel_index = torch.argmax(hat_d_per_kernel)
-        beta_one_hot = torch.zeros_like(hat_d_per_kernel)
-        beta_one_hot[largest_kernel_index] = 1.0
-        return beta_one_hot
-
-    def beta_with_smallest_hat_d(self, hat_d_per_kernel: torch.Tensor) -> torch.Tensor:
-        largest_kernel_index = torch.argmin(hat_d_per_kernel)
+    def beta_with_extreme_kernel_base_values(
+        self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor, minimize_type_two_error: bool = True
+    ) -> torch.Tensor:
+        kernel_base_values = torch.tensor(
+            [hat_d_per_kernel[i] / hat_Q_k[i][i] for i in range(len(hat_d_per_kernel))]
+        ).to(self.device)
+        if minimize_type_two_error:
+            log(
+                INFO,
+                "Rather than optimizing, we select a single kernel with largest hat_d_k",
+            )
+            largest_kernel_index = torch.argmax(kernel_base_values)
+        else:
+            log(
+                INFO,
+                "Rather than optimizing, we select a single kernel with smallest hat_d_k",
+            )
+            largest_kernel_index = torch.argmin(kernel_base_values)
         beta_one_hot = torch.zeros_like(hat_d_per_kernel)
         beta_one_hot[largest_kernel_index] = 1.0
         return beta_one_hot
@@ -236,28 +246,17 @@ class MkMmdLoss(torch.nn.Module):
         # check to see that at least one of them is positive. If none of them are positive, then select a single kernel
         # with largest hat_d, similar to the suggestion of Gretton et al. in "Optimal Kernel Choice for Large-Scale
         # Two-Sample Tests", 2012
-        if not torch.any(hat_d_per_kernel > 0):
-            if self.minimize_type_two_error:
-                log(
-                    INFO,
-                    f"None of the estimates for hat_d are positive: {hat_d_per_kernel}."
-                    "Rather than optimizing, we select "
-                    "a single kernel with largest hat_d_k",
-                )
-                return self.beta_with_largest_hat_d(hat_d_per_kernel)
-            else:
-                log(
-                    INFO,
-                    f"None of the estimates for hat_d are positive: {hat_d_per_kernel}."
-                    "Rather than optimizing, we select "
-                    "a single kernel with smallest hat_d_k",
-                )
-                return self.beta_with_smallest_hat_d(hat_d_per_kernel)
 
         # shape of hat_Q_k is number of kernels x number of kernels
         hat_Q_k = self.compute_hat_Q_k(all_h_u_per_v_i)
         # Eigen shift hat_Q_k and scale by 2 as the QP setup scales by 1/2
         regularized_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(self.kernel_num).to(self.device)
+
+        if not torch.any(hat_d_per_kernel > 0):
+            log(INFO, f"None of the estimates for hat_d are positive: {hat_d_per_kernel}.")
+            return self.beta_with_extreme_kernel_base_values(
+                hat_d_per_kernel, regularized_Q_k, minimize_type_two_error=True
+            )
 
         if self.minimize_type_two_error:
             unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
