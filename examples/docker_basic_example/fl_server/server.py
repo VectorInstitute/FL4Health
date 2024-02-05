@@ -3,13 +3,13 @@ from functools import partial
 from typing import Any, Dict
 
 import flwr as fl
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def fit_config(
@@ -20,13 +20,6 @@ def fit_config(
     return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
 
 
-def get_initial_model_parameters() -> Parameters:
-    # Initializing the model parameters on the server side
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Net()
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
-
-
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
@@ -34,6 +27,8 @@ def main(config: Dict[str, Any]) -> None:
         config["local_epochs"],
         config["batch_size"],
     )
+
+    initial_model = Net()
 
     # Server performs simple FedAveraging as it's server-side optimization strategy
     strategy = FedAvg(
@@ -46,7 +41,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(),
+        initial_parameters=get_all_model_parameters(initial_model),
     )
 
     fl.server.start_server(

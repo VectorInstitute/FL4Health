@@ -7,8 +7,7 @@ from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Metrics
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 from sklearn.model_selection import train_test_split
@@ -18,13 +17,7 @@ from examples.fedopt_example.metrics import Outcome, ServerMetrics
 from examples.models.lstm_model import LSTM
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters(vocab_size: int, vocab_dimension: int, hidden_size: int) -> Parameters:
-    # FedAdam requires that we provide server side parameter initialization.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = LSTM(vocab_size, vocab_dimension, hidden_size)
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in initial_model.state_dict().items()])
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def metric_aggregation(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
@@ -137,6 +130,8 @@ def main(config: Dict[str, Any]) -> None:
         label_encoder,
     )
 
+    initial_model = LSTM(vocabulary.vocabulary_size, config["vocab_dimension"], config["hidden_size"])
+
     # Server performs FedAdam as the server side optimization strategy.
     # Uses the default parameters for moment accumulation
 
@@ -151,9 +146,7 @@ def main(config: Dict[str, Any]) -> None:
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
         # Server side weight initialization
-        initial_parameters=get_initial_model_parameters(
-            vocabulary.vocabulary_size, config["vocab_dimension"], config["hidden_size"]
-        ),
+        initial_parameters=get_all_model_parameters(initial_model),
     )
 
     client_manager = SimpleClientManager()

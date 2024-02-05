@@ -11,14 +11,10 @@ from flwr.server.strategy import FedAdam
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
-)
+from research.flamby.utils import evaluate_metrics_aggregation_fn, fit_config, fit_metrics_aggregation_fn
 
 
 def main(
@@ -48,7 +44,7 @@ def main(
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
         eta=server_learning_rate,
     )
 
