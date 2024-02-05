@@ -1,4 +1,5 @@
 import argparse
+import os
 from functools import partial
 from logging import INFO
 from typing import Any, Dict
@@ -8,11 +9,12 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.fenda_mkmmd.fenda_model import FedIsic2019FendaModel
-from research.flamby.flamby_servers.personal_server import PersonalServer
+from research.flamby.fed_isic2019.moon_mkmmd.moon_model import FedIsic2019MoonModel
+from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
@@ -21,7 +23,7 @@ from research.flamby.utils import (
 )
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -29,8 +31,12 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["n_server_rounds"],
     )
 
+    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    checkpoint_name = "server_best_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+
     client_manager = SimpleClientManager()
-    model = FedIsic2019FendaModel(frozen_blocks=13, turn_off_bn_tracking=False)
+    model = FedIsic2019MoonModel()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -47,7 +53,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_all_model_parameters(model),
     )
 
-    server = PersonalServer(client_manager, strategy)
+    server = FullExchangeServer(client_manager, model, strategy, checkpointer=checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -56,7 +62,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     log(INFO, "Training Complete")
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{server.best_aggregated_loss}")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
 
     # Shutdown the server gracefully
     server.shutdown()
@@ -64,6 +70,19 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--artifact_dir",
+        action="store",
+        type=str,
+        help="Path to save server artifacts such as logs and model checkpoints",
+        required=True,
+    )
+    parser.add_argument(
+        "--run_name",
+        action="store",
+        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
+        required=True,
+    )
     parser.add_argument(
         "--config_path",
         action="store",
@@ -93,4 +112,4 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.server_address)
+    main(config, args.server_address, args.artifact_dir, args.run_name)

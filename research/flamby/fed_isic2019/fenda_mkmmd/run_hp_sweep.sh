@@ -27,12 +27,12 @@ VENV_PATH=$4
 
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.001 )
-MU_VALUES=( 0.0 0.1 1 10)
+MU_VALUES=( 0.1 1 10)
 
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd_new"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
@@ -45,7 +45,7 @@ for LR_VALUE in "${LR_VALUES[@]}"; do
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
     echo "Server Address: ${SERVER_ADDRESS}"
-    SBATCH_COMMAND="research/flamby/fed_isic2019/fenda/run_fold_experiment.slrm \
+    SBATCH_COMMAND="research/flamby/fed_isic2019/fenda_mkmmd/run_fold_experiment.slrm \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \
