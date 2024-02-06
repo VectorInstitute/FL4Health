@@ -98,7 +98,8 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         tensor_names = packed_parameters[(3 * split_size) :][0].tolist()
         return model_parameters, (parameter_indices, tensor_shapes, tensor_names)
 
-    def extract_coo_info_from_dense(self, x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
+    @staticmethod
+    def extract_coo_info_from_dense(x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
         """
         Take a dense tensor x and extract the information required
         (namely, its nonzero values, their indices within the tensor, and the shape of x)

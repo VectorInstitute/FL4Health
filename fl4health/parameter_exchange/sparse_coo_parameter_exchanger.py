@@ -80,7 +80,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             mask = torch.where(threshold_result == 0, input=threshold_result, other=1)
             # Tensor whose mask values are all zero will not be exchanged, so we
             # do not return them.
-            if not (mask == 0).all():
+            if not (mask.shape == torch.Size([]) or (mask == 0).all()):
                 names_to_masks[name] = mask
         return names_to_masks
 
