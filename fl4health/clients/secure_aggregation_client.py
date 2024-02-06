@@ -34,6 +34,7 @@ from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+torch.set_default_dtype(torch.float64)
 
 class SecureAggregationClient(BasicClient):
     def __init__(
@@ -205,6 +206,7 @@ class SecureAggregationClient(BasicClient):
     # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         local_epochs, local_steps, current_server_round = self.process_config(config)
+        log(INFO, f' start of client server round {current_server_round}')
         if not self.initialized:
             self.setup_client(config)
 
@@ -228,18 +230,40 @@ class SecureAggregationClient(BasicClient):
                 self.num_train_samples,
                 metrics,
             )
+        
+        for param in self.model.parameters():
+            param.data = param.data.to(torch.float32)
+
+        for name, layer in self.model.state_dict().items():
+            log(DEBUG, f'current_round: {current_server_round}')
+            log(DEBUG, name)
+            log(DEBUG, layer.dtype)
+
+
         if local_epochs is not None:
             log(INFO, 'Training by epochs')
-            loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
+            loss_dict, metrics, training_set_size = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+            self.num_train_samples = training_set_size
         elif local_steps is not None:
             log(INFO, 'Training by steps')
-            loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
+            loss_dict, metrics, training_set_size = self.train_by_steps(local_steps, current_server_round)
+            self.num_train_samples = training_set_size
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
+
+        if current_server_round > 0 :
+            # log(INFO, '-----metrics------')
+            # log(INFO, self.metrics)
+            log(INFO, f'-----train loss meter len {len(self.train_loss_meter.losses_list)}------')
+            log(INFO, self.train_loss_meter.losses_list[-1].as_dict())
+            # log(INFO, f'-----val loss meter len {len(self.val_loss_meter.losses_list)}------')
+            # log(INFO, self.val_loss_meter.losses_list[-1].as_dict())
+            log(INFO, f'-----metrics--len {len(metrics)}---')
+            log(INFO, metrics)
 
         # NOTE uncomment for debugging
         # pickle.dump(self.model.state_dict(), open(f"examples/secure_aggregation_example/local_models/{random()}.pkl", "wb"))
@@ -255,6 +279,21 @@ class SecureAggregationClient(BasicClient):
             log(WARN, f"The DP-mechanism you chose {dp_kind} is not yet implemented. Aborting FL.")
             exit()
 
+        # if current_server_round == 1:
+        #     log(INFO, '-----pop train loss meter------')
+        #     log(INFO, len(self.train_loss_meter.losses_list))
+        #     log(INFO, len(self.val_loss_meter.losses_list))
+
+        #     log(INFO, self.train_loss_meter.losses_list.pop())
+        #     log(INFO, '-----pop val loss meter------')
+        #     # log(INFO, self.val_loss_meter.losses_list.pop())
+            
+        # for name, layer in self.model.state_dict().items():
+        #     log(DEBUG, f'current_round: {current_server_round}')
+        #     log(DEBUG, name)
+        #     log(DEBUG, layer.dtype)
+        log(INFO, f' end of client server round {current_server_round}, post processing start')
+
         return (
             self.process_model_post_training(weight=self.num_train_samples),
             self.num_train_samples,
@@ -269,10 +308,16 @@ class SecureAggregationClient(BasicClient):
 
         assert self.model is not None and self.parameter_exchanger is not None
         self.parameter_exchanger = SecureAggregationExchanger()
+        # torch.set_default_dtype(torch.float64)
 
         # reshape model tensors and concatenate into a vector
-        vector = vectorize_model(self.model)
-
+        vector = vectorize_model(self.model).to(torch.float64)
+        log(INFO, f'post processing vector dtyle: {vector.dtype}')
+        for param in self.model.parameters():
+            log(INFO, f'post processing model dtyle: {param.data.dtype}')
+            break
+        # log(DEBUG, 'clipped')
+        # log(DEBUG, vector[:100])
         # TODO adjust clip to weighting
         vector *= weight # weight for FedAvg, server divides out sum of client weights
 
@@ -281,13 +326,18 @@ class SecureAggregationClient(BasicClient):
         # adjust for scaling of model vector by the weight (often the train data size)
         weighted_clip = c * weight
         vector = clip_vector(vector=vector, clip=weighted_clip, granularity=g)
-
+        # log(DEBUG, 'weighted')
+        # log(DEBUG, vector[:100])
         # x'' = H(Dx')
         vector = torch.mul(vector, generate_random_sign_vector(dim=self.model_dim)) # hadamard product
         vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+        # log(DEBUG,'after zero pad')
+        # log(INFO, vector)
         log(DEBUG, f'Starting Welsh Hadamard Transform')
         t0 = time.perf_counter()
         vector = fwht(vector)
+        # log(DEBUG,'after WHT')
+        # log(INFO, vector)
         t1 = time.perf_counter()
         log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0}')
         # vector = torch.matmul(
@@ -301,14 +351,18 @@ class SecureAggregationClient(BasicClient):
         # log(DEBUG, f'Done rounding')
 
         # discrete Gaussian noise 
+        vector = torch.ceil(vector).to(torch.int64)
+        # log(DEBUG, f'casted type: {vector.dtype}')
         v = (self.privacy_settings['noise_scale'] / g) ** 2
         log(DEBUG, f'Adding noise')
-        vector += torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device="cuda")
+        vector += torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
         log(DEBUG, f'Adding mask')
-
+        # log(DEBUG,'after noising')
+        # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
         vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
-
+        # log(DEBUG,'after masking')
+        # log(INFO, vector[:100])
         # processed = []
         # i = 0
         # for layer in self.model.state_dict().values():
@@ -316,8 +370,12 @@ class SecureAggregationClient(BasicClient):
         #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
         #     processed.append(tensor.cpu().numpy())
         #     i = j
+        # log(INFO, vector.dtype)
+        # log(INFO, vector)
+        vector_np = vector.cpu().numpy()
+        log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
 
-        return [vector.cpu().numpy()]
+        return [vector_np]
 
     def generate_mask(self):
         dim = sum(param.numel() for param in self.model.parameters() if param.requires_grad)
@@ -408,14 +466,20 @@ class SecureAggregationClient(BasicClient):
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+    ) -> Tuple[Dict[str, float], Dict[str, Scalar], int]:
         """These are cutomized for Poisson subsampling"""
         self.model.train()
         local_step = 0
+
+        datasize = 0
         for local_epoch in range(epochs):
+            log(INFO, f'Consumed {datasize} datapoints by epoch {local_epoch}.')
             self.train_metric_meter_mngr.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
+
+                datasize += list(input.shape)[0]
+
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
@@ -432,11 +496,11 @@ class SecureAggregationClient(BasicClient):
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         # Return final training metrics
-        return loss_dict, metrics
+        return loss_dict, metrics, datasize
 
     def train_by_steps(
         self, steps: int, current_round: Optional[int] = None
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+    ) -> Tuple[Dict[str, float], Dict[str, Scalar], int]:
         """These are cutomized for Poisson subsampling"""
 
         self.model.train()
@@ -446,7 +510,10 @@ class SecureAggregationClient(BasicClient):
 
         self.train_loss_meter.clear()
         self.train_metric_meter_mngr.clear()
+
+        datasize = 0
         for step in range(steps):
+            log(INFO, f'Consumed {datasize} datapoints by step {step}.')
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -454,6 +521,8 @@ class SecureAggregationClient(BasicClient):
                 # reinitialize data loader
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
+
+            datasize += list(input.shape)[0]
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
@@ -469,4 +538,4 @@ class SecureAggregationClient(BasicClient):
         self._handle_logging(loss_dict, metrics, current_round=current_round)
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
-        return loss_dict, metrics
+        return loss_dict, metrics, datasize

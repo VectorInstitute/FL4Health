@@ -195,7 +195,7 @@ class SecureAggregationStrategy(BasicFedAvg):
             for local_model_layers in local_models:
                 for k in range(num_layers):
                     global_model_layers[k] += local_model_layers[k]
-                    global_model_layers[k] %= arithmetic_modulus
+                    # global_model_layers[k] %= arithmetic_modulus
 
             parameters_aggregated = ndarrays_to_parameters(global_model_layers)
 
@@ -214,10 +214,22 @@ class SecureAggregationStrategy(BasicFedAvg):
         log(INFO, f'Training data size: {aggregate_data_size}')
 
         global_model_vector = local_models.pop(0)
+        log(DEBUG, f'----first model------')
+        log(DEBUG, global_model_vector[:100])
+
         for vect in local_models:
             global_model_vector += vect
+            # global_model_vector %= arithmetic_modulus
 
-        global_model_vector %= arithmetic_modulus
+        log(DEBUG, f'----before modulo data size{aggregate_data_size}------')
+        log(DEBUG, global_model_vector[:100])
+        # global_model_vector %= arithmetic_modulus
+        # log(DEBUG, f'----after modulo data size{aggregate_data_size}------')
+        # log(DEBUG, global_model_vector[:100])
+
+        global_model_vector = global_model_vector.astype('float64') / aggregate_data_size
+        log(DEBUG, f'----after normalization------')
+        log(DEBUG, global_model_vector[:100])
         # parameters_aggregated = ndarrays_to_parameters([global_model_vector])
         parameters_aggregated = global_model_vector
         # if server_round == 0:

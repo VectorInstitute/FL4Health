@@ -163,3 +163,5 @@ settings.json
 
 **/*.pkl
 examples/secure_aggregation_example/running_pid.txt
+**/log/**
+flamby_datasets/

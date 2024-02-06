@@ -88,13 +88,16 @@ def load_cifar10_data(
     return train_loader, validation_loader, num_examples
 
 
-def poisson_subsampler_cifar10(data_dir: Path, expected_batch_size: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+def poisson_subsampler_cifar10(data_dir: Path, expected_batch_size: int) -> Tuple[DataLoader, DataLoader]:
     """This dataloader for CIFAR-10 uses Poisson subsampling to select batches of given EXPECTED batch size.
 
     Args
         expected_batch_size: determines the Poisson sampling probability = expected_batch_size / total_data_size.
         For simplicity we will assume expected_batch_size is an integer. Note that this Poisson sampling probability will 
         differ between train & validation sets due to their total_data_size.
+
+    Note 
+        Does not return num_examples unlike regular loaders, as Poisson sampling num_examples are determined on the fly.
     """
 
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -125,16 +128,17 @@ def poisson_subsampler_cifar10(data_dir: Path, expected_batch_size: int) -> Tupl
     # train_loader = DataLoader(training_set, batch_size=batch_size, sampler=poisson_sampler_training)
     # validation_loader = DataLoader(validation_set, batch_size=batch_size, sampler=poisson_sampler_validataion)
 
+    # # NOTE for logging
+    # train_size, _ = next(iter(opcus_train_loader))
+    # validation_size, _ = next(iter(opcus_validation_loader))
 
-    train_size, _ = next(iter(opcus_train_loader))
-    validation_size, _ = next(iter(opcus_validation_loader))
+    # num_examples = {
+    #     "train_set": list(train_size.shape)[0],
+    #     "validation_set": list(validation_size.shape)[0],
+    # }
+    # log(INFO, "---------------")
+    # log(INFO, num_examples)
 
-    num_examples = {
-        "train_set": list(train_size.shape)[0],
-        "validation_set": list(validation_size.shape)[0],
-    }
-    log(INFO, "---------------")
-    log(INFO, num_examples)
-    return opcus_train_loader, opcus_validation_loader, num_examples
+    return opcus_train_loader, opcus_validation_loader
 
 

@@ -11,4 +11,5 @@ shamir_reconstruction_threshold: 2
 
 # Other configs
 local_epochs: 1
+local_steps: 5
 checkpoint_path: "examples/secure_aggregation_example"

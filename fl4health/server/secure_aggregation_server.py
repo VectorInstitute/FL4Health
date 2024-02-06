@@ -72,7 +72,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         model_integer_range: int = 1 << 30,
         dropout_mode=False,
     ) -> None:
-
+        log(INFO, 'secure aggregation server initializing...')
         assert isinstance(strategy, SecureAggregationStrategy)
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
         self.timeout = timeout
@@ -127,15 +127,18 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # Perform federated learning rounds under the Secure Aggregation Protocol.
         for current_round in range(1, 1 + num_rounds):
-
+            log(INFO, f'current fl round from server: {current_round}')
             metrics = self.secure_aggregation(current_round, timeout)
 
             # Record distributed (and not centralized) loss / metrics.
             history = History()
             history.add_metrics_distributed_fit(server_round=current_round, metrics=metrics)
+            log(INFO, f'------begin evaulation: {current_round}-------')
 
             # Evaluate model on a sample of available clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
+            log(INFO, f'------end evaulation: {current_round}-------')
+
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
@@ -179,20 +182,35 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         #     generate_walsh_hadamard_matrix(exponent=get_exponent(vector.numel())), 
         #     vector
         # )
-        vector = fwht(torch.from_numpy(params).to(device='cuda'))
+        # log(DEBUG, '=====dtype====')
+        # log(DEBUG, params.dtype)
+        # log(DEBUG, params)
+        # log(DEBUG, '=====torch====')
+        vector = torch.from_numpy(params).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        # log(DEBUG, vector.dtype)
+        # log(DEBUG, vector)
+        # log(DEBUG, '=====fwht====')
+        vector = fwht(vector)
+        # log(DEBUG, vector)
         # Hadamard product
         vector = torch.mul(
             self.privacy_settings['granularity'] * generate_random_sign_vector(dim=vector.numel(), seed=0),
             vector
         )
         # remove padding zeros and divide to average
-        vector = vector[:self.crypto.model_dimension] / train_size
+        vector = vector[:self.crypto.model_dimension] 
+        # log(INFO, vector)
         # set global model
         self.server_model = unvectorize_model(self.server_model, vector)
-
+        # for name, layer in self.server_model.state_dict().items():
+        #     log(DEBUG, name)
+        #     log(DEBUG, f'current_round: {current_round}')
+        #     log(DEBUG, layer)
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
         )
+        # log(INFO, 'parameters_to_ndarrays(self.parameters)')
+        # log(INFO, parameters_to_ndarrays(self.parameters))
 
         if self.dropout_mode:
             unmaksed_params = self.unmasking(

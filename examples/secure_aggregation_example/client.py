@@ -41,7 +41,7 @@ class SecAggClient(SecureAggregationClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         # sample_size is currently unused
-        training_loader, training_loader, sample_size = poisson_subsampler_cifar10(self.data_path, batch_size)
+        training_loader, training_loader = poisson_subsampler_cifar10(self.data_path, batch_size)
 
         return training_loader, training_loader
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
 
     # compute resource
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # instantiate Cifar client class with SecAgg as defined above
     client = SecAggClient(data_path, [Accuracy("accuracy")], DEVICE)

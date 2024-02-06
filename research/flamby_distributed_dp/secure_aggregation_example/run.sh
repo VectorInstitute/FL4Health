@@ -5,8 +5,8 @@
 # rm examples/secure_aggregation_example/*.pkl
 
 source .venv/bin/activate
-WORKING_DIR=research/flamby_distributed_dp/secure_and_private_example
-BASE_MODULE="research.flamby_distributed_dp.secure_and_private_example"
+WORKING_DIR=research/flamby_distributed_dp/secure_aggregation_example
+BASE_MODULE="research.flamby_distributed_dp.secure_aggregation_example"
 
 mkdir -p "$WORKING_DIR/log"
 
