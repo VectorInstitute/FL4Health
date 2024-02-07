@@ -27,6 +27,8 @@ def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
         assert (params[i] == old_model_params[i]).all()
         assert (new_params[i] == global_model_params[i]).all()
 
+    torch.seed()  # resetting the seed at the end, just to be safe
+
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
 def test_contrastive_loss(get_client: MoonClient) -> None:  # noqa
@@ -46,9 +48,11 @@ def test_contrastive_loss(get_client: MoonClient) -> None:  # noqa
 
     assert pytest.approx(0.837868, abs=0.0001) == contrastive_loss
 
+    torch.seed()  # resetting the seed at the end, just to be safe
+
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_compute_loss(get_client: MoonClient) -> None:  # noqa
+def test_computing_loss(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
     # Dummy to ensure the compute loss function in the moon client is executed
@@ -67,9 +71,22 @@ def test_compute_loss(get_client: MoonClient) -> None:  # noqa
         "global_features": global_features.reshape(len(global_features), -1),
         "old_features": previous_local_features.reshape(1, len(previous_local_features), -1),
     }
+    expected_loss = 0.8132616
+    expected_total_loss = 0.837868 + 0.8132616
+    expected_contrastive_loss = 0.837868
 
-    loss = moon_client.compute_loss(preds=preds, features=features, target=target)
-    assert isinstance(loss.backward["backward"], torch.Tensor)
-    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
-    assert pytest.approx(0.837868, abs=0.0001) == loss.additional_losses["contrastive_loss"]
-    assert pytest.approx(0.837868 + 0.8132616, abs=0.0001) == loss.backward["backward"].item()
+    total_loss, additional_losses = moon_client.compute_loss_and_additional_losses(preds, features, target)
+    assert isinstance(total_loss, torch.Tensor)
+    assert pytest.approx(expected_total_loss, abs=0.0001) == total_loss.item()
+    assert pytest.approx(expected_contrastive_loss, abs=0.0001) == additional_losses["contrastive_loss"]
+    assert pytest.approx(expected_loss, abs=0.0001) == additional_losses["loss"].item()
+    assert pytest.approx(expected_total_loss, abs=0.0001) == additional_losses["total_loss"].item()
+
+    training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
+    assert isinstance(training_loss.backward["backward"], torch.Tensor)
+    assert pytest.approx(expected_loss, abs=0.0001) == evaluation_loss.checkpoint.item()
+    assert pytest.approx(expected_total_loss, abs=0.0001) == training_loss.backward["backward"].item()
+    assert training_loss.additional_losses == evaluation_loss.additional_losses
+
+    torch.seed()  # resetting the seed at the end, just to be safe
