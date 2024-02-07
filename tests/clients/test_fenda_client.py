@@ -91,6 +91,7 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert pytest.approx(3.0671176, abs=0.0001) == training_loss.backward["backward"].item()
+    assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
     assert training_loss.additional_losses == evaluation_loss.additional_losses
     assert training_loss.additional_losses["loss"] == evaluation_loss.checkpoint.item()
     assert training_loss.additional_losses["total_loss"] == training_loss.backward["backward"].item()

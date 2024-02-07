@@ -166,7 +166,7 @@ LossesType = TypeVar("LossesType", bound=Losses)
 
 
 class LossMeter(Generic[LossesType]):
-    def __init__(self, loss_meter_type: LossMeterType, losses_type: type[Losses]) -> None:
+    def __init__(self, loss_meter_type: LossMeterType, losses_type: type[LossesType]) -> None:
         """
         A meter to store a list of losses.
 
