@@ -64,12 +64,13 @@ class MoonClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
-        old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
-        for i, old_model in enumerate(self.old_models_list):
-            _, old_model_features = old_model(input)
-            old_features[i] = old_model_features["features"]
-        _, global_model_features = self.global_model(input)
-        features.update({"global_features": global_model_features["features"], "old_features": old_features})
+        if len(self.old_models_list) == self.len_old_models_buffer:
+            old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
+            for i, old_model in enumerate(self.old_models_list):
+                _, old_model_features = old_model(input)
+                old_features[i] = old_model_features["features"]
+            _, global_model_features = self.global_model(input)
+            features.update({"global_features": global_model_features["features"], "old_features": old_features})
         return preds, features
 
     def get_parameters(self, config: Config) -> NDArrays:
