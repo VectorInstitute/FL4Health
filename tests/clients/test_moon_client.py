@@ -20,12 +20,62 @@ def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     new_params = [layer_weights + 0.1 for layer_weights in params]
     moon_client.set_parameters(new_params, config)
 
+    # Global model parameters should match those of the new_params
+    global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
+    # Make sure the MOON model parameters are equal to the global model parameters
+    new_moon_model_params = [val.cpu().numpy() for _, val in moon_client.model.state_dict().items()]
+
+    for i in range(len(params)):
+        assert (new_params[i] == global_model_params[i]).all()
+        assert (new_params[i] == new_moon_model_params[i]).all()
+
+    # Make sure the old model list is still empty
+    assert len(moon_client.old_models_list) == 0
+
+
+@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
+def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
+    torch.manual_seed(42)
+    moon_client = get_client
+    config: Config = {}
+
+    params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
+    # Mocking sending parameters to the server, need to make sure the old_model_list is updated
+    _ = moon_client.get_parameters(config)
+    new_params = [layer_weights + 0.1 for layer_weights in params]
+    moon_client.set_parameters(new_params, config)
+
+    # Assert we stored the old model
+    assert len(moon_client.old_models_list) == 1
+
     old_model_params = [val.cpu().numpy() for _, val in moon_client.old_models_list[-1].state_dict().items()]
     global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
+    # Make sure the MOON model parameters are equal to the global model parameters
+    new_moon_model_params = [val.cpu().numpy() for _, val in moon_client.model.state_dict().items()]
 
     for i in range(len(params)):
         assert (params[i] == old_model_params[i]).all()
         assert (new_params[i] == global_model_params[i]).all()
+        assert (new_params[i] == new_moon_model_params[i]).all()
+
+    # Do another round to make sure old model list doesn't expand and it contains new parameters
+    # Mocking sending parameters to the server, need to make sure the old_model_list is updated
+    _ = moon_client.get_parameters(config)
+    new_params_2 = [layer_weights + 0.1 for layer_weights in params]
+    moon_client.set_parameters(new_params, config)
+
+    # Assert we stored the old model
+    assert len(moon_client.old_models_list) == 1
+
+    old_model_params = [val.cpu().numpy() for _, val in moon_client.old_models_list[-1].state_dict().items()]
+    global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
+    # Make sure the MOON model parameters are equal to the global model parameters
+    new_moon_model_params = [val.cpu().numpy() for _, val in moon_client.model.state_dict().items()]
+
+    for i in range(len(params)):
+        assert (new_params[i] == old_model_params[i]).all()
+        assert (new_params_2[i] == global_model_params[i]).all()
+        assert (new_params_2[i] == new_moon_model_params[i]).all()
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])

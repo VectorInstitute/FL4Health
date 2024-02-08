@@ -60,12 +60,13 @@ class MoonClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
-        old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
-        for i, old_model in enumerate(self.old_models_list):
-            _, old_model_features = old_model(input)
-            old_features[i] = old_model_features["features"]
-        _, global_model_features = self.global_model(input)
-        features.update({"global_features": global_model_features["features"], "old_features": old_features})
+        if len(self.old_models_list) > 0:
+            old_features = torch.zeros(len(self.old_models_list), *features["features"].size()).to(self.device)
+            for i, old_model in enumerate(self.old_models_list):
+                _, old_model_features = old_model(input)
+                old_features[i] = old_model_features["features"]
+            _, global_model_features = self.global_model(input)
+            features.update({"global_features": global_model_features["features"], "old_features": old_features})
         return preds, features
 
     def get_contrastive_loss(
@@ -89,7 +90,7 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old local model
         old_model = self.clone_and_freeze_model(self.model)
@@ -97,6 +98,9 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
+        return super().get_parameters(config)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
