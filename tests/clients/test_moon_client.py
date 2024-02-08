@@ -41,10 +41,15 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     moon_client = get_client
     config: Config = {}
 
+    assert len(moon_client.old_models_list) == 0
+
     params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
     _ = moon_client.get_parameters(config)
     new_params = [layer_weights + 0.1 for layer_weights in params]
+    # Setting parameters once to represent an evaluation set parameters
+    moon_client.set_parameters(new_params, config)
+    # Setting parameters again to represent a training set parameters
     moon_client.set_parameters(new_params, config)
 
     # Assert we stored the old model
@@ -64,6 +69,9 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
     _ = moon_client.get_parameters(config)
     new_params_2 = [layer_weights + 0.1 for layer_weights in params]
+    # Setting parameters once to represent an evaluation set parameters
+    moon_client.set_parameters(new_params, config)
+    # Setting parameters again to represent a training set parameters
     moon_client.set_parameters(new_params, config)
 
     # Assert we stored the old model
