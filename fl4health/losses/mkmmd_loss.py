@@ -253,7 +253,7 @@ class MkMmdLoss(torch.nn.Module):
         regularized_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(self.kernel_num).to(self.device)
 
         if not torch.any(hat_d_per_kernel > 0):
-            log(INFO, f"None of the estimates for hat_d are positive: {hat_d_per_kernel}.")
+            log(INFO, f"None of the estimates for hat_d are positive: {hat_d_per_kernel.squeeze()}.")
             return self.beta_with_extreme_kernel_base_values(
                 hat_d_per_kernel, regularized_Q_k, minimize_type_two_error=True
             )

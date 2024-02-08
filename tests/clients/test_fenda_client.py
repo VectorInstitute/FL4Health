@@ -64,12 +64,18 @@ def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
         "old_global_features": old_global_features,
         "aggregated_global_features": aggregated_global_features,
     }
-    loss = fenda_client.compute_loss(preds=preds, target=target, features=features)
-    assert isinstance(loss.backward["backward"], torch.Tensor)
-    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
-    assert loss.checkpoint.item() != loss.backward["backward"].item()
 
-    auxiliary_loss_total = (loss.backward["backward"] - loss.checkpoint).item()
-    global_contrastive_loss = loss.additional_losses["global_contrastive_loss"].item()
-    local_contrastive_loss = loss.additional_losses["local_contrastive_loss"].item()
-    assert pytest.approx(auxiliary_loss_total, abs=0.001) == (global_contrastive_loss + local_contrastive_loss)
+    training_loss = fenda_client.compute_training_loss(preds=preds, target=target, features=features)
+    evaluation_loss = fenda_client.compute_evaluation_loss(preds=preds, target=target, features=features)
+    assert isinstance(training_loss.backward["backward"], torch.Tensor)
+    assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
+    assert pytest.approx(3.0671176, abs=0.0001) == training_loss.backward["backward"].item()
+    assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
+    assert training_loss.additional_losses == evaluation_loss.additional_losses
+    assert training_loss.additional_losses["loss"] == evaluation_loss.checkpoint.item()
+    assert training_loss.additional_losses["total_loss"] == training_loss.backward["backward"].item()
+
+    auxiliary_loss_total = (training_loss.backward["backward"] - evaluation_loss.checkpoint).item()
+    contrastive_minimize = training_loss.additional_losses["global_contrastive_loss"].item()
+    contrastive_maximize = training_loss.additional_losses["personal_contrastive_loss"].item()
+    assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)

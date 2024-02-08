@@ -68,7 +68,7 @@ MOON adds a contrastive loss function that attempts to ensure that the feature r
 </td>
 </tr>
 <tr>
-<th style="text-align: left; width: 250px"> Non-Personalized Methods </th>
+<th style="text-align: left; width: 250px"> Personalized Methods </th>
 <th style="text-align: center; width: 350px"> Notes </th>
 </tr>
 <tr>

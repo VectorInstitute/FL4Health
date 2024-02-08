@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.contrastive_loss import ContrastiveLoss
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -72,7 +72,7 @@ class MoonClient(BasicClient):
         features.update({"global_features": global_model_features["features"], "old_features": old_features})
         return preds, features
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old local model
         old_model = self.clone_and_freeze_model(self.model)
@@ -80,6 +80,9 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
+        return super().get_parameters(config)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
@@ -114,11 +117,61 @@ class MoonClient(BasicClient):
             X=torch.cat(old_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5
         )
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Computes loss given predictions and features of the model and ground truth data. Loss includes
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For MOON, the loss is the total loss and the additional losses are the loss, contrastive loss, and total loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `contrastive_loss` and `total loss` keys and their calculated values.
+        """
+
+        loss = self.criterion(preds["prediction"], target)
+        total_loss = loss.clone()
+        additional_losses = {
+            "loss": loss,
+        }
+
+        if self.contrastive_weight and "old_features" in features:
+            contrastive_loss = self.contrastive_loss(
+                features["features"], features["global_features"].unsqueeze(0), features["old_features"]
+            )
+            total_loss += self.contrastive_weight * contrastive_loss
+            additional_losses["contrastive_loss"] = contrastive_loss
+
+        elif self.mkmmd_loss_weights and "old_features" in features:
+            min_mkmmd_loss = self.mkmmd_loss(features["features"], features["global_features"])
+            max_mkmmd_loss = self.mkmmd_loss(features["features"], features["old_features"][-1])
+            total_loss += (
+                self.mkmmd_loss_weights[0] * min_mkmmd_loss.sum() - self.mkmmd_loss_weights[1] * max_mkmmd_loss.sum()
+            )
+            additional_losses["min_mkmmd_loss"] = min_mkmmd_loss
+            additional_losses["max_mkmmd_loss"] = max_mkmmd_loss
+
+        additional_losses["total_loss"] = total_loss
+
+        return total_loss, additional_losses
+
+    def compute_training_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> TrainingLosses:
+        """
+        Computes training loss given predictions and features of the model and ground truth data. Loss includes
         base loss plus a model contrastive loss.
 
         Args:
@@ -128,26 +181,37 @@ class MoonClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+            indexed by name.
         """
         if len(self.old_models_list) == 0:
-            return super().compute_loss(preds, features, target)
+            return super().compute_training_loss(preds, features, target)
 
-        loss = self.criterion(preds["prediction"], target)
-        total_loss = loss.clone()
-        additional_losses = {}
+        total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 
-        if self.contrastive_weight:
-            contrastive_loss = self.contrastive_loss(
-                features["features"], features["global_features"].unsqueeze(0), features["old_features"]
-            )
-            total_loss += self.contrastive_weight * contrastive_loss
-            additional_losses["contrastive_loss"] = contrastive_loss
-        elif self.mkmmd_loss_weights:
-            min_mkmmd_loss = self.mkmmd_loss(features["features"], features["global_features"])
-            max_mkmmd_loss = self.mkmmd_loss(features["features"], features["old_features"][-1])
-            total_loss += self.mkmmd_loss_weights[0] * min_mkmmd_loss - self.mkmmd_loss_weights[1] * max_mkmmd_loss
-            additional_losses["min_mkmmd_loss"] = min_mkmmd_loss
-            additional_losses["max_mkmmd_loss"] = max_mkmmd_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
-        return losses
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions and features of the model and ground truth data. Loss includes
+        base loss plus a model contrastive loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
+                additional losses indexed by name.
+        """
+        if len(self.old_models_list) == 0:
+            return super().compute_evaluation_loss(preds, features, target)
+
+        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)
