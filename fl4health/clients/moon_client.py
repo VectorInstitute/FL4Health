@@ -89,7 +89,7 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old local model
         old_model = self.clone_and_freeze_model(self.model)
@@ -97,6 +97,9 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
+        return super().get_parameters(config)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
