@@ -64,8 +64,8 @@ class MoonClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
-        if len(self.old_models_list) == self.len_old_models_buffer:
-            old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
+        if len(self.old_models_list) > 0:
+            old_features = torch.zeros(len(self.old_models_list), *features["features"].size()).to(self.device)
             for i, old_model in enumerate(self.old_models_list):
                 _, old_model_features = old_model(input)
                 old_features[i] = old_model_features["features"]
