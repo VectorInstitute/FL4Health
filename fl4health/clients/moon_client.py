@@ -89,7 +89,7 @@ class MoonClient(BasicClient):
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
-        if self.mkmmd_loss_weights:
+        if self.mkmmd_loss_weights and len(self.old_models_list) > 0:
             self.set_optimized_betas(self.mkmmd_loss, self.old_models_list[-1], self.global_model)
 
     def set_optimized_betas(
