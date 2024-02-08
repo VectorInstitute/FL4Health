@@ -60,12 +60,14 @@ class MoonClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
-        old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
-        for i, old_model in enumerate(self.old_models_list):
-            _, old_model_features = old_model(input)
-            old_features[i] = old_model_features["features"]
-        _, global_model_features = self.global_model(input)
-        features.update({"global_features": global_model_features["features"], "old_features": old_features})
+        # If there are no models in the old_models_list, we don't compute the features for the contrastive loss
+        if len(self.old_models_list) > 0:
+            old_features = torch.zeros(len(self.old_models_list), *features["features"].size()).to(self.device)
+            for i, old_model in enumerate(self.old_models_list):
+                _, old_model_features = old_model(input)
+                old_features[i] = old_model_features["features"]
+            _, global_model_features = self.global_model(input)
+            features.update({"global_features": global_model_features["features"], "old_features": old_features})
         return preds, features
 
     def get_contrastive_loss(
@@ -89,14 +91,17 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def get_parameters(self, config: Config) -> NDArrays:
         assert isinstance(self.model, MoonModel)
-        # Save the parameters of the old local model
+        # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
+        return super().get_parameters(config)
+
+    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         # Set the parameters of the model
         super().set_parameters(parameters, config)
 
@@ -161,10 +166,12 @@ class MoonClient(BasicClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
             indexed by name.
         """
+        # If there are no old local models in the list (first pass of MOON training), we just do basic loss
+        #  calculations
         if len(self.old_models_list) == 0:
-            return super().compute_training_loss(preds, features, target)
-
-        total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+            total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        else:
+            total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 
     def compute_evaluation_loss(
@@ -187,8 +194,13 @@ class MoonClient(BasicClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
                 additional losses indexed by name.
         """
+        # If there are no old local models in the list (first pass of MOON training), we just do basic loss
+        # calculations
         if len(self.old_models_list) == 0:
-            return super().compute_evaluation_loss(preds, features, target)
-
-        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)
+            checkpoint_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        else:
+            _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+            # Note that the first parameter returned is the "total loss", which includes the contrastive loss
+            # So we use the vanilla loss stored in additional losses for checkpointing.
+            checkpoint_loss = additional_losses["loss"]
+        return EvaluationLosses(checkpoint=checkpoint_loss, additional_losses=additional_losses)
