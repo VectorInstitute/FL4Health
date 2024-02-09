@@ -3,9 +3,7 @@ from functools import partial
 from typing import Any, Dict
 
 import flwr as fl
-import torch.nn as nn
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
@@ -16,11 +14,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters(model: nn.Module) -> Parameters:
-    # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def fit_config(
@@ -67,7 +61,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
         adaptive_proximal_weight=config["adaptive_proximal_weight"],
         proximal_weight=config["proximal_weight"],
     )
