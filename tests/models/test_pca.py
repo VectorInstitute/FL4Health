@@ -24,7 +24,7 @@ def setup_random_seeds() -> Generator[None, None, None]:
     unset_all_random_seeds()
 
 
-def create_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> Tensor:
+def create_full_rank_data() -> Tensor:
     # Create a full-rank data matrix of size (N, data_dimension).
     # Since torch.rand() is very likely to return a full-rank matrix,
     # we use it to achieve this (after setting seed).
@@ -33,7 +33,7 @@ def create_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> Te
     return X
 
 
-def create_low_rank_data(setup_random_seeds: Generator[None, None, None]) -> Tensor:
+def create_low_rank_data() -> Tensor:
     # Create a low-rank data matrix of size (N, data_dimension) and rank = low_rank.
     A = torch.rand(small_rank - 1, data_dimension)
     assert torch.linalg.matrix_rank(A) == small_rank - 1
@@ -60,7 +60,7 @@ def test_reshaping() -> None:
 
 def test_centering(setup_random_seeds: Generator[None, None, None]) -> None:
     # Test that the pca module properly centers the data matrix.
-    X = create_full_rank_data(setup_random_seeds)
+    X = create_full_rank_data()
     data_mean = torch.mean(X, dim=0)
     pca_module = PcaModule()
     X_prime = pca_module.prepare_data_forward(X, center_data=True)
@@ -72,7 +72,7 @@ def test_centering(setup_random_seeds: Generator[None, None, None]) -> None:
 
 def test_full_svd_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=True)
-    X = create_full_rank_data(setup_random_seeds)
+    X = create_full_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
     pca_module.set_principal_components(principal_components, singular_values)
@@ -85,7 +85,7 @@ def test_full_svd_full_rank_data(setup_random_seeds: Generator[None, None, None]
 
 def test_full_svd_low_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=True)
-    X = create_low_rank_data(setup_random_seeds)
+    X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
     # Since X is low-rank, it is expected that only the first small_rank singular values should be nonzero.
@@ -112,7 +112,7 @@ def test_reduced_svd_full_rank_data(setup_random_seeds: Generator[None, None, No
 
 def test_reduced_svd_low_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=False)
-    X = create_low_rank_data(setup_random_seeds)
+    X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
     assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-4)
@@ -126,7 +126,7 @@ def test_low_rank_svd(setup_random_seeds: Generator[None, None, None]) -> None:
     # Following the same approach, we test the low_rank svd functionality.
     q = small_rank + 4
     pca_module = PcaModule(low_rank=True, full_svd=False, rank_estimation=q)
-    X = create_low_rank_data(setup_random_seeds)
+    X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == q and len(singular_values) == q
     assert torch.allclose(singular_values[small_rank:], torch.zeros(q - small_rank), atol=5e-4)

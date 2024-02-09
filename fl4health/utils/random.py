@@ -32,4 +32,4 @@ def unset_all_random_seeds() -> None:
     log(INFO, "Setting all random seeds to None.")
     random.seed(None)
     np.random.seed(None)
-    torch.manual_seed(None)
+    torch.seed()
