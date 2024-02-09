@@ -50,10 +50,12 @@ def test_setting_global_model(get_client: MoonClient) -> None:  # noqa
         assert (params[i] == global_params[i]).all()
 
     # Make sure the globa model is not set to train
+    assert moon_client.global_model.training is False
     for param in moon_client.global_model.parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
+    assert moon_client.model.training is True
     for param in moon_client.model.parameters():
         assert param.requires_grad is True
 
@@ -77,15 +79,17 @@ def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
     old_model_params = [
         copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.old_models_list[0].state_dict().items()
     ]
-    # Make sure the MOON model parameters are equal to the global model parameters
+    # Make sure the MOON model parameters are equal to the old model parameters
     for i in range(len(params)):
         assert (params[i] == old_model_params[i]).all()
 
-    # Make sure the old model is not set to train
+    # Make sure the all old models is not set to train
+    assert moon_client.old_models_list[0].training is False
     for param in moon_client.old_models_list[0].parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
+    assert moon_client.model.training is True
     for param in moon_client.model.parameters():
         assert param.requires_grad is True
 

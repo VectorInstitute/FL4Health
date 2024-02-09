@@ -783,8 +783,8 @@ class BasicClient(NumPyClient):
 
     def update_before_train(self, current_server_round: int) -> None:
         """
-        Hook method called before strating training with the number of current server round performed.
-        For example, used by Moon and Fenda model and fenda to save global model after aggregation.
+        Hook method called before training with the number of current server rounds performed.
+        For example, used by Moon and Fenda model to save global modules after aggregation.
 
         Args:
             current_server_round (int): The number of current server round.
@@ -796,7 +796,8 @@ class BasicClient(NumPyClient):
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training. Also used to save previous train model weights by Moon and Fenda model.
+        returned during training. Also used by Moon and Fenda model to save trained modules weights before
+        aggregation.
 
         Args:
             local_steps (int): The number of steps in the local training.

@@ -30,6 +30,7 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
     fenda_client.get_parameters(config)
 
     assert isinstance(fenda_client.old_local_module, torch.nn.Module)
+    assert fenda_client.old_local_module.training is False
     for param in fenda_client.old_local_module.parameters():
         assert param.requires_grad is False
 
@@ -38,6 +39,7 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
         assert (params_local[i] == old_local_module_params[i]).all()
 
     assert isinstance(fenda_client.old_global_module, torch.nn.Module)
+    assert fenda_client.old_global_module.training is False
     for param in fenda_client.old_global_module.parameters():
         assert param.requires_grad is False
 
@@ -68,11 +70,13 @@ def test_setting_global_model(get_fenda_client: FendaClient) -> None:  # noqa
     for i in range(len(aggregate_params)):
         assert (aggregate_params[i] == global_params[i]).all()
 
-    # Make sure the aggregated module is not set to train d
+    # Make sure the aggregated module is not set to train
+    assert fenda_client.aggregated_global_module.training is False
     for param in fenda_client.aggregated_global_module.parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
+    assert fenda_client.model.training is True
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
 
@@ -116,13 +120,15 @@ def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
         assert (global_params[i] == old_global_params[i]).all()
 
     # Make sure the old global and local module is not set to train
+    assert fenda_client.old_local_module.training is False
     for param in fenda_client.old_local_module.parameters():
         assert param.requires_grad is False
-
+    assert fenda_client.old_global_module.training is False
     for param in fenda_client.old_global_module.parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
+    assert fenda_client.model.training is True
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
 
