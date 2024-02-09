@@ -1,5 +1,5 @@
 # FedProx Federated Variational Auto-encoder Example
-This is an example implementation of training a Variational Auto-encoder model on the MNIST dataset. This example used the FedProx strategy to train personalized variational autoencoders with adaptive proximal weight. The server uses Federated Averaging to aggregate the VAE model weights. The structure of the encoder and decoder models are defined in `models.py``.
+This is an example implementation of training a Variational Auto-encoder model on the MNIST dataset. This example uses the FedProx strategy to train personalized variational autoencoders with adaptive proximal weight. The server uses Federated Averaging to aggregate the VAE model weights. The structure of the encoder and decoder models are defined in `models.py``.
 
 ## Running the Example
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.

@@ -39,8 +39,8 @@ class VaeFedProxClient(FedProxClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         # The base_loss is the loss function used for comparing the original and generated image pixels.
-        # In this example, data is in binary scale, therefore binary cross entropy is used.
-        base_loss = torch.nn.BCELoss(reduction="sum")
+        # We are using MSE loss to calculate the difference between the reconstructed and original images.
+        base_loss = torch.nn.MSELoss(reduction="sum")
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
         return VaeLoss(latent_dim, base_loss)
 

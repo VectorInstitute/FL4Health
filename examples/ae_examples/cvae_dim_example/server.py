@@ -49,7 +49,8 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    model = MnistNet(int(config["latent_dim"]))
+    # Dimensionality reduction reduces the size of inputs to the size of cat(mu, logvar).
+    model = MnistNet(int(config["latent_dim"]) * 2)
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)

@@ -55,7 +55,7 @@ def test_conditional_variational_autoencoder_model_base() -> None:
     # Create a dummy dataset for testing
     dummy_dataset = DummyDataset(data_vector_size)
     # Test AutoEncoderDatasetConverter with condition based on data label.
-    autoencoder_converter = AutoEncoderDatasetConverter(condition="label")
+    autoencoder_converter = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     converted_data = autoencoder_converter.convert_dataset(dummy_dataset)
 
     # Model Settings
@@ -65,7 +65,9 @@ def test_conditional_variational_autoencoder_model_base() -> None:
     # Initiate Conditional Variational model
     encoder = VariationalEncoder(embedding_size, condition_vector_size)
     decoder = VariationalDecoder(embedding_size, condition_vector_size)
-    autoencoder = ConditionalVae(encoder=encoder, decoder=decoder, converter=autoencoder_converter)
+    autoencoder = ConditionalVae(
+        encoder=encoder, decoder=decoder, unpack_input_condition=autoencoder_converter.get_unpacking_function()
+    )
 
     # Create data loader
     data_loader = DataLoader(converted_data, batch_size=batch_size)

@@ -1,24 +1,22 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import torch
 import torch.nn as nn
 
-from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
-
 
 class AbstractAe(nn.Module, ABC):
-    """The base class for all Encoder-Decoder based models.
-    All we need to define such model is the type of the model, and the structure
-    of the encoder and the decoder modules. This type of model should have the capability
-    to encode data using the encoder module and decode the output of the encoder using the decoder module.
-    """
-
     def __init__(
         self,
         encoder: nn.Module,
         decoder: nn.Module,
     ) -> None:
+        """
+        The base class for all autoencoder based models.
+        All we need to define such model is the type of the model, and the structure
+        of the encoder and the decoder modules. This type of model should have the capability
+        to encode data using the encoder module and decode the output of the encoder using the decoder module.
+        """
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -47,17 +45,14 @@ class BasicAe(AbstractAe):
 
 
 class VariationalAe(AbstractAe):
-    """Variational Auto-Encoder model base class."""
-
     def __init__(
         self,
         encoder: nn.Module,
         decoder: nn.Module,
     ) -> None:
-        """Initializes the VariationalAE class.
+        """Variational Auto-Encoder model base class.
 
         Args:
-            model_type (AutoEncoderType): The model type should be VARIATIONAL_AE.
             encoder (nn.Module): Encoder module defined by the user.
             decoder (nn.Module): Decoder module defined by the user.
         """
@@ -74,7 +69,7 @@ class VariationalAe(AbstractAe):
     def sampling(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        return eps.mul(std).add_(mu)
+        return mu + eps * std
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         mu, logvar = self.encode(input)
@@ -83,26 +78,25 @@ class VariationalAe(AbstractAe):
         # Output (reconstruction) is flattened to be concatenated with mu and logvar vectors.
         # The shape of the flattened_output can be later restored by having the training data shape,
         # or the decoder structure.
+        # This assumes output is "batch first".
         flattened_output = output.view(output.shape[0], -1)
         return torch.cat((logvar, mu, flattened_output), dim=1)
 
 
 class ConditionalVae(AbstractAe):
     def __init__(
-        self, encoder: nn.Module, decoder: nn.Module, converter: Optional[AutoEncoderDatasetConverter] = None
+        self, encoder: nn.Module, decoder: nn.Module, unpack_input_condition: Optional[Callable] = None
     ) -> None:
         """Conditional Variatioan Auto-Encoder model.
 
         Args:
             encoder (nn.Module): The encoder used to map input to latent space.
             decoder (nn.Module): The decoder used to reconstruct the input using a vector in latent space.
-
-        Returns:
-            _type_: _description_
+            unpack_input_condition (Optional[Callable], optional): For unpacking the input and condition tensors.
         """
 
         super().__init__(encoder, decoder)
-        self.converter = converter
+        self.unpack_input_condition = unpack_input_condition
 
     def encode(
         self, input: torch.Tensor, condition: Optional[torch.Tensor] = None
@@ -121,16 +115,17 @@ class ConditionalVae(AbstractAe):
     def sampling(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
-        return eps.mul(std).add_(mu)
+        return mu + eps * std
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        assert self.converter is not None
-        input, condition = self.converter.unpack_input_condition(input)
+        assert self.unpack_input_condition is not None
+        input, condition = self.unpack_input_condition(input)
         mu, logvar = self.encode(input, condition)
         z = self.sampling(mu, logvar)
         output = self.decode(z, condition)
         # Output (reconstruction) is flattened to be concatenated with mu and logvar vectors.
         # The shape of the flattened_output can be later restored by having the training data shape,
         # or the decoder structure.
+        # This assumes output is "batch first".
         flattened_output = output.view(output.shape[0], -1)
         return torch.cat((logvar, mu, flattened_output), dim=1)

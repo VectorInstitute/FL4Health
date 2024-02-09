@@ -32,11 +32,11 @@ class MnistVariationalDecoder(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.fc4 = nn.Linear(latent_dim, 256)
-        self.fc5 = nn.Linear(256, 512)
-        self.fc6 = nn.Linear(512, output_size)
+        self.fc1 = nn.Linear(latent_dim, 256)
+        self.fc2 = nn.Linear(256, 512)
+        self.fc3 = nn.Linear(512, output_size)
 
     def forward(self, latent_vector: torch.Tensor) -> torch.Tensor:
-        latent_vector = F.relu(self.fc4(latent_vector))
-        latent_vector = F.relu(self.fc5(latent_vector))
-        return F.sigmoid(self.fc6(latent_vector))
+        latent_vector = F.relu(self.fc1(latent_vector))
+        latent_vector = F.relu(self.fc2(latent_vector))
+        return F.sigmoid(self.fc3(latent_vector))

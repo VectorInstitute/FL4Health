@@ -22,7 +22,8 @@ def kl_divergence_normal(
 
 
 def test_analytical_kl_divergence_loss() -> None:
-    vae_loss = VaeLoss(latent_dim=10)
+    base_loss = torch.nn.MSELoss(reduction="sum")
+    vae_loss = VaeLoss(latent_dim=10, base_loss=base_loss)
     mu = torch.randn(10)
     logvar = torch.randn(10)
 
@@ -33,7 +34,7 @@ def test_analytical_kl_divergence_loss() -> None:
     kl_divergence_value = kl_divergence_normal((mu, logvar), (mu_p, logvar_p))
 
     # Calculate the KL divergence using the VaeLoss method
-    calculated_kl_loss = vae_loss.standard_kl_divergence_loss(mu, logvar)
+    calculated_kl_loss = vae_loss.standard_normal_kl_divergence_loss(mu, logvar)
 
     # Check if the calculated KL divergence is close to the expected value
     tolerance = 1e-5
@@ -41,7 +42,8 @@ def test_analytical_kl_divergence_loss() -> None:
 
 
 def test_unpack_model_output() -> None:
-    vae_loss = VaeLoss(latent_dim=5)
+    base_loss = torch.nn.MSELoss(reduction="sum")
+    vae_loss = VaeLoss(latent_dim=5, base_loss=base_loss)
 
     # Create dummy input 3D tensor with dummy mu and logvar
     batch_size = 5

@@ -71,7 +71,7 @@ def test_autoencoder_converter_label_conditioned() -> None:
     # Create a dummy dataset for testing
     dummy_dataset = DummyDataset()
     # Initialize the converter and convert the dataset.
-    autoencoder_converter_label = AutoEncoderDatasetConverter(condition="label")
+    autoencoder_converter_label = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     autoencoder_converter_label.convert_dataset(dummy_dataset)
     # Get the size of condition vector (condition is one_hot_encoded target)
     num_conditions = autoencoder_converter_label.get_condition_vector_size()
@@ -89,14 +89,16 @@ def test_pack_unpack() -> None:
     # Create a dummy dataset for testing
     dummy_dataset = DummyDataset()
     # Initiate the data converter
-    autoencoder_converter = AutoEncoderDatasetConverter(condition="label")
+    autoencoder_converter = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     # Convert the dataset
     converted_data = autoencoder_converter.convert_dataset(dummy_dataset)
     # create data loader
     data_loader = DataLoader(converted_data, batch_size=batch_size)
     # A normal training loop
     for data_batch, target_batch in data_loader:
-        data_batch, condition_batch = autoencoder_converter.unpack_input_condition(data_batch)
+        data_batch, condition_batch = autoencoder_converter.unpack_input_condition(
+            data_batch, autoencoder_converter.get_condition_vector_size(), autoencoder_converter.data_shape
+        )
         # Check the unpacked data shape is as expected.
         assert data_batch.shape == torch.Size(
             [batch_size, autoencoder_converter.data_shape[0], autoencoder_converter.data_shape[1]]

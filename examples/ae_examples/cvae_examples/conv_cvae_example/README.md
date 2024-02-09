@@ -1,5 +1,5 @@
 # Federated Convolutional CVAE Example
-This is an example implementation of training a Convolutional Conditional Variational Auto-encoder model on the MNIST dataset. In this example, the model is conditioned based on a client-specific ID that is an integer associated with the client. This allows the model to learn a specific mapping of the input to the latent representation while being conditioned on the specific client feature space, potentially leading to more personalized representations. A data converter (`AutoEncoderDatasetConverter`) is initiated using the condition vector and then used for converting the data into the proper format for training. This converter can be initiated with any user defined vector for the condition, alternatively, user can pass `label` as the condition which conditions each data sample on its label. In this example, the client is a BasicClient, but it can instead inherit from any of the available client classes. The server uses Federated Averaging to aggregate the CVAE model weights. In this example, the condition is fed into the encoder after the convolutional layers.
+This is an example implementation of training a Convolutional Conditional Variational Auto-encoder model on the MNIST dataset. In this example, each data sample has a specific condition that is the binary representation of their class. To do so, a data converter (`AutoEncoderDatasetConverter`) is initiated with a customized converter function (`binary_class_condition_data_converter`), then used for converting the data into the proper format for training. Alternatively, user can pass `label` as the condition with `do_one_hot_encoding= True` which conditions each data sample on its one hot encoded vector of the label. Notably, all the clients should use the same convertor function for consistency. In the encoder module, the condition is fed after the convolutional layers. Eventhough the client in this example is a BasicClient, users have the option to inherit from any of the available client classes instead. The server uses Federated Averaging to aggregate the CVAE model weights.
 
 
 ## Running the Example
@@ -24,7 +24,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 Once the server has started and logged "FL starting," the next step, in separate terminals, is to start the two
 clients. This is done by simply running (remembering to activate your environment)
 ```
-python -m examples.cvae_example.conv_cvae_example.client --dataset_path /path/to/data --condition "client's ID number" --num_conditions "total number of clients (client IDs)"
+python -m examples.cvae_example.conv_cvae_example.client --dataset_path /path/to/data
 ```
 **NOTE**: The argument `dataset_path` has two functions, depending on whether the dataset exists locally or not. If
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
@@ -32,16 +32,10 @@ automatically downloaded to the path specified and used in the run.
 
 After both clients have been started federated learning should commence.
 
-**NOTE**: In this example, the argument `condition ` is used to set a client-specific condition on the CVAE model. Here, client IDs are used as the condition on their data. The next argument `num_conditions` is used to create a one hot encoded condition vector for each client.
-
 
 ### In this example
 You can use the following commands to run the clients.
-Client 0:
+
 ```
-python -m examples.ae_examples.cvae_examples.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition 0  --num_conditions 2
-```
-Client 1:
-```
-python -m examples.ae_examples.cvae_examples.conv_cvae_example.client --dataset_path examples/datasets/MNIST --condition 1  --num_conditions 2
+python -m examples.ae_examples.cvae_examples.conv_cvae_example.client --dataset_path examples/datasets/MNIST
 ```

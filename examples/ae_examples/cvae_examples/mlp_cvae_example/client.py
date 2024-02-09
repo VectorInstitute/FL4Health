@@ -26,7 +26,7 @@ class CondAutoEncoderClient(BasicClient):
     def __init__(
         self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: torch.Tensor
     ) -> None:
-        BasicClient.__init__(self, data_path, metrics, DEVICE)
+        super().__init__(data_path, metrics, DEVICE)
         # In this example, condition is based on client ID.
         self.condition_vector = condition
         # To train an autoencoder-based model we need to define a data converter that prepares the data
@@ -54,8 +54,8 @@ class CondAutoEncoderClient(BasicClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         # The base_loss is the loss function used for comparing the original and generated image pixels.
-        # In this example, data is in binary scale, therefore binary cross entropy is used.
-        base_loss = torch.nn.BCELoss(reduction="sum")
+        # We are using MSE loss to calculate the difference between the reconstructed and original images.
+        base_loss = torch.nn.MSELoss(reduction="sum")
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
         return VaeLoss(latent_dim, base_loss)
 
@@ -64,9 +64,15 @@ class CondAutoEncoderClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        # The input/output size is the flattened MNIST image size.
         encoder = MnistConditionalEncoder(input_size=784, latent_dim=latent_dim)
         decoder = MnistConditionalDecoder(latent_dim=latent_dim, output_size=784)
-        return ConditionalVae(encoder=encoder, decoder=decoder, converter=self.autoencoder_converter)
+        # The unpacking function is passed to the CVAE model to unpack the input tensor to data and condition tensors.
+        # Client's data is converted using autoencoder_converter in get_data_loaders.
+        # Note: setup_client() shuld first initialize the data loaders and then the model
+        # to be able to initiate the model with the unpacking method of the converted dataset.
+        unpacking_function = self.autoencoder_converter.get_unpacking_function()
+        return ConditionalVae(encoder=encoder, decoder=decoder, unpack_input_condition=unpacking_function)
 
 
 if __name__ == "__main__":
@@ -88,7 +94,7 @@ if __name__ == "__main__":
     set_all_random_seeds(42)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    # Create the condition vector.
+    # Create the condition vector. This creation needs to be "consistent" across clients.
     # In this example, condition is based on client ID.
     # Client should decide how they want to create their condition vector.
     # Here we use simple one_hot_encoding but it can be any vector.

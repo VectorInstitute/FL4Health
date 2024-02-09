@@ -562,9 +562,10 @@ class BasicClient(NumPyClient):
         Args:
             config (Config): The config from the server.
         """
+        # First set up the data as model might need special instructions to treat different data.
+        train_loader, val_loader = self.get_data_loaders(config)
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
-        train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
 

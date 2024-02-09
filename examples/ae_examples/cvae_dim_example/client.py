@@ -22,7 +22,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class CvaeDimClient(BasicClient):
     def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: torch.Tensor):
-        BasicClient.__init__(self, data_path, metrics, DEVICE)
+        super().__init__(data_path, metrics, DEVICE)
         self.condition = condition
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -47,7 +47,8 @@ class CvaeDimClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
-        return MnistNet(latent_dim).to(self.device)
+        # Dimensionality reduction reduces the size of inputs to the size of cat(mu, logvar).
+        return MnistNet(latent_dim * 2).to(self.device)
 
 
 if __name__ == "__main__":

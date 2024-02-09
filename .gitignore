@@ -161,4 +161,5 @@ settings.json
 
 **/*.pkl
 **/*.png
+**/*.pt
 /metrics/
