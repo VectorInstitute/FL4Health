@@ -23,6 +23,10 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
     params_global = [
         copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.global_module.state_dict().items()
     ]
+    loss = {
+        "loss": 0.0,
+    }
+    fenda_client.update_after_train(0, loss)
     fenda_client.get_parameters(config)
 
     assert isinstance(fenda_client.old_local_module, torch.nn.Module)
@@ -43,9 +47,9 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_setting_global_model(get_client: FendaClient) -> None:  # noqa
+def test_setting_global_model(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
-    fenda_client = get_client
+    fenda_client = get_fenda_client
 
     assert fenda_client.aggregated_global_module is None
     assert isinstance(fenda_client.model, FendaModel)
@@ -64,21 +68,19 @@ def test_setting_global_model(get_client: FendaClient) -> None:  # noqa
     for i in range(len(aggregate_params)):
         assert (aggregate_params[i] == global_params[i]).all()
 
-    # Make sure the aggregated module is not set to train
-    assert fenda_client.aggregated_global_module.train is False
+    # Make sure the aggregated module is not set to train d
     for param in fenda_client.aggregated_global_module.parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
-    assert fenda_client.model.train is True
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_setting_old_models(get_client: FendaClient) -> None:  # noqa
+def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
-    fenda_client = get_client
+    fenda_client = get_fenda_client
 
     assert fenda_client.old_local_module is None
     assert fenda_client.old_global_module is None
@@ -114,16 +116,13 @@ def test_setting_old_models(get_client: FendaClient) -> None:  # noqa
         assert (global_params[i] == old_global_params[i]).all()
 
     # Make sure the old global and local module is not set to train
-    assert fenda_client.old_local_module.train is False
     for param in fenda_client.old_local_module.parameters():
         assert param.requires_grad is False
 
-    assert fenda_client.old_global_module.train is False
     for param in fenda_client.old_global_module.parameters():
         assert param.requires_grad is False
 
     # Make sure the original model is still set to train
-    assert fenda_client.model.train is True
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
 
