@@ -92,7 +92,7 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def update_before_train(self, current_server_round: int) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
@@ -100,12 +100,13 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
-        return super().update_before_train(current_server_round)
+        return super().update_after_train(local_steps, loss_dict)
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
-        return super().update_after_train(local_steps, loss_dict)
+
+        return super().update_before_train(current_server_round)
 
     def compute_loss_and_additional_losses(
         self,
