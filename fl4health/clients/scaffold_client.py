@@ -11,7 +11,7 @@ from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacy
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
@@ -178,13 +178,13 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
         losses.backward["backward"].backward()

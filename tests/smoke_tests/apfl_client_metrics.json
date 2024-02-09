@@ -7,7 +7,6 @@
                 "train - local - accuracy": 0.5312
             },
             "loss_dict": {
-                "checkpoint": 1.2816,
                 "backward": 1.2816,
                 "global": 1.1172,
                 "local": 1.5267
@@ -26,7 +25,6 @@
                 "train - local - accuracy": 0.8453
             },
             "loss_dict": {
-                "checkpoint": 0.3687,
                 "backward": 0.3687,
                 "global": 0.3495,
                 "local": 0.4544
@@ -45,7 +43,6 @@
                 "train - local - accuracy": 0.8671
             },
             "loss_dict": {
-                "checkpoint": 0.3044,
                 "backward": 0.3044,
                 "global": 0.2709,
                 "local": 0.4339

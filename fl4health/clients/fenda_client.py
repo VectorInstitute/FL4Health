@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -185,28 +185,33 @@ class FendaClient(BasicClient):
 
         return contrastive_loss_minimize, contrastive_loss_maximize
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Computes loss given predictions of the model and ground truth data. Optionally computes additional loss
-        components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on client attributes
-        set from server config.
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
+        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-                All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
+                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
+                    keys and their respective calculated values.
         """
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
-        additional_losses = {}
+        additional_losses = {"loss": loss}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
@@ -243,6 +248,31 @@ class FendaClient(BasicClient):
             additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
             additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
+        additional_losses["total_loss"] = total_loss
 
-        return losses
+        return total_loss, additional_losses
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions of the model and ground truth data. Optionally computes
+        additional loss components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on
+        client attributes set from server config.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss
+                and perfcl_loss.
+        """
+        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

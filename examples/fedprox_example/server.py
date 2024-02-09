@@ -5,8 +5,7 @@ from typing import Any, Dict, Optional
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
@@ -16,15 +15,8 @@ from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-
-
-def get_initial_model_information() -> Parameters:
-    # Initializing the model parameters on the server side.
-    # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MnistNet()
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
 
 
 def fit_config(
@@ -65,7 +57,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_parameters = get_initial_model_information()
+    initial_model = MnistNet()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedProx(
@@ -78,7 +70,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=initial_parameters,
+        initial_parameters=get_all_model_parameters(initial_model),
         adaptive_proximal_weight=config["adaptive_proximal_weight"],
         proximal_weight=config["proximal_weight"],
         proximal_weight_delta=config["proximal_weight_delta"],

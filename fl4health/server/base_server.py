@@ -166,7 +166,6 @@ class FlServer(Server):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
-
         self.metrics_reporter.add_to_metrics_at_round(server_round, data={"evaluate_start": datetime.datetime.now()})
 
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
