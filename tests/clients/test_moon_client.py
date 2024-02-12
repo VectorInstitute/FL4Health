@@ -59,6 +59,8 @@ def test_setting_global_model(get_client: MoonClient) -> None:  # noqa
     for param in moon_client.model.parameters():
         assert param.requires_grad is True
 
+    torch.seed()  # resetting the seed at the end, just to be safe
+
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
 def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
@@ -92,6 +94,8 @@ def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
     assert moon_client.model.training is True
     for param in moon_client.model.parameters():
         assert param.requires_grad is True
+
+    torch.seed()  # resetting the seed at the end, just to be safe
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
