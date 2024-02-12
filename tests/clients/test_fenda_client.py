@@ -47,6 +47,8 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
     for i in range(len(params_global)):
         assert (params_global[i] == old_global_module_params[i]).all()
 
+    torch.seed()  # resetting the seed at the end, just to be safe
+
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
 def test_setting_global_model(get_fenda_client: FendaClient) -> None:  # noqa
@@ -79,6 +81,8 @@ def test_setting_global_model(get_fenda_client: FendaClient) -> None:  # noqa
     assert fenda_client.model.training is True
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
+
+    torch.seed()  # resetting the seed at the end, just to be safe
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
@@ -132,6 +136,8 @@ def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
     for param in fenda_client.model.parameters():
         assert param.requires_grad is True
 
+    torch.seed()  # resetting the seed at the end, just to be safe
+
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
 def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # noqa
@@ -152,6 +158,8 @@ def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # n
     contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
 
     assert contrastive_loss == pytest.approx(0.6931, rel=0.01)
+
+    torch.seed()  # resetting the seed at the end, just to be safe
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
@@ -191,3 +199,5 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
     contrastive_minimize = training_loss.additional_losses["contrastive_loss_minimize"].item()
     contrastive_maximize = training_loss.additional_losses["contrastive_loss_maximize"].item()
     assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)
+
+    torch.seed()  # resetting the seed at the end, just to be safe
