@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -100,25 +100,24 @@ class FendaClient(BasicClient):
                         )
         return preds, features
 
-    def get_parameters(self, config: Config) -> NDArrays:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
             self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
-        return super().get_parameters(config)
+        return super().update_after_train(local_steps, loss_dict)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the parameters of the model
-        super().set_parameters(parameters, config)
-
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
         if self.mkmmd_loss_weight:
             self.set_optimized_betas(self.mkmmd_loss)
+
+        return super().update_before_train(current_server_round)
 
     def set_optimized_betas(self, mkmmd_loss: MkMmdLoss) -> None:
         """Set the optimized betas for the MK-MMD loss."""

@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -48,7 +47,7 @@ class MoonClient(BasicClient):
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
-        self.global_model: torch.nn.Module
+        self.global_model: Optional[torch.nn.Module] = None
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -70,11 +69,13 @@ class MoonClient(BasicClient):
             for i, old_model in enumerate(self.old_models_list):
                 _, old_model_features = old_model(input)
                 old_features[i] = old_model_features["features"]
+            features.update({"old_features": old_features})
+        if self.global_model is not None:
             _, global_model_features = self.global_model(input)
-            features.update({"global_features": global_model_features["features"], "old_features": old_features})
+            features.update({"global_features": global_model_features["features"]})
         return preds, features
 
-    def get_parameters(self, config: Config) -> NDArrays:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
@@ -82,17 +83,16 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
-        return super().get_parameters(config)
+        return super().update_after_train(local_steps, loss_dict)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the parameters of the model
-        super().set_parameters(parameters, config)
-
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
         if self.mkmmd_loss_weights and len(self.old_models_list) > 0:
             self.set_optimized_betas(self.mkmmd_loss, self.old_models_list[-1], self.global_model)
+
+        return super().update_before_train(current_server_round)
 
     def set_optimized_betas(
         self, mkmmd_loss: MkMmdLoss, old_model: torch.nn.Module, global_model: torch.nn.Module
