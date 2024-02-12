@@ -1,5 +1,4 @@
 from abc import ABC
-from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
 import torch
@@ -159,12 +158,9 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         # We can flatten the data since self.data_shape is already saved.
         return torch.cat([data.view(-1), target]), data
 
-    def get_unpacking_function(self) -> Callable:
+    def get_unpacking_function(self, packed_input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         condition_vector_size = self.get_condition_vector_size()
-        converter_function = partial(
-            self.unpack_input_condition, cond_vec_size=condition_vector_size, data_shape=self.data_shape
-        )
-        return converter_function
+        return self.unpack_input_condition(packed_input, condition_vector_size, self.data_shape)
 
     def unpack_input_condition(
         self, packed_data: torch.Tensor, cond_vec_size: int, data_shape: torch.Size

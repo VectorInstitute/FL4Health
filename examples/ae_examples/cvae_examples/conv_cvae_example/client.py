@@ -78,9 +78,7 @@ class CondConvAutoEncoderClient(BasicClient):
         decoder = ConvConditionalDecoder(latent_dim=latent_dim)
         # The unpacking function is passed to the CVAE model to unpack the input tensor to data and condition tensors.
         # Client's data is converted using autoencoder_converter in get_data_loaders.
-        # Note: setup_client() shuld first initialize the data loaders and then the model
-        # to be able to initiate the model with the unpacking method of the converted dataset.
-        unpacking_function = self.autoencoder_converter.get_unpacking_function()
+        unpacking_function = self.autoencoder_converter.get_unpacking_function
         return ConditionalVae(encoder=encoder, decoder=decoder, unpack_input_condition=unpacking_function)
 
 

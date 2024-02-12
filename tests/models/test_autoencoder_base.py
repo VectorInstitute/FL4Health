@@ -66,7 +66,7 @@ def test_conditional_variational_autoencoder_model_base() -> None:
     encoder = VariationalEncoder(embedding_size, condition_vector_size)
     decoder = VariationalDecoder(embedding_size, condition_vector_size)
     autoencoder = ConditionalVae(
-        encoder=encoder, decoder=decoder, unpack_input_condition=autoencoder_converter.get_unpacking_function()
+        encoder=encoder, decoder=decoder, unpack_input_condition=autoencoder_converter.get_unpacking_function
     )
 
     # Create data loader
