@@ -34,24 +34,6 @@ def fit_config(
         "sparsity_level": sparsity_level,
         "current_server_round": current_server_round,
     }
-    config["fl_fit_round"] = True
-    return config
-
-
-def eval_config(
-    batch_size: int,
-    sparsity_level: float,
-    current_server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
-) -> Config:
-    config: Config = {
-        **make_dict_with_epochs_or_steps(local_epochs, local_steps),
-        "batch_size": batch_size,
-        "sparsity_level": sparsity_level,
-        "current_server_round": current_server_round,
-    }
-    config["fl_fit_round"] = False
     return config
 
 
@@ -59,14 +41,6 @@ def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["batch_size"],
-        config["sparsity_level"],
-        local_epochs=config.get("local_epochs"),
-        local_steps=config.get("local_steps"),
-    )
-
-    eval_config_fn = partial(
-        eval_config,
         config["batch_size"],
         config["sparsity_level"],
         local_epochs=config.get("local_epochs"),
@@ -84,7 +58,7 @@ def main(config: Dict[str, Any]) -> None:
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
-        on_evaluate_config_fn=eval_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(model),

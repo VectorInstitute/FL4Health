@@ -18,10 +18,7 @@ from examples.partial_weight_exchange_example.client_data import construct_datal
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import (
-    select_layers_by_percentage,
-    select_layers_by_threshold,
-)
+from fl4health.parameter_exchange.parameter_selection_criteria import SelectionFunctionConstructor
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 
@@ -105,15 +102,18 @@ class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
         norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
         exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
         select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
-        selection_function = select_layers_by_percentage if filter_by_percentage else select_layers_by_threshold
-        parameter_exchanger = DynamicLayerExchanger(
-            layer_selection_function=selection_function,
+        selection_function_constructor = SelectionFunctionConstructor(
             norm_threshold=norm_threshold,
             exchange_percentage=exchange_percentage,
             normalize=normalize,
-            filter_by_percentage=filter_by_percentage,
             select_drift_more=select_drift_more,
         )
+        layer_selection_function = (
+            selection_function_constructor.select_by_percentage()
+            if filter_by_percentage
+            else selection_function_constructor.select_by_threshold()
+        )
+        parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
 
     def test(self, num_classes: int) -> Tuple[float, float, List[float]]:

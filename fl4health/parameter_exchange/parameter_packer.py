@@ -90,6 +90,8 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         return model_parameters + parameter_indices + tensor_shapes + [np.array(tensor_names)]
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
+        # The names of the tensors is wrapped in a list, which is then transformed into an NDArrays of length 1
+        # before packing.
         assert len(packed_parameters) % 3 == 1
         split_size = (len(packed_parameters) - 1) // 3
         model_parameters = packed_parameters[:split_size]

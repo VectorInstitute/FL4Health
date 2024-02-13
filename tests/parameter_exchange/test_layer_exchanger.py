@@ -3,10 +3,7 @@ import torch
 import torch.nn as nn
 
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger, FixedLayerExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import (
-    select_layers_by_percentage,
-    select_layers_by_threshold,
-)
+from fl4health.parameter_exchange.parameter_selection_criteria import SelectionFunctionConstructor
 from tests.test_utils.models_for_test import LinearModel, ToyConvNet
 
 
@@ -42,13 +39,17 @@ def test_norm_drift_layer_exchange() -> None:
     norm_threshold = 2
     exchange_percentage = 0.5
 
-    exchanger = DynamicLayerExchanger(
-        layer_selection_function=select_layers_by_threshold,
+    selection_function_constructor = SelectionFunctionConstructor(
         norm_threshold=norm_threshold,
         exchange_percentage=exchange_percentage,
         normalize=False,
-        filter_by_percentage=False,
         select_drift_more=True,
+    )
+
+    select_layers_by_threshold_func = selection_function_constructor.select_by_threshold()
+
+    exchanger = DynamicLayerExchanger(
+        layer_selection_function=select_layers_by_threshold_func,
     )
 
     # Test selecting layers by thresholding their drift norms.
@@ -61,7 +62,9 @@ def test_norm_drift_layer_exchange() -> None:
     assert len(layer_names) == 2
 
     # Normalize when calculating drift norm.
-    exchanger.set_normalization_mode(True)
+    selection_function_constructor.normalize = True
+    select_layers_by_threshold_func_normalize = selection_function_constructor.select_by_threshold()
+    exchanger.layer_selection_function = select_layers_by_threshold_func_normalize
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layers_to_exchange) == 0
@@ -69,8 +72,8 @@ def test_norm_drift_layer_exchange() -> None:
 
     # Select the layers that drift the most in terms of l2 norm,
     # where the number of layers selected is determined by exchange_percentage.
-    exchanger.set_filter_mode(True)
-    exchanger.set_layer_selection_function(layer_selection_function=select_layers_by_percentage)
+    select_layers_by_percentage_func = selection_function_constructor.select_by_percentage()
+    exchanger.layer_selection_function = select_layers_by_percentage_func
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layer_names) == 2

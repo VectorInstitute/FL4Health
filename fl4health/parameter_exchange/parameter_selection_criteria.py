@@ -1,10 +1,52 @@
 import math
-from typing import Dict, List, Tuple
+from functools import partial
+from typing import Callable, Dict, List, Tuple
 
 import torch
 import torch.nn as nn
 from flwr.common.typing import NDArrays
 from torch import Tensor
+
+
+class SelectionFunctionConstructor:
+    def __init__(
+        self, norm_threshold: float, exchange_percentage: float, normalize: bool = True, select_drift_more: bool = True
+    ) -> None:
+        """
+        This class leverages functools.partial to construct layer selection functions,
+        which are meant to be used by the DynamicLayerExchanger class.
+
+        Args:
+            norm_threshold (float): A nonnegative real number used to select those
+                layers whose drift in l2 norm exceeds (or falls short of) it.
+            exchange_percentage (float): Indicates the percentage of layers that are selected.
+            normalize (bool, optional): Indicates whether when calculating the norm of a layer,
+                we also divide by the number of parameters in that layer. Defaults to True.
+            select_drift_more (bool, optional): Indicates whether layers with larger
+                drift norm are selected. Defaults to True.
+        """
+        assert 0 < exchange_percentage <= 1
+        assert 0 < norm_threshold
+        self.norm_threshold = norm_threshold
+        self.exchange_percentage = exchange_percentage
+        self.normalize = normalize
+        self.select_drift_more = select_drift_more
+
+    def select_by_threshold(self) -> Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]:
+        return partial(
+            select_layers_by_threshold,
+            self.norm_threshold,
+            self.normalize,
+            self.select_drift_more,
+        )
+
+    def select_by_percentage(self) -> Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]:
+        return partial(
+            select_layers_by_percentage,
+            self.exchange_percentage,
+            self.normalize,
+            self.select_drift_more,
+        )
 
 
 # Selection criteria functions for selecting entire layers. Should be used with the DynamicLayerExchanger class.
@@ -17,7 +59,11 @@ def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -
 
 
 def select_layers_by_threshold(
-    model: nn.Module, initial_model: nn.Module, threshold: float, normalize: bool, select_drift_more: bool
+    threshold: float,
+    normalize: bool,
+    select_drift_more: bool,
+    model: nn.Module,
+    initial_model: nn.Module,
 ) -> Tuple[NDArrays, List[str]]:
     """
     Return those layers of model that deviate (in l2 norm) away from corresponding layers of
@@ -42,7 +88,11 @@ def select_layers_by_threshold(
 
 
 def select_layers_by_percentage(
-    model: nn.Module, initial_model: nn.Module, exchange_percentage: float, normalize: bool, select_drift_more: bool
+    exchange_percentage: float,
+    normalize: bool,
+    select_drift_more: bool,
+    model: nn.Module,
+    initial_model: nn.Module,
 ) -> Tuple[NDArrays, List[str]]:
     names_to_norm_drift = {}
     initial_model_states = initial_model.state_dict()
@@ -63,6 +113,7 @@ def select_layers_by_percentage(
 
 # Score generating functions used for selecting arbitrary sets of weights.
 # The ones implemented here are those that demonstrated good performance in the super-mask paper.
+# Link to this paper: https://arxiv.org/abs/1905.01067
 def largest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
