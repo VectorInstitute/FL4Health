@@ -1,6 +1,6 @@
 import math
 from functools import partial
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -74,8 +74,8 @@ def select_layers_by_threshold(
     initial_model_states = initial_model.state_dict()
     model_states = model.state_dict()
     for layer_name, layer_param in model_states.items():
-        layer_param_past = initial_model_states[layer_name]
-        drift_norm = _calculate_drift_norm(layer_param, layer_param_past, normalize)
+        ghost_of_layer_params_past = initial_model_states[layer_name]
+        drift_norm = _calculate_drift_norm(layer_param, ghost_of_layer_params_past, normalize)
         if select_drift_more:
             if drift_norm > threshold:
                 layers_to_transfer.append(layer_param.cpu().numpy())
@@ -114,21 +114,22 @@ def select_layers_by_percentage(
 # Score generating functions used for selecting arbitrary sets of weights.
 # The ones implemented here are those that demonstrated good performance in the super-mask paper.
 # Link to this paper: https://arxiv.org/abs/1905.01067
-def largest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def largest_final_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
         names_to_scores[tensor_name] = torch.abs(tensor_values)
     return names_to_scores
 
 
-def smallest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def smallest_final_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
         names_to_scores[tensor_name] = (-1) * torch.abs(tensor_values)
     return names_to_scores
 
 
-def largest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def largest_magnitude_change_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+    assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
     initial_model_states = initial_model.state_dict()
@@ -138,7 +139,8 @@ def largest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module) 
     return names_to_scores
 
 
-def smallest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def smallest_magnitude_change_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+    assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
     initial_model_states = initial_model.state_dict()
@@ -148,7 +150,8 @@ def smallest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module)
     return names_to_scores
 
 
-def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+    assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
     initial_model_states = initial_model.state_dict()
@@ -158,7 +161,8 @@ def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Mod
     return names_to_scores
 
 
-def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Module) -> Dict[str, Tensor]:
+def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+    assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
     initial_model_states = initial_model.state_dict()

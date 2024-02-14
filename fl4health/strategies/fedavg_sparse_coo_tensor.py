@@ -48,6 +48,12 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         A client can send an arbitrary set of parameters within a certain tensor,
         and these parameters are packed according to the sparse COO format.
 
+        For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
+        two pages:
+            1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+            2. https://pytorch.org/docs/stable/sparse.html
+
+
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
@@ -227,6 +233,12 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         for packed_parameters, num_examples in results:
             nonzero_parameter_values, additional_info = self.parameter_packer.unpack_parameters(packed_parameters)
             parameter_indices, tensor_shapes, tensor_names = additional_info
+
+            # Sanity check to ensure that they all have the same length and the length is > 0.
+            assert (
+                len(nonzero_parameter_values) == len(parameter_indices) == len(tensor_shapes) == len(tensor_names)
+                and len(tensor_names) > 0
+            )
             for tensor_params, tensor_param_indices, tensor_shape, tensor_name in zip(
                 nonzero_parameter_values, parameter_indices, tensor_shapes, tensor_names
             ):
@@ -282,6 +294,12 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         for packed_parameters, _ in results:
             nonzero_parameter_values, additional_info = self.parameter_packer.unpack_parameters(packed_parameters)
             parameter_indices, tensor_shapes, tensor_names = additional_info
+
+            # Sanity check.
+            assert (
+                len(nonzero_parameter_values) == len(parameter_indices) == len(tensor_shapes) == len(tensor_names)
+                and len(tensor_names) > 0
+            )
             for tensor_params, tensor_param_indices, tensor_shape, tensor_name in zip(
                 nonzero_parameter_values, parameter_indices, tensor_shapes, tensor_names
             ):

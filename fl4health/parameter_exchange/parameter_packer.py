@@ -81,6 +81,12 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
     and then representing them in the sparse COO tensor format, which requires knowing
     the indices of the parameters within the tensor to which they belong,
     the shape of that tensor, and also the name of it.
+
+    For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
+    two pages:
+        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+        2. https://pytorch.org/docs/stable/sparse.html
+
     """
 
     def pack_parameters(
