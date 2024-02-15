@@ -1,5 +1,5 @@
 import math
-from logging import INFO
+from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
@@ -12,11 +12,11 @@ from torch.nn.modules import Module
 from fl4health.parameter_exchange.parameter_packer import SparseCooParameterPacker
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
+ScoreGenFunction = Callable[[nn.Module, Optional[nn.Module]], Dict[str, Tensor]]
+
 
 class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDArrays, List[str]]]):
-    def __init__(
-        self, sparsity_level: float, score_gen_function: Callable[[nn.Module, Optional[nn.Module]], Dict[str, Tensor]]
-    ) -> None:
+    def __init__(self, sparsity_level: float, score_gen_function: ScoreGenFunction) -> None:
         """
         Parameter exchanger for sparse tensors.
 
@@ -30,7 +30,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
 
         Args:
             sparsity_level (float): The level of sparsity. Must be between 0 and 1.
-            score_gen_function (Callable[..., Dict[str, Tensor]]): Function that is responsible for
+            score_gen_function (ScoreGenFunction): Function that is responsible for
             generating a score for every parameter inside a model in order to facilitate parameter selection.
 
             In most cases, this function takes as inputs a current model and an initial model,
@@ -80,7 +80,10 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         all_scores = torch.cat([val.flatten() for _, val in all_parameter_scores.items()])
         # Sorting all scores and determining the threshold.
         sorted_scores, _ = torch.sort(all_scores, descending=True)
-        top_scores = sorted_scores[: math.ceil(len(sorted_scores) * self.sparsity_level)]
+        n_top_scores = math.ceil(len(sorted_scores) * self.sparsity_level)
+        # Sanity check.
+        assert n_top_scores >= 1
+        top_scores = sorted_scores[:n_top_scores]
         score_threshold = top_scores[-1].item()
 
         # Apply the score threshold to each model tensor to obtain the corresponding sparse tensor.
@@ -93,6 +96,16 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             model_tensor = model_states[tensor_name]
             # Sanity check.
             assert model_tensor.shape == param_scores.shape
+
+            unique_score_values = torch.unique(
+                input=param_scores, sorted=False, return_inverse=False, return_counts=False
+            )
+            if len(unique_score_values) == 1:
+                log(
+                    WARNING,
+                    """All parameters have the same score.
+                The number of parameters selected may not match the intended sparsity level.""",
+                )
             # Use score_threshold to produce sparse tensors.
             model_tensor_sparse = torch.where(param_scores >= score_threshold, input=model_tensor, other=0)
             # Tensors without any parameter or whose parameter values are all zero after thresholding

@@ -24,6 +24,7 @@ class PartialWeightExchangeClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        store_initial_model: bool = False,
     ) -> None:
         """
         Client that only exchanges a subset of its parameters with the server in each communication round.
@@ -40,6 +41,10 @@ class PartialWeightExchangeClient(BasicClient):
                 each batch. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
+            store_initial_model (bool): Indicates whether the client should store a copy of the model weights
+                at the beginning of each training round. The model copy might be required to select the subset
+                of model parameters to be exchanged with the server, depending on the selection criterion used.
+                Defaults to False.
         """
         super().__init__(
             data_path=data_path,
@@ -49,10 +54,11 @@ class PartialWeightExchangeClient(BasicClient):
             checkpointer=checkpointer,
             metrics_reporter=metrics_reporter,
         )
-        # Initial model parameters to be used in calculating weight shifts during training
-        self.initial_model: nn.Module
+        # Initial model parameters to be used in selecting parameters to be exchanged during training.
+        self.initial_model: Optional[nn.Module]
         # Parameter exchanger to be used in server-client exchange of dynamic layers.
         self.parameter_exchanger: PartialParameterExchanger
+        self.store_initial_model = store_initial_model
 
     def setup_client(self, config: Config) -> None:
         """
@@ -64,7 +70,10 @@ class PartialWeightExchangeClient(BasicClient):
             config (Config): Configuration used to setup the client properly
         """
         super().setup_client(config)
-        self.initial_model = copy.deepcopy(self.model).to(self.device)
+        if self.store_initial_model:
+            self.initial_model = copy.deepcopy(self.model).to(self.device)
+        else:
+            self.initial_model = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
@@ -120,5 +129,6 @@ class PartialWeightExchangeClient(BasicClient):
                 first fitting round. Otherwise, use a PartialParameterExchanger.
         """
         super().set_parameters(parameters, config, fitting_round)
-        # Stores the values of the new model parameters at the beginning of each client training round.
-        self.initial_model.load_state_dict(self.model.state_dict(), strict=True)
+        if self.initial_model:
+            # Stores the values of the new model parameters at the beginning of each client training round.
+            self.initial_model.load_state_dict(self.model.state_dict(), strict=True)

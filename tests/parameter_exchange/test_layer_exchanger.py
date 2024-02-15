@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger, FixedLayerExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import SelectionFunctionConstructor
+from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
 from tests.test_utils.models_for_test import LinearModel, ToyConvNet
 
 
@@ -39,7 +39,7 @@ def test_norm_drift_layer_exchange() -> None:
     norm_threshold = 2
     exchange_percentage = 0.5
 
-    selection_function_constructor = SelectionFunctionConstructor(
+    selection_function_constructor = LayerSelectionFunctionConstructor(
         norm_threshold=norm_threshold,
         exchange_percentage=exchange_percentage,
         normalize=False,

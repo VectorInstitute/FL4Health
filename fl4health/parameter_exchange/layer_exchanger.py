@@ -9,6 +9,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLay
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
+LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
 
 
 class FixedLayerExchanger(ParameterExchanger):
@@ -94,19 +95,19 @@ class LayerExchangerWithExclusions(ParameterExchanger):
 class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
     def __init__(
         self,
-        layer_selection_function: Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]],
+        layer_selection_function: LayerSelectionFunction,
     ) -> None:
         """
         This exchanger selects a subset of a model's layers that at the end of each training round based
         on "layer_selection_function". Only the selected layers are exchanged with the server.
         Args:
-            layer_selection_function (Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]):
+            layer_selection_function (LayerSelectionFunction):
                 Function responsible for selecting the layers to be exchanged. This function relies
                 on extra parameters such as norm threshold or exchange percentage,
                 but we assume that it has already been pre-constructed using
-                the class SelectionFunctionConstructor, so it only needs to take
+                the class LayerSelectionFunctionConstructor, so it only needs to take
                 in two nn.Module objects as inputs. For more details, please see the
-                docstring of SelectionFunctionConstructor.
+                docstring of LayerSelectionFunctionConstructor.
         """
         self.layer_selection_function = layer_selection_function
         self.parameter_packer = ParameterPackerWithLayerNames()

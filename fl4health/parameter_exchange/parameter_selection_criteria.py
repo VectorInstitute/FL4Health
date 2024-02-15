@@ -7,8 +7,10 @@ import torch.nn as nn
 from flwr.common.typing import NDArrays
 from torch import Tensor
 
+LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
 
-class SelectionFunctionConstructor:
+
+class LayerSelectionFunctionConstructor:
     def __init__(
         self, norm_threshold: float, exchange_percentage: float, normalize: bool = True, select_drift_more: bool = True
     ) -> None:
@@ -32,7 +34,7 @@ class SelectionFunctionConstructor:
         self.normalize = normalize
         self.select_drift_more = select_drift_more
 
-    def select_by_threshold(self) -> Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]:
+    def select_by_threshold(self) -> LayerSelectionFunction:
         return partial(
             select_layers_by_threshold,
             self.norm_threshold,
@@ -40,7 +42,7 @@ class SelectionFunctionConstructor:
             self.select_drift_more,
         )
 
-    def select_by_percentage(self) -> Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]:
+    def select_by_percentage(self) -> LayerSelectionFunction:
         return partial(
             select_layers_by_percentage,
             self.exchange_percentage,
@@ -49,7 +51,8 @@ class SelectionFunctionConstructor:
         )
 
 
-# Selection criteria functions for selecting entire layers. Should be used with the DynamicLayerExchanger class.
+# Selection criteria functions for selecting entire layers. Intended to be used
+# by the DynamicLayerExchanger class via the LayerSelectionFunctionConstructor class.
 def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -> float:
     t_diff = (t1 - t2).float()
     drift_norm = torch.linalg.norm(t_diff)
