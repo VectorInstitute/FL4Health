@@ -2,12 +2,11 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -44,7 +43,7 @@ class MoonClient(BasicClient):
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
-        self.global_model: torch.nn.Module
+        self.global_model: Optional[torch.nn.Module] = None
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -60,12 +59,16 @@ class MoonClient(BasicClient):
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
-        old_features = torch.zeros(self.len_old_models_buffer, *features["features"].size()).to(self.device)
-        for i, old_model in enumerate(self.old_models_list):
-            _, old_model_features = old_model(input)
-            old_features[i] = old_model_features["features"]
-        _, global_model_features = self.global_model(input)
-        features.update({"global_features": global_model_features["features"], "old_features": old_features})
+        # If there are no models in the old_models_list, we don't compute the features for the contrastive loss
+        if len(self.old_models_list) > 0:
+            old_features = torch.zeros(len(self.old_models_list), *features["features"].size()).to(self.device)
+            for i, old_model in enumerate(self.old_models_list):
+                _, old_model_features = old_model(input)
+                old_features[i] = old_model_features["features"]
+            features.update({"old_features": old_features})
+        if self.global_model is not None:
+            _, global_model_features = self.global_model(input)
+            features.update({"global_features": global_model_features["features"]})
         return preds, features
 
     def get_contrastive_loss(
@@ -89,25 +92,68 @@ class MoonClient(BasicClient):
 
         return self.ce_criterion(logits, labels)
 
-    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         assert isinstance(self.model, MoonModel)
-        # Save the parameters of the old local model
+        # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
-        # Set the parameters of the model
-        super().set_parameters(parameters, config, fitting_round)
+        return super().update_after_train(local_steps, loss_dict)
 
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+        return super().update_before_train(current_server_round)
+
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Computes loss given predictions and features of the model and ground truth data. Loss includes
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For MOON, the loss is the total loss and the additional losses are the loss, contrastive loss, and total loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `contrastive_loss` and `total loss` keys and their calculated values.
+        """
+
+        loss = self.criterion(preds["prediction"], target)
+        total_loss = loss.clone()
+        additional_losses = {
+            "loss": loss,
+        }
+
+        if self.contrastive_weight:
+            contrastive_loss = self.get_contrastive_loss(
+                features["features"], features["global_features"], features["old_features"]
+            )
+            total_loss += self.contrastive_weight * contrastive_loss
+            additional_losses["contrastive_loss"] = contrastive_loss
+
+        additional_losses["total_loss"] = total_loss
+
+        return total_loss, additional_losses
+
+    def compute_training_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> TrainingLosses:
+        """
+        Computes training loss given predictions and features of the model and ground truth data. Loss includes
         base loss plus a model contrastive loss.
 
         Args:
@@ -117,19 +163,44 @@ class MoonClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+            indexed by name.
         """
+        # If there are no old local models in the list (first pass of MOON training), we just do basic loss
+        #  calculations
         if len(self.old_models_list) == 0:
-            return super().compute_loss(preds, features, target)
-        loss = self.criterion(preds["prediction"], target)
-        total_loss = loss.clone()
-        additional_losses = {}
+            total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        else:
+            total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 
-        if self.contrastive_weight:
-            contrastive_loss = self.get_contrastive_loss(
-                features["features"], features["global_features"], features["old_features"]
-            )
-            total_loss += self.contrastive_weight * contrastive_loss
-            additional_losses["contrastive_loss"] = contrastive_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
-        return losses
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions and features of the model and ground truth data. Loss includes
+        base loss plus a model contrastive loss.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
+                additional losses indexed by name.
+        """
+        # If there are no old local models in the list (first pass of MOON training), we just do basic loss
+        # calculations
+        if len(self.old_models_list) == 0:
+            checkpoint_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        else:
+            _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+            # Note that the first parameter returned is the "total loss", which includes the contrastive loss
+            # So we use the vanilla loss stored in additional losses for checkpointing.
+            checkpoint_loss = additional_losses["loss"]
+        return EvaluationLosses(checkpoint=checkpoint_loss, additional_losses=additional_losses)

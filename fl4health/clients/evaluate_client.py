@@ -14,7 +14,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 
 
@@ -35,7 +35,6 @@ class EvaluateClient(BasicClient):
         model_checkpoint_path: Optional[Path] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
-
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
         self.client_name = self.generate_hash()
@@ -51,9 +50,9 @@ class EvaluateClient(BasicClient):
             self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         # This data loader should be instantiated as the one on which to run evaluation
-        self.global_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.global_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.global_metric_manager = MetricManager(self.metrics, "global_eval_manager")
-        self.local_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.local_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.local_metric_manager = MetricManager(self.metrics, "local_eval_manager")
 
         # The attributes to be set in setup_client
@@ -135,9 +134,8 @@ class EvaluateClient(BasicClient):
         )
 
     def _handle_logging(  # type: ignore
-        self, losses: Losses, metrics_dict: Dict[str, Scalar], is_global: bool
+        self, losses: EvaluationLosses, metrics_dict: Dict[str, Scalar], is_global: bool
     ) -> None:
-
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
         eval_prefix = "Global Model" if is_global else "Local Model"
@@ -149,7 +147,7 @@ class EvaluateClient(BasicClient):
 
     def validate_on_model(
         self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, is_global: bool
-    ) -> Tuple[Losses, Dict[str, Scalar]]:
+    ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
@@ -158,7 +156,7 @@ class EvaluateClient(BasicClient):
             for inputs, targets in self.data_loader:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 preds = {"prediction": model(inputs)}
-                losses = self.compute_loss(preds, {}, targets)
+                losses = self.compute_evaluation_loss(preds, {}, targets)
 
                 metric_meter.update(preds, targets)
                 loss_meter.update(losses)
@@ -169,10 +167,10 @@ class EvaluateClient(BasicClient):
         return losses, metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
-        local_loss: Optional[Losses] = None
+        local_loss: Optional[EvaluationLosses] = None
         local_metrics: Optional[Dict[str, Scalar]] = None
 
-        global_loss: Optional[Losses] = None
+        global_loss: Optional[EvaluationLosses] = None
         global_metrics: Optional[Dict[str, Scalar]] = None
 
         if self.local_model:

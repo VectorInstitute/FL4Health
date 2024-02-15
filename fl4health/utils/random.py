@@ -22,3 +22,14 @@ def set_all_random_seeds(seed: Optional[int] = 42) -> None:
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
+
+
+def unset_all_random_seeds() -> None:
+    """
+    Set random seeds for Python random, NumPy, and PyTorch to None. Running this function would undo
+    the effects of set_all_random_seeds.
+    """
+    log(INFO, "Setting all random seeds to None.")
+    random.seed(None)
+    np.random.seed(None)
+    torch.seed()

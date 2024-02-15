@@ -5,8 +5,7 @@ from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
+from flwr.common.typing import Config
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -14,14 +13,7 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
-
-
-def get_initial_model_parameters(num_classes: int) -> Parameters:
-    # Initializing the model parameters on the server side.
-    classifier_head = RobertaClassificationHead(num_classes=num_classes, input_dim=768)
-    initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
-    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
-    return ndarrays_to_parameters(model_weights)
+from fl4health.utils.functions import get_all_model_parameters
 
 
 def construct_config(
@@ -144,6 +136,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["n_server_rounds"],
     )
 
+    classifier_head = RobertaClassificationHead(num_classes=config["num_classes"], input_dim=768)
+    initial_model = ROBERTA_BASE_ENCODER.get_model(head=classifier_head)
+
     # Since clients can send different tensors to the server, we perform weighted averaging separately on each tensor.
     strategy = FedAvgDynamicLayer(
         # Server waits for min_available_clients before starting FL rounds
@@ -152,7 +147,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         on_evaluate_config_fn=eval_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(config["num_classes"]),
+        initial_parameters=get_all_model_parameters(initial_model),
     )
 
     client_manager = PoissonSamplingClientManager()

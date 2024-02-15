@@ -11,7 +11,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -99,11 +99,14 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_training_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> TrainingLosses:
         """
-        Computes loss given predictions of the model and ground truth data. Adds to objective by including
+        Computes training loss given predictions of the model and ground truth data. Adds to objective by including
         proximal loss which is the l2 norm between the initial and final weights of local training.
 
         Args:
@@ -113,14 +116,19 @@ class FedProxClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses includes proximal loss.
+            TrainingLosses: an instance of TrainingLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Additional losses includes proximal loss.
         """
-        loss = self.criterion(preds["prediction"], target)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        if additional_losses is None:
+            additional_losses = {}
+
         proximal_loss = self.get_proximal_loss()
-        total_loss = loss + proximal_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss})
-        return losses
+        additional_losses["proximal_loss"] = proximal_loss
+        # adding the vanilla loss to the additional losses to be used by update_after_train
+        additional_losses["loss"] = loss
+
+        return TrainingLosses(backward=loss + proximal_loss, additional_losses=additional_losses)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())
@@ -131,4 +139,4 @@ class FedProxClient(BasicClient):
         the corresponding loss dictionary.
         """
         # Store current loss which is the vanilla loss without the proximal term added in
-        self.current_loss = loss_dict["checkpoint"]
+        self.current_loss = loss_dict["loss"]
