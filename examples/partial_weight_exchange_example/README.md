@@ -1,5 +1,5 @@
 # Partial Weight Exchange Federated Learning Example
-This example leverages the partial weight exchange system, where instead of exchanging the entire model between the server and clients in every training round,
+This example leverages the dynamic layer exchanger, where instead of exchanging the entire model between the server and clients in every training round,
 only certain tensors are exchanged, and weighted averaging is performed in a per-tensor fashion on the server side.
 
 In each training round, the tensors to be exchanged with the server are selected based their "drift norm" in that training round, which is defined as the l2-norm of the difference between their values at the end of that training round and their initial values at the beginning of the same training round.

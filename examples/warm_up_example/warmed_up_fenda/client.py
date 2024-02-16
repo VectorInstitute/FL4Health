@@ -53,14 +53,7 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        # Load the pretrained model
-        model: nn.Module = self.warmed_up_module.load_from_pretrained(
-            FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE))
-        ).to(self.device)
-
-        # To not overwrite the pretrained model with server model weights
-        self.model_weights_initialized = True
-        return model
+        return FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
@@ -70,7 +63,6 @@ class MnistFendaClient(FendaClient):
 
     # Overriding the initialize_all_model_weights function is required to load the pretrained model
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
-        super().initialize_all_model_weights(parameters, config)
         # Load the pretrained model
         self.warmed_up_module.load_from_pretrained(self.model)
 

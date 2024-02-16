@@ -2,7 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, NormDriftParameterExchanger
+from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger, FixedLayerExchanger
+from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
 from tests.test_utils.models_for_test import LinearModel, ToyConvNet
 
 
@@ -35,28 +36,44 @@ def test_norm_drift_layer_exchange() -> None:
     nn.init.constant_(model_to_exchange.fc1.weight, 1)
     nn.init.constant_(model_to_exchange.fc2.weight, 2)
 
-    threshold = 2
-    percentage = 0.5
+    norm_threshold = 2
+    exchange_percentage = 0.5
 
-    exchanger = NormDriftParameterExchanger(threshold, percentage, False, False)
+    selection_function_constructor = LayerSelectionFunctionConstructor(
+        norm_threshold=norm_threshold,
+        exchange_percentage=exchange_percentage,
+        normalize=False,
+        select_drift_more=True,
+    )
 
-    # Test NormDriftParameterExchanger.filter_by_threshold(),
-    # assuming we do not normalize by the number of parameters
-    # when calculating a tensor's drift norm.
+    select_layers_by_threshold_func = selection_function_constructor.select_by_threshold()
+
+    exchanger = DynamicLayerExchanger(
+        layer_selection_function=select_layers_by_threshold_func,
+    )
+
+    # Test selecting layers by thresholding their drift norms.
+    # Assume we do not normalize by the number of parameters
+    # when calculating a tensor's drift norm and
+    # select layers that drift the most.
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layers_to_exchange) == 2
     assert len(layer_names) == 2
 
     # Normalize when calculating drift norm.
-    exchanger.set_normalization_mode(True)
+    selection_function_constructor.normalize = True
+    select_layers_by_threshold_func_normalize = selection_function_constructor.select_by_threshold()
+    exchanger.layer_selection_function = select_layers_by_threshold_func_normalize
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layers_to_exchange) == 0
     assert len(layer_names) == 0
 
-    # Test NormDriftParameterExchanger.filter_by_percentage().
-    exchanger.set_filter_mode(True)
+    # Select the layers that drift the most in terms of l2 norm,
+    # where the number of layers selected is determined by exchange_percentage.
+    select_layers_by_percentage_func = selection_function_constructor.select_by_percentage()
+    exchanger.layer_selection_function = select_layers_by_percentage_func
     layers_with_names_to_exchange = exchanger.push_parameters(model_to_exchange, initial_model)
     layers_to_exchange, layer_names = exchanger.unpack_parameters(layers_with_names_to_exchange)
     assert len(layer_names) == 2
