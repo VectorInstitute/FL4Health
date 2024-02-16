@@ -27,21 +27,6 @@ def fit_config(
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
     }
-    config["fl_fit_round"] = True
-    return config
-
-
-def eval_config(
-    local_steps: int,
-    n_server_rounds: int,
-    current_round: int,
-) -> Config:
-    config: Config = {
-        "local_steps": local_steps,
-        "n_server_rounds": n_server_rounds,
-        "current_server_round": current_round,
-    }
-    config["fl_fit_round"] = False
     return config
 
 
@@ -49,12 +34,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_steps"],
-        config["n_server_rounds"],
-    )
-
-    eval_config_fn = partial(
-        eval_config,
         config["local_steps"],
         config["n_server_rounds"],
     )
@@ -72,7 +51,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
-        on_evaluate_config_fn=eval_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),

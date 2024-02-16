@@ -15,7 +15,7 @@
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/run_fold_experiment.slrm \
+# sbatch research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
@@ -25,9 +25,9 @@
 #   server_address
 #
 # Example:
-# sbatch research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/run_fold_experiment.slrm \
-#   research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/config.yaml \
-#   research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/hp_results/ \
+# sbatch research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/run_fold_experiment.slrm \
+#   research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/config.yaml \
+#   research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
@@ -120,7 +120,7 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_ixi.sparse_tensor_exchange.large_final_magnitude.server \
+    nohup python -m research.flamby.fed_ixi.sparse_tensor_exchange.large_magnitude_change.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
@@ -138,7 +138,7 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_ixi.sparse_tensor_exchange.large_final_magnitude.client \
+        nohup python -m research.flamby.fed_ixi.sparse_tensor_exchange.large_magnitude_change.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \

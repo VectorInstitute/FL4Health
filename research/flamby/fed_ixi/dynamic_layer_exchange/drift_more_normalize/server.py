@@ -11,14 +11,10 @@ from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_servers.personal_server import PersonalServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
-    summarize_model_info,
-)
+from research.flamby.utils import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn, summarize_model_info
 
 
 def fit_config(
@@ -39,29 +35,6 @@ def fit_config(
         "exchange_percentage": exchange_percentage,
         "current_server_round": current_round,
     }
-    config["fl_fit_round"] = True
-    return config
-
-
-def eval_config(
-    local_steps: int,
-    n_server_rounds: int,
-    normalize: bool,
-    filter_by_percentage: bool,
-    norm_threshold: float,
-    exchange_percentage: float,
-    current_round: int,
-) -> Config:
-    config: Config = {
-        "local_steps": local_steps,
-        "n_server_rounds": n_server_rounds,
-        "normalize": normalize,
-        "filter_by_percentage": filter_by_percentage,
-        "norm_threshold": norm_threshold,
-        "exchange_percentage": exchange_percentage,
-        "current_server_round": current_round,
-    }
-    config["fl_fit_round"] = False
     return config
 
 
@@ -69,16 +42,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["local_steps"],
-        config["n_server_rounds"],
-        config["normalize"],
-        config["filter_by_percentage"],
-        config["norm_threshold"],
-        config["exchange_percentage"],
-    )
-
-    eval_config_fn = partial(
-        eval_config,
         config["local_steps"],
         config["n_server_rounds"],
         config["normalize"],
@@ -100,10 +63,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
-        on_evaluate_config_fn=eval_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
     server = PersonalServer(client_manager, strategy)

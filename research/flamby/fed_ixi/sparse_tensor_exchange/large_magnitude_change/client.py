@@ -20,15 +20,15 @@ from fl4health.checkpointing.checkpointer import (
     TorchCheckpointer,
 )
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
-from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
+from fl4health.parameter_exchange.parameter_selection_criteria import largest_magnitude_change_scores
+from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
-class FedIxiDynamicLayerClient(PartialWeightExchangeClient):
+class FedIxiSparseTensorClient(PartialWeightExchangeClient):
     def __init__(
         self,
         data_path: Path,
@@ -36,7 +36,7 @@ class FedIxiDynamicLayerClient(PartialWeightExchangeClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        exchange_percentage: float,
+        sparsity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         store_initial_model: bool = True,
@@ -51,7 +51,7 @@ class FedIxiDynamicLayerClient(PartialWeightExchangeClient):
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-        self.exchange_percentage = exchange_percentage
+        self.sparsity_level = sparsity_level
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -77,23 +77,11 @@ class FedIxiDynamicLayerClient(PartialWeightExchangeClient):
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
 
-    def get_parameter_exchanger(self, config: Config) -> DynamicLayerExchanger:
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
-        selection_function_constructor = LayerSelectionFunctionConstructor(
-            norm_threshold=norm_threshold,
-            exchange_percentage=self.exchange_percentage,
-            normalize=normalize,
-            select_drift_more=select_drift_more,
+    def get_parameter_exchanger(self, config: Config) -> SparseCooParameterExchanger:
+        parameter_exchanger = SparseCooParameterExchanger(
+            sparsity_level=self.sparsity_level,
+            score_gen_function=largest_magnitude_change_scores,
         )
-        if filter_by_percentage:
-            layer_selection_function = selection_function_constructor.select_by_percentage()
-            log(INFO, f"Exchange Percentage: {self.exchange_percentage}")
-        else:
-            layer_selection_function = selection_function_constructor.select_by_threshold()
-        parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
 
 
@@ -137,10 +125,10 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--exchange_percentage",
+        "--sparsity_level",
         action="store",
         type=float,
-        help="Exchange percentage in partial weight exchange",
+        help="Level of sparsity used in partial weight exchange",
     )
     parser.add_argument(
         "--seed",
@@ -174,13 +162,13 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    client = FedIxiDynamicLayerClient(
+    client = FedIxiSparseTensorClient(
         data_path=Path(args.dataset_dir),
         metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        exchange_percentage=args.exchange_percentage,
+        sparsity_level=args.sparsity_level,
         checkpointer=checkpointer,
     )
 

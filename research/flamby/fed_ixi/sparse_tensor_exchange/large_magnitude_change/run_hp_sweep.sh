@@ -3,16 +3,16 @@
 ###############################################
 # Usage:
 #
-#  ./research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/run_hp_sweep.sh \
+#  ./research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# ./research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/run_hp_sweep.sh \
-#   research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/config.yaml \
-#   research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/ \
+# ./research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/run_hp_sweep.sh \
+#   research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/config.yaml \
+#   research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/ \
 #   /Users/david/Desktop/FLambyDatasets/fed_ixi/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -46,7 +46,7 @@ do
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
     echo "Server Address: ${SERVER_ADDRESS}"
-    SBATCH_COMMAND="research/flamby/fed_ixi/sparse_tensor_exchange/large_final_magnitude/run_fold_experiment.slrm \
+    SBATCH_COMMAND="research/flamby/fed_ixi/sparse_tensor_exchange/large_magnitude_change/run_fold_experiment.slrm \
       ${SERVER_CONFIG_PATH} \
       ${EXPERIMENT_DIRECTORY} \
       ${DATASET_DIR} \
