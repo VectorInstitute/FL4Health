@@ -2,10 +2,11 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -24,10 +25,11 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
-        contrastive_weight: Optional[float] = None,
         len_old_models_buffer: int = 1,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        contrastive_weight: Optional[float] = None,
+        mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -36,15 +38,16 @@ class MoonClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
-        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.contrastive_weight = contrastive_weight
+        self.mkmmd_loss_weights = mkmmd_loss_weights
         self.temperature = temperature
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=self.temperature)
+        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
-        self.global_model: torch.nn.Module
+        self.global_model: Optional[torch.nn.Module] = None
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -66,32 +69,13 @@ class MoonClient(BasicClient):
             for i, old_model in enumerate(self.old_models_list):
                 _, old_model_features = old_model(input)
                 old_features[i] = old_model_features["features"]
+            features.update({"old_features": old_features})
+        if self.global_model is not None:
             _, global_model_features = self.global_model(input)
-            features.update({"global_features": global_model_features["features"], "old_features": old_features})
+            features.update({"global_features": global_model_features["features"]})
         return preds, features
 
-    def get_contrastive_loss(
-        self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        This constrastive loss is implemented based on https://github.com/QinbinLi/MOON.
-        The primary idea is to enhance the similarity between the current local features and the global feature
-        as positive pairs while reducing the similarity between the current local features and the previous local
-        features as negative pairs.
-        """
-        assert len(features) == len(global_features)
-        posi = self.cos_sim(features, global_features)
-        logits = posi.reshape(-1, 1)
-        for old_feature in old_features:
-            assert len(features) == len(old_feature)
-            nega = self.cos_sim(features, old_feature)
-            logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        logits /= self.temperature
-        labels = torch.zeros(features.size(0)).to(self.device).long()
-
-        return self.ce_criterion(logits, labels)
-
-    def get_parameters(self, config: Config) -> NDArrays:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         assert isinstance(self.model, MoonModel)
         # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
@@ -99,14 +83,41 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
-        return super().get_parameters(config)
+        return super().update_after_train(local_steps, loss_dict)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the parameters of the model
-        super().set_parameters(parameters, config)
-
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
+
+        if self.mkmmd_loss_weights and len(self.old_models_list) > 0:
+            self.set_optimized_betas(self.mkmmd_loss, self.old_models_list[-1], self.global_model)
+
+        return super().update_before_train(current_server_round)
+
+    def set_optimized_betas(
+        self, mkmmd_loss: MkMmdLoss, old_model: torch.nn.Module, global_model: torch.nn.Module
+    ) -> None:
+        """Set the optimized betas for the MK-MMD loss."""
+        assert isinstance(old_model, MoonModel)
+        assert isinstance(global_model, MoonModel)
+
+        old_dist = []
+        global_dist = []
+
+        # Compute the old features before aggregation and global features
+        old_model.eval()
+        global_model.eval()
+        with torch.no_grad():
+            for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
+                _, old_features = old_model(input)
+                _, global_features = global_model(input)
+                old_dist.append(old_features["features"])
+                global_dist.append(global_features["features"])
+
+        mkmmd_loss.betas = mkmmd_loss.optimize_betas(
+            X=torch.cat(old_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5
+        )
 
     def compute_loss_and_additional_losses(
         self,
@@ -135,12 +146,21 @@ class MoonClient(BasicClient):
             "loss": loss,
         }
 
-        if self.contrastive_weight:
-            contrastive_loss = self.get_contrastive_loss(
-                features["features"], features["global_features"], features["old_features"]
+        if self.contrastive_weight and "old_features" in features:
+            contrastive_loss = self.contrastive_loss(
+                features["features"], features["global_features"].unsqueeze(0), features["old_features"]
             )
             total_loss += self.contrastive_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
+
+        elif self.mkmmd_loss_weights and "old_features" in features:
+            min_mkmmd_loss = self.mkmmd_loss(features["features"], features["global_features"])
+            max_mkmmd_loss = self.mkmmd_loss(features["features"], features["old_features"][-1])
+            total_loss += (
+                self.mkmmd_loss_weights[0] * min_mkmmd_loss.sum() - self.mkmmd_loss_weights[1] * max_mkmmd_loss.sum()
+            )
+            additional_losses["min_mkmmd_loss"] = min_mkmmd_loss
+            additional_losses["max_mkmmd_loss"] = max_mkmmd_loss
 
         additional_losses["total_loss"] = total_loss
 

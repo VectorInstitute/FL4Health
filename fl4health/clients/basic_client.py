@@ -254,6 +254,8 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config)
 
+        self.update_before_train(current_server_round)
+
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
@@ -779,12 +781,23 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
+    def update_before_train(self, current_server_round: int) -> None:
+        """
+        Hook method called before training with the number of current server rounds performed.
+        For example, used by Moon and Fenda to save global modules after aggregation.
+
+        Args:
+            current_server_round (int): The number of current server round.
+        """
+        pass
+
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training.
+        returned during training. Also used by Moon and Fenda to save trained modules weights before
+        aggregation.
 
         Args:
             local_steps (int): The number of steps in the local training.

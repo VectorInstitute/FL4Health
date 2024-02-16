@@ -20,17 +20,80 @@ def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     new_params = [layer_weights + 0.1 for layer_weights in params]
     moon_client.set_parameters(new_params, config)
 
-    # Global model parameters should match those of the new_params
-    global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
     # Make sure the MOON model parameters are equal to the global model parameters
     new_moon_model_params = [val.cpu().numpy() for _, val in moon_client.model.state_dict().items()]
 
     for i in range(len(params)):
-        assert (new_params[i] == global_model_params[i]).all()
         assert (new_params[i] == new_moon_model_params[i]).all()
 
     # Make sure the old model list is still empty
     assert len(moon_client.old_models_list) == 0
+
+    torch.seed()  # resetting the seed at the end, just to be safe
+
+
+@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
+def test_setting_global_model(get_client: MoonClient) -> None:  # noqa
+    torch.manual_seed(42)
+    moon_client = get_client
+
+    assert moon_client.global_model is None
+
+    params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
+    moon_client.update_before_train(0)
+
+    assert moon_client.global_model is not None
+
+    global_params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.global_model.state_dict().items()]
+    # Make sure the MOON model parameters are equal to the global model parameters
+    for i in range(len(params)):
+        assert (params[i] == global_params[i]).all()
+
+    # Make sure the globa model is not set to train
+    assert moon_client.global_model.training is False
+    for param in moon_client.global_model.parameters():
+        assert param.requires_grad is False
+
+    # Make sure the original model is still set to train
+    assert moon_client.model.training is True
+    for param in moon_client.model.parameters():
+        assert param.requires_grad is True
+
+    torch.seed()  # resetting the seed at the end, just to be safe
+
+
+@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
+def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
+    torch.manual_seed(42)
+    moon_client = get_client
+
+    assert len(moon_client.old_models_list) == 0
+
+    params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
+    loss = {
+        "loss": 0.0,
+    }
+    moon_client.update_after_train(0, loss)
+
+    # Assert we stored the old model
+    assert len(moon_client.old_models_list) == 1
+
+    old_model_params = [
+        copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.old_models_list[0].state_dict().items()
+    ]
+    # Make sure the MOON model parameters are equal to the old model parameters
+    for i in range(len(params)):
+        assert (params[i] == old_model_params[i]).all()
+
+    # Make sure the all old models is not set to train
+    assert moon_client.old_models_list[0].training is False
+    for param in moon_client.old_models_list[0].parameters():
+        assert param.requires_grad is False
+
+    # Make sure the original model is still set to train
+    assert moon_client.model.training is True
+    for param in moon_client.model.parameters():
+        assert param.requires_grad is True
 
     torch.seed()  # resetting the seed at the end, just to be safe
 
@@ -44,6 +107,10 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     assert len(moon_client.old_models_list) == 0
 
     params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
+    loss = {
+        "loss": 0.0,
+    }
+    moon_client.update_after_train(0, loss)
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
     _ = moon_client.get_parameters(config)
     new_params = [layer_weights + 0.1 for layer_weights in params]
@@ -51,9 +118,11 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     moon_client.set_parameters(new_params, config)
     # Setting parameters again to represent a training set parameters
     moon_client.set_parameters(new_params, config)
+    moon_client.update_before_train(0)
 
-    # Assert we stored the old model
+    # Assert we stored the old model and the global model
     assert len(moon_client.old_models_list) == 1
+    assert moon_client.global_model is not None
 
     old_model_params = [val.cpu().numpy() for _, val in moon_client.old_models_list[-1].state_dict().items()]
     global_model_params = [val.cpu().numpy() for _, val in moon_client.global_model.state_dict().items()]
@@ -67,12 +136,14 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
 
     # Do another round to make sure old model list doesn't expand and it contains new parameters
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
+    moon_client.update_after_train(0, loss)
     _ = moon_client.get_parameters(config)
     new_params_2 = [layer_weights + 0.1 for layer_weights in params]
     # Setting parameters once to represent an evaluation set parameters
     moon_client.set_parameters(new_params, config)
     # Setting parameters again to represent a training set parameters
     moon_client.set_parameters(new_params, config)
+    moon_client.update_before_train(0)
 
     # Assert we stored the old model
     assert len(moon_client.old_models_list) == 1
@@ -91,28 +162,7 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_contrastive_loss(get_client: MoonClient) -> None:  # noqa
-    torch.manual_seed(42)
-    moon_client = get_client
-
-    global_features = torch.tensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
-    local_features = torch.tensor([[[1.0, 2.0], [2.0, 1.0]], [[2.0, 1.0], [1.0, -1.0]]])
-    previous_local_features = torch.tensor([[[1.0, 2.0], [2.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]]])
-
-    # Default temperature is 0.5
-    contrastive_loss = moon_client.get_contrastive_loss(
-        features=local_features.reshape(len(local_features), -1),
-        global_features=global_features.reshape(len(global_features), -1),
-        old_features=previous_local_features.reshape(1, len(previous_local_features), -1),
-    )
-
-    assert pytest.approx(0.837868, abs=0.0001) == contrastive_loss
-
-    torch.seed()  # resetting the seed at the end, just to be safe
-
-
-@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_computing_loss(get_client: MoonClient) -> None:  # noqa
+def test_compute_loss(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
     # Dummy to ensure the compute loss function in the moon client is executed
