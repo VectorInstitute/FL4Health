@@ -67,7 +67,6 @@ class BasicClient(NumPyClient):
             self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
-        self.model_weights_initialized = False
 
         # Loss and Metric management
         self.train_loss_meter = LossMeter[TrainingLosses](loss_meter_type, TrainingLosses)
@@ -167,7 +166,6 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
-        self.model_weights_initialized = True
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         """
