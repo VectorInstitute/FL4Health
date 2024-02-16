@@ -31,4 +31,4 @@ python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/t
 
 **NOTE**: "SEED" above should match that of the warm up run if you want to ensure the datasets are split consistently.
 
-After both clients have been started federated learning should commence.
+After all three clients have been started federated learning should commence.

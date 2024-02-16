@@ -46,6 +46,15 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         """Calling the score generating function to produce parameter scores."""
         return self.score_gen_function(model, initial_model)
 
+    def _check_unique_score(self, param_scores: Tensor) -> None:
+        unique_score_values = torch.unique(input=param_scores, sorted=False, return_inverse=False, return_counts=False)
+        if len(unique_score_values) == 1:
+            log(
+                WARNING,
+                """All parameters have the same score.
+                The number of parameters selected may not match the intended sparsity level.""",
+            )
+
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
     ) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
@@ -83,8 +92,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         n_top_scores = math.ceil(len(sorted_scores) * self.sparsity_level)
         # Sanity check.
         assert n_top_scores >= 1
-        top_scores = sorted_scores[:n_top_scores]
-        score_threshold = top_scores[-1].item()
+        score_threshold = sorted_scores[(n_top_scores - 1)].item()
 
         # Apply the score threshold to each model tensor to obtain the corresponding sparse tensor.
         selected_parameters_all_tensors = []
@@ -97,15 +105,8 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             # Sanity check.
             assert model_tensor.shape == param_scores.shape
 
-            unique_score_values = torch.unique(
-                input=param_scores, sorted=False, return_inverse=False, return_counts=False
-            )
-            if len(unique_score_values) == 1:
-                log(
-                    WARNING,
-                    """All parameters have the same score.
-                The number of parameters selected may not match the intended sparsity level.""",
-                )
+            self._check_unique_score(param_scores=param_scores)
+
             # Use score_threshold to produce sparse tensors.
             model_tensor_sparse = torch.where(param_scores >= score_threshold, input=model_tensor, other=0)
             # Tensors without any parameter or whose parameter values are all zero after thresholding

@@ -98,8 +98,8 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
         layer_selection_function: LayerSelectionFunction,
     ) -> None:
         """
-        This exchanger selects a subset of a model's layers that at the end of each training round based
-        on "layer_selection_function". Only the selected layers are exchanged with the server.
+        This exchanger uses "layer_selection_function" to select a subset of a model's layers
+        at the end of each training round. Only the selected layers are exchanged with the server.
         Args:
             layer_selection_function (LayerSelectionFunction):
                 Function responsible for selecting the layers to be exchanged. This function relies
