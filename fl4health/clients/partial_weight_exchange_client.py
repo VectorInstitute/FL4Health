@@ -129,6 +129,7 @@ class PartialWeightExchangeClient(BasicClient):
                 first fitting round. Otherwise, use a PartialParameterExchanger.
         """
         super().set_parameters(parameters, config, fitting_round)
-        if self.initial_model:
+        if self.store_initial_model:
+            assert self.initial_model is not None
             # Stores the values of the new model parameters at the beginning of each client training round.
             self.initial_model.load_state_dict(self.model.state_dict(), strict=True)
