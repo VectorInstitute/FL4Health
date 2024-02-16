@@ -82,24 +82,31 @@ class NumpyClippingClient(BasicClient):
         clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
         return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         This function assumes that the parameters being passed contain model parameters followed by the last entry
-        of the list being the new clipping bound. They are unpacked for the clients to use in training. If it's the
-        first time the model is being initialized, we assume the full model is being initialized and use the
-        FullParameterExchanger() to set all model weights
+        of the list being the new clipping bound. They are unpacked for the clients to use in training. If it is
+        called in the first fitting round, we assume the full model is being initialized and use the
+        FullParameterExchanger() to set all model weights.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the clipping bound.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round
+                is a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling
+                parameters.
+                A full parameter exchanger is used if the current federated learning round is the very
+                first fitting round.
         """
         assert self.model is not None and self.parameter_exchanger is not None
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
         self.clipping_bound = clipping_bound
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
 
-        if not self.model_weights_initialized:
+        if current_server_round == 1 and fitting_round:
             # Initialize all model weights as this is the first time things have been set
             self.initialize_all_model_weights(server_model_parameters, config)
             # Extract only the initial weights that we care about clipping and exchanging

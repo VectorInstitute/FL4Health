@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -15,13 +15,12 @@ from torcheval.metrics.functional import multiclass_f1_score
 from torchtext.models import ROBERTA_BASE_ENCODER, RobertaClassificationHead
 
 from examples.partial_weight_exchange_example.client_data import construct_dataloaders
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import (
-    select_layers_by_percentage,
-    select_layers_by_threshold,
-)
+from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
+from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 
@@ -33,12 +32,18 @@ class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
+        store_initial_model: bool = True,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
+            checkpointer=checkpointer,
+            metrics_reporter=metrics_reporter,
+            store_initial_model=store_initial_model,
         )
         self.test_loader: DataLoader
 
@@ -46,9 +51,9 @@ class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
         if not self.initialized:
             self.setup_client(config)
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=False)
         testing = self.narrow_config_type(config, "testing", bool)
-        num_classes = num_classes = self.narrow_config_type(config, "num_classes", int)
+        num_classes = self.narrow_config_type(config, "num_classes", int)
 
         if not testing:
             loss, metric_values = self.validate()
@@ -105,15 +110,18 @@ class TransformerDynamicLayerExchangeClient(PartialWeightExchangeClient):
         norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
         exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
         select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
-        selection_function = select_layers_by_percentage if filter_by_percentage else select_layers_by_threshold
-        parameter_exchanger = DynamicLayerExchanger(
-            layer_selection_function=selection_function,
+        selection_function_constructor = LayerSelectionFunctionConstructor(
             norm_threshold=norm_threshold,
             exchange_percentage=exchange_percentage,
             normalize=normalize,
-            filter_by_percentage=filter_by_percentage,
             select_drift_more=select_drift_more,
         )
+        layer_selection_function = (
+            selection_function_constructor.select_by_percentage()
+            if filter_by_percentage
+            else selection_function_constructor.select_by_threshold()
+        )
+        parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
 
     def test(self, num_classes: int) -> Tuple[float, float, List[float]]:

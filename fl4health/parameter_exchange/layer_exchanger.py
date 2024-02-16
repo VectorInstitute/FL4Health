@@ -9,6 +9,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLay
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
+LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
 
 
 class FixedLayerExchanger(ParameterExchanger):
@@ -94,67 +95,28 @@ class LayerExchangerWithExclusions(ParameterExchanger):
 class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
     def __init__(
         self,
-        layer_selection_function: Callable[..., Tuple[NDArrays, List[str]]],
-        norm_threshold: float,
-        exchange_percentage: float = 0.1,
-        normalize: bool = True,
-        filter_by_percentage: bool = True,
-        select_drift_more: bool = True,
+        layer_selection_function: LayerSelectionFunction,
     ) -> None:
         """
-        This exchanger selects those parameters that at the end of each training round, drift away (in l2 norm)
-        from their initial values (at the beginning of the same round) by more than self.threshold.
+        This exchanger uses "layer_selection_function" to select a subset of a model's layers
+        at the end of each training round. Only the selected layers are exchanged with the server.
+        Args:
+            layer_selection_function (LayerSelectionFunction):
+                Function responsible for selecting the layers to be exchanged. This function relies
+                on extra parameters such as norm threshold or exchange percentage,
+                but we assume that it has already been pre-constructed using
+                the class LayerSelectionFunctionConstructor, so it only needs to take
+                in two nn.Module objects as inputs. For more details, please see the
+                docstring of LayerSelectionFunctionConstructor.
         """
-        self.set_layer_selection_function(layer_selection_function)
-        self.parameter_packer = ParameterPackerWithLayerNames()
-        assert 0 < exchange_percentage <= 1
-        assert 0 < norm_threshold
-        self.norm_threshold = norm_threshold
-        self.exchange_percentage = exchange_percentage
-        self.set_normalization_mode(normalize)
-        self.set_filter_mode(filter_by_percentage)
-        self.set_select_drift_more(select_drift_more)
-
-    def set_layer_selection_function(
-        self, layer_selection_function: Callable[..., Tuple[NDArrays, List[str]]]
-    ) -> None:
         self.layer_selection_function = layer_selection_function
-
-    def set_filter_mode(self, filter_by_percentage: bool) -> None:
-        self.filter_by_percentage = filter_by_percentage
-
-    def set_normalization_mode(self, normalize: bool) -> None:
-        self.normalize = normalize
-
-    def set_select_drift_more(self, select_drift_more: bool) -> None:
-        self.select_drift_more = select_drift_more
-
-    def _calculate_drift_norm(self, t1: torch.Tensor, t2: torch.Tensor) -> float:
-        t_diff = (t1 - t2).float()
-        drift_norm = torch.linalg.norm(t_diff)
-        if self.normalize:
-            drift_norm /= torch.numel(t_diff)
-        return drift_norm.item()
-
-    def set_threshold(self, new_threshold: float) -> None:
-        self.norm_threshold = new_threshold
-
-    def set_percentage(self, new_percentage: float) -> None:
-        assert 0 < new_percentage <= 1
-        self.exchange_percentage = new_percentage
+        self.parameter_packer = ParameterPackerWithLayerNames()
 
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
     ) -> Tuple[NDArrays, List[str]]:
         assert initial_model is not None
-        if self.filter_by_percentage:
-            return self.layer_selection_function(
-                model, initial_model, self.exchange_percentage, self.normalize, self.select_drift_more
-            )
-        else:
-            return self.layer_selection_function(
-                model, initial_model, self.norm_threshold, self.normalize, self.select_drift_more
-            )
+        return self.layer_selection_function(model, initial_model)
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None

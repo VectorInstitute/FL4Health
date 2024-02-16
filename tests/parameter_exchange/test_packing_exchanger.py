@@ -236,7 +236,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (model_copy.fc2.weight == 6.6).all()
 
     # Test parameter selection with other criteria
-    parameter_exchanger.set_score_gen_function(largest_magnitude_change_scores)
+    parameter_exchanger.score_gen_function = largest_magnitude_change_scores
     nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
@@ -245,7 +245,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (shapes[0] == np.array([6, 1, 5, 5])).all()
     assert tensor_names[0] == "conv1.weight"
 
-    parameter_exchanger.set_score_gen_function(largest_increase_in_magnitude_scores)
+    parameter_exchanger.score_gen_function = largest_increase_in_magnitude_scores
     nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
@@ -254,7 +254,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (shapes[0] == np.array([6, 1, 5, 5])).all()
     assert tensor_names[0] == "conv1.weight"
 
-    parameter_exchanger.set_score_gen_function(smallest_final_magnitude_scores)
+    parameter_exchanger.score_gen_function = smallest_final_magnitude_scores
     nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
@@ -263,7 +263,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (shapes[0] == np.array([6, 1, 5, 5])).all()
     assert tensor_names[0] == "conv1.weight"
 
-    parameter_exchanger.set_score_gen_function(smallest_magnitude_change_scores)
+    parameter_exchanger.score_gen_function = smallest_magnitude_change_scores
     nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1
@@ -272,7 +272,7 @@ def test_sparse_coo_parameter_exchanger() -> None:
     assert (shapes[0] == np.array([16, 256])).all()
     assert tensor_names[0] == "fc1.weight"
 
-    parameter_exchanger.set_score_gen_function(smallest_increase_in_magnitude_scores)
+    parameter_exchanger.score_gen_function = smallest_increase_in_magnitude_scores
     nonzero_vals, additional_parameters = parameter_exchanger.select_parameters(model_const, initial_model_const)
     indices, shapes, tensor_names = additional_parameters
     assert len(nonzero_vals) == 1 and len(indices) == 1 and len(shapes) == 1 and len(tensor_names) == 1

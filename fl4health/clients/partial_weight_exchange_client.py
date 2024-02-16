@@ -24,6 +24,7 @@ class PartialWeightExchangeClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        store_initial_model: bool = False,
     ) -> None:
         """
         Client that only exchanges a subset of its parameters with the server in each communication round.
@@ -40,6 +41,10 @@ class PartialWeightExchangeClient(BasicClient):
                 each batch. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
                 checkpointing. Defaults to None.
+            store_initial_model (bool): Indicates whether the client should store a copy of the model weights
+                at the beginning of each training round. The model copy might be required to select the subset
+                of model parameters to be exchanged with the server, depending on the selection criterion used.
+                Defaults to False.
         """
         super().__init__(
             data_path=data_path,
@@ -49,10 +54,11 @@ class PartialWeightExchangeClient(BasicClient):
             checkpointer=checkpointer,
             metrics_reporter=metrics_reporter,
         )
-        # Initial model parameters to be used in calculating weight shifts during training
-        self.initial_model: nn.Module
+        # Initial model parameters to be used in selecting parameters to be exchanged during training.
+        self.initial_model: Optional[nn.Module]
         # Parameter exchanger to be used in server-client exchange of dynamic layers.
         self.parameter_exchanger: PartialParameterExchanger
+        self.store_initial_model = store_initial_model
 
     def setup_client(self, config: Config) -> None:
         """
@@ -64,7 +70,10 @@ class PartialWeightExchangeClient(BasicClient):
             config (Config): Configuration used to setup the client properly
         """
         super().setup_client(config)
-        self.initial_model = copy.deepcopy(self.model).to(self.device)
+        if self.store_initial_model:
+            self.initial_model = copy.deepcopy(self.model).to(self.device)
+        else:
+            self.initial_model = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
@@ -97,31 +106,30 @@ class PartialWeightExchangeClient(BasicClient):
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized, we assume the full model is
-        being initialized and the weights sent correspond to the complete set of weights. Thus we use the
-        FullParameterExchanger() to set all model weights.
+        parameters are set.
 
-        Subsequently, this approach uses the threshold parameter exchanger to handle exchanging a dynamic subset of
-        model layer weights.
+        In the first fitting round, we assume the full model is being
+        initialized and use the FullParameterExchanger() to set all model weights.
+
+        In other times, this approach uses a partial weight exchanger to set model weights.
 
         Args:
             parameters (NDArrays): parameters is the set of weights and their corresponding model component names,
                 corresponding to the state dict names. These are woven together in the NDArrays object. These are
                 unwound properly by the parameter exchanger
             config (Config): configuration if required to control parameter exchange.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is
+                a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling
+                parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round. Otherwise, use a PartialParameterExchanger.
         """
-        # Since PartialWeightExchangeClient may exchange different sets parameters
-        # across different training round, the full parameter exchanger is only used
-        # if a client is selected to participate in the first *fitting* round.
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        fl_fit_round = self.narrow_config_type(config, "fl_fit_round", bool)
-        if (not self.model_weights_initialized) and current_server_round == 1 and fl_fit_round:
-            self.initialize_all_model_weights(parameters, config)
-        else:
-            self.model_weights_initialized = True
-            self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        # Stores the values of the new model parameters at the beginning of each client training round.
-        self.initial_model.load_state_dict(self.model.state_dict(), strict=True)
+        super().set_parameters(parameters, config, fitting_round)
+        if self.store_initial_model:
+            assert self.initial_model is not None
+            # Stores the values of the new model parameters at the beginning of each client training round.
+            self.initial_model.load_state_dict(self.model.state_dict(), strict=True)

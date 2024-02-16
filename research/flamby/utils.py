@@ -30,11 +30,6 @@ def fit_config(
     }
 
 
-def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
-    # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
-
-
 def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]

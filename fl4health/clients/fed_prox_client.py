@@ -11,7 +11,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 
@@ -71,22 +71,27 @@ class FedProxClient(BasicClient):
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
         return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with proximal weight. They are
-        unpacked for the clients to use in training. If it's the first time the model is being initialized, we assume
-        the full model is being  initialized and use the FullParameterExchanger() to set all model weights
+        unpacked for the clients to use in training. In the first fitting round, we assume the full model is being
+        initialized and use the FullParameterExchanger() to set all model weights.
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model and also the proximal weight to be applied during training.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning
+                round is a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
         server_model_state, self.proximal_weight = self.parameter_exchanger.unpack_parameters(parameters)
         log(INFO, f"Proximal weight received from the server: {self.proximal_weight}")
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FedProx loss.
@@ -94,11 +99,14 @@ class FedProxClient(BasicClient):
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_training_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> TrainingLosses:
         """
-        Computes loss given predictions of the model and ground truth data. Adds to objective by including
+        Computes training loss given predictions of the model and ground truth data. Adds to objective by including
         proximal loss which is the l2 norm between the initial and final weights of local training.
 
         Args:
@@ -108,14 +116,19 @@ class FedProxClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses includes proximal loss.
+            TrainingLosses: an instance of TrainingLosses containing checkpoint loss, backward loss and
+                additional losses indexed by name. Additional losses includes proximal loss.
         """
-        loss = self.criterion(preds["prediction"], target)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        if additional_losses is None:
+            additional_losses = {}
+
         proximal_loss = self.get_proximal_loss()
-        total_loss = loss + proximal_loss
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses={"proximal_loss": proximal_loss})
-        return losses
+        additional_losses["proximal_loss"] = proximal_loss
+        # adding the vanilla loss to the additional losses to be used by update_after_train
+        additional_losses["loss"] = loss
+
+        return TrainingLosses(backward=loss + proximal_loss, additional_losses=additional_losses)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())
@@ -126,4 +139,4 @@ class FedProxClient(BasicClient):
         the corresponding loss dictionary.
         """
         # Store current loss which is the vanilla loss without the proximal term added in
-        self.current_loss = loss_dict["checkpoint"]
+        self.current_loss = loss_dict["loss"]

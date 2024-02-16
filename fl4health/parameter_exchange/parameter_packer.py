@@ -81,6 +81,12 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
     and then representing them in the sparse COO tensor format, which requires knowing
     the indices of the parameters within the tensor to which they belong,
     the shape of that tensor, and also the name of it.
+
+    For more information on the sparse COO format and sparse tensors in PyTorch, please see the following
+    two pages:
+        1. https://pytorch.org/docs/stable/generated/torch.sparse_coo_tensor.html
+        2. https://pytorch.org/docs/stable/sparse.html
+
     """
 
     def pack_parameters(
@@ -90,6 +96,8 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         return model_parameters + parameter_indices + tensor_shapes + [np.array(tensor_names)]
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
+        # The names of the tensors is wrapped in a list, which is then transformed into an NDArrays of length 1
+        # before packing.
         assert len(packed_parameters) % 3 == 1
         split_size = (len(packed_parameters) - 1) // 3
         model_parameters = packed_parameters[:split_size]
@@ -98,7 +106,8 @@ class SparseCooParameterPacker(ParameterPacker[Tuple[NDArrays, NDArrays, List[st
         tensor_names = packed_parameters[(3 * split_size) :][0].tolist()
         return model_parameters, (parameter_indices, tensor_shapes, tensor_names)
 
-    def extract_coo_info_from_dense(self, x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
+    @staticmethod
+    def extract_coo_info_from_dense(x: Tensor) -> Tuple[NDArray, NDArray, NDArray]:
         """
         Take a dense tensor x and extract the information required
         (namely, its nonzero values, their indices within the tensor, and the shape of x)
