@@ -166,13 +166,13 @@ class MkMmdLoss(torch.nn.Module):
         if minimize_type_two_error:
             log(
                 INFO,
-                "Rather than optimizing, we select a single kernel with largest hat_d_k",
+                "Rather than optimizing, we select a single kernel with largest hat_d_k/hat_Q_k_lambda",
             )
             largest_kernel_index = torch.argmax(kernel_base_values)
         else:
             log(
                 INFO,
-                "Rather than optimizing, we select a single kernel with smallest hat_d_k",
+                "Rather than optimizing, we select a single kernel with smallest hat_d_k/hat_Q_k_lambda",
             )
             largest_kernel_index = torch.argmin(kernel_base_values)
         beta_one_hot = torch.zeros_like(hat_d_per_kernel)

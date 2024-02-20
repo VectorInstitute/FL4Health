@@ -55,9 +55,8 @@ class FendaClient(BasicClient):
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
         self.mkmmd_loss_weight = mkmmd_loss_weight
-        self.temperature = temperature
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
-        self.contrastive_loss = ContrastiveLoss(self.device, temperature=self.temperature).to(self.device)
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature).to(self.device)
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
 
         # Need to save previous local module, global module and aggregated global module at each communication round
@@ -123,8 +122,8 @@ class FendaClient(BasicClient):
         """Set the optimized betas for the MK-MMD loss."""
         assert isinstance(self.model, FendaModel)
 
-        local_dist = []
-        aggregated_dist = []
+        local_distribution = []
+        aggregated_distribution = []
 
         # Compute the local and aggregated features for the train loader
         self.model.eval()
@@ -132,11 +131,11 @@ class FendaClient(BasicClient):
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 _, features = self.predict(input)
-                local_dist.append(features["local_features"])
-                aggregated_dist.append(features["global_features"])
+                local_distribution.append(features["local_features"])
+                aggregated_distribution.append(features["global_features"])
 
         mkmmd_loss.betas = mkmmd_loss.optimize_betas(
-            X=torch.cat(local_dist, dim=0), Y=torch.cat(aggregated_dist, dim=0), lambda_m=1e-5
+            X=torch.cat(local_distribution, dim=0), Y=torch.cat(aggregated_distribution, dim=0), lambda_m=1e-5
         )
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
@@ -152,7 +151,7 @@ class FendaClient(BasicClient):
         MK-MMD loss aims to compute the distance among distribtution of current local features
         and current global features of fenda model.
         """
-        assert len(local_features) == len(global_features)
+        assert local_features.shape == global_features.shape
         return self.mkmmd_loss(local_features, global_features)
 
     def get_contrastive_loss(

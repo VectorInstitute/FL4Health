@@ -40,8 +40,7 @@ class MoonClient(BasicClient):
         )
         self.contrastive_weight = contrastive_weight
         self.mkmmd_loss_weights = mkmmd_loss_weights
-        self.temperature = temperature
-        self.contrastive_loss = ContrastiveLoss(self.device, temperature=self.temperature)
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature)
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
         # Saving previous local models and global model at each communication round to compute contrastive loss
@@ -101,8 +100,8 @@ class MoonClient(BasicClient):
         assert isinstance(old_model, MoonModel)
         assert isinstance(global_model, MoonModel)
 
-        old_dist = []
-        global_dist = []
+        old_distribution = []
+        global_distribution = []
 
         # Compute the old features before aggregation and global features
         old_model.eval()
@@ -112,11 +111,11 @@ class MoonClient(BasicClient):
                 input, target = input.to(self.device), target.to(self.device)
                 _, old_features = old_model(input)
                 _, global_features = global_model(input)
-                old_dist.append(old_features["features"])
-                global_dist.append(global_features["features"])
+                old_distribution.append(old_features["features"])
+                global_distribution.append(global_features["features"])
 
         mkmmd_loss.betas = mkmmd_loss.optimize_betas(
-            X=torch.cat(old_dist, dim=0), Y=torch.cat(global_dist, dim=0), lambda_m=1e-5
+            X=torch.cat(old_distribution, dim=0), Y=torch.cat(global_distribution, dim=0), lambda_m=1e-5
         )
 
     def compute_loss_and_additional_losses(
