@@ -14,11 +14,11 @@ from tests.test_utils.models_for_test import FeatureCnn, HeadCnn
 def test_setting_parameters(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [copy.deepcopy(val.cpu().numpy()) for _, val in moon_client.model.state_dict().items()]
     new_params = [layer_weights + 0.1 for layer_weights in params]
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=True)
 
     # Make sure the MOON model parameters are equal to the global model parameters
     new_moon_model_params = [val.cpu().numpy() for _, val in moon_client.model.state_dict().items()]
@@ -102,7 +102,7 @@ def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
 def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     assert len(moon_client.old_models_list) == 0
 
@@ -115,9 +115,9 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     _ = moon_client.get_parameters(config)
     new_params = [layer_weights + 0.1 for layer_weights in params]
     # Setting parameters once to represent an evaluation set parameters
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=False)
     # Setting parameters again to represent a training set parameters
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=True)
     moon_client.update_before_train(0)
 
     # Assert we stored the old model and the global model
@@ -136,13 +136,14 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
 
     # Do another round to make sure old model list doesn't expand and it contains new parameters
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
+    config["current_server_round"] = 2
     moon_client.update_after_train(0, loss)
     _ = moon_client.get_parameters(config)
     new_params_2 = [layer_weights + 0.1 for layer_weights in params]
     # Setting parameters once to represent an evaluation set parameters
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=False)
     # Setting parameters again to represent a training set parameters
-    moon_client.set_parameters(new_params, config)
+    moon_client.set_parameters(new_params, config, fitting_round=True)
     moon_client.update_before_train(0)
 
     # Assert we stored the old model
