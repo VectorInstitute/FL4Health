@@ -43,7 +43,7 @@ def test_variational_autoencoder_model_base() -> None:
     # Get a batch from the data loader and do a forward pass
     data, target = next(iter(data_loader))
     output = autoencoder(data)
-    # Check the type and dimention of output: assuming data is "batch first".
+    # Check the type and dimension of output: assuming data is "batch first".
     assert isinstance(output, torch.Tensor) and output.dim() == 2
     # Check the shape of output after concatenation in forward pass.
     assert output.shape[0] == batch_size and output.shape[1] == embedding_size * 2 + data_vector_size
@@ -66,15 +66,17 @@ def test_conditional_variational_autoencoder_model_base() -> None:
     encoder = VariationalEncoder(embedding_size, condition_vector_size)
     decoder = VariationalDecoder(embedding_size, condition_vector_size)
     autoencoder = ConditionalVae(
-        encoder=encoder, decoder=decoder, unpack_input_condition=autoencoder_converter.get_unpacking_function
+        encoder=encoder,
+        decoder=decoder,
     )
+    autoencoder.unpack_input_condition = autoencoder_converter.get_unpacking_function()
 
     # Create data loader
     data_loader = DataLoader(converted_data, batch_size=batch_size)
     # Get a batch from the data loader and do a forward pass
     data, target = next(iter(data_loader))
     output = autoencoder(data)
-    # Check the type and dimention of output: assuming data is "batch first".
+    # Check the type and dimension of output: assuming data is "batch first".
     assert isinstance(output, torch.Tensor) and output.dim() == 2
     # Check the shape of output after concatenation in forward pass.
     assert output.shape[0] == batch_size and output.shape[1] == embedding_size * 2 + data_vector_size

@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
 import torch
@@ -25,8 +26,8 @@ class DatasetConverter(ABC, BaseDataset):
         # Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.
         # converter_function is applied after the transformers.
         assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: BaseDataset)"
-        data, taregt = self.dataset.__getitem__(index)
-        return self.converter_function(data, taregt)
+        data, target = self.dataset.__getitem__(index)
+        return self.converter_function(data, target)
 
     def __len__(self) -> int:
         assert self.dataset is not None, "Error: dataset is should be either converted or initiated."
@@ -51,7 +52,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         condition_vector_size: Optional[int] = None,
     ) -> None:
         """
-        A dataset converter specific to formating supervised data such as MNIST for
+        A dataset converter specific to formatting supervised data such as MNIST for
         self-supervised training in autoencoder-based models, and potentially handling
         the existence of additional input i.e. condition.
         This class includes three converter functions that are chosen based on the condition,
@@ -86,7 +87,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
     def convert_dataset(self, dataset: BaseDataset) -> BaseDataset:
         self.dataset = dataset
         # Data shape is saved to be used in the pack-unpack process.
-        # This is the shape of the data after getting treansformed by torch transforms.
+        # This is the shape of the data after getting transformed by torch transforms.
         data, _ = self.dataset[0]
         self.data_shape = data.shape
         return self
@@ -158,12 +159,17 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         # We can flatten the data since self.data_shape is already saved.
         return torch.cat([data.view(-1), target]), data
 
-    def get_unpacking_function(self, packed_input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_unpacking_function(self) -> Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]:
         condition_vector_size = self.get_condition_vector_size()
-        return self.unpack_input_condition(packed_input, condition_vector_size, self.data_shape)
+        return partial(
+            AutoEncoderDatasetConverter.unpack_input_condition,
+            cond_vec_size=condition_vector_size,
+            data_shape=self.data_shape,
+        )
 
+    @staticmethod
     def unpack_input_condition(
-        self, packed_data: torch.Tensor, cond_vec_size: int, data_shape: torch.Size
+        packed_data: torch.Tensor, cond_vec_size: int, data_shape: torch.Size
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Unpacks model inputs (data and condition) from a tensor used in the training loop
         regardless of the converter function used to pack them. Unpacking relies on the size of the condition vector,

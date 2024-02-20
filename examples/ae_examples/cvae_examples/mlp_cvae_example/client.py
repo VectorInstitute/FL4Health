@@ -35,6 +35,14 @@ class CondAutoEncoderClient(BasicClient):
         # You can optionally pass a custom converter function to this class.
         self.autoencoder_converter = AutoEncoderDatasetConverter(self.condition_vector)
 
+    def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
+        # The unpacking function is passed to the CVAE model to unpack the input tensor to data and condition tensors.
+        # Client's data is converted using autoencoder_converter in get_data_loaders.
+        # This function can be initiated after data loaders are created.
+        assert isinstance(self.model, ConditionalVae)
+        self.model.unpack_input_condition = self.autoencoder_converter.get_unpacking_function()
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
@@ -67,10 +75,7 @@ class CondAutoEncoderClient(BasicClient):
         # The input/output size is the flattened MNIST image size.
         encoder = MnistConditionalEncoder(input_size=784, latent_dim=latent_dim)
         decoder = MnistConditionalDecoder(latent_dim=latent_dim, output_size=784)
-        # Note: setup_client() shuld first initialize the data loaders and then the model
-        # to be able to initiate the model with the unpacking method of the converted dataset.
-        unpacking_function = self.autoencoder_converter.get_unpacking_function
-        return ConditionalVae(encoder=encoder, decoder=decoder, unpack_input_condition=unpacking_function)
+        return ConditionalVae(encoder=encoder, decoder=decoder)
 
 
 if __name__ == "__main__":

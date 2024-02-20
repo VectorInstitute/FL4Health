@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from fl4health.model_bases.autoencoders_base import ConditionalVae, VariationalAe
-from fl4health.preprocessing.autoencoders.dim_reduction import CvaeNonFixedConditionProcessor, VaeProcessor
+from fl4health.preprocessing.autoencoders.dim_reduction import CvaeVariableConditionProcessor, VaeProcessor
 from fl4health.utils.dataset import BaseDataset
 from tests.test_utils.models_for_test import VariationalDecoder, VariationalEncoder
 
@@ -58,21 +58,21 @@ def test_non_fixed_batched_conditional_dim_reduction() -> None:
     encoder = VariationalEncoder(embedding_size, condition_vector_size)
     decoder = VariationalDecoder(embedding_size, condition_vector_size)
     # unpack_input_condition can be none since we just use encoder.
-    autoencoder = ConditionalVae(encoder=encoder, decoder=decoder, unpack_input_condition=None)
+    autoencoder = ConditionalVae(encoder=encoder, decoder=decoder)
     torch.save(autoencoder, PATH)
     # Initiating a non-fixed conditional processor as for each data sample we have a random condition vector.
-    cvae_processor = CvaeNonFixedConditionProcessor(checkpointing_path=PATH)
+    cvae_processor = CvaeVariableConditionProcessor(checkpointing_path=PATH)
     # Get a batch of data
     data_batch, condition_batch = next(iter(data_loader))
     encoded_batch = cvae_processor(data_batch, condition_batch)
-    # Check the type and dimention of output: assuming data is "batch first".
+    # Check the type and dimension of output: assuming data is "batch first".
     assert isinstance(encoded_batch, torch.Tensor) and encoded_batch.dim() == 2
     # Check the shape of encoder output
     assert encoded_batch.shape[0] == batch_size and encoded_batch.shape[1] == embedding_size * 2
 
 
 def test_vae_dim_reduction() -> None:
-    """Tests the VAE dimentionality reduction both on a single data and a batch of data."""
+    """Tests the VAE dimensionality reduction both on a single data and a batch of data."""
     # Data settings
     data_size = 50
     sample_vector_size = 100
@@ -93,7 +93,7 @@ def test_vae_dim_reduction() -> None:
     # Get a batch of data
     data_batch, target_batch = next(iter(data_loader))
     encoded_batch = vae_processor(data_batch)
-    # Check the type and dimention of output: assuming data is "batch first".
+    # Check the type and dimension of output: assuming data is "batch first".
     assert isinstance(encoded_batch, torch.Tensor) and encoded_batch.dim() == 2
     # Check the shape of encoder output
     assert encoded_batch.shape[0] == batch_size and encoded_batch.shape[1] == embedding_size * 2

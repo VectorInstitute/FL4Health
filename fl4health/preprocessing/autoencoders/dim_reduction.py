@@ -8,15 +8,18 @@ class AutoEncoderProcessing(ABC):
     def __init__(
         self,
         checkpointing_path: Path,
+        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
     ) -> None:
-        """
-        Abstract class for processors that work with a pre-trained and saved autoencoder model.
+        """Abstract class for processors that work with a pre-trained and saved autoencoder model.
 
         Args:
             checkpointing_path (Path): Path to the saved model.
+            device (torch.device, optional): Device indicator for where to send the model and data samples
+            for preprocessing.
         """
+
         self.checkpointing_path = checkpointing_path
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = device
         self.load_autoencoder()
 
     def load_autoencoder(self) -> None:
@@ -34,7 +37,7 @@ class AeProcessor(AutoEncoderProcessing):
     """
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
-        # This transformer is called for the input samples after they are transfered into torch tensors.
+        # This transformer is called for the input samples after they are transferred into torch tensors.
         embedding_vector = self.autoencoder.encode(sample.to(self.device))
         return embedding_vector.clone().detach()
 
@@ -43,6 +46,7 @@ class VaeProcessor(AutoEncoderProcessing):
     def __init__(
         self,
         checkpointing_path: Path,
+        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
         return_mu: bool = False,
     ) -> None:
         """
@@ -50,19 +54,21 @@ class VaeProcessor(AutoEncoderProcessing):
 
         Args:
             checkpointing_path (Path): Path to the saved model.
+            device (torch.device, optional): Device indicator for where to send the model and data samples
+            for preprocessing.
             return_mu (bool, optional): If true, only mu is returned. Defaults to False.
         """
-        super().__init__(checkpointing_path)
+        super().__init__(checkpointing_path, device)
         self.return_mu = return_mu
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
-        # This transformer is called for the input samples after they are transfered into torch tensors.
+        # This transformer is called for the input samples after they are transferred into torch tensors.
         mu, logvar = self.autoencoder.encode(sample.to(self.device))
         if self.return_mu:
             return mu.clone().detach()
         # By default returns cat(mu,logvar).
-        # Contatation is performed on the last dimention which for both the batched data and single data
-        # is the latent space dimention.
+        # Concatenation is performed on the last dimension which for both the batched data and single data
+        # is the latent space dimension.
         return torch.cat((mu.clone().detach(), logvar.clone().detach()), dim=-1)
 
 
@@ -73,46 +79,52 @@ class CvaeFixedConditionProcessor(AutoEncoderProcessing):
         self,
         checkpointing_path: Path,
         condition: torch.Tensor,
-        return_mu: bool = False,
-        batch_size: int = 1,
+        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        return_mu_only: bool = False,
     ) -> None:
-        super().__init__(checkpointing_path)
+        super().__init__(checkpointing_path, device)
         self.condition = condition
-        self.return_mu = return_mu
+        self.return_mu_only = return_mu_only
         assert (
             self.condition.dim() == 1
         ), f"Error: condition should be a 1D vector instead of a {self.condition.dim()}D tensor."
-        # Assuming data is "batch first"
-        # If we are processing a batch of data, condition should be repeated for each sample.
-        if batch_size > 1:
-            self.condition = self.condition.repeat(batch_size, 1)
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
-        # This transformer is called for the input samples after they are transfered into torch tensors.
-        mu, logvar = self.autoencoder.encode(sample.to(self.device), self.condition.to(self.device))
-        if self.return_mu:
+        # Assuming batch is the first dimension
+        if sample.dim() == 1:
+            batch_condition = self.condition
+        else:
+            # If we are processing a batch of data, condition should be repeated for each sample.
+            sample_batch_size = sample.shape[0]
+            batch_condition = self.condition.repeat(sample_batch_size, 1)
+        # This transformer is called for the input samples after they are transformed into torch tensors.
+        mu, logvar = self.autoencoder.encode(sample.to(self.device), batch_condition.to(self.device))
+        if self.return_mu_only:
             return mu.clone().detach()
         # By default returns cat(mu,logvar)
-        # Contatation is performed on the last dimention which for both the batched data and single data
-        # is the latent space dimention.
+        # Concatenation is performed on the last dimension which for both the batched data and single data
+        # is the latent space dimension.
         return torch.cat((mu.clone().detach(), logvar.clone().detach()), dim=-1)
 
 
-class CvaeNonFixedConditionProcessor(AutoEncoderProcessing):
+class CvaeVariableConditionProcessor(AutoEncoderProcessing):
     def __init__(
         self,
         checkpointing_path: Path,
-        return_mu: bool = False,
+        device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
+        return_mu_only: bool = False,
     ) -> None:
-        """Transformer processor to encode the data using CVAE encoder with non-fixed condition,
+        """Transformer processor to encode the data using CVAE encoder with variable condition,
         that is each data sample can have a specific condition.
 
         Args:
             checkpointing_path (Path): Path to the saved model.
-            return_mu (bool, optional): If true, only mu is returned. Defaults to False.
+            device (torch.device, optional): Device indicator for where to send the model and data samples
+            for preprocessing.
+            return_mu_only (bool, optional): If true, only mu is returned. Defaults to False.
         """
-        super().__init__(checkpointing_path)
-        self.return_mu = return_mu
+        super().__init__(checkpointing_path, device)
+        self.return_mu_only = return_mu_only
 
     def __call__(self, sample: torch.Tensor, condition: torch.Tensor) -> torch.Tensor:
         """Performs encoding.
@@ -125,16 +137,16 @@ class CvaeNonFixedConditionProcessor(AutoEncoderProcessing):
         Returns:
             torch.Tensor: Encoded sample(s).
         """
-        # This transformer is called for the input samples after they are transfered into torch tensors.
+        # This transformer is called for the input samples after they are transformed into torch tensors.
         # We assume condition and data are "batch first".
         if condition.size(0) > 1:  # If condition is a batch
             assert condition.size(0) == sample.size(
                 0
             ), f"Error: Condition shape: {condition.shape} does not match the data shape: {sample.shape}"
         mu, logvar = self.autoencoder.encode(sample.to(self.device), condition.to(self.device))
-        if self.return_mu:
+        if self.return_mu_only:
             return mu.clone().detach()
         # By default returns cat(mu,logvar)
-        # Contatation is performed on the last dimention which for both the batched data and single data
-        # is the latent space dimention.
+        # Concatenation is performed on the last dimension which for both the batched data and single data
+        # is the latent space dimension.
         return torch.cat((mu.clone().detach(), logvar.clone().detach()), dim=-1)

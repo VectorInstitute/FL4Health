@@ -13,9 +13,9 @@ class AbstractAe(nn.Module, ABC):
     ) -> None:
         """
         The base class for all autoencoder based models.
-        All we need to define such model is the type of the model, and the structure
-        of the encoder and the decoder modules. This type of model should have the capability
-        to encode data using the encoder module and decode the output of the encoder using the decoder module.
+        To define this model, we need to define the structure of the encoder and the decoder modules.
+        This type of model should have the capability to encode data using the encoder module and decode
+        the output of the encoder using the decoder module.
         """
         super().__init__()
         self.encoder = encoder
@@ -85,9 +85,12 @@ class VariationalAe(AbstractAe):
 
 class ConditionalVae(AbstractAe):
     def __init__(
-        self, encoder: nn.Module, decoder: nn.Module, unpack_input_condition: Optional[Callable] = None
+        self,
+        encoder: nn.Module,
+        decoder: nn.Module,
+        unpack_input_condition: Optional[Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]] = None,
     ) -> None:
-        """Conditional Variatioan Auto-Encoder model.
+        """Conditional Variational Auto-Encoder model.
 
         Args:
             encoder (nn.Module): The encoder used to map input to latent space.

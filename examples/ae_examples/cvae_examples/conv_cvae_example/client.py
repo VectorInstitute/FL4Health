@@ -47,6 +47,14 @@ class CondConvAutoEncoderClient(BasicClient):
             condition_vector_size=4,
         )
 
+    def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
+        # The unpacking function is passed to the CVAE model to unpack the input tensor to data and condition tensors.
+        # Client's data is converted using autoencoder_converter in get_data_loaders.
+        # This function can be initiated after data loaders are created.
+        assert isinstance(self.model, ConditionalVae)
+        self.model.unpack_input_condition = self.autoencoder_converter.get_unpacking_function()
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
@@ -76,10 +84,7 @@ class CondConvAutoEncoderClient(BasicClient):
         latent_dim = self.narrow_config_type(config, "latent_dim", int)
         encoder = ConvConditionalEncoder(latent_dim=latent_dim)
         decoder = ConvConditionalDecoder(latent_dim=latent_dim)
-        # The unpacking function is passed to the CVAE model to unpack the input tensor to data and condition tensors.
-        # Client's data is converted using autoencoder_converter in get_data_loaders.
-        unpacking_function = self.autoencoder_converter.get_unpacking_function
-        return ConditionalVae(encoder=encoder, decoder=decoder, unpack_input_condition=unpacking_function)
+        return ConditionalVae(encoder=encoder, decoder=decoder)
 
 
 if __name__ == "__main__":
