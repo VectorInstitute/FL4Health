@@ -677,3 +677,20 @@ class VariationalDecoder(nn.Module):
         if condition is not None:
             return self.linear(torch.cat((x, condition), dim=-1))
         return self.linear(x)
+
+
+class ConstantConvNet(nn.Module):
+    def __init__(self, constants: List[float]) -> None:
+        assert len(constants) == 4
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5, bias=False)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5, bias=False)
+        self.fc1 = nn.Linear(16 * 4 * 4, 16, bias=False)
+        self.fc2 = nn.Linear(16, 4, bias=False)
+
+        nn.init.constant_(self.conv1.weight, val=constants[0])
+        nn.init.constant_(self.conv2.weight, val=constants[1])
+
+        nn.init.constant_(self.fc1.weight, val=constants[2])
+        nn.init.constant_(self.fc2.weight, val=constants[3])
