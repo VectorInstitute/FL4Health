@@ -143,6 +143,7 @@ def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
 def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
+    fenda_client.contrastive_loss.temperature = 0.5
 
     features = torch.tensor([[1, 1, 1]]).float()
     positive_pairs = torch.tensor([[1, 1, 1]]).float()
@@ -169,6 +170,7 @@ def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # n
 def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
+    fenda_client.contrastive_loss.temperature = 0.5
     fenda_client.perfcl_loss_weights = (1.0, 1.0)
     fenda_client.criterion = torch.nn.CrossEntropyLoss()
 
