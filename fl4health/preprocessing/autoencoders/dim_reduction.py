@@ -47,7 +47,7 @@ class VaeProcessor(AutoEncoderProcessing):
         self,
         checkpointing_path: Path,
         device: torch.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu"),
-        return_mu: bool = False,
+        return_mu_only: bool = False,
     ) -> None:
         """
         Transformer processor to encode the data using VAE encoder.
@@ -56,15 +56,15 @@ class VaeProcessor(AutoEncoderProcessing):
             checkpointing_path (Path): Path to the saved model.
             device (torch.device, optional): Device indicator for where to send the model and data samples
             for preprocessing.
-            return_mu (bool, optional): If true, only mu is returned. Defaults to False.
+            return_mu_only (bool, optional): If true, only mu is returned. Defaults to False.
         """
         super().__init__(checkpointing_path, device)
-        self.return_mu = return_mu
+        self.return_mu_only = return_mu_only
 
     def __call__(self, sample: torch.Tensor) -> torch.Tensor:
         # This transformer is called for the input samples after they are transferred into torch tensors.
         mu, logvar = self.autoencoder.encode(sample.to(self.device))
-        if self.return_mu:
+        if self.return_mu_only:
             return mu.clone().detach()
         # By default returns cat(mu,logvar).
         # Concatenation is performed on the last dimension which for both the batched data and single data
