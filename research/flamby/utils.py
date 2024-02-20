@@ -33,7 +33,7 @@ def fit_config(
 def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
-    # Initializing the control variates to zero, as suggested in the originalq scaffold paper
+    # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in client_model.parameters() if val.requires_grad]
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 

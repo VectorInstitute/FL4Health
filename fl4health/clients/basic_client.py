@@ -67,7 +67,6 @@ class BasicClient(NumPyClient):
             self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
-        self.model_weights_initialized = False
 
         # Loss and Metric management
         self.train_loss_meter = LossMeter[TrainingLosses](loss_meter_type, TrainingLosses)
@@ -130,19 +129,27 @@ class BasicClient(NumPyClient):
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized, we assume the full model is being
+        parameters are set. In the first fitting round, we assume the full model is being
         initialized and use the FullParameterExchanger() to set all model weights.
+        Otherwise, we use the appropriate parameter exchanger defined by the user depending on the
+        federated learning algorithm being used.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model but may contain more information than that.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is a
+                fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
         """
         assert self.model is not None
-        if not self.model_weights_initialized:
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        if current_server_round == 1 and fitting_round:
             self.initialize_all_model_weights(parameters, config)
         else:
             assert self.parameter_exchanger is not None
@@ -159,7 +166,6 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
-        self.model_weights_initialized = True
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         """
@@ -252,7 +258,7 @@ class BasicClient(NumPyClient):
             data={"fit_start": datetime.datetime.now()},
         )
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=True)
 
         self.update_before_train(current_server_round)
 
@@ -304,7 +310,7 @@ class BasicClient(NumPyClient):
             data={"evaluate_start": datetime.datetime.now()},
         )
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=False)
         loss, metric_values = self.validate()
 
         self.metrics_reporter.add_to_metrics_at_round(

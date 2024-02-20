@@ -63,7 +63,7 @@ class ScaffoldClient(BasicClient):
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
         return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
@@ -78,7 +78,7 @@ class ScaffoldClient(BasicClient):
         server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Note that we are restricting to weights that require a gradient here because they are used to compute
         # control variates
