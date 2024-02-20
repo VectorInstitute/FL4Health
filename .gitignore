@@ -160,4 +160,6 @@ settings.json
 # model artifacts
 
 **/*.pkl
+**/*.png
+**/*.pt
 /metrics/

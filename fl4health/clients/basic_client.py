@@ -368,7 +368,6 @@ class BasicClient(NumPyClient):
     ) -> None:
         """
         Handles reporting of losses and metrics to W&B.
-
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
             metrics_dict (Dict[str, Scalar]): A dictionary of metrics to log.
@@ -568,6 +567,7 @@ class BasicClient(NumPyClient):
         Args:
             config (Config): The config from the server.
         """
+
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
@@ -699,7 +699,7 @@ class BasicClient(NumPyClient):
         """
         Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
         In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
-        string and optimizer are returned (ie APFL), the use must override this method.
+        string and optimizer are returned (ie APFL), the user must override this method.
 
         Args:
             config (Config): The config from the server.
