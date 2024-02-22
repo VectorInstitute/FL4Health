@@ -7,12 +7,12 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_sparse_coo_tensor import FedAvgSparseCooTensor
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
 def fit_config(
