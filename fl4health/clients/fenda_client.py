@@ -24,10 +24,11 @@ class FendaClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
+        beta_update_interval: int = 5,
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
-        mkmmd_loss_weight: Optional[float] = None,
+        mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -49,21 +50,28 @@ class FendaClient(BasicClient):
             Each value associate with one of two contrastive losses in perfcl loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
-            mkmmd_loss_weight: Weight to be used for mkmmd loss.
+            mkmmd_loss_weight: Weights to be used for mkmmd losses. Fist value is for minimizing the distance
+            and second value is for maximizing the distance.
         """
         self.perfcl_loss_weights = perfcl_loss_weights
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.contrastive_loss_weight = contrastive_loss_weight
-        self.mkmmd_loss_weight = mkmmd_loss_weight
+        self.mkmmd_loss_weights = mkmmd_loss_weights
         self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
         self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature).to(self.device)
-        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
+        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
+        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
+        self.beta_update_interval = beta_update_interval
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
         self.old_local_module: Optional[torch.nn.Module] = None
         self.old_global_module: Optional[torch.nn.Module] = None
         self.aggregated_global_module: Optional[torch.nn.Module] = None
+
+        self.local_buffer: list[torch.Tensor] = []
+        self.global_buffer: list[torch.Tensor] = []
+        self.aggregated_buffer: list[torch.Tensor] = []
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModel)
@@ -97,6 +105,16 @@ class FendaClient(BasicClient):
                         features["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
                             len(features["global_features"]), -1
                         )
+        elif self.mkmmd_loss_weights is not None:
+            if self.aggregated_global_module is not None:
+                features["aggregated_global_features"] = self.aggregated_global_module.forward(input).reshape(
+                    len(features["global_features"]), -1
+                )
+
+            self.local_buffer.append(features["local_features"].detach())
+            self.global_buffer.append(features["global_features"].detach())
+            self.aggregated_buffer.append(features["aggregated_global_features"].detach())
+
         return preds, features
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
@@ -113,30 +131,82 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
-        if self.mkmmd_loss_weight:
-            self.set_optimized_betas(self.mkmmd_loss)
+        if (
+            self.mkmmd_loss_weights
+            and self.old_global_module
+            and self.old_local_module
+            and self.aggregated_global_module
+        ):
+            self.update_buffers(
+                local_module=self.old_local_module,
+                global_module=self.old_global_module,
+                aggregated_module=self.aggregated_global_module,
+            )
+            if self.mkmmd_loss_weights[0] != 0.0:
+                self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                    X=torch.cat(self.global_buffer, dim=0), Y=torch.cat(self.aggregated_buffer, dim=0), lambda_m=1e-5
+                )
+            if self.mkmmd_loss_weights[1] != 0.0:
+                self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
+                    X=torch.cat(self.local_buffer, dim=0), Y=torch.cat(self.aggregated_buffer, dim=0), lambda_m=1e-5
+                )
+
+            self.local_buffer.clear()
+            self.global_buffer.clear()
+            self.aggregated_buffer.clear()
 
         return super().update_before_train(current_server_round)
 
-    def set_optimized_betas(self, mkmmd_loss: MkMmdLoss) -> None:
-        """Set the optimized betas for the MK-MMD loss."""
-        assert isinstance(self.model, FendaModel)
+    def update_after_step(self, step: int) -> None:
+        if step % self.beta_update_interval == 0:
+            if self.mkmmd_loss_weights and self.old_local_module and self.old_global_module:
+                # Update betas for the MK-MMD loss based on gathered features during training
+                if self.mkmmd_loss_weights[0] != 0.0:
+                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                        X=torch.cat(self.global_buffer, dim=0),
+                        Y=torch.cat(self.aggregated_buffer, dim=0),
+                        lambda_m=1e-5,
+                    )
+                if self.mkmmd_loss_weights[1] != 0.0:
+                    self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
+                        X=torch.cat(self.local_buffer, dim=0),
+                        Y=torch.cat(self.aggregated_buffer, dim=0),
+                        lambda_m=1e-5,
+                    )
 
-        local_distribution = []
-        aggregated_distribution = []
+        return super().update_after_step(step)
 
-        # Compute the local and aggregated features for the train loader
-        self.model.eval()
+    def update_buffers(
+        self, local_module: torch.nn.Module, global_module: torch.nn.Module, aggregated_module: torch.nn.Module
+    ) -> None:
+        """Update the feature buffer of the local, global and aggregated features."""
+        assert isinstance(local_module, torch.nn.Module)
+        assert isinstance(global_module, torch.nn.Module)
+        assert isinstance(aggregated_module, torch.nn.Module)
+
+        self.local_buffer.clear()
+        self.global_buffer.clear()
+        self.aggregated_buffer.clear()
+
+        # Compute the old features before aggregation and global features
+        local_module.eval()
+        global_module.eval()
+        aggregated_module.eval()
+        assert not local_module.training
+        assert not global_module.training
+        assert not aggregated_module.training
+
         with torch.no_grad():
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                _, features = self.predict(input)
-                local_distribution.append(features["local_features"])
-                aggregated_distribution.append(features["global_features"])
+                local_features = local_module.forward(input)
+                global_features = global_module.forward(input)
+                aggregated_features = aggregated_module.forward(input)
 
-        mkmmd_loss.betas = mkmmd_loss.optimize_betas(
-            X=torch.cat(local_distribution, dim=0), Y=torch.cat(aggregated_distribution, dim=0), lambda_m=1e-5
-        )
+                # Local feature are same as old local features
+                self.local_buffer.append(local_features.reshape(len(local_features), -1))
+                self.global_buffer.append(global_features.reshape(len(global_features), -1))
+                self.aggregated_buffer.append(aggregated_features.reshape(len(aggregated_features), -1))
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
@@ -145,14 +215,6 @@ class FendaClient(BasicClient):
         """
         assert len(local_features) == len(global_features)
         return torch.abs(self.cos_sim(local_features, global_features)).mean()
-
-    def get_mkmmd_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
-        """
-        MK-MMD loss aims to compute the distance among distribtution of current local features
-        and current global features of fenda model.
-        """
-        assert local_features.shape == global_features.shape
-        return self.mkmmd_loss(local_features, global_features)
 
     def get_contrastive_loss(
         self, local_features: torch.Tensor, old_local_features: torch.Tensor, global_features: torch.Tensor
@@ -200,6 +262,15 @@ class FendaClient(BasicClient):
 
         return global_contrastive_loss, local_contrastive_loss
 
+    def get_mkmmd_loss(
+        self, mkmmd_loss: MkMmdLoss, distribution_a: torch.Tensor, distribution_b: torch.Tensor
+    ) -> torch.Tensor:
+        """
+        MK-MMD loss aims to compute the distance among given two distributions with optimized betas.
+        """
+        assert distribution_a.shape == distribution_b.shape
+        return mkmmd_loss(distribution_a, distribution_b)
+
     def compute_loss_and_additional_losses(
         self,
         preds: Dict[str, torch.Tensor],
@@ -237,14 +308,6 @@ class FendaClient(BasicClient):
             total_loss += self.cos_sim_loss_weight * cos_sim_loss
             additional_losses["cos_sim_loss"] = cos_sim_loss
 
-        if self.mkmmd_loss_weight:
-            mkmmd_loss = self.get_mkmmd_loss(
-                local_features=features["local_features"],
-                global_features=features["global_features"],
-            )
-            total_loss -= self.mkmmd_loss_weight * mkmmd_loss
-            additional_losses["mkmmd_loss"] = mkmmd_loss
-
         # Optimal contrastive_loss_weight for FedIsic dataset is 10.0
         if self.contrastive_loss_weight and "old_local_features" in features:
             contrastive_loss = self.get_contrastive_loss(
@@ -270,6 +333,25 @@ class FendaClient(BasicClient):
             )
             additional_losses["global_contrastive_loss"] = global_contrastive_loss
             additional_losses["personal_contrastive_loss"] = personal_contrastive_loss
+
+        if self.mkmmd_loss_weights:
+            if self.mkmmd_loss_weights[0] != 0.0:
+                mkmmd_loss_min = self.get_mkmmd_loss(
+                    mkmmd_loss=self.mkmmd_loss_min,
+                    distribution_a=features["global_features"],
+                    distribution_b=features["aggregated_global_features"],
+                )
+                total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min.sum()
+                additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
+
+            if self.mkmmd_loss_weights[1] != 0.0:
+                mkmmd_loss_max = self.get_mkmmd_loss(
+                    mkmmd_loss=self.mkmmd_loss_max,
+                    distribution_a=features["local_features"],
+                    distribution_b=features["aggregated_global_features"],
+                )
+                total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max.sum()
+                additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
 
         additional_losses["total_loss"] = total_loss
 
