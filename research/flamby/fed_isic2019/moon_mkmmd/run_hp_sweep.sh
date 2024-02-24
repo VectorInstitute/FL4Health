@@ -27,13 +27,13 @@ VENV_PATH=$4
 
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.001 )
-MU_VALUES=( 0 1 10 )
-GAMMA_VALUES=( 0 1 10 )
+MU_VALUES=( 0 0.1 1 10 )
+GAMMA_VALUES=( 0 0.1 1 10 )
 
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd_new"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 

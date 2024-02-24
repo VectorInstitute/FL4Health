@@ -24,7 +24,6 @@ class FendaClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
-        beta_update_interval: int = 5,
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,
@@ -50,7 +49,7 @@ class FendaClient(BasicClient):
             Each value associate with one of two contrastive losses in perfcl loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
-            mkmmd_loss_weight: Weights to be used for mkmmd losses. Fist value is for minimizing the distance
+            mkmmd_loss_weights: Weights to be used for mkmmd losses. Fist value is for minimizing the distance
             and second value is for maximizing the distance.
         """
         self.perfcl_loss_weights = perfcl_loss_weights
@@ -61,7 +60,6 @@ class FendaClient(BasicClient):
         self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature).to(self.device)
         self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
-        self.beta_update_interval = beta_update_interval
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
@@ -111,10 +109,6 @@ class FendaClient(BasicClient):
                     len(features["global_features"]), -1
                 )
 
-            self.local_buffer.append(features["local_features"].detach())
-            self.global_buffer.append(features["global_features"].detach())
-            self.aggregated_buffer.append(features["aggregated_global_features"].detach())
-
         return preds, features
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
@@ -156,25 +150,6 @@ class FendaClient(BasicClient):
             self.aggregated_buffer.clear()
 
         return super().update_before_train(current_server_round)
-
-    def update_after_step(self, step: int) -> None:
-        if step % self.beta_update_interval == 0:
-            if self.mkmmd_loss_weights and self.old_local_module and self.old_global_module:
-                # Update betas for the MK-MMD loss based on gathered features during training
-                if self.mkmmd_loss_weights[0] != 0.0:
-                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                        X=torch.cat(self.global_buffer, dim=0),
-                        Y=torch.cat(self.aggregated_buffer, dim=0),
-                        lambda_m=1e-5,
-                    )
-                if self.mkmmd_loss_weights[1] != 0.0:
-                    self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                        X=torch.cat(self.local_buffer, dim=0),
-                        Y=torch.cat(self.aggregated_buffer, dim=0),
-                        lambda_m=1e-5,
-                    )
-
-        return super().update_after_step(step)
 
     def update_buffers(
         self, local_module: torch.nn.Module, global_module: torch.nn.Module, aggregated_module: torch.nn.Module

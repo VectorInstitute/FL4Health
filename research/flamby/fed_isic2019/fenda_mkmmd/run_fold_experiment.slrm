@@ -65,6 +65,7 @@ VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
 MU=$7
+GAMMA=$8
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -146,7 +147,7 @@ do
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --mu ${MU} \
-            --mkmmd_loss \
+            --gamma ${GAMMA} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

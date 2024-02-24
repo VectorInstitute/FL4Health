@@ -27,7 +27,7 @@ class MoonClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
-        beta_update_interval: int = 5,
+        beta_update_interval: int = 10,
         checkpointer: Optional[TorchCheckpointer] = None,
         contrastive_weight: Optional[float] = None,
         mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
@@ -53,6 +53,7 @@ class MoonClient(BasicClient):
         self.local_buffer: list[torch.Tensor] = []
         self.old_local_buffer: list[torch.Tensor] = []
         self.global_buffer: list[torch.Tensor] = []
+        self.optimized_betas = False
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -78,10 +79,6 @@ class MoonClient(BasicClient):
         if self.global_model is not None:
             _, global_model_features = self.global_model(input)
             features.update({"global_features": global_model_features["features"]})
-        if self.mkmmd_loss_weights and len(self.old_local_buffer) > 0:
-            self.local_buffer.append(features["features"].detach())
-            self.old_local_buffer.append(features["old_features"].detach())
-            self.global_buffer.append(features["global_features"].detach())
 
         return preds, features
 
@@ -99,34 +96,16 @@ class MoonClient(BasicClient):
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
-        if self.mkmmd_loss_weights and len(self.old_models_list) > 0:
-            # Update the feature buffer of the local and global features with evaluation mode
-            self.update_buffers(self.old_models_list[-1], self.global_model)
-
-            # Update betas for the MK-MMD loss based on features gathered of evaluation mode
-            if self.mkmmd_loss_weights[0] != 0:
-                assert isinstance(self.local_buffer, list) and len(self.local_buffer) > 0
-                assert isinstance(self.global_buffer, list) and len(self.global_buffer) > 0
-                self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                    X=torch.cat(self.local_buffer, dim=0), Y=torch.cat(self.global_buffer, dim=0), lambda_m=1e-5
-                )
-
-            if self.mkmmd_loss_weights[1] != 0:
-                assert len(self.old_local_buffer) > 0
-                assert len(self.global_buffer) > 0
-                self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                    X=torch.cat(self.old_local_buffer, dim=0), Y=torch.cat(self.global_buffer, dim=0), lambda_m=1e-5
-                )
-
-        self.old_local_buffer.clear()
-        self.local_buffer.clear()
-        self.global_buffer.clear()
+        # Optimizing betas for the MK-MMD loss has not been done yet
+        self.optimized_betas = False
 
         return super().update_before_train(current_server_round)
 
     def update_after_step(self, step: int) -> None:
-        if step % self.beta_update_interval == 0:
-            if self.mkmmd_loss_weights and len(self.old_models_list) > 0:
+        if step > 0 and step % self.beta_update_interval == 0:
+            if self.mkmmd_loss_weights and len(self.old_models_list) > 0 and self.global_model:
+                # Update the feature buffer of the old local, local and global features with evaluation mode
+                self.update_buffers(self.model, self.global_model, self.old_models_list[-1])
                 # Update betas for the MK-MMD loss based on gathered features during training
                 if self.mkmmd_loss_weights[0] != 0:
                     self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
@@ -140,12 +119,22 @@ class MoonClient(BasicClient):
                         lambda_m=1e-5,
                     )
 
+                # Betas have been optimized
+                self.optimized_betas = True
+
+            self.old_local_buffer.clear()
+            self.local_buffer.clear()
+            self.global_buffer.clear()
+
         return super().update_after_step(step)
 
-    def update_buffers(self, local_model: torch.nn.Module, global_model: torch.nn.Module) -> None:
+    def update_buffers(
+        self, local_model: torch.nn.Module, global_model: torch.nn.Module, old_local_model: torch.nn.Module
+    ) -> None:
         """Update the feature buffer of the local and global features."""
         assert isinstance(local_model, MoonModel)
         assert isinstance(global_model, MoonModel)
+        assert isinstance(old_local_model, MoonModel)
 
         self.local_buffer.clear()
         self.old_local_buffer.clear()
@@ -154,18 +143,23 @@ class MoonClient(BasicClient):
         # Compute the old features before aggregation and global features
         local_model.eval()
         global_model.eval()
+        old_local_model.eval()
         assert not local_model.training
         assert not global_model.training
+        assert not old_local_model.training
 
         with torch.no_grad():
             for input, target in self.train_loader:
                 input, target = input.to(self.device), target.to(self.device)
                 _, local_features = local_model(input)
                 _, global_features = global_model(input)
-                # Local feature are same as old local features
-                self.local_buffer.append(local_features["features"])
-                self.old_local_buffer.append(local_features["features"])
-                self.global_buffer.append(global_features["features"])
+                _, old_local_features = old_local_model(input)
+
+                self.local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
+                self.global_buffer.append(global_features["features"].reshape(len(global_features["features"]), -1))
+                self.old_local_buffer.append(
+                    old_local_features["features"].reshape(len(old_local_features["features"]), -1)
+                )
 
     def compute_loss_and_additional_losses(
         self,
@@ -201,7 +195,12 @@ class MoonClient(BasicClient):
             total_loss += self.contrastive_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
 
-        elif self.mkmmd_loss_weights and "global_features" in features and "old_features" in features:
+        elif (
+            self.mkmmd_loss_weights
+            and "global_features" in features
+            and "old_features" in features
+            and self.optimized_betas
+        ):
             if self.mkmmd_loss_weights[0] != 0:
                 mkmmd_loss_min = self.mkmmd_loss_min(features["features"], features["global_features"])
                 total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min.sum()

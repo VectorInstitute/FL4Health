@@ -37,10 +37,7 @@ class FedIsic2019FendaClient(FendaClient):
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        cos_sim_activate: bool = False,
-        contrastive_activate: bool = False,
-        mkmmd_activate: bool = False,
-        extra_loss_weights: Optional[float] = None,
+        mkmmd_loss_weights: Tuple[float, float] = (10, 10),
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -48,18 +45,10 @@ class FedIsic2019FendaClient(FendaClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            mkmmd_loss_weights=mkmmd_loss_weights,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-        if cos_sim_activate:
-            assert extra_loss_weights is not None
-            self.cos_sim_loss_weight = extra_loss_weights
-        if contrastive_activate:
-            assert extra_loss_weights is not None
-            self.contrastive_loss_weight = extra_loss_weights
-        if mkmmd_activate:
-            assert extra_loss_weights is not None
-            self.mkmmd_loss_weight = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -129,11 +118,15 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
-    parser.add_argument("--cos_sim_loss", action="store_true", help="Activate Cosine Similarity loss")
-    parser.add_argument("--contrastive_loss", action="store_true", help="Activate Contrastive loss")
-    parser.add_argument("--mkmmd_loss", action="store_true", help="Activate MK-MMD loss")
     parser.add_argument(
         "--mu",
+        action="store",
+        type=float,
+        help="Weight for the auxiliary losses",
+        required=False,
+    )
+    parser.add_argument(
+        "--gamma",
         action="store",
         type=float,
         help="Weight for the auxiliary losses",
@@ -171,10 +164,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        cos_sim_activate=args.cos_sim_loss,
-        contrastive_activate=args.contrastive_loss,
-        mkmmd_activate=args.mkmmd_loss,
-        extra_loss_weights=args.mu,
+        mkmmd_loss_weights=(args.mu, args.gamma),
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
