@@ -5,6 +5,8 @@ from typing import Optional
 
 import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Parameters
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.strategy import Strategy
@@ -13,7 +15,11 @@ from fl4health.checkpointing.checkpointer import ServerPerRoundCheckpointer, Tor
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServerWithCheckpointing
-from research.picai.fl_utils import get_initial_model_parameters
+
+
+def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
+    # Initializing the model parameters on the server side.
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
 class PicaiServer(FlServerWithCheckpointing):

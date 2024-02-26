@@ -164,7 +164,7 @@ def get_img_and_seg_paths(
     Returns:
         Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
-            to the diffferent MR Sequences for a given patient exam. The second element is a list of strings
+            to the diffferent MRI Sequences for a given patient exam. The second element is a list of strings
             representing the associated segmentation labels. The final element of the returned tuple is a
             torch tensor that give the class proportions.
     """
@@ -201,7 +201,7 @@ def split_img_and_seg_paths(
     Split image and segmentation paths into a number of mutually exclusive sets.
 
     img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents
-        a list of file paths corresponding to the diffferent MR Sequences for a given patient exam.
+        a list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
     seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
     splits (int): The number of splits to partition the dataset.
 
@@ -234,7 +234,7 @@ def get_dataloader(
     Initializes and returns MONAI Dataloader.
     Args:
         img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
-            list of file paths corresponding to the diffferent MR Sequences for a given patient exam.
+            list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
         seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
         batch_size (str): The number of samples per batch yielded by the DataLoader.
         img_transorm (Compose): The series of transformations applied to input images during dataloading.
@@ -246,8 +246,9 @@ def get_dataloader(
        DataLoader: MONAI dataloader.
     """
     # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
-    # list of files interpreted as multi-parametric sequnce. Supported by image loader used by ImageDataset
-    # https://docs.monai.io/en/stable/transforms.html#loadimage
+    # list of files interpreted as multi-parametric sequnce. Supported by image loader:
+    # https://docs.monai.io/en/stable/transforms.html#loadimage used by ImageDataset:
+    # https://docs.monai.io/en/latest/data.html#monai.data.ImageDataset
     ds = ImageDataset(
         image_files=img_paths,  # type: ignore
         seg_files=seg_paths,

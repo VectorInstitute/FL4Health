@@ -36,6 +36,7 @@
 LOG_DIR=$1
 VENV_PATH=$2
 FOLD_ID=$3
+RUN_NAME=$4
 
 echo "Config Path: ${CONFIG_PATH}"
 echo "Python Venv Path: ${VENV_PATH}"
@@ -54,4 +55,4 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID}
+python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID} --run_name ${RUN_NAME} > ${LOG_PATH} 2>&1

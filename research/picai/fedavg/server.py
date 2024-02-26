@@ -4,20 +4,39 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Config, Parameters
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import load_config
-from research.picai.fl_utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_parameters,
-)
 from research.picai.model_utils import get_model
 from research.picai.picai_server import PicaiServer
+
+
+def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
+    # Initializing the model parameters on the server side.
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
+
+
+def fit_config(
+    fold_id: int,
+    batch_size: int,
+    local_epochs: int,
+    n_server_rounds: int,
+    current_round: int,
+) -> Config:
+    return {
+        "fold_id": fold_id,
+        "batch_size": batch_size,
+        "local_epochs": local_epochs,
+        "n_server_rounds": n_server_rounds,
+        "current_server_round": current_round,
+    }
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:

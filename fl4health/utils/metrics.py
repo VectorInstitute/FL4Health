@@ -66,7 +66,7 @@ class Metric(ABC):
 class TorchMetric(Metric):
     def __init__(self, name: str, metric: TMetric) -> None:
         """
-        Thin wrapper on TorchMetric to make it compatible with out Metric interface.
+        Thin wrapper on TorchMetric to make it compatible with our Metric interface.
 
         Args:
             name (str): The name of the metric.

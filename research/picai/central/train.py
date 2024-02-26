@@ -25,6 +25,7 @@ def main() -> None:
         help="Base path to training/validation data sheets",
     )
     parser.add_argument("--fold", type=int, required=True, help="Which fold to perform experiment")
+    parser.add_argument("--run_name", type=str, required=True, help="String used to name run")
 
     # Model related arguments
     parser.add_argument("--num_channels", type=int, default=3, help="Number of input channels/sequences")
@@ -65,7 +66,7 @@ def main() -> None:
         optimizer=optimizer,
         device=device,
         checkpoint_stub=args.checkpoint_dir,
-        run_name="test_run",
+        run_name=args.run_name,
     )
 
     # Define train and validation metrics and corresponding managers

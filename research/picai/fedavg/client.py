@@ -33,11 +33,13 @@ class PicaiFedAvgClient(PicaiClient):
 
         super().__init__(data_path, metrics, device, intermediate_checkpoint_dir=intermediate_checkpoint_dir)
         self.overviews_dir = overviews_dir
+        self.class_proportions: torch.Tensor
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        train_img_paths, train_seg_paths, _ = get_img_and_seg_paths(
+        train_img_paths, train_seg_paths, class_proportions = get_img_and_seg_paths(
             self.overviews_dir, self.data_path, int(config["fold_id"]), True
         )
+        self.class_proportions = class_proportions
         train_loader = get_dataloader(
             train_img_paths,
             train_seg_paths,
@@ -63,7 +65,7 @@ class PicaiFedAvgClient(PicaiClient):
         return get_model(device=self.device)
 
     def get_criterion(self, config: Config) -> nn.Module:  # type: ignore
-        return FocalLoss(alpha=0.75)
+        return FocalLoss(alpha=self.class_proportions[-1].item())
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), amsgrad=True)

@@ -63,7 +63,7 @@ where **<patient_id>** is a unique identifier for a given patient.
 <patient_id>_<study_id>_<sequence_id>.mha
 ```
 
-**<study_id>** uniquely identifies a particular study and **sequence_id>** specifies the sequence type (ie `_t2w`, `_hbv` or `_adc`). Together the **<patient_id**> and the **<study_id>** uniquely identify an exam. For example, `patient_id=10417` has two exams with `study_id=1000424` and `study_id=1000425`. Hence, this patient has two different T2W sequences (as well as two different ADC and DWI sequences) availabe at:
+**<study_id>** uniquely identifies a particular study and **<sequence_id>** specifies the sequence type (ie `_t2w`, `_hbv` or `_adc`). Together the **<patient_id**> and the **<study_id>** uniquely identify an exam. For example, `patient_id=10417` has two exams with `study_id=1000424` and `study_id=1000425`. Hence, this patient has two different T2W sequences (as well as two different ADC and DWI sequences) availabe at:
 
 ```
 /ssd003/projects/aieng/public/PICAI/input/images/10417/10417_1000424_t2w.mha
@@ -86,7 +86,7 @@ Alternatively, the AI-derived annotations are available on the cluster at:
 /ssd003/projects/aieng/public/PICAI/input/picai_labels/csPCa_lesion_delineations/AI/Bosma22a/<patient_id>_<exam_id>.nii
 ```
 
-The raw annotations differ in spatial resolution across annotators. Specifically, some annotations have been created at the spatial resolution and orientation of the T2W image, while others have been created at the resolution and orientation of the DWI/ADC images. To account for this, resampled annotations have also been made available. The resampled annotations are at the same dimension and spatial resolution astheir correspinding T2W images, following the guidelines of the PICAI competition. The resampled annotations are available at:
+The raw annotations differ in spatial resolution across annotators. Specifically, some annotations have been created at the spatial resolution and orientation of the T2W image, while others have been created at the resolution and orientation of the DWI/ADC images. To account for this, resampled annotations have also been made available. The resampled annotations are at the same dimension and spatial resolution as their corresponding T2W images, following the guidelines of the PICAI competition. The resampled annotations are available at:
 ```
 /ssd003/projects/aieng/public/PICAI/input/picai_labels/csPCa_lesion_delineations/human_expert/resampled/<patient_id>_<exam_id>.nii
 ```
