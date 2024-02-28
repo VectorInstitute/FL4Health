@@ -8,6 +8,7 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from monai.data.dataloader import DataLoader
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, CentralPerRoundCheckpointer
@@ -20,7 +21,7 @@ class SingleNodeTrainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         model: nn.Module,
-        criterion: nn.Module,
+        criterion: _Loss,
         optimizer: Optimizer,
         device: torch.device,
         checkpoint_stub: str,

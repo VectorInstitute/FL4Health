@@ -9,6 +9,7 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from monai.data.dataloader import DataLoader
+from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torchmetrics.classification import MultilabelAveragePrecision
 
@@ -95,7 +96,7 @@ class PicaiFedAvgClient(PicaiClient):
     def get_model(self, config: Config) -> nn.Module:
         return get_model(device=self.device)
 
-    def get_criterion(self, config: Config) -> nn.Module:  # type: ignore
+    def get_criterion(self, config: Config) -> _Loss:
         return FocalLoss(alpha=self.class_proportions[-1].item())
 
     def get_optimizer(self, config: Config) -> Optimizer:
