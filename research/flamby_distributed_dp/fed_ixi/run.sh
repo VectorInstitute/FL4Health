@@ -10,3 +10,7 @@ research/flamby_distributed_dp/fed_ixi/run_hp_sweep.sh \
     log/fed_ixi/ \
     flamby_datasets/fed_ixi/ \
     .venv/
+
+sleep 5
+
+squeue --me

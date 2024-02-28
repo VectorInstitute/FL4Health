@@ -82,7 +82,7 @@ def fwht(x):
     dim=x.size()[0]
     assert math.log2(dim).is_integer()
     log2 = int(math.ceil(math.log2(dim)))
-    h_2x2 = torch.tensor([[1.0, 1.0], [1.0, -1.0]])
+    h_2x2 = torch.tensor([[1.0, 1.0], [1.0, -1.0]]).to(dtype=torch.float64)
     permutation = torch.tensor([0,2,1])
 
     def _hadamard_step(x, dim):
@@ -111,7 +111,25 @@ def fwht(x):
     return xt2[0] / torch.sqrt(torch.tensor(dim))
     # xt2 = xt2.tolist()[0]
     
+@jit(nopython=True)
+def shift_transform(vect: np.array, r: int) -> np.array:
+    m = r % 2
+    half = r // 2
 
+    assert m  == 0
+
+    for i in prange(vect.size):
+        component = vect[i] % r
+        if 0 <= component <= half:
+            vect[i] = component
+        else:
+            vect[i] = component - r
+
+    return vect
+
+@jit(nopython=True)
+def modular_clipping(vector: np.array, a: int, b: int) -> np.array:
+    return vector - (b-a) * np.floor((vector-a)/(b-a))
 
 # dimen = 27
 # x = torch.rand(2**dimen)
@@ -140,9 +158,25 @@ def fwht(x):
 #     print(t1-t0)
 
 
+if __name__ == '__main__':
+    print(shift_transform(np.array([-10 , -9, -3, -2 , 0, 1, 2, 5, 3, 9, 10]), 4))
+
+        
 
 
         
+# @jit(nopython=True)
+# def shift_transform(vect: np.array, r: int) -> np.array:
+#     m = r % 2
+#     half = r // 2
 
+#     assert m  == 0
 
-        
+#     for i in prange(vect.size):
+#         component = vect[i] % r
+#         if 0 <= component <= half:
+#             continue
+#         else:
+#             vect[i] = component - r
+
+#     return vect

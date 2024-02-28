@@ -32,10 +32,8 @@ from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model, get_model_layer_types, change_model_dtypes
-import json 
-import os
-import uuid 
-import timeit
+from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
@@ -46,41 +44,11 @@ class SecureAggregationClient(BasicClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        privacy_settings,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        client_id: str = uuid.uuid1()
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
-
-        self.client_id = client_id
-
-        temporary_dir = os.path.join(
-            os.path.dirname(checkpointer.best_checkpoint_path),
-            'temp'
-        )
-
-        if not os.path.exists(temporary_dir):
-            os.makedirs(temporary_dir)
-
-        self.temporary_model_path = os.path.join(
-            temporary_dir,
-            f'client_{self.client_id}_initial_model.pth'
-        )
-
-        metrics_dir = os.path.join(
-            os.path.dirname(checkpointer.best_checkpoint_path),
-            'metrics'
-        )
-
-        if not os.path.exists(metrics_dir):
-            os.makedirs(metrics_dir)
-
-        self.metrics_path = os.path.join(
-            metrics_dir,
-            f'client_{self.client_id}_metrics.json'
-        )
 
         # client-side cryptography for Secure Aggregation
         self.crypto = ClientCryptoKit()
@@ -95,15 +63,12 @@ class SecureAggregationClient(BasicClient):
 
         # TODO set differential privacy parameters
         self.privacy_settings = {
-            **privacy_settings,
             "dp_mechanism": PrivacyMechanismIndex.DiscreteGaussian.value,
+            "noise_scale": 10,
+            "granularity": 1,
+            "clipping_threshold": 89134,
+            "bias": 0.5,
         }
-
-        with open(self.metrics_path, 'w+') as file:
-            json.dump({
-                'id': self.client_id,
-                'privacy_settings': self.privacy_settings,
-            },file)
 
         assert 0 <= self.privacy_settings["bias"] < 1
 
@@ -122,14 +87,12 @@ class SecureAggregationClient(BasicClient):
                 # NOTE this client integer ID currently persists across SecAgg rounds
                 self.crypto.set_client_integer(integer=config["client_integer"])
 
-
                 # these determine the number of Shamir shares
                 self.crypto.set_number_of_bobs(integer=config["number_of_bobs"])
                 self.crypto.set_reconstruction_threshold(new_threshold=config["shamir_reconstruction_threshold"])
 
                 # modulus may change at the start of each SecAgg if dropout occurs (refer to documentation)
                 self.crypto.set_arithmetic_modulus(modulus=config["arithmetic_modulus"])
-                self.privacy_settings['arithmetic_modulus'] = self.crypto.arithmetic_modulus
 
                 self.dropout_mode = config["dropout_mode"]
 
@@ -253,27 +216,18 @@ class SecureAggregationClient(BasicClient):
         # local model <- global model
         self.set_parameters(parameters, config)
 
-        # store initial model for getting model delta
-        vector_0 = vectorize_model(self.model)
-        torch.save(vector_0, self.temporary_model_path)
-        del vector_0
-
         # TODO round 0 is a temporary work around for server to sample clients
         # NOTE when removing this round, be sure to initialize parameters such as model_dim elsewhere
         if current_server_round == 0:
-            
-            self.start_time=timeit.default_timer()
-
             # set dimension
             self.model_dim = sum(param.numel() for param in self.model.state_dict().values())
             self.padded_model_dim = 2**get_exponent(self.model_dim)
-            log(INFO, f'unpadded { self.model_dim } padded {self.padded_model_dim}')
             
             # freeze model layer dtypes 
             # (these dtypes are modified during SecAgg and need to be changed back to avoid errors!)
-            self.layer_dtypes = get_model_layer_types(self.model)
-            log(INFO, '-----model dtype list--------')
-            log(INFO, self.layer_dtypes)
+            # self.layer_dtypes = get_model_layer_types(self.model)
+            # log(INFO, '-----model dtype list--------')
+            # log(INFO, self.layer_dtypes)
 
 
             # set all local model parameters to 0
@@ -283,7 +237,6 @@ class SecureAggregationClient(BasicClient):
             # NOTE this is a full exchanger, needs to be modified for any partial exchanger
             parmeters = [val.cpu().numpy() for _, val in self.model.state_dict().items()]
             metrics = {}
-
             return (
                 parmeters,
                 self.num_train_samples,
@@ -362,89 +315,26 @@ class SecureAggregationClient(BasicClient):
         #     log(DEBUG, name)
         #     log(DEBUG, layer.dtype)
         log(INFO, f' end of client server round {current_server_round}, post processing start')
-        
-        metrics_to_save = {}
-
-        with open(self.metrics_path, 'r') as file:
-            metrics_to_save = json.load(file)
-            log(DEBUG, f'{metrics_to_save}, {type(metrics_to_save)}')
-
-            for key, value in metrics.items():
-                if key not in metrics_to_save:
-                    metrics_to_save[key] = [value]
-                else:
-                    metrics_to_save[key].append(value)
-
-            for key, value in loss_dict.items():
-                if key not in metrics_to_save:
-                    metrics_to_save[key] = [value]
-                else:
-                    metrics_to_save[key].append(value)
-
-            if 'round' not in metrics_to_save:
-                metrics_to_save['round'] = [current_server_round]
-            else:
-                metrics_to_save['round'].append(current_server_round)
-
-            
-            if 'arithmetic_modulus' not in metrics_to_save:
-                metrics_to_save['arithmetic_modulus'] = [self.privacy_settings['arithmetic_modulus']]
-            else:
-                metrics_to_save['arithmetic_modulus'].append(self.privacy_settings['arithmetic_modulus'])
-
-
-            if 'time' not in metrics_to_save:
-                metrics_to_save['time'] = [timeit.default_timer()-self.start_time]
-            else:
-                metrics_to_save['time'].append(timeit.default_timer()-self.start_time)
-                
-            # metrics_to_save[current_server_round] = {
-            #     'round': current_server_round,
-            #     'metrics': metrics,
-            #     'arithmetic_modulus': self.privacy_settings['arithmetic_modulus'],
-            # }
-
-        with open(self.metrics_path, 'w') as file:
-            json.dump(metrics_to_save, file)
-            log(DEBUG, f'finished recording metrics for round {current_server_round}')
 
         return (
-            self.process_model_post_training(),
+            self.process_model_post_training(weight=self.num_train_samples),
             self.num_train_samples,
             metrics,
         )
 
-    def process_model_post_training(self) -> NDArrays:
-        """ We send model delta to the server. See Algorithm 1 in 
+    def process_model_post_training(self, weight: int) -> NDArrays:
+        """See Algorithm 1 in 
         Ref
             The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
-            https://arxiv.org/pdf/2102.06387.pdf
-        
-        """
+            https://arxiv.org/pdf/2102.06387.pdf"""
 
         assert self.model is not None and self.parameter_exchanger is not None
         self.parameter_exchanger = SecureAggregationExchanger()
         # torch.set_default_dtype(torch.float64)
 
         # reshape model tensors and concatenate into a vector
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
-        vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
-
-        # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
-        # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
-
-        # model diff
-        vector = vector_1 - vector_0
-
-        del vector_0, vector_1
-
-        vector = vector.to(dtype=torch.float64)
-
-        # log(INFO, f'post processing vector dtyle: {vector.dtype}')
-        # log(DEBUG, 'model diff---------')
-        # log(DEBUG, vector[:100])
-
+        vector = vectorize_model(self.model).to(torch.float64)
+        log(INFO, f'post processing vector dtyle: {vector.dtype}')
         for param in self.model.parameters():
             log(INFO, f'post processing model dtyle: {param.data.dtype}')
             break
@@ -474,7 +364,7 @@ class SecureAggregationClient(BasicClient):
         # log(DEBUG,'after WHT')
         # log(INFO, vector)
         t1 = time.perf_counter()
-        log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0} sec')
+        log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0}')
         # vector = torch.matmul(
         #     input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
         #     other=vector
@@ -496,12 +386,9 @@ class SecureAggregationClient(BasicClient):
         # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
         vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
-
-        # NOTE turn off weighted average
-        # vector *= weight
-
-        log(DEBUG,'after masking')
-        log(INFO, vector[:100])
+        vector *= weight
+        # log(DEBUG,'after masking')
+        # log(INFO, vector[:100])
         # processed = []
         # i = 0
         # for layer in self.model.state_dict().values():
@@ -671,9 +558,6 @@ class SecureAggregationClient(BasicClient):
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        log(INFO, '==========Training losses start==========')
-        log(INFO, loss_dict)
-        log(INFO, '==========Training losses end==========')
         metrics = self.train_metric_meter_mngr.compute()
 
         # Log results and maybe report via WANDB
@@ -681,6 +565,30 @@ class SecureAggregationClient(BasicClient):
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics, datasize
+
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+        """
+        Given input and target, generate predictions, compute loss, optionally update metrics if they exist.
+        Assumes self.model is in train model already.
+        """
+        # Clear gradients from optimizer if they exist
+        self.optimizer.zero_grad()
+
+        # Call user defined methods to get predictions and compute loss
+        preds = self.predict(input)
+        losses = self.compute_loss(preds, target)
+
+        # Compute backward pass and update paramters with optimizer
+        losses.backward.backward()
+
+        # dp gradient modification
+        for param in self.model.parameters():
+            param.grad *= 2
+
+
+        self.optimizer.step()
+
+        return losses, preds
     
     def revert_layer_dtype(self):
         self.model = change_model_dtypes(model=self.model, dtypes_list=self.layer_dtypes)

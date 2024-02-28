@@ -211,25 +211,26 @@ class SecureAggregationStrategy(BasicFedAvg):
         
         local_models = [parameters_to_ndarrays(client_response.parameters)[0] for _, client_response in results]
         aggregate_data_size = sum([client_response.num_examples for _, client_response in results])
+        received_model_count = len(results)
         log(INFO, f'Training data size: {aggregate_data_size}')
 
         global_model_vector = local_models.pop(0)
         log(DEBUG, f'----first model------')
-        log(DEBUG, global_model_vector[:100])
+        log(DEBUG, global_model_vector[:25])
 
         for vect in local_models:
             global_model_vector += vect
             # global_model_vector %= arithmetic_modulus
 
-        log(DEBUG, f'----before modulo data size{aggregate_data_size}------')
-        log(DEBUG, global_model_vector[:100])
+        log(DEBUG, f'----before modulo data size {aggregate_data_size}, #clients {received_model_count}------')
+        log(DEBUG, global_model_vector[:25])
         # global_model_vector %= arithmetic_modulus
         # log(DEBUG, f'----after modulo data size{aggregate_data_size}------')
         # log(DEBUG, global_model_vector[:100])
 
-        global_model_vector = global_model_vector.astype('float64') / aggregate_data_size
-        log(DEBUG, f'----after normalization------')
-        log(DEBUG, global_model_vector[:100])
+        global_model_vector = global_model_vector.astype('float64') #/ aggregate_data_size
+        log(DEBUG, f'----datatype should be float64------')
+        log(DEBUG, global_model_vector.dtype)
         # parameters_aggregated = ndarrays_to_parameters([global_model_vector])
         parameters_aggregated = global_model_vector
         # if server_round == 0:
@@ -263,7 +264,7 @@ class SecureAggregationStrategy(BasicFedAvg):
         if server_round == 0:
             return parameters_aggregated, metrics_aggregated
 
-        return parameters_aggregated, metrics_aggregated, aggregate_data_size
+        return parameters_aggregated, metrics_aggregated, aggregate_data_size, received_model_count
 
     def debugger(self, *info):
         log(DEBUG, 6 * "\n")

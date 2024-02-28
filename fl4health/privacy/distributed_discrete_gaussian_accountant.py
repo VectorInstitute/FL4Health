@@ -126,23 +126,25 @@ class DDGAccountant:
 
         return log(arg1+arg2+arg3) / (alpha-1)
     
-    def fl_accountant_rdp(self, alpha: int) -> float:
+    def fl_accountant_rdp(self, alpha: int, poisson_subsampled=False) -> float:
         """Returns rdp epsilon for a given rdp alpha resulting from composing 
         multiple federated rounds of [DDG] with Poisson subsampling."""
-        return self.rounds * self.poisson_subsampled_rdp(alpha=alpha)
+        if poisson_subsampled:
+            return self.rounds * self.poisson_subsampled_rdp(alpha=alpha)
+        return self.rounds * self.renyi_dp_epsilon(alpha=alpha)
     
-    def approximate_dp_epsilon(self, alpha: int) -> float:
+    def approximate_dp_epsilon(self, alpha: int, poisson_subsampled=False) -> float:
         """See [RDP] Proposition 3."""
-        rdp_eps = self.fl_accountant_rdp(alpha)
+        rdp_eps = self.fl_accountant_rdp(alpha, poisson_subsampled)
         return rdp_eps + log(1/self.delta) / (alpha - 1)
 
-    def optimal_adp_epslion(self) -> float:
+    def optimal_adp_epslion(self, poisson_subsampled=False) -> float:
         """Get best approximate-DP epsilon."""
         optimal = float('inf')
 
         alpha = self.lb
         while alpha <= self.ub:
-            candidate = self.approximate_dp_epsilon(alpha)
+            candidate = self.approximate_dp_epsilon(alpha, poisson_subsampled)
             if candidate < optimal:
                 optimal = candidate
 

@@ -20,10 +20,8 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from fl4health.clients.secure_aggregation_client import SecureAggregationClient
-
+from fl4health.utils.config import load_config
 # torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_dtype(torch.float64)
-
 
 class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
     def __init__(
@@ -33,6 +31,7 @@ class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
+        privacy_settings,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
@@ -44,6 +43,8 @@ class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
             loss_meter_type=loss_meter_type,
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
+            client_id=client_number,
+            privacy_settings=privacy_settings,
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
@@ -109,6 +110,22 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
+
+    hyperparameter_options = 'clipping_threshold, granularity, noise_scale, bias, model_integer_range_exponent'
+    parser.add_argument(
+        "--hyperparameter_name", action="store", type=str, help=f'Tunable hyperparameter type: {hyperparameter_options}.'
+    )
+    parser.add_argument(
+        "--hyperparameter_value", action="store", type=float, help="Tunable hyperparameter value."
+    )
+
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -120,6 +137,23 @@ if __name__ == "__main__":
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
+    config = load_config(args.config_path)
+    privacy_settings = {
+        'clipping_threshold': config['clipping_threshold'],
+        'granularity': config['granularity'],
+        'noise_scale': config['noise_scale'],
+        'bias': config['bias'],
+        # NOTE 'model_integer_range' not needed by client
+        # 'model_integer_range': 1 << config['model_integer_range_exponent'], 
+    }
+
+    # update privacy setting for tunable hyperparameter
+    key, value = args.hyperparameter_name, args.hyperparameter_value
+    assert key in ['clipping_threshold', 'granularity', 'noise_scale', 'bias', 'model_integer_range']
+    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
+    privacy_settings[key] = value
+    log(INFO, f'{privacy_settings}')
+
     client = FedHeartDiseaseFedAvgClient(
         data_path=Path(args.dataset_dir),
         metrics=[Accuracy("FedHeartDisease_accuracy")],
@@ -127,6 +161,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        privacy_settings=privacy_settings,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

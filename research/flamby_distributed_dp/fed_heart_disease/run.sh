@@ -8,3 +8,6 @@ mkdir -p log_error/fed_heart_disease/
     log/fed_heart_disease/\
     flamby_datasets/fed_heart_disease/ \
     .venv/
+
+sleep 3
+squeue --me

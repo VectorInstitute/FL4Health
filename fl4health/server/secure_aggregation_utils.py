@@ -1,12 +1,15 @@
 from collections import OrderedDict
-from typing import Tuple
+from typing import Tuple, List
 
 from torch import Size, Tensor, cat, flatten, float64, nn, prod, tensor
+import torch 
 from torch.linalg import vector_norm
+from flwr.common.logger import log
+from logging import INFO
 
 
 def get_model_dimension(model: nn.Module) -> int:
-    return sum(p.numel() for p in model.parameters())
+    return sum(p.numel() for p in model.state_dict().values())
 
 
 def tensor_shape_to_parameter_count(tensor_shape: Size) -> int:
@@ -29,9 +32,14 @@ def unvectorize_model(model: nn.Module, parameter_vector: Tensor) -> nn.Module:
     state_dict = model.state_dict()
     for layer_name, layer_params in state_dict.items():
         shape = layer_params.size()
-        end += tensor_shape_to_parameter_count(shape)
+        end += layer_params.numel()
+        # if layer_params.numel() == 1:
+        #     log(INFO, layer_name)
+        #     log(INFO, layer_params)
+        #     log(INFO, get_model_dimension(model))
+        # log(INFO, f'start: {start}, end {end}, shape {shape}, numel: {layer_params.numel()}')
         segment = parameter_vector[start:end]
-        state_dict[layer_name] = segment.view(shape)
+        state_dict[layer_name] = segment.view(shape)    
         start = end
 
     model.load_state_dict(state_dict)
@@ -42,3 +50,20 @@ def get_model_norm(model: nn.Module, p=2) -> Tensor:
     """Finds the p-norm of the model."""
     vect = vectorize_model(model).to(float64)
     return vector_norm(vect, ord=p)
+
+def get_model_layer_types(model: nn.Module) -> List[torch.dtype]:
+    return [layer.dtype for layer in model.state_dict().values()]
+
+def change_model_dtypes(model: nn.Module, dtypes_list: List[torch.dtype]) -> nn.Module:
+
+    model_state_dict = model.state_dict()
+
+    assert len(model_state_dict) == len(dtypes_list)
+
+    i = 0
+    for key in model_state_dict.keys():
+        model_state_dict[key] = model_state_dict[key].to(dtypes_list[i])
+        i += 1
+
+    model.load_state_dict(model_state_dict)
+    return model

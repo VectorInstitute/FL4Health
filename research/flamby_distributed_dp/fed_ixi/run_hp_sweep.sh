@@ -25,18 +25,23 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
+# LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
 SERVER_PORT=8100
+
+# Search through these hyperparameters
+HYPERPARAMETER_NAME="clipping_threshold"
+HYPERPARAMETER_VALUES=( 1 2 5 10 20 )
+DEFAULT_LR=0.001
 
 # Create sweep folder
 SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
-for LR_VALUE in "${LR_VALUES[@]}";
+for HYPERPARAMETER_VALUE in "${HYPERPARAMETER_VALUES[@]}";
 do
-  EXPERIMENT_NAME="lr_${LR_VALUE}"
+  EXPERIMENT_NAME="${HYPERPARAMETER_NAME}_${HYPERPARAMETER_VALUE}"
   echo "Beginning Experiment ${EXPERIMENT_NAME}"
   EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
   echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
@@ -48,8 +53,10 @@ do
     ${EXPERIMENT_DIRECTORY} \
     ${DATASET_DIR} \
     ${VENV_PATH} \
-    ${LR_VALUE} \
-    ${SERVER_ADDRESS}"
+    ${DEFAULT_LR} \
+    ${SERVER_ADDRESS}
+    ${HYPERPARAMETER_NAME} \
+    ${HYPERPARAMETER_VALUE}"
   echo "Running sbatch command ${SBATCH_COMMAND}"
   sbatch ${SBATCH_COMMAND}
   ((SERVER_PORT=SERVER_PORT+1))

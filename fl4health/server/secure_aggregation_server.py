@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from itertools import product
 from logging import DEBUG, INFO, WARN
 from typing import Any, Dict, List, Optional, Set, Tuple
-
+from numba import jit, prange
 import numpy as np
 import torch
 from flwr.common import GetPropertiesIns, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
@@ -23,7 +23,9 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     get_exponent
 )
 from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
-    fwht
+    fwht,
+    shift_transform, 
+    modular_clipping
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.reporting.fl_wanb import ServerWandBReporter
@@ -39,11 +41,13 @@ from fl4health.security.secure_aggregation import (
 )
 from fl4health.server.base_server import ExchangerType, FlServerWithCheckpointing
 from fl4health.server.polling import poll_clients
-from fl4health.server.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model
+from fl4health.server.secure_aggregation_utils import get_model_dimension, unvectorize_model, vectorize_model, change_model_dtypes, get_model_layer_types
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 
+import json
+import os 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -64,26 +68,56 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         strategy: SecureAggregationStrategy,
         model: Module,
         parameter_exchanger: ExchangerType,
+        privacy_settings,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         timeout: Optional[float] = 30,
         # secure aggregation params
         shamir_reconstruction_threshold: int = 2,
-        model_integer_range: int = 1 << 30,
+        # model_integer_range: int = 1 << 30,
         dropout_mode=False,
     ) -> None:
         log(INFO, 'secure aggregation server initializing...')
         assert isinstance(strategy, SecureAggregationStrategy)
         super().__init__(client_manager, model, parameter_exchanger, wandb_reporter, strategy, checkpointer)
+
+        self.layer_dtypes = get_model_layer_types(model)
+        
+
         self.timeout = timeout
         self.dropout_mode = dropout_mode
 
         self.crypto = ServerCryptoKit()
         self.set_shamir_threshold(shamir_reconstruction_threshold)
-        self.set_model_integer_range(model_integer_range)
+        self.set_model_integer_range(privacy_settings['model_integer_range'])
         self.crypto.model_dimension = get_model_dimension(model)
 
+        temporary_dir = os.path.join(
+            os.path.dirname(checkpointer.best_checkpoint_path),
+            'temp'
+        )
+
+        if not os.path.exists(temporary_dir):
+            os.makedirs(temporary_dir)
+
+        self.temporary_model_path = os.path.join(
+            temporary_dir,
+            f'server_initial_model.pth'
+        )
+
         self.blackbox = BlackBox()
+        metrics_dir = os.path.join(os.path.dirname(
+            checkpointer.best_checkpoint_path), 
+            'metrics'
+        )
+
+        if not os.path.exists(metrics_dir):
+            os.makedirs(metrics_dir)
+
+        self.metrics_path = os.path.join(
+            metrics_dir,
+            'server_metrics.json'
+        )
 
         # for communication with specific client
         self.id_proxy_table: Dict[ClientId, ClientProxy] = {}
@@ -94,13 +128,15 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         # differential privacy
         self.privacy_settings = {
+            **privacy_settings,
             "dp_mechanism": PrivacyMechanismIndex.DiscreteGaussian.value,
-            "noise_scale": 1,
-            "granularity": 1,
-            "clipping_threshold": 10,
-            "bias": 0.5,
         }
 
+        with open(self.metrics_path, 'w+') as file:
+            json.dump({
+                'privacy_hyperparameters': self.privacy_settings
+            }, file)
+            
     # the 'main' function; orchestrates FL
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
 
@@ -125,25 +161,82 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # assigns clients to integers > 0 as ID and sets everyone's status as online
         self.initialize_tables()
 
+        # both the client and the server initially nulls the model vector
+        vector_0 = 0 * vectorize_model(self.server_model)
+        torch.save(vector_0, self.temporary_model_path)
+        del vector_0
+
         # Perform federated learning rounds under the Secure Aggregation Protocol.
         for current_round in range(1, 1 + num_rounds):
             log(INFO, f'current fl round from server: {current_round}')
             metrics = self.secure_aggregation(current_round, timeout)
 
+            blackbox = {}
             # Record distributed (and not centralized) loss / metrics.
             history = History()
             history.add_metrics_distributed_fit(server_round=current_round, metrics=metrics)
-            log(INFO, f'------begin evaulation: {current_round}-------')
 
             # Evaluate model on a sample of available clients
+            # pass global model to clients
             res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
-            log(INFO, f'------end evaulation: {current_round}-------')
 
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
                     history.add_loss_distributed(server_round=current_round, loss=loss_fed)
                     history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
+
+                metrics_to_save = {}
+
+                with open(self.metrics_path, 'r') as file:
+                    metrics_to_save = json.load(file)
+
+                    for key, value in metrics.items():
+                        if key not in metrics_to_save:
+                            metrics_to_save[key] = [value]
+                        else:
+                            metrics_to_save[key].append(value)
+
+                    if 'loss' not in metrics_to_save:
+                        metrics_to_save['loss'] = [loss_fed]
+                    else:
+                        metrics_to_save['loss'].append(loss_fed)
+
+                    for key, value in evaluate_metrics_fed.items():
+                        if key not in metrics_to_save:
+                            metrics_to_save[key] = [value]
+                        else:
+                            metrics_to_save[key].append(value)
+
+                    if 'round' not in metrics_to_save:
+                        metrics_to_save['round'] = [current_round]
+                    else:
+                        metrics_to_save['round'].append(current_round)
+                    
+                    if 'arithmetic_modulus' not in metrics_to_save:
+                        metrics_to_save['arithmetic_modulus'] = [self.privacy_settings['arithmetic_modulus']]
+                    else:
+                        metrics_to_save['arithmetic_modulus'].append(self.privacy_settings['arithmetic_modulus'])
+
+                    # NOTE server only 
+                    now = timeit.default_timer()
+                    if 'time' not in metrics_to_save:
+                        metrics_to_save['time'] = [now-start_time]
+                    else:
+                        metrics_to_save['time'].append(now-start_time)
+
+                # metrics_to_save[current_round] = {
+                #     'round': current_round,
+                #     'metrics': metrics,
+                #     'loss_fed': loss_fed if loss_fed else 'None',
+                #     'evaluate_metrics_fed': evaluate_metrics_fed,
+                #     'arithmetic_modulus': self.privacy_settings['arithmetic_modulus'],
+                # }
+
+                with open(self.metrics_path, 'w') as file:
+                    json.dump(metrics_to_save, file)
+                    log(DEBUG, f'finished recording metrics for round {current_round}')
+
 
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -160,10 +253,12 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.advertise_keys(current_round)
         self.share_keys(current_round)
 
-        params, metrics, responded_clients, dropped_clients, train_size = \
+        params, metrics, responded_clients, dropped_clients, train_size, received_model_count = \
         self.masked_input_collection(
             current_round=current_round, timeout=timeout, arithmetic_modulus=self.crypto.arithmetic_modulus
         )
+
+        assert len(responded_clients) == received_model_count
 
         # server procedure to post-process sum
         # global_model_layers = tuple(map(
@@ -186,7 +281,17 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # log(DEBUG, params.dtype)
         # log(DEBUG, params)
         # log(DEBUG, '=====torch====')
-        vector = torch.from_numpy(params).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        
+        log(INFO, f'Arithmetic modulus {self.crypto.arithmetic_modulus}')
+        vector = shift_transform(params, self.crypto.arithmetic_modulus)
+        assert self.crypto.arithmetic_modulus % 2 == 0
+        half = self.crypto.arithmetic_modulus // 2
+
+        # NOTE vector is the model delta
+        # vector = modular_clipping(vector=params, a=-half, b=half)
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        vector = torch.from_numpy(params).to(device=device)
         # log(DEBUG, vector.dtype)
         # log(DEBUG, vector)
         # log(DEBUG, '=====fwht====')
@@ -199,9 +304,26 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         )
         # remove padding zeros and divide to average
         vector = vector[:self.crypto.model_dimension] 
+
+        # NOTE we are not doing weighted average
+        # vector /= train_size
+
+        # NOTE this is unweighted average
+        vector /= received_model_count
+        
         # log(INFO, vector)
         # set global model
-        self.server_model = unvectorize_model(self.server_model, vector)
+        log(INFO,'------model delta after transform------')
+        log(INFO, vector[:30]) 
+
+        # NOTE vector is the model delta
+        model_vector = torch.load(self.temporary_model_path).to(device=device) + vector
+        log(INFO,'------final model------')
+        log(INFO, model_vector[:30]) 
+        
+        self.server_model = unvectorize_model(self.server_model, model_vector)
+        self.revert_layer_dtype()
+        log(INFO, get_model_layer_types(self.server_model))
         # for name, layer in self.server_model.state_dict().items():
         #     log(DEBUG, name)
         #     log(DEBUG, f'current_round: {current_round}')
@@ -259,7 +381,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         self.crypto.set_number_of_bobs(peer_count=peers)
 
         # Set modulus after counting peers.
-        self.crypto.calculate_arithmetic_modulus()
+        arithmetic_modulus = self.crypto.calculate_arithmetic_modulus()
+        self.privacy_settings['arithmetic_modulus'] = arithmetic_modulus
 
         self.blackbox.record_setup(round, peers + 1, self.crypto.model_integer_range)
 
@@ -391,7 +514,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # ---------------------- second round (ends) --------------------------
 
     def masked_input_collection(self, current_round, timeout, arithmetic_modulus):
-        params, metircs, responded_and_dropouts, train_size = self.secure_aggregation_fit_round(
+        params, metrics, responded_and_dropouts, train_size, received_model_count = self.secure_aggregation_fit_round(
             server_round=current_round, timeout=timeout, arithmetic_modulus=arithmetic_modulus
         )
 
@@ -416,7 +539,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             exit()
 
         dropped_clients = self.get_dropout_clients()
-        return params, metircs, responded_clients, dropped_clients, train_size
+        return params, metrics, responded_clients, dropped_clients, train_size, received_model_count
 
     def unmasking(self, round: int, responded: List[ClientId], dropped: List[ClientId], timeout: float):
         """Outputs sum of masks to be removed (subtracted).
@@ -766,8 +889,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             failures=failures,
         )
 
-        parameters_aggregated, metrics_aggregated, aggregate_data_size = aggregated_result
-        return parameters_aggregated, metrics_aggregated, (results, failures), aggregate_data_size
+        parameters_aggregated, metrics_aggregated, aggregate_data_size, received_model_count = aggregated_result
+        return parameters_aggregated, metrics_aggregated, (results, failures), aggregate_data_size, received_model_count
 
     def proxys_to_ids(self, proxy_list: List[ClientProxy]) -> Set[ClientId]:
         ids = set()
@@ -883,3 +1006,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
     def request_masked_input(self):
         req = {"sender": "server", "fl_round": self.fl_round, "even_name": Event.MASKED_INPUT_COLLECTION.value}
+
+    def revert_layer_dtype(self):
+        self.server_model = change_model_dtypes(model=self.server_model, dtypes_list=self.layer_dtypes)

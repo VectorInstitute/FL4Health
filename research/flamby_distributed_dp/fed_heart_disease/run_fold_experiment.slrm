@@ -64,6 +64,9 @@ VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
 
+HYPERPARAMETER_NAME=$7
+HYPERPARAMETER_VALUE=$8
+
 # Create the artifact directory
 mkdir -p "${ARTIFACT_DIR}"
 
@@ -119,6 +122,8 @@ do
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
+        --hyperparameter_name ${HYPERPARAMETER_NAME} \
+        --hyperparameter_value ${HYPERPARAMETER_VALUE} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -134,12 +139,15 @@ do
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
         nohup python -m research.flamby_distributed_dp.fed_heart_disease.client \
+            --config_path ${SERVER_CONFIG_PATH} \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
+            --hyperparameter_name ${HYPERPARAMETER_NAME} \
+            --hyperparameter_value ${HYPERPARAMETER_VALUE} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

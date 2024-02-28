@@ -15,6 +15,7 @@ def construct_fedisic_train_val_datasets(
     # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
     # ignore for now.
     train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2], generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu")))  # type: ignore
+    # train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2]))
     return train_dataset, validation_dataset
 
 

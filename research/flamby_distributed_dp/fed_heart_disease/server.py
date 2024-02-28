@@ -28,11 +28,10 @@ from research.flamby.utils import (
 
 import torch
 
-torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
-torch.set_default_tensor_type('torch.cuda.FloatTensor')
-torch.set_default_dtype(torch.float64)
+# torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+# torch.set_default_tensor_type('torch.cuda.FloatTensor')
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, args) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -62,10 +61,26 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         initial_parameters=get_initial_model_parameters(model),
     )
 
+    privacy_settings = {
+        'clipping_threshold': config['clipping_threshold'],
+        'granularity': config['granularity'],
+        'model_integer_range': 1 << config['model_integer_range_exponent'],   
+        'noise_scale': config['noise_scale'],
+        'bias': config['bias'],
+    }
+
+    # update privacy setting for tunable hyperparameter
+    key, value = args.hyperparameter_name, args.hyperparameter_value
+    assert key in ['clipping_threshold', 'granularity', 'noise_scale', 'bias', 'model_integer_range']
+    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
+    privacy_settings[key] = value
+    log(INFO, f'{privacy_settings}')
+
     server = SecureAggregationServer(
         client_manager=client_manager,
         strategy=strategy,
         model=model,
+        privacy_settings=privacy_settings,
         parameter_exchanger=SecureAggregationExchanger(),
         checkpointer=checkpointer
     )
@@ -111,8 +126,15 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    hyperparameter_options = 'clipping_threshold, granularity, noise_scale, bias, model_integer_range_exponent'
+    parser.add_argument(
+        "--hyperparameter_name", action="store", type=str, help=f'Tunable hyperparameter type: {hyperparameter_options}.'
+    )
+    parser.add_argument(
+        "--hyperparameter_value", action="store", type=float, help="Tunable hyperparameter value."
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    main(config, args.server_address, args.artifact_dir, args.run_name, args)

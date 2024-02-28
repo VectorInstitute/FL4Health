@@ -413,6 +413,10 @@ class ServerCryptoKit:
     def calculate_arithmetic_modulus(self) -> int:
         # stores and returns modulus of arithmetic
         self.arithmetic_modulus = (self.number_of_bobs + 1) * (self.model_integer_range - 1) + 1
+
+        # TODO temporary fix since modular clipping requires modulus to be even 
+        self.arithmetic_modulus *= 2
+        
         return self.arithmetic_modulus
 
     def clear_cache(self) -> None:

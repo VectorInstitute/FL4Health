@@ -293,6 +293,9 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
         # Get losses and number of examples from the evaluation results.
         loss_results = [(evaluate_res.num_examples, evaluate_res.loss) for _, evaluate_res in results]
+        log(INFO, '========== evaluate ==========')
+        log(INFO, loss_results)
+        log(INFO, '========== evaluate ==========')
         # Then aggregate the losses
         loss_aggregated = aggregate_losses(loss_results, self.weighted_eval_losses)
 
