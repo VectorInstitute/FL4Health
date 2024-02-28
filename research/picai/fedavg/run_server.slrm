@@ -29,6 +29,7 @@ SERVER_PORT=$1
 CONFIG_PATH=$2
 LOG_DIR=$3
 VENV_PATH=$4
+N_CLIENTS=$5
 
 # Print the name of the node, this will be the network address
 echo "Node Name: ${SLURMD_NODENAME}"
@@ -53,6 +54,6 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment"
 which python
 
-python -m research.picai.fedavg.server --config_path ${CONFIG_PATH} --server_address ${SERVER_ADDRESS} --artifact_dir ${LOG_DIR} > ${LOG_PATH} 2>&1
+python -m research.picai.fedavg.server --config_path ${CONFIG_PATH} --server_address ${SERVER_ADDRESS} --artifact_dir ${LOG_DIR} --n_clients ${N_CLIENTS} > ${LOG_PATH} 2>&1
 
 echo ${SERVER_ADDRESS}

@@ -51,9 +51,7 @@ CONFIG_PATH=$1
 SERVER_LOG_DIR=$2
 CLIENT_LOG_DIR=$3
 VENV_PATH=$4
-
-# Spins up 2 clients, as the list is 3 strings long
-CLIENT_DATA_PATH_SUFFIXES=( "" "" )
+N_CLIENTS=$5
 
 echo "Python Venv Path: ${VENV_PATH}"
 echo "World size: ${SLURM_NTASKS}"
@@ -73,24 +71,21 @@ SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
 echo "Server logging at: ${SERVER_OUTPUT_FILE}"
 echo "Launching Server"
 
-nohup python -m research.picai.fedavg.server --config_path ${SERVER_CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} > ${SERVER_OUTPUT_FILE} 2>&1 &
+nohup python -m research.picai.fedavg.server --config_path ${SERVER_CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} --n_clients ${N_CLIENTS} > ${SERVER_OUTPUT_FILE} 2>&1 &
 
 # Sleep for 20 seconds to allow the server to come up.
 sleep 20
 
 # Start n number of clients and divert the outputs to their own files
-client_number=0
-for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
+END=$(($N_CLIENTS - 1))
+for i in $(seq 1 $END);
 do
-    CLIENT_NAME="client_${client_number}"
-    CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}${DATA_PATH_SUFFIX}"
+    CLIENT_NAME="client_${i}"
     echo "Launching ${CLIENT_NAME}"
 
-    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${client_number}.out"
+    CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${i}.out"
     echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
     nohup python -m research.picai.fedavg.client --artifact_dir ${CLIENT_LOG_DIR} > ${CLIENT_LOG_PATH} 2>&1 &
-
-    client_number=$((client_number+1))
 done
 
 echo "FL Processes Running"

@@ -28,6 +28,7 @@ def fit_config(
     batch_size: int,
     local_epochs: int,
     n_server_rounds: int,
+    n_clients: int,
     current_round: int,
 ) -> Config:
     return {
@@ -35,11 +36,12 @@ def fit_config(
         "batch_size": batch_size,
         "local_epochs": local_epochs,
         "n_server_rounds": n_server_rounds,
+        "n_clients": n_clients,
         "current_server_round": current_round,
     }
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, n_clients: int) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -47,6 +49,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["batch_size"],
         config["local_epochs"],
         config["n_server_rounds"],
+        n_clients,  # Used to inform clients how many data partitions to create
     )
 
     client_manager = SimpleClientManager()
@@ -54,10 +57,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
+        min_fit_clients=n_clients,
+        min_evaluate_clients=n_clients,
         # Server waits for min_available_clients before starting FL rounds
-        min_available_clients=config["n_clients"],
+        min_available_clients=n_clients,
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
@@ -103,8 +106,15 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--n_clients",
+        action="store",
+        type=int,
+        help="The number of clients in the FL experiments",
+        required=True,
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address)
+    main(config, args.server_address, args.n_clients)

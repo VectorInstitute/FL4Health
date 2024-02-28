@@ -5,9 +5,7 @@ SERVER_CONFIG_PATH=$2
 SERVER_LOG_DIR=$3
 CLIENT_LOG_DIR=$4
 VENV_PATH=$5
-
-# Spins up 2 clients, as the list is 2 strings long
-CLIENT_DATA_PATH_SUFFIXES=( "" "" )
+N_CLIENTS=$6
 
 SERVER_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
 SERVER_JOB_NAME="fl_server_${SERVER_JOB_HASH}"
@@ -23,7 +21,7 @@ echo "Python Venv Path: ${VENV_PATH}"
 echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
-  research/picai/fedavg/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH}"
+  research/picai/fedavg/run_server.slrm ${SERVER_PORT} ${SERVER_CONFIG_PATH} ${SERVER_LOG_DIR} ${VENV_PATH} ${N_CLIENTS}"
 
 JOB_ID=$(sbatch --parsable ${SBATCH_COMMAND} )
 echo "Server Job ID: ${JOB_ID}"
@@ -45,11 +43,10 @@ echo "Extracted Server Address: ${SERVER_ADDRESS}"
 sleep 20
 
 # Spin up the clients on each disparate node with the server address
-
-for DATA_PATH_SUFFIX in "${CLIENT_DATA_PATH_SUFFIXES[@]}";
+END=$(($N_CLIENTS - 1))
+for i in $(seq 0 $END);
 do
 
-  CLIENT_DATA_PATH="${CLIENT_DATA_BASE_PATH}/${DATA_PATH_SUFFIX}"
 
   CLIENT_JOB_HASH=$(echo $( md5sum <<<$RANDOM ) | head -c 10 )
   CLIENT_JOB_NAME="fl_client_${CLIENT_JOB_HASH}"
@@ -61,7 +58,7 @@ do
 
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
     research/picai/fedavg/run_client.slrm ${SERVER_ADDRESS} ${CLIENT_LOG_DIR} ${VENV_PATH} \
-    ${CLIENT_JOB_HASH}"
+    ${CLIENT_JOB_HASH} ${i}"
 
   sbatch ${SBATCH_COMMAND}
 done

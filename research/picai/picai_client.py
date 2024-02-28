@@ -19,6 +19,7 @@ class PicaiClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         intermediate_checkpoint_dir: Path = Path("./"),
+        data_partition: Optional[int] = None,
     ) -> None:
         """
         A simple extension of the Base FL client that adds tolerance to pre-emptions by checkpointing
@@ -40,6 +41,7 @@ class PicaiClient(BasicClient):
         self.per_round_checkpointer = ClientPerRoundCheckpointer(
             intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
         )
+        self.data_partition = data_partition
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """

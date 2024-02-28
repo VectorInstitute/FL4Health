@@ -150,7 +150,7 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
 
 def get_img_and_seg_paths(
     overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
-) -> Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]:
+) -> Tuple[List[List[str]], List[str], torch.Tensor]:
     """
     Gets the image paths, segmentation paths and label proportions for the specified fold.
 
@@ -195,8 +195,8 @@ def get_img_and_seg_paths(
 
 
 def split_img_and_seg_paths(
-    img_paths: List[List[str]], seg_paths: List[str], splits: int
-) -> Tuple[Sequence[Sequence[Sequence[str]]], Sequence[Sequence[str]]]:
+    img_paths: List[List[str]], seg_paths: List[str], splits: int, seed: int = 0
+) -> Tuple[List[List[List[str]]], List[List[str]]]:
     """
     Split image and segmentation paths into a number of mutually exclusive sets.
 
@@ -210,7 +210,7 @@ def split_img_and_seg_paths(
         images and segmentation labels.
     """
     assert len(img_paths) == len(seg_paths)
-
+    random.seed(seed)
     client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
     client_img_paths: List[List[List[str]]] = [[] for _ in range(splits)]
     client_seg_paths: List[List[str]] = [[] for _ in range(splits)]
