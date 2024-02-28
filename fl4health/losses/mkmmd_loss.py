@@ -237,7 +237,7 @@ class MkMmdLoss(torch.nn.Module):
         # QPFunction returns betas in the shape 1 x num_kernels to we take the transpose for consistency
         return QPFunction(verbose=False, solver=QPSolvers.CVXPY)(regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b).t()
 
-    def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: Optional[float] = 1e-5) -> torch.Tensor:
+    def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
         all_h_u_per_v_i = self.compute_all_h_u_per_v_i(X, Y)
 
@@ -259,13 +259,19 @@ class MkMmdLoss(torch.nn.Module):
             )
 
         if self.minimize_type_two_error:
-            unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
+            computed_beta = False
+            while not computed_beta:
+                try:
+                    unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
+                except Exception as e:
+                    log(INFO, f"{e}. \n Increasing lambda_m from {lambda_m} to {lambda_m * 2}.")
+                    regularized_Q_k += lambda_m * torch.eye(self.kernel_num).to(self.device)
+
         else:
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
             unnormalized_betas = self.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
         optimized_betas = (1.0 / torch.sum(unnormalized_betas)) * unnormalized_betas
-        log(INFO, f"Set optimized betas: {optimized_betas.squeeze()}.")
         return optimized_betas
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:

@@ -1,7 +1,9 @@
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -27,7 +29,7 @@ class MoonClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
-        beta_update_interval: int = 10,
+        beta_update_interval: int = 20,
         checkpointer: Optional[TorchCheckpointer] = None,
         contrastive_weight: Optional[float] = None,
         mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
@@ -111,6 +113,7 @@ class MoonClient(BasicClient):
                     self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
                         X=torch.cat(self.local_buffer, dim=0), Y=torch.cat(self.global_buffer, dim=0), lambda_m=1e-5
                     )
+                    log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss_min.betas.squeeze()}.")
 
                 if self.mkmmd_loss_weights[1] != 0:
                     self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
@@ -118,6 +121,7 @@ class MoonClient(BasicClient):
                         Y=torch.cat(self.global_buffer, dim=0),
                         lambda_m=1e-5,
                     )
+                    log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
 
                 # Betas have been optimized
                 self.optimized_betas = True
@@ -207,7 +211,7 @@ class MoonClient(BasicClient):
                 additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
 
             if self.mkmmd_loss_weights[1] != 0:
-                mkmmd_loss_max = self.mkmmd_loss_max(features["old_features"], features["global_features"])
+                mkmmd_loss_max = self.mkmmd_loss_max(features["old_features"][-1], features["global_features"])
                 total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max.sum()
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
 
