@@ -264,7 +264,10 @@ class MkMmdLoss(torch.nn.Module):
                 try:
                     unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
                 except Exception as e:
-                    log(INFO, f"{e}. \n Increasing lambda_m from {lambda_m} to {lambda_m * 10}.")
+                    log(INFO, f"{e}.")
+                    E = torch.linalg.eigvals(regularized_Q_k).real
+                    log(INFO, f"Eigen values are {E}.")
+                    log(INFO, f"Increasing lambda_m from {lambda_m} to {lambda_m * 10}.")
                     lambda_m *= 10
                     regularized_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(self.kernel_num).to(self.device)
 
