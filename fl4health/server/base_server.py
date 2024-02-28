@@ -232,31 +232,3 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model
-
-
-class FedDGGAServer(FlServer):
-    def __init__(
-        self,
-        client_manager: ClientManager,
-        strategy: Optional[Strategy] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
-    ) -> None:
-        # TODO docstrings
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
-
-    def fit_round(
-        self,
-        server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
-        res_fit = super().fit_round(server_round, timeout)
-        if res_fit:
-            # import ipdb;ipdb.set_trace()
-
-            # TODO what to do in case of failure?
-
-            parameters_prime, _, (results, _) = res_fit
-
-        return res_fit
