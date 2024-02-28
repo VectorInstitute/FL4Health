@@ -8,11 +8,10 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Parameters
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.utils.metrics import Metric, MetricManager
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -36,20 +35,6 @@ def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tup
     # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in client_model.parameters() if val.requires_grad]
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
-
-
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
 
 
 def get_all_run_folders(artifact_dir: str) -> List[str]:
