@@ -273,6 +273,20 @@ class BasicClient(NumPyClient):
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
 
+        # Check if we should run an evaluation with validation data after fit (used by FedDGGA)
+        try:
+            evaluate_after_fit = self.narrow_config_type(config, "evaluate_after_fit", bool)
+        except ValueError:
+            evaluate_after_fit = False
+
+        if evaluate_after_fit:
+            loss, metric_values = self.validate()
+            metrics_after_fit = {
+                **metric_values,  # type: ignore
+                "val - loss": loss,
+            }
+            metrics.update(metrics_after_fit)
+
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={
