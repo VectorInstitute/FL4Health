@@ -43,7 +43,7 @@ def metric_aggregation(
     all_client_metrics: List[Tuple[int, Metrics]],
 ) -> Tuple[int, Metrics]:
     """
-    Function that computes a weighted aggregation of metrics normlized by the total number of samples.
+    Function that computes a weighted aggregation of metrics normalized by the total number of samples.
 
     Args:
         all_client_metrics (List[Tuple[int, Metrics]]): A list of tuples with the
@@ -99,7 +99,7 @@ def uniform_normalize_metrics(
     Function that normalizes metrics based on how many clients contributed to the metric.
 
     Args:
-        total_client_count_by_metric (DefaultDict[str, int]): The count of clients that contirbuted to each metric.
+        total_client_count_by_metric (DefaultDict[str, int]): The count of clients that contributed to each metric.
         aggregated_metrics (Metrics): Metrics that have been aggregated across clients.
 
     Returns:
