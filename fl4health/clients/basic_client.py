@@ -20,7 +20,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wanb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.losses import Losses, LossMeter, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 
 T = TypeVar("T")
@@ -67,11 +67,10 @@ class BasicClient(NumPyClient):
             self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
-        self.model_weights_initialized = False
 
         # Loss and Metric management
-        self.train_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
-        self.val_loss_meter = LossMeter.get_meter_by_type(loss_meter_type)
+        self.train_loss_meter = LossMeter[TrainingLosses](loss_meter_type, TrainingLosses)
+        self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
 
@@ -130,19 +129,27 @@ class BasicClient(NumPyClient):
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
-        parameters are set. If it's the first time the model is being initialized, we assume the full model is being
+        parameters are set. In the first fitting round, we assume the full model is being
         initialized and use the FullParameterExchanger() to set all model weights.
+        Otherwise, we use the appropriate parameter exchanger defined by the user depending on the
+        federated learning algorithm being used.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model but may contain more information than that.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is a
+                fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
         """
         assert self.model is not None
-        if not self.model_weights_initialized:
+        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        if current_server_round == 1 and fitting_round:
             self.initialize_all_model_weights(parameters, config)
         else:
             assert self.parameter_exchanger is not None
@@ -159,7 +166,6 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
-        self.model_weights_initialized = True
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         """
@@ -252,7 +258,9 @@ class BasicClient(NumPyClient):
             data={"fit_start": datetime.datetime.now()},
         )
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=True)
+
+        self.update_before_train(current_server_round)
 
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
@@ -302,7 +310,7 @@ class BasicClient(NumPyClient):
             data={"evaluate_start": datetime.datetime.now()},
         )
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=False)
         loss, metric_values = self.validate()
 
         self.metrics_reporter.add_to_metrics_at_round(
@@ -360,7 +368,6 @@ class BasicClient(NumPyClient):
     ) -> None:
         """
         Handles reporting of losses and metrics to W&B.
-
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
             metrics_dict (Dict[str, Scalar]): A dictionary of metrics to log.
@@ -380,7 +387,7 @@ class BasicClient(NumPyClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
@@ -391,7 +398,7 @@ class BasicClient(NumPyClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[Losses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
@@ -399,15 +406,15 @@ class BasicClient(NumPyClient):
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
-        # Compute backward pass and update paramters with optimizer
+        # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
         self.optimizers["global"].step()
 
         return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
@@ -417,14 +424,14 @@ class BasicClient(NumPyClient):
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[Losses, Dict[str, torch.Tensor]]: The losses object from the val step along with
+            Tuple[EvaluationLosses, Dict[str, torch.Tensor]]: The losses object from the val step along with
             a dictionary of the predictions produced by the model.
         """
 
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict(input)
-            losses = self.compute_loss(preds, features, target)
+            losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
 
@@ -456,8 +463,7 @@ class BasicClient(NumPyClient):
                 self.total_steps += 1
                 local_step += 1
             metrics = self.train_metric_manager.compute()
-            losses = self.train_loss_meter.compute()
-            loss_dict = losses.as_dict()
+            loss_dict = self.train_loss_meter.compute().as_dict()
 
             # Log results and maybe report via WANDB
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
@@ -502,8 +508,7 @@ class BasicClient(NumPyClient):
             self.update_after_step(step)
             self.total_steps += 1
 
-        losses = self.train_loss_meter.compute()
-        loss_dict = losses.as_dict()
+        loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
@@ -530,8 +535,7 @@ class BasicClient(NumPyClient):
                 self.val_metric_manager.update(preds, target)
 
         # Compute losses and metrics over validation set
-        losses = self.val_loss_meter.compute()
-        loss_dict = losses.as_dict()
+        loss_dict = self.val_loss_meter.compute().as_dict()
         metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
@@ -563,6 +567,7 @@ class BasicClient(NumPyClient):
         Args:
             config (Config): The config from the server.
         """
+
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
@@ -624,11 +629,36 @@ class BasicClient(NumPyClient):
         else:
             raise ValueError("Model forward did not return a tensor or dictionary or tensors")
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
         """
-        Computes loss given predictions (and potentially features) of the model and ground truth data.
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the loss
+                - A dictionary of additional losses with their names and values, or None if
+                    there are no additional losses.
+        """
+        return self.criterion(preds["prediction"], target), None
+
+    def compute_training_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> TrainingLosses:
+        """
+        Computes training loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
@@ -637,17 +667,39 @@ class BasicClient(NumPyClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
+            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
+                indexed by name.
         """
-        loss = self.criterion(preds["prediction"], target)
-        losses = Losses(checkpoint=loss, backward=loss)
-        return losses
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return TrainingLosses(backward=loss, additional_losses=additional_losses)
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name.
+        """
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
 
     def set_optimizer(self, config: Config) -> None:
         """
         Method called in the the setup_client method to set optimizer attribute returned by used-defined get_optimizer.
         In the simplest case, get_optimizer returns an optimizer. For more advanced use cases where a dictionary of
-        string and optimizer are returned (ie APFL), the use must override this method.
+        string and optimizer are returned (ie APFL), the user must override this method.
 
         Args:
             config (Config): The config from the server.
@@ -735,12 +787,23 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
+    def update_before_train(self, current_server_round: int) -> None:
+        """
+        Hook method called before training with the number of current server rounds performed.
+        For example, used by Moon and Fenda to save global modules after aggregation.
+
+        Args:
+            current_server_round (int): The number of current server round.
+        """
+        pass
+
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         """
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training.
+        returned during training. Also used by Moon and Fenda to save trained modules weights before
+        aggregation.
 
         Args:
             local_steps (int): The number of steps in the local training.

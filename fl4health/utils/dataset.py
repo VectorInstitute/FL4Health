@@ -20,7 +20,6 @@ class BaseDataset(Dataset):
             data = self.transform(data.numpy())
         if self.target_transform is not None:
             target = self.target_transform(target.numpy())
-
         return data, target
 
     def __len__(self) -> int:

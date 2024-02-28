@@ -11,7 +11,7 @@ from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacy
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
@@ -63,7 +63,7 @@ class ScaffoldClient(BasicClient):
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
         return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
@@ -78,7 +78,7 @@ class ScaffoldClient(BasicClient):
         server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Note that we are restricting to weights that require a gradient here because they are used to compute
         # control variates
@@ -178,13 +178,13 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
         losses.backward["backward"].backward()

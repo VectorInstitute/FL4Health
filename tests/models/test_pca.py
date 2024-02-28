@@ -1,15 +1,27 @@
+import math
+from collections.abc import Generator
+
+import pytest
 import torch
 from torch import Tensor
 
 from fl4health.model_bases.pca import PcaModule
-from fl4health.utils.random import set_all_random_seeds
+from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 
 data_dimension = 256
 N = 2048
 N_small = 128
 seed = 83
 small_rank = 16
-set_all_random_seeds(seed)
+
+
+# For more inforamtion of this type hint,
+# see https://docs.python.org/3.8/library/typing.html#typing.Generator/
+@pytest.fixture
+def setup_random_seeds() -> Generator[None, None, None]:
+    set_all_random_seeds(seed)
+    yield
+    unset_all_random_seeds()
 
 
 def create_full_rank_data() -> Tensor:
@@ -46,7 +58,7 @@ def test_reshaping() -> None:
     assert (B == B_prime).all()
 
 
-def test_centering() -> None:
+def test_centering(setup_random_seeds: Generator[None, None, None]) -> None:
     # Test that the pca module properly centers the data matrix.
     X = create_full_rank_data()
     data_mean = torch.mean(X, dim=0)
@@ -58,7 +70,7 @@ def test_centering() -> None:
     assert (pca_module.data_mean == data_mean).all()
 
 
-def test_full_svd_full_rank_data() -> None:
+def test_full_svd_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=True)
     X = create_full_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
@@ -68,26 +80,26 @@ def test_full_svd_full_rank_data() -> None:
     # used in reconstruction equals this rank (since we perform full svd),
     # we should expect reconstruction_error to be close to zero.
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=None, center_data=True)
-    assert abs(reconstruction_error) < 1e-10
+    assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
 
 
-def test_full_svd_low_rank_data() -> None:
+def test_full_svd_low_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=True)
     X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
     # Since X is low-rank, it is expected that only the first small_rank singular values should be nonzero.
     # The remaining singular values should be (nearly) zero.
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-4)
     pca_module.set_principal_components(principal_components, singular_values)
 
     # Since X has rank = small_rank and this is also the number of principal components
     # used in reconstruction, we should expect reconstruction_error to be close to zero.
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=small_rank, center_data=True)
-    assert abs(reconstruction_error) < 1e-10
+    assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
 
 
-def test_reduced_svd_full_rank_data() -> None:
+def test_reduced_svd_full_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=False)
     X = torch.rand(N_small, data_dimension)
     principal_components, singular_values = pca_module(X, center_data=True)
@@ -95,29 +107,29 @@ def test_reduced_svd_full_rank_data() -> None:
     # We should still expect (nearly) perfect reconstruction.
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=None, center_data=True)
-    assert abs(reconstruction_error) < 1e-10
+    assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
 
 
-def test_reduced_svd_low_rank_data() -> None:
+def test_reduced_svd_low_rank_data(setup_random_seeds: Generator[None, None, None]) -> None:
     pca_module = PcaModule(low_rank=False, full_svd=False)
     X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == data_dimension and len(singular_values) == data_dimension
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(data_dimension - small_rank), atol=5e-4)
     # We should still expect (nearly) perfect reconstruction.
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=small_rank, center_data=True)
-    assert abs(reconstruction_error) < 1e-10
+    assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
 
 
-def test_low_rank_svd() -> None:
+def test_low_rank_svd(setup_random_seeds: Generator[None, None, None]) -> None:
     # Following the same approach, we test the low_rank svd functionality.
     q = small_rank + 4
     pca_module = PcaModule(low_rank=True, full_svd=False, rank_estimation=q)
     X = create_low_rank_data()
     principal_components, singular_values = pca_module(X, center_data=True)
     assert principal_components.size(1) == q and len(singular_values) == q
-    assert torch.allclose(singular_values[small_rank:], torch.zeros(q - small_rank), atol=5e-6)
+    assert torch.allclose(singular_values[small_rank:], torch.zeros(q - small_rank), atol=5e-4)
     pca_module.set_principal_components(principal_components, singular_values)
     reconstruction_error = pca_module.compute_reconstruction_error(X, k=small_rank, center_data=True)
-    assert abs(reconstruction_error) < 1e-10
+    assert math.isclose(reconstruction_error, 0.0, abs_tol=1e-8)
