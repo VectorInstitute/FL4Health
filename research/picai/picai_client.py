@@ -71,7 +71,7 @@ class PicaiClient(BasicClient):
             if self.per_round_checkpointer.checkpoint_exists():
                 _, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
 
-        self.set_parameters(parameters, config)
+        self.set_parameters(parameters, config, fitting_round=True)
 
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
