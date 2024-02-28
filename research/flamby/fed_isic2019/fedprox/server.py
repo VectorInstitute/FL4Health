@@ -13,8 +13,9 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from research.flamby.flamby_servers.fedprox_server import FedProxServer
-from research.flamby.utils import evaluate_metrics_aggregation_fn, fit_config, fit_metrics_aggregation_fn
+from research.flamby.utils import fit_config
 
 
 def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
