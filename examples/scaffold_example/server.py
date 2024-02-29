@@ -6,12 +6,12 @@ import flwr as fl
 from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.random import set_all_random_seeds
 
 
