@@ -17,31 +17,25 @@ def test_check_config() -> None:
     """Verify invalid configs raise Error"""
 
     # Test missing values
-    config_1: Config = {"n_clients": 5, "n_server_rounds": 10}
+    config_1: Config = {"n_server_rounds": 10}
 
     with raises(InvalidConfigError):
         check_config(config_1)
 
     # Test incorrect value type
-    config_2: Config = {"n_clients": 5, "n_server_rounds": 10, "batch_size": 45.8}
+    config_2: Config = {"n_server_rounds": 10, "batch_size": 45.8}
 
     with raises(InvalidConfigError):
         check_config(config_2)
 
     # Test invalid parameter range
-    config_3 = {"n_clients": -2, "n_server_rounds": 10, "batch_size": 4}
+    config_3: Config = {"n_server_rounds": 4.5, "batch_size": 4}
 
     with raises(InvalidConfigError):
         check_config(config_3)
 
     # Test invalid parameter range
-    config: Config = {"n_clients": 20, "n_server_rounds": 4.5, "batch_size": 4}
-
-    with raises(InvalidConfigError):
-        check_config(config)
-
-    # Test invalid parameter range
-    config_4: Config = {"n_clients": 20, "n_server_rounds": 4, "batch_size": -4}
+    config_4: Config = {"n_server_rounds": 4, "batch_size": -4}
 
     with raises(InvalidConfigError):
         check_config(config_4)
