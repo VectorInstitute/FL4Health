@@ -1,10 +1,13 @@
+from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
+# import numpy as np
 from flwr.common import Parameters
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
+from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
 from flwr.server.strategy import Strategy
 
@@ -15,7 +18,7 @@ from fl4health.server.base_server import FlServer
 
 
 class FixedSamplingClientManager(SimpleClientManager):
-    """Keeps sampling fixed until it's asked to reset"""
+    """Keeps sampling fixed until it's reset"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -51,11 +54,18 @@ class FixedSamplingClientManager(SimpleClientManager):
 
 
 class ClientMetrics:
+    """Stores client metrics for easy retrieval."""
+
     def __init__(
         self,
         train_metrics: Optional[Dict[str, Scalar]] = None,
         evaluation_metrics: Optional[Dict[str, Scalar]] = None,
     ):
+        """
+        Args:
+            train_metrics: (Optional[Dict[str, Scalar]]) a list of train metrics. Optional, default is None.
+            evaluation_metrics: (Optional[Dict[str, Scalar]]) a list of evaluation metrics. Optional, default is None.
+        """
         self.train_metrics = train_metrics
         self.evaluation_metrics = evaluation_metrics
 
@@ -63,10 +73,49 @@ class ClientMetrics:
         return f"train_metrics: {self.train_metrics}, evaluation_metrics: {self.evaluation_metrics}"
 
 
+class FairnessMetricType(Enum):
+    # TODO docstrings
+    ACCURACY = "val - prediction - accuracy"
+    LOSS = "val - loss"
+    CUSTOM = "custom"
+
+    @classmethod
+    def signal_for_type(cls, fairness_metric_type: "FairnessMetricType") -> float:
+        if fairness_metric_type == FairnessMetricType.ACCURACY:
+            return -1.0
+        if fairness_metric_type == FairnessMetricType.LOSS:
+            return 1
+        return 0
+
+
+class FairnessMetric:
+    # TODO docstrings
+    def __init__(
+        self,
+        metric_type: FairnessMetricType,
+        metric_name: str = "",
+        signal: float = 0.0,
+    ):
+        # TODO dosctrings
+        self.metric_type = metric_type
+        self.metric_name = metric_name
+        self.signal = signal
+
+        if metric_type is None:
+            assert metric_name is not None and signal is not None
+        else:
+            if metric_name == "":
+                self.metric_name = metric_type.value
+            if signal == 0.0:
+                self.signal = FairnessMetricType.signal_for_type(metric_type)
+
+
 class FedDGGAServer(FlServer):
     def __init__(
         self,
         client_manager: FixedSamplingClientManager,
+        fairness_metric: Optional[FairnessMetric] = None,
+        weight_step_size: float = 0.2,
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
@@ -74,7 +123,21 @@ class FedDGGAServer(FlServer):
     ) -> None:
         # TODO docstrings
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
+
+        if fairness_metric is None:
+            self.fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
+        else:
+            self.fairness_metric = fairness_metric
+
+        self.weight_step_size = weight_step_size
         self.clients_metrics: List[ClientMetrics] = []
+        self.num_rounds: Optional[int] = None
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        # TODO docstring
+        # Storing the number of rounds to be used for calculating the weight step decay
+        self.num_rounds = num_rounds
+        return super().fit(num_rounds, timeout)
 
     def fit_round(
         self,
@@ -83,6 +146,7 @@ class FedDGGAServer(FlServer):
     ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
         # TODO docstrings
 
+        # Resetting sampling and metrics
         client_manager = self.client_manager()
         assert isinstance(client_manager, FixedSamplingClientManager), (
             "Client manager is not of type ClientManagerWithFixedSample" f"({type(client_manager)})"
@@ -91,6 +155,9 @@ class FedDGGAServer(FlServer):
         self.clients_metrics = []
 
         res_fit = super().fit_round(server_round, timeout)
+
+        # Collecting train metrics
+        # should contain evaluation of the client's local model against its validation set
         if res_fit:
             # TODO what to do in case of failure?
             _, _, (results, _) = res_fit
@@ -106,10 +173,42 @@ class FedDGGAServer(FlServer):
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
         # TODO docstrings
         res_eval = super().evaluate_round(server_round, timeout)
+
+        # Collecting evaluation metrics
+        # which consists of evaluation of the global model against the client's validation set
         if res_eval:
             # TODO what to do in case of failure?
-            _, _, (results, _) = res_eval
+            loss_fed, _, (results, _) = res_eval
             for i in range(len(results)):
                 self.clients_metrics[i].evaluation_metrics = results[i][1].metrics
+                # adding the loss to the metrics
+                val_loss_key = FairnessMetricType.LOSS.value
+                self.clients_metrics[i].evaluation_metrics[val_loss_key] = loss_fed  # type: ignore
+
+        # Refining the weights at the end of the training round
+        assert self.num_rounds is not None
+        weight_step_size_decay = self.weight_step_size / self.num_rounds
+        weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
+        self.refine_parameters_by_GA(weight_step_size_for_round)
 
         return res_eval
+
+    def refine_parameters_by_GA(
+        self,
+        weight_step_size: float,
+    ) -> None:
+        # TODO docstrings
+        value_list = []
+        for client_metrics in self.clients_metrics:
+            assert client_metrics.evaluation_metrics is not None and client_metrics.train_metrics is not None
+
+            global_model_metric_value = client_metrics.evaluation_metrics[self.fairness_metric.metric_name]
+            local_model_metric_value = client_metrics.train_metrics[self.fairness_metric.metric_name]
+            assert isinstance(global_model_metric_value, float) and isinstance(local_model_metric_value, float)
+
+            value_list.append(global_model_metric_value - local_model_metric_value)
+
+        # value_list_ndarray = np.array(value_list)
+        # norm_gap_list = value_list_ndarray / np.max(np.abs(value_list_ndarray))
+        # step_size = 1.0 / 3.0 * weight_step_size
+        # self.parameters +=

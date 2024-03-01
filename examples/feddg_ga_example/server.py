@@ -7,12 +7,12 @@ from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.server.feddg_ga_server import FedDGGAServer, FixedSamplingClientManager
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.random import set_all_random_seeds
 
 
@@ -61,7 +61,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = FixedSamplingClientManager()
-    server = FedDGGAServer(client_manager, strategy)
+    server = FedDGGAServer(client_manager=client_manager, strategy=strategy)
 
     fl.server.start_server(
         server=server,
