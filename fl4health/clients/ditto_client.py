@@ -23,7 +23,7 @@ class DittoClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        lam: float = 0.0,
+        lam: float = 1.0,
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
@@ -355,11 +355,6 @@ class DittoClient(BasicClient):
         # Compute local model vanilla loss
         assert "local" in preds
         local_loss = self.criterion(preds["local"], target)
-
-        # Compute ditto drift loss to assert that it is, in fact non-zero
-        # NOTE: It should be non-zero because the global model should be distinct from the local model
-        ditto_local_loss = self.get_ditto_drift_loss()
-        log(INFO, f"During Evaluation the Ditto Drift Loss is: {ditto_local_loss.item()}")
 
         additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
 

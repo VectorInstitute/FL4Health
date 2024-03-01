@@ -67,7 +67,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistDittoClient(data_path, [Accuracy()], DEVICE)
+    client = MnistDittoClient(data_path, [Accuracy()], DEVICE, lam=0.1)
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully
