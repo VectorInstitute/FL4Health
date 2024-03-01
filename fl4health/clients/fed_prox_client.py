@@ -44,7 +44,7 @@ class FedProxClient(BasicClient):
 
     def get_proximal_loss(self) -> torch.Tensor:
         assert self.initial_tensors is not None
-        # Using state dictionary to ensure the same ordering as exchange
+        # Using parameters to ensure the same ordering as exchange
         model_weights = [layer_weights for layer_weights in self.model.parameters()]
         assert len(self.initial_tensors) == len(model_weights)
 
@@ -116,7 +116,7 @@ class FedProxClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: an instance of TrainingLosses containing checkpoint loss, backward loss and
+            TrainingLosses: an instance of TrainingLosses containin backward loss and
                 additional losses indexed by name. Additional losses includes proximal loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
