@@ -235,7 +235,9 @@ class MkMmdLoss(torch.nn.Module):
         #   b is a scalar
 
         # QPFunction returns betas in the shape 1 x num_kernels to we take the transpose for consistency
-        return QPFunction(verbose=False, solver=QPSolvers.CVXPY)(regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b).t()
+        return QPFunction(verbose=False, solver=QPSolvers.CVXPY, check_Q_spd=False)(
+            regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b
+        ).t()
 
     def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
         # In this function, we assume that X, Y: n_samples, n_features
