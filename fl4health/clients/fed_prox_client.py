@@ -116,7 +116,7 @@ class FedProxClient(BasicClient):
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            TrainingLosses: an instance of TrainingLosses containin backward loss and
+            TrainingLosses: an instance of TrainingLosses containing backward loss and
                 additional losses indexed by name. Additional losses includes proximal loss.
         """
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
