@@ -1,7 +1,7 @@
 # FedProx Federated Learning Example
 
 In this example, we implement the Ditto algorithm from the paper [Ditto: Fair and Robust Federated Learning Through Personalization
-](https://arxiv.org/abs/2012.04221). This method is has been shown to perform quick well on certain benchmarks (though not as well as others). See for example [Benchmark for Personalized Federated Learning](https://www.computer.org/csdl/journal/oj/2024/01/10316561/1S2UbvQk5Tq) and [pFL-Bench: A Comprehensive Benchmark for Personalized Federated Learning](https://arxiv.org/abs/2206.03655). The method is somewhat related to FedProx. Essentially, the model trains a global model through FedAvg and uses that global model, at each round to also train a personalized model. That model is trained using the same loss function, but with the initial global model (at the start of each round) as a penalty. That is, the local model weights are constrained using $\lambda > 0$ such that
+](https://arxiv.org/abs/2012.04221). This method has been shown to perform quite well on certain benchmarks (though not as well as others). See for example [Benchmark for Personalized Federated Learning](https://www.computer.org/csdl/journal/oj/2024/01/10316561/1S2UbvQk5Tq) and [pFL-Bench: A Comprehensive Benchmark for Personalized Federated Learning](https://arxiv.org/abs/2206.03655). The method is somewhat related to FedProx. Essentially, the model trains a global model through FedAvg and uses that global model, at each round to also train a personalized model. That model is trained using the same loss function, but with the initial global model (at the start of each round) as a penalty. That is, the local model weights are constrained using $\lambda > 0$ such that
 $$
 l_{w} + \lambda \Vert w - w_g \Vert_2^2,
 $$
