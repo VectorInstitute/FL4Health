@@ -42,7 +42,7 @@ class DittoClient(BasicClient):
                 checkpointing. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
-            lam (float, optional): weight applied to the Ditto drift loss. Defaults to 0.0.
+            lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
         """
         super().__init__(
             data_path=data_path,
@@ -278,7 +278,7 @@ class DittoClient(BasicClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we adds to vanilla loss function by including Ditto penalty loss which is the l2 inner
+        For the local model we add to vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
         The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
 
