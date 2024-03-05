@@ -63,7 +63,7 @@ def test_forming_ditto_loss(get_client: DittoClient) -> None:  # noqa
 
     ditto_loss = ditto_client.get_ditto_drift_loss()
 
-    assert pytest.approx(ditto_loss.detach().item(), abs=0.02) == ditto_client.lam * (
+    assert pytest.approx(ditto_loss.detach().item(), abs=0.02) == (ditto_client.lam / 2.0) * (
         1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32
     )
 
