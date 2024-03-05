@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
-# import numpy as np
+import numpy as np
 from flwr.common import Parameters
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import SimpleClientManager
@@ -132,6 +132,15 @@ class FedDGGAServer(FlServer):
         self.weight_step_size = weight_step_size
         self.clients_metrics: List[ClientMetrics] = []
         self.num_rounds: Optional[int] = None
+        self.adjustment_weights: Dict[str, float] = {}
+
+    def client_manager(self) -> FixedSamplingClientManager:
+        """Return FixedSamplingClientManager."""
+        client_manager = super().client_manager()
+        assert isinstance(client_manager, FixedSamplingClientManager), (
+            "Client manager is not of type FixedSamplingClientManager" f"({type(client_manager)})"
+        )
+        return client_manager
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         # TODO docstring
@@ -147,11 +156,7 @@ class FedDGGAServer(FlServer):
         # TODO docstrings
 
         # Resetting sampling and metrics
-        client_manager = self.client_manager()
-        assert isinstance(client_manager, FixedSamplingClientManager), (
-            "Client manager is not of type ClientManagerWithFixedSample" f"({type(client_manager)})"
-        )
-        client_manager.reset_sample()
+        self.client_manager().reset_sample()
         self.clients_metrics = []
 
         res_fit = super().fit_round(server_round, timeout)
@@ -186,20 +191,19 @@ class FedDGGAServer(FlServer):
                 self.clients_metrics[i].evaluation_metrics[val_loss_key] = loss_fed  # type: ignore
 
         # Refining the weights at the end of the training round
-        assert self.num_rounds is not None
-        weight_step_size_decay = self.weight_step_size / self.num_rounds
-        weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
-        self.refine_parameters_by_GA(weight_step_size_for_round)
+        self.refine_parameters_by_GA(server_round)
 
         return res_eval
 
-    def refine_parameters_by_GA(
-        self,
-        weight_step_size: float,
-    ) -> None:
+    def refine_parameters_by_GA(self, server_round: int) -> None:
         # TODO docstrings
+        clients_proxies = self.client_manager().current_sample
+        assert clients_proxies is not None
+
         value_list = []
-        for client_metrics in self.clients_metrics:
+        # calculating metric difference
+        for i in range(len(self.clients_metrics)):
+            client_metrics = self.clients_metrics[i]
             assert client_metrics.evaluation_metrics is not None and client_metrics.train_metrics is not None
 
             global_model_metric_value = client_metrics.evaluation_metrics[self.fairness_metric.metric_name]
@@ -208,7 +212,34 @@ class FedDGGAServer(FlServer):
 
             value_list.append(global_model_metric_value - local_model_metric_value)
 
-        # value_list_ndarray = np.array(value_list)
-        # norm_gap_list = value_list_ndarray / np.max(np.abs(value_list_ndarray))
-        # step_size = 1.0 / 3.0 * weight_step_size
-        # self.parameters +=
+            # initializing weight for this client
+            cid = clients_proxies[i].cid
+            if cid not in self.adjustment_weights:
+                self.adjustment_weights[cid] = 1.0 / 3.0
+
+        # calculating norm gap
+        value_list_ndarray = np.array(value_list)
+        norm_gap_list = value_list_ndarray / np.max(np.abs(value_list_ndarray))
+        step_size = 1.0 / 3.0 * self.get_current_weight_step_size(server_round)
+
+        # updating weights
+        for i in range(len(self.clients_metrics)):
+            cid = clients_proxies[i].cid
+            self.adjustment_weights[cid] += self.fairness_metric.signal * norm_gap_list[i] * step_size
+
+        # weight clip
+        new_total_weight = 0.0
+        for cid in self.adjustment_weights:
+            clipped_weight = np.clip(self.adjustment_weights[cid], 0.0, 1.0)
+            self.adjustment_weights[cid] = clipped_weight
+            new_total_weight += clipped_weight
+
+        for cid in self.adjustment_weights:
+            self.adjustment_weights[cid] /= new_total_weight
+
+    def get_current_weight_step_size(self, server_round: int) -> float:
+        # TODO docstring
+        assert self.num_rounds is not None
+        weight_step_size_decay = self.weight_step_size / self.num_rounds
+        weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
+        return weight_step_size_for_round
