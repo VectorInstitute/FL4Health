@@ -242,7 +242,7 @@ class EvaluateClient(BasicClient):
 
     def get_local_model(self, config: Config) -> Optional[nn.Module]:
         """
-        Functionality for initializing a model from a local checkpoint. This can be overriden for custom behavior
+        Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior
         """
         # If a model checkpoint is provided, we load the checkpoint into the local model to be evaluated.
         if self.model_checkpoint_path:

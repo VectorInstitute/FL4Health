@@ -39,7 +39,7 @@ class BasicClient(NumPyClient):
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
         User is responsible for implementing methods: get_model, get_optimizer, get_data_loaders, get_criterion
-        Other methods can be overriden to achieve custom functionality.
+        Other methods can be overridden to achieve custom functionality.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -131,7 +131,7 @@ class BasicClient(NumPyClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
-        Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
+        Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
         parameters are set. In the first fitting round, we assume the full model is being
         initialized and use the FullParameterExchanger() to set all model weights.
         Otherwise, we use the appropriate parameter exchanger defined by the user depending on the
