@@ -1,8 +1,11 @@
 from enum import Enum
+from logging import ERROR
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from flwr.common import Parameters
+from flwr.common.logger import log
+from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -133,6 +136,7 @@ class FedDGGAServer(FlServer):
         self.clients_metrics: List[ClientMetrics] = []
         self.num_rounds: Optional[int] = None
         self.adjustment_weights: Dict[str, float] = {}
+        self.results_and_failures: FitResultsAndFailures = ([], [])
 
     def client_manager(self) -> FixedSamplingClientManager:
         """Return FixedSamplingClientManager."""
@@ -165,7 +169,8 @@ class FedDGGAServer(FlServer):
         # should contain evaluation of the client's local model against its validation set
         if res_fit:
             # TODO what to do in case of failure?
-            _, _, (results, _) = res_fit
+            _, _, (results, failures) = res_fit
+            self.results_and_failures = (results, failures)
             for result in results:
                 self.clients_metrics.append(ClientMetrics(train_metrics=result[1].metrics))
 
@@ -190,18 +195,31 @@ class FedDGGAServer(FlServer):
                 val_loss_key = FairnessMetricType.LOSS.value
                 self.clients_metrics[i].evaluation_metrics[val_loss_key] = loss_fed  # type: ignore
 
-        # Refining the weights at the end of the training round
-        self.refine_parameters_by_GA(server_round)
+        # Calculating and applying the weights at the end of the training round
+        self.calculate_weights_by_ga(server_round)
+        self.apply_weights_to_results()
+
+        # Making the aggregation again, now with the weighted results
+        aggregated_result: Tuple[
+            Optional[Parameters],
+            Dict[str, Scalar],
+        ] = self.strategy.aggregate_fit(server_round, self.results_and_failures[0], self.results_and_failures[1])
+        parameters_aggregated, _ = aggregated_result
+
+        if parameters_aggregated:
+            self.parameters = parameters_aggregated
+        else:
+            log(ERROR, "Parameters aggregated is None.")
 
         return res_eval
 
-    def refine_parameters_by_GA(self, server_round: int) -> None:
+    def calculate_weights_by_ga(self, server_round: int) -> None:
         # TODO docstrings
         clients_proxies = self.client_manager().current_sample
         assert clients_proxies is not None
 
         value_list = []
-        # calculating metric difference
+        # calculating local vs global metric difference
         for i in range(len(self.clients_metrics)):
             client_metrics = self.clients_metrics[i]
             assert client_metrics.evaluation_metrics is not None and client_metrics.train_metrics is not None
@@ -243,3 +261,20 @@ class FedDGGAServer(FlServer):
         weight_step_size_decay = self.weight_step_size / self.num_rounds
         weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
         return weight_step_size_for_round
+
+    def apply_weights_to_results(self) -> None:
+        # TODO docstring
+        clients_proxies = self.client_manager().current_sample
+        assert clients_proxies is not None
+
+        for i in range(len(self.results_and_failures[0])):
+            cid = clients_proxies[i].cid
+            client_weight = self.adjustment_weights[cid]
+            client_results = self.results_and_failures[0][i]
+            client_parameters = parameters_to_ndarrays(client_results[1].parameters)
+
+            for j in range(len(client_parameters)):
+                client_parameters[i] *= client_weight
+
+            weighted_client_parameters = ndarrays_to_parameters(client_parameters)
+            client_results[1].parameters = weighted_client_parameters
