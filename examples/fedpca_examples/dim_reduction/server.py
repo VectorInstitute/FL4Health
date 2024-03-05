@@ -8,12 +8,12 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.mnist_model import MnistNet
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
 def fit_config(
@@ -35,7 +35,11 @@ def fit_config(
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
-        fit_config, config["local_epochs"], config["batch_size"], config["new_dimension"], config["pca_path"]
+        fit_config,
+        config["local_epochs"],
+        config["batch_size"],
+        config["new_dimension"],
+        config["pca_path"],
     )
 
     # Initializing the model on the server side

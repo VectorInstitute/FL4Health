@@ -7,9 +7,9 @@ from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
 def fit_config(
@@ -17,7 +17,11 @@ def fit_config(
     batch_size: int,
     current_round: int,
 ) -> Config:
-    return {"local_epochs": local_epochs, "batch_size": batch_size, "current_round": current_round}
+    return {
+        "local_epochs": local_epochs,
+        "batch_size": batch_size,
+        "current_round": current_round,
+    }
 
 
 def main(config: Dict[str, Any]) -> None:
