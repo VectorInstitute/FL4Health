@@ -108,7 +108,7 @@ class DittoClient(BasicClient):
         ]
 
         # network l2 inner product tensor weighted by lambda
-        return self.lam * torch.stack(layer_inner_products).sum()
+        return (self.lam / 2.0) * torch.stack(layer_inner_products).sum()
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
