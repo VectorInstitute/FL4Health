@@ -21,6 +21,8 @@ torch = "^1.12.1"
 pycyclops = "^0.2.2"
 dp-accounting = "^0.4.3"
 aiohttp = "^3.9.3"
+transformers = "^4.37.2"
+datasets = "^2.17.1"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.13 version because of restrictions with tensorflow-io
