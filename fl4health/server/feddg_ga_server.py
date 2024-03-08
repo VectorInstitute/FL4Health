@@ -7,53 +7,15 @@ from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Scalar
-from flwr.server.client_manager import SimpleClientManager
-from flwr.server.client_proxy import ClientProxy
-from flwr.server.criterion import Criterion
 from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.base_server import FlServer
-
-
-class FixedSamplingClientManager(SimpleClientManager):
-    """Keeps sampling fixed until it's reset"""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.current_sample: Optional[List[ClientProxy]] = None
-
-    def reset_sample(self) -> None:
-        """Resets the saved sample so self.sample produces a new sample again."""
-        self.current_sample = None
-
-    def sample(
-        self,
-        num_clients: int,
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
-    ) -> List[ClientProxy]:
-        """
-        Return a new client sample for the first time it runs. For subsequent runs,
-        it will return the sample sampling until self.reset_sampling() is called.
-
-        Args:
-            num_clients: (int) The number of clients to sample.
-            min_num_clients: (Optional[int]) The minimum number of clients to return in the sample.
-                Optional, default is num_clients.
-            criterion: (Optional[Criterion]) A criterion to filter clients to sample.
-                Optional, default is no criterion (no filter).
-
-        Returns:
-            List[ClientProxy]: A list of sampled clients as ClientProxy instances.
-        """
-        if self.current_sample is None:
-            self.current_sample = super().sample(num_clients, min_num_clients, criterion)
-        return self.current_sample
 
 
 class ClientMetrics:
@@ -61,19 +23,27 @@ class ClientMetrics:
 
     def __init__(
         self,
+        cid: str,
         train_metrics: Optional[Dict[str, Scalar]] = None,
         evaluation_metrics: Optional[Dict[str, Scalar]] = None,
     ):
         """
         Args:
+            cid: (str) The client id that generated these metrics
             train_metrics: (Optional[Dict[str, Scalar]]) a list of train metrics. Optional, default is None.
             evaluation_metrics: (Optional[Dict[str, Scalar]]) a list of evaluation metrics. Optional, default is None.
         """
+        self.cid = cid
         self.train_metrics = train_metrics
         self.evaluation_metrics = evaluation_metrics
 
     def __repr__(self) -> str:
-        return f"train_metrics: {self.train_metrics}, evaluation_metrics: {self.evaluation_metrics}"
+        """
+        Makes a string representation of this object.
+
+        Returns: a string representation of this object.
+        """
+        return f"cid: {self.cid}, train_metrics: {self.train_metrics}, evaluation_metrics: {self.evaluation_metrics}"
 
 
 class FairnessMetricType(Enum):
@@ -84,6 +54,7 @@ class FairnessMetricType(Enum):
 
     @classmethod
     def signal_for_type(cls, fairness_metric_type: "FairnessMetricType") -> float:
+        # TODO docstrings
         if fairness_metric_type == FairnessMetricType.ACCURACY:
             return -1.0
         if fairness_metric_type == FairnessMetricType.LOSS:
@@ -141,9 +112,9 @@ class FedDGGAServer(FlServer):
     def client_manager(self) -> FixedSamplingClientManager:
         """Return FixedSamplingClientManager."""
         client_manager = super().client_manager()
-        assert isinstance(client_manager, FixedSamplingClientManager), (
-            "Client manager is not of type FixedSamplingClientManager" f"({type(client_manager)})"
-        )
+        assert isinstance(
+            client_manager, FixedSamplingClientManager
+        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
         return client_manager
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
@@ -165,14 +136,22 @@ class FedDGGAServer(FlServer):
 
         res_fit = super().fit_round(server_round, timeout)
 
+        clients_proxies = self.client_manager().current_sample
+        assert clients_proxies is not None
+
         # Collecting train metrics
         # should contain evaluation of the client's local model against its validation set
         if res_fit:
             # TODO what to do in case of failure?
             _, _, (results, failures) = res_fit
             self.results_and_failures = (results, failures)
-            for result in results:
-                self.clients_metrics.append(ClientMetrics(train_metrics=result[1].metrics))
+            for i in range(len(results)):
+                self.clients_metrics.append(
+                    ClientMetrics(
+                        cid=clients_proxies[i].cid,
+                        train_metrics=results[i][1].metrics,
+                    )
+                )
 
         return res_fit
 
@@ -184,12 +163,16 @@ class FedDGGAServer(FlServer):
         # TODO docstrings
         res_eval = super().evaluate_round(server_round, timeout)
 
+        clients_proxies = self.client_manager().current_sample
+        assert clients_proxies is not None
+
         # Collecting evaluation metrics
         # which consists of evaluation of the global model against the client's validation set
         if res_eval:
             # TODO what to do in case of failure?
             loss_fed, _, (results, _) = res_eval
             for i in range(len(results)):
+                assert clients_proxies[i].cid == self.clients_metrics[i].cid
                 self.clients_metrics[i].evaluation_metrics = results[i][1].metrics
                 # adding the loss to the metrics
                 val_loss_key = FairnessMetricType.LOSS.value
@@ -221,7 +204,10 @@ class FedDGGAServer(FlServer):
         value_list = []
         # calculating local vs global metric difference
         for i in range(len(self.clients_metrics)):
+            cid = clients_proxies[i].cid
             client_metrics = self.clients_metrics[i]
+
+            assert client_metrics.cid == cid
             assert client_metrics.evaluation_metrics is not None and client_metrics.train_metrics is not None
 
             global_model_metric_value = client_metrics.evaluation_metrics[self.fairness_metric.metric_name]
@@ -231,7 +217,6 @@ class FedDGGAServer(FlServer):
             value_list.append(global_model_metric_value - local_model_metric_value)
 
             # initializing weight for this client
-            cid = clients_proxies[i].cid
             if cid not in self.adjustment_weights:
                 self.adjustment_weights[cid] = 1.0 / 3.0
 
@@ -241,15 +226,15 @@ class FedDGGAServer(FlServer):
         step_size = 1.0 / 3.0 * self.get_current_weight_step_size(server_round)
 
         # updating weights
-        for i in range(len(self.clients_metrics)):
+        new_total_weight = 0.0
+        for i in range(len(clients_proxies)):
             cid = clients_proxies[i].cid
             self.adjustment_weights[cid] += self.fairness_metric.signal * norm_gap_list[i] * step_size
 
-        # weight clip
-        new_total_weight = 0.0
-        for cid in self.adjustment_weights:
+            # weight clip
             clipped_weight = np.clip(self.adjustment_weights[cid], 0.0, 1.0)
             self.adjustment_weights[cid] = clipped_weight
+            # Question: should we sum all the weights or just the current clients' weights?
             new_total_weight += clipped_weight
 
         for cid in self.adjustment_weights:
