@@ -10,13 +10,13 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.random import set_all_random_seeds
 
 
