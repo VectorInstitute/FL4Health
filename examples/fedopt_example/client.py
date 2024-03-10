@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import flwr as fl
 import torch
@@ -68,9 +68,11 @@ class NewsClassifierClient(BasicClient):
                 metric.setup(self.label_encoder)
         super().setup_client(config)
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
-        assert isinstance(self.model, LSTM)
+        assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)
         h0, c0 = self.model.init_hidden(self.batch_size)
         h0 = h0.to(self.device)
         c0 = c0.to(self.device)

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.typing import Config
@@ -64,7 +64,9 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -77,6 +79,7 @@ class FendaClient(BasicClient):
             index by name. Specificaly the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
+        assert isinstance(input, torch.Tensor)
         preds, features = self.model(input)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             if self.old_local_module is not None:

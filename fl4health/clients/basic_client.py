@@ -2,9 +2,9 @@ import copy
 import datetime
 import random
 import string
-from logging import INFO
+from logging import ERROR, INFO
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -24,6 +24,9 @@ from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, T
 from fl4health.utils.metrics import Metric, MetricManager
 
 T = TypeVar("T")
+BatchType = TypeVar(
+    "BatchType", bound=Union[Tuple[torch.Tensor, torch.Tensor], Dict[str, torch.Tensor], List[torch.Tensor]]
+)
 
 
 class BasicClient(NumPyClient):
@@ -89,6 +92,8 @@ class BasicClient(NumPyClient):
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
+        self.input_keys: Optional[Union[str, List[str]]] = None
+        self.target_key: Optional[str] = None
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         """
@@ -387,14 +392,47 @@ class BasicClient(NumPyClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def _retrieve_data_from_batch_dict(
+        self, batch_dict: Dict[str, torch.Tensor], keys: Union[str, List[str]]
+    ) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+        if isinstance(keys, str):
+            return batch_dict[keys].to(self.device)
+        elif isinstance(keys, list):
+            assert len(keys) > 0
+            if len(keys) == 1:
+                return batch_dict[keys[0]].to(self.device)
+            else:
+                return {key: batch_dict[key].to(self.device) for key in keys}
+        else:
+            raise TypeError("Provided keys must be either a list of strings or a single string.")
+
+    def process_batch(self, batch: BatchType) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
+        if isinstance(batch, tuple) or isinstance(batch, list):
+            input, target = batch
+            input, target = input.to(self.device), target.to(self.device)
+        elif isinstance(batch, dict):
+            assert self.input_keys and self.target_key
+            try:
+                input = self._retrieve_data_from_batch_dict(batch, keys=self.input_keys)
+                target = self._retrieve_data_from_batch_dict(batch, keys=self.target_key)
+            except KeyError:
+                log(ERROR, "Dataloader batch does not have the expected keys.")
+        else:
+            raise TypeError(
+                "Dataloader batch must be of type Tuple[Tensor, Tensor], List[Tensor], or Dict[str, Tensor]."
+            )
+        return input, target
+
+    def train_step(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
         Assumes self.model is in train mode already.
 
         Args:
-            input (torch.Tensor): The input to be fed into the model.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): The input to be fed into the model.
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
@@ -414,7 +452,9 @@ class BasicClient(NumPyClient):
 
         return losses, preds
 
-    def val_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
+    def val_step(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+    ) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
@@ -454,8 +494,8 @@ class BasicClient(NumPyClient):
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
+            for batch in self.train_loader:
+                input, target = self.process_batch(batch)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.train_metric_manager.update(preds, target)
@@ -494,14 +534,14 @@ class BasicClient(NumPyClient):
         self.train_metric_manager.clear()
         for step in range(steps):
             try:
-                input, target = next(train_iterator)
+                batch = next(train_iterator)
             except StopIteration:
                 # StopIteration is thrown if dataset ends
                 # reinitialize data loader
                 train_iterator = iter(self.train_loader)
-                input, target = next(train_iterator)
+                batch = next(train_iterator)
 
-            input, target = input.to(self.device), target.to(self.device)
+            input, target = self.process_batch(batch)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
             self.train_metric_manager.update(preds, target)
@@ -528,8 +568,8 @@ class BasicClient(NumPyClient):
         self.val_metric_manager.clear()
         self.val_loss_meter.clear()
         with torch.no_grad():
-            for input, target in self.val_loader:
-                input, target = input.to(self.device), target.to(self.device)
+            for batch in self.val_loader:
+                input, target = self.process_batch(batch)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
                 self.val_metric_manager.update(preds, target)
@@ -589,6 +629,8 @@ class BasicClient(NumPyClient):
 
         self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
 
+        self.input_keys, self.target_key = self.get_input_target_keys(config)
+
         self.initialized = True
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
@@ -603,12 +645,16 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
-            input (torch.Tensor): Inputs to be fed into the model.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into the model.
+            If input is of type Dict[str, torch.Tensor], it is assumed that the keys of input
+            match the names of the keyword arguments of self.model.forward().
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
@@ -617,10 +663,20 @@ class BasicClient(NumPyClient):
             All predictions included in dictionary will be used to compute metrics.
 
         Raises:
+            TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
+            forward method.
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        preds = self.model(input)
+        if isinstance(input, torch.Tensor):
+            preds = self.model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of self.model.forward().
+            preds = self.model(**input)
+        else:
+            raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
 
         if isinstance(preds, dict):
             return preds, {}
@@ -786,6 +842,27 @@ class BasicClient(NumPyClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
+
+    def get_input_target_keys(self, config: Config) -> Union[Tuple[None, None], Tuple[Union[str, List[str]], str]]:
+        """
+        Return the keys that are needed to extract the input and traget from a dataloader batch (assuming the batch
+        is of type Dict[str, Tensor]). Return None if no such keys are needed (default behaviour). The user should
+        override this method if the dataloader batch is a dictionary.
+
+        Note that the input may consist of multiple tensors. This corresponds to the case where self.model.forward()
+        need to take in more than one tensors. In this case, a list of keys is needed to to extract input.
+
+        On the other hand, target is always assumed to be a single tensor, so only one key is needed to extract it
+        from a batch.
+
+        Args:
+            config (Config): The config from the server.
+
+        Returns:
+            Union[Tuple[None, None], Tuple[Union[str, List[str]], str]]: the keys needed to extract
+            input and traget from a dataloader batch.
+        """
+        return None, None
 
     def update_before_train(self, current_server_round: int) -> None:
         """

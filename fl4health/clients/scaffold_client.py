@@ -1,6 +1,6 @@
 import copy
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.typing import Config, NDArrays
@@ -178,7 +178,9 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 

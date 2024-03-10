@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.typing import Config
@@ -73,7 +73,9 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(
+        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -89,6 +91,7 @@ class EnsembleClient(BasicClient):
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
+        assert isinstance(input, torch.Tensor)
         for optimizer in self.optimizers.values():
             optimizer.zero_grad()
 
