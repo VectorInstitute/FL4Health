@@ -9,7 +9,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.server.feddg_ga_server import FedDGGAServer, FixedSamplingClientManager
+from fl4health.server.feddg_ga_server import FedDGGAServer
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -60,8 +60,7 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
 
-    client_manager = FixedSamplingClientManager()
-    server = FedDGGAServer(client_manager=client_manager, strategy=strategy)
+    server = FedDGGAServer(strategy=strategy)
 
     fl.server.start_server(
         server=server,

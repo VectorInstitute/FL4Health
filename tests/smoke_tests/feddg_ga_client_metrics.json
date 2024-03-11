@@ -1,0 +1,49 @@
+{
+    "type": "client",
+    "rounds": {
+        "1": {
+            "fit_metrics": {
+                "train - personal - accuracy": 0.6703125,
+                "train - global - accuracy": 0.7015625,
+                "train - local - accuracy": 0.53125,
+                "val - personal - accuracy": 0.7069333333333333,
+                "val - global - accuracy": 0.6961333333333334,
+                "val - local - accuracy": 0.6716,
+                "val - loss": 1.3477438688278198
+            },
+            "loss_dict": {
+                "global": 1.1172425746917725,
+                "local": 1.5267385244369507,
+                "backward": 1.2816627025604248
+            },
+            "evaluate_metrics": {
+                "val - personal - accuracy": 0.7069333333333333,
+                "val - global - accuracy": 0.6961333333333334,
+                "val - local - accuracy": 0.6716
+            },
+            "loss": 1.347744107246399
+        },
+        "2": {
+            "fit_metrics": {
+                "train - personal - accuracy": 0.884375,
+                "train - global - accuracy": 0.9125,
+                "train - local - accuracy": 0.8609375,
+                "val - personal - accuracy": 0.8276,
+                "val - global - accuracy": 0.8596,
+                "val - local - accuracy": 0.7246666666666667,
+                "val - loss": 0.6240026354789734
+            },
+            "loss_dict": {
+                "global": 0.30921491980552673,
+                "local": 0.45731544494628906,
+                "backward": 0.35111671686172485
+            },
+            "evaluate_metrics": {
+                "val - personal - accuracy": 0.8276,
+                "val - global - accuracy": 0.8596,
+                "val - local - accuracy": 0.7246666666666667
+            },
+            "loss": 0.6240026354789734
+        }
+    }
+}

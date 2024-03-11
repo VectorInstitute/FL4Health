@@ -41,20 +41,29 @@ class ClientMetrics:
         """
         Makes a string representation of this object.
 
-        Returns: a string representation of this object.
+        Returns: (str) a string representation of this object.
         """
         return f"cid: {self.cid}, train_metrics: {self.train_metrics}, evaluation_metrics: {self.evaluation_metrics}"
 
 
 class FairnessMetricType(Enum):
-    # TODO docstrings
+    """Defines the basic types for fairness metrics, their default names and their default signals"""
+
     ACCURACY = "val - prediction - accuracy"
     LOSS = "val - loss"
     CUSTOM = "custom"
 
     @classmethod
     def signal_for_type(cls, fairness_metric_type: "FairnessMetricType") -> float:
-        # TODO docstrings
+        """
+        Return the default signal for the given metric type.
+
+        Args:
+            fairness_metric_type: (FairnessMetricType) the fairness metric type.
+
+        Returns: -1.0 if FairnessMetricType.ACCURACY, 1.0 if FairnessMetricType.LOSS and
+            0 if FairnessMetricType.CUSTOM.
+        """
         if fairness_metric_type == FairnessMetricType.ACCURACY:
             return -1.0
         if fairness_metric_type == FairnessMetricType.LOSS:
@@ -63,20 +72,32 @@ class FairnessMetricType(Enum):
 
 
 class FairnessMetric:
-    # TODO docstrings
+    """Defines a fairness metric with attributes that can be overridden if needed."""
+
     def __init__(
         self,
         metric_type: FairnessMetricType,
         metric_name: str = "",
         signal: float = 0.0,
     ):
-        # TODO dosctrings
+        """
+        Instantiates a fairness metric with a type and optional metric name and
+            signal if one wants to override them.
+
+        Args:
+            metric_type: (FairnessMetricType) the fairness metric type. If CUSTOM, the metric_type and
+                signal should be provided.
+            metric_name: (str, optional) the name of the metric to be used as fairness metric.
+                Optional, default is metric_type.value.
+            signal: (float, optional) the signal of the fairness metric. Optional default is
+                FairnessMetricType.signal_for_type(metric_type)
+        """
         self.metric_type = metric_type
         self.metric_name = metric_name
         self.signal = signal
 
-        if metric_type is None:
-            assert metric_name is not None and signal is not None
+        if metric_type is FairnessMetricType.CUSTOM:
+            assert metric_name is not None and metric_name != "" and signal is not None
         else:
             if metric_name == "":
                 self.metric_name = metric_type.value
@@ -85,9 +106,13 @@ class FairnessMetric:
 
 
 class FedDGGAServer(FlServer):
+    """
+    A server that implements FedDG-GA (Federated Domain Generalization with Generalization Adjustment,
+    Zhang et al. 2023).
+    """
+
     def __init__(
         self,
-        client_manager: FixedSamplingClientManager,
         fairness_metric: Optional[FairnessMetric] = None,
         weight_step_size: float = 0.2,
         strategy: Optional[Strategy] = None,
@@ -95,8 +120,30 @@ class FedDGGAServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
-        # TODO docstrings
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
+        """
+        Inits an instance of FedDGGAServer
+
+        Must have "evaluate_after_fit: True" in the config in order to work properly. Will set client_manager
+        to a new instance of FixedSamplingClientManager.
+
+        Args:
+            fairness_metric: (FairnessMetric, optional) The fairness metric to evaluate the clients against.
+                Optional, default is FairnessMetric(FairnessMetricType.LOSS).
+            weight_step_size: (float, optional) the step size the GA weights should be adjusted at the end of
+                each round. Optional, default is 0.2.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+        """
+        super().__init__(FixedSamplingClientManager(), strategy, wandb_reporter, checkpointer, metrics_reporter)
 
         if fairness_metric is None:
             self.fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
@@ -118,7 +165,15 @@ class FedDGGAServer(FlServer):
         return client_manager
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
-        # TODO docstring
+        """
+        Run federated learning for a number of rounds.
+
+        Args:
+            num_rounds: (int) the number of rounds to run federated learning for.
+            timeout: (Optional[float]) the timeout to wait for clients to respond.
+
+        Returns: (History) A History object with the results of training and evaluation.
+        """
         # Storing the number of rounds to be used for calculating the weight step decay
         self.num_rounds = num_rounds
         return super().fit(num_rounds, timeout)
@@ -128,7 +183,22 @@ class FedDGGAServer(FlServer):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
-        # TODO docstrings
+        """
+        Run one round of federated learning fit.
+
+        Resets the client manager sampling at the beginning. Collects the results of fit for each
+        client to be used later for generalization adjustment.
+
+        Args:
+            server_round: (int) the current server round it is in.
+            timeout: (Optional[float]) the timeout to wait for clients to respond.
+
+        Returns: (Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]) the results
+            of fit_round, which consists of a tuple containing:
+                1. The updated and aggregated parameters
+                2. The aggregated metrics
+                3. An instance of FitResultsAndFailures with the individual client's results and metrics.
+        """
 
         # Resetting sampling and metrics
         self.client_manager().reset_sample()
@@ -160,7 +230,27 @@ class FedDGGAServer(FlServer):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
-        # TODO docstrings
+        """
+        Run one round of federated learning evaluation.
+
+        Collects the result of evaluate and perform the Domain Generalization algorithm by:
+            1. Calculating the per-client Generalization Adaptation weights based on
+                the evaluate and fit results
+            2. Applying the clients' weights to each one of their results
+            3. Running aggregation again with the weighted results
+            4. Updating the parameters with the new aggregated parameters to be used
+                in the next fit round
+
+        Args:
+            server_round: (int) the current server round it is in.
+            timeout: (Optional[float]) the timeout to wait for clients to respond.
+
+        Returns: (Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]) the results
+            of evaluate_round, which consists of a tuple containing:
+                1. The aggregated loss
+                2. The aggregated metrics
+                3. An instance of FitResultsAndFailures with the individual client's results and metrics.
+        """
         res_eval = super().evaluate_round(server_round, timeout)
 
         clients_proxies = self.client_manager().current_sample
@@ -197,7 +287,13 @@ class FedDGGAServer(FlServer):
         return res_eval
 
     def calculate_weights_by_ga(self, server_round: int) -> None:
-        # TODO docstrings
+        """
+        Update the self.adjustment_weights dictionary by calculating the new weights
+        based on the current server round, fit and evaluation metrics.
+
+        Args:
+            server_round: (int) the current server round.
+        """
         clients_proxies = self.client_manager().current_sample
         assert clients_proxies is not None
 
@@ -234,21 +330,29 @@ class FedDGGAServer(FlServer):
             # weight clip
             clipped_weight = np.clip(self.adjustment_weights[cid], 0.0, 1.0)
             self.adjustment_weights[cid] = clipped_weight
-            # Question: should we sum all the weights or just the current clients' weights?
+            # TODO Question: should we sum all the weights or just the current clients' weights?
             new_total_weight += clipped_weight
 
         for cid in self.adjustment_weights:
             self.adjustment_weights[cid] /= new_total_weight
 
     def get_current_weight_step_size(self, server_round: int) -> float:
-        # TODO docstring
+        """
+        Calculates the current weight step size based on the current server round,  weight
+        step size and total number of rounds.
+
+        Args:
+            server_round: (int) the current server round
+
+        Returns: (float) the current value for the weight step size.
+        """
         assert self.num_rounds is not None
         weight_step_size_decay = self.weight_step_size / self.num_rounds
         weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
         return weight_step_size_for_round
 
     def apply_weights_to_results(self) -> None:
-        # TODO docstring
+        """Apply self.adjustment_weights to self.results_and_failures."""
         clients_proxies = self.client_manager().current_sample
         assert clients_proxies is not None
 
