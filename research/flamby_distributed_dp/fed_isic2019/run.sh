@@ -1,5 +1,5 @@
 clear 
-scancel --me 
+# scancel --me 
 rm -rf log_error/fed_isic2019/ log/fed_isic2019/ 
 
 mkdir -p log_error/fed_isic2019/

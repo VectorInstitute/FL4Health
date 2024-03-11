@@ -22,6 +22,7 @@ from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datase
 from fl4health.clients.secure_aggregation_client import SecureAggregationClient
 
 from fl4health.utils.config import load_config
+from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
 
 
 class FedIxiFedAvgClient(SecureAggregationClient):
@@ -65,7 +66,7 @@ class FedIxiFedAvgClient(SecureAggregationClient):
         # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
         # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
         # and APFL
-        model: nn.Module = Baseline(out_channels_first_layer=12).to(self.device)
+        model: nn.Module = ModifiedBaseline().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

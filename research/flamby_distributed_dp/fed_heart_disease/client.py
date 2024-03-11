@@ -150,9 +150,9 @@ if __name__ == "__main__":
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
     assert key in ['clipping_threshold', 'granularity', 'noise_scale', 'bias', 'model_integer_range']
-    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
+    # log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
-    log(INFO, f'{privacy_settings}')
+    # log(INFO, f'{privacy_settings}')
 
     client = FedHeartDiseaseFedAvgClient(
         data_path=Path(args.dataset_dir),

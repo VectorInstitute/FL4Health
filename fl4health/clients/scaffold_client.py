@@ -3,7 +3,13 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config, NDArrays, Scalar
+import uuid
+import os 
+import json
+import timeit
+from flwr.common.logger import log
+from logging import INFO
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -242,4 +248,110 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             loss_meter_type=loss_meter_type,
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
+        )
+
+class DPScaffoldLoggingClient(DPScaffoldClient):
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        client_id: str = uuid.uuid1(),
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+    ) -> None:
+        super().__init__(data_path=data_path, 
+                         metrics=metrics,
+                         device=device,
+                         loss_meter_type=loss_meter_type,
+                         metric_meter_type=metric_meter_type, 
+                         checkpointer=checkpointer)
+        
+        self.client_id = client_id
+        
+        metrics_dir = os.path.join(
+            os.path.dirname(checkpointer.best_checkpoint_path),
+            'metrics'
+        )
+
+        try:
+            os.makedirs(metrics_dir)
+        except FileExistsError:
+            pass
+
+        self.metrics_path = os.path.join(
+            metrics_dir,
+            f'client_{self.client_id}_metrics.json'
+        )
+
+        # will be set after model initialization
+        self.model_dim = None
+
+        with open(self.metrics_path, 'w+') as file:
+            json.dump({
+                'id': self.client_id,
+            },file)
+
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        local_epochs, local_steps, self.federated_round = self.process_config(config)
+
+        if not self.initialized:
+            self.setup_client(config)
+            self.start_time=timeit.default_timer()
+            with open(self.metrics_path, 'r') as file:
+                metrics_to_save = json.load(file)
+                metrics_to_save["privacy_settings"] = {"noise_multiplier": self.noise_multiplier}
+            with open(self.metrics_path, 'w') as file:
+                json.dump(metrics_to_save, file)
+                
+
+        self.set_parameters(parameters, config)
+        if local_epochs is not None:
+            log(INFO, 'Training by epochs')
+            loss_dict, metrics = self.train_by_epochs(local_epochs, self.federated_round)
+            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+        elif local_steps is not None:
+            log(INFO, 'Training by epochs')
+            loss_dict, metrics = self.train_by_steps(local_steps, self.federated_round)
+        else:
+            raise ValueError("Must specify either local_epochs or local_steps in the Config.")
+
+        # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
+        self.update_after_train(local_steps, loss_dict)
+
+        with open(self.metrics_path, 'r') as file:
+            metrics_to_save = json.load(file)
+
+            for key, value in metrics.items():
+                if key not in metrics_to_save:
+                    metrics_to_save[key] = [value]
+                else:
+                    metrics_to_save[key].append(value)
+
+            for key, value in loss_dict.items():
+                if key not in metrics_to_save:
+                    metrics_to_save[key] = [value]
+                else:
+                    metrics_to_save[key].append(value)
+
+            if 'round' not in metrics_to_save:
+                metrics_to_save['round'] = [self.federated_round]
+            else:
+                metrics_to_save['round'].append(self.federated_round)
+
+            if 'time' not in metrics_to_save:
+                metrics_to_save['time'] = [timeit.default_timer()-self.start_time]
+            else:
+                metrics_to_save['time'].append(timeit.default_timer()-self.start_time)
+                
+        with open(self.metrics_path, 'w') as file:
+            json.dump(metrics_to_save, file)
+
+        # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
+        # calculation results.
+        return (
+            self.get_parameters(config),
+            self.num_train_samples,
+            metrics,
         )

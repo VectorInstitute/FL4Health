@@ -115,10 +115,11 @@ class BasicClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         loss, metric_values = self.validate()
-        log(INFO, '======evaluate outputs - start ========')
-        log(INFO, loss)
-        log(INFO, metric_values)
-        log(INFO, '======evaluate outputs -end ========')
+        # log(INFO, '======evaluate outputs - start ========')
+        # log(INFO, f'val sample size {self.num_val_samples}')
+        # log(INFO, loss)
+        # log(INFO, metric_values)
+        # log(INFO, '======evaluate outputs -end ========')
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -195,11 +196,11 @@ class BasicClient(NumpyFlClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds = self.predict(input)
-            log(INFO, 'validation step start')
-            log(INFO, f'prediction {preds}')
+            # log(INFO, 'validation step start')
+            # log(INFO, f'prediction {preds}')
             losses = self.compute_loss(preds, target)
-            log(INFO, f'losses {losses.as_dict()}')
-            log(INFO, 'validation step end')
+            # log(INFO, f'losses {losses.as_dict()}')
+            # log(INFO, 'validation step end')
         return losses, preds
 
     def train_by_epochs(
@@ -211,6 +212,9 @@ class BasicClient(NumpyFlClient):
             self.train_metric_meter_mngr.clear()
             self.train_loss_meter.clear()
             for input, target in self.train_loader:
+                if torch.numel(input) == 0:
+                    log(INFO, 'Zero batch detected in train_by_epoch, skipping...')
+                    continue
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
@@ -242,11 +246,17 @@ class BasicClient(NumpyFlClient):
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
+                if torch.numel(input) == 0:
+                    log(INFO, 'Zero batch detected in train_by_steps, skipping...')
+                    continue
             except StopIteration:
                 # StopIteration is thrown if dataset ends
                 # reinitialize data loader
                 train_iterator = iter(self.train_loader)
                 input, target = next(train_iterator)
+                if torch.numel(input) == 0:
+                    log(INFO, 'Zero batch detected inside train_by_steps StopIteration, skipping...')
+                    continue
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
@@ -268,8 +278,8 @@ class BasicClient(NumpyFlClient):
         
         self.model.eval()
 
-        from fl4health.server.secure_aggregation_utils import vectorize_model
-        log(INFO, vectorize_model(self.model)[:25])
+        # from fl4health.server.secure_aggregation_utils import vectorize_model
+        # log(INFO, vectorize_model(self.model)[:25])
 
         self.val_metric_meter_mngr.clear()
         self.val_loss_meter.clear()
@@ -279,11 +289,13 @@ class BasicClient(NumpyFlClient):
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
                 self.val_metric_meter_mngr.update(preds, target)
+                # log(INFO, '===== labels =====')
+                # log(INFO, target)
 
         # Compute losses and metrics over validation set
         losses = self.val_loss_meter.compute()
         loss_dict = losses.as_dict()
-        log(INFO, f'loss over validation set {loss_dict}')
+        # log(INFO, f'loss over validation set {loss_dict}')
         metrics = self.val_metric_meter_mngr.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
@@ -339,14 +351,14 @@ class BasicClient(NumpyFlClient):
         User can override for more complex logic.
         """
         preds = self.model(input)
-        d = sum(p.numel() for p in self.model.state_dict().values())
-        log(INFO, f'predict function start, model size {d}')
-        for k, v in self.model.state_dict().items():
-            log(INFO, f'{k}, {v.dtype}')
+        # d = sum(p.numel() for p in self.model.state_dict().values())
+        # log(INFO, f'predict function start, model size {d}')
+        # for k, v in self.model.state_dict().items():
+        #     log(INFO, f'{k}, {v.dtype}')
         
-        log(INFO, f'input {input}')
-        log(INFO, f'pred {preds}')
-        log(INFO, 'predict function end')
+        # log(INFO, f'input {input}')
+        # log(INFO, f'pred {preds}')
+        # log(INFO, 'predict function end')
 
         if isinstance(preds, dict):
             return preds
@@ -366,6 +378,8 @@ class BasicClient(NumpyFlClient):
         """
         loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
+        # log(INFO, f'=====compute loss: {losses.as_dict()} =====')
+
         return losses
 
     def set_optimizer(self, config: Config) -> None:

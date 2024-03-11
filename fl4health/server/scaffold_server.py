@@ -12,7 +12,9 @@ from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
 from fl4health.strategies.scaffold import Scaffold
-
+from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+import timeit
+import os, json
 
 class ScaffoldServer(FlServer):
     def __init__(
@@ -218,3 +220,180 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         assert isinstance(self.strategy, Scaffold)
         # Now that we initialized the parameters for scaffold, call instance level privacy fit
         return InstanceLevelDPServer.fit(self, num_rounds=num_rounds, timeout=timeout)
+
+class DPScaffoldLoggingServer(DPScaffoldServer):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        noise_multiplier: int,
+        batch_size: int,
+        num_server_rounds: int,
+        strategy: Scaffold,
+        local_epochs: Optional[int] = None,
+        local_steps: Optional[int] = None,
+        delta: Optional[float] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        warm_start: bool = False,
+    ) -> None:
+        super().__init__(
+            client_manager=client_manager,
+            noise_multiplier=noise_multiplier,
+            batch_size=batch_size,
+            num_server_rounds=num_server_rounds,
+            strategy=strategy,
+            local_epochs=local_epochs,
+            local_steps=local_steps,
+            delta=delta,
+            wandb_reporter=wandb_reporter,
+            checkpointer=checkpointer,
+            warm_start=warm_start
+        )
+        metrics_dir = os.path.join(os.path.dirname(
+            checkpointer.best_checkpoint_path), 
+            'metrics'
+        )
+
+        if not os.path.exists(metrics_dir):
+            os.makedirs(metrics_dir)
+
+        self.metrics_path = os.path.join(
+            metrics_dir,
+            'server_metrics.json'
+        )
+
+        with open(self.metrics_path, 'w+') as file:
+            json.dump({
+                'privacy_hyperparameters': {
+                    'noise_multiplier': noise_multiplier
+                }
+            }, file)
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+        """
+        Run DP Scaffold algorithm for the specified number of rounds.
+
+        Args:
+            num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
+            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+                timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
+                server waits for the minimum number of clients to be available set in the strategy.
+
+        Returns:
+            History: The history object contains the full set of FL training results, including things like aggregated
+                loss and metrics.
+        """
+        assert isinstance(self.strategy, Scaffold)
+        # Now that we initialized the parameters for scaffold, call instance level privacy fit
+
+        assert isinstance(self.strategy, StrategyWithPolling)
+        sample_counts = self.poll_clients_for_sample_counts(timeout)
+        self.setup_privacy_accountant(sample_counts)
+
+        history = History()
+
+        # Initialize parameters
+        log(INFO, "Initializing global parameters")
+        self.parameters = self._get_initial_parameters(timeout=timeout)
+        log(INFO, "Evaluating initial parameters")
+        res = self.strategy.evaluate(0, parameters=self.parameters)
+        if res is not None:
+            log(
+                INFO,
+                "initial parameters (loss, other metrics): %s, %s",
+                res[0],
+                res[1],
+            )
+            history.add_loss_centralized(server_round=0, loss=res[0])
+            history.add_metrics_centralized(server_round=0, metrics=res[1])
+
+        # Run federated learning for num_rounds
+        log(INFO, "FL starting")
+        start_time = timeit.default_timer()
+
+        for current_round in range(1, num_rounds + 1):
+            # Train model and replace previous global model
+            res_fit = self.fit_round(server_round=current_round, timeout=timeout)
+            if res_fit:
+                parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
+                if parameters_prime:
+                    self.parameters = parameters_prime
+                history.add_metrics_distributed_fit(
+                    server_round=current_round, metrics=fit_metrics
+                )
+
+            # Evaluate model using strategy implementation
+            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
+            if res_cen is not None:
+                loss_cen, metrics_cen = res_cen
+                log(
+                    INFO,
+                    "fit progress: (%s, %s, %s, %s)",
+                    current_round,
+                    loss_cen,
+                    metrics_cen,
+                    timeit.default_timer() - start_time,
+                )
+                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
+                history.add_metrics_centralized(
+                    server_round=current_round, metrics=metrics_cen
+                )
+
+            # Evaluate model on a sample of available clients
+            res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
+            if res_fed:
+                loss_fed, evaluate_metrics_fed, _ = res_fed
+                if loss_fed:
+                    history.add_loss_distributed(
+                        server_round=current_round, loss=loss_fed
+                    )
+                    history.add_metrics_distributed(
+                        server_round=current_round, metrics=evaluate_metrics_fed
+                    )
+
+                    with open(self.metrics_path, 'r') as file:
+                        metrics_to_save = json.load(file)
+
+                    metrics_to_save['current_round'] = current_round
+
+                    if current_round == 1:
+                        metrics_to_save['privacy_hyperparameters']['num_fl_rounds'] = num_rounds
+
+
+                    for key, value in fit_metrics.items():
+                        if key not in metrics_to_save:
+                            metrics_to_save[key] = [value]
+                        else:
+                            metrics_to_save[key].append(value)
+
+                    if 'loss' not in metrics_to_save:
+                        metrics_to_save['loss'] = [loss_fed]
+                    else:
+                        metrics_to_save['loss'].append(loss_fed)
+
+                    for key, value in evaluate_metrics_fed.items():
+                        if key not in metrics_to_save:
+                            metrics_to_save[key] = [value]
+                        else:
+                            metrics_to_save[key].append(value)
+
+                    # NOTE server only 
+                    now = timeit.default_timer()
+                    if 'time' not in metrics_to_save:
+                        metrics_to_save['time'] = [now-start_time]
+                    else:
+                        metrics_to_save['time'].append(now-start_time)
+
+                with open(self.metrics_path, 'w') as file:
+                    json.dump(metrics_to_save, file)
+                    log(DEBUG, f'finished recording metrics for round {current_round}')
+
+        # Bookkeeping
+        end_time = timeit.default_timer()
+        elapsed = end_time - start_time
+        log(INFO, "FL finished in %s", elapsed)
+
+        if self.wandb_reporter:
+            # report history to W and B
+            self.wandb_reporter.report_metrics(num_rounds, history)
+        return history

@@ -1,4 +1,6 @@
-clear && scancel --me && rm -rf log_error/fed_heart_disease/ log/fed_heart_disease/ 
+clear 
+# scancel --me 
+rm -rf log_error/fed_heart_disease/ log/fed_heart_disease/ 
 
 mkdir -p log/fed_heart_disease/
 mkdir -p log_error/fed_heart_disease/

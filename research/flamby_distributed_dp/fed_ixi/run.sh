@@ -1,4 +1,6 @@
-clear && scancel --me && rm -rf log_error/fed_ixi/ log/fed_ixi/ 
+clear
+# scancel --me 
+rm -rf log_error/fed_ixi/ log/fed_ixi/ 
 
 mkdir -p log_error/fed_ixi/
 mkdir -p log/fed_ixi/

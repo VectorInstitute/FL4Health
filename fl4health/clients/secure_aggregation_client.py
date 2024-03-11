@@ -28,7 +28,8 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
 )
 from fl4health.privacy_mechanisms.discrete_gaussian_mechanism import (
     generate_discrete_gaussian_vector,
-    fwht
+    fwht,
+    shift_transform
 )
 from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
 from fl4health.server.secure_aggregation_utils import get_model_norm, vectorize_model, get_model_layer_types, change_model_dtypes
@@ -36,6 +37,8 @@ import json
 import os
 import uuid 
 import timeit
+
+from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
@@ -106,6 +109,8 @@ class SecureAggregationClient(BasicClient):
             },file)
 
         assert 0 <= self.privacy_settings["bias"] < 1
+
+        self.debug_mode = True
 
 
     # The 'main' function for client-side secure aggregation.
@@ -246,12 +251,19 @@ class SecureAggregationClient(BasicClient):
     # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         local_epochs, local_steps, current_server_round = self.process_config(config)
+        self.current_server_round = current_server_round
         log(INFO, f' start of client server round {current_server_round}')
         if not self.initialized:
             self.setup_client(config)
 
+        # log(DEBUG, f'Client model on round {current_server_round} prior to set_parameter()')
+        # log(DEBUG, vectorize_model(self.model))
+
         # local model <- global model
         self.set_parameters(parameters, config)
+
+        # log(DEBUG, f'Client model on round {current_server_round} after call to set_parameter()')
+        # log(DEBUG, vectorize_model(self.model))
 
         # store initial model for getting model delta
         vector_0 = vectorize_model(self.model)
@@ -267,18 +279,25 @@ class SecureAggregationClient(BasicClient):
             # set dimension
             self.model_dim = sum(param.numel() for param in self.model.state_dict().values())
             self.padded_model_dim = 2**get_exponent(self.model_dim)
-            log(INFO, f'unpadded { self.model_dim } padded {self.padded_model_dim}')
+            # log(INFO, f'unpadded { self.model_dim } padded {self.padded_model_dim}')
             
             # freeze model layer dtypes 
             # (these dtypes are modified during SecAgg and need to be changed back to avoid errors!)
             self.layer_dtypes = get_model_layer_types(self.model)
-            log(INFO, '-----model dtype list--------')
-            log(INFO, self.layer_dtypes)
+            # log(INFO, '-----model dtype list--------')
+            # log(INFO, self.layer_dtypes)
 
 
             # set all local model parameters to 0
             # Be careful we null parameters only after the dtypes have been recorded!
-            self.constant_parameters(n=0)
+
+            # log(DEBUG, f'round {current_server_round} before constant_parameter')
+            # log(DEBUG, vectorize_model(self.model))
+
+            # self.constant_parameters(n=100)
+
+            # log(DEBUG, f'round {current_server_round} after constant_parameter')
+            # log(DEBUG, vectorize_model(self.model))
 
             # NOTE this is a full exchanger, needs to be modified for any partial exchanger
             parmeters = [val.cpu().numpy() for _, val in self.model.state_dict().items()]
@@ -289,19 +308,20 @@ class SecureAggregationClient(BasicClient):
                 self.num_train_samples,
                 metrics,
             )
+
         
         # for param in self.model.parameters():
         #     param.data = param.data.to(torch.float32)
 
-        log(INFO, f'-----model dtype list round {current_server_round} before reverting--------')
-        log(INFO, get_model_layer_types(self.model))
+        # log(INFO, f'-----model dtype list round {current_server_round} before reverting--------')
+        # log(INFO, get_model_layer_types(self.model))
 
         # SecAgg changes dtypes to higher precision float
         # this change needs to be reverted before training to avoid error
         self.revert_layer_dtype()
 
-        log(INFO, f'-----model dtype list round {current_server_round} after reverting--------')
-        log(INFO, get_model_layer_types(self.model)==self.layer_dtypes)
+        # log(INFO, f'-----model dtype list round {current_server_round} after reverting--------')
+        # log(INFO, get_model_layer_types(self.model)==self.layer_dtypes)
 
         # for name, layer in self.model.state_dict().items():
         #     log(DEBUG, f'current_round: {current_server_round}')
@@ -323,21 +343,20 @@ class SecureAggregationClient(BasicClient):
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
-
-        if current_server_round > 0 :
+        # if current_server_round > 0 :
             # log(INFO, '-----metrics------')
             # log(INFO, self.metrics)
-            log(INFO, f'-----train loss meter len {len(self.train_loss_meter.losses_list)}------')
-            log(INFO, self.train_loss_meter.losses_list[-1].as_dict())
+            # log(INFO, f'-----train loss meter len {len(self.train_loss_meter.losses_list)}------')
+            # log(INFO, self.train_loss_meter.losses_list[-1].as_dict())
             # log(INFO, f'-----val loss meter len {len(self.val_loss_meter.losses_list)}------')
             # log(INFO, self.val_loss_meter.losses_list[-1].as_dict())
-            log(INFO, f'-----metrics--len {len(metrics)}---')
-            log(INFO, metrics)
+            # log(INFO, f'-----metrics--len {len(metrics)}---')
+            # log(INFO, metrics)
 
         # NOTE uncomment for debugging
         # pickle.dump(self.model.state_dict(), open(f"examples/secure_aggregation_example/local_models/{random()}.pkl", "wb"))
-
-        log(INFO, f'Number of training examples: {self.num_train_samples}')
+        
+        # log(INFO, f'Number of training examples: {self.num_train_samples}')
 
         if self.privacy_settings["dp_mechanism"] == PrivacyMechanismIndex.DiscreteGaussian.value:
             m = self.crypto.arithmetic_modulus
@@ -361,7 +380,7 @@ class SecureAggregationClient(BasicClient):
         #     log(DEBUG, f'current_round: {current_server_round}')
         #     log(DEBUG, name)
         #     log(DEBUG, layer.dtype)
-        log(INFO, f' end of client server round {current_server_round}, post processing start')
+        # log(INFO, f' end of client server round {current_server_round}, post processing start')
         
         metrics_to_save = {}
 
@@ -406,14 +425,14 @@ class SecureAggregationClient(BasicClient):
 
         with open(self.metrics_path, 'w') as file:
             json.dump(metrics_to_save, file)
-            log(DEBUG, f'finished recording metrics for round {current_server_round}')
+            # log(DEBUG, f'finished recording metrics for round {current_server_round}')
 
         return (
             self.process_model_post_training(),
             self.num_train_samples,
             metrics,
         )
-
+    
     def process_model_post_training(self) -> NDArrays:
         """ We send model delta to the server. See Algorithm 1 in 
         Ref
@@ -430,14 +449,19 @@ class SecureAggregationClient(BasicClient):
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
         vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
-
+        # self.echo('trained model', vector_1)
         # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
         # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
 
         # model diff
         vector = vector_1 - vector_0
 
+        # vector = vectorize_model(self.model).to(device=device)
+        delta = pad_zeros(vector=vector, dim=self.model_dim)
         del vector_0, vector_1
+        
+        # debug 
+        # vector = torch.ones(self.model_dim)
 
         vector = vector.to(dtype=torch.float64)
 
@@ -445,30 +469,30 @@ class SecureAggregationClient(BasicClient):
         # log(DEBUG, 'model diff---------')
         # log(DEBUG, vector[:100])
 
-        for param in self.model.parameters():
-            log(INFO, f'post processing model dtyle: {param.data.dtype}')
-            break
+        # for param in self.model.parameters():
+        #     log(INFO, f'post processing model dtyle: {param.data.dtype}')
+        #     break
         # log(DEBUG, 'clipped')
         # log(DEBUG, vector[:100])
         # TODO adjust clip to weighting
         # vector *= weight # weight for FedAvg, server divides out sum of client weights
 
         c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
-
+        
         # adjust for scaling of model vector by the weight (often the train data size)
         # weighted_clip = c * weight
         vector = clip_vector(vector=vector, clip=c, granularity=g)
         # log(DEBUG, 'weighted')
         # log(DEBUG, vector[:100])
         # x'' = H(Dx')
-        log(INFO, f'original vector {len(vector)}')
+        # log(INFO, f'original vector {len(vector)}')
         vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
         sign_vector = generate_random_sign_vector(dim=self.padded_model_dim)
-        log(INFO, f'padded vector {len(vector)}, signed vector {len(sign_vector)}, self.model_dim {self.model_dim}, self.padded_model_dim {self.padded_model_dim}')
+        # log(INFO, f'padded vector {len(vector)}, signed vector {len(sign_vector)}, self.model_dim {self.model_dim}, self.padded_model_dim {self.padded_model_dim}')
         vector = torch.mul(vector, sign_vector) # hadamard product
         # log(DEBUG,'after zero pad')
         # log(INFO, vector)
-        log(DEBUG, f'Starting Welsh Hadamard Transform {vector.dtype}')
+        log(DEBUG, f'Starting Welsh Hadamard Transform')
         t0 = time.perf_counter()
         vector = fwht(vector)
         # log(DEBUG,'after WHT')
@@ -485,23 +509,32 @@ class SecureAggregationClient(BasicClient):
         # vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
         # log(DEBUG, f'Done rounding')
 
+
         # discrete Gaussian noise 
-        vector = torch.round(vector).to(torch.int64)
+        # vector = torch.round(vector).to(torch.int64)
+        b = self.privacy_settings['bias']
+        # self.echo('before rounding, after fwht', vector)
+        vector = randomized_rounding(vector, c, g, self.model_dim, b)
+        # self.echo('raw model server', vector)
         # log(DEBUG, f'casted type: {vector.dtype}')
         v = (self.privacy_settings['noise_scale'] / g) ** 2
-        log(DEBUG, f'Adding noise')
-        vector += torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
-        log(DEBUG, f'Adding mask')
+        # log(INFO, f'Adding noise')
+        noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
+        vector += noise
+        # log(INFO, f'Adding mask')
         # log(DEBUG,'after noising')
         # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
-        vector += torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
-
+        mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+        # self.echo('mask', mask)
+        # vector *= 0
+        vector += mask
         # NOTE turn off weighted average
         # vector *= weight
 
-        log(DEBUG,'after masking')
-        log(INFO, vector[:100])
+        # log(INFO,'Added mask')
+        # log(INFO, vector[:100])
         # processed = []
         # i = 0
         # for layer in self.model.state_dict().values():
@@ -512,7 +545,154 @@ class SecureAggregationClient(BasicClient):
         # log(INFO, vector.dtype)
         # log(INFO, vector)
         vector_np = vector.cpu().numpy()
-        log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
+        # log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
+        # import numpy as np 
+        # vector_np = self.crypto.client_integer * np.ones(vector_np.size) + mask.cpu().numpy()
+        # self.echo('sent to server', vector_np)
+
+        return [vector_np, delta.cpu().numpy(), vectorize_model(self.model).cpu().numpy()]
+    
+
+
+    def debug_process_model_post_training(self) -> NDArrays:
+        """ We send model delta to the server. See Algorithm 1 in 
+        Ref
+            The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
+            https://arxiv.org/pdf/2102.06387.pdf
+        
+        """
+
+        assert self.model is not None and self.parameter_exchanger is not None
+        self.parameter_exchanger = SecureAggregationExchanger()
+        # torch.set_default_dtype(torch.float64)
+
+        # reshape model tensors and concatenate into a vector
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
+        vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
+        self.echo('trained model', vector_1)
+        # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
+        # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
+
+        # model diff
+        vector = vector_1 - vector_0
+
+        #
+        vector = 10 * torch.ones(self.model_dim)
+
+        delta = pad_zeros(vector=vector, dim=self.model_dim)
+        del vector_0, vector_1
+
+        vector = vector.to(dtype=torch.float64)
+
+        # log(INFO, f'post processing vector dtyle: {vector.dtype}')
+        # log(DEBUG, 'model diff---------')
+        # log(DEBUG, vector[:100])
+
+        # for param in self.model.parameters():
+        #     log(INFO, f'post processing model dtyle: {param.data.dtype}')
+        #     break
+        # log(DEBUG, 'clipped')
+        # log(DEBUG, vector[:100])
+        # TODO adjust clip to weighting
+        # vector *= weight # weight for FedAvg, server divides out sum of client weights
+
+        c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+        
+        # adjust for scaling of model vector by the weight (often the train data size)
+        # weighted_clip = c * weight
+        vector = clip_vector(vector=vector, clip=c, granularity=g)
+        # log(DEBUG, 'weighted')
+        # log(DEBUG, vector[:100])
+        # x'' = H(Dx')
+        # log(INFO, f'original vector {len(vector)}')
+        vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+        sign_vector = generate_random_sign_vector(dim=self.padded_model_dim)
+        # log(INFO, f'padded vector {len(vector)}, signed vector {len(sign_vector)}, self.model_dim {self.model_dim}, self.padded_model_dim {self.padded_model_dim}')
+        vector = torch.mul(vector, sign_vector) # hadamard product
+        # log(DEBUG,'after zero pad')
+        # log(INFO, vector)
+        log(DEBUG, f'Starting Welsh Hadamard Transform')
+        t0 = time.perf_counter()
+        vector = fwht(vector)
+        # log(DEBUG,'after WHT')
+        # log(INFO, vector)
+        t1 = time.perf_counter()
+        log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0} sec')
+        # vector = torch.matmul(
+        #     input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
+        #     other=vector
+        # )
+        # log(DEBUG, f'Starting randomized rounding')
+
+        # b = self.privacy_settings['bias']
+        # vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
+        # log(DEBUG, f'Done rounding')
+
+
+        # discrete Gaussian noise 
+        # vector = torch.round(vector).to(torch.int64)
+        b = self.privacy_settings['bias']
+        self.echo('before rounding, after fwht', vector)
+        vector = randomized_rounding(vector, c, g, self.model_dim, b)
+        self.echo('raw model server', vector)
+        # log(DEBUG, f'casted type: {vector.dtype}')
+        v = (self.privacy_settings['noise_scale'] / g) ** 2
+        # log(INFO, f'Adding noise')
+        noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        self.echo('noise', noise)
+        # vector += noise
+        # log(INFO, f'Adding mask')
+        # log(DEBUG,'after noising')
+        # log(INFO, vector)
+        # TODO if dropout is turned on, then add selfmask below
+        mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+        self.echo('mask', mask)
+        # vector *= 0
+        # vector += mask
+        # NOTE turn off weighted average
+        # vector *= weight
+
+        # log(INFO,'Added mask')
+        # log(INFO, vector[:100])
+        # processed = []
+        # i = 0
+        # for layer in self.model.state_dict().values():
+        #     j = i + layer.numel()
+        #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
+        #     processed.append(tensor.cpu().numpy())
+        #     i = j
+        # log(INFO, vector.dtype)
+        # log(INFO, vector)
+        vector_np = vector.cpu().numpy()
+        # log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
+
+        vector = shift_transform(vector_np, self.crypto.arithmetic_modulus)
+        assert self.crypto.arithmetic_modulus % 2 == 0
+        half = self.crypto.arithmetic_modulus // 2
+
+        # NOTE vector is the model delta
+        # vector = modular_clipping(vector=params, a=-half, b=half)
+
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        vector = torch.from_numpy(vector).to(device=device)
+        # log(DEBUG, vector.dtype)
+        # log(DEBUG, vector)
+        # log(DEBUG, '=====fwht====')
+        vector = fwht(vector)
+        # log(DEBUG, vector)
+        # Hadamard product
+        vector = torch.mul(
+            self.privacy_settings['granularity'] * generate_random_sign_vector(dim=vector.numel(), seed=0),
+            vector
+        )
+
+        error = vector - delta
+        self.echo('error', error)
+        self.echo('max error', torch.linalg.vector_norm(error, float('inf')))
+        exit()
+        # self.echo('sent to server', vector_np)
+
 
         return [vector_np]
 
@@ -642,6 +822,10 @@ class SecureAggregationClient(BasicClient):
     ) -> Tuple[Dict[str, float], Dict[str, Scalar], int]:
         """These are cutomized for Poisson subsampling"""
 
+        # log(INFO, '===== training by steps ======')
+        # for k, v in self.model.state_dict().items():
+        #     log(INFO, v)
+
         self.model.train()
 
         # Pass loader to iterator so we can step through train loader
@@ -652,7 +836,7 @@ class SecureAggregationClient(BasicClient):
 
         datasize = 0
         for step in range(steps):
-            log(INFO, f'Consumed {datasize} datapoints by step {step}.')
+            # log(INFO, f'Consumed {datasize} datapoints by step {step}.')
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -671,9 +855,9 @@ class SecureAggregationClient(BasicClient):
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        log(INFO, '==========Training losses start==========')
-        log(INFO, loss_dict)
-        log(INFO, '==========Training losses end==========')
+        # log(INFO, '==========Training losses start==========')
+        # log(INFO, loss_dict)
+        # log(INFO, '==========Training losses end==========')
         metrics = self.train_metric_meter_mngr.compute()
 
         # Log results and maybe report via WANDB
@@ -684,3 +868,302 @@ class SecureAggregationClient(BasicClient):
     
     def revert_layer_dtype(self):
         self.model = change_model_dtypes(model=self.model, dtypes_list=self.layer_dtypes)
+
+    def echo(self, message: str, to_print: any) -> None:
+        if self.debug_mode:
+            log(INFO, f'round {self.current_server_round}')
+            log(INFO, f'{message}')
+            log(INFO, to_print)
+
+
+class CentralDPSecAggClient(SecureAggregationClient):
+    """No noise is added by client for the central setting."""
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        privacy_settings,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        client_id: str = uuid.uuid1()
+    ) -> None:
+        super().__init__(
+            data_path = data_path,
+            metrics = metrics,
+            device = device,
+            privacy_settings = privacy_settings,
+            loss_meter_type = loss_meter_type,
+            metric_meter_type = metric_meter_type,
+            checkpointer = checkpointer,
+            client_id = client_id
+        )
+
+    def process_model_post_training(self) -> NDArrays:
+            """ We send model delta to the server. See Algorithm 1 in 
+            Ref
+                The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
+                https://arxiv.org/pdf/2102.06387.pdf
+            
+            """
+
+            assert self.model is not None and self.parameter_exchanger is not None
+            self.parameter_exchanger = SecureAggregationExchanger()
+            # torch.set_default_dtype(torch.float64)
+
+            # reshape model tensors and concatenate into a vector
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
+            vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
+            # self.echo('trained model', vector_1)
+            # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
+            # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
+
+            # model diff
+            vector = vector_1 - vector_0
+
+            # vector = vectorize_model(self.model).to(device=device)
+            delta = pad_zeros(vector=vector, dim=self.model_dim)
+            del vector_0, vector_1
+            
+            # debug 
+            # vector = torch.ones(self.model_dim)
+
+            vector = vector.to(dtype=torch.float64)
+
+            # log(INFO, f'post processing vector dtyle: {vector.dtype}')
+            # log(DEBUG, 'model diff---------')
+            # log(DEBUG, vector[:100])
+
+            # for param in self.model.parameters():
+            #     log(INFO, f'post processing model dtyle: {param.data.dtype}')
+            #     break
+            # log(DEBUG, 'clipped')
+            # log(DEBUG, vector[:100])
+            # TODO adjust clip to weighting
+            # vector *= weight # weight for FedAvg, server divides out sum of client weights
+
+            c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+            
+            # adjust for scaling of model vector by the weight (often the train data size)
+            # weighted_clip = c * weight
+            vector = clip_vector(vector=vector, clip=c, granularity=g)
+            # log(DEBUG, 'weighted')
+            # log(DEBUG, vector[:100])
+            # x'' = H(Dx')
+            # log(INFO, f'original vector {len(vector)}')
+            vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+            sign_vector = generate_random_sign_vector(dim=self.padded_model_dim)
+            # log(INFO, f'padded vector {len(vector)}, signed vector {len(sign_vector)}, self.model_dim {self.model_dim}, self.padded_model_dim {self.padded_model_dim}')
+            vector = torch.mul(vector, sign_vector) # hadamard product
+            # log(DEBUG,'after zero pad')
+            # log(INFO, vector)
+            log(DEBUG, f'Starting Welsh Hadamard Transform')
+            t0 = time.perf_counter()
+            vector = fwht(vector)
+            # log(DEBUG,'after WHT')
+            # log(INFO, vector)
+            t1 = time.perf_counter()
+            log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0} sec')
+            # vector = torch.matmul(
+            #     input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
+            #     other=vector
+            # )
+            # log(DEBUG, f'Starting randomized rounding')
+
+            # b = self.privacy_settings['bias']
+            # vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
+            # log(DEBUG, f'Done rounding')
+
+
+            # discrete Gaussian noise 
+            # vector = torch.round(vector).to(torch.int64)
+            b = self.privacy_settings['bias']
+            # self.echo('before rounding, after fwht', vector)
+            vector = randomized_rounding(vector, c, g, self.model_dim, b)
+            # self.echo('raw model server', vector)
+            # log(DEBUG, f'casted type: {vector.dtype}')
+            v = (self.privacy_settings['noise_scale'] / g) ** 2
+            # log(INFO, f'Adding noise')
+            # noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+            # self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
+            # vector += noise
+            # log(INFO, f'Adding mask')
+            # log(DEBUG,'after noising')
+            # log(INFO, vector)
+            # TODO if dropout is turned on, then add selfmask below
+            mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+            # self.echo('mask', mask)
+            # vector *= 0
+            vector += mask
+            # NOTE turn off weighted average
+            # vector *= weight
+
+            # log(INFO,'Added mask')
+            # log(INFO, vector[:100])
+            # processed = []
+            # i = 0
+            # for layer in self.model.state_dict().values():
+            #     j = i + layer.numel()
+            #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
+            #     processed.append(tensor.cpu().numpy())
+            #     i = j
+            # log(INFO, vector.dtype)
+            # log(INFO, vector)
+            vector_np = vector.cpu().numpy()
+            # log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
+            # import numpy as np 
+            # vector_np = self.crypto.client_integer * np.ones(vector_np.size) + mask.cpu().numpy()
+            # self.echo('sent to server', vector_np)
+
+            return [vector_np, delta.cpu().numpy(), vectorize_model(self.model).cpu().numpy()]
+
+class LocalDPSecAggClient(SecureAggregationClient):
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        privacy_settings,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        client_id: str = uuid.uuid1()
+    ) -> None:
+        super().__init__(
+            data_path = data_path,
+            metrics = metrics,
+            device = device,
+            privacy_settings = privacy_settings,
+            loss_meter_type = loss_meter_type,
+            metric_meter_type = metric_meter_type,
+            checkpointer = checkpointer,
+            client_id = client_id
+        )
+
+    def process_model_post_training(self) -> NDArrays:
+        """ We send model delta to the server. See Algorithm 1 in 
+        Ref
+            The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
+            https://arxiv.org/pdf/2102.06387.pdf
+        
+        """
+
+        assert self.model is not None and self.parameter_exchanger is not None
+        self.parameter_exchanger = SecureAggregationExchanger()
+        # torch.set_default_dtype(torch.float64)
+
+        # reshape model tensors and concatenate into a vector
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
+        vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
+
+        vector = vector_1 - vector_0
+        # vector = vectorize_model(self.model).to(device=device)
+        delta = pad_zeros(vector=vector, dim=self.model_dim)
+
+        # add continuous Gaussian noise 
+        stdev = self.privacy_settings['noise_scale'] / self.privacy_settings['granularity']
+        vector_1 += gaussian_mechanism(dim=self.model_dimension, standard_deviation=stdev)
+        vector = vector_1 - vector_0
+        # self.echo('trained model', vector_1)
+        # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
+        # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
+
+        # model diff
+
+        del vector_0, vector_1
+        
+        # debug 
+        # vector = torch.ones(self.model_dim)
+
+        vector = vector.to(dtype=torch.float64)
+
+        # log(INFO, f'post processing vector dtyle: {vector.dtype}')
+        # log(DEBUG, 'model diff---------')
+        # log(DEBUG, vector[:100])
+
+        # for param in self.model.parameters():
+        #     log(INFO, f'post processing model dtyle: {param.data.dtype}')
+        #     break
+        # log(DEBUG, 'clipped')
+        # log(DEBUG, vector[:100])
+        # TODO adjust clip to weighting
+        # vector *= weight # weight for FedAvg, server divides out sum of client weights
+
+        c, g = self.privacy_settings['clipping_threshold'], self.privacy_settings['granularity']
+        
+        # adjust for scaling of model vector by the weight (often the train data size)
+        # weighted_clip = c * weight
+        vector = clip_vector(vector=vector, clip=c, granularity=g)
+        # log(DEBUG, 'weighted')
+        # log(DEBUG, vector[:100])
+        # x'' = H(Dx')
+        # log(INFO, f'original vector {len(vector)}')
+        vector = pad_zeros(vector=vector, dim=self.model_dim) # pad zeros 
+        sign_vector = generate_random_sign_vector(dim=self.padded_model_dim)
+        # log(INFO, f'padded vector {len(vector)}, signed vector {len(sign_vector)}, self.model_dim {self.model_dim}, self.padded_model_dim {self.padded_model_dim}')
+        vector = torch.mul(vector, sign_vector) # hadamard product
+        # log(DEBUG,'after zero pad')
+        # log(INFO, vector)
+        log(DEBUG, f'Starting Welsh Hadamard Transform')
+        t0 = time.perf_counter()
+        vector = fwht(vector)
+        # log(DEBUG,'after WHT')
+        # log(INFO, vector)
+        t1 = time.perf_counter()
+        log(DEBUG, f'Welsh Hadamard Transform finished in {t1-t0} sec')
+        # vector = torch.matmul(
+        #     input=generate_walsh_hadamard_matrix(exponent=get_exponent(self.model_dim)),
+        #     other=vector
+        # )
+        # log(DEBUG, f'Starting randomized rounding')
+
+        # b = self.privacy_settings['bias']
+        # vector = randomized_rounding(vector=vector, clip=c, granularity=g, unpadded_model_dim=self.model_dim, bias=b)
+        # log(DEBUG, f'Done rounding')
+
+
+        # discrete Gaussian noise 
+        # vector = torch.round(vector).to(torch.int64)
+        b = self.privacy_settings['bias']
+        # self.echo('before rounding, after fwht', vector)
+        vector = randomized_rounding(vector, c, g, self.model_dim, b)
+        # self.echo('raw model server', vector)
+        # log(DEBUG, f'casted type: {vector.dtype}')
+        v = (self.privacy_settings['noise_scale'] / g) ** 2
+        # log(INFO, f'Adding noise')
+        # noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        # self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
+        # vector += noise
+        # log(INFO, f'Adding mask')
+        # log(DEBUG,'after noising')
+        # log(INFO, vector)
+        # TODO if dropout is turned on, then add selfmask below
+        mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+        # self.echo('mask', mask)
+        # vector *= 0
+        vector += mask
+        # NOTE turn off weighted average
+        # vector *= weight
+
+        # log(INFO,'Added mask')
+        # log(INFO, vector[:100])
+        # processed = []
+        # i = 0
+        # for layer in self.model.state_dict().values():
+        #     j = i + layer.numel()
+        #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
+        #     processed.append(tensor.cpu().numpy())
+        #     i = j
+        # log(INFO, vector.dtype)
+        # log(INFO, vector)
+        vector_np = vector.cpu().numpy()
+        # log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
+        # import numpy as np 
+        # vector_np = self.crypto.client_integer * np.ones(vector_np.size) + mask.cpu().numpy()
+        # self.echo('sent to server', vector_np)
+
+        return [vector_np, delta.cpu().numpy(), vectorize_model(self.model).cpu().numpy()]
+    

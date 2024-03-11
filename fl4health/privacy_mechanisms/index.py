@@ -6,3 +6,4 @@ class PrivacyMechanismIndex(Enum):
     Skellam = "skellam mechanism"
     PoissonBionomial = "poisson binomial mechanism"
     Binomial = "binomial mechanism"
+    ContinuousGaussian = 'continuous gaussian mechanism'

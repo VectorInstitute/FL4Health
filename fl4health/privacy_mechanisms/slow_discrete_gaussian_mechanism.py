@@ -224,6 +224,9 @@ def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, u
     rounded_vector = rounder(vector, purse)
     i = 0
     while torch.linalg.vector_norm(rounded_vector, ord=2) > upper_bound:
+        if i == 100:
+            log(DEBUG, f'Rounding not converging after 100 rounds.')
+            exit()
         n  = torch.linalg.vector_norm(rounded_vector, ord=2)
         log(INFO, f'round: {i} {n}>{upper_bound}')
         i+=1

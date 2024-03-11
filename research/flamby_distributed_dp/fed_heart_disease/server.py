@@ -72,9 +72,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
     assert key in ['clipping_threshold', 'granularity', 'noise_scale', 'bias', 'model_integer_range']
-    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
+    # log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
-    log(INFO, f'{privacy_settings}')
+    # log(INFO, f'{privacy_settings}')
 
     server = SecureAggregationServer(
         client_manager=client_manager,
