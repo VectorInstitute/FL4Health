@@ -61,7 +61,7 @@ class FairnessMetricType(Enum):
         Args:
             fairness_metric_type: (FairnessMetricType) the fairness metric type.
 
-        Returns: -1.0 if FairnessMetricType.ACCURACY, 1.0 if FairnessMetricType.LOSS and
+        Returns: (float) -1.0 if FairnessMetricType.ACCURACY, 1.0 if FairnessMetricType.LOSS and
             0 if FairnessMetricType.CUSTOM.
         """
         if fairness_metric_type == FairnessMetricType.ACCURACY:
@@ -214,6 +214,8 @@ class FedDGGAServer(FlServer):
         if res_fit:
             # TODO what to do in case of failure?
             _, _, (results, failures) = res_fit
+            assert len(results) == len(clients_proxies)
+
             self.results_and_failures = (results, failures)
             for i in range(len(results)):
                 self.clients_metrics.append(
