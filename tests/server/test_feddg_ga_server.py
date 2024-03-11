@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple
 from unittest.mock import Mock, patch
 
 from flwr.common.typing import Code, FitRes, Parameters, Scalar, Status
@@ -26,13 +26,9 @@ def test_fit_round(mock_super_fit_round: Mock) -> None:
     for i in range(test_num_clients):
         server.client_manager().register(CustomClientProxy(str(i)))
 
-    test_metrics: List[Dict[str, Union[bool, bytes, float, int, str]]] = [
-        {"test_metric": 123},
-        {"test_metric": 456},
-    ]
     test_results = [
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, test_metrics[0])],
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, test_metrics[1])],
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_metric": 123})],
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_metric": 456})],
     ]
     test_failures = []  # type: ignore
     test_server_round = 2
@@ -55,6 +51,6 @@ def test_fit_round(mock_super_fit_round: Mock) -> None:
     assert current_sample is not None
     for i in range(len(server.clients_metrics)):
         assert server.clients_metrics[i].cid == current_sample[i].cid
-        assert server.clients_metrics[i].train_metrics == test_metrics[i]
+        assert server.clients_metrics[i].train_metrics == test_results[i][1].metrics  # type: ignore
 
     # TODO: assert reset sampling called
