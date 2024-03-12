@@ -23,8 +23,7 @@ def test_fit(mock_super_fit: Mock) -> None:
 def test_fit_round(mock_super_fit_round: Mock) -> None:
     server = FedDGGAServer()
     test_num_clients = 2
-    for i in range(test_num_clients):
-        server.client_manager().register(CustomClientProxy(str(i)))
+    _setup_client_manager(server, test_num_clients)
 
     test_results = [
         [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_metric": 123})],
@@ -53,4 +52,14 @@ def test_fit_round(mock_super_fit_round: Mock) -> None:
         assert server.clients_metrics[i].cid == current_sample[i].cid
         assert server.clients_metrics[i].train_metrics == test_results[i][1].metrics  # type: ignore
 
-    # TODO: assert reset sampling called
+    server.client_manager().reset_sample.assert_called_once()  # type: ignore
+
+
+def _setup_client_manager(server: FedDGGAServer, num_clients: int) -> None:
+    client_manager = server.client_manager()
+    for i in range(num_clients):
+        client_manager.register(CustomClientProxy(str(i)))
+
+    reset_sample_fn = client_manager.reset_sample
+    client_manager.reset_sample = Mock()  # type: ignore
+    client_manager.reset_sample.side_effect = reset_sample_fn
