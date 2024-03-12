@@ -1,9 +1,10 @@
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import Mock, patch
 
-from flwr.common.typing import Code, FitRes, Parameters, Scalar, Status
-from flwr.server.server import FitResultsAndFailures
+from flwr.common.typing import Code, EvaluateRes, FitRes, Parameters, Scalar, Status
+from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
 
+from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 from fl4health.server.feddg_ga_server import FedDGGAServer
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
@@ -19,47 +20,87 @@ def test_fit(mock_super_fit: Mock) -> None:
     assert server.num_rounds == test_num_rounds
 
 
+@patch("fl4health.server.feddg_ga_server.FlServer.evaluate_round")
 @patch("fl4health.server.feddg_ga_server.FlServer.fit_round")
-def test_fit_round(mock_super_fit_round: Mock) -> None:
-    server = FedDGGAServer()
-    test_num_clients = 2
-    _setup_client_manager(server, test_num_clients)
-
-    test_results = [
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_metric": 123})],
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_metric": 456})],
-    ]
-    test_failures = []  # type: ignore
+def test_fit_and_evaluate_round(mock_super_fit_round: Mock, mock_super_evaluate_round: Mock) -> None:
+    # Setting up
+    test_total_rounds = 5
     test_server_round = 2
+    test_num_clients = 2
+    test_loss = 0.1
+    test_fit_results = [
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 1.0, "val - loss": 1.1})],
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 2.0, "val - loss": 1.1})],
+    ]
+    test_evaluate_results = [
+        [None, EvaluateRes(Status(Code.OK, ""), 3.0, 2, {"test_eval_metric": 4.0})],
+        [None, EvaluateRes(Status(Code.OK, ""), 5.0, 2, {"test_eval_metric": 6.0})],
+    ]
+    test_failures: List[Any] = []
+    test_fit_results_and_failures = (test_fit_results, test_failures)
+    test_evaluate_results_and_failures = (test_evaluate_results, test_failures)
+    server = _setup_server(
+        num_clients=test_num_clients,
+        loss=test_loss,
+        fit_results_and_failures=test_fit_results_and_failures,
+        evaluate_results_and_failures=test_evaluate_results_and_failures,
+        mock_fit_round=mock_super_fit_round,
+        mock_evaluate_round=mock_super_evaluate_round,
+    )
+    server.num_rounds = test_total_rounds
 
-    def fit_round_side_effect(
-        server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
-        server.client_manager().sample(test_num_clients)
-        return None, None, (test_results, test_failures)  # type: ignore
+    # Test fit
+    client_manager = server.client_manager()
+    with patch.object(FixedSamplingClientManager, "reset_sample", wraps=client_manager.reset_sample):
+        test_fit_result = server.fit_round(test_server_round, None)
+        client_manager.reset_sample.assert_called_once()  # type: ignore
 
-    mock_super_fit_round.side_effect = fit_round_side_effect
-
-    test_fit_result = server.fit_round(test_server_round, None)
-
-    assert test_fit_result == (None, None, (test_results, test_failures))
-    assert server.results_and_failures == (test_results, test_failures)
+    assert test_fit_result == (None, None, test_fit_results_and_failures)
+    assert server.results_and_failures == test_fit_results_and_failures
     assert len(server.clients_metrics) == test_num_clients
     current_sample = server.client_manager().current_sample
     assert current_sample is not None
     for i in range(len(server.clients_metrics)):
         assert server.clients_metrics[i].cid == current_sample[i].cid
-        assert server.clients_metrics[i].train_metrics == test_results[i][1].metrics  # type: ignore
+        assert server.clients_metrics[i].train_metrics == test_fit_results[i][1].metrics  # type: ignore
 
-    server.client_manager().reset_sample.assert_called_once()  # type: ignore
-
-
-def _setup_client_manager(server: FedDGGAServer, num_clients: int) -> None:
+    # Test evaluate
     client_manager = server.client_manager()
-    for i in range(num_clients):
-        client_manager.register(CustomClientProxy(str(i)))
+    with patch.object(FixedSamplingClientManager, "reset_sample", wraps=client_manager.reset_sample):
+        test_evaluate_result = server.evaluate_round(test_server_round, None)
+        client_manager.reset_sample.assert_not_called()  # type: ignore
 
-    reset_sample_fn = client_manager.reset_sample
-    client_manager.reset_sample = Mock()  # type: ignore
-    client_manager.reset_sample.side_effect = reset_sample_fn
+    # TODO make assertions
+
+
+def _setup_server(
+    num_clients: int,
+    loss: float,
+    fit_results_and_failures: Tuple[List[Any], List[Any]],
+    evaluate_results_and_failures: Tuple[List[Any], List[Any]],
+    mock_fit_round: Mock,
+    mock_evaluate_round: Mock,
+) -> FedDGGAServer:
+    server = FedDGGAServer()
+    for i in range(num_clients):
+        server.client_manager().register(CustomClientProxy(str(i)))
+
+    def fit_round_side_effect(
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+        server.client_manager().sample(num_clients)
+        return None, None, fit_results_and_failures  # type: ignore
+
+    mock_fit_round.side_effect = fit_round_side_effect
+
+    def evaluate_round_side_effect(
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        server.client_manager().sample(num_clients)
+        return loss, None, evaluate_results_and_failures  # type: ignore
+
+    mock_evaluate_round.side_effect = evaluate_round_side_effect
+
+    return server
