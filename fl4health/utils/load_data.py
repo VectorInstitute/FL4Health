@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import torchvision.transforms as transforms
 from flwr.common.logger import log
@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR10
 
 from fl4health.utils.dataset import BaseDataset, MnistDataset
+from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
 
@@ -15,21 +16,29 @@ def load_mnist_data(
     data_dir: Path,
     batch_size: int,
     sampler: Optional[LabelBasedSampler] = None,
+    transform: Union[None, Callable] = None,
+    target_transform: Union[None, Callable] = None,
+    dataset_converter: Optional[DatasetConverter] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load MNIST Dataset (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5), (0.5)),
-        ]
-    )
+    if transform is None:
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
     train_ds: BaseDataset = MnistDataset(data_dir, train=True, transform=transform)
     val_ds: BaseDataset = MnistDataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)
         val_ds = sampler.subsample(val_ds)
+
+    if dataset_converter is not None:
+        train_ds = dataset_converter.convert_dataset(train_ds)
+        val_ds = dataset_converter.convert_dataset(val_ds)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     validation_loader = DataLoader(val_ds, batch_size=batch_size)
