@@ -1,8 +1,10 @@
+from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import Mock, patch
 
 from flwr.common.typing import Code, EvaluateRes, FitRes, Parameters, Scalar, Status
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures
+from flwr.server.strategy.fedavg import FedAvg
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 from fl4health.server.feddg_ga_server import FedDGGAServer
@@ -29,8 +31,8 @@ def test_fit_and_evaluate_round(mock_super_fit_round: Mock, mock_super_evaluate_
     test_num_clients = 2
     test_loss = 0.1
     test_fit_results = [
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 1.0, "val - loss": 1.1})],
-        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 2.0, "val - loss": 1.1})],
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 1.1, "val - loss": 1.2})],
+        [None, FitRes(Status(Code.OK, ""), Parameters([], ""), 2, {"test_fit_metric": 2.1, "val - loss": 2.2})],
     ]
     test_evaluate_results = [
         [None, EvaluateRes(Status(Code.OK, ""), 3.0, 2, {"test_eval_metric": 4.0})],
@@ -42,8 +44,8 @@ def test_fit_and_evaluate_round(mock_super_fit_round: Mock, mock_super_evaluate_
     server = _setup_server(
         num_clients=test_num_clients,
         loss=test_loss,
-        fit_results_and_failures=test_fit_results_and_failures,
-        evaluate_results_and_failures=test_evaluate_results_and_failures,
+        fit_results_and_failures=deepcopy(test_fit_results_and_failures),
+        evaluate_results_and_failures=deepcopy(test_evaluate_results_and_failures),
         mock_fit_round=mock_super_fit_round,
         mock_evaluate_round=mock_super_evaluate_round,
     )
@@ -52,10 +54,10 @@ def test_fit_and_evaluate_round(mock_super_fit_round: Mock, mock_super_evaluate_
     # Test fit
     client_manager = server.client_manager()
     with patch.object(FixedSamplingClientManager, "reset_sample", wraps=client_manager.reset_sample):
-        test_fit_result = server.fit_round(test_server_round, None)
+        fit_result = server.fit_round(test_server_round, None)
         client_manager.reset_sample.assert_called_once()  # type: ignore
 
-    assert test_fit_result == (None, None, test_fit_results_and_failures)
+    assert fit_result == (None, None, test_fit_results_and_failures)
     assert server.results_and_failures == test_fit_results_and_failures
     assert len(server.clients_metrics) == test_num_clients
     current_sample = server.client_manager().current_sample
@@ -66,11 +68,29 @@ def test_fit_and_evaluate_round(mock_super_fit_round: Mock, mock_super_evaluate_
 
     # Test evaluate
     client_manager = server.client_manager()
-    with patch.object(FixedSamplingClientManager, "reset_sample", wraps=client_manager.reset_sample):
-        test_evaluate_result = server.evaluate_round(test_server_round, None)
-        client_manager.reset_sample.assert_not_called()  # type: ignore
+    strategy = server.strategy
+    with patch.object(FedDGGAServer, "calculate_weights_by_ga", wraps=server.calculate_weights_by_ga):
+        with patch.object(FedDGGAServer, "apply_weights_to_results", wraps=server.apply_weights_to_results):
+            with patch.object(FixedSamplingClientManager, "reset_sample", wraps=client_manager.reset_sample):
+                with patch.object(FedAvg, "aggregate_fit", wraps=strategy.aggregate_fit):
+                    evaluate_result = server.evaluate_round(test_server_round, None)
+                    client_manager.reset_sample.assert_not_called()  # type: ignore
+                    server.calculate_weights_by_ga.assert_called_once_with(test_server_round)  # type: ignore
+                    server.apply_weights_to_results.assert_called_once()  # type: ignore
+                    strategy.aggregate_fit.assert_called_once()  # type: ignore
 
-    # TODO make assertions
+    # adding the loss to the test evaluate result so we can make the assertions
+    for result in test_evaluate_results:
+        assert result[1] is not None
+        result[1].metrics["val - loss"] = test_loss
+
+    assert evaluate_result == (test_loss, None, test_evaluate_results_and_failures)
+    assert len(server.clients_metrics) == test_num_clients
+    current_sample = server.client_manager().current_sample
+    assert current_sample is not None
+    for i in range(len(server.clients_metrics)):
+        assert server.clients_metrics[i].cid == current_sample[i].cid
+        assert server.clients_metrics[i].evaluation_metrics == test_evaluate_results[i][1].metrics  # type: ignore
 
 
 def _setup_server(
