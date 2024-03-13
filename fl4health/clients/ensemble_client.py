@@ -84,7 +84,7 @@ class EnsembleClient(BasicClient):
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 
         Args:
-            input (torch.Tensor): The input to be fed into the model.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): The input to be fed into the model.
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:

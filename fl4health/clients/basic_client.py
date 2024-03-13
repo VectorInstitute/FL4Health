@@ -27,6 +27,7 @@ T = TypeVar("T")
 BatchType = TypeVar(
     "BatchType", bound=Union[Tuple[torch.Tensor, torch.Tensor], Dict[str, torch.Tensor], List[torch.Tensor]]
 )
+TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
 
 
 class BasicClient(NumPyClient):
@@ -383,7 +384,7 @@ class BasicClient(NumPyClient):
             return
 
         # If no current_round is passed or current_round is None, set current_round to 0
-        # This situation only arises when we do local finetuning and call train_by_epochs or train_by_steps explicitly
+        # This situation only arises when we do local fine-tuning and call train_by_epochs or train_by_steps explicitly
         current_round = current_round if current_round is not None else 0
 
         reporting_dict: Dict[str, Any] = {"server_round": current_round}
@@ -392,24 +393,32 @@ class BasicClient(NumPyClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
+    def _move_data_to_device(self, data: TorchInputType) -> TorchInputType:
+        if isinstance(data, torch.Tensor):
+            return data.to(self.device)
+        elif isinstance(data, dict):
+            return {key: value.to(self.device) for key, value in data.items()}
+        else:
+            raise TypeError("Input must be of type Tensor or Dict[str, Tensor].")
+
     def _retrieve_data_from_batch_dict(
         self, batch_dict: Dict[str, torch.Tensor], keys: Union[str, List[str]]
     ) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
         if isinstance(keys, str):
-            return batch_dict[keys].to(self.device)
+            return batch_dict[keys]
         elif isinstance(keys, list):
             assert len(keys) > 0
             if len(keys) == 1:
-                return batch_dict[keys[0]].to(self.device)
+                return batch_dict[keys[0]]
             else:
-                return {key: batch_dict[key].to(self.device) for key in keys}
+                return {key: batch_dict[key] for key in keys}
         else:
             raise TypeError("Provided keys must be either a list of strings or a single string.")
 
-    def process_batch(self, batch: BatchType) -> Tuple[Union[torch.Tensor, Dict[str, torch.Tensor]], torch.Tensor]:
+    def process_batch(self, batch: BatchType) -> Tuple[TorchInputType, torch.Tensor]:
         if isinstance(batch, tuple) or isinstance(batch, list):
             input, target = batch
-            input, target = input.to(self.device), target.to(self.device)
+            input, target = input, target
         elif isinstance(batch, dict):
             assert self.input_keys and self.target_key
             try:
@@ -423,8 +432,16 @@ class BasicClient(NumPyClient):
             )
         return input, target
 
+    def is_empty_batch(self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> bool:
+        if isinstance(input, torch.Tensor):
+            return len(input) == 0
+        elif isinstance(input, dict):
+            return all(len(val) == 0 for _, val in input.items())
+        else:
+            raise TypeError("Input must be of type Tensor or Dict[str, Tensor].")
+
     def train_step(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+        self, input: TorchInputType, target: torch.Tensor
     ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
@@ -432,7 +449,7 @@ class BasicClient(NumPyClient):
         Assumes self.model is in train mode already.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): The input to be fed into the model.
+            input (TorchInputType): The input to be fed into the model.
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
@@ -453,14 +470,14 @@ class BasicClient(NumPyClient):
         return losses, preds
 
     def val_step(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+        self, input: TorchInputType, target: torch.Tensor
     ) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
 
         Args:
-            input (torch.Tensor): The input to be fed into the model.
+            input (TorchInputType): The input to be fed into the model.
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
@@ -496,6 +513,13 @@ class BasicClient(NumPyClient):
             self.train_loss_meter.clear()
             for batch in self.train_loader:
                 input, target = self.process_batch(batch)
+                # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
+                # construct empty batches. We skip the iteration if this occurs.
+                if self.is_empty_batch(input):
+                    log(INFO, "Empty batch generated by data loader. Skipping step.")
+                    continue
+
+                input, target = self._move_data_to_device(input), self._move_data_to_device(target)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.train_metric_manager.update(preds, target)
@@ -542,6 +566,13 @@ class BasicClient(NumPyClient):
                 batch = next(train_iterator)
 
             input, target = self.process_batch(batch)
+            # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
+            # construct empty batches. We skip the iteration if this occurs.
+            if self.is_empty_batch(input):
+                log(INFO, "Empty batch generated by data loader. Skipping step.")
+                continue
+
+            input, target = self._move_data_to_device(input), self._move_data_to_device(target)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
             self.train_metric_manager.update(preds, target)
@@ -645,14 +676,12 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into the model.
+            input (TorchInputType): Inputs to be fed into the model.
             If input is of type Dict[str, torch.Tensor], it is assumed that the keys of input
             match the names of the keyword arguments of self.model.forward().
 

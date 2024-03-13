@@ -215,8 +215,9 @@ class DittoClient(BasicClient):
         number of steps.
 
         Args:
-            input (torch.Tensor): input tensor to be run through both the global and local models
-            target (torch.Tensor): target tensor to be used to compute a loss given each models outputs
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): input tensor to be run through
+            both the global and local models.
+            target (torch.Tensor): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: Returns relevant loss values from both the global and local
@@ -254,7 +255,7 @@ class DittoClient(BasicClient):
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
         Args:
-            input (torch.Tensor): Inputs to be fed into both models.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into both models.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element

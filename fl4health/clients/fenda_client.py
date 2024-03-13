@@ -71,7 +71,7 @@ class FendaClient(BasicClient):
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (torch.Tensor): Inputs to be fed into the model.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into the model.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
