@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Callable, Tuple, Union
+from typing import Callable, Dict, Tuple, Union
 
 import torch
 from torch.utils.data import Dataset
@@ -53,3 +53,21 @@ class MnistDataset(BaseDataset):
         self.targets = mnist_dataset.targets
         self.transform = transform
         self.target_transform = target_transform
+
+
+class DictDataset(Dataset):
+    def __init__(self, data_dict: Dict[str, torch.Tensor], target_name: str) -> None:
+        assert target_name in data_dict
+        self.data_dict = data_dict
+        self.target_name = target_name
+
+    def __getitem__(self, index: int) -> Dict[str, torch.Tensor]:
+        return {key: val[index] for key, val in self.data_dict.items()}
+
+    def __len__(self) -> int:
+        first_key = list(self.data_dict.keys())[0]
+        return len(self.data_dict[first_key])
+
+    @property
+    def targets(self) -> torch.Tensor:
+        return self.data_dict[self.target_name]
