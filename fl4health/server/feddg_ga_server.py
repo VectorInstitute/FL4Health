@@ -365,7 +365,7 @@ class FedDGGAServer(FlServer):
             client_parameters = parameters_to_ndarrays(client_results[1].parameters)
 
             for j in range(len(client_parameters)):
-                client_parameters[j] *= client_weight
+                client_parameters[j] = client_parameters[j] * client_weight
 
             weighted_client_parameters = ndarrays_to_parameters(client_parameters)
             client_results[1].parameters = weighted_client_parameters
