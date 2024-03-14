@@ -8,6 +8,8 @@
 #SBATCH --mem=16G
 #SBATCH --partition=t4v2
 #SBATCH --qos=m2
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
 
 # Note:
 #	  ntasks: Total number of processes to use across world
