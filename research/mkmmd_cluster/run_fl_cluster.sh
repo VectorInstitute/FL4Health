@@ -38,11 +38,21 @@ echo "Client Log Dir: ${CLIENT_LOG_DIR}"
 echo "Python Venv Path: ${VENV_PATH}"
 echo "Server Job Hash: ${SERVER_JOB_HASH}"
 
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd_dist"
+echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
+mkdir ${SWEEP_DIRECTORY}
+
+EXPERIMENT_NAME="lr_${LR_VALUE}_mu_${MU_VALUE}_gamma_${GAMMA_VALUE}"
+echo "Beginning Experiment ${EXPERIMENT_NAME}"
+EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
+echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
+mkdir "${EXPERIMENT_DIRECTORY}"
+
 SBATCH_COMMAND="--job-name=${SERVER_JOB_NAME} --output=${SERVER_OUT_LOGS} --error=${SERVER_ERROR_LOGS} \
   research/mkmmd_cluster/run_server.slrm \
   ${SERVER_PORT} \
   ${SERVER_CONFIG_PATH} \
-  ${ARTIFACT_DIR} \
+  ${EXPERIMENT_DIRECTORY} \
   ${SERVER_LOG_DIR} \
   ${VENV_PATH} \
   ${SERVER_JOB_HASH}"
@@ -83,7 +93,7 @@ do
   SBATCH_COMMAND="--job-name=${CLIENT_JOB_NAME} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
     research/mkmmd_cluster/run_client.slrm \
     ${SERVER_ADDRESS} \
-    ${ARTIFACT_DIR} \
+    ${EXPERIMENT_DIRECTORY} \
     ${DATASET_DIR} \
     ${CLIENT_LOG_DIR} \
     ${VENV_PATH}\
