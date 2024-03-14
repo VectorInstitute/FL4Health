@@ -8,6 +8,15 @@ SERVER_LOG_DIR=$5
 CLIENT_LOG_DIR=$6
 VENV_PATH=$7
 
+echo "Server Port number: ${SERVER_PORT}"
+echo "Config Path: ${SERVER_CONFIG_PATH}"
+echo "Server Log Dir: ${SERVER_LOG_DIR}"
+echo "Client Log Dir: ${CLIENT_LOG_DIR}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Artifacts Dir: ${ARTIFACT_DIR}"
+echo "Dataset Dir: ${DATASET_DIR}"
+
+
 # Spins up 3 clients
 n_clients=3
 
