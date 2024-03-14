@@ -40,8 +40,8 @@ JOB_HASH=$10
 
 
 
-RUN_NAME= "Run1"
-SEED= 2021 
+RUN_NAME="Run1"
+SEED=2021 
 
 # Print relevant information for the client to connect to the server and run
 echo "Server Address: ${SERVER_ADDRESS}"
