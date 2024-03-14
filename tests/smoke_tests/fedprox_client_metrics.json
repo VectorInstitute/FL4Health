@@ -3,7 +3,7 @@
         "1": {
             "fit_metrics": {"train - prediction - accuracy": 0.2031},
             "loss_dict": {
-                "checkpoint": 2.1473,
+                "loss": 2.1473,
                 "backward": 2.1736,
                 "proximal_loss": 0.0263
             },
@@ -13,7 +13,7 @@
         "2": {
             "fit_metrics": {"train - prediction - accuracy": 0.5},
             "loss_dict": {
-                "checkpoint": 1.7772,
+                "loss": 1.7772,
                 "backward": 1.7772,
                 "proximal_loss": 0.0
             },
@@ -23,7 +23,7 @@
         "3": {
             "fit_metrics": {"train - prediction - accuracy": 0.6734},
             "loss_dict": {
-                "checkpoint": 1.0223,
+                "loss": 1.0223,
                 "backward": 1.0223,
                 "proximal_loss": 0.0
             },

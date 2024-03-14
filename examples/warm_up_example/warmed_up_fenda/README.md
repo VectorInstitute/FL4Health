@@ -1,5 +1,5 @@
 # Warmed Up FENDA Federated Learning Example
-This example provides an example of training a FENDA type model on a non-IID subset of the MNIST data after being warmed up with FedAvg. The FL server expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client has a modified version of the MNIST dataset. This modificThis modification essentially subsamples a certain number from the original training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties of the clients training/validation data. In theory, the models should be able to perform well on their local data while learning from other clients data that has different statistical properties. The proportion of labels at each client is determined by dirichlet distribtuion across the classes. The lower the beta parameter is for each class, the higher the degree of the label heterogeneity.
+This example provides an example of training a FENDA type model on a non-IID subset of the MNIST data after being warmed up with FedAvg. The FL server expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client has a modified version of the MNIST dataset. More precisely, each client subsamples from the original MNIST dataset in order to synthetically induce local variations in the statistical properties of the clients training/validation data. In theory, the models should be able to perform well on their local data while learning from other clients' data that has different statistical properties. The proportion of labels at each client is determined by dirichlet distribution across the classes. The lower the beta parameter is for each class, the higher the degree of the label heterogeneity.
 
 The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
 
@@ -31,4 +31,4 @@ python -m examples.warm_up_example.warmed_up_fenda.client --dataset_path /path/t
 
 **NOTE**: "SEED" above should match that of the warm up run if you want to ensure the datasets are split consistently.
 
-After both clients have been started federated learning should commence.
+After all three clients have been started federated learning should commence.

@@ -11,7 +11,7 @@ from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacy
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
@@ -50,7 +50,7 @@ class ScaffoldClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArrays to be sent to the server for aggregation
+        Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
@@ -63,7 +63,7 @@ class ScaffoldClient(BasicClient):
         packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
         return packed_params
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with server control variates.
         They are unpacked for the clients to use in training. If it's the first time the model is being initialized,
@@ -78,7 +78,7 @@ class ScaffoldClient(BasicClient):
         server_model_state, server_control_variates = self.parameter_exchanger.unpack_parameters(parameters)
         self.server_control_variates = server_control_variates
 
-        super().set_parameters(server_model_state, config)
+        super().set_parameters(server_model_state, config, fitting_round)
 
         # Note that we are restricting to weights that require a gradient here because they are used to compute
         # control variates
@@ -154,7 +154,7 @@ class ScaffoldClient(BasicClient):
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes elementwise difference of two lists of NDarray
+        Computes element-wise difference of two lists of NDarray
         where elements in params_2 are subtracted from elements in params_1
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
@@ -169,22 +169,22 @@ class ScaffoldClient(BasicClient):
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate)
+        scaling_coefficient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
-            delta_control_variate + scaling_coeffient * delta_model_weight
+            delta_control_variate + scaling_coefficient * delta_model_weight
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
-        losses = self.compute_loss(preds, features, target)
+        losses = self.compute_training_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
         losses.backward["backward"].backward()

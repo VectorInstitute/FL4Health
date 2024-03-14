@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.fenda_client import FendaClient
@@ -34,6 +35,8 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
+    elif type == DittoClient:
+        client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
     elif type == MoonClient:
         client = MoonClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = FullParameterExchanger()

@@ -2,14 +2,14 @@ from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-from flwr.common.typing import Config, NDArrays
+from flwr.common.typing import Config
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -94,23 +94,21 @@ class FendaClient(BasicClient):
                         )
         return preds, features
 
-    def get_parameters(self, config: Config) -> NDArrays:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
             self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
-        return super().get_parameters(config)
+        return super().update_after_train(local_steps, loss_dict)
 
-    def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        # Set the parameters of the model
-        super().set_parameters(parameters, config)
-
+    def update_before_train(self, current_server_round: int) -> None:
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
+        return super().update_before_train(current_server_round)
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
@@ -185,28 +183,33 @@ class FendaClient(BasicClient):
 
         return contrastive_loss_minimize, contrastive_loss_maximize
 
-    def compute_loss(
-        self, preds: Dict[str, torch.Tensor], features: Dict[str, torch.Tensor], target: torch.Tensor
-    ) -> Losses:
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Computes loss given predictions of the model and ground truth data. Optionally computes additional loss
-        components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on client attributes
-        set from server config.
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
+        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-                All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Losses: Object containing checkpoint loss, backward loss and additional losses indexed by name.
-            Additional losses may include cosine_similarity_loss, contrastive_loss and perfcl_loss.
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
+                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
+                    keys and their respective calculated values.
         """
 
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
-        additional_losses = {}
+        additional_losses = {"loss": loss}
 
         # Optimal cos_sim_loss_weight for FedIsic dataset is 100.0
         if self.cos_sim_loss_weight:
@@ -243,6 +246,31 @@ class FendaClient(BasicClient):
             additional_losses["contrastive_loss_minimize"] = contrastive_loss_minimize
             additional_losses["contrastive_loss_maximize"] = contrastive_loss_maximize
 
-        losses = Losses(checkpoint=loss, backward=total_loss, additional_losses=additional_losses)
+        additional_losses["total_loss"] = total_loss
 
-        return losses
+        return total_loss, additional_losses
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions of the model and ground truth data. Optionally computes
+        additional loss components such as cosine_similarity_loss, contrastive_loss and perfcl_loss based on
+        client attributes set from server config.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss
+                and perfcl_loss.
+        """
+        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

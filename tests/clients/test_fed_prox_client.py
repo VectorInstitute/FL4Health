@@ -13,13 +13,13 @@ from tests.test_utils.models_for_test import LinearTransform, SmallCnn
 def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
 
-    fed_prox_client.set_parameters(packed_params, config)
+    fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
 
     assert fed_prox_client.initial_tensors is not None
     # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)
@@ -33,12 +33,12 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
 def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
-    fed_prox_client.set_parameters(packed_params, config)
+    fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
 
     # We've taken no training steps so the proximal loss should be 0.0
     assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
@@ -49,7 +49,7 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    fed_prox_client.set_parameters(packed_perturbed_params, config)
+    fed_prox_client.set_parameters(packed_perturbed_params, config, fitting_round=True)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
 
@@ -62,12 +62,12 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
 def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
-    fed_prox_client.set_parameters(packed_params, config)
+    fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
     perturbed_proximal_weight = 1.0
@@ -75,7 +75,7 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    fed_prox_client.set_parameters(packed_perturbed_params, config)
+    fed_prox_client.set_parameters(packed_perturbed_params, config, fitting_round=True)
 
     proximal_loss = fed_prox_client.get_proximal_loss()
     proximal_loss.backward()
@@ -94,12 +94,12 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
 def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 0.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
-    fed_prox_client.set_parameters(packed_params, config)
+    fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
 
     # We've taken no training steps so the proximal loss should be 0.0
     assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
@@ -110,7 +110,7 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
         perturbed_params, perturbed_proximal_weight
     )
 
-    fed_prox_client.set_parameters(packed_perturbed_params, config)
+    fed_prox_client.set_parameters(packed_perturbed_params, config, fitting_round=True)
 
     assert fed_prox_client.proximal_weight == perturbed_proximal_weight
 
@@ -119,13 +119,13 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
 def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
     torch.manual_seed(42)
     fed_prox_client = get_client
-    config: Config = {}
+    config: Config = {"current_server_round": 1}
     fed_prox_client.criterion = torch.nn.CrossEntropyLoss()
 
     params = [val.cpu().numpy() for _, val in fed_prox_client.model.state_dict().items()]
     proximal_weight = 1.0
     packed_params = fed_prox_client.parameter_exchanger.pack_parameters(params, proximal_weight)
-    fed_prox_client.set_parameters(packed_params, config)
+    fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
 
     # We've taken no training steps so the proximal loss should be 0.0
     assert fed_prox_client.get_proximal_loss().detach().item() == 0.0
@@ -138,7 +138,8 @@ def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
 
     preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
     target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
-    loss = fed_prox_client.compute_loss(preds, {}, target)
-    assert isinstance(loss.backward, dict)
-    assert pytest.approx(0.8132616, abs=0.0001) == loss.checkpoint.item()
-    assert loss.checkpoint.item() != loss.backward["backward"].item()
+    training_loss = fed_prox_client.compute_training_loss(preds, {}, target)
+    evaluation_loss = fed_prox_client.compute_evaluation_loss(preds, {}, target)
+    assert isinstance(training_loss.backward, dict)
+    assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
+    assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
