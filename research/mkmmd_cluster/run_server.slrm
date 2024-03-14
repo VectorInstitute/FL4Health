@@ -36,6 +36,15 @@ JOB_HASH=$6
 RUN_NAME="Run1"
 SEED=2021 
 
+echo "Server Port number: ${SERVER_PORT}"
+echo "Config Path: ${CONFIG_PATH}"
+echo "Python Venv Path: ${VENV_PATH}"
+echo "Job Hash: ${JOB_HASH}"
+echo "Artifacts Dir: ${ARTIFACT_DIR}"
+echo "Log Dir: ${LOG_DIR}"
+echo "Run Name: ${RUN_NAME}"
+echo "Seed: ${SEED}"
+
 # Print the name of the node, this will be the network address
 echo "Node Name: ${SLURMD_NODENAME}"
 echo "Server Port number: ${SERVER_PORT}"
