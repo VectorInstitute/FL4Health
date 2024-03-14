@@ -77,7 +77,7 @@ python -m research.flamby.fed_ixi.moon_mkmmd.server \
     --run_name ${RUN_NAME} \
     --server_address ${SERVER_ADDRESS} \
     --seed ${SEED} \
-    > ${LOG_PATH} 2>&1 &
+    > ${LOG_PATH} 2>&1 
 
 
 echo ${SERVER_ADDRESS}
