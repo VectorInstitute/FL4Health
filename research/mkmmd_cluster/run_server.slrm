@@ -8,8 +8,7 @@
 #SBATCH --mem=16G
 #SBATCH --partition=t4v2
 #SBATCH --qos=m2
-#SBATCH --output=%j_%x.out
-#SBATCH --error=%j_%x.err
+
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -72,7 +71,13 @@ echo "Active Environment"
 which python
 
 
-python -m research.flamby.fed_ixi.ditto.server --config_path ${CONFIG_PATH} --artifact_dir ${ARTIFACT_DIR} --run_name ${RUN_NAME} --server_address ${SERVER_ADDRESS} --seed ${SEED} > ${LOG_PATH} 2>&1 &
+python -m research.flamby.fed_ixi.moon_mkmmd.server \
+    --config_path ${CONFIG_PATH} \
+    --artifact_dir ${ARTIFACT_DIR} \
+    --run_name ${RUN_NAME} \
+    --server_address ${SERVER_ADDRESS} \
+    --seed ${SEED} \
+    > ${LOG_PATH} 2>&1 &
 
 
 echo ${SERVER_ADDRESS}

@@ -8,8 +8,6 @@
 #SBATCH --mem=16G
 #SBATCH --partition=t4v2
 #SBATCH --qos=m2
-#SBATCH --output=%j_%x.out
-#SBATCH --error=%j_%x.err
 
 # Note:
 #	  ntasks: Total number of processes to use across world
@@ -66,7 +64,7 @@ which python
 
 echo "Server Address used by Client: ${SERVER_ADDRESS}"
 
-python -m examples.fedprox_example.client \
+python -m research.flamby.fed_ixi.moon_mkmmd.client \
     --artifact_dir ${ARTIFACT_DIR} \
     --dataset_dir ${DATASET_DIR} \
     --run_name ${RUN_NAME} \
