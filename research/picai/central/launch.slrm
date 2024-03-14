@@ -20,7 +20,7 @@
 # Example:
 # sbatch research/picai/fedavg/launch.slrm \
 #   research/fedprox_cluster/artifacts/ \
-#   /h/demerson/vector_repositories/fl4health_env/ \
+#   /h/jsmith/repositories/fl4health_env/ \
 #   0
 #
 # Notes:
