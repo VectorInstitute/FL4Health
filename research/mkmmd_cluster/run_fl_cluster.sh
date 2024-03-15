@@ -17,6 +17,7 @@ echo "Artifacts Dir: ${ARTIFACT_DIR}"
 echo "Dataset Dir: ${DATASET_DIR}"
 
 
+
 # Spins up 3 clients
 n_clients=3
 
