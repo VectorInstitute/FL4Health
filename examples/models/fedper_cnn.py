@@ -15,7 +15,7 @@ class FedPerLocalPredictionHead(nn.Module):
         return x
 
 
-class FedPerGloalFeatureExtractor(nn.Module):
+class FedPerGlobalFeatureExtractor(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5)
