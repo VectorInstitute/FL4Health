@@ -7,7 +7,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.fedper_cnn import FedPerGloalFeatureExtractor, FedPerLocalPredictionHead
+from examples.models.fedper_cnn import FedPerGlobalFeatureExtractor, FedPerLocalPredictionHead
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fedper_base import FedPerModel
 from fl4health.server.base_server import FlServer
@@ -45,7 +45,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     initial_model = FedPerModel(
-        global_feature_extractor=FedPerGloalFeatureExtractor(),
+        global_feature_extractor=FedPerGlobalFeatureExtractor(),
         local_prediction_head=FedPerLocalPredictionHead(),
         flatten_features=True,
     )

@@ -55,7 +55,7 @@ class MoonClient(BasicClient):
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specificaly the features of the model, features of the global model and features of
+            index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)
@@ -75,7 +75,7 @@ class MoonClient(BasicClient):
         self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
     ) -> torch.Tensor:
         """
-        This constrastive loss is implemented based on https://github.com/QinbinLi/MOON.
+        This contrastive loss is implemented based on https://github.com/QinbinLi/MOON.
         The primary idea is to enhance the similarity between the current local features and the global feature
         as positive pairs while reducing the similarity between the current local features and the previous local
         features as negative pairs.
