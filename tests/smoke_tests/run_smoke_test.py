@@ -386,7 +386,7 @@ def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[
             value = value["target_value"]
 
         assert approx(value, abs=tolerance) == saved_value, (
-            f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested"
+            f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested "
             f"value ({value}) within requested tolerance ({tolerance})."
         )
 

@@ -1,15 +1,15 @@
 {
     "rounds": {
         "1": {
-            "metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.1850, "custom_tolerance": 0.005}},
-            "loss_aggregated": 2.2803
+            "metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.1936, "custom_tolerance": 0.005}},
+            "loss_aggregated": 2.2790
         },
         "2": {
             "metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.3108, "custom_tolerance": 0.05}},
             "loss_aggregated": {"target_value": 2.2633, "custom_tolerance": 0.005}
         },
         "3": {
-            "metrics_aggregated": {"val - prediction - accuracy": 0.3906},
+            "metrics_aggregated": {"val - prediction - accuracy": 0.46653},
             "loss_aggregated": {"target_value": 2.2294, "custom_tolerance": 0.05}
         }
     }

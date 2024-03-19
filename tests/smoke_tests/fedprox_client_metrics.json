@@ -3,32 +3,32 @@
         "1": {
             "fit_metrics": {"train - prediction - accuracy": 0.2031},
             "loss_dict": {
-                "loss": 2.1473,
-                "backward": 2.1736,
+                "loss": 2.14825,
+                "backward": 2.1745,
                 "proximal_loss": 0.0263
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.4744},
-            "loss": 2.0011
+            "evaluate_metrics": {"val - prediction - accuracy": 0.4728},
+            "loss": 2.0038
         },
         "2": {
-            "fit_metrics": {"train - prediction - accuracy": 0.5},
+            "fit_metrics": {"train - prediction - accuracy": 0.4984},
             "loss_dict": {
-                "loss": 1.7772,
-                "backward": 1.7772,
+                "loss": 1.7851,
+                "backward": 1.7851,
                 "proximal_loss": 0.0
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.6026},
-            "loss": 1.2596
+            "evaluate_metrics": {"val - prediction - accuracy": 0.60186},
+            "loss": 1.2702
         },
         "3": {
-            "fit_metrics": {"train - prediction - accuracy": 0.6734},
+            "fit_metrics": {"train - prediction - accuracy": 0.67187},
             "loss_dict": {
-                "loss": 1.0223,
-                "backward": 1.0223,
+                "loss": 1.02636,
+                "backward": 1.02636,
                 "proximal_loss": 0.0
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.7870},
-            "loss": 0.8278
+            "evaluate_metrics": {"val - prediction - accuracy": 0.7876},
+            "loss": 0.8338
         }
     }
 }

@@ -2,57 +2,57 @@
     "rounds": {
         "1": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.6703,
-                "train - global - accuracy": 0.7015,
-                "train - local - accuracy": 0.5312
+                "train - personal - accuracy": 0.6656,
+                "train - global - accuracy": 0.6953,
+                "train - local - accuracy": 0.5328
             },
             "loss_dict": {
-                "backward": 1.2816,
-                "global": 1.1172,
-                "local": 1.5267
+                "backward": 1.2845,
+                "global": 1.1217,
+                "local": 1.5191
             },
             "evaluate_metrics": {
-                "val - personal - accuracy": 0.7069,
-                "val - global - accuracy": 0.6961,
-                "val - local - accuracy": 0.6716
+                "val - personal - accuracy": 0.7034,
+                "val - global - accuracy": 0.702,
+                "val - local - accuracy": 0.6776
             },
-            "loss": 1.3477
+            "loss": 1.3631
         },
         "2": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.8781,
-                "train - global - accuracy": 0.8828,
-                "train - local - accuracy": 0.8453
+                "train - personal - accuracy": 0.8828,
+                "train - global - accuracy": 0.8859,
+                "train - local - accuracy": 0.85
             },
             "loss_dict": {
-                "backward": 0.3687,
-                "global": 0.3495,
-                "local": 0.4544
+                "backward": 0.3659,
+                "global": 0.3440,
+                "local": 0.4500
             },
             "evaluate_metrics": {
-                "val - personal - accuracy": 0.7936,
-                "val - global - accuracy": 0.7956,
-                "val - local - accuracy": 0.7609
+                "val - personal - accuracy": 0.8054,
+                "val - global - accuracy": 0.8177,
+                "val - local - accuracy": 0.7586
             },
-            "loss": 0.6121
+            "loss": 0.5969
         },
         "3": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.8953,
-                "train - global - accuracy": 0.8968,
-                "train - local - accuracy": 0.8671
+                "train - personal - accuracy": 0.9,
+                "train - global - accuracy": 0.9,
+                "train - local - accuracy": 0.8718
             },
             "loss_dict": {
-                "backward": 0.3044,
-                "global": 0.2709,
-                "local": 0.4339
+                "backward": 0.2923,
+                "global": 0.2512,
+                "local": 0.4202
             },
             "evaluate_metrics": {
-                "val - personal - accuracy": 0.7509,
-                "val - global - accuracy": 0.8454,
-                "val - local - accuracy": 0.5494
+                "val - personal - accuracy": 0.7522,
+                "val - global - accuracy": 0.8465,
+                "val - local - accuracy": 0.5933
             },
-            "loss": 0.7558
+            "loss": 0.7513
         }
     }
 }

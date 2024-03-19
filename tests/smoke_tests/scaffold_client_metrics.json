@@ -1,14 +1,14 @@
 {
     "rounds": {
         "0": {
-            "fit_metrics": {"train - prediction - accuracy": 0.1968},
-            "loss_dict": {"backward": 2.2603}
+            "fit_metrics": {"train - prediction - accuracy": 0.1984},
+            "loss_dict": {"backward": 2.25907}
         },
         "1": {
-            "fit_metrics": {"train - prediction - accuracy": 0.1890},
-            "loss_dict": {"backward": 2.2676},
-            "evaluate_metrics": {"val - prediction - accuracy": {"target_value": 0.1850, "custom_tolerance": 0.005}},
-            "loss": 2.2803
+            "fit_metrics": {"train - prediction - accuracy": 0.1875},
+            "loss_dict": {"backward": 2.26685},
+            "evaluate_metrics": {"val - prediction - accuracy": {"target_value": 0.1936, "custom_tolerance": 0.005}},
+            "loss": 2.27909
         },
         "2": {
             "fit_metrics": {"train - prediction - accuracy": {"target_value": 0.3531, "custom_tolerance": 0.05}},
@@ -19,11 +19,11 @@
             "loss": {"target_value": 2.2633, "custom_tolerance": 0.005}
         },
         "3": {
-            "fit_metrics": {"train - prediction - accuracy": {"target_value": 0.3718, "custom_tolerance": 0.05}},
+            "fit_metrics": {"train - prediction - accuracy": {"target_value": 0.4328, "custom_tolerance": 0.05}},
             "loss_dict": {
-                "backward": {"target_value": 2.1390, "custom_tolerance": 0.005}
+                "backward": {"target_value": 2.12018, "custom_tolerance": 0.005}
             },
-            "evaluate_metrics": {"val - prediction - accuracy": {"target_value": 0.3906, "custom_tolerance": 0.005}},
+            "evaluate_metrics": {"val - prediction - accuracy": {"target_value": 0.46653, "custom_tolerance": 0.005}},
             "loss": {"target_value": 2.2294, "custom_tolerance": 0.05}
         }
     }
