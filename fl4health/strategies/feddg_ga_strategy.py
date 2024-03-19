@@ -70,6 +70,9 @@ class FairnessMetric:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
 
 
+INITIAL_WEIGHT = 1.0 / 3.0
+
+
 class FedDGGAStrategy(FedAvg):
     def __init__(
         self,
@@ -216,7 +219,7 @@ class FedDGGAStrategy(FedAvg):
 
             # initializing adjustment weights for this client if they don't exist yet
             if cid not in self.adjustment_weights:
-                self.adjustment_weights[cid] = 1.0 / 3.0
+                self.adjustment_weights[cid] = INITIAL_WEIGHT
 
             # apply adjustment weights
             weighted_client_parameters = parameters_to_ndarrays(result[1].parameters)
