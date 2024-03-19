@@ -4,6 +4,7 @@ from typing import Any, Dict, Tuple
 
 import flwr as fl
 import numpy as np
+import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 
@@ -12,13 +13,15 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.scaffold_server import DPScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
+from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = MnistNet()
+    initial_model: nn.Module = MnistNet()
+    initial_model, _ = privacy_validate_and_fix_modules(initial_model)
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
     # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in initial_model.parameters() if val.requires_grad]

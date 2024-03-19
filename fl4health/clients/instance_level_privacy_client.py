@@ -1,15 +1,13 @@
-from logging import WARNING
 from pathlib import Path
 from typing import Optional, Sequence
 
 import torch
-from flwr.common.logger import log
 from flwr.common.typing import Config
 from opacus import PrivacyEngine
-from opacus.validators import ModuleValidator
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -47,16 +45,17 @@ class InstanceLevelPrivacyClient(BasicClient):
         super().setup_client(config)
 
         # Configure DP training
-        self.setup_opacus_objects()
+        self.setup_opacus_objects(config)
 
-    def setup_opacus_objects(self) -> None:
+    def setup_opacus_objects(self, config: Config) -> None:
         # Validate that the model layers are compatible with privacy mechanisms in Opacus and try to replace the layers
         # with compatible ones if necessary.
-        errors = ModuleValidator.validate(self.model, strict=False)
-        if len(errors) != 0:
-            for error in errors:
-                log(WARNING, f"Opacus error: {error}")
-            self.model = ModuleValidator.fix(self.model)
+        self.model, reinitialize_optimizer = privacy_validate_and_fix_modules(self.model)
+
+        # If we have fixed the model by changing out layers (and therefore parameters), we need to update the optimizer
+        # parameters to coincide with this fixed model. NOTE: It is not done in make_private!
+        if reinitialize_optimizer:
+            self.set_optimizer(config)
 
         # Create DP training objects
         privacy_engine = PrivacyEngine()
