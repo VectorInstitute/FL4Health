@@ -24,7 +24,7 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> Tuple[nn.Module, bool]
     while len(errors) != 0:
         for error in errors:
             opacus_warning = (
-                "Opacus has found layers within your model, that do not comply with DP training. "
+                "Opacus has found layers within your model that do not comply with DP training. "
                 "These layers will automatically be replaced with DP compliant layers. "
                 "If you would like to perform this replacement yourself, please adjust your model manually."
             )
