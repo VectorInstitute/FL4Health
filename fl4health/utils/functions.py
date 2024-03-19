@@ -23,6 +23,12 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> Tuple[nn.Module, bool]
     # complex nested models to fully replace all layers within a model (for example, in the Fed-IXI model)
     while len(errors) != 0:
         for error in errors:
+            opacus_warning = (
+                "Opacus has found layers within your model, that do not comply with DP training. "
+                "These layers will automatically be replaced with DP compliant layers. "
+                "If you would like to perform this replacement yourself, please adjust your model manually."
+            )
+            log(WARNING, f"{opacus_warning}")
             log(WARNING, f"Opacus error: {error}")
         model = ModuleValidator.fix(model)
         errors = ModuleValidator.validate(model, strict=False)
