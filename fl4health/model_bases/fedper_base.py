@@ -22,7 +22,7 @@ class FedPerModel(MoonModel, PartialLayerExchangeModel):
             local_prediction_head (nn.Module): Final set of layers. These are not aggregated by the server.
             flatten_features (bool): Whether or not the forward should flatten the produced features across the batch.
                 Flattening of the features can be used to ensure that the features produced are compatible with the
-                MOON-based constrative loss functions. This allows a FedPer model to be used with a MOON client.
+                MOON-based contrastive loss functions. This allows a FedPer model to be used with a MOON client.
                 Defaults to False.
         """
         super().__init__(

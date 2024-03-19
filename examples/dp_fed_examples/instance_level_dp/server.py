@@ -3,6 +3,7 @@ from functools import partial
 from typing import Any, Dict, Optional
 
 import flwr as fl
+import torch.nn as nn
 from flwr.common.typing import Config
 
 from examples.models.cnn_model import Net
@@ -11,7 +12,7 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.functions import get_all_model_parameters, privacy_validate_and_fix_modules
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
@@ -52,6 +53,14 @@ def fit_config(
     )
 
 
+def get_model_and_validate() -> nn.Module:
+    # Create the model and use the Opacus validator to replace and layers that are not privacy compliant, such as
+    # BatchNorm layers. This is also done on the client side. So we enforce a match.
+    initial_model = Net()
+    modified_model, _ = privacy_validate_and_fix_modules(initial_model)
+    return modified_model
+
+
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
@@ -63,7 +72,7 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = Net()
+    initial_model = get_model_and_validate()
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
