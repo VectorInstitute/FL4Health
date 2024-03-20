@@ -40,7 +40,7 @@
             "fit_metrics": {
                 "train - personal - accuracy": 0.9,
                 "train - global - accuracy": 0.9,
-                "train - local - accuracy": 0.8703
+                "train - local - accuracy": 0.8718
             },
             "loss_dict": {
                 "backward": 0.2923,
