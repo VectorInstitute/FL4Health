@@ -27,8 +27,8 @@
                 "backward": 1.0223,
                 "proximal_loss": 0.0
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.7870},
-            "loss": 0.8278
+            "evaluate_metrics": {"val - prediction - accuracy": 0.7876},
+            "loss": 0.828
         }
     }
 }
