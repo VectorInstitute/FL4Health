@@ -261,7 +261,7 @@ class FedDGGAStrategy(FedAvg):
         # calculating norm gap
         value_list_ndarray = np.array(value_list)
         norm_gap_list = value_list_ndarray / np.max(np.abs(value_list_ndarray))
-        step_size = 1.0 / 3.0 * self.get_current_weight_step_size(server_round)
+        step_size = (1.0 / 3.0) * self.get_current_weight_step_size(server_round)
 
         # updating weights
         new_total_weight = 0.0
