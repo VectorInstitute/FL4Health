@@ -61,7 +61,7 @@
                 "backward": 0.4095
             },
             "evaluate_metrics": {
-                "val - personal - accuracy": 0.7929,
+                "val - personal - accuracy": {"target_value": 0.795, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8446,
                 "val - local - accuracy": 0.7417
             },
