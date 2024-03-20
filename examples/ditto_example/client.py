@@ -31,7 +31,7 @@ class MnistDittoClient(DittoClient):
         return MnistNet().to(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
+        # Note that the global optimizer operates on self.global_model.parameters()
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=0.01)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
         return {"global": global_optimizer, "local": local_optimizer}

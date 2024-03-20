@@ -10,7 +10,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.fedper_cnn import FedPerGloalFeatureExtractor, FedPerLocalPredictionHead
+from examples.models.fedper_cnn import FedPerGlobalFeatureExtractor, FedPerLocalPredictionHead
 from fl4health.clients.moon_client import MoonClient
 from fl4health.model_bases.fedper_base import FedPerModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -44,7 +44,7 @@ class MnistFedPerClient(MoonClient):
         # NOTE: Flatten features is set to true to make the model compatible with the MOON contrastive loss function,
         # which requires the intermediate feature representations to be flattened for similarity calculations.
         model: nn.Module = FedPerModel(
-            global_feature_extractor=FedPerGloalFeatureExtractor(),
+            global_feature_extractor=FedPerGlobalFeatureExtractor(),
             local_prediction_head=FedPerLocalPredictionHead(),
             flatten_features=True,
         ).to(self.device)

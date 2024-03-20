@@ -50,7 +50,7 @@ class ScaffoldClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArrays to be sent to the server for aggregation
+        Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
         assert self.model is not None and self.parameter_exchanger is not None
 
@@ -154,7 +154,7 @@ class ScaffoldClient(BasicClient):
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes elementwise difference of two lists of NDarray
+        Computes element-wise difference of two lists of NDarray
         where elements in params_2 are subtracted from elements in params_1
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
@@ -169,11 +169,11 @@ class ScaffoldClient(BasicClient):
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate)
+        scaling_coefficient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
-            delta_control_variate + scaling_coeffient * delta_model_weight
+            delta_control_variate + scaling_coefficient * delta_model_weight
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
         return updated_client_control_variates
