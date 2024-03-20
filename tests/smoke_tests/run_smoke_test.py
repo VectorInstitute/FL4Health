@@ -298,10 +298,12 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
-    if "cifar" in dataset_path:
+
+    elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
         load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
         logger.info("Finished preloading CIFAR10 dataset")
+
     else:
         logger.info("Preload not supported for specified dataset. Skipping.")
 

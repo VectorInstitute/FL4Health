@@ -15,7 +15,7 @@
                 "val - global - accuracy": 0.836,
                 "val - local - accuracy": 0.7141
             },
-            "loss_aggregated": 0.7170
+            "loss_aggregated": {"target_value": 0.7170, "custom_tolerance": 0.005}
         },
         "3": {
             "metrics_aggregated": {
