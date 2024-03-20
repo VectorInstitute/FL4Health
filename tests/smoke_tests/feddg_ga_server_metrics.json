@@ -23,7 +23,7 @@
                 "val - global - accuracy": 0.8446,
                 "val - local - accuracy": 0.7417
             },
-            "loss_aggregated": 0.6144
+            "loss_aggregated": {"target_value": 0.6144, "custom_tolerance": 0.005}
         }
     },
     "metrics_centralized": {},
