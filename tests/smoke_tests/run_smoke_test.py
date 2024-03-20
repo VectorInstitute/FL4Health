@@ -31,7 +31,6 @@ async def run_smoke_test(
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: Optional[bool] = False,
     seed: Optional[int] = None,
-    different_seed_per_client: bool = False,
     server_metrics: Optional[Dict[str, Any]] = None,
     client_metrics: Optional[Dict[str, Any]] = None,
 ) -> None:
@@ -119,8 +118,6 @@ async def run_smoke_test(
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
         seed (Optional[int]): The random seed to be passed in to both the client and the server.
-        different_seed_per_client (bool): Produces different seeds for every client by doing seed + i
-            (where i is the index of the client). Optional, default False.
         server_metrics (Optional[Dict[str, Any]]): A dictionary of metrics to be checked against the metrics file
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
@@ -203,10 +200,7 @@ async def run_smoke_test(
         if checkpoint_path is not None:
             client_args.extend(["--checkpoint_path", checkpoint_path])
         if seed is not None:
-            client_seed = seed
-            if different_seed_per_client:
-                client_seed += i
-            client_args.extend(["--seed", str(client_seed)])
+            client_args.extend(["--seed", str(seed)])
 
         client_process = await asyncio.create_subprocess_exec(
             "python",
@@ -473,9 +467,8 @@ if __name__ == "__main__":
             config_path="tests/smoke_tests/feddg_ga_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
             seed=42,
-            different_seed_per_client=True,
             server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
-            # client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
         )
     )
     loop.run_until_complete(

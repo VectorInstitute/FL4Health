@@ -1,8 +1,10 @@
 from enum import Enum
+from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common.logger import log
 from flwr.common.typing import EvaluateRes, FitIns, FitRes, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -260,7 +262,18 @@ class FedDGGAStrategy(FedAvg):
 
         # calculating norm gap
         value_list_ndarray = np.array(value_list)
-        norm_gap_list = value_list_ndarray / np.max(np.abs(value_list_ndarray))
+        max_value = np.max(np.abs(value_list_ndarray))
+
+        if max_value == 0:
+            log(
+                WARNING,
+                "Max value in metric diff list is 0. Adjustment weights will remain the same. "
+                + f"Value list: {value_list}",
+            )
+            norm_gap_list = np.zeros(len(value_list))
+        else:
+            norm_gap_list = value_list_ndarray / max_value
+
         step_size = (1.0 / 3.0) * self.get_current_weight_step_size(server_round)
 
         # updating weights
