@@ -31,7 +31,7 @@
                 "val - personal - accuracy": {"target_value": 0.766, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.836,
                 "val - local - accuracy": 0.7141,
-                "val - loss": 0.7170
+                "val - loss": {"target_value": 0.7170, "custom_tolerance": 0.005}
             },
             "loss_dict": {
                 "global": 0.6370,
@@ -53,7 +53,7 @@
                 "val - personal - accuracy": {"target_value": 0.795, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8446,
                 "val - local - accuracy": 0.7417,
-                "val - loss": 0.6144
+                "val - loss": {"target_value": 0.6144, "custom_tolerance": 0.005}
             },
             "loss_dict": {
                 "global": 0.3604,
