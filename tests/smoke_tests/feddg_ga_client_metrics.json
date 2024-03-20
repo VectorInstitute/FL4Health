@@ -26,8 +26,8 @@
         "2": {
             "fit_metrics": {
                 "train - personal - accuracy": 0.8734,
-                "train - global - accuracy": 0.8609,
-                "train - local - accuracy": 0.8609,
+                "train - global - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
+                "train - local - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
                 "val - personal - accuracy": 0.766,
                 "val - global - accuracy": 0.836,
                 "val - local - accuracy": 0.7141,
