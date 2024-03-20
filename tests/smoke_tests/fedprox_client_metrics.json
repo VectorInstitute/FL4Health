@@ -7,7 +7,7 @@
                 "backward": 2.1745,
                 "proximal_loss": 0.0263
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.4744},
+            "evaluate_metrics": {"val - prediction - accuracy": 0.4728},
             "loss": 2.0038
         },
         "2": {
