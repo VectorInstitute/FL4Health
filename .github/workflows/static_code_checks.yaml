@@ -41,13 +41,3 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           virtual-environment: .venv/
-          # Ignoring security vulnerabilities in Pillow because pycyclops cannot update it to the
-          # version that fixes them (>10.0.1).
-          # Remove those when the issue below is fixed and pycyclops changes its requirements:
-          # https://github.com/SeldonIO/alibi/issues/991
-          ignore-vulns: |
-            PYSEC-2023-175
-            PYSEC-2023-227
-            GHSA-j7hp-h8jx-5ppr
-            GHSA-56pw-mpj4-fxww
-            GHSA-3f63-hfp8-52jq
