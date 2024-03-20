@@ -5,12 +5,12 @@
             "loss_aggregated": 2.0011
         },
         "2": {
-            "metrics_aggregated": {"val - prediction - accuracy": 0.60186},
-            "loss_aggregated": 1.2702
+            "metrics_aggregated": {"val - prediction - accuracy": 0.6026},
+            "loss_aggregated": 1.2596
         },
         "3": {
             "metrics_aggregated": {"val - prediction - accuracy": 0.7876},
-            "loss_aggregated": 0.8338
+            "loss_aggregated": 0.8277
         }
     }
 }
