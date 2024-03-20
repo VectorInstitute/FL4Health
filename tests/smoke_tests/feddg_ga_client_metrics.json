@@ -58,7 +58,7 @@
             "loss_dict": {
                 "global": 0.3604,
                 "local": {"target_value": 0.5572, "custom_tolerance": 0.005},
-                "backward": 0.4095
+                "backward": {"target_value": 0.4095, "custom_tolerance": 0.005},
             },
             "evaluate_metrics": {
                 "val - personal - accuracy": {"target_value": 0.795, "custom_tolerance": 0.005},
