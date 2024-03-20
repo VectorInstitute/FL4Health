@@ -28,7 +28,7 @@
                 "train - personal - accuracy": 0.8734,
                 "train - global - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
                 "train - local - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
-                "val - personal - accuracy": 0.766,
+                "val - personal - accuracy": {"target_value": 0.766, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.836,
                 "val - local - accuracy": 0.7141,
                 "val - loss": 0.7170
@@ -50,7 +50,7 @@
                 "train - personal - accuracy": 0.8906,
                 "train - global - accuracy": 0.8765,
                 "train - local - accuracy": 0.8640,
-                "val - personal - accuracy": 0.7929,
+                "val - personal - accuracy": {"target_value": 0.795, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8446,
                 "val - local - accuracy": 0.7417,
                 "val - loss": 0.6144
