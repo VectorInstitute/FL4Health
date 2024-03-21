@@ -2,7 +2,7 @@ import json
 import os
 import random
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -149,10 +149,17 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
 
 
 def get_img_and_seg_paths(
-    overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
+    overviews_dir: Path,
+    base_dir: Path,
+    fold_id: int,
+    train: bool,
+    include_T1: bool = True,
+    include_T2: bool = True,
+    include_ADC: bool = True,
 ) -> Tuple[List[List[str]], List[str], torch.Tensor]:
     """
-    Gets the image paths, segmentation paths and label proportions for the specified fold.
+    Gets the image paths, segmentation paths and label proportions for the specified fold. Exclude T1, T2 or ADC
+    if specified.
 
     Args:
         overviews_dir (Path): A path to the directory containing the marksheets that specify the
@@ -160,6 +167,9 @@ def get_img_and_seg_paths(
         base_dir (Path): The base path of the PICAI dataset.
         fold_id (int): The id of the fold to fetch the image segmentation paths for.
         train (bool): Whether to load the train dataset or the validation dataset.
+        include_T1 (bool): Whether or not to include T1 Sequence as part of the input data.
+        include_T2 (bool): Whether or not to include T1 Sequence as part of the input data.
+        include_ADC (bool): Whether or not to include ADC Sequence as part of the input data.
 
     Returns:
         Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
@@ -169,14 +179,24 @@ def get_img_and_seg_paths(
             torch tensor that give the class proportions.
     """
 
+    # Make sure at least one sequence will be present
+    assert not (include_T1 is False and include_T2 is False and include_ADC is False)
+
     # load datasheets
     file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
     file_path = os.path.join(overviews_dir, file_name)
     with open(Path(file_path)) as fp:
         file_json = json.load(fp)
 
+    # Determine valid file name endings (indicator for sequence type: T1, T2, ADC)
+    all_postfix = ("0000.nii.gz", "0001.nii.gz", "0002.nii.gz")
+    valid_postfix = tuple([item for flag, item in zip([include_T1, include_T2, include_ADC], all_postfix) if flag])
+
     # load paths to images and labels
-    img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in file_json["image_paths"]]
+    img_paths = [
+        [os.path.join(base_dir, path) for path in path_list if path.endswith(valid_postfix)]
+        for path_list in file_json["image_paths"]
+    ]
     seg_paths = [os.path.join(base_dir, path) for path in file_json["label_paths"]]
 
     # Determine class proportions
@@ -192,49 +212,6 @@ def get_img_and_seg_paths(
     print(f"{dataset_name} Samples [-:{class_ratio[1]};+:{class_ratio[0]}]: {len(seg_paths)}")
 
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
-
-
-def get_img_and_seg_paths_t2_wg(
-    overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
-) -> Tuple[List[str], List[str]]:
-    """
-    Gets T2 Images and corresponding WG segmentation labels. This task involves segmenting
-    the prostate whole gland as opposed to cancerous lesions.
-    Uses the same image data (ie T2 images without T1 and ADC) and splits provided by the picai challenge.
-    The labels are provided by the PICAI challenge and are derived from an AI based solution.
-
-    Args:
-        overviews_dir (Path): A path to the directory containing the marksheets that specify the
-            image paths for each fold.
-        base_dir (Path): The base path of the PICAI dataset.
-        fold_id (int): The id of the fold to fetch the image segmentation paths for.
-        train (bool): Whether to load the train dataset or the validation dataset.
-
-    Returns:
-        Tuple[Sequence[str], Sequence[str]]: The first element of the returned tuple
-            is a list of file paths pointing to the T2 images for each patient exam.
-            The second element is a list of file paths pointing to the whole gland
-            segmentation labels for each of the patient exams.
-    """
-    # load datasheets
-    file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
-    file_path = os.path.join(overviews_dir, file_name)
-    with open(Path(file_path)) as fp:
-        file_json = json.load(fp)
-
-    # load paths to images
-    img_paths = [
-        [os.path.join(base_dir, path) for path in path_list if path.endswith("0001.nii.gz")][0]
-        for path_list in file_json["image_paths"]
-    ]
-
-    base_seg_path = os.path.join(base_dir, "input/picai_labels/anatomical_delineations/whole_gland/AI/Guerbet23")
-    seg_paths = [
-        os.path.join(base_seg_path, "_".join(img_path.split("/")[-1].split("_")[:2]) + ".nii.gz")
-        for img_path in img_paths
-    ]
-
-    return img_paths, seg_paths
 
 
 def split_img_and_seg_paths(
@@ -265,7 +242,7 @@ def split_img_and_seg_paths(
 
 
 def get_dataloader(
-    img_paths: Sequence[Sequence[str]],
+    img_paths: Union[Sequence[Sequence[str]], Sequence[str]],
     seg_paths: Sequence[str],
     batch_size: int,
     img_transform: Compose,

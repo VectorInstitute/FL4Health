@@ -126,3 +126,17 @@ Similarly, the validation dataset file for a specific fold is available at:
 ```
 
 To learn about the details of the preprocessing, please refer to the [General Setup Documentation](https://github.com/DIAGNijmegen/picai_baseline?tab=readme-ov-file#general-setup) and subsequently the [U-Net Baseline Data Preparation](https://github.com/DIAGNijmegen/picai_baseline/blob/main/unet_baseline.md#u-net---data-preparation).
+
+### Prostate Whole Gland Segmentation
+Another related segmentation task using the aforementioned dataset is Prostate Whole Gland (WG) Segmentation. As the name implies, WG Segmentation involves segmenting the entire prostate, consisting of the peripheral zone (PZ) and the transition zone (TZ) ([more on this](https://radiopaedia.org/articles/prostate)). WG Segmentation is an important task in itself but is often used as a means to localize the prostate to register between sequences or narrow the region of interest for downstream segmentation tasks. The PICAI grand challenge has provided [AI-derived segmentation maps of the WG](https://github.com/DIAGNijmegen/picai_labels) for all of the samples in the dataset. To this end, a dataset with the identical preprocessing as above (except for the fact it only includes T2 sequence) is made available on the cluster.
+
+Each preprocessed image sample is stored on the cluster at the following path:
+```
+/ssd003/projects/aieng/public/PICAI/workdir/nnUNet_raw_data/wg_segmentation/imagesTr/<patient_id>_<study_id>.nii.gz
+```
+
+and the corresponding label
+
+```
+/ssd003/projects/aieng/public/PICAI/workdir/nnUNet_raw_data/wg_segmentation/labelsTr/<patient_id>_<study_id>.nii.gz
+```
