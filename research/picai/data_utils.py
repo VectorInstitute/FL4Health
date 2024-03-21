@@ -194,6 +194,49 @@ def get_img_and_seg_paths(
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
 
 
+def get_img_and_seg_paths_t2_wg(
+    overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
+) -> Tuple[List[str], List[str]]:
+    """
+    Gets T2 Images and corresponding WG segmentation labels. This task involves segmenting
+    the prostate whole gland as opposed to cancerous lesions.
+    Uses the same image data (ie T2 images without T1 and ADC) and splits provided by the picai challenge.
+    The labels are provided by the PICAI challenge and are derived from an AI based solution.
+
+    Args:
+        overviews_dir (Path): A path to the directory containing the marksheets that specify the
+            image paths for each fold.
+        base_dir (Path): The base path of the PICAI dataset.
+        fold_id (int): The id of the fold to fetch the image segmentation paths for.
+        train (bool): Whether to load the train dataset or the validation dataset.
+
+    Returns:
+        Tuple[Sequence[str], Sequence[str]]: The first element of the returned tuple
+            is a list of file paths pointing to the T2 images for each patient exam.
+            The second element is a list of file paths pointing to the whole gland
+            segmentation labels for each of the patient exams.
+    """
+    # load datasheets
+    file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
+    file_path = os.path.join(overviews_dir, file_name)
+    with open(Path(file_path)) as fp:
+        file_json = json.load(fp)
+
+    # load paths to images
+    img_paths = [
+        [os.path.join(base_dir, path) for path in path_list if path.endswith("0001.nii.gz")][0]
+        for path_list in file_json["image_paths"]
+    ]
+
+    base_seg_path = os.path.join(base_dir, "input/picai_labels/anatomical_delineations/whole_gland/AI/Guerbet23")
+    seg_paths = [
+        os.path.join(base_seg_path, "_".join(img_path.split("/")[-1].split("_")[:2]) + ".nii.gz")
+        for img_path in img_paths
+    ]
+
+    return img_paths, seg_paths
+
+
 def split_img_and_seg_paths(
     img_paths: List[List[str]], seg_paths: List[str], splits: int, seed: int = 0
 ) -> Tuple[List[List[List[str]]], List[List[str]]]:
