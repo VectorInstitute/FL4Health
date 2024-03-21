@@ -5,37 +5,24 @@ from unittest.mock import Mock
 import numpy as np
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Code, EvaluateRes, FitRes, Parameters, Scalar, Status
-from flwr.server.client_manager import SimpleClientManager
+from flwr.server.client_manager import ClientManager, SimpleClientManager
 from pytest import approx, raises
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
-from fl4health.strategies.feddg_ga_strategy import INITIAL_WEIGHT, FairnessMetricType, FedDGGAStrategy
+from fl4health.strategies.feddg_ga_strategy import INITIAL_ADJUSTMENT_WEIGHT, FairnessMetricType, FedDGGAStrategy
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
-def test_initialize_parameters_success() -> None:
-    strategy = FedDGGAStrategy()
-    try:
-        strategy.initialize_parameters(FixedSamplingClientManager())
-    except Exception as e:
-        assert False, f"initialize_parameters threw an exception: {e}"
-
-
-def test_initialize_parameters_fail() -> None:
-    strategy = FedDGGAStrategy()
-    with raises(AssertionError):
-        strategy.initialize_parameters(SimpleClientManager())
-
-
-def _make_mock_client_manager() -> Mock:
-    mock_client_manager = Mock()
-    mock_client_manager.sample.return_value = []
-    mock_client_manager.num_available.return_value = 1
-    return mock_client_manager
+def _apply_mocks_to_client_manager(client_manager: ClientManager) -> ClientManager:
+    client_proxy = CustomClientProxy("1")
+    client_manager.register(client_proxy)
+    client_manager.sample = Mock()  # type: ignore
+    client_manager.sample.return_value = [client_proxy]
+    return client_manager
 
 
 def test_configure_fit_success() -> None:
-
+    fixed_sampling_client_manager = _apply_mocks_to_client_manager(FixedSamplingClientManager())
     test_n_server_rounds = 3
 
     def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
@@ -46,28 +33,41 @@ def test_configure_fit_success() -> None:
     strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn)
     assert strategy.num_rounds is None
 
-    strategy.configure_fit(1, Parameters([], ""), _make_mock_client_manager())
+    try:
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
+    except Exception as e:
+        assert False, f"initialize_parameters threw an exception: {e}"
+
     assert strategy.num_rounds == test_n_server_rounds
 
 
 def test_configure_fit_fail() -> None:
-    mock_client_manager = Mock()
-    mock_client_manager.sample.return_value = []
+    fixed_sampling_client_manager = _apply_mocks_to_client_manager(FixedSamplingClientManager())
+    simple_client_manager = _apply_mocks_to_client_manager(SimpleClientManager())
 
     strategy = FedDGGAStrategy()
     with raises(AssertionError):
-        strategy.configure_fit(1, Parameters([], ""), _make_mock_client_manager())
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
+        return {
+            "n_server_rounds": 2,
+        }
+
+    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn)
+    with raises(AssertionError):
+        strategy.configure_fit(1, Parameters([], ""), simple_client_manager)
+
+    def on_fit_config_fn_1(server_round: int) -> Dict[str, Scalar]:
         return {
             "foo": 123,
         }
 
-    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn)
+    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn_1)
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
-        strategy.configure_fit(1, Parameters([], ""), _make_mock_client_manager())
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
     def on_fit_config_fn_2(server_round: int) -> Dict[str, Scalar]:
         return {
@@ -78,7 +78,7 @@ def test_configure_fit_fail() -> None:
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
-        strategy.configure_fit(1, Parameters([], ""), _make_mock_client_manager())
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
 
 def test_aggregate_fit_and_aggregate_evaluate() -> None:
@@ -115,8 +115,8 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
         test_cid_2: test_fit_metrics_2,
     }
     assert strategy.adjustment_weights == {
-        test_cid_1: INITIAL_WEIGHT,
-        test_cid_2: INITIAL_WEIGHT,
+        test_cid_1: INITIAL_ADJUSTMENT_WEIGHT,
+        test_cid_2: INITIAL_ADJUSTMENT_WEIGHT,
     }
     assert parameters_aggregated is not None
     parameters_array = parameters_to_ndarrays(parameters_aggregated)[0].tolist()

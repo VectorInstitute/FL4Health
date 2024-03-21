@@ -72,7 +72,8 @@ class FairnessMetric:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
 
 
-INITIAL_WEIGHT = 1.0 / 3.0
+# Initial value for the adjustment weight of each client model
+INITIAL_ADJUSTMENT_WEIGHT = 1.0 / 3.0
 
 
 class FedDGGAStrategy(FedAvg):
@@ -99,8 +100,51 @@ class FedDGGAStrategy(FedAvg):
         fairness_metric: Optional[FairnessMetric] = None,
         weight_step_size: float = 0.2,
     ):
-        # TODO docstrings
+        """Strategy for the FedDG-GA algorithm (Federated Domain Generalization with
+        Generalization Adjustment, Zhang et al. 2023).
 
+        Args:
+            fraction_fit : float, optional
+                Fraction of clients used during training. In case `min_fit_clients`
+                is larger than `fraction_fit * available_clients`, `min_fit_clients`
+                will still be sampled. Defaults to 1.0.
+            fraction_evaluate : float, optional
+                Fraction of clients used during validation. In case `min_evaluate_clients`
+                is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
+                will still be sampled. Defaults to 1.0.
+            min_fit_clients : int, optional
+                Minimum number of clients used during training. Defaults to 2.
+            min_evaluate_clients : int, optional
+                Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients : int, optional
+                Minimum number of total clients in the system. Defaults to 2.
+            evaluate_fn :
+                Optional[
+                    Callable[[int, NDArrays, Dict[str, Scalar]],
+                    Optional[Tuple[float, Dict[str, Scalar]]]]
+                ]
+                Optional function used for validation. Defaults to None.
+            on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
+                Function used to configure training. Defaults to None.
+            on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
+                Function used to configure validation. Defaults to None.
+            accept_failures : bool, optional
+                Whether or not accept rounds containing failures. Defaults to True.
+            initial_parameters : Parameters, optional
+                Initial global model parameters.
+            fit_metrics_aggregation_fn : Optional[MetricsAggregationFn]
+                Metrics aggregation function, optional.
+            evaluate_metrics_aggregation_fn : Optional[MetricsAggregationFn]
+                Metrics aggregation function, optional.
+            fairness_metric : FairnessMetric, optional.
+                The metric to evaluate the local model of each client against the global model in order to
+                determine their adjustment weight for aggregation. Can be set to any default metric in
+                FairnessMetricType or set to use a custom metric. Optional, default is
+                FairnessMetric(FairnessMetricType.LOSS).
+            weight_step_size : float
+                The step size to determine the magnitude of change for the adjustment weight.
+                Optional, default is 0.2.
+        """
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -128,36 +172,33 @@ class FedDGGAStrategy(FedAvg):
         self.num_rounds: Optional[int] = None
         self.adjustment_weights: Dict[str, float] = {}
 
-    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
-        """Initialize the (global) model parameters.
-
-        Parameters
-        ----------
-        client_manager : ClientManager
-            The client manager which holds all currently connected clients.
-
-        Returns
-        -------
-        parameters : Optional[Parameters]
-            If parameters are returned, then the server will treat these as the
-            initial global model parameters.
-        """
-
-        # TODO add this assert to docstrings
-        assert isinstance(
-            client_manager, FixedSamplingClientManager
-        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
-
-        return super().initialize_parameters(client_manager)
-
     def configure_fit(
         self,
         server_round: int,
         parameters: Parameters,
         client_manager: ClientManager,
     ) -> List[Tuple[ClientProxy, FitIns]]:
-        # TODO docstrings
+        """
+        Configure the next round of training.
+
+        Will also collect the number of rounds the training will run for in order
+        to calculate the adjustment weight step size. Fails if n_server_rounds is not set in the config
+        or if it's not an integer.
+
+        Args:
+            server_round: (int) the current server round.
+            parameters: (Parameters) the model parameters.
+            client_manager: (ClientManager) The client manager which holds all currently
+                connected clients. It must be an instance of FixedSamplingClientManager.
+
+        Returns:
+            (List[Tuple[ClientProxy, FitIns]]) the input for the clients' fit function.
+        """
         client_fit_ins = super().configure_fit(server_round, parameters, client_manager)
+
+        assert isinstance(
+            client_manager, FixedSamplingClientManager
+        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
 
         # Setting self.num_rounds
         if self.num_rounds is None:
@@ -175,9 +216,21 @@ class FedDGGAStrategy(FedAvg):
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-        # TODO docstrings
+        """
+        Aggregate fit results by weighing them against the adjustment weights and then summing them.
 
-        # TODO should we call super here or just recalculate the weights?
+        Collects the fit metrics that will be used to change the adjustment weights for the next round.
+
+        Args:
+            server_round: (int) the current server round.
+            results: (List[Tuple[ClientProxy, FitRes]]) The clients' fit results.
+            failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
+
+        Returns:
+            (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
+                and the aggregated fit metrics.
+        """
+
         _, metrics_aggregated = super().aggregate_fit(server_round, results, failures)
 
         self.train_metrics = {}
@@ -194,8 +247,21 @@ class FedDGGAStrategy(FedAvg):
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        # TODO docstrings
+        """
+        Aggregate evaluation losses using weighted average.
 
+        Collects the evaluation metrics and update the adjustment weights, which will be used
+        when aggregating the results for the next round.
+
+        Args:
+            server_round: (int) the current server round.
+            results: (List[Tuple[ClientProxy, FitRes]]) The clients' evaluate results.
+            failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' evaluate failures.
+
+        Returns:
+            (Tuple[Optional[float], Dict[str, Scalar]]) A tuple containing the aggregated evaluation loss
+                and the aggregated evaluation metrics.
+        """
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 
         self.evaluation_metrics = {}
@@ -213,7 +279,15 @@ class FedDGGAStrategy(FedAvg):
         return loss_aggregated, metrics_aggregated
 
     def weight_and_aggregate_results(self, results: List[Tuple[ClientProxy, FitRes]]) -> NDArrays:
-        # TODO docstrings
+        """
+        Aggregate results by weighing them against the adjustment weights and then summing them.
+
+        Args:
+            results: (List[Tuple[ClientProxy, FitRes]]) The clients' fit results.
+
+        Returns:
+            (NDArrays) the weighted and aggregated results.
+        """
 
         aggregated_results: Optional[NDArrays] = None
         for result in results:
@@ -221,7 +295,7 @@ class FedDGGAStrategy(FedAvg):
 
             # initializing adjustment weights for this client if they don't exist yet
             if cid not in self.adjustment_weights:
-                self.adjustment_weights[cid] = INITIAL_WEIGHT
+                self.adjustment_weights[cid] = INITIAL_ADJUSTMENT_WEIGHT
 
             # apply adjustment weights
             weighted_client_parameters = parameters_to_ndarrays(result[1].parameters)
@@ -246,9 +320,8 @@ class FedDGGAStrategy(FedAvg):
 
         Args:
             server_round: (int) the current server round.
+            cids: (List[str]) the list of client ids that participated in this round.
         """
-        # TODO add cids to docstrings
-
         value_list = []
         # calculating local vs global metric difference
         for cid in cids:
