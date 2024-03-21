@@ -325,7 +325,9 @@ class FedDGGAStrategy(FedAvg):
         value_list = []
         # calculating local vs global metric difference
         for cid in cids:
-            assert cid in self.train_metrics and cid in self.evaluation_metrics
+            assert (
+                cid in self.train_metrics and cid in self.evaluation_metrics
+            ), f"{cid} not in {self.train_metrics.keys()} or {self.evaluation_metrics.keys()}"
 
             global_model_metric_value = self.evaluation_metrics[cid][self.fairness_metric.metric_name]
             local_model_metric_value = self.train_metrics[cid][self.fairness_metric.metric_name]
