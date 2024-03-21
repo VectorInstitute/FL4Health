@@ -151,6 +151,7 @@ class EvaluateClient(BasicClient):
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
+        model.to(self.device)
 
         with torch.no_grad():
             for inputs, targets in self.data_loader:

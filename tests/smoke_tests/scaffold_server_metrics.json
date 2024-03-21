@@ -1,7 +1,7 @@
 {
     "rounds": {
         "1": {
-            "metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.1850, "custom_tolerance": 0.005}},
+            "metrics_aggregated": {"val - prediction - accuracy": {"target_value": 0.1837, "custom_tolerance": 0.005}},
             "loss_aggregated": 2.2803
         },
         "2": {
