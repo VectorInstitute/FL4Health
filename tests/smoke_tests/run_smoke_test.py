@@ -4,7 +4,7 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import torch
 import yaml
@@ -254,9 +254,11 @@ async def run_smoke_test(
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
-    _assert_metrics(MetricType.SERVER, server_metrics)
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
 
     # client assertions
+    client_errors = []
     for i in range(len(full_client_outputs)):
         assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
@@ -276,7 +278,8 @@ async def run_smoke_test(
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
             )
 
-        _assert_metrics(MetricType.CLIENT, client_metrics)
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
 
     logger.info("All checks passed. Test finished.")
 
@@ -355,9 +358,10 @@ DEFAULT_METRICS_FOLDER = Path("metrics")
 DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[str, Any]] = None) -> None:
+def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[str, Any]] = None) -> List[str]:
+    errors: List[str] = []
     if metrics_to_assert is None:
-        return
+        return errors
 
     metrics_found = False
     for file in DEFAULT_METRICS_FOLDER.iterdir():
@@ -371,13 +375,18 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[st
             continue
 
         metrics_found = True
-        _assert_metrics_dict(metrics_to_assert, metrics)
+        errors.extend(_assert_metrics_dict(metrics_to_assert, metrics))
 
-    assert metrics_found, f"Metrics of type {metric_type.value} not found."
+    if not metrics_found:
+        errors.append(f"Metrics of type {metric_type.value} not found.")
+
+    return errors
 
 
-def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> None:
-    def _assert(value: Any, saved_value: Any) -> None:
+def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> List[str]:
+    errors = []
+
+    def _assert(value: Any, saved_value: Any) -> Optional[str]:
         # helper function to avoid code repetition
         tolerance = DEFAULT_TOLERANCE
         if isinstance(value, dict):
@@ -385,13 +394,18 @@ def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[
             tolerance = value["custom_tolerance"]
             value = value["target_value"]
 
-        assert approx(value, abs=tolerance) == saved_value, (
-            f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested "
-            f"value ({value}) within requested tolerance ({tolerance})."
-        )
+        if approx(value, abs=tolerance) != saved_value:
+            return (
+                f"Saved value for metric '{metric_key}' ({saved_value}) does not match the requested "
+                f"value ({value}) within requested tolerance ({tolerance})."
+            )
+
+        return None
 
     for metric_key in metrics_to_assert:
-        assert metric_key in metrics_saved, f"Metric '{metric_key}' not found in saved metrics."
+        if metric_key not in metrics_saved:
+            errors.append(f"Metric '{metric_key}' not found in saved metrics.")
+            continue
 
         value_to_assert = metrics_to_assert[metric_key]
 
@@ -400,17 +414,23 @@ def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[
                 # if it's a dictionary, call this function recursively
                 # except when the dictionary has "target_value" and "custom_tolerance", which should
                 # be treated as a regular dictionary
-                _assert_metrics_dict(value_to_assert, metrics_saved[metric_key])
+                errors.extend(_assert_metrics_dict(value_to_assert, metrics_saved[metric_key]))
                 continue
 
         if isinstance(value_to_assert, list) and len(value_to_assert) > 0:
             # if it's a list, call an assertion for each element of the list
             for i in range(len(value_to_assert)):
-                _assert(value_to_assert[i], metrics_saved[metric_key][i])
+                error = _assert(value_to_assert[i], metrics_saved[metric_key][i])
+                if error is not None:
+                    errors.append(error)
             continue
 
         # if it's just a regular value, perform the assertion
-        _assert(value_to_assert, metrics_saved[metric_key])
+        error = _assert(value_to_assert, metrics_saved[metric_key])
+        if error is not None:
+            errors.append(error)
+
+    return errors
 
 
 def clear_metrics_folder() -> None:
