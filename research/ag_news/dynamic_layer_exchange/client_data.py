@@ -21,7 +21,7 @@ def collate_fn_with_padding(
     return tokenizer.pad(input_list), torch.stack(target_list)
 
 
-def create_dict_dataset(
+def create_text_classification_dataset(
     dataset: datasets.Dataset, column_names: List[str], target_name: str
 ) -> TextClassificationDataset:
     data_dict = {}
@@ -50,12 +50,12 @@ def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float
 
     # It is important to ensure that the column names do not contain the column
     # that correspond to the raw text because Hugging face does that by default.
-    train_dataset = create_dict_dataset(train_dataset, column_names, "label")
+    train_dataset = create_text_classification_dataset(train_dataset, column_names, "label")
     train_dataset = sampler.subsample(train_dataset)
 
     val_dataset = tokenized_ag_news["test"]
     val_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
-    val_dataset = create_dict_dataset(val_dataset, column_names, "label")
+    val_dataset = create_text_classification_dataset(val_dataset, column_names, "label")
     val_dataset = sampler.subsample(val_dataset)
 
     # The collate function is used to dynamically pad the sequences within every batch to the same length.
