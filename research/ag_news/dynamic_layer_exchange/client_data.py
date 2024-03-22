@@ -49,7 +49,7 @@ def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float
     train_dataset.set_format(type="torch", columns=column_names)
 
     # It is important to ensure that the column names do not contain the column
-    # that correspond to the raw text because Hugging face does that by default.
+    # that correspond to the raw text to ensure that padding via collate functions works.
     train_dataset = create_text_classification_dataset(train_dataset, column_names, "label")
     train_dataset = sampler.subsample(train_dataset)
 

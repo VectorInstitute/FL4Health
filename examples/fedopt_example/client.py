@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -14,7 +14,7 @@ from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, constr
 from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -69,7 +69,8 @@ class NewsClassifierClient(BasicClient):
         super().setup_client(config)
 
     def predict(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
+        self,
+        input: TorchInputType,
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
         assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)
