@@ -6,7 +6,7 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
@@ -40,7 +40,7 @@ class ApflClient(BasicClient):
             self.model.update_alpha()
 
     def train_step(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+        self, input: TorchInputType, target: torch.Tensor
     ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 

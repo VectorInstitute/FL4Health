@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -45,14 +45,12 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
 
-    def predict(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into the model.
+            input (TorchInputType): Inputs to be fed into the model.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element

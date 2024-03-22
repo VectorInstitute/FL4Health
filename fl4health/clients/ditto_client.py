@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
 import torch.nn as nn
@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -207,7 +207,7 @@ class DittoClient(BasicClient):
         return super().train_by_steps(steps, current_round)
 
     def train_step(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]], target: torch.Tensor
+        self, input: TorchInputType, target: torch.Tensor
     ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
@@ -215,7 +215,7 @@ class DittoClient(BasicClient):
         number of steps.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): input tensor to be run through
+            input (TorchInputType): input tensor to be run through
             both the global and local models.
             target (torch.Tensor): target tensor to be used to compute a loss given each models outputs.
 
@@ -249,7 +249,8 @@ class DittoClient(BasicClient):
         return losses, preds
 
     def predict(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
+        self,
+        input: TorchInputType,
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary

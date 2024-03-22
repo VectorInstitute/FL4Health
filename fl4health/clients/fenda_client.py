@@ -1,11 +1,11 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -64,14 +64,12 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
 
-    def predict(
-        self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into the model.
+            input (TorchInputType): Inputs to be fed into the model.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
