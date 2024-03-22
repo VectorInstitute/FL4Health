@@ -30,6 +30,8 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
+        learning_rate: float,
+        exchange_percentage: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -44,6 +46,9 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             metrics_reporter=metrics_reporter,
             store_initial_model=store_initial_model,
         )
+        assert 0 < exchange_percentage <= 1.0
+        self.exchange_percentage = exchange_percentage
+        self.learning_rate: float = learning_rate
 
     def get_model(self, config: Config) -> nn.Module:
         num_classes = self.narrow_config_type(config, "num_classes", int)
@@ -61,7 +66,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=0.00001, weight_decay=0.001)
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=0.001)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
@@ -77,11 +82,10 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         normalize = self.narrow_config_type(config, "normalize", bool)
         filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
         norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        exchange_percentage = self.narrow_config_type(config, "exchange_percentage", float)
         select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
         selection_function_constructor = LayerSelectionFunctionConstructor(
             norm_threshold=norm_threshold,
-            exchange_percentage=exchange_percentage,
+            exchange_percentage=self.exchange_percentage,
             normalize=normalize,
             select_drift_more=select_drift_more,
         )
@@ -106,6 +110,18 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--learning_rate",
+        action="store",
+        type=float,
+        help="Learning rate used by the client",
+    )
+    parser.add_argument(
+        "--exchange_percentage",
+        action="store",
+        type=float,
+        help="Percentage of the number of tensors that are exchanged with the server",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -115,7 +131,13 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = BertDynamicLayerExchangeClient(data_path, [Accuracy("accuracy")], DEVICE)
+    client = BertDynamicLayerExchangeClient(
+        data_path,
+        [Accuracy("accuracy")],
+        DEVICE,
+        learning_rate=args.learning_rate,
+        exchange_percentage=args.exchange_percentage,
+    )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
     # of larger messages would still be blocked.
