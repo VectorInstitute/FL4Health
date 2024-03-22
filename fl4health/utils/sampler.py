@@ -1,14 +1,14 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, List, Set, TypeVar
+from typing import Any, Dict, List, Set, TypeVar
 
 import numpy as np
 import torch
 
-from fl4health.utils.dataset import BaseDataset, DictDataset
+from fl4health.utils.dataset import BaseDataset, TextClassificationDataset
 
 T = TypeVar("T")
-D = TypeVar("D", BaseDataset, DictDataset)
+D = TypeVar("D", BaseDataset, TextClassificationDataset)
 
 
 class LabelBasedSampler(ABC):
@@ -26,11 +26,12 @@ class LabelBasedSampler(ABC):
             dataset.targets = dataset.targets[selected_indices]
             dataset.data = dataset.data[selected_indices]
             return dataset
-        elif isinstance(dataset, DictDataset):
-            new_data_dict = {}
-            for key, val in dataset.data_dict.items():
-                new_data_dict[key] = val[selected_indices]
-            return DictDataset(new_data_dict, dataset.target_name)
+        elif isinstance(dataset, TextClassificationDataset):
+            new_targets = dataset.targets[selected_indices]
+            new_data: Dict[str, List[torch.Tensor]] = {}
+            for key, val in dataset.data.items():
+                new_data[key] = [val[i] for i in selected_indices]
+            return TextClassificationDataset(new_data, new_targets)
         else:
             raise TypeError("Dataset type is not supported by this sampler.")
 
