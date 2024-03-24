@@ -121,12 +121,12 @@ PerFCL extends MOON to consider separate globally and locally trained feature ex
 [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf)
 </td>
 <td>
-FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The constrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
+FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The contrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
 </td>
 </tr>
 </table>
 
-More approaches are being implemented as they are prioritized. However, the library also provides significant flexibiltiy to implement strategies of your own.
+More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
 
 ## Privacy Capabilities
 
@@ -150,7 +150,7 @@ Houses modules associated with custom functionality on top of Flower's client ma
 
 ### Clients
 
-Here, implementations for specific FL strategies that affect client-side training or enforce certrain properties during training are housed. There is also a basic client that implements standard client-side optimization flows for convenience. For example, the FedProxClient adds the requisite proximal loss term to a provided standard loss prior to performing optimization.
+Here, implementations for specific FL strategies that affect client-side training or enforce certain properties during training are housed. There is also a basic client that implements standard client-side optimization flows for convenience. For example, the FedProxClient adds the requisite proximal loss term to a provided standard loss prior to performing optimization.
 
 ### Feature Alignment
 
@@ -168,7 +168,7 @@ An interesting model base is the `ensemble_base` which facilitates federally tra
 
 ### Parameter Exchange
 
-In vanilla FL, all model weights are exchanged between the server and clients. However, in many cases, either more or less information needs to be exchanged. SCAFFOLD requires that both weights and associated "control variates" be exchanged between the two entities. On the other hand, APFL only exchanges a subset of the parameters. The classes in this folder facilitate the proper handling of both of these situtations. More complicated [adaptive parameter exchange](https://arxiv.org/abs/2205.01557) techniques are also considered here. There is an example of this type of approach in the Examples folder under the [partial_weight_exchange_example](examples/partial_weight_exchange_example).
+In vanilla FL, all model weights are exchanged between the server and clients. However, in many cases, either more or less information needs to be exchanged. SCAFFOLD requires that both weights and associated "control variates" be exchanged between the two entities. On the other hand, APFL only exchanges a subset of the parameters. The classes in this folder facilitate the proper handling of both of these situations. More complicated [adaptive parameter exchange](https://arxiv.org/abs/2205.01557) techniques are also considered here. There is an example of this type of approach in the Examples folder under the [partial_weight_exchange_example](examples/partial_weight_exchange_example).
 
 ### Preprocessing
 
@@ -200,7 +200,7 @@ Note that these strategies are also responsible for unpacking and repacking info
 
 ## Examples
 
-The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessbile way to learn what is required to experiment with different FL capabilties. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
+The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessible way to learn what is required to experiment with different FL capabilities. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
 
 __NOTE__: The contents of the examples folder is not packed with the FL4Health library on release to PyPi
 
@@ -218,7 +218,7 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 
 ## Citation
 
-We hope that the libary will be useful to both FL practioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
+We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
 ```
 D. B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, M. Lotif, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
 ```

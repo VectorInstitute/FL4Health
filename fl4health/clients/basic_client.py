@@ -632,14 +632,19 @@ class BasicClient(NumPyClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        preds = self.model(input)
+        output = self.model(input)
 
-        if isinstance(preds, dict):
-            return preds, {}
-        elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}, {}
+        if isinstance(output, dict):
+            return output, {}
+        elif isinstance(output, torch.Tensor):
+            return {"prediction": output}, {}
+        elif isinstance(output, tuple):
+            if len(output) != 2:
+                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
+            preds, features = output
+            return preds, features
         else:
-            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
         self,

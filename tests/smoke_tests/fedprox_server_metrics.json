@@ -2,15 +2,15 @@
     "rounds": {
         "1": {
             "metrics_aggregated": {"val - prediction - accuracy": 0.4744},
-            "loss_aggregated": 2.001
+            "loss_aggregated": 2.0011
         },
         "2": {
             "metrics_aggregated": {"val - prediction - accuracy": 0.6026},
             "loss_aggregated": 1.2596
         },
         "3": {
-            "metrics_aggregated": {"val - prediction - accuracy": 0.7870},
-            "loss_aggregated": 0.8278
+            "metrics_aggregated": {"val - prediction - accuracy": 0.7876},
+            "loss_aggregated": 0.8277
         }
     }
 }

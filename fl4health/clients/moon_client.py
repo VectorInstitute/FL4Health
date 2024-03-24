@@ -67,7 +67,7 @@ class MoonClient(BasicClient):
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specificaly the features of the model, features of the global model and features of
+            index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         preds, features = self.model(input)

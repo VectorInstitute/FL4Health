@@ -53,7 +53,7 @@ def test_compute_updated_control_variate(get_client: ScaffoldClient) -> None:  #
 @pytest.mark.parametrize("type,model", [(DPScaffoldClient, Net())])
 def test_dp_scaffold_client(get_client: DPScaffoldClient) -> None:  # noqa
     client: DPScaffoldClient = get_client
-    client.setup_opacus_objects()
+    client.setup_opacus_objects({})
 
     assert isinstance(client.model, GradSampleModule)
     assert isinstance(client.optimizers["global"], DPOptimizer)
