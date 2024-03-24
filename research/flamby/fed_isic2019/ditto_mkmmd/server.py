@@ -4,7 +4,6 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
-from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg

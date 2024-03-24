@@ -26,7 +26,7 @@ DATASET_DIR=$3
 VENV_PATH=$4
 
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
-LAM_VALUES=( 0.01 0.1 1.0 )
+MU_VALUES=( 0.01 0.1 1.0 )
 
 SERVER_PORT=8100
 
@@ -52,7 +52,7 @@ do
       ${DATASET_DIR} \
       ${VENV_PATH} \
       ${LR_VALUE} \
-      ${LAM_VALUE} \
+      ${MU_VALUES} \
       ${SERVER_ADDRESS}"
     echo "Running sbatch command ${SBATCH_COMMAND}"
     sbatch ${SBATCH_COMMAND}

@@ -11,10 +11,11 @@ from torch.optim import Optimizer
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
+from fl4health.model_bases.moon_base import MoonModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.model_bases.moon_base import MoonModel
+
 
 class DittoClient(BasicClient):
     def __init__(
@@ -47,7 +48,8 @@ class DittoClient(BasicClient):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. Defaults to 20.
+            beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss.
+                Defaults to 20.
         """
         super().__init__(
             data_path=data_path,
@@ -167,7 +169,7 @@ class DittoClient(BasicClient):
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
         assert isinstance(self.model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local 
+        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
         self.init_global_model = self.clone_and_freeze_model(self.global_model)
 
@@ -183,15 +185,14 @@ class DittoClient(BasicClient):
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-
     def update_before_train(self, current_server_round: int) -> None:
         assert isinstance(self.model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local 
+        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
         self.init_global_model = self.clone_and_freeze_model(self.global_model)
 
         return super().update_before_train(current_server_round)
-    
+
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
@@ -265,7 +266,7 @@ class DittoClient(BasicClient):
 
         # Return dictionary of predictions where key is used to name respective MetricMeters
         return losses, preds
-    
+
     def update_after_step(self, step: int) -> None:
         if step % self.beta_update_interval == 0:
             if self.mkmmd_loss_weight and self.init_global_model:
@@ -303,7 +304,9 @@ class DittoClient(BasicClient):
                 _, init_global_features = init_global_model(input)
 
                 local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
-                init_global_buffer.append(init_global_features["features"].reshape(len(init_global_features["features"]), -1))
+                init_global_buffer.append(
+                    init_global_features["features"].reshape(len(init_global_features["features"]), -1)
+                )
         return torch.cat(local_buffer, dim=0), torch.cat(init_global_buffer, dim=0)
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
@@ -316,14 +319,14 @@ class DittoClient(BasicClient):
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
-            index by name. 
+            index by name.
 
         Raises:
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        global_preds,_ = self.global_model(input)
-        local_preds,features = self.model(input)
+        global_preds, _ = self.global_model(input)
+        local_preds, features = self.model(input)
 
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.
@@ -369,7 +372,7 @@ class DittoClient(BasicClient):
         # Compute local model loss + ditto constraint term
         assert "local" in preds
         local_loss = self.criterion(preds["local"], target)
-        total_loss = local_loss 
+        total_loss = local_loss
 
         additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
 
@@ -382,12 +385,10 @@ class DittoClient(BasicClient):
         if self.mkmmd_loss_weight != 0:
             # Compute MK-MMD loss
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
-            total_loss += self.mkmmd_loss_weight*mkmmd_loss
+            total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
-        
 
         return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
-        
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """

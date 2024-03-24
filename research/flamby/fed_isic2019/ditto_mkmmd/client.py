@@ -7,7 +7,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -31,10 +31,9 @@ class FedIsic2019DittoClient(DittoClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam:  float = 0,
+        lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
-        
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -114,9 +113,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -127,7 +123,7 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the auxiliary losses",
+        help="Weight for the mkmmd losses",
         required=False,
     )
     args = parser.parse_args()
@@ -150,7 +146,6 @@ if __name__ == "__main__":
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        lam=args.lam,
         checkpointer=checkpointer,
         mkmmd_loss_weight=args.mu,
     )

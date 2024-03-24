@@ -65,7 +65,7 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 CLIENT_LR=$5
-LAM_VALUE=$6
+MU_VALUE=$6
 SERVER_ADDRESS=$7
 
 # Create the artifact directory
@@ -145,7 +145,7 @@ do
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
-            --lam ${LAM_VALUE} \
+            --mu ${MU_VALUE} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             > ${CLIENT_LOG_PATH} 2>&1 &
