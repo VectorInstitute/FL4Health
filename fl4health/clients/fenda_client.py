@@ -316,7 +316,7 @@ class FendaClient(BasicClient):
                     distribution_a=features["global_features"],
                     distribution_b=features["aggregated_global_features"],
                 )
-                total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min.sum()
+                total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min
                 additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
 
             if self.mkmmd_loss_weights[1] != 0.0:
@@ -325,7 +325,7 @@ class FendaClient(BasicClient):
                     distribution_a=features["local_features"],
                     distribution_b=features["aggregated_global_features"],
                 )
-                total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max.sum()
+                total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
 
         additional_losses["total_loss"] = total_loss

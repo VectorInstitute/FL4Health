@@ -73,10 +73,10 @@ class MkMmdLoss(torch.nn.Module):
         # x and y. That is the inner product. Note that ||x - y||^2 = <x - y, x - y> = (x-y)^T(x-y)
         # For the quadruples of the form (x,  x', y, y') we need distances for (x, x'), (y, y'), (x, y'), (x, y')
         # NOTE: The inner product for a vector x^Tx is just the square and sum of the components of x
-        x_x_prime = torch.sum((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 1, :]) ** 2, dim=1, keepdim=True)
-        y_y_prime = torch.sum((v_i_quadruples[:, 2, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_y_prime = torch.sum((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_prime_y = torch.sum((v_i_quadruples[:, 1, :] - v_i_quadruples[:, 2, :]) ** 2, dim=1, keepdim=True)
+        x_x_prime = torch.mean((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 1, :]) ** 2, dim=1, keepdim=True)
+        y_y_prime = torch.mean((v_i_quadruples[:, 2, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
+        x_y_prime = torch.mean((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
+        x_prime_y = torch.mean((v_i_quadruples[:, 1, :] - v_i_quadruples[:, 2, :]) ** 2, dim=1, keepdim=True)
         # each inner product is a tensor of dimension len(v_i_quadruples), we return a tensor of shape
         # len(v_i_quadruples) x 4
         return torch.cat([x_x_prime, y_y_prime, x_y_prime, x_prime_y], dim=1)
@@ -127,7 +127,7 @@ class MkMmdLoss(torch.nn.Module):
         all_h_u_per_vi = self.compute_all_h_u_per_v_i(X, Y)
         hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_vi)
         # Take the dot product between the indivudal kernel hat_d values to scale by the basis coefficients
-        return torch.mm(beta.t(), hat_d_per_kernel).squeeze(0)
+        return torch.mm(beta.t(), hat_d_per_kernel)[0][0]
 
     def create_h_u_delta_w_i(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_v_i has dimension number kernels x number of v_i quadruples

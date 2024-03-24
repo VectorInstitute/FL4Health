@@ -65,19 +65,19 @@ def test_construct_quadruples() -> None:
 def test_inner_products_calculation() -> None:
     # inner products should be of shape n_samples // 2 x 4 (inner product component)
     assert inner_products.shape == (5, 4)
-    inner_product_quad_1_0 = 2 * 2 + 1 * 1 + (-3) * (-3)
-    inner_product_quad_1_1 = 2 * 2 + 0 * 0 + (-1) * (-1)
-    inner_product_quad_1_2 = 3 * 3 + (-2) * (-2) + (-1) * (-1)
-    inner_product_quad_1_3 = (-1) * (-1) + (-3) * (-3) + (3) * (3)
+    inner_product_quad_1_0 = (2 * 2 + 1 * 1 + (-3) * (-3)) / 3
+    inner_product_quad_1_1 = (2 * 2 + 0 * 0 + (-1) * (-1)) / 3
+    inner_product_quad_1_2 = (3 * 3 + (-2) * (-2) + (-1) * (-1)) / 3
+    inner_product_quad_1_3 = ((-1) * (-1) + (-3) * (-3) + (3) * (3)) / 3
     assert inner_products[1][0] == inner_product_quad_1_0
     assert inner_products[1][1] == inner_product_quad_1_1
     assert inner_products[1][2] == inner_product_quad_1_2
     assert inner_products[1][3] == inner_product_quad_1_3
 
-    inner_product_quad_4_0 = 0 * 0 + 2 * 2 + 3 * 3
-    inner_product_quad_4_1 = (-1) * (-1) + (1) * (1) + (-3) * (-3)
-    inner_product_quad_4_2 = 0 * 0 + 3 * 3 + 0 * 0
-    inner_product_quad_4_3 = 1 * 1 + 0 * 0 + 0 * 0
+    inner_product_quad_4_0 = (0 * 0 + 2 * 2 + 3 * 3) / 3
+    inner_product_quad_4_1 = ((-1) * (-1) + (1) * (1) + (-3) * (-3)) / 3
+    inner_product_quad_4_2 = (0 * 0 + 3 * 3 + 0 * 0) / 3
+    inner_product_quad_4_3 = (1 * 1 + 0 * 0 + 0 * 0) / 3
     assert inner_products[4][0] == inner_product_quad_4_0
     assert inner_products[4][1] == inner_product_quad_4_1
     assert inner_products[4][2] == inner_product_quad_4_2
@@ -94,11 +94,11 @@ def test_compute_h_u_from_inner_products() -> None:
     assert h_u_gamma_2.shape == (1, 5)
 
     # The fourth entry should coincide with computing h_u(v_4), so we compute h_u using the 4th inner product entry
-    h_u_components_gamma_1_3_target = torch.exp((-1 * torch.Tensor([2, 10, 5, 3])) / (2 * torch.pow(gamma_1, 2)))
+    h_u_components_gamma_1_3_target = torch.exp((-1 * torch.Tensor([2, 10, 5, 3]) / 3) / (2 * torch.pow(gamma_1, 2)))
     # For the other gamma, the fourth entry should coincide with computing h_u(v_4), so we compute h_u using the
     # 4th inner product entry
-    h_u_components_gamma_2_3_target = torch.exp((-1 * torch.Tensor([2, 10, 5, 3])) / (2 * torch.pow(gamma_2, 2)))
-    h_u_components_gamma_2_0_target = torch.exp((-1 * torch.Tensor([22, 14, 2, 2])) / (2 * torch.pow(gamma_2, 2)))
+    h_u_components_gamma_2_3_target = torch.exp((-1 * torch.Tensor([2, 10, 5, 3]) / 3) / (2 * torch.pow(gamma_2, 2)))
+    h_u_components_gamma_2_0_target = torch.exp((-1 * torch.Tensor([22, 14, 2, 2]) / 3) / (2 * torch.pow(gamma_2, 2)))
 
     h_u_gamma_1_3_target = (
         h_u_components_gamma_1_3_target[0]
@@ -149,7 +149,7 @@ def test_compute_hat_d_per_kernel() -> None:
 def test_compute_mkmmd() -> None:
     betas = torch.Tensor([1.5, 2.0, -1.0]).reshape(-1, 1).to(DEVICE)
     mkmmd_target = hat_d_per_kernel[0, 0] * 1.5 + hat_d_per_kernel[1, 0] * 2.0 + hat_d_per_kernel[2, 0] * (-1.0)
-    assert mkmmd_loss.compute_mkmmd(X, Y, betas) == mkmmd_target
+    assert pytest.approx(mkmmd_loss.compute_mkmmd(X, Y, betas), abs=0.0001) == mkmmd_target
 
 
 def test_create_h_u_delta_w_i() -> None:
@@ -209,7 +209,7 @@ def test_optimize_betas_degenerate_case() -> None:
     # The simple test cases above result in a set of hat_ds that are all negative. In this case, we perform the
     # selection of a single kernel as recommended in Gretton
     degenerate_betas = mkmmd_loss.optimize_betas(X, Y, lambda_m=0.0001)
-    beta_target = torch.Tensor([[1, 0, 0]]).to(DEVICE).t()
+    beta_target = torch.Tensor([[0, 1, 0]]).to(DEVICE).t()
     assert torch.all(degenerate_betas.eq(beta_target))
 
 
@@ -232,7 +232,7 @@ def test_get_best_vertex_for_objective_function() -> None:
     print(regularized_Q_k)
     assert best_vertex.shape == (3, 1)
     # check this
-    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == -2.5965
+    assert pytest.approx(best_vertex[0, 0].item(), abs=0.0001) == -4.1297
     assert pytest.approx(best_vertex[1, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(best_vertex[2, 0].item(), abs=0.0001) == 0.0
     assert pytest.approx(torch.mm(hat_d_per_kernel.t(), best_vertex), abs=0.0001) == 1.0
@@ -274,7 +274,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     all_h_u_per_vi_local = default_mkmmd.compute_all_h_u_per_v_i(X, Y)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_vi_local)
     mkmmd_before_opt = default_mkmmd(X, Y)
-    assert pytest.approx(mkmmd_before_opt.item(), abs=0.0001) == 0.02652
+    assert pytest.approx(mkmmd_before_opt.item(), abs=0.0001) == 0.03088
 
     hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_vi_local)
     regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(29)).to(DEVICE)
