@@ -222,7 +222,7 @@ class LossMeter(Generic[LossesType]):
                 meter type
         """
         # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
-        # from the first entry because losses can have different keys. We get list of all the keys from 
+        # from the first entry because losses can have different keys. We get list of all the keys from
         # all the losses.
         loss_keys = list(set(key for loss_dict_ in loss_list for key in loss_dict_.keys()))
         loss_dict: Dict[str, torch.Tensor] = {}
@@ -234,4 +234,3 @@ class LossMeter(Generic[LossesType]):
             loss_dict[key] = loss
 
         return loss_dict
-
