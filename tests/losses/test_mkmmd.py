@@ -216,7 +216,7 @@ def test_optimize_betas_degenerate_case() -> None:
 def test_gamma_defaults() -> None:
     default_mkmmd = MkMmdLoss(DEVICE)
     neg_gamma_powers = [-3.5, -3.25, -3, -2.75, -2.5, -2.25, -2, -1.75, -1.5, -1.25, -1, -0.75, -0.5, -0.25, 0]
-    pos_gamma_powers = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.25, 3.5]
+    pos_gamma_powers = [0.25, 0.5, 0.75, 1]
     gamma_powers = neg_gamma_powers + pos_gamma_powers
     default_gammas = torch.Tensor([2**power for power in gamma_powers])
     assert torch.all(default_mkmmd.gammas.eq(default_gammas))
@@ -274,10 +274,10 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     all_h_u_per_vi_local = default_mkmmd.compute_all_h_u_per_v_i(X, Y)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_vi_local)
     mkmmd_before_opt = default_mkmmd(X, Y)
-    assert pytest.approx(mkmmd_before_opt.item(), abs=0.0001) == 0.03088
+    assert pytest.approx(mkmmd_before_opt.item(), abs=0.0001) == 0.01928
 
     hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_vi_local)
-    regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(29)).to(DEVICE)
+    regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(19)).to(DEVICE)
     unnormalized_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
     assert pytest.approx(torch.mm(unnormalized_betas.t(), hat_d_per_kernel_local), abs=0.0001) == 1.0000
 
