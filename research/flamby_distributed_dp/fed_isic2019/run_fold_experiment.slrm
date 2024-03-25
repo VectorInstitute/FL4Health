@@ -5,12 +5,12 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
+#SBATCH --mem=32G
 #SBATCH --partition=a40
 #SBATCH --qos=m2
 #SBATCH --job-name=DDP
-#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019/%j_%x.out"
-#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019/%j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_distributed/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_distributed/%j_%x.err"
 
 ###############################################
 # Usage:
