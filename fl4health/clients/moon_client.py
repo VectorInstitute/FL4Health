@@ -52,10 +52,7 @@ class MoonClient(BasicClient):
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
-        self.local_buffer: list[torch.Tensor] = []
-        self.old_local_buffer: list[torch.Tensor] = []
-        self.global_buffer: list[torch.Tensor] = []
-        self.optimized_betas = False
+        self.betas_optimized = False
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -99,50 +96,50 @@ class MoonClient(BasicClient):
         self.global_model = self.clone_and_freeze_model(self.model)
 
         # Optimizing betas for the MK-MMD loss has not been done yet
-        self.optimized_betas = False
+        self.betas_optimized = False
 
         return super().update_before_train(current_server_round)
 
     def update_after_step(self, step: int) -> None:
         if step > 0 and step % self.beta_update_interval == 0:
             if self.mkmmd_loss_weights and len(self.old_models_list) > 0 and self.global_model:
-                # Update the feature buffer of the old local, local and global features with evaluation mode
-                self.update_buffers(self.model, self.global_model, self.old_models_list[-1])
+                # Get the feature distribution of the old, local and global features with evaluation mode
+                local_distribution, global_distribution, old_distribution = self.update_buffers(
+                    self.model, self.global_model, self.old_models_list[-1]
+                )
                 # Update betas for the MK-MMD loss based on gathered features during training
                 if self.mkmmd_loss_weights[0] != 0:
                     self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                        X=torch.cat(self.local_buffer, dim=0), Y=torch.cat(self.global_buffer, dim=0), lambda_m=1e-5
+                        X=local_distribution, Y=global_distribution, lambda_m=1e-5
                     )
                     log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss_min.betas.squeeze()}.")
 
                 if self.mkmmd_loss_weights[1] != 0:
                     self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                        X=torch.cat(self.old_local_buffer, dim=0),
-                        Y=torch.cat(self.global_buffer, dim=0),
+                        X=old_distribution,
+                        Y=global_distribution,
                         lambda_m=1e-5,
                     )
                     log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
 
                 # Betas have been optimized
-                self.optimized_betas = True
-
-            self.old_local_buffer.clear()
-            self.local_buffer.clear()
-            self.global_buffer.clear()
+                self.betas_optimized = True
 
         return super().update_after_step(step)
 
     def update_buffers(
         self, local_model: torch.nn.Module, global_model: torch.nn.Module, old_local_model: torch.nn.Module
-    ) -> None:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Update the feature buffer of the local and global features."""
         assert isinstance(local_model, MoonModel)
         assert isinstance(global_model, MoonModel)
         assert isinstance(old_local_model, MoonModel)
 
-        self.local_buffer.clear()
-        self.old_local_buffer.clear()
-        self.global_buffer.clear()
+        local_buffer = []
+        global_buffer = []
+        old_buffer = []
+
+        init_state_local_model = local_model.training
 
         # Compute the old features before aggregation and global features
         local_model.eval()
@@ -159,11 +156,14 @@ class MoonClient(BasicClient):
                 _, global_features = global_model(input)
                 _, old_local_features = old_local_model(input)
 
-                self.local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
-                self.global_buffer.append(global_features["features"].reshape(len(global_features["features"]), -1))
-                self.old_local_buffer.append(
-                    old_local_features["features"].reshape(len(old_local_features["features"]), -1)
-                )
+                local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
+                global_buffer.append(global_features["features"].reshape(len(global_features["features"]), -1))
+                old_buffer.append(old_local_features["features"].reshape(len(old_local_features["features"]), -1))
+
+        if init_state_local_model:
+            local_model.train()
+
+        return torch.cat(local_buffer, dim=0), torch.cat(global_buffer, dim=0), torch.cat(old_buffer, dim=0)
 
     def compute_loss_and_additional_losses(
         self,
@@ -203,7 +203,7 @@ class MoonClient(BasicClient):
             self.mkmmd_loss_weights
             and "global_features" in features
             and "old_features" in features
-            and self.optimized_betas
+            and self.betas_optimized
         ):
             if self.mkmmd_loss_weights[0] != 0:
                 mkmmd_loss_min = self.mkmmd_loss_min(features["features"], features["global_features"])

@@ -165,11 +165,6 @@ class DittoClient(BasicClient):
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-        assert isinstance(self.model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
-        # update penalty term.
-        self.init_global_model = self.clone_and_freeze_model(self.global_model)
-
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
         If this is the first time we're initializing the model weights, we initialize both the global and the local
@@ -265,12 +260,12 @@ class DittoClient(BasicClient):
     def update_after_step(self, step: int) -> None:
         if step % self.beta_update_interval == 0:
             if self.mkmmd_loss_weight and self.init_global_model:
-                # Update the feature buffer of the old local, local and global features with evaluation mode
-                local_buffer, init_global_buffer = self.update_buffers(self.model, self.init_global_model)
+                # Get the feature distribution of the local and init global features with evaluation mode
+                local_distribution, init_global_distribution = self.update_buffers(self.model, self.init_global_model)
                 # Update betas for the MK-MMD loss based on gathered features during training
                 if self.mkmmd_loss_weight != 0:
                     self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
-                        X=local_buffer, Y=init_global_buffer, lambda_m=1e-5
+                        X=local_distribution, Y=init_global_distribution, lambda_m=1e-5
                     )
                     log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss.betas.squeeze()}.")
 
@@ -283,9 +278,11 @@ class DittoClient(BasicClient):
         assert isinstance(local_model, MoonModel)
         assert isinstance(init_global_model, MoonModel)
 
-        # Compute the old features before aggregation and global features
+        init_state_local_model = local_model.training
+
+        # Set local model to evaluation mode
         local_model.eval()
-        init_global_model.eval()
+
         assert not local_model.training
         assert not init_global_model.training
 
@@ -302,6 +299,10 @@ class DittoClient(BasicClient):
                 init_global_buffer.append(
                     init_global_features["features"].reshape(len(init_global_features["features"]), -1)
                 )
+
+        if init_state_local_model:
+            local_model.train()
+
         return torch.cat(local_buffer, dim=0), torch.cat(init_global_buffer, dim=0)
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:

@@ -67,10 +67,6 @@ class FendaClient(BasicClient):
         self.old_global_module: Optional[torch.nn.Module] = None
         self.aggregated_global_module: Optional[torch.nn.Module] = None
 
-        self.local_buffer: list[torch.Tensor] = []
-        self.global_buffer: list[torch.Tensor] = []
-        self.aggregated_buffer: list[torch.Tensor] = []
-
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModel)
         return FixedLayerExchanger(self.model.layers_to_exchange())
@@ -131,37 +127,37 @@ class FendaClient(BasicClient):
             and self.old_local_module
             and self.aggregated_global_module
         ):
-            self.update_buffers(
+            local_distribution, global_distribution, aggregated_distribution = self.update_buffers(
                 local_module=self.old_local_module,
                 global_module=self.old_global_module,
                 aggregated_module=self.aggregated_global_module,
             )
             if self.mkmmd_loss_weights[0] != 0.0:
                 self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                    X=torch.cat(self.global_buffer, dim=0), Y=torch.cat(self.aggregated_buffer, dim=0), lambda_m=1e-5
+                    X=global_distribution, Y=aggregated_distribution, lambda_m=1e-5
                 )
             if self.mkmmd_loss_weights[1] != 0.0:
                 self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                    X=torch.cat(self.local_buffer, dim=0), Y=torch.cat(self.aggregated_buffer, dim=0), lambda_m=1e-5
+                    X=local_distribution, Y=aggregated_distribution, lambda_m=1e-5
                 )
-
-            self.local_buffer.clear()
-            self.global_buffer.clear()
-            self.aggregated_buffer.clear()
 
         return super().update_before_train(current_server_round)
 
     def update_buffers(
         self, local_module: torch.nn.Module, global_module: torch.nn.Module, aggregated_module: torch.nn.Module
-    ) -> None:
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Update the feature buffer of the local, global and aggregated features."""
         assert isinstance(local_module, torch.nn.Module)
         assert isinstance(global_module, torch.nn.Module)
         assert isinstance(aggregated_module, torch.nn.Module)
 
-        self.local_buffer.clear()
-        self.global_buffer.clear()
-        self.aggregated_buffer.clear()
+        local_buffer = []
+        global_buffer = []
+        aggregated_buffer = []
+
+        # Save the state of the local and global modules
+        init_state_local_module = local_module.training
+        init_state_global_module = global_module.training
 
         # Compute the old features before aggregation and global features
         local_module.eval()
@@ -179,9 +175,17 @@ class FendaClient(BasicClient):
                 aggregated_features = aggregated_module.forward(input)
 
                 # Local feature are same as old local features
-                self.local_buffer.append(local_features.reshape(len(local_features), -1))
-                self.global_buffer.append(global_features.reshape(len(global_features), -1))
-                self.aggregated_buffer.append(aggregated_features.reshape(len(aggregated_features), -1))
+                local_buffer.append(local_features.reshape(len(local_features), -1))
+                global_buffer.append(global_features.reshape(len(global_features), -1))
+                aggregated_buffer.append(aggregated_features.reshape(len(aggregated_features), -1))
+
+        # Reset the state of the local and global modules
+        if init_state_local_module:
+            local_module.train()
+        if init_state_global_module:
+            global_module.train()
+
+        return torch.cat(local_buffer), torch.cat(global_buffer), torch.cat(aggregated_buffer)
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
