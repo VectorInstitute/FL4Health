@@ -327,6 +327,11 @@ class DittoClient(BasicClient):
 
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.
+        if not isinstance(global_preds, torch.Tensor):
+            global_preds = global_preds["prediction"]
+        if not isinstance(local_preds, torch.Tensor):
+            local_preds = local_preds["prediction"]
+
         assert isinstance(global_preds, torch.Tensor)
         assert isinstance(local_preds, torch.Tensor)
 
