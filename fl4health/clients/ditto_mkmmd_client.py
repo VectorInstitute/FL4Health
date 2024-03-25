@@ -94,9 +94,6 @@ class DittoClient(BasicClient):
         # Need to setup the global model here as well. It should be the same architecture as the local model so
         # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
         self.global_model = self.get_model(config).to(self.device)
-        if self.mkmmd_loss_weight > 0:
-            assert isinstance(self.model, MoonModel)
-            assert isinstance(self.global_model, MoonModel)
         # The rest of the setup is the same
         super().setup_client(config)
 
@@ -334,6 +331,8 @@ class DittoClient(BasicClient):
         assert isinstance(local_preds, torch.Tensor)
 
         if self.mkmmd_loss_weight != 0:
+            assert isinstance(self.model, MoonModel)
+            assert isinstance(self.init_global_model, MoonModel)
             _, init_global_features = self.init_global_model(input)
             features.update({"init_global_features": init_global_features["features"]})
 
