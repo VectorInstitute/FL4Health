@@ -1,83 +1,80 @@
 import argparse
 import os
-from logging import INFO
+
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
+
 from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
+from logging import INFO
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
+
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer, BestMetricCheckpointWeights
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
+from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
-
-
 from fl4health.utils.config import load_config
-from research.flamby_central_dp.fed_ixi.model import ModifiedBaseline
 
-from fl4health.clients.central_dp_client import CentralDPClient
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
+
+from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
+
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+# torch.set_default_dtype(torch.float64)
+from flamby.datasets.fed_ixi import Baseline
 
-import torch
-
-
-class FedIxiFedAvgClient(CentralDPClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        client_number: int,
-        learning_rate: float,
-        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
-        checkpointer: Optional[TorchCheckpointer] = None,
-    ) -> None:
-        super().__init__(
-            data_path=data_path,
-            metrics=metrics,
-            device=device,
-            loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            checkpointer=checkpointer,
-            client_id=client_number,
-        )
-        self.client_number = client_number
-        self.learning_rate = learning_rate
-
-        assert 0 <= client_number < NUM_CLIENTS
-        log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-
+class FedIXIFedAvgClient(DPScaffoldLoggingClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(
-            self.client_number, str(self.data_path)
+            self.client_id, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=2, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
-        # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
-        # and APFL
-        model: nn.Module = ModifiedBaseline().to(self.device)
+        model: nn.Module = FedIXIUNet().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        # return torch.optim.AdamW(self.model.parameters(), lr=0.05)
+        return torch.optim.SGD(self.model.parameters(), lr=0.05)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
 
+# if __name__ == '__main__':
+#     test_ixi_batch = torch.rand(1,1,48,60,48)
+#     model = FedIXIUNet()
+#     optimizer = torch.optim.SGD(model.parameters(), lr=0.05)
+#     loss = BaselineLoss()
+
+#     from opacus import PrivacyEngine
+#     privacy_engine = PrivacyEngine()
+#     train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(
+#             0, str('flamby_datasets/fed_ixi')
+#     )
+#     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+#     model, optimizer, train_loader = privacy_engine.make_private_with_epsilon(
+#     module=model,
+#     optimizer=optimizer,
+#     data_loader=train_loader,
+#     epochs=1,
+#     target_epsilon=10,
+#     target_delta=10,
+#     max_grad_norm=5,
+#     )
+
+#     print('here1')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
@@ -92,7 +89,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIXI Dataset (ex. path/to/fedixi/dataset)",
+        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
         required=True,
     )
     parser.add_argument(
@@ -112,15 +109,8 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-2 for FedIXI)",
+        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
         required=True,
-    )
-    parser.add_argument(
-        "--config_path",
-        action="store",
-        type=str,
-        help="Path to configuration file.",
-        default="config.yaml",
     )
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
@@ -132,6 +122,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--hyperparameter_value", action="store", type=float, help="Tunable hyperparameter value."
     )
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -141,26 +138,16 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = BestMetricCheckpointWeights(checkpoint_dir, checkpoint_name, maximize=False)
 
     config = load_config(args.config_path)
-    privacy_settings = {
-        'gaussian_noise_variance': config['gaussian_noise_variance'],
-    }
 
-    # update privacy setting for tunable hyperparameter
-    key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['gaussian_noise_variance']
-    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
-    privacy_settings[key] = value
-    log(INFO, f'{privacy_settings}')
-
-    client = FedIxiFedAvgClient(
+    
+    client = FedIXIFedAvgClient(
         data_path=Path(args.dataset_dir),
         metrics=[BinarySoftDiceCoefficient("FedIXI_dice")],
         device=DEVICE,
-        client_number=args.client_number,
-        learning_rate=args.learning_rate,
+        client_id=args.client_number,
         checkpointer=checkpointer,
     )
 

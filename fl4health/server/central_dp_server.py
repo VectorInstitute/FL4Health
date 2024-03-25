@@ -289,11 +289,17 @@ class CentralDPServer(FlServerWithCheckpointing):
         # model delta
         delta = torch.from_numpy(global_model_delta_vector).to(device=device)
         
+        # TODO record clip & delta to out files 
+        clip = 100
+
         # noisy delta 
         sigma = math.sqrt(self.gaussian_noise_variance)
-        delta += gaussian_mechanism(dim=self.model_dimension, standard_deviation=sigma)
+        delta += gaussian_mechanism(dim=self.model_dimension, epsilon=1, delta=0.01, clip=clip)
         
-        model_vector = delta + torch.load(self.temporary_model_path).to(device=device) 
+        model_vector = torch.load(self.temporary_model_path).to(device=device) 
+        model_vector *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(model_vector, ord=2))
+
+        model_vector += delta 
         self.server_model = unvectorize_model(self.server_model, model_vector)
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]

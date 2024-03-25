@@ -27,6 +27,7 @@ from fl4health.server.secure_aggregation_server import SecureAggregationServer
 
 from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
 
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 
 
 def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, args) -> None:
@@ -45,7 +46,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
     # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL
-    model = ModifiedBaseline()
+    model = FedIXIUNet()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

@@ -26,7 +26,8 @@ from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggr
 from fl4health.strategies.central_dp_strategy import CentralDPStrategy
 from fl4health.server.central_dp_server import CentralDPServer
 
-from research.flamby_central_dp.fed_ixi.model import ModifiedBaseline
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
+
 import torch
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -48,7 +49,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
     # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL
-    model = ModifiedBaseline()
+    model = FedIXIUNet()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

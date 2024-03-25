@@ -1,5 +1,6 @@
 import argparse
 import os
+from flwr.common.logger import log
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
@@ -21,7 +22,11 @@ from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from fl4health.clients.secure_aggregation_client import SecureAggregationClient
 from fl4health.utils.config import load_config
-# torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+
+from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
+
+torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
     def __init__(
@@ -61,7 +66,7 @@ class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Baseline().to(self.device)
+        model: nn.Module = FedHeartDiseaseLargeBaseline().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

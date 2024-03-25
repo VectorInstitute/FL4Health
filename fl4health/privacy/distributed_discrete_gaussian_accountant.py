@@ -35,7 +35,7 @@ class DistributedDiscreteGaussianAccountant:
             noise_scale: float, 
             granularity: float, 
             model_dimension: int, 
-            alpha_search_space = (1, 3),
+            alpha_search_space = (1, 10),
             randomized_rounding_bias: float, 
             number_of_trustworthy_fl_clients: int,
             approximate_dp_delta: Optional[float] = None,
@@ -98,7 +98,7 @@ class DistributedDiscreteGaussianAccountant:
         """Accounting based on Lemma 2.3 in [zCDP]"""
         return self.rounds * self.concentrated_dp_epsilon_single_round()
     
-    def concentrated_to_approximate_dp(self, search_scale=0.00001):
+    def concentrated_to_approximate_dp(self, search_scale=0.0001):
 
         def compute_candidate(alpha: float, z_eps: float):
             assert alpha > 1
@@ -115,11 +115,36 @@ class DistributedDiscreteGaussianAccountant:
             candidate_value = compute_candidate(alpha=alpha, z_eps=z_eps)
             if candidate_value < optimial_value:
                 optimial_value = candidate_value
-                print(alpha, optimial_value)
+                # print(alpha, optimial_value)
+            # later make this a bisection search 
+            # or differentiate the expression for exact value 
             alpha += search_scale
         
         return optimial_value
+    
+    def optimal_adp_epsilon(self, searh_scale=0.0001):
+        return self.concentrated_to_approximate_dp(search_scale=searh_scale)
 
+    def subsampling_privacy_amplification(self, dataset_size: int, sample_size: int, searh_scale=0.0001):
+        """
+        Ref 
+            Lemma 3 in 
+            Wang et al., Subsampled Rényi Differential Privacy and Analytical Moments Accountant
+            https://www.shivakasiviswanathan.com/AISTATS19.pdf
+
+        Returns approximate-DP (epsilon, delta)
+        """
+        assert 0 < sample_size <= dataset_size
+
+        ratio = sample_size / dataset_size
+
+        try:
+            epsilon = log(1+ratio*(exp(self.optimal_adp_epsilon(searh_scale))-1))
+        except OverflowError:
+            print(f'Approximate-DP epsilon: {self.optimal_adp_epsilon(searh_scale)} is too large and caused overflow.')
+            exit()
+        delta = ratio*self.delta
+        return (epsilon, delta)
         
 
         
@@ -221,14 +246,14 @@ if __name__ == '__main__':
     }
 
     privacy_parameters = {
-        "clipping_threshold": 0.003,
-        "noise_scale": 0.003,
+        "clipping_threshold": 3,
+        "noise_scale": 0.1,
         "granularity": 0.001,
         "model_integer_range": 65536,
-        "bias": 0.5,
+        "bias": exp(-0.5),
         "dp_mechanism": "discrete gaussian mechanism",
-        "model_dimension": 14,
-        "num_fl_rounds": 20,
+        "model_dimension": 4017796,
+        "num_fl_rounds": 50,
         "num_clients": 4
     }
     
@@ -240,11 +265,14 @@ if __name__ == '__main__':
         model_dimension=privacy_parameters["model_dimension"],
         randomized_rounding_bias=privacy_parameters["bias"],
         number_of_trustworthy_fl_clients=privacy_parameters["num_clients"],
-        fl_rounds=privacy_parameters["num_fl_rounds"]
+        fl_rounds=privacy_parameters["num_fl_rounds"],
+        # approximate_dp_delta=0.9/740
     )
 
 
     # print(accountant.concentrated_dp_epsilon_single_round())
-    print(accountant._tau())
+    print(accountant.subsampling_privacy_amplification(2,1))
+    # print(accountant.concentrated_dp_epsilon_fl())
+    # print(accountant._tau())
 
 

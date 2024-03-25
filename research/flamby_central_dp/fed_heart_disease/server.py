@@ -25,6 +25,8 @@ from research.flamby.utils import (
     summarize_model_info,
 )
 
+from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
+
 
 import torch
 
@@ -44,7 +46,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    model = Baseline()
+    model = FedHeartDiseaseLargeBaseline()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy

@@ -163,3 +163,20 @@ def shutoff_batch_norm_tracking(model: nn.Module) -> None:
             module.register_buffer("running_mean", None)
             module.register_buffer("running_var", None)
             module.register_buffer("num_batches_tracked", None)
+
+def shutoff_group_norm_tracking(model: nn.Module) -> None:
+    # Iterate through all named modules of the model and, if we encounter a batch normalization layer, we set
+    # track_running_stats to false instead of true.
+    for name, module in model.named_modules():
+        if isinstance(module, nn.GroupNorm):
+            log(INFO, f"Modifying Batch Normalization Layer: {name}")
+            module.track_running_stats = False
+            # NOTE: It's apparently not enough to set this boolean to false. We need to set all of the relevant
+            # variable to none, otherwise the layer still tries to apply the stale variables during evaluation
+            # leading to eventual NaNs again.
+            module.running_mean = None
+            module.running_var = None
+            module.num_batches_tracked = None
+            module.register_buffer("running_mean", None)
+            module.register_buffer("running_var", None)
+            module.register_buffer("num_batches_tracked", None)

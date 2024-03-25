@@ -64,3 +64,6 @@ class MnistNetWithBnAndFrozen(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         return x
+
+
+

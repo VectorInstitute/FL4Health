@@ -22,6 +22,8 @@ from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_
 from fl4health.clients.central_dp_client import CentralDPClient
 from fl4health.utils.config import load_config
 # torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
+
 
 class FedHeartDiseaseFedAvgClient(CentralDPClient):
     def __init__(
@@ -59,7 +61,7 @@ class FedHeartDiseaseFedAvgClient(CentralDPClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Baseline().to(self.device)
+        model: nn.Module = FedHeartDiseaseLargeBaseline().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

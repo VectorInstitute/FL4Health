@@ -9,8 +9,8 @@
 #SBATCH --partition=a40
 #SBATCH --qos=m2
 #SBATCH --job-name=DDP
-#SBATCH --output="log_error/fed_ixi_central/%j_%x.out"
-#SBATCH --error="log_error/fed_ixi_central/ %j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_local/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_local/ %j_%x.err"
 
 ###############################################
 # Usage:
@@ -67,7 +67,7 @@ SERVER_ADDRESS=$6
 HYPERPARAMETER_NAME=$7
 HYPERPARAMETER_VALUE=$8
 
-FOLDER="flamby_central_dp"
+FOLDER="flamby_local_dp"
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"

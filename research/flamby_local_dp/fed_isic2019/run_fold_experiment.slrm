@@ -5,12 +5,12 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
-#SBATCH --partition=a40
-#SBATCH --qos=m2
-#SBATCH --job-name=DDP
-#SBATCH --output="log_error/fed_isic2019_central/%j_%x.out"
-#SBATCH --error="log_error/fed_isic2019_central/%j_%x.err"
+#SBATCH --mem=32G
+#SBATCH --partition=a100
+#SBATCH --qos=a100_xuejzhao
+#SBATCH --job-name=DDP-XL
+#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_local/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_local/%j_%x.err"
 
 ###############################################
 # Usage:
@@ -68,7 +68,7 @@ SERVER_ADDRESS=$6
 HYPERPARAMETER_NAME=$7
 HYPERPARAMETER_VALUE=$8
 
-FOLDER="flamby_central_dp"
+FOLDER="flamby_local_dp"
 
 # Create the artifact directory
 mkdir -p "${ARTIFACT_DIR}"

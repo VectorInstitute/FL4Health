@@ -1,13 +1,13 @@
 clear 
 # scancel --me 
-rm -rf log_error/fed_isic2019/ log/fed_isic2019/ 
+rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_distributed/ /scratch/ssd004/scratch/xuejzhao/log/fed_isic2019_distributed/ 
 
-mkdir -p log_error/fed_isic2019/
-mkdir -p log/fed_isic2019/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_distributed/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log/fed_isic2019_distributed/
 
 research/flamby_distributed_dp/fed_isic2019/run_hp_sweep.sh \
     research/flamby_distributed_dp/fed_isic2019/config.yaml \
-    log/fed_isic2019/ \
+    /scratch/ssd004/scratch/xuejzhao/log/fed_isic2019_distributed/ \
     flamby_datasets/fed_isic2019/ \
     .venv/
 

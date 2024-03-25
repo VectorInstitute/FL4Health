@@ -249,8 +249,10 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
             checkpointer=checkpointer,
             warm_start=warm_start
         )
-        metrics_dir = os.path.join(os.path.dirname(
-            checkpointer.best_checkpoint_path), 
+
+        dir = checkpointer.best_checkpoint_path
+
+        metrics_dir = os.path.join(os.path.dirname(dir), 
             'metrics'
         )
 
@@ -288,7 +290,12 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
 
         assert isinstance(self.strategy, StrategyWithPolling)
         sample_counts = self.poll_clients_for_sample_counts(timeout)
-        self.setup_privacy_accountant(sample_counts)
+        log(INFO, 'sample_counts')
+        log(INFO, sample_counts)
+        if len(sample_counts) > 1:
+            self.setup_privacy_accountant(sample_counts)
+        else:
+            log(INFO, f'invalid sample count: {sample_counts}')
 
         history = History()
 

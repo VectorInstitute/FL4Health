@@ -9,8 +9,8 @@
 #SBATCH --partition=a40
 #SBATCH --qos=m2
 #SBATCH --job-name=DDP
-#SBATCH --output="log_error/fed_ixi/%j_%x.out"
-#SBATCH --error="log_error/fed_ixi/ %j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/ %j_%x.err"
 
 ###############################################
 # Usage:

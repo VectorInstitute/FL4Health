@@ -7,68 +7,46 @@ from typing import Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
+
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from logging import INFO
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from fl4health.clients.central_dp_client import CentralDPClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from torch.utils.data import DataLoader
+
 from fl4health.utils.config import load_config
 
-from research.flamby_central_dp.fed_isic2019.model import ModifiedBaseline
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+
+from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
+from flamby.datasets.fed_isic2019 import Baseline
 
-
-class FedIsic2019FedAvgClient(CentralDPClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        client_number: int,
-        learning_rate: float,
-        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
-        checkpointer: Optional[TorchCheckpointer] = None,
-    ) -> None:
-        super().__init__(
-            data_path=data_path,
-            metrics=metrics,
-            device=device,
-            loss_meter_type=loss_meter_type,
-            metric_meter_type=metric_meter_type,
-            checkpointer=checkpointer,
-            client_id=client_number,
-        )
-        self.client_number = client_number
-        self.learning_rate = learning_rate
-
-        assert 0 <= client_number < NUM_CLIENTS
-        log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-
+class FedIsic2019FedAvgClient(DPScaffoldLoggingClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
-            self.client_number, str(self.data_path)
+            self.client_id, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=4, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = ModifiedBaseline().to(self.device)
+        model: nn.Module = FedISICImageClassifier().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        # return torch.optim.AdamW(self.model.parameters(), lr=0.05)
+        return torch.optim.SGD(self.model.parameters(), lr=0.05)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
@@ -145,8 +123,7 @@ if __name__ == "__main__":
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         device=DEVICE,
-        client_number=args.client_number,
-        learning_rate=args.learning_rate,
+        client_id=args.client_number,
         checkpointer=checkpointer,
     )
 

@@ -18,11 +18,12 @@ from flamby.datasets.fed_heart_disease import Baseline
 import os 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
+from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Baseline()
+    initial_model = FedHeartDiseaseLargeBaseline()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
     # Initializing the control variates to zero, as suggested in the original scaffold paper
     control_variates = [np.zeros_like(val.data) for val in initial_model.parameters() if val.requires_grad]
@@ -86,6 +87,7 @@ def main(config: Dict[str, Any], checkpoint_dir) -> None:
         num_server_rounds=config["n_server_rounds"],
         strategy=strategy,
         warm_start=True,
+        checkpointer=checkpointer
     )
 
     fl.server.start_server(
@@ -93,6 +95,8 @@ def main(config: Dict[str, Any], checkpoint_dir) -> None:
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
+    
+    server.shutdown()
 
 
 if __name__ == "__main__":

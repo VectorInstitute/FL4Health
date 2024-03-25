@@ -24,6 +24,8 @@ from fl4health.clients.secure_aggregation_client import SecureAggregationClient
 from fl4health.utils.config import load_config
 from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
 
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
+
 
 class FedIxiFedAvgClient(SecureAggregationClient):
     def __init__(
@@ -66,7 +68,7 @@ class FedIxiFedAvgClient(SecureAggregationClient):
         # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
         # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
         # and APFL
-        model: nn.Module = ModifiedBaseline().to(self.device)
+        model: nn.Module = FedIXIUNet().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

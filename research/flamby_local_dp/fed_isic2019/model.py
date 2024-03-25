@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
 
-from research.flamby.utils import shutoff_batch_norm_tracking
+from research.flamby.utils import shutoff_group_norm_tracking
+from opacus.validators import ModuleValidator
 
 
 class ModifiedBaseline(nn.Module):
@@ -19,9 +20,52 @@ class ModifiedBaseline(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.model = Baseline()
-        shutoff_batch_norm_tracking(self.model)
+        self.model = ModuleValidator.fix(Baseline())
+        # shutoff_group_norm_tracking(self.model)
+        
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.model(x)
+        return x
+
+import torch 
+import torch.nn as nn 
+import torch.nn.functional as F
+
+class FedISICImageClassifier(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 8, 17)
+        # relu
+
+        self.conv2 = nn.Conv2d(8, 16, 33)
+        # relu 
+        self.maxpool1 = nn.MaxPool2d(8, 8)
+
+        self.conv3 = nn.Conv2d(16, 32, 5)
+        # relu 
+
+        self.conv4 = nn.Conv2d(32, 64, 6)
+        # relu 
+        self.maxpool2 = nn.MaxPool2d(2,2)
+
+        self.fc1 = nn.Linear(64*5*5, 300)
+        self.drop = nn.Dropout(p=0.3)
+        self.fc2 = nn.Linear(300, 30)
+        # drop
+        self.fc3 = nn.Linear(30, 8)
+
+    def forward(self, x):
+        
+        # convolutional stack
+        x = F.relu(self.conv1(x))
+        x = self.maxpool1(F.relu(self.conv2(x)))
+        x = F.relu(self.conv3(x))
+        x = self.maxpool2(F.relu(self.conv4(x)))
+        # fully connected stack
+        x = torch.flatten(x, 1)
+        x = self.drop(self.fc1(x))
+        x = self.drop(self.fc2(x))
+        x = self.fc3(x)
+
         return x

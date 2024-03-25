@@ -8,6 +8,20 @@ case ${EXPERIMENT} in
         bash research/flamby_distributed_dp/fed_ixi/run.sh
         bash research/flamby_distributed_dp/fed_isic2019/run.sh
         bash research/flamby_distributed_dp/fed_heart_disease/run.sh
+
+        bash research/flamby_central_dp/fed_ixi/run.sh
+        bash research/flamby_central_dp/fed_isic2019/run.sh
+        bash research/flamby_central_dp/fed_heart_disease/run.sh
+
+        bash research/flamby_local_dp/fed_ixi/run.sh
+        bash research/flamby_local_dp/fed_isic2019/run.sh
+        bash research/flamby_local_dp/fed_heart_disease/run.sh
+        ;;
+
+    "all-local")
+        # bash research/flamby_local_dp/fed_ixi/run.sh
+        # bash research/flamby_local_dp/fed_isic2019/run.sh
+        # bash research/flamby_local_dp/fed_heart_disease/run.sh
         ;;
 
     "heart")

@@ -1,15 +1,15 @@
 clear
 # scancel --me 
-rm -rf log_error/fed_ixi/ log/fed_ixi/ 
+rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/ /scratch/ssd004/scratch/xuejzhao/log/fed_ixi_distributed/ 
 
-mkdir -p log_error/fed_ixi/
-mkdir -p log/fed_ixi/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log/fed_ixi_distributed/
 
 
 
 research/flamby_distributed_dp/fed_ixi/run_hp_sweep.sh \
     research/flamby_distributed_dp/fed_ixi/config.yaml \
-    log/fed_ixi/ \
+    /scratch/ssd004/scratch/xuejzhao/log/fed_ixi_distributed/ \
     flamby_datasets/fed_ixi/ \
     .venv/
 

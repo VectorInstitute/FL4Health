@@ -31,7 +31,8 @@ SERVER_PORT=8100
 
 # Search through these hyperparameters
 HYPERPARAMETER_NAME="noise_scale"
-HYPERPARAMETER_VALUES=(0.00001 0.0001 0.001 0.01 0.1 1 10 100 1000)
+HYPERPARAMETER_VALUES=(0.001)
+#(0.001 0.005 0.01 0.2 0.5 1 2)
 DEFAULT_LR=0.001
 
 # Create sweep folder

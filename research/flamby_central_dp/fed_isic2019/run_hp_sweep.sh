@@ -32,7 +32,8 @@ SERVER_PORT=8100
 
 # Search through these hyperparameters
 HYPERPARAMETER_NAME="gaussian_noise_variance"
-HYPERPARAMETER_VALUES=(0.1 0.01 0.001 0.0001)
+HYPERPARAMETER_VALUES=(0.001)
+# HYPERPARAMETER_VALUES=(0.001 0.01 0.1 0.5 1 5)
 DEFAULT_LR=0.001
 
 # Create sweep folder

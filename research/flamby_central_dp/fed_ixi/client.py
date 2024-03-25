@@ -28,6 +28,7 @@ from fl4health.clients.central_dp_client import CentralDPClient
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
 import torch
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 
 
 class FedIxiFedAvgClient(CentralDPClient):
@@ -69,7 +70,7 @@ class FedIxiFedAvgClient(CentralDPClient):
         # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
         # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
         # and APFL
-        model: nn.Module = ModifiedBaseline().to(self.device)
+        model: nn.Module = FedIXIUNet().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

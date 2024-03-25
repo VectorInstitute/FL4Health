@@ -24,7 +24,7 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-FOLDER="flamby_central_dp"
+FOLDER="flamby_local_dp"
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
 # LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
@@ -32,7 +32,7 @@ SERVER_PORT=8100
 
 # Search through these hyperparameters
 HYPERPARAMETER_NAME="gaussian_noise_variance"
-HYPERPARAMETER_VALUES=(0.1 0.01 0.001 0.0001)
+HYPERPARAMETER_VALUES=(0.1)
 DEFAULT_LR=0.001
 
 # Create sweep folder

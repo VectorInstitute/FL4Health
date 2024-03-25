@@ -46,18 +46,27 @@ for exp in [heart, isic, ixi]:
     for name in metric_names_array:
         metric_name = experiment[name]
 
-        path = f'log(noise_scale)/{task}/hp_sweep_results'
+        path = f'log_all3/{task}/hp_sweep_results'
         # hyperparameter_name = 'granularity'
         # hyperparameter_values = ['0.1', '0.01', '0.001', '0.0001', '0.00001', '0.000001']
         hyperparameter_name = 'noise_scale'
         # '0.00001'
-        hyperparameter_values = [ '0.0001', 0.001, 0.01, 0.1, 1, 10, 100, 1000]
-        rounds_per_run = 20
+        # hyperparameter_values = [ '0.0001', 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+        # rounds_per_run = 20
+
+        if task == 'fed_heart_disease':
+            hyperparameter_values = [0.001, 0.0025, 0.005, 0.0075, 0.01, 0.2]
+        if task == 'fed_isic2019':
+            hyperparameter_values = [0.001, 0.005, 0.01, 0.2, 0.5, 1, 2]
+        if task == 'fed_ixi':
+            hyperparameter_values = [0.001, 0.005, 0.01, 0.2, 0.5, 1, 2, 5]
+
+        rounds_per_run = 50
 
         server_subdirectory = 'metrics/server_metrics.json'
 
 
-        plot_dir = os.path.join('plots', task)
+        plot_dir = os.path.join('plots_v2', task)
         os.makedirs(plot_dir, exist_ok=True)
 
 
@@ -84,10 +93,19 @@ for exp in [heart, isic, ixi]:
                 tag = f'Run{run}'
                 run_folder = os.path.join(experiment_folder, tag, server_subdirectory)
 
+                if not os.path.exists(run_folder):
+                    print(run_folder, 'not found.')
+                    continue 
+
                 with open(run_folder) as file:
                     metrics_dict = json.load(file)
                     privacy_settings = metrics_dict['privacy_hyperparameters']
-                    metric_array = metrics_dict[metric_name]
+                    try:
+                        metric_array = metrics_dict[metric_name]
+                    except KeyError:
+                        print(metric_name, 'not found in', run_folder)
+                        continue
+
                     if metric_name == 'round vs l_inf_error':
                         if isinstance(metric_array, dict):
                             # convert dict to array
@@ -99,6 +117,9 @@ for exp in [heart, isic, ixi]:
 
 
             for val_array in collective_data.values():    
+                if len(val_array) == 0:
+                    print('val_array empty, skipping')
+                    continue
                 mean = statistics.mean(val_array)
                 standard_deviation = statistics.stdev(val_array)
                 y_data.append(mean)
@@ -111,10 +132,11 @@ for exp in [heart, isic, ixi]:
                 granularity =  privacy_settings['granularity'], 
                 model_dimension = dim, 
                 randomized_rounding_bias = privacy_settings['bias'], 
-                number_of_trustworth_fl_clients = num_clients,
-                fl_rounds=rounds_per_run
+                number_of_trustworthy_fl_clients = num_clients,
+                fl_rounds=rounds_per_run,
+                approximate_dp_delta=1/740**2
             )
-            eps = format(accountant.optimal_adp_epslion(), '.2e')
+            eps = format(accountant.optimal_adp_epsilon(), '.2e')
 
             label = f'{value}'
             if plot_eps:

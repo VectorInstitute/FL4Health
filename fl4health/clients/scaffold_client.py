@@ -149,6 +149,20 @@ class ScaffoldClient(BasicClient):
             model_params for model_params in self.model.parameters() if model_params.requires_grad
         ]
 
+        # for name, module in self.model.named_parameters():
+        #     if module.grad is None:
+        #         log(INFO, '-------parameters (start)--------')
+        #         log(INFO, f'name: {name}, module: {module}')
+        #         log(INFO, module.grad_sample)
+        #         log(INFO, '------parameters (end)---------')
+
+
+
+        # for name, module in self.model.named_modules():
+        #     log(INFO, '------modules (start)---------')
+        #     log(INFO, f'name: {name}, module: {module}')
+        #     log(INFO, '------modules (end)---------')
+
         for param, client_cv, server_cv in zip(
             model_params_with_grad, self.client_control_variates, self.server_control_variates
         ):
@@ -187,7 +201,7 @@ class ScaffoldClient(BasicClient):
 
     def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[Losses, Dict[str, torch.Tensor]]:
         # Clear gradients from optimizer if they exist
-        self.optimizer.zero_grad()
+        self.optimizer.zero_grad(set_to_none=False)
 
         # Get predictions and compute loss
         preds = self.predict(input)
@@ -298,6 +312,9 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
 
         if not self.initialized:
             self.setup_client(config)
+        
+        log(INFO, f'federated round {self.federated_round}')
+        if self.federated_round == 0:
             self.start_time=timeit.default_timer()
             with open(self.metrics_path, 'r') as file:
                 metrics_to_save = json.load(file)

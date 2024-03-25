@@ -1,11 +1,11 @@
 import argparse
 import os
 from functools import partial
-from logging import INFO
+
 from typing import Any, Dict
 
 import flwr as fl
-from flamby.datasets.fed_ixi import Baseline
+from logging import INFO
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
@@ -13,91 +13,126 @@ from flwr.server.strategy import FedAvg
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
+from fl4health.server.secure_aggregation_server import CentralDPSecAggServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
     fit_metrics_aggregation_fn,
     get_initial_model_parameters,
-    summarize_model_info,
 )
-
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-
-from fl4health.strategies.central_dp_strategy import CentralDPStrategy
-from fl4health.server.central_dp_server import CentralDPServer
-
-from research.flamby_central_dp.fed_ixi.model import ModifiedBaseline
 import torch
 
+from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
+
+import argparse
+from functools import partial
+from typing import Any, Dict, Tuple
+
+import flwr as fl
+import numpy as np
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Config, Parameters
+
+from examples.models.cnn_model import MnistNet
+from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.server.scaffold_server import DPScaffoldLoggingServer
+from fl4health.strategies.scaffold import Scaffold
+from fl4health.utils.config import load_config
+
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
+import os 
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, BestMetricCheckpointWeights
+
+from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+
+
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
+# torch.set_default_dtype(torch.float64)
+def get_initial_model_information() -> Tuple[Parameters, Parameters]:
+    # Initializing the model parameters on the server side.
+    # Currently uses the Pytorch default initialization for the model parameters.
+    initial_model = FedIXIUNet()
+    model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
+
+    # model_weights = [val.detach().cpu().numpy() for val in initial_model.parameters() if val.requires_grad]
+    
+    # Initializing the control variates to zero, as suggested in the original scaffold paper
+    control_variates = [np.zeros_like(val.data.cpu()) for val in initial_model.parameters() if val.requires_grad]
+    return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, args) -> None:
+def fit_config(
+    local_steps: int,
+    batch_size: int,
+    n_server_rounds: int,
+    noise_multiplier: float,
+    clipping_bound: float,
+    current_round: int,
+) -> Config:
+    return {
+        "local_steps": local_steps,
+        "batch_size": batch_size,
+        "n_server_rounds": n_server_rounds,
+        "current_server_round": current_round,
+        "clipping_bound": clipping_bound,
+        "noise_multiplier": noise_multiplier,
+    }
+
+
+def main(config: Dict[str, Any], checkpoint_dir) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
         config["local_steps"],
+        config["batch_size"],
         config["n_server_rounds"],
+        config["noise_multiplier"],
+        config["clipping_bound"],
     )
 
-    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+    initial_parameters, initial_control_variates = get_initial_model_information()
+
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestMetricCheckpointWeights(checkpoint_dir, checkpoint_name)
 
-    client_manager = SimpleClientManager()
-
-    # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of
-    # the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL
-    model = ModifiedBaseline()
-    summarize_model_info(model)
-
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = CentralDPStrategy(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
-        # Server waits for min_available_clients before starting FL rounds
+    # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
+    strategy = Scaffold(
+        fraction_fit=config["client_sampling_rate"],
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
+        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
-        fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_initial_model_parameters(model),
+        initial_parameters=initial_parameters,
+        initial_control_variates=initial_control_variates,
     )
 
-    privacy_settings = {
-        'gaussian_noise_variance': config['gaussian_noise_variance'],
-    }
-
-    # update privacy setting for tunable hyperparameter
-    key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['gaussian_noise_variance']
-    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
-    privacy_settings[key] = value
-    log(INFO, f'{privacy_settings}')
-
-    
-    server = CentralDPServer(
+    # ClientManager that performs Poisson type sampling
+    client_manager = PoissonSamplingClientManager()
+    server = DPScaffoldLoggingServer(
         client_manager=client_manager,
+        noise_multiplier=config["noise_multiplier"],
+        batch_size=config["batch_size"],
+        local_steps=config["local_steps"],
+        num_server_rounds=config["n_server_rounds"],
         strategy=strategy,
-        model=model,
-        parameter_exchanger=SecureAggregationExchanger(),
-        checkpointer=checkpointer,
-        privacy_settings=privacy_settings,
+        warm_start=True,
+        checkpointer=checkpointer
     )
+
     fl.server.start_server(
         server=server,
-        server_address=server_address,
+        server_address="0.0.0.0:8100",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
-
-    # Shutdown the server gracefully
     server.shutdown()
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="FL Server Main")
     parser = argparse.ArgumentParser(description="FL Server Main")
     parser.add_argument(
         "--artifact_dir",
@@ -117,7 +152,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="config.yaml",
+        default="examples/scaffold_example/config.yaml",
     )
     parser.add_argument(
         "--server_address",
@@ -136,5 +171,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-    log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name, args)
+
+    checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
+
+    main(config, checkpoint_dir)

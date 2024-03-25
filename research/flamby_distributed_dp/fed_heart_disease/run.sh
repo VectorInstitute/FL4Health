@@ -1,13 +1,13 @@
 clear 
 # scancel --me 
-rm -rf log_error/fed_heart_disease/ log/fed_heart_disease/ 
+rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_distributed/ /scratch/ssd004/scratch/xuejzhao/log/fed_heart_disease_distributed/ 
 
-mkdir -p log/fed_heart_disease/
-mkdir -p log_error/fed_heart_disease/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log/fed_heart_disease_distributed/
+mkdir -p /scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_distributed/
 
 ./research/flamby_distributed_dp/fed_heart_disease/run_hp_sweep.sh \
     research/flamby_distributed_dp/fed_heart_disease/config.yaml \
-    log/fed_heart_disease/\
+    /scratch/ssd004/scratch/xuejzhao/log/fed_heart_disease_distributed/\
     flamby_datasets/fed_heart_disease/ \
     .venv/
 

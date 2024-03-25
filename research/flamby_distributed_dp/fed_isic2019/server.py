@@ -25,7 +25,7 @@ import torch
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 
-from research.flamby_distributed_dp.fed_isic2019.model import ModifiedBaseline
+from research.flamby_distributed_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -45,7 +45,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    model = ModifiedBaseline()
+    model = FedISICImageClassifier()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = SecureAggregationStrategy(

@@ -25,6 +25,7 @@ from research.flamby_central_dp.fed_isic2019.model import ModifiedBaseline
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
 
 
 class FedIsic2019FedAvgClient(CentralDPClient):
@@ -63,7 +64,7 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = ModifiedBaseline().to(self.device)
+        model: nn.Module = FedISICImageClassifier().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

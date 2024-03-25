@@ -19,10 +19,12 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
+from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 import os 
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-
+from flwr.common.logger import log
+from logging import INFO
 
 class FedHeartClient(DPScaffoldLoggingClient):
 
@@ -39,7 +41,7 @@ class FedHeartClient(DPScaffoldLoggingClient):
         return torch.optim.SGD(self.model.parameters(), lr=0.05)
 
     def get_model(self, config: Config) -> nn.Module:
-        return Baseline().to(self.device)
+        return FedHeartDiseaseLargeBaseline().to(self.device)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
@@ -112,7 +114,11 @@ if __name__ == "__main__":
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
 
-    client = FedHeartClient(data_path=data_path, metrics=[Accuracy()], device=DEVICE, checkpointer=checkpointer, client_id=args.client_number)
+    client = FedHeartClient(data_path=data_path, 
+                            metrics=[Accuracy('FedHeartDisease_accuracy')], 
+                            device=DEVICE,
+                              checkpointer=checkpointer, 
+                              client_id=args.client_number)
 
     fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
     client.shutdown()
