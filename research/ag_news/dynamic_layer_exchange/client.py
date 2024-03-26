@@ -109,10 +109,10 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--dataset_dir", 
-        action="store", 
-        type=str, 
-        help="Path to the local dataset", 
+        "--dataset_dir",
+        action="store",
+        type=str,
+        help="Path to the local dataset",
         required=True,
     )
     parser.add_argument(
