@@ -344,6 +344,54 @@ class DittoClient(BasicClient):
 
         return {"global": global_preds, "local": local_preds}, features
 
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        """
+        Computes the loss and any additional losses given predictions of the model and ground truth data.
+        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
+        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the total loss
+                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
+                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
+                    keys and their respective calculated values.
+        """
+
+        # Compute global model vanilla loss
+        assert "global" in preds
+        global_loss = self.criterion(preds["global"], target)
+
+        # Compute local model loss + ditto constraint term
+        assert "local" in preds
+        local_loss = self.criterion(preds["local"], target)
+        total_loss = local_loss
+
+        additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
+
+        if self.mkmmd_loss_weight != 0:
+            # Compute MK-MMD loss
+            mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
+            total_loss += self.mkmmd_loss_weight * mkmmd_loss
+            additional_losses["mkmmd_loss"] = mkmmd_loss
+
+            if self.feature_l2_norm:
+                feature_l2_norm_loss = torch.norm(features["features"], p=2)
+                total_loss += self.feature_l2_norm * feature_l2_norm_loss
+                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
+
+        return total_loss, additional_losses
+
     def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
@@ -370,35 +418,15 @@ class DittoClient(BasicClient):
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
 
-        # Compute global model vanilla loss
-        assert "global" in preds
-        global_loss = self.criterion(preds["global"], target)
-
-        # Compute local model loss + ditto constraint term
-        assert "local" in preds
-        local_loss = self.criterion(preds["local"], target)
-        total_loss = local_loss
-
-        additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        if additional_losses is None:
+            additional_losses = {}
 
         # Compute ditto drift loss
-        if self.lam != 0:
-            ditto_local_loss = self.get_ditto_drift_loss()
-            total_loss += ditto_local_loss
-            additional_losses["ditto_loss"] = ditto_local_loss
+        ditto_local_loss = self.get_ditto_drift_loss()
+        additional_losses["ditto_loss"] = ditto_local_loss
 
-        if self.mkmmd_loss_weight != 0:
-            # Compute MK-MMD loss
-            mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
-            total_loss += self.mkmmd_loss_weight * mkmmd_loss
-            additional_losses["mkmmd_loss"] = mkmmd_loss
-
-            if self.feature_l2_norm:
-                feature_l2_norm_loss = torch.norm(features["features"], p=2)
-                total_loss += self.feature_l2_norm * feature_l2_norm_loss
-                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
-
-        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
