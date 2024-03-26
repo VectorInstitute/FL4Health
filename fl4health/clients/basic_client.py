@@ -565,6 +565,7 @@ class BasicClient(NumPyClient):
         self.val_loss_meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
+                input, target = self._move_data_to_device(input), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
                 self.val_metric_manager.update(preds, target)
