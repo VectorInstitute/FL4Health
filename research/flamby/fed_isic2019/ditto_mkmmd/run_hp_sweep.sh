@@ -41,6 +41,7 @@ do
   for MU_VALUE in "${MU_VALUES[@]}";
   do
     for L2_VALUE in "${L2_VALUES[@]}";
+    do
       EXPERIMENT_NAME="lr_${LR_VALUE}_mu_${MU_VALUE}_l2_${L2_VALUE}"
       echo "Beginning Experiment ${EXPERIMENT_NAME}"
       EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
