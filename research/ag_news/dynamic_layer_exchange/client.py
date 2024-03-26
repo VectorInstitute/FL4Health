@@ -100,9 +100,9 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         return parameter_exchanger
 
     def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        preds, features = super().predict(input)
-        if "logits" in preds.keys():
-            preds["prediction"] = preds.pop("logits")
+        outputs, features = super().predict(input)
+        preds = {}
+        preds["prediction"] = outputs["logits"]
         return preds, features
 
 
