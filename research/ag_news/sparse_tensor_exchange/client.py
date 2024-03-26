@@ -17,23 +17,23 @@ from transformers import BertForSequenceClassification
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
-from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
+from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
+from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from research.ag_news.client_data import construct_dataloaders
 
 
-class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
+class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
         learning_rate: float,
-        exchange_percentage: float,
+        sparsity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -48,8 +48,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             metrics_reporter=metrics_reporter,
             store_initial_model=store_initial_model,
         )
-        assert 0 < exchange_percentage <= 1.0
-        self.exchange_percentage = exchange_percentage
+        self.sparsity_level = sparsity_level
         self.learning_rate: float = learning_rate
 
     def get_model(self, config: Config) -> nn.Module:
@@ -71,32 +70,12 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=0.001)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        """
-        This method configures and instantiates a NormDriftParameterExchanger to be used in dynamic weight exchange.
-
-        Args:
-            config (Config): Configuration used to setup the weight exchanger properties for dynamic exchange
-
-        Returns:
-            ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
-                federated training
-        """
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
-        selection_function_constructor = LayerSelectionFunctionConstructor(
-            norm_threshold=norm_threshold,
-            exchange_percentage=self.exchange_percentage,
-            normalize=normalize,
-            select_drift_more=select_drift_more,
+        # A different score_gen_function may be passed in to allow for alternative
+        # selection criterion.
+        parameter_exchanger = SparseCooParameterExchanger(
+            sparsity_level=self.sparsity_level,
+            score_gen_function=largest_final_magnitude_scores,
         )
-        layer_selection_function = (
-            selection_function_constructor.select_by_percentage()
-            if filter_by_percentage
-            else selection_function_constructor.select_by_threshold()
-        )
-        parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
 
     def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
@@ -149,10 +128,10 @@ if __name__ == "__main__":
         help="Learning rate used by the client",
     )
     parser.add_argument(
-        "--exchange_percentage",
+        "--sparsity_level",
         action="store",
         type=float,
-        help="Percentage of the number of tensors that are exchanged with the server",
+        help="Sparsity level used for parameter exchange",
     )
     args = parser.parse_args()
 
@@ -163,19 +142,19 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Exchange Percentage: {args.exchange_percentage}")
+    log(INFO, f"Sparsity Level: {args.sparsity_level}")
 
     # Checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
-    client = BertDynamicLayerExchangeClient(
+    client = BertSparseTensorExchangeClient(
         data_path,
         [Accuracy("accuracy")],
         DEVICE,
         learning_rate=args.learning_rate,
-        exchange_percentage=args.exchange_percentage,
+        sparsity_level=args.sparsity_level,
         checkpointer=checkpointer,
     )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
