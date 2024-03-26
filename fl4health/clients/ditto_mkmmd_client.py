@@ -384,7 +384,7 @@ class DittoClient(BasicClient):
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
-
+            log(INFO, f"checking self.feature_l2_norm: {self.feature_l2_norm}")
             if self.feature_l2_norm:
                 feature_l2_norm_loss = torch.norm(features["features"], p=2)
                 total_loss += self.feature_l2_norm * feature_l2_norm_loss
@@ -419,8 +419,7 @@ class DittoClient(BasicClient):
         assert self.global_model.training and self.model.training
 
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        if additional_losses is None:
-            additional_losses = {}
+        assert additional_losses is not None
 
         # Compute ditto drift loss
         ditto_local_loss = self.get_ditto_drift_loss()
@@ -465,14 +464,8 @@ class DittoClient(BasicClient):
         # Check that both models are in eval mode
         assert not self.global_model.training and not self.model.training
 
-        # Compute global model vanilla loss
-        assert "global" in preds
-        global_loss = self.criterion(preds["global"], target)
+        _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        assert additional_losses is not None
+        checkpoint = additional_losses["local_loss"]
 
-        # Compute local model vanilla loss
-        assert "local" in preds
-        local_loss = self.criterion(preds["local"], target)
-
-        additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
-
-        return EvaluationLosses(checkpoint=local_loss, additional_losses=additional_losses)
+        return EvaluationLosses(checkpoint=checkpoint, additional_losses=additional_losses)
