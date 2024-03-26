@@ -688,9 +688,6 @@ class BasicClient(NumPyClient):
                 indexed by name.
         """
 
-        # Check that the model is in training mode
-        assert self.model.training 
-
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return TrainingLosses(backward=loss, additional_losses=additional_losses)
 
@@ -713,8 +710,6 @@ class BasicClient(NumPyClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
                 indexed by name.
         """
-        # Check that the model is in evaluation mode
-        assert not self.model.training 
 
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)

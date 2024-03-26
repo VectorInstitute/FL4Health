@@ -189,7 +189,11 @@ def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
         "aggregated_global_features": aggregated_global_features,
     }
 
+    # Make sure the model is set to train
+    fenda_client.model.train()
     training_loss = fenda_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    fenda_client.model.eval()
     evaluation_loss = fenda_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()

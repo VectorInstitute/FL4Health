@@ -360,7 +360,7 @@ class FendaClient(BasicClient):
         """
 
         # Check that the model is in evaluation mode
-        assert not self.model.training 
+        assert not self.model.training
 
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

@@ -29,7 +29,6 @@ class DittoClient(BasicClient):
         mkmmd_loss_weight: float = 10.0,
         beta_update_interval: int = 20,
         feature_l2_norm: Optional[float] = 0.0,
-
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through

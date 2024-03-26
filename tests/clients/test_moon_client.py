@@ -193,7 +193,11 @@ def test_compute_loss(get_client: MoonClient) -> None:  # noqa
     assert pytest.approx(expected_loss, abs=0.0001) == additional_losses["loss"].item()
     assert pytest.approx(expected_total_loss, abs=0.0001) == additional_losses["total_loss"].item()
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(expected_loss, abs=0.0001) == evaluation_loss.checkpoint.item()
@@ -225,7 +229,11 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     }
     expected_loss = 0.8132616
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
 
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
@@ -247,7 +255,11 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     assert pytest.approx(expected_loss, abs=0.0001) == additional_losses["loss"].item()
     assert pytest.approx(expected_total_loss, abs=0.0001) == additional_losses["total_loss"].item()
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(expected_loss, abs=0.0001) == evaluation_loss.checkpoint.item()
