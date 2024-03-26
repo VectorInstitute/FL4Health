@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -97,6 +98,12 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         )
         parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
         return parameter_exchanger
+
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        preds, features = super().predict(input)
+        if "logits" in preds.keys():
+            preds["prediction"] = preds.pop("logits")
+        return preds, features
 
 
 if __name__ == "__main__":
