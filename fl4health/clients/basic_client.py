@@ -661,21 +661,26 @@ class BasicClient(NumPyClient):
             forward.
         """
         if isinstance(input, torch.Tensor):
-            preds = self.model(input)
+            output = self.model(input)
         elif isinstance(input, dict):
             # If input is a dictionary, then we unpack it before computing the forward pass.
             # Note that this assumes the keys of the input match (exactly) the keyword args
             # of self.model.forward().
-            preds = self.model(**input)
+            output = self.model(**input)
         else:
             raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
 
-        if isinstance(preds, dict):
-            return preds, {}
-        elif isinstance(preds, torch.Tensor):
-            return {"prediction": preds}, {}
+        if isinstance(output, dict):
+            return output, {}
+        elif isinstance(output, torch.Tensor):
+            return {"prediction": output}, {}
+        elif isinstance(output, tuple):
+            if len(output) != 2:
+                raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
+            preds, features = output
+            return preds, features
         else:
-            raise ValueError("Model forward did not return a tensor or dictionary or tensors")
+            raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
         self,

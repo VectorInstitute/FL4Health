@@ -118,7 +118,7 @@ class Scaffold(BasicFedAvg):
                 Defaults to None.
             model (Optional[nn.Module]): If provided and initial_control_variates is not, this is used to
                 set the server control variates and the initial control variates on the client side to all zeros.
-                If initial_control_variates are provided, they take precendence. Defaults to None.
+                If initial_control_variates are provided, they take precedence. Defaults to None.
 
         Returns:
             Parameters: This quantity represents the initial values for the control variates for the server and on the
