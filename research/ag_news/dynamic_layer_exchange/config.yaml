@@ -2,8 +2,8 @@
 n_server_rounds: 4 # The number of rounds to run FL
 
 # Parameters that describe clients
-n_clients: 5 # The number of clients in the FL experiment
-local_epochs: 1 # The number of epochs to complete for client
+n_clients: 3 # The number of clients in the FL experiment
+local_steps: 500 # The number of epochs to complete for client
 batch_size: 4 # The batch size for client training
 
 num_classes: 4 # number of classes in the classification task.

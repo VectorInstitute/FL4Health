@@ -109,7 +109,17 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
-        "--dataset_path", action="store", type=str, help="Path to the local dataset", default="examples/datasets"
+        "--dataset_dir",
+        action="store",
+        type=str,
+        help="Path to the local dataset",
+        required=True,
+    )
+    parser.add_argument(
+        "--run_name",
+        action="store",
+        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
+        required=True,
     )
     parser.add_argument(
         "--server_address",
@@ -122,7 +132,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-2 for FedIXI)",
+        help="Number of the client. Used for checkpointing",
         required=True,
     )
     parser.add_argument(
@@ -141,12 +151,12 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    data_path = Path(args.dataset_path)
+    data_path = Path(args.dataset_dir)
 
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Exchange Percentage: {args.learning_rate}")
+    log(INFO, f"Exchange Percentage: {args.exchange_percentage}")
 
     # Checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)

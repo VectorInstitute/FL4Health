@@ -70,7 +70,8 @@ SERVER_ADDRESS=$7
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+# RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+RUN_NAMES=( "Run1" )
 
 echo "Python Venv Path: ${VENV_PATH}"
 
@@ -134,12 +135,13 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_ixi.scaffold.client \
+        nohup python -m research.ag_news.dynamic_layer_exchange.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
+            --exchange_percentage ${EXCHANGE_PERCENTAGE} \
             --server_address ${SERVER_ADDRESS} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
