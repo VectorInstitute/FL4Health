@@ -85,19 +85,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["beta"],
     )
 
-    eval_config_fn = partial(
-        fit_config,
-        config["local_steps"],
-        config["batch_size"],
-        config["num_classes"],
-        config["normalize"],
-        config["filter_by_percentage"],
-        config["norm_threshold"],
-        config["exchange_percentage"],
-        config["sample_percentage"],
-        config["beta"],
-    )
-
     initial_model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", config["num_classes"])
 
     # Since clients can send different tensors to the server, we perform weighted averaging separately on each tensor.
@@ -105,7 +92,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
-        on_evaluate_config_fn=eval_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),

@@ -1,4 +1,5 @@
 import argparse
+import os
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
@@ -13,7 +14,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -101,6 +102,13 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument(
+        "--artifact_dir",
+        action="store",
+        type=str,
+        help="Path to save client artifacts such as logs and model checkpoints",
+        required=True,
+    )
+    parser.add_argument(
         "--dataset_path", action="store", type=str, help="Path to the local dataset", default="examples/datasets"
     )
     parser.add_argument(
@@ -109,6 +117,13 @@ if __name__ == "__main__":
         type=str,
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
+    )
+    parser.add_argument(
+        "--client_number",
+        action="store",
+        type=int,
+        help="Number of the client for dataset loading (should be 0-2 for FedIXI)",
+        required=True,
     )
     parser.add_argument(
         "--learning_rate",
@@ -130,6 +145,13 @@ if __name__ == "__main__":
 
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
+    log(INFO, f"Learning Rate: {args.learning_rate}")
+    log(INFO, f"Exchange Percentage: {args.learning_rate}")
+
+    # Checkpointing
+    checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
+    checkpoint_name = f"client_{args.client_number}_best_model.pkl"
+    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     client = BertDynamicLayerExchangeClient(
         data_path,
@@ -137,6 +159,7 @@ if __name__ == "__main__":
         DEVICE,
         learning_rate=args.learning_rate,
         exchange_percentage=args.exchange_percentage,
+        checkpointer=checkpointer,
     )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
