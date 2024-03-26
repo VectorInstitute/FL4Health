@@ -18,7 +18,7 @@ def collate_fn_with_padding(
     for pair in batch:
         input_list.append(pair[0])
         target_list.append(pair[1])
-    return tokenizer.pad(input_list), torch.stack(target_list)
+    return tokenizer.pad(input_list).data, torch.stack(target_list)
 
 
 def create_text_classification_dataset(
@@ -45,17 +45,18 @@ def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float
 
     # Set the columns of datasets so different parts can be easily accessed.
     train_dataset = tokenized_ag_news["train"]
-    column_names = ["input_ids", "attention_mask", "label"]
-    train_dataset.set_format(type="torch", columns=column_names)
+    data_column_names = ["input_ids", "attention_mask"]
+    all_column_names = data_column_names + ["label"]
+    train_dataset.set_format(type="torch", columns=all_column_names)
 
     # It is important to ensure that the column names do not contain the column
     # that correspond to the raw text to ensure that padding via collate functions works.
-    train_dataset = create_text_classification_dataset(train_dataset, column_names, "label")
+    train_dataset = create_text_classification_dataset(train_dataset, data_column_names, "label")
     train_dataset = sampler.subsample(train_dataset)
 
     val_dataset = tokenized_ag_news["test"]
-    val_dataset.set_format(type="torch", columns=column_names)
-    val_dataset = create_text_classification_dataset(val_dataset, column_names, "label")
+    val_dataset.set_format(type="torch", columns=all_column_names)
+    val_dataset = create_text_classification_dataset(val_dataset, data_column_names, "label")
     val_dataset = sampler.subsample(val_dataset)
 
     # The collate function is used to dynamically pad the sequences within every batch to the same length.
