@@ -384,7 +384,6 @@ class DittoClient(BasicClient):
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
-            log(INFO, f"checking self.feature_l2_norm: {self.feature_l2_norm}")
             if self.feature_l2_norm:
                 feature_l2_norm_loss = torch.norm(features["features"], p=2)
                 total_loss += self.feature_l2_norm * feature_l2_norm_loss
