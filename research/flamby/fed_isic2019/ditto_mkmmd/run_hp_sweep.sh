@@ -27,6 +27,7 @@ VENV_PATH=$4
 
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 MU_VALUES=( 0.01 0.1 1.0 )
+L2_VALUES=( 0.01 0.1 1.0 )
 
 SERVER_PORT=8100
 
@@ -39,24 +40,27 @@ for LR_VALUE in "${LR_VALUES[@]}";
 do
   for MU_VALUE in "${MU_VALUES[@]}";
   do
-    EXPERIMENT_NAME="lr_${LR_VALUE}_mu_${MU_VALUE}"
-    echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
-    echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
-    mkdir "${EXPERIMENT_DIRECTORY}"
-    SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
-    echo "Server Address: ${SERVER_ADDRESS}"
-    SBATCH_COMMAND="research/flamby/fed_isic2019/ditto_mkmmd/run_fold_experiment.slrm \
-      ${SERVER_CONFIG_PATH} \
-      ${EXPERIMENT_DIRECTORY} \
-      ${DATASET_DIR} \
-      ${VENV_PATH} \
-      ${LR_VALUE} \
-      ${MU_VALUES} \
-      ${SERVER_ADDRESS}"
-    echo "Running sbatch command ${SBATCH_COMMAND}"
-    sbatch ${SBATCH_COMMAND}
-    ((SERVER_PORT=SERVER_PORT+1))
+    for L2_VALUE in "${L2_VALUES[@]}";
+      EXPERIMENT_NAME="lr_${LR_VALUE}_mu_${MU_VALUE}_l2_${L2_VALUE}"
+      echo "Beginning Experiment ${EXPERIMENT_NAME}"
+      EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
+      echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
+      mkdir "${EXPERIMENT_DIRECTORY}"
+      SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
+      echo "Server Address: ${SERVER_ADDRESS}"
+      SBATCH_COMMAND="research/flamby/fed_isic2019/ditto_mkmmd/run_fold_experiment.slrm \
+        ${SERVER_CONFIG_PATH} \
+        ${EXPERIMENT_DIRECTORY} \
+        ${DATASET_DIR} \
+        ${VENV_PATH} \
+        ${LR_VALUE} \
+        ${MU_VALUES} \
+        ${L2_VALUES} \
+        ${SERVER_ADDRESS}"
+      echo "Running sbatch command ${SBATCH_COMMAND}"
+      sbatch ${SBATCH_COMMAND}
+      ((SERVER_PORT=SERVER_PORT+1))
+    done
   done
 done
 

@@ -358,5 +358,9 @@ class FendaClient(BasicClient):
                 indexed by name. Additional losses may include cosine_similarity_loss, contrastive_loss
                 and perfcl_loss.
         """
+
+        # Check that the model is in evaluation mode
+        assert not self.model.training 
+
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=additional_losses["loss"], additional_losses=additional_losses)

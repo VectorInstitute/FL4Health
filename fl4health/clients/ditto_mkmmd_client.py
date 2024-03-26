@@ -28,6 +28,8 @@ class DittoClient(BasicClient):
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
         beta_update_interval: int = 20,
+        feature_l2_norm: Optional[float] = 0.0,
+
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
@@ -60,6 +62,7 @@ class DittoClient(BasicClient):
         )
         self.lam = lam
         self.mkmmd_loss_weight = mkmmd_loss_weight
+        self.feature_l2_norm = feature_l2_norm
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.global_model: nn.Module
         self.init_global_model: nn.Module
@@ -390,6 +393,11 @@ class DittoClient(BasicClient):
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
+
+            if self.feature_l2_norm:
+                feature_l2_norm_loss = torch.norm(features["features"], p=2)
+                total_loss += self.feature_l2_norm * feature_l2_norm_loss
+                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
         return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 

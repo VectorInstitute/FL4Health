@@ -33,6 +33,7 @@ class MoonClient(BasicClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         contrastive_weight: Optional[float] = None,
         mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
+        feature_l2_norm: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -43,6 +44,7 @@ class MoonClient(BasicClient):
         )
         self.contrastive_weight = contrastive_weight
         self.mkmmd_loss_weights = mkmmd_loss_weights
+        self.feature_l2_norm = feature_l2_norm
         self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature)
         self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
@@ -116,8 +118,8 @@ class MoonClient(BasicClient):
 
                 if self.mkmmd_loss_weights[1] != 0:
                     self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                        X=old_distribution,
-                        Y=global_distribution,
+                        X=local_distribution,
+                        Y=old_distribution,
                         lambda_m=1e-5,
                     )
                     log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
@@ -211,9 +213,14 @@ class MoonClient(BasicClient):
                 additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
 
             if self.mkmmd_loss_weights[1] != 0:
-                mkmmd_loss_max = self.mkmmd_loss_max(features["old_features"][-1], features["global_features"])
+                mkmmd_loss_max = self.mkmmd_loss_max(features["features"], features["old_features"][-1])
                 total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
+            
+            if self.feature_l2_norm:
+                feature_l2_norm_loss = torch.norm(features["features"], p=2)
+                total_loss += self.feature_l2_norm * feature_l2_norm_loss
+                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
         additional_losses["total_loss"] = total_loss
 
@@ -239,6 +246,10 @@ class MoonClient(BasicClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
             indexed by name.
         """
+
+        # Check that the model is in training mode
+        assert self.model.training
+
         # If there are no old local models in the list (first pass of MOON training), we just do basic loss
         #  calculations
         if len(self.old_models_list) == 0:
@@ -267,6 +278,9 @@ class MoonClient(BasicClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
                 additional losses indexed by name.
         """
+        # Check that the model is in evaluation mode
+        assert not self.model.training
+
         # If there are no old local models in the list (first pass of MOON training), we just do basic loss
         # calculations
         if len(self.old_models_list) == 0:

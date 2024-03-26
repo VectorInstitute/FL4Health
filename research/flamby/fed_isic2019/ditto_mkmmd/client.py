@@ -34,6 +34,7 @@ class FedIsic2019DittoClient(DittoClient):
         lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
+        feature_l2_norm: float = 1,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -44,6 +45,7 @@ class FedIsic2019DittoClient(DittoClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
+            feature_l2_norm=feature_l2_norm,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -126,6 +128,13 @@ if __name__ == "__main__":
         help="Weight for the mkmmd losses",
         required=False,
     )
+    parser.add_argument(
+        "--l2",
+        action="store",
+        type=float,
+        help="Weight for the feature l2 norm loss",
+        required=False,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -148,6 +157,7 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
         mkmmd_loss_weight=args.mu,
+        feature_l2_norm=args.l2,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
