@@ -55,8 +55,8 @@ do
         ${DATASET_DIR} \
         ${VENV_PATH} \
         ${LR_VALUE} \
-        ${MU_VALUES} \
-        ${L2_VALUES} \
+        ${MU_VALUE} \
+        ${L2_VALUE} \
         ${SERVER_ADDRESS}"
       echo "Running sbatch command ${SBATCH_COMMAND}"
       sbatch ${SBATCH_COMMAND}
