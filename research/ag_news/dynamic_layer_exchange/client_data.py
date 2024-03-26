@@ -54,7 +54,7 @@ def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float
     train_dataset = sampler.subsample(train_dataset)
 
     val_dataset = tokenized_ag_news["test"]
-    val_dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "label"])
+    val_dataset.set_format(type="torch", columns=column_names)
     val_dataset = create_text_classification_dataset(val_dataset, column_names, "label")
     val_dataset = sampler.subsample(val_dataset)
 

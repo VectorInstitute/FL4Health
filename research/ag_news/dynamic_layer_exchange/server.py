@@ -85,7 +85,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["beta"],
     )
 
-    initial_model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", config["num_classes"])
+    initial_model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=config["num_classes"])
 
     # Since clients can send different tensors to the server, we perform weighted averaging separately on each tensor.
     strategy = FedAvgDynamicLayer(
