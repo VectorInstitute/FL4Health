@@ -30,6 +30,8 @@ class LabelBasedSampler(ABC):
             new_targets = dataset.targets[selected_indices]
             new_data: Dict[str, List[torch.Tensor]] = {}
             for key, val in dataset.data.items():
+                # Since val is a list of tensors, we can't directly index into it
+                # using selected_indices.
                 new_data[key] = [val[i] for i in selected_indices]
             return TextClassificationDataset(new_data, new_targets)
         else:

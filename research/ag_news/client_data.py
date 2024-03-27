@@ -14,6 +14,9 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 def collate_fn_with_padding(
     tokenizer: PreTrainedTokenizer, batch: List[Tuple[Dict[str, List[torch.Tensor]], torch.Tensor]]
 ) -> Tuple[Dict[str, List[torch.Tensor]], torch.Tensor]:
+    """
+    Pad the sequences within a batch to the same length.
+    """
     input_list, target_list = [], []
     for pair in batch:
         input_list.append(pair[0])
@@ -45,12 +48,13 @@ def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float
 
     # Set the columns of datasets so different parts can be easily accessed.
     train_dataset = tokenized_ag_news["train"]
+
+    # It is important to ensure that the column names do not contain the column
+    # that correspond to the raw text to ensure that padding via collate functions works as expected.
     data_column_names = ["input_ids", "attention_mask"]
     all_column_names = data_column_names + ["label"]
     train_dataset.set_format(type="torch", columns=all_column_names)
 
-    # It is important to ensure that the column names do not contain the column
-    # that correspond to the raw text to ensure that padding via collate functions works.
     train_dataset = create_text_classification_dataset(train_dataset, data_column_names, "label")
     train_dataset = sampler.subsample(train_dataset)
 
