@@ -100,6 +100,15 @@ Trains a global feature extractor shared by all clients through FedAvg and a pri
 <tr>
 <td>
 
+[Ditto](https://arxiv.org/abs/2012.04221)
+</td>
+<td>
+Trains a global model with FedAvg and a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous global model.
+</td>
+</tr>
+<tr>
+<td>
+
 [APFL](https://arxiv.org/abs/2003.13461)
 </td>
 <td>
