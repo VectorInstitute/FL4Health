@@ -17,7 +17,13 @@ from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, 
 
 def fit_config(
     batch_size: int,
-    sparsity_level: float,
+    normalize: bool,
+    filter_by_percentage: bool,
+    select_drift_more: bool,
+    norm_threshold: float,
+    exchange_percentage: float,
+    sample_percentage: float,
+    beta: float,
     current_server_round: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
@@ -25,7 +31,13 @@ def fit_config(
     config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
-        "sparsity_level": sparsity_level,
+        "normalize": normalize,
+        "filter_by_percentage": filter_by_percentage,
+        "select_drift_more": select_drift_more,
+        "norm_threshold": norm_threshold,
+        "exchange_percentage": exchange_percentage,
+        "sample_percentage": sample_percentage,
+        "beta": beta,
         "current_server_round": current_server_round,
     }
     return config
@@ -36,7 +48,13 @@ def main(config: Dict[str, Any]) -> None:
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
-        config["sparsity_level"],
+        config["normalize"],
+        config["filter_by_percentage"],
+        config["select_drift_more"],
+        config["norm_threshold"],
+        config["exchange_percentage"],
+        config["sample_percentage"],
+        config["beta"],
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )

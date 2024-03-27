@@ -70,6 +70,6 @@ if __name__ == "__main__":
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarDynamicLayerClient(data_path, [Accuracy("accuracy")], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    client = CifarDynamicLayerClient(data_path, [Accuracy("accuracy")], DEVICE, store_initial_model=True)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
