@@ -389,6 +389,8 @@ class DittoClient(BasicClient):
                 total_loss += self.feature_l2_norm * feature_l2_norm_loss
                 additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
+        additional_losses["total_loss"] = total_loss
+
         return total_loss, additional_losses
 
     def compute_training_loss(
@@ -417,14 +419,14 @@ class DittoClient(BasicClient):
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
 
-        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+        total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         assert additional_losses is not None
 
         # Compute ditto drift loss
         ditto_local_loss = self.get_ditto_drift_loss()
         additional_losses["ditto_loss"] = ditto_local_loss
 
-        return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=total_loss + ditto_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
