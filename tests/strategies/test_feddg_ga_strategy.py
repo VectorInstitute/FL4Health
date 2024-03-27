@@ -9,7 +9,7 @@ from flwr.server.client_manager import ClientManager, ClientProxy, SimpleClientM
 from pytest import approx, raises
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
-from fl4health.strategies.feddg_ga_strategy import INITIAL_ADJUSTMENT_WEIGHT, FairnessMetricType, FedDGGAStrategy
+from fl4health.strategies.feddg_ga_strategy import INITIAL_ADJUSTMENT_WEIGHT, FairnessMetricType, FedDgGaStrategy
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
@@ -22,7 +22,7 @@ def test_configure_fit_success() -> None:
             "n_server_rounds": test_n_server_rounds,
         }
 
-    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn)
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn)
     assert strategy.num_rounds is None
 
     try:
@@ -37,7 +37,7 @@ def test_configure_fit_fail() -> None:
     fixed_sampling_client_manager = _apply_mocks_to_client_manager(FixedSamplingClientManager())
     simple_client_manager = _apply_mocks_to_client_manager(SimpleClientManager())
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -46,7 +46,7 @@ def test_configure_fit_fail() -> None:
             "n_server_rounds": 2,
         }
 
-    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn)
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), simple_client_manager)
 
@@ -55,7 +55,7 @@ def test_configure_fit_fail() -> None:
             "foo": 123,
         }
 
-    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn_1)
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_1)
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
@@ -66,7 +66,7 @@ def test_configure_fit_fail() -> None:
             "n_server_rounds": 1.1,
         }
 
-    strategy = FedDGGAStrategy(on_fit_config_fn=on_fit_config_fn_2)
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_2)
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
@@ -83,7 +83,7 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
     test_eval_metrics_2 = test_eval_results[1][1].metrics
     test_val_loss_key = FairnessMetricType.LOSS.value
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
 
     # test aggregate fit
@@ -119,7 +119,7 @@ def test_weight_and_aggregate_results_with_default_weights() -> None:
     test_cid_1 = test_fit_results[0][0].cid
     test_cid_2 = test_fit_results[1][0].cid
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     aggregated_results = strategy.weight_and_aggregate_results(test_fit_results)
 
     assert strategy.adjustment_weights == {
@@ -135,7 +135,7 @@ def test_weight_and_aggregate_results_with_existing_weights() -> None:
     test_cid_2 = test_fit_results[1][0].cid
     test_adjustment_weights = {test_cid_1: 0.21, test_cid_2: 0.76}
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     strategy.adjustment_weights = deepcopy(test_adjustment_weights)
     aggregated_results = strategy.weight_and_aggregate_results(test_fit_results)
 
@@ -147,7 +147,7 @@ def test_update_weights_by_ga() -> None:
     test_cids = ["1", "2"]
     test_val_loss_key = FairnessMetricType.LOSS.value
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
     strategy.train_metrics = {
         test_cids[0]: {test_val_loss_key: 0.5467},
@@ -174,7 +174,7 @@ def test_update_weights_by_ga_with_same_metrics() -> None:
     test_cids = ["1", "2"]
     test_val_loss_key = FairnessMetricType.LOSS.value
 
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
     strategy.train_metrics = {
         test_cids[0]: {test_val_loss_key: 0.5467},
@@ -195,7 +195,7 @@ def test_update_weights_by_ga_with_same_metrics() -> None:
 
 
 def test_get_current_weight_step_size() -> None:
-    strategy = FedDGGAStrategy()
+    strategy = FedDgGaStrategy()
 
     with raises(AssertionError):
         strategy.get_current_weight_step_size(2)

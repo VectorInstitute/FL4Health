@@ -52,7 +52,7 @@ class FairnessMetric:
             signal if one wants to override them.
 
         Args:
-            metric_type: (FairnessMetricType) the fairness metric type. If CUSTOM, the metric_type and
+            metric_type: (FairnessMetricType) the fairness metric type. If CUSTOM, the metric_name and
                 signal should be provided.
             metric_name: (str, optional) the name of the metric to be used as fairness metric.
                 Optional, default is metric_type.value.
@@ -76,7 +76,7 @@ class FairnessMetric:
 INITIAL_ADJUSTMENT_WEIGHT = 1.0 / 3.0
 
 
-class FedDGGAStrategy(FedAvg):
+class FedDgGaStrategy(FedAvg):
     def __init__(
         self,
         *,
