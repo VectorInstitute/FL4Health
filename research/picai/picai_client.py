@@ -61,7 +61,7 @@ class PicaiClient(BasicClient):
         Raises:
             ValueError: If local_steps or local_epochs is not specified in config.
         """
-        local_epochs, local_steps, current_server_round = self.process_config(config)
+        local_epochs, local_steps, current_server_round, _ = self.process_config(config)
 
         if not self.initialized:
             self.setup_client(config)

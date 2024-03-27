@@ -301,10 +301,12 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         client.get_data_loaders(config)
 
         logger.info("Finished preloading MNIST dataset")
-    if "cifar" in dataset_path:
+
+    elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
         load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
         logger.info("Finished preloading CIFAR10 dataset")
+
     else:
         logger.info("Preload not supported for specified dataset. Skipping.")
 
@@ -478,6 +480,17 @@ if __name__ == "__main__":
             seed=42,
             server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
             client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.feddg_ga_example.server",
+            client_python_path="examples.feddg_ga_example.client",
+            config_path="tests/smoke_tests/feddg_ga_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
         )
     )
     loop.run_until_complete(
