@@ -24,8 +24,6 @@ def construct_config(
     normalize: bool,
     filter_by_percentage: bool,
     select_drift_more: bool,
-    norm_threshold: float,
-    exchange_percentage: float,
     sample_percentage: float,
     beta: float,
 ) -> Config:
@@ -39,8 +37,6 @@ def construct_config(
         "normalize": normalize,
         "filter_by_percentage": filter_by_percentage,
         "select_drift_more": select_drift_more,
-        "norm_threshold": norm_threshold,
-        "exchange_percentage": exchange_percentage,
         "sample_percentage": sample_percentage,
         "beta": beta,
     }
@@ -53,8 +49,6 @@ def fit_config(
     normalize: bool,
     filter_by_percentage: bool,
     select_drift_more: bool,
-    norm_threshold: float,
-    exchange_percentage: float,
     sample_percentage: float,
     beta: float,
     current_round: int,
@@ -67,8 +61,6 @@ def fit_config(
         normalize,
         filter_by_percentage,
         select_drift_more,
-        norm_threshold,
-        exchange_percentage,
         sample_percentage,
         beta,
     )
@@ -84,8 +76,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         config["normalize"],
         config["filter_by_percentage"],
         config["select_drift_more"],
-        config["norm_threshold"],
-        config["exchange_percentage"],
         config["sample_percentage"],
         config["beta"],
     )

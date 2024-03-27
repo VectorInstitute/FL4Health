@@ -34,6 +34,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         device: torch.device,
         learning_rate: float,
         exchange_percentage: float,
+        norm_threshold: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -48,7 +49,8 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             metrics_reporter=metrics_reporter,
             store_initial_model=store_initial_model,
         )
-        assert 0 < exchange_percentage <= 1.0
+        assert 0 < exchange_percentage <= 1.0 and norm_threshold > 0
+        self.norm_threshold = norm_threshold
         self.exchange_percentage = exchange_percentage
         self.learning_rate: float = learning_rate
 
@@ -83,10 +85,9 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         """
         normalize = self.narrow_config_type(config, "normalize", bool)
         filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
         select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
         selection_function_constructor = LayerSelectionFunctionConstructor(
-            norm_threshold=norm_threshold,
+            norm_threshold=self.norm_threshold,
             exchange_percentage=self.exchange_percentage,
             normalize=normalize,
             select_drift_more=select_drift_more,
@@ -154,6 +155,13 @@ if __name__ == "__main__":
         type=float,
         help="Percentage of the number of tensors that are exchanged with the server",
     )
+    parser.add_argument(
+        "--norm_threshold",
+        action="store",
+        type=float,
+        help="Norm threshold",
+        default=24.5,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -176,6 +184,7 @@ if __name__ == "__main__":
         DEVICE,
         learning_rate=args.learning_rate,
         exchange_percentage=args.exchange_percentage,
+        norm_threshold=args.norm_threshold,
         checkpointer=checkpointer,
     )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
