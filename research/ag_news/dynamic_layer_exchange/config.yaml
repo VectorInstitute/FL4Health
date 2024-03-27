@@ -1,0 +1,16 @@
+# Parameters that describe server
+n_server_rounds: 6 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+local_steps: 1000 # The number of steps to complete for client
+batch_size: 16 # The batch size for client training
+
+num_classes: 4 # number of classes in the classification task.
+
+normalize: True # specifies whether division by the tensor's dimension is performed when computing its drift norm.
+filter_by_percentage: True # this argument toggles between the two mechanisms for selecting the tensors to be exchanged.
+select_drift_more: True # If True, then select those tensors that drift the most in l2 norm.
+
+sample_percentage: 0.75 # the proportion of the training data that will actually be used in training
+beta: 1.0 # controls the heterogeneity of the data distributions among clients

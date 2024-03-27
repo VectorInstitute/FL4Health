@@ -1,0 +1,20 @@
+# Parameters that describe server
+n_server_rounds: 6 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+local_epochs: 3 # The number of epochs to complete for client
+batch_size: 32 # The batch size for client training
+
+normalize: True # specifies whether division by the tensor's dimension is performed when computing its drift norm.
+filter_by_percentage: True # this argument toggles between the two mechanisms for selecting the tensors to be exchanged.
+select_drift_more: True # If True, then select those tensors that drift the most in l2 norm.
+
+norm_threshold: 24.5 # if a tensor's drift norm exceeds this threshold, then it will be sent to the server. Only applicable when filter_by_percentage is False
+exchange_percentage: 0.5 # if a tensor has a drift norm that is falls in the top percentile specified by this argument, then it will be sent to the server. Only applicable when filter_by_percentage is True
+
+sample_percentage: 0.75
+beta: 1.0
+
+# checkpointing
+checkpoint_path: "examples/dynamic_layer_exchange_example"

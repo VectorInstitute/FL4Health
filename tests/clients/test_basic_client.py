@@ -3,11 +3,14 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 from unittest.mock import MagicMock
 
+import freezegun
 import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
 
 from fl4health.clients.basic_client import BasicClient
+
+freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
 
 @freeze_time("2012-12-12 12:12:12")
