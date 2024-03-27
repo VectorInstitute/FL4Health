@@ -687,7 +687,6 @@ class BasicClient(NumPyClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
                 indexed by name.
         """
-
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return TrainingLosses(backward=loss, additional_losses=additional_losses)
 
@@ -710,7 +709,6 @@ class BasicClient(NumPyClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
                 indexed by name.
         """
-
         loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         return EvaluationLosses(checkpoint=loss, additional_losses=additional_losses)
 
@@ -834,8 +832,8 @@ class BasicClient(NumPyClient):
         """
         Hook method called after local train step on client. step is an integer that represents
         the local training step that was most recently completed. For example, used by the APFL
-        method to update the alpha value after a training a step. Also used by the Moon and Fenda
-        to update optimized beta value for mkmmd loss after n steps.
+        method to update the alpha value after a training a step. Also used by the Moon, Fenda
+        and ditto to update optimized beta value for mkmmd loss after n steps.
 
         Args:
             step (int): The step number in local training that was most recently completed.

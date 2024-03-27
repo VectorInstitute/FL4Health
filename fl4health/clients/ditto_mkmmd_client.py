@@ -62,10 +62,11 @@ class DittoClient(BasicClient):
         self.lam = lam
         self.mkmmd_loss_weight = mkmmd_loss_weight
         self.feature_l2_norm = feature_l2_norm
+        self.beta_update_interval = beta_update_interval
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
+
         self.global_model: nn.Module
         self.init_global_model: nn.Module
-        self.beta_update_interval = beta_update_interval
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
@@ -108,11 +109,12 @@ class DittoClient(BasicClient):
             torch.Tensor: Returns the L2 inner product between the initial global weights of the round and the current
                 local model weights.
         """
-        assert self.global_model is not None and self.model is not None
+        assert self.init_global_model is not None and self.model is not None and self.lam is not None
         # Using parameters to ensure the same ordering as exchange
         local_model_weights = [layer_weights for layer_weights in self.model.parameters()]
         # Detach the weights to ensure we don't compute gradients with respect to the tensors
         initial_global_weights = [layer_weights.detach() for layer_weights in self.init_global_model.parameters()]
+
         assert len(initial_global_weights) == len(local_model_weights)
         assert len(initial_global_weights) > 0
 
@@ -323,8 +325,13 @@ class DittoClient(BasicClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        global_preds, _ = self.global_model(input)
-        local_preds, features = self.model(input)
+        if isinstance(self.model, MoonModel):
+            global_preds, _ = self.global_model(input)
+            local_preds, features = self.model(input)
+        else:
+            global_preds = self.global_model(input)
+            local_preds = self.model(input)
+            features = {}
 
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.
@@ -337,8 +344,10 @@ class DittoClient(BasicClient):
         assert isinstance(local_preds, torch.Tensor)
 
         if self.mkmmd_loss_weight != 0:
-            assert isinstance(self.model, MoonModel)
-            assert isinstance(self.init_global_model, MoonModel)
+            if not isinstance(self.model, MoonModel) or not isinstance(self.init_global_model, MoonModel):
+                AssertionError(
+                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type MoonModel."
+                )
             _, init_global_features = self.init_global_model(input)
             features.update({"init_global_features": init_global_features["features"]})
 
@@ -380,12 +389,14 @@ class DittoClient(BasicClient):
         additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
 
         if self.mkmmd_loss_weight != 0:
+            assert "init_global_features" in features
+            assert "features" in features
             # Compute MK-MMD loss
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
             if self.feature_l2_norm:
-                feature_l2_norm_loss = torch.linalg.norm(features["features"], p=2)
+                feature_l2_norm_loss = torch.linalg.norm(features["features"])
                 total_loss += self.feature_l2_norm * feature_l2_norm_loss
                 additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
