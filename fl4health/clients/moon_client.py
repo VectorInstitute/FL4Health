@@ -218,7 +218,7 @@ class MoonClient(BasicClient):
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
 
             if self.feature_l2_norm:
-                feature_l2_norm_loss = torch.norm(features["features"], p=2)
+                feature_l2_norm_loss = torch.linalg.norm(features["features"], p=2)
                 total_loss += self.feature_l2_norm * feature_l2_norm_loss
                 additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
