@@ -16,9 +16,9 @@ An example is something like
 ``` bash
 ./research/flamby/fed_isic2019/ditto_mkmmd/run_hp_sweep.sh \
    research/flamby/fed_isic2019/ditto_mkmmd/config.yaml \
-   research/flamby/fed_isic2019/ditto_mkmmd/ \
+   research/flamby/fed_isic2019/ditto/ \
    /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```
 
-In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, the client-side learning rate, and `gamma`, the mkmmd loss for ditto model structure, in the `run_hp_sweep.sh` script directly.
+In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, the client-side learning rate, and `mu`, the mkmmd loss for ditto model structure and `l2`, the l2 regularization parameter for features, in the `run_hp_sweep.sh` script directly.

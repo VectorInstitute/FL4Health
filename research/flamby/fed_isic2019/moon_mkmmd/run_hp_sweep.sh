@@ -12,7 +12,7 @@
 # Example:
 # ./research/flamby/fed_isic2019/moon_mkmmd/run_hp_sweep.sh \
 #   research/flamby/fed_isic2019/moon_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/moon_mkmmd/ \
+#   research/flamby/fed_isic2019/moon/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -26,7 +26,7 @@ DATASET_DIR=$3
 VENV_PATH=$4
 
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
-LR_VALUES=( 0.001 )
+LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 MU_VALUES=( 0 0.1 1 10 )
 GAMMA_VALUES=( 0 0.1 1 10 )
 L2_VALUES=( 0.01 0.1 1.0 )
@@ -34,7 +34,7 @@ L2_VALUES=( 0.01 0.1 1.0 )
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd_new"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 

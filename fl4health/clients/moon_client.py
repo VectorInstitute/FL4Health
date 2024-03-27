@@ -105,11 +105,11 @@ class MoonClient(BasicClient):
     def update_after_step(self, step: int) -> None:
         if step > 0 and step % self.beta_update_interval == 0:
             if self.mkmmd_loss_weights and len(self.old_models_list) > 0 and self.global_model:
-                # Get the feature distribution of the old, local and global features with evaluation mode
+                # Get the feature distribution of the old, local and global models with evaluation mode
                 local_distribution, global_distribution, old_distribution = self.update_buffers(
                     self.model, self.global_model, self.old_models_list[-1]
                 )
-                # Update betas for the MK-MMD loss based on gathered features during training
+                # Update betas for the MK-MMD loss
                 if self.mkmmd_loss_weights[0] != 0:
                     self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
                         X=local_distribution, Y=global_distribution, lambda_m=1e-5
@@ -143,7 +143,7 @@ class MoonClient(BasicClient):
 
         init_state_local_model = local_model.training
 
-        # Compute the old features before aggregation and global features
+        # Set the models to evaluation mode
         local_model.eval()
         global_model.eval()
         old_local_model.eval()
@@ -162,6 +162,7 @@ class MoonClient(BasicClient):
                 global_buffer.append(global_features["features"].reshape(len(global_features["features"]), -1))
                 old_buffer.append(old_local_features["features"].reshape(len(old_local_features["features"]), -1))
 
+        # Set the local model back to their original mode
         if init_state_local_model:
             local_model.train()
 

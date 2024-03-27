@@ -77,6 +77,7 @@ class BaseEfficientNet(nn.Module):
 
 
 class FedIsic2019DittoModel(MoonModel):
+    # We need to use MoonModel as the base class to get the output features of the base model for mkmmd loss
     def __init__(self, frozen_blocks: Optional[int] = None, turn_off_bn_tracking: bool = False) -> None:
         base_module = BaseEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         head_module = HeadClassifier(1280)

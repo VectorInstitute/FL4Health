@@ -3,7 +3,7 @@
 To run the hyperparameter sweep you simply run the command
 
 ```bash
-./research/flamby/fed_isic2019/moon/run_hp_sweep.sh \
+./research/flamby/fed_isic2019/moon_mkmmd/run_hp_sweep.sh \
    path_to_config.yaml \
    path_to_folder_for_artifacts/ \
    path_to_folder_for_dataset/ \
@@ -16,9 +16,9 @@ An example is something like
 ``` bash
 ./research/flamby/fed_isic2019/moon_mkmmd/run_hp_sweep.sh \
    research/flamby/fed_isic2019/moon_mkmmd/config.yaml \
-   research/flamby/fed_isic2019/moon_mkmmd/ \
+   research/flamby/fed_isic2019/moon/ \
    /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```
 
-In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, or `mu` in the `run_hp_sweep.sh` script directly. These represent the client-side learning rate and the contrastive loss weight respectively.
+In order to manipulate the grid search being conducted, you need to change the parameters for `lr`, the client-side learning rate, and `mu` and `gamma`, the mkmmd loss weights for moon model structure and `l2`, the l2 regularization parameter for features, in the `run_hp_sweep.sh` script directly.

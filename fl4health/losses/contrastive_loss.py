@@ -39,6 +39,8 @@ class ContrastiveLoss(torch.nn.Module):
         Returns:
             torch.Tensor: Contrastive loss value
         """
+        # TODO: We can extend it to support multiple positive pairs using multi-label classification
+
         assert self.temperature is not None
         if len(positive_pairs) != 1:
             AssertionError(

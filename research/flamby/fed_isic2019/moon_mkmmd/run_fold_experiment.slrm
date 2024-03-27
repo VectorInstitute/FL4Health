@@ -28,7 +28,7 @@
 # Example:
 # sbatch research/flamby/fed_isic2019/moon_mkmmd/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/moon_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/moon_mkmmd/hp_results/ \
+#   research/flamby/fed_isic2019/moon/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
@@ -73,8 +73,8 @@ CLIENT_L2=$9
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" )
-SEEDS=(2021 )
+RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+SEEDS=( 2021 2022 2023 2024 2025 )
 
 echo "Python Venv Path: ${VENV_PATH}"
 

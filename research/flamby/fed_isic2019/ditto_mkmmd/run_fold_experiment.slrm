@@ -28,7 +28,7 @@
 # Example:
 # sbatch research/flamby/fed_isic2019/ditto_mkmmd/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/ditto_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/ditto_mkmmd/hp_results/ \
+#   research/flamby/fed_isic2019/ditto/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \

@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "--l2",
         action="store",
         type=float,
-        help="Weight for the feature l2 norm loss",
+        help="Weight for the feature l2 norm loss as a regularizer",
         required=False,
     )
     args = parser.parse_args()
