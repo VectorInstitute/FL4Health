@@ -7,7 +7,7 @@ from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import BertTokenizer, PreTrainedTokenizer
 
-from fl4health.utils.dataset import TextClassificationDataset
+from fl4health.utils.dataset import DictionaryDataset
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -26,12 +26,12 @@ def collate_fn_with_padding(
 
 def create_text_classification_dataset(
     dataset: datasets.Dataset, column_names: List[str], target_name: str
-) -> TextClassificationDataset:
+) -> DictionaryDataset:
     data_dict = {}
     for column_name in column_names:
         data_dict[column_name] = dataset[column_name]
     targets = dataset[target_name]
-    return TextClassificationDataset(data=data_dict, targets=targets)
+    return DictionaryDataset(data=data_dict, targets=targets)
 
 
 def construct_dataloaders(batch_size: int, sample_percentage: float, beta: float) -> Tuple[DataLoader, DataLoader]:

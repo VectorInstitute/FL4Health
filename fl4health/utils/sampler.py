@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Set, TypeVar
 import numpy as np
 import torch
 
-from fl4health.utils.dataset import BaseDataset, TextClassificationDataset
+from fl4health.utils.dataset import BaseDataset, DictionaryDataset
 
 T = TypeVar("T")
-D = TypeVar("D", BaseDataset, TextClassificationDataset)
+D = TypeVar("D", BaseDataset, DictionaryDataset)
 
 
 class LabelBasedSampler(ABC):
@@ -26,14 +26,14 @@ class LabelBasedSampler(ABC):
             dataset.targets = dataset.targets[selected_indices]
             dataset.data = dataset.data[selected_indices]
             return dataset
-        elif isinstance(dataset, TextClassificationDataset):
+        elif isinstance(dataset, DictionaryDataset):
             new_targets = dataset.targets[selected_indices]
             new_data: Dict[str, List[torch.Tensor]] = {}
             for key, val in dataset.data.items():
                 # Since val is a list of tensors, we can't directly index into it
                 # using selected_indices.
                 new_data[key] = [val[i] for i in selected_indices]
-            return TextClassificationDataset(new_data, new_targets)
+            return DictionaryDataset(new_data, new_targets)
         else:
             raise TypeError("Dataset type is not supported by this sampler.")
 

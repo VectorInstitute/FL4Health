@@ -55,7 +55,7 @@ class MnistDataset(BaseDataset):
         self.target_transform = target_transform
 
 
-class TextClassificationDataset(Dataset):
+class DictionaryDataset(Dataset):
     def __init__(self, data: Dict[str, List[torch.Tensor]], targets: torch.Tensor) -> None:
         self.data = data
         self.targets = targets
