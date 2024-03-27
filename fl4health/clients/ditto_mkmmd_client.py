@@ -375,7 +375,7 @@ class DittoClient(BasicClient):
         # Compute local model loss + ditto constraint term
         assert "local" in preds
         local_loss = self.criterion(preds["local"], target)
-        total_loss = local_loss
+        total_loss = local_loss.clone()
 
         additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
 
