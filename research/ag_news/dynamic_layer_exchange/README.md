@@ -32,7 +32,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `normalize`: specifies whether division by the tensor's dimension is performed when computing its drift norm.
 * `filter_by_percentage`: by using the dynamic layer exchanger, each client takes in an "--exchange_percentage" argument and a "--norm_threshold" argument, each corresponding to a mechanism for selecting the tensors to be exchanged with the server. The argument `filter_by_percentage` toggles between these two mechanisms. See the next section for more details on these two mechanisms, see the next section.
 * `sample_percentage`: specifies how much of the original training set is retained after Dirichlet sampling.
-* `beta`: a positive real number which controls the heterogeneity of the data distributions across clients. The larger beta is, the more heterogeneous the distributions are.
+* `beta`: a positive real number which controls the heterogeneity of the data distributions across clients. The smaller beta is, the more heterogeneous the distributions are.
 * `n_server_rounds`: The number of rounds to run FL.
 
 ## Starting Clients

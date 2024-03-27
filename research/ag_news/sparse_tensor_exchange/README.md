@@ -32,7 +32,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `batch_size`: size of the batches each client will train on.
 * `num_classes`: number of classes in the classification task.
 * `sample_percentage`: specifies how much of the original training set is retained after Dirichlet sampling.
-* `beta`: a positive real number which controls the heterogeneity of the data distributions across clients. The larger beta is, the more heterogeneous the distributions are.
+* `beta`: a positive real number which controls the heterogeneity of the data distributions across clients. The smaller beta is, the more heterogeneous the distributions are.
 * `n_server_rounds`: The number of rounds to run FL.
 
 ## Starting Clients
