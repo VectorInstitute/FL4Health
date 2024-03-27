@@ -143,19 +143,23 @@ def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
 def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
-    fenda_client.temperature = 0.5
+    fenda_client.contrastive_loss.temperature = 0.5
 
     features = torch.tensor([[1, 1, 1]]).float()
     positive_pairs = torch.tensor([[1, 1, 1]]).float()
     negative_pairs = torch.tensor([[0, 0, 0]]).float()
-    contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
+    contrastive_loss = fenda_client.contrastive_loss(
+        features, positive_pairs.unsqueeze(0), negative_pairs.unsqueeze(0)
+    )
 
     assert contrastive_loss == pytest.approx(0.1269, rel=0.01)
 
     features = torch.tensor([[0, 0, 0]]).float()
     positive_pairs = torch.tensor([[1, 1, 1]]).float()
     negative_pairs = torch.tensor([[0, 0, 0]]).float()
-    contrastive_loss = fenda_client.compute_contrastive_loss(features, positive_pairs, negative_pairs)
+    contrastive_loss = fenda_client.contrastive_loss(
+        features, positive_pairs.unsqueeze(0), negative_pairs.unsqueeze(0)
+    )
 
     assert contrastive_loss == pytest.approx(0.6931, rel=0.01)
 
@@ -163,10 +167,10 @@ def test_computing_contrastive_loss(get_fenda_client: FendaClient) -> None:  # n
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
+def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
-    fenda_client.temperature = 0.5
+    fenda_client.contrastive_loss.temperature = 0.5
     fenda_client.perfcl_loss_weights = (1.0, 1.0)
     fenda_client.criterion = torch.nn.CrossEntropyLoss()
 
@@ -185,7 +189,11 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
         "aggregated_global_features": aggregated_global_features,
     }
 
+    # Make sure the model is set to train
+    fenda_client.model.train()
     training_loss = fenda_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    fenda_client.model.eval()
     evaluation_loss = fenda_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
@@ -196,8 +204,8 @@ def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
     assert training_loss.additional_losses["total_loss"] == training_loss.backward["backward"].item()
 
     auxiliary_loss_total = (training_loss.backward["backward"] - evaluation_loss.checkpoint).item()
-    contrastive_minimize = training_loss.additional_losses["contrastive_loss_minimize"].item()
-    contrastive_maximize = training_loss.additional_losses["contrastive_loss_maximize"].item()
+    contrastive_minimize = training_loss.additional_losses["global_contrastive_loss"].item()
+    contrastive_maximize = training_loss.additional_losses["personal_contrastive_loss"].item()
     assert pytest.approx(auxiliary_loss_total, abs=0.001) == (contrastive_minimize + contrastive_maximize)
 
     torch.seed()  # resetting the seed at the end, just to be safe

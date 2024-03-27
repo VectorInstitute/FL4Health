@@ -1,10 +1,14 @@
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
+from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -23,10 +27,13 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
         temperature: float = 0.5,
-        contrastive_weight: Optional[float] = None,
         len_old_models_buffer: int = 1,
+        beta_update_interval: int = 20,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        contrastive_weight: Optional[float] = None,
+        mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
+        feature_l2_norm: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -35,15 +42,19 @@ class MoonClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        self.cos_sim = torch.nn.CosineSimilarity(dim=-1).to(self.device)
-        self.ce_criterion = torch.nn.CrossEntropyLoss().to(self.device)
         self.contrastive_weight = contrastive_weight
-        self.temperature = temperature
+        self.mkmmd_loss_weights = mkmmd_loss_weights
+        self.feature_l2_norm = feature_l2_norm
+        self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature)
+        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
+        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
+        self.beta_update_interval = beta_update_interval
 
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
+        self.betas_optimized = False
 
     def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
@@ -69,28 +80,8 @@ class MoonClient(BasicClient):
         if self.global_model is not None:
             _, global_model_features = self.global_model(input)
             features.update({"global_features": global_model_features["features"]})
+
         return preds, features
-
-    def get_contrastive_loss(
-        self, features: torch.Tensor, global_features: torch.Tensor, old_features: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        This contrastive loss is implemented based on https://github.com/QinbinLi/MOON.
-        The primary idea is to enhance the similarity between the current local features and the global feature
-        as positive pairs while reducing the similarity between the current local features and the previous local
-        features as negative pairs.
-        """
-        assert len(features) == len(global_features)
-        posi = self.cos_sim(features, global_features)
-        logits = posi.reshape(-1, 1)
-        for old_feature in old_features:
-            assert len(features) == len(old_feature)
-            nega = self.cos_sim(features, old_feature)
-            logits = torch.cat((logits, nega.reshape(-1, 1)), dim=1)
-        logits /= self.temperature
-        labels = torch.zeros(features.size(0)).to(self.device).long()
-
-        return self.ce_criterion(logits, labels)
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
         assert isinstance(self.model, MoonModel)
@@ -106,7 +97,76 @@ class MoonClient(BasicClient):
         # Save the parameters of the global model
         self.global_model = self.clone_and_freeze_model(self.model)
 
+        # Optimizing betas for the MK-MMD loss has not been done yet
+        self.betas_optimized = False
+
         return super().update_before_train(current_server_round)
+
+    def update_after_step(self, step: int) -> None:
+        if step > 0 and step % self.beta_update_interval == 0:
+            if self.mkmmd_loss_weights and len(self.old_models_list) > 0 and self.global_model:
+                # Get the feature distribution of the old, local and global models with evaluation mode
+                local_distribution, global_distribution, old_distribution = self.update_buffers(
+                    self.model, self.global_model, self.old_models_list[-1]
+                )
+                # Update betas for the MK-MMD loss
+                if self.mkmmd_loss_weights[0] != 0:
+                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                        X=local_distribution, Y=global_distribution, lambda_m=1e-5
+                    )
+                    log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss_min.betas.squeeze()}.")
+
+                if self.mkmmd_loss_weights[1] != 0:
+                    self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
+                        X=local_distribution,
+                        Y=old_distribution,
+                        lambda_m=1e-5,
+                    )
+                    log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
+
+                # Betas have been optimized
+                self.betas_optimized = True
+
+        return super().update_after_step(step)
+
+    def update_buffers(
+        self, local_model: torch.nn.Module, global_model: torch.nn.Module, old_local_model: torch.nn.Module
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Update the feature buffer of the local and global features."""
+        assert isinstance(local_model, MoonModel)
+        assert isinstance(global_model, MoonModel)
+        assert isinstance(old_local_model, MoonModel)
+
+        local_buffer = []
+        global_buffer = []
+        old_buffer = []
+
+        init_state_local_model = local_model.training
+
+        # Set the models to evaluation mode
+        local_model.eval()
+        global_model.eval()
+        old_local_model.eval()
+        assert not local_model.training
+        assert not global_model.training
+        assert not old_local_model.training
+
+        with torch.no_grad():
+            for input, target in self.train_loader:
+                input, target = input.to(self.device), target.to(self.device)
+                _, local_features = local_model(input)
+                _, global_features = global_model(input)
+                _, old_local_features = old_local_model(input)
+
+                local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
+                global_buffer.append(global_features["features"].reshape(len(global_features["features"]), -1))
+                old_buffer.append(old_local_features["features"].reshape(len(old_local_features["features"]), -1))
+
+        # Set the local model back to their original mode
+        if init_state_local_model:
+            local_model.train()
+
+        return torch.cat(local_buffer, dim=0), torch.cat(global_buffer, dim=0), torch.cat(old_buffer, dim=0)
 
     def compute_loss_and_additional_losses(
         self,
@@ -135,12 +195,33 @@ class MoonClient(BasicClient):
             "loss": loss,
         }
 
-        if self.contrastive_weight:
-            contrastive_loss = self.get_contrastive_loss(
-                features["features"], features["global_features"], features["old_features"]
+        if self.contrastive_weight and "old_features" in features:
+            contrastive_loss = self.contrastive_loss(
+                features["features"], features["global_features"].unsqueeze(0), features["old_features"]
             )
             total_loss += self.contrastive_weight * contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
+
+        elif (
+            self.mkmmd_loss_weights
+            and "global_features" in features
+            and "old_features" in features
+            and self.betas_optimized
+        ):
+            if self.mkmmd_loss_weights[0] != 0:
+                mkmmd_loss_min = self.mkmmd_loss_min(features["features"], features["global_features"])
+                total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min
+                additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
+
+            if self.mkmmd_loss_weights[1] != 0:
+                mkmmd_loss_max = self.mkmmd_loss_max(features["features"], features["old_features"][-1])
+                total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max
+                additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
+
+            if self.feature_l2_norm:
+                feature_l2_norm_loss = torch.linalg.norm(features["features"])
+                total_loss += self.feature_l2_norm * feature_l2_norm_loss
+                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
         additional_losses["total_loss"] = total_loss
 
@@ -166,6 +247,10 @@ class MoonClient(BasicClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
             indexed by name.
         """
+
+        # Check that the model is in training mode
+        assert self.model.training
+
         # If there are no old local models in the list (first pass of MOON training), we just do basic loss
         #  calculations
         if len(self.old_models_list) == 0:
@@ -194,6 +279,9 @@ class MoonClient(BasicClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and
                 additional losses indexed by name.
         """
+        # Check that the model is in evaluation mode
+        assert not self.model.training
+
         # If there are no old local models in the list (first pass of MOON training), we just do basic loss
         # calculations
         if len(self.old_models_list) == 0:
