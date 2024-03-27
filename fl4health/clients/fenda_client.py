@@ -112,6 +112,7 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         if self.contrastive_loss_weight or self.perfcl_loss_weights:
             self.old_local_module = self.clone_and_freeze_model(self.model.local_module)
+        if self.contrastive_loss_weight or self.perfcl_loss_weights or self.mkmmd_loss_weights:
             self.old_global_module = self.clone_and_freeze_model(self.model.global_module)
 
         return super().update_after_train(local_steps, loss_dict)
@@ -121,20 +122,15 @@ class FendaClient(BasicClient):
         assert isinstance(self.model, FendaModel)
         if self.perfcl_loss_weights:
             self.aggregated_global_module = self.clone_and_freeze_model(self.model.global_module)
-        if (
-            self.mkmmd_loss_weights
-            and self.old_global_module
-            and self.old_local_module
-            and self.aggregated_global_module
-        ):
-            local_distribution, global_distribution, aggregated_distribution = self.update_buffers(
-                local_module=self.old_local_module,
+        if self.mkmmd_loss_weights and self.old_global_module and self.aggregated_global_module:
+            local_distribution, old_global_distribution, aggregated_distribution = self.update_buffers(
+                local_module=self.model.local_module,
                 global_module=self.old_global_module,
                 aggregated_module=self.aggregated_global_module,
             )
             if self.mkmmd_loss_weights[0] != 0.0:
                 self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                    X=global_distribution, Y=aggregated_distribution, lambda_m=1e-5
+                    X=old_global_distribution, Y=aggregated_distribution, lambda_m=1e-5
                 )
             if self.mkmmd_loss_weights[1] != 0.0:
                 self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
@@ -242,13 +238,24 @@ class FendaClient(BasicClient):
         return global_contrastive_loss, local_contrastive_loss
 
     def get_mkmmd_loss(
-        self, mkmmd_loss: MkMmdLoss, distribution_a: torch.Tensor, distribution_b: torch.Tensor
-    ) -> torch.Tensor:
+        self,
+        local_features: torch.Tensor,
+        global_features: torch.Tensor,
+        aggregated_global_features: torch.Tensor,
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         """
         MK-MMD loss aims to compute the distance among given two distributions with optimized betas.
         """
-        assert distribution_a.shape == distribution_b.shape
-        return mkmmd_loss(distribution_a, distribution_b)
+        assert self.mkmmd_loss_weights is not None
+        assert local_features.shape == aggregated_global_features.shape
+        assert global_features.shape == aggregated_global_features.shape
+
+        mkmmd_loss_min, mkmmd_loss_max = None, None
+        if self.mkmmd_loss_weights[0] != 0.0:
+            mkmmd_loss_min = self.mkmmd_loss_min(global_features, aggregated_global_features)
+        if self.mkmmd_loss_weights[1] != 0.0:
+            mkmmd_loss_max = self.mkmmd_loss_max(local_features, aggregated_global_features)
+        return mkmmd_loss_min, mkmmd_loss_max
 
     def compute_loss_and_additional_losses(
         self,
@@ -314,21 +321,16 @@ class FendaClient(BasicClient):
             additional_losses["personal_contrastive_loss"] = personal_contrastive_loss
 
         if self.mkmmd_loss_weights:
-            if self.mkmmd_loss_weights[0] != 0.0:
-                mkmmd_loss_min = self.get_mkmmd_loss(
-                    mkmmd_loss=self.mkmmd_loss_min,
-                    distribution_a=features["global_features"],
-                    distribution_b=features["aggregated_global_features"],
-                )
+            mkmmd_loss_min, mkmmd_loss_max = self.get_mkmmd_loss(
+                local_features=features["local_features"],
+                global_features=features["global_features"],
+                aggregated_global_features=features["aggregated_global_features"],
+            )
+            if mkmmd_loss_min:
                 total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min
                 additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
 
-            if self.mkmmd_loss_weights[1] != 0.0:
-                mkmmd_loss_max = self.get_mkmmd_loss(
-                    mkmmd_loss=self.mkmmd_loss_max,
-                    distribution_a=features["local_features"],
-                    distribution_b=features["aggregated_global_features"],
-                )
+            if mkmmd_loss_max:
                 total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max
 
