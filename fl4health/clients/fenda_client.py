@@ -69,7 +69,8 @@ class FendaClient(BasicClient):
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (TorchInputType): Inputs to be fed into the model.
+            input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element

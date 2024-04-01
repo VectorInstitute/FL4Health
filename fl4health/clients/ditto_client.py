@@ -216,7 +216,8 @@ class DittoClient(BasicClient):
 
         Args:
             input (TorchInputType): input tensor to be run through
-            both the global and local models.
+            both the global and local models. Here, TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
             target (torch.Tensor): target tensor to be used to compute a loss given each models outputs.
 
         Returns:

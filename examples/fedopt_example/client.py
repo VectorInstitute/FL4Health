@@ -72,6 +72,13 @@ class NewsClassifierClient(BasicClient):
         self,
         input: TorchInputType,
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s), and potentially features, of the model(s) given the input.
+
+        Args:
+            input (TorchInputType): the input to self.model's forward pass. TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
+        """
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
         assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)
         h0, c0 = self.model.init_hidden(self.batch_size)

@@ -181,6 +181,9 @@ class ScaffoldClient(BasicClient):
     def train_step(
         self, input: TorchInputType, target: torch.Tensor
     ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+        # TorchInputType is simply an alias for the union of
+        # torch.Tensor and Dict[str, torch.Tensor].
+
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 

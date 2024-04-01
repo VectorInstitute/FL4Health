@@ -85,6 +85,8 @@ class EnsembleClient(BasicClient):
 
         Args:
             input (TorchInputType): The input to be fed into the model.
+            TorchInputType is simply an alias for the union of torch.Tensor and
+            Dict[str, torch.Tensor].
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
