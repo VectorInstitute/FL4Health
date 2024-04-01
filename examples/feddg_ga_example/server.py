@@ -47,7 +47,7 @@ def main(config: Dict[str, Any]) -> None:
 
     initial_model = ApflModule(MnistNetWithBnAndFrozen())
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
+    # Implementation of FedDG-GA as a server side strategy
     strategy = FedDgGaStrategy(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
@@ -61,6 +61,10 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
 
+    # FixedSamplingClientManager is a requirement here because the sampling cannot
+    # be different between validation and evaluation for FedDG-GA to work. FixedSamplingClientManager
+    # will return the same sampling until it is told to reset, which in FedDgGaStrategy
+    # is done right before fit_round.
     client_manager = FixedSamplingClientManager()
     server = FlServer(strategy=strategy, client_manager=client_manager)
 

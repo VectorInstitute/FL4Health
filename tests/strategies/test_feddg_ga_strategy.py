@@ -9,7 +9,7 @@ from flwr.server.client_manager import ClientManager, ClientProxy, SimpleClientM
 from pytest import approx, raises
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
-from fl4health.strategies.feddg_ga_strategy import INITIAL_ADJUSTMENT_WEIGHT, FairnessMetricType, FedDgGaStrategy
+from fl4health.strategies.feddg_ga_strategy import FairnessMetricType, FedDgGaStrategy
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
@@ -20,6 +20,7 @@ def test_configure_fit_success() -> None:
     def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
         return {
             "n_server_rounds": test_n_server_rounds,
+            "evaluate_after_fit": True,
         }
 
     strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn)
@@ -31,28 +32,35 @@ def test_configure_fit_success() -> None:
         assert False, f"initialize_parameters threw an exception: {e}"
 
     assert strategy.num_rounds == test_n_server_rounds
+    assert strategy.initial_adjustment_weight == 1.0 / fixed_sampling_client_manager.num_available()
+    fixed_sampling_client_manager.reset_sample.assert_called_once()  # type: ignore
 
 
 def test_configure_fit_fail() -> None:
     fixed_sampling_client_manager = _apply_mocks_to_client_manager(FixedSamplingClientManager())
     simple_client_manager = _apply_mocks_to_client_manager(SimpleClientManager())
 
+    # Fails with no configure fit
     strategy = FedDgGaStrategy()
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
+    # Fails with bad client manager type
     def on_fit_config_fn(server_round: int) -> Dict[str, Scalar]:
         return {
             "n_server_rounds": 2,
+            "evaluate_after_fit": True,
         }
 
     strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), simple_client_manager)
 
+    # Fail with no n_server_rounds
     def on_fit_config_fn_1(server_round: int) -> Dict[str, Scalar]:
         return {
             "foo": 123,
+            "evaluate_after_fit": True,
         }
 
     strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_1)
@@ -61,14 +69,37 @@ def test_configure_fit_fail() -> None:
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
+    # Fails with n_server_rounds not being an integer
     def on_fit_config_fn_2(server_round: int) -> Dict[str, Scalar]:
         return {
             "n_server_rounds": 1.1,
+            "evaluate_after_fit": True,
         }
 
     strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_2)
     assert strategy.num_rounds is None
 
+    with raises(AssertionError):
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
+
+    # Fails with evaluate_after_fit not being set
+    def on_fit_config_fn_3(server_round: int) -> Dict[str, Scalar]:
+        return {
+            "n_server_rounds": 2,
+        }
+
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_3)
+    with raises(AssertionError):
+        strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
+
+    # Fails with evaluate_after_fit not being True
+    def on_fit_config_fn_4(server_round: int) -> Dict[str, Scalar]:
+        return {
+            "n_server_rounds": 2,
+            "evaluate_after_fit": False,
+        }
+
+    strategy = FedDgGaStrategy(on_fit_config_fn=on_fit_config_fn_4)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -82,9 +113,11 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
     test_eval_metrics_1 = test_eval_results[0][1].metrics
     test_eval_metrics_2 = test_eval_results[1][1].metrics
     test_val_loss_key = FairnessMetricType.LOSS.value
+    test_initial_adjustment_weight = 1.0 / 3.0
 
     strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
+    strategy.initial_adjustment_weight = test_initial_adjustment_weight
 
     # test aggregate fit
     parameters_aggregated, _ = strategy.aggregate_fit(2, deepcopy(test_fit_results), [])
@@ -94,8 +127,8 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
         test_cid_2: test_fit_metrics_2,
     }
     assert strategy.adjustment_weights == {
-        test_cid_1: INITIAL_ADJUSTMENT_WEIGHT,
-        test_cid_2: INITIAL_ADJUSTMENT_WEIGHT,
+        test_cid_1: test_initial_adjustment_weight,
+        test_cid_2: test_initial_adjustment_weight,
     }
     assert parameters_aggregated is not None
     parameters_array = parameters_to_ndarrays(parameters_aggregated)[0].tolist()
@@ -118,13 +151,15 @@ def test_weight_and_aggregate_results_with_default_weights() -> None:
     test_fit_results, _ = _make_test_data()
     test_cid_1 = test_fit_results[0][0].cid
     test_cid_2 = test_fit_results[1][0].cid
+    test_initial_adjustment_weight = 1.0 / 3.0
 
     strategy = FedDgGaStrategy()
+    strategy.initial_adjustment_weight = test_initial_adjustment_weight
     aggregated_results = strategy.weight_and_aggregate_results(test_fit_results)
 
     assert strategy.adjustment_weights == {
-        test_cid_1: INITIAL_ADJUSTMENT_WEIGHT,
-        test_cid_2: INITIAL_ADJUSTMENT_WEIGHT,
+        test_cid_1: test_initial_adjustment_weight,
+        test_cid_2: test_initial_adjustment_weight,
     }
     assert aggregated_results[0].tolist() == [approx(1.0, abs=0.0005), approx(1.0666, abs=0.0005)]
 
@@ -146,9 +181,11 @@ def test_weight_and_aggregate_results_with_existing_weights() -> None:
 def test_update_weights_by_ga() -> None:
     test_cids = ["1", "2"]
     test_val_loss_key = FairnessMetricType.LOSS.value
+    test_initial_adjustment_weight = 1.0 / 3.0
 
     strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
+    strategy.initial_adjustment_weight = test_initial_adjustment_weight
     strategy.train_metrics = {
         test_cids[0]: {test_val_loss_key: 0.5467},
         test_cids[1]: {test_val_loss_key: 0.5432},
@@ -158,8 +195,8 @@ def test_update_weights_by_ga() -> None:
         test_cids[1]: {test_val_loss_key: 0.7654},
     }
     strategy.adjustment_weights = {
-        test_cids[0]: INITIAL_ADJUSTMENT_WEIGHT,
-        test_cids[1]: INITIAL_ADJUSTMENT_WEIGHT,
+        test_cids[0]: test_initial_adjustment_weight,
+        test_cids[1]: test_initial_adjustment_weight,
     }
 
     strategy.update_weights_by_ga(2, test_cids)
@@ -173,9 +210,11 @@ def test_update_weights_by_ga() -> None:
 def test_update_weights_by_ga_with_same_metrics() -> None:
     test_cids = ["1", "2"]
     test_val_loss_key = FairnessMetricType.LOSS.value
+    test_initial_adjustment_weight = 1.0 / 3.0
 
     strategy = FedDgGaStrategy()
     strategy.num_rounds = 3
+    strategy.initial_adjustment_weight = test_initial_adjustment_weight
     strategy.train_metrics = {
         test_cids[0]: {test_val_loss_key: 0.5467},
         test_cids[1]: {test_val_loss_key: 0.5432},
@@ -185,8 +224,8 @@ def test_update_weights_by_ga_with_same_metrics() -> None:
         test_cids[1]: {test_val_loss_key: 0.5432},
     }
     strategy.adjustment_weights = {
-        test_cids[0]: INITIAL_ADJUSTMENT_WEIGHT,
-        test_cids[1]: INITIAL_ADJUSTMENT_WEIGHT,
+        test_cids[0]: test_initial_adjustment_weight,
+        test_cids[1]: test_initial_adjustment_weight,
     }
 
     strategy.update_weights_by_ga(2, test_cids)
@@ -219,10 +258,13 @@ def test_get_current_weight_step_size() -> None:
 
 
 def _apply_mocks_to_client_manager(client_manager: ClientManager) -> ClientManager:
-    client_proxy = CustomClientProxy("1")
-    client_manager.register(client_proxy)
+    client_proxy_1 = CustomClientProxy("1")
+    client_proxy_2 = CustomClientProxy("2")
+    client_manager.register(client_proxy_1)
+    client_manager.register(client_proxy_2)
     client_manager.sample = Mock()  # type: ignore
-    client_manager.sample.return_value = [client_proxy]
+    client_manager.sample.return_value = [client_proxy_1, client_proxy_2]
+    client_manager.reset_sample = Mock()  # type: ignore
     return client_manager
 
 

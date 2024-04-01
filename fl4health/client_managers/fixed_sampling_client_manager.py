@@ -24,7 +24,7 @@ class FixedSamplingClientManager(SimpleClientManager):
     ) -> List[ClientProxy]:
         """
         Return a new client sample for the first time it runs. For subsequent runs,
-        it will return the sample sampling until self.reset_sampling() is called.
+        it will return the same sampling until self.reset_sampling() is called.
 
         Args:
             num_clients: (int) The number of clients to sample.

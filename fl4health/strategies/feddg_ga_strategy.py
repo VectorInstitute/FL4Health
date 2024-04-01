@@ -28,14 +28,20 @@ class FairnessMetricType(Enum):
         Args:
             fairness_metric_type: (FairnessMetricType) the fairness metric type.
 
-        Returns: (float) -1.0 if FairnessMetricType.ACCURACY, 1.0 if FairnessMetricType.LOSS and
-            0 if FairnessMetricType.CUSTOM.
+        Returns: (float) -1.0 if FairnessMetricType.ACCURACY or 1.0 if FairnessMetricType.LOSS.
+
+        Raises: (Exception) if type is CUSTOM as the signal has to be defined by the user.
         """
+        # For loss values, large and **positive** gaps imply worse generalization of global
+        # weights to local models. Therefore, we want to **increase** weight for these model
+        # parameters to improve generalization. So signal is positive. For accuracy, large
+        # **negative** gaps imply worse generalization. So the signal is -1.0, to increase
+        # weights for the associated model parameters.
         if fairness_metric_type == FairnessMetricType.ACCURACY:
             return -1.0
         if fairness_metric_type == FairnessMetricType.LOSS:
-            return 1
-        return 0
+            return 1.0
+        raise Exception("This function should not be called with CUSTOM type.")
 
 
 class FairnessMetric:
@@ -44,8 +50,8 @@ class FairnessMetric:
     def __init__(
         self,
         metric_type: FairnessMetricType,
-        metric_name: str = "",
-        signal: float = 0.0,
+        metric_name: Optional[str] = None,
+        signal: Optional[float] = None,
     ):
         """
         Instantiates a fairness metric with a type and optional metric name and
@@ -55,25 +61,21 @@ class FairnessMetric:
             metric_type: (FairnessMetricType) the fairness metric type. If CUSTOM, the metric_name and
                 signal should be provided.
             metric_name: (str, optional) the name of the metric to be used as fairness metric.
-                Optional, default is metric_type.value.
-            signal: (float, optional) the signal of the fairness metric. Optional default is
-                FairnessMetricType.signal_for_type(metric_type)
+                Optional, default is metric_type.value. Mandatory if metric_type is CUSTOM.
+            signal: (float, optional) the signal of the fairness metric. Optional, default is
+                FairnessMetricType.signal_for_type(metric_type). Mandatory if metric_type is CUSTOM.
         """
         self.metric_type = metric_type
         self.metric_name = metric_name
         self.signal = signal
 
         if metric_type is FairnessMetricType.CUSTOM:
-            assert metric_name is not None and metric_name != "" and signal is not None
+            assert metric_name is not None and signal is not None
         else:
-            if metric_name == "":
+            if metric_name is None:
                 self.metric_name = metric_type.value
-            if signal == 0.0:
+            if signal is None:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
-
-
-# Initial value for the adjustment weight of each client model
-INITIAL_ADJUSTMENT_WEIGHT = 1.0 / 3.0
 
 
 class FedDgGaStrategy(FedAvg):
@@ -142,8 +144,8 @@ class FedDgGaStrategy(FedAvg):
                 FairnessMetricType or set to use a custom metric. Optional, default is
                 FairnessMetric(FairnessMetricType.LOSS).
             weight_step_size : float
-                The step size to determine the magnitude of change for the adjustment weight.
-                Optional, default is 0.2.
+                The step size to determine the magnitude of change for the adjustment weight. It has to be
+                0 < weight_step_size < 1. Optional, default is 0.2.
         """
         super().__init__(
             fraction_fit=fraction_fit,
@@ -166,10 +168,12 @@ class FedDgGaStrategy(FedAvg):
             self.fairness_metric = fairness_metric
 
         self.weight_step_size = weight_step_size
+        assert 0 < self.weight_step_size < 1, f"weight_step_size has to be between 0 and 1 ({self.weight_step_size})"
 
         self.train_metrics: Dict[str, Dict[str, Scalar]] = {}
         self.evaluation_metrics: Dict[str, Dict[str, Scalar]] = {}
         self.num_rounds: Optional[int] = None
+        self.initial_adjustment_weight: Optional[float] = None
         self.adjustment_weights: Dict[str, float] = {}
 
     def configure_fit(
@@ -194,16 +198,22 @@ class FedDgGaStrategy(FedAvg):
         Returns:
             (List[Tuple[ClientProxy, FitIns]]) the input for the clients' fit function.
         """
-        client_fit_ins = super().configure_fit(server_round, parameters, client_manager)
-
         assert isinstance(
             client_manager, FixedSamplingClientManager
         ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
 
+        client_manager.reset_sample()
+
+        client_fit_ins = super().configure_fit(server_round, parameters, client_manager)
+
+        self.initial_adjustment_weight = 1.0 / len(client_fit_ins)
+
         # Setting self.num_rounds
         if self.num_rounds is None:
-            assert self.on_fit_config_fn is not None, "on_fit_config_in must be specified"
+            assert self.on_fit_config_fn is not None, "on_fit_config_fn must be specified"
             config = self.on_fit_config_fn(server_round)
+            assert "evaluate_after_fit" in config, "evaluate_after_fit must be present in config and set to True"
+            assert config["evaluate_after_fit"] is True, "evaluate_after_fit must be set to True"
             assert "n_server_rounds" in config, "n_server_rounds must be specified"
             assert isinstance(config["n_server_rounds"], int), "n_server_rounds is not an integer"
             self.num_rounds = config["n_server_rounds"]
@@ -230,12 +240,13 @@ class FedDgGaStrategy(FedAvg):
             (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics.
         """
-
+        # The original aggregated parameters is done by the super class (which we want to
+        # override its behaviour here), so we are discarding it to recalculate them in the lines below
         _, metrics_aggregated = super().aggregate_fit(server_round, results, failures)
 
         self.train_metrics = {}
-        for result in results:
-            self.train_metrics[result[0].cid] = result[1].metrics
+        for client_proxy, fit_res in results:
+            self.train_metrics[client_proxy.cid] = fit_res.metrics
 
         parameters_aggregated = ndarrays_to_parameters(self.weight_and_aggregate_results(results))
 
@@ -250,7 +261,7 @@ class FedDgGaStrategy(FedAvg):
         """
         Aggregate evaluation losses using weighted average.
 
-        Collects the evaluation metrics and update the adjustment weights, which will be used
+        Collects the evaluation metrics and updates the adjustment weights, which will be used
         when aggregating the results for the next round.
 
         Args:
@@ -265,15 +276,15 @@ class FedDgGaStrategy(FedAvg):
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 
         self.evaluation_metrics = {}
-        for result in results:
-            cid = result[0].cid
-            self.evaluation_metrics[cid] = result[1].metrics
+        for client_proxy, eval_res in results:
+            cid = client_proxy.cid
+            self.evaluation_metrics[cid] = eval_res.metrics
             # adding the loss to the metrics
             val_loss_key = FairnessMetricType.LOSS.value
             self.evaluation_metrics[cid][val_loss_key] = loss_aggregated  # type: ignore
 
         # Updating the weights at the end of the training round
-        cids = [result[0].cid for result in results]
+        cids = [client_proxy.cid for client_proxy, _ in results]
         self.update_weights_by_ga(server_round, cids)
 
         return loss_aggregated, metrics_aggregated
@@ -290,15 +301,16 @@ class FedDgGaStrategy(FedAvg):
         """
 
         aggregated_results: Optional[NDArrays] = None
-        for result in results:
-            cid = result[0].cid
+        for client_proxy, fit_res in results:
+            cid = client_proxy.cid
 
             # initializing adjustment weights for this client if they don't exist yet
             if cid not in self.adjustment_weights:
-                self.adjustment_weights[cid] = INITIAL_ADJUSTMENT_WEIGHT
+                assert self.initial_adjustment_weight is not None
+                self.adjustment_weights[cid] = self.initial_adjustment_weight
 
             # apply adjustment weights
-            weighted_client_parameters = parameters_to_ndarrays(result[1].parameters)
+            weighted_client_parameters = parameters_to_ndarrays(fit_res.parameters)
             for i in range(len(weighted_client_parameters)):
                 weighted_client_parameters[i] = weighted_client_parameters[i] * self.adjustment_weights[cid]
 
@@ -322,45 +334,52 @@ class FedDgGaStrategy(FedAvg):
             server_round: (int) the current server round.
             cids: (List[str]) the list of client ids that participated in this round.
         """
-        value_list = []
+        generalization_gaps = []
         # calculating local vs global metric difference
         for cid in cids:
             assert (
                 cid in self.train_metrics and cid in self.evaluation_metrics
             ), f"{cid} not in {self.train_metrics.keys()} or {self.evaluation_metrics.keys()}"
 
+            assert self.fairness_metric.metric_name is not None
+
             global_model_metric_value = self.evaluation_metrics[cid][self.fairness_metric.metric_name]
             local_model_metric_value = self.train_metrics[cid][self.fairness_metric.metric_name]
             assert isinstance(global_model_metric_value, float) and isinstance(local_model_metric_value, float)
 
-            value_list.append(global_model_metric_value - local_model_metric_value)
+            generalization_gaps.append(global_model_metric_value - local_model_metric_value)
 
         # calculating norm gap
-        value_list_ndarray = np.array(value_list)
-        max_value = np.max(np.abs(value_list_ndarray))
+        generalization_gap_ndarray = np.array(generalization_gaps)
+        max_value = np.max(np.abs(generalization_gap_ndarray))
 
         if max_value == 0:
             log(
                 WARNING,
                 "Max value in metric diff list is 0. Adjustment weights will remain the same. "
-                + f"Value list: {value_list}",
+                + f"Value list: {generalization_gaps}",
             )
-            norm_gap_list = np.zeros(len(value_list))
+            norm_gap_list = np.zeros(len(generalization_gaps))
         else:
-            norm_gap_list = value_list_ndarray / max_value
+            norm_gap_list = generalization_gap_ndarray / max_value
 
-        step_size = (1.0 / 3.0) * self.get_current_weight_step_size(server_round)
+        assert self.initial_adjustment_weight is not None
+        step_size = self.initial_adjustment_weight * self.get_current_weight_step_size(server_round)
 
         # updating weights
         new_total_weight = 0.0
         for i in range(len(cids)):
             cid = cids[i]
+            # For loss values, large and **positive** gaps imply worse generalization of global
+            # weights to local models. Therefore, we want to **increase** weight for these model
+            # parameters to improve generalization. So signal is positive. For accuracy, large
+            # **negative** gaps imply worse generalization. So the signal is -1.0, to increase
+            # weights for the associated model parameters.
             self.adjustment_weights[cid] += self.fairness_metric.signal * norm_gap_list[i] * step_size
 
             # weight clip
             clipped_weight = np.clip(self.adjustment_weights[cid], 0.0, 1.0)
             self.adjustment_weights[cid] = clipped_weight
-            # TODO Question: should we sum all the weights or just the current clients' weights?
             new_total_weight += clipped_weight
 
         for cid in cids:

@@ -278,7 +278,8 @@ class BasicClient(NumPyClient):
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
 
-        # Check if we should run an evaluation with validation data after fit (used by FedDGGA)
+        # Check if we should run an evaluation with validation data after fit
+        # (for example, this is used by FedDGGA)
         if evaluate_after_fit:
             metrics.update(self.evaluate_after_fit())
 
