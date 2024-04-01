@@ -4,7 +4,7 @@ import random
 import string
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -24,9 +24,6 @@ from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, T
 from fl4health.utils.metrics import Metric, MetricManager
 
 T = TypeVar("T")
-BatchType = TypeVar(
-    "BatchType", bound=Union[Tuple[torch.Tensor, torch.Tensor], Dict[str, torch.Tensor], List[torch.Tensor]]
-)
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
 
 

@@ -56,8 +56,6 @@ class CifarDynamicLayerClient(PartialWeightExchangeClient):
             else layer_selection_function_constructor.select_by_threshold()
         )
 
-        # The user may call layer_selection_function_constructor.select_by_threshold()
-        # to select layers purely based on thresholding instead.
         parameter_exchanger = DynamicLayerExchanger(layer_selection_function=layer_selection_function)
 
         return parameter_exchanger
