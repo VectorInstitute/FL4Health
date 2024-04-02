@@ -281,7 +281,8 @@ class FedDgGaStrategy(FedAvg):
             self.evaluation_metrics[cid] = eval_res.metrics
             # adding the loss to the metrics
             val_loss_key = FairnessMetricType.LOSS.value
-            self.evaluation_metrics[cid][val_loss_key] = loss_aggregated  # type: ignore
+            assert loss_aggregated is not None
+            self.evaluation_metrics[cid][val_loss_key] = loss_aggregated
 
         # Updating the weights at the end of the training round
         cids = [client_proxy.cid for client_proxy, _ in results]
@@ -335,7 +336,7 @@ class FedDgGaStrategy(FedAvg):
             cids: (List[str]) the list of client ids that participated in this round.
         """
         generalization_gaps = []
-        # calculating local vs global metric difference
+        # calculating local vs global metric difference (generalization gaps)
         for cid in cids:
             assert (
                 cid in self.train_metrics and cid in self.evaluation_metrics
@@ -349,22 +350,22 @@ class FedDgGaStrategy(FedAvg):
 
             generalization_gaps.append(global_model_metric_value - local_model_metric_value)
 
-        # calculating norm gap
-        generalization_gap_ndarray = np.array(generalization_gaps)
-        max_value = np.max(np.abs(generalization_gap_ndarray))
+        # Calculating the normalized the generalization gaps
+        generalization_gaps_ndarray = np.array(generalization_gaps)
+        mean_generalization_gap = np.mean(generalization_gaps_ndarray)
+        var_generalization_gaps = generalization_gaps_ndarray - mean_generalization_gap
+        max_var_generalization_gap = np.max(var_generalization_gaps)
 
-        if max_value == 0:
+        if max_var_generalization_gap == 0:
             log(
                 WARNING,
-                "Max value in metric diff list is 0. Adjustment weights will remain the same. "
-                + f"Value list: {generalization_gaps}",
+                "Max variance in generalization gap is 0. Adjustment weights will remain the same. "
+                + f"Generalization gaps: {generalization_gaps}",
             )
-            norm_gap_list = np.zeros(len(generalization_gaps))
+            normalized_generalization_gaps = np.zeros(len(generalization_gaps))
         else:
-            norm_gap_list = generalization_gap_ndarray / max_value
-
-        assert self.initial_adjustment_weight is not None
-        step_size = self.initial_adjustment_weight * self.get_current_weight_step_size(server_round)
+            step_size = self.get_current_weight_step_size(server_round)
+            normalized_generalization_gaps = (var_generalization_gaps * step_size) / max_var_generalization_gap
 
         # updating weights
         new_total_weight = 0.0
@@ -375,9 +376,11 @@ class FedDgGaStrategy(FedAvg):
             # parameters to improve generalization. So signal is positive. For accuracy, large
             # **negative** gaps imply worse generalization. So the signal is -1.0, to increase
             # weights for the associated model parameters.
-            self.adjustment_weights[cid] += self.fairness_metric.signal * norm_gap_list[i] * step_size
+            self.adjustment_weights[cid] += self.fairness_metric.signal * normalized_generalization_gaps[i]
 
-            # weight clip
+            # Weight clip
+            # The paper states the clipping only happens for values below 0 but the reference
+            # implementation also clips values larger than 1, probably as an extra assurance.
             clipped_weight = np.clip(self.adjustment_weights[cid], 0.0, 1.0)
             self.adjustment_weights[cid] = clipped_weight
             new_total_weight += clipped_weight
@@ -395,7 +398,15 @@ class FedDgGaStrategy(FedAvg):
 
         Returns: (float) the current value for the weight step size.
         """
+        # The implementation of d^r here differs from the definition in the paper
+        # because our server round starts at 1 instead of 0.
         assert self.num_rounds is not None
         weight_step_size_decay = self.weight_step_size / self.num_rounds
         weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
+
+        # Applying a dampening present in the reference implementation
+        # but not in the paper
+        assert self.initial_adjustment_weight is not None
+        weight_step_size_for_round *= self.initial_adjustment_weight
+
         return weight_step_size_for_round
