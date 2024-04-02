@@ -404,9 +404,8 @@ class FedDgGaStrategy(FedAvg):
         weight_step_size_decay = self.weight_step_size / self.num_rounds
         weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
 
-        # Applying a dampening present in the reference implementation
-        # but not in the paper
-        assert self.initial_adjustment_weight is not None
-        weight_step_size_for_round *= self.initial_adjustment_weight
+        # Omitting an additional scaler here that is present in the reference
+        # implementation but not in the paper:
+        # weight_step_size_for_round *= self.initial_adjustment_weight
 
         return weight_step_size_for_round
