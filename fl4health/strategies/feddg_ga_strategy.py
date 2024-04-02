@@ -354,7 +354,7 @@ class FedDgGaStrategy(FedAvg):
         generalization_gaps_ndarray = np.array(generalization_gaps)
         mean_generalization_gap = np.mean(generalization_gaps_ndarray)
         var_generalization_gaps = generalization_gaps_ndarray - mean_generalization_gap
-        max_var_generalization_gap = np.max(var_generalization_gaps)
+        max_var_generalization_gap = np.max(np.abs(var_generalization_gaps))
 
         if max_var_generalization_gap == 0:
             log(
