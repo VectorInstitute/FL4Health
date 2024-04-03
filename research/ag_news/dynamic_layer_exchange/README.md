@@ -13,7 +13,7 @@ Each client performs Dirichlet sampling on its training set so we get heterogene
 In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Information about Dataset
-client_data.py handles all data preprosessiong steps and is responsible for constructing the dataloaders for training and evaluation.
+client_data.py handles all data preprocessing steps and is responsible for constructing the dataloaders for training and evaluation.
 Since we are using a pre-trained BERT model, its corresponding tokenizer and vocabulary (all pre-trained) are used for processing
 the raw text data. The Dirichlet subsampling on the training data is also performed in this module. The execution of client_data.py is included
 as part of the client code, so you do not need to run it separately.

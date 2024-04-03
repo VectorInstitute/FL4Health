@@ -51,7 +51,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
-            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_fit_clients (int, optional): Minimum number of clients used during fitting. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Optional[

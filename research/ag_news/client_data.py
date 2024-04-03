@@ -19,9 +19,9 @@ def collate_fn_with_padding(
     Pad the sequences within a batch to the same length.
     """
     input_list, target_list = [], []
-    for pair in batch:
-        input_list.append(pair[0])
-        target_list.append(pair[1])
+    for input_dict, target in batch:
+        input_list.append(input_dict)
+        target_list.append(target)
     return tokenizer.pad(input_list).data, torch.stack(target_list)
 
 

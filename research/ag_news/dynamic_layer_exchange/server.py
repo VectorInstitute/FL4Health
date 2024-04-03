@@ -6,9 +6,9 @@ from typing import Any, Dict
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from flwr.server.client_manager import SimpleClientManager
 from transformers import BertForSequenceClassification
 
-from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 from fl4health.utils.config import load_config
@@ -95,7 +95,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
 
-    client_manager = PoissonSamplingClientManager()
+    client_manager = SimpleClientManager()
     server = FlServer(client_manager, strategy)
 
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.

@@ -3,16 +3,16 @@
 ###############################################
 # Usage:
 #
-#  ./research/ag_news/dynamic_layer_exchange/run_hp_sweep.sh \
+#  ./research/ag_news/sparse_tensor_exchange/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# ./research/ag_news/dynamic_layer_exchange/run_hp_sweep.sh \
-#   research/ag_news/dynamic_layer_exchange/config.yaml \
-#   research/ag_news/dynamic_layer_exchange/ \
+# ./research/ag_news/sparse_tensor_exchange/run_hp_sweep.sh \
+#   research/ag_news/sparse_tensor_exchange/config.yaml \
+#   research/ag_news/sparse_tensor_exchange/ \
 #   /Users/david/Desktop/AG_NEWS/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
