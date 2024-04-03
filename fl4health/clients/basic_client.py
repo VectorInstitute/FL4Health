@@ -420,6 +420,8 @@ class BasicClient(NumPyClient):
 
         Raises:
             TypeError: raised if input is not of type torch.Tensor or Dict[str, torch.Tensor].
+            ValueError: raised if input has type Dict[str, torch.Tensor] and not all tensors
+            within the dictionary have the same size.
 
         Returns:
             bool: True if input is an empty batch.
@@ -427,7 +429,13 @@ class BasicClient(NumPyClient):
         if isinstance(input, torch.Tensor):
             return len(input) == 0
         elif isinstance(input, dict):
-            return all(len(val) == 0 for _, val in input.items())
+            input_iter = iter(input.items())
+            _, first_val = next(input_iter)
+            first_val_len = len(first_val)
+            if not all(len(val) == first_val_len for _, val in input_iter):
+                raise ValueError("Not all tensors in the dictionary have the same size.")
+            else:
+                return first_val_len == 0
         else:
             raise TypeError("Input must be of type torch.Tensor or Dict[str, torch.Tensor].")
 
