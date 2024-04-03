@@ -70,6 +70,7 @@ class CentralDPServer(FlServerWithCheckpointing):
         timeout: Optional[float] = 30,
         checkpointer: Optional[TorchCheckpointer] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
+        task_name: str = '',
     ) -> None:
         
         log(INFO, 'Central-DP server initializing...')
@@ -78,6 +79,7 @@ class CentralDPServer(FlServerWithCheckpointing):
 
         self.timeout = timeout
         self.model_dimension = get_model_dimension(model)
+        self.task_name = task_name
 
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.best_checkpoint_path),
@@ -107,15 +109,19 @@ class CentralDPServer(FlServerWithCheckpointing):
         )
 
         # differential privacy
+        # NOTE clip is hard coded for now
         self.privacy_settings = {
             **privacy_settings,
+            'clip': 5,
             "dp_mechanism": PrivacyMechanismIndex.ContinuousGaussian.value,
         }
 
-        self.gaussian_noise_variance = self.privacy_settings['gaussian_noise_variance']
+        # self.gaussian_noise_variance = self.privacy_settings['gaussian_noise_variance']
 
         with open(self.metrics_path, 'w+') as file:
             json.dump({
+                'party': 'server',
+                'task_name': self.task_name,
                 'privacy_hyperparameters': self.privacy_settings
             }, file)
             
@@ -186,7 +192,7 @@ class CentralDPServer(FlServerWithCheckpointing):
 
                 with open(self.metrics_path, 'r') as file:
                     metrics_to_save = json.load(file)
-
+                    metrics_to_save['model_size'] = sum(p.numel() for p in self.server_model.parameters() if p.requires_grad)
                     metrics_to_save['current_round'] = current_round
 
                     if current_round == 1:
@@ -290,16 +296,20 @@ class CentralDPServer(FlServerWithCheckpointing):
         delta = torch.from_numpy(global_model_delta_vector).to(device=device)
         
         # TODO record clip & delta to out files 
-        clip = 100
+        clip = self.privacy_settings['clip']
+        eps = self.privacy_settings['epsilon']
 
-        # noisy delta 
-        sigma = math.sqrt(self.gaussian_noise_variance)
-        delta += gaussian_mechanism(dim=self.model_dimension, epsilon=1, delta=0.01, clip=clip)
-        
+        # # noisy delta 
+        # delta *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(delta, ord=2))
+        # log(INFO, '------clipped')
+        # log(INFO, delta[:25])
+        # delta += gaussian_mechanism(dim=self.model_dimension, epsilon=eps, delta=1/(23247**2), clip=clip)
+        # log(INFO, '------noised')
+        # log(INFO, delta[:25])
         model_vector = torch.load(self.temporary_model_path).to(device=device) 
-        model_vector *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(model_vector, ord=2))
-
         model_vector += delta 
+
+        # THIS UPDATED MODEL IS SAVED IN THE FIT() METHOD
         self.server_model = unvectorize_model(self.server_model, model_vector)
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]

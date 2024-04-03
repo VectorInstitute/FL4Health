@@ -78,6 +78,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         shamir_reconstruction_threshold: int = 2,
         # model_integer_range: int = 1 << 30,
         dropout_mode=False,
+        task_name: str = '',
     ) -> None:
         self.debug_mode = True
         log(INFO, 'secure aggregation server initializing...')
@@ -89,6 +90,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         self.timeout = timeout
         self.dropout_mode = dropout_mode
+        self.task_name = task_name
 
         self.crypto = ServerCryptoKit()
         self.set_shamir_threshold(shamir_reconstruction_threshold)
@@ -137,6 +139,8 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
         with open(self.metrics_path, 'w+') as file:
             json.dump({
+                'party': 'server',
+                'task_name': self.task_name,
                 'privacy_hyperparameters': self.privacy_settings
             }, file)
             
@@ -178,7 +182,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         for current_round in range(1, 1 + num_rounds):
             self.current_server_round = current_round
             log(INFO, f'current fl round from server: {current_round}')
-            metrics, l_inf_error, received_model_count = self.secure_aggregation(current_round, timeout)
+            metrics, error, received_model_count = self.secure_aggregation(current_round, timeout)
 
             blackbox = {}
             # Record distributed (and not centralized) loss / metrics.
@@ -199,7 +203,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
 
                 with open(self.metrics_path, 'r') as file:
                     metrics_to_save = json.load(file)
-
+                    metrics_to_save['model_size'] = sum(p.numel() for p in self.server_model.parameters() if p.requires_grad)
                     metrics_to_save['current_round'] = current_round
 
                     if current_round == 1:
@@ -224,10 +228,10 @@ class SecureAggregationServer(FlServerWithCheckpointing):
                         else:
                             metrics_to_save[key].append(value)
 
-                    if 'round vs l_inf_error' not in metrics_to_save:
-                        metrics_to_save['round vs l_inf_error'] = [l_inf_error]
+                    if 'error_on_round' not in metrics_to_save:
+                        metrics_to_save['error_on_round'] = {self.current_server_round: error}
                     else:
-                        metrics_to_save['round vs l_inf_error'].append(l_inf_error)  
+                        metrics_to_save['error_on_round'][self.current_server_round] = error 
                     
                     # if 'arithmetic_modulus' not in metrics_to_save:
                     #     metrics_to_save['arithmetic_modulus'] = [self.privacy_settings['arithmetic_modulus']]
@@ -357,6 +361,7 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         log(INFO, 'model: max error, l1-error') 
         l_inf = torch.linalg.vector_norm(model_aggregate-model_vector, ord=float('inf'))
         l_1 = torch.linalg.vector_norm(model_aggregate-model_vector, ord=1)
+        l_2 = torch.linalg.vector_norm(model_aggregate-model_vector, ord=2)
         log(INFO, f'{l_inf}, {l_1}')
         log(INFO, '+++++ server sees this (end) ++++++++') 
         # log(INFO, vector)
@@ -386,8 +391,12 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             unmaksed_params = self.unmasking(
                 round=current_round, timeout=timeout, responded=responded_clients, dropped=dropped_clients
             )
-
-        return metrics, l_inf.item(), received_model_count
+        errors = {
+            'l_inf': l_inf.item(),
+            'l_1': l_1.item(),
+            'l_2': l_2.item()
+        }
+        return metrics, errors, received_model_count
 
     def initialize_tables(self):
 

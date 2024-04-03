@@ -23,6 +23,10 @@ SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
+HYPERPARAMETER_NAME=$5
+
+shift 5
+HYPERPARAMETER_VALUES=("$@")
 
 FOLDER="flamby_central_dp"
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
@@ -31,8 +35,10 @@ FOLDER="flamby_central_dp"
 SERVER_PORT=8100
 
 # Search through these hyperparameters
-HYPERPARAMETER_NAME="gaussian_noise_variance"
-HYPERPARAMETER_VALUES=(0.001)
+# HYPERPARAMETER_NAME="epsilon"
+# HYPERPARAMETER_VALUES=(10000)
+
+# HYPERPARAMETER_VALUES=(0.001 0.01 0.1 1 5 10)
 # HYPERPARAMETER_VALUES=(0.001 0.01 0.1 0.5 1 5)
 DEFAULT_LR=0.001
 
@@ -41,9 +47,15 @@ SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir -p ${SWEEP_DIRECTORY}
 
+if [ "$HYPERPARAMETER_NAME" = "gaussian_noise_variance" ]; then
+  ALIAS="noise"
+else 
+  ALIAS=$HYPERPARAMETER_NAME
+fi
+
 for HYPERPARAMETER_VALUE in "${HYPERPARAMETER_VALUES[@]}";
 do
-  EXPERIMENT_NAME="${HYPERPARAMETER_NAME}_${HYPERPARAMETER_VALUE}"
+  EXPERIMENT_NAME="${ALIAS}_${HYPERPARAMETER_VALUE}"
   echo "Beginning Experiment ${EXPERIMENT_NAME}"
   EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
   echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"

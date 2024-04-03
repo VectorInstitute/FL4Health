@@ -50,6 +50,7 @@ class FedHeartDiseaseFedAvgClient(SecureAggregationClient):
             checkpointer=checkpointer,
             client_id=client_number,
             privacy_settings=privacy_settings,
+            task_name='Fed-HeartDisease Distributed',
         )
         self.client_number = client_number
         self.learning_rate = learning_rate

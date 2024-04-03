@@ -51,6 +51,7 @@ class FedIxiFedAvgClient(CentralDPClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
+            task_name='Fed-IXI Central'
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
@@ -146,12 +147,12 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     privacy_settings = {
-        'gaussian_noise_variance': config['gaussian_noise_variance'],
+        'epsilon': config['epsilon'],
     }
 
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['gaussian_noise_variance']
+    assert key in ['epsilon']
     log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
     log(INFO, f'{privacy_settings}')

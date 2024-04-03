@@ -1,5 +1,25 @@
 from math import comb, exp, log, sqrt, pi, e
 from typing import Optional, Tuple
+from functools import partial
+
+def rdp_subsampling_amplification(subsampling_ratio, alpha, rdp_epsilon_func):
+    """
+    Reference
+        Theorem 9 in "Subsampled Rényi Differential Privacy and Analytical Moments Accountant"
+        https://www.shivakasiviswanathan.com/AISTATS19.pdf
+    """
+    assert alpha > 1 and isinstance(alpha, int)
+
+    # alias
+    g = subsampling_ratio
+    eps = rdp_epsilon_func
+    e2 = exp(eps(2))
+
+    # summands
+    a = g**2 * comb(alpha, 2) * min(4*(e2-1), 2 * e2)
+    b = sum(g**j * comb(alpha, j)*exp((j-1)*eps(j)) * 2 for j in range(3, alpha+1))
+    
+    return log(1+a+b) / (alpha-1)
 
 
 class DistributedDiscreteGaussianAccountant:
@@ -8,6 +28,9 @@ class DistributedDiscreteGaussianAccountant:
     References 
         [DDG] The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
               https://arxiv.org/pdf/2102.06387.pdf
+
+        [DDP-J] Journal version of [DDG]
+                http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
 
         [PS] Poisson Subsampled Renyi Differential Privacy
              http://proceedings.mlr.press/v97/zhu19c/zhu19c.pdf
@@ -39,6 +62,7 @@ class DistributedDiscreteGaussianAccountant:
             randomized_rounding_bias: float, 
             number_of_trustworthy_fl_clients: int,
             approximate_dp_delta: Optional[float] = None,
+            privacy_amplification_sampling_ratio: float = 1,
             poisson_subsampling_probability: Optional[float] = None
     ) -> None:
         
@@ -46,6 +70,7 @@ class DistributedDiscreteGaussianAccountant:
         self.d = model_dimension
         self.lb = alpha_search_space[0]
         self.ub = alpha_search_space[1]
+        self.g = privacy_amplification_sampling_ratio
         self.N = number_of_trustworthy_fl_clients
         self.p = poisson_subsampling_probability
         self.rounds = fl_rounds
@@ -66,8 +91,6 @@ class DistributedDiscreteGaussianAccountant:
         b, g = self.beta, self.gamma
 
         arg1 = c**2 + g**2 * d/4 + sqrt(2 * log(1/b)) * g * (c + g*sqrt(d)/2)
-
-
         arg2 = (c + g * sqrt(d))**2
 
         return min(arg1, arg2)
@@ -91,172 +114,84 @@ class DistributedDiscreteGaussianAccountant:
 
         arg1 = sqrt(common + 2 * t * d)
         arg2 = sqrt(common) + t * sqrt(d)
-        # print(arg1, arg2)
+
         return min(arg1, arg2)
     
-    def concentrated_dp_epsilon_fl(self) -> float:
-        """Accounting based on Lemma 2.3 in [zCDP]"""
-        return self.rounds * self.concentrated_dp_epsilon_single_round()
-    
-    def concentrated_to_approximate_dp(self, search_scale=0.0001):
+    def renyi_dp_single_round(self, alpha: float):
+        """
+        We use the fact that eps/2-concentrated DP is the same as 
+        (alpha, eps^2 * alpha/2)-RDP for all alpha > 1.
 
-        def compute_candidate(alpha: float, z_eps: float):
-            assert alpha > 1
-            u = z_eps**2 * alpha/2
-            v = log(  1 / (alpha*self.delta)  ) / (alpha-1)
-            w = log(1-1/alpha)
-            return u + v + w
+        Reference
+            Page 2 of [DDG-J]
+        """
+        assert alpha > 1
+        cdp_eps = self.concentrated_dp_epsilon_single_round() 
+        return .5 * cdp_eps**2 * alpha
+
+
+    def fl_rdp_accountant(self, alpha, amplify=True):
+        if amplify:
+            return self.rounds * rdp_subsampling_amplification(subsampling_ratio=self.g, alpha=alpha, rdp_epsilon_func=self.renyi_dp_single_round)
+        return self.rounds * self.renyi_dp_single_round(alpha)
+    
+    def fl_approximate_dp_accountant(self, amplify=False):
+        # search scale is only used when amplify=False
+        search_scale=0.0001
+
+        # alpha_integer_upper_bound is only used when amplify=True
+        alpha_integer_upper_bound = 3
+
+        if not amplify:
+            # convert concentrated to approximate-dp according to Lemma 4 in [DDG-J] 
+            concentrated_eps = self.rounds * self.concentrated_dp_epsilon_single_round()
+
+            def compute_candidate(alpha: float, concentrated_eps: float):
+                assert alpha > 1
+                u = concentrated_eps**2 * alpha/2
+                v = log(  1 / (alpha*self.delta)  ) / (alpha-1)
+                w = log(1-1/alpha)
+                return u + v + w
         
-        optimial_value = float('inf')
-        z_eps = self.concentrated_dp_epsilon_fl()
+            optimial_value = float('inf')
+                
+            alpha = self.lb + search_scale
+            while alpha <= self.ub:
+                candidate_value = compute_candidate(alpha=alpha, concentrated_eps=concentrated_eps)
+                if candidate_value < optimial_value:
+                    optimial_value = candidate_value
+                    # print(alpha, optimial_value)
+                alpha += search_scale
             
-        alpha = self.lb + search_scale
-        while alpha <= self.ub:
-            candidate_value = compute_candidate(alpha=alpha, z_eps=z_eps)
-            if candidate_value < optimial_value:
-                optimial_value = candidate_value
-                # print(alpha, optimial_value)
-            # later make this a bisection search 
-            # or differentiate the expression for exact value 
-            alpha += search_scale
+            return optimial_value
         
-        return optimial_value
-    
-    def optimal_adp_epsilon(self, searh_scale=0.0001):
-        return self.concentrated_to_approximate_dp(search_scale=searh_scale)
-
-    def subsampling_privacy_amplification(self, dataset_size: int, sample_size: int, searh_scale=0.0001):
-        """
-        Ref 
-            Lemma 3 in 
-            Wang et al., Subsampled Rényi Differential Privacy and Analytical Moments Accountant
-            https://www.shivakasiviswanathan.com/AISTATS19.pdf
-
-        Returns approximate-DP (epsilon, delta)
-        """
-        assert 0 < sample_size <= dataset_size
-
-        ratio = sample_size / dataset_size
-
-        try:
-            epsilon = log(1+ratio*(exp(self.optimal_adp_epsilon(searh_scale))-1))
-        except OverflowError:
-            print(f'Approximate-DP epsilon: {self.optimal_adp_epsilon(searh_scale)} is too large and caused overflow.')
-            exit()
-        delta = ratio*self.delta
-        return (epsilon, delta)
-        
-
-        
-
-    
-    # def renyi_dp_epsilon(self, alpha: float) -> float:
-    #     """Concentrated-DP to Renyi-DP. See [DDG] Page 6.
-        
-    #     Args 
-    #         alpha: the RDP order 
-    #     """
-
-    #     assert alpha > 1
-
-    #     eps = self.concentrated_dp_epsilon()
-
-    #     return  alpha * eps**2 / 2
-    
-    # def poisson_subsampled_rdp(self, alpha: int) -> float:
-    #     """Privacy amplification when DDG is composed with Poisson sub-sampling. 
-        
-    #     Args
-    #         alpha (int): In this accounting based on [PS] Theorem 5, we restrict alpha to
-    #         be an integer at least 2 as alpha appears in a binomial coefficient in a finite sum.
-    #     """
-
-    #     assert isinstance(alpha, int) and alpha > 1
-
-    #     p = self.p
-    #     eps = self.renyi_dp_epsilon # this is a function
-
-    #     arg1 = (1-p)**(alpha-1) * (alpha*p-p+1)
-    #     arg2 = comb(alpha, 2) * p**2 * (1-p)**(alpha-2) * exp(eps(2))
-
-    #     arg3, l = 0, 3
-    #     while l <= alpha:
-    #         arg3 += comb(alpha, l) * (1-p)**(alpha-l) * p**l * exp((l-1) * eps(l))
-    #         l += 1
-    #     arg3 *= 3
-
-    #     return log(arg1+arg2+arg3) / (alpha-1)
-    
-    # def fl_accountant_rdp(self, alpha: float|int, poisson_subsampled=False) -> float:
-    #     """Returns rdp epsilon for a given rdp alpha resulting from composing 
-    #     multiple federated rounds of [DDG] with Poisson subsampling.
-        
-    #     Note
-    #         Poisson subsampled calculations require alpha be integer. Otherwise it should be float.
-    #     """
-    #     if poisson_subsampled:
-    #         return self.rounds * self.poisson_subsampled_rdp(alpha=alpha)
-    #     return self.rounds * self.renyi_dp_epsilon(alpha=alpha)
-    
-    # def approximate_dp_epsilon(self):
-        
-    #     def inner(alpha: float):
-    #         u = 
-    #         return 
+        else:
+            # convert Renyi-DP to approximate-DP by [RDP] Proposition 3
+            optimial_value = float('inf')
+            for alpha in range(2, alpha_integer_upper_bound):
+                rdp_eps = self.fl_rdp_accountant(alpha=alpha, amplify=True)
+                candidate_value = rdp_eps + log(1/self.delta) / (alpha-1)
+                if candidate_value < optimial_value:
+                    optimial_value = candidate_value
+                    print('amplified: ', alpha, optimial_value)
+            return optimial_value
 
 
 
-
-    
-    # def _get_expression(self, alpha: int, poisson_subsampled=False) -> float:
-    #     """See [RDP] Proposition 3."""
-    #     rdp_eps = self.fl_accountant_rdp(alpha, poisson_subsampled)
-    #     return rdp_eps + log(1/self.delta) / (alpha - 1)
-
-
-    # def optimal_adp_epslion(self, poisson_subsampled=False) -> float:
-    #     """Get best approximate-DP epsilon."""
-    #     optimal = float('inf')
-
-    #     alpha = self.lb
-    #     while alpha <= self.ub:
-    #         candidate = self._get_expression(alpha, poisson_subsampled)
-    #         if candidate < optimal:
-    #             optimal = candidate
-
-    #         # NOTE print search process
-    #         # print(f'alpha={alpha} candidate={candidate} optimal={optimal}')
-
-    #         alpha += 1
-
-    #     return optimal
 
 if __name__ == '__main__':
-
     privacy_parameters = {
-        "clipping_threshold": 1.0,
-        "granularity": 0.001,
-        "model_integer_range": 65536,
-        "noise_scale": 0.001,
-        "bias": 0.5,
-        "dp_mechanism": "discrete gaussian mechanism",
-        "model_dimension": 14,
-        "num_fl_rounds": 20,
-        "num_clients": 4
-    }
-
-    privacy_parameters = {
-        "clipping_threshold": 3,
-        "noise_scale": 0.1,
-        "granularity": 0.001,
-        "model_integer_range": 65536,
+        "clipping_threshold": 0.001,
+        "noise_scale": 0.0004, #0.005,
+        "granularity": 0.000_000_1, #0.001,
         "bias": exp(-0.5),
         "dp_mechanism": "discrete gaussian mechanism",
-        "model_dimension": 4017796,
-        "num_fl_rounds": 50,
-        "num_clients": 4
+        "model_dimension": 500_000, #1_148_066,
+        "num_fl_rounds": 1,
+        "num_clients": 4,
+        'privacy_amplification_sampling_ratio': 0.1,
+        'approximate_dp_delta': 1/23247**2,
     }
-    
 
     accountant = DistributedDiscreteGaussianAccountant(
         l2_clip=privacy_parameters["clipping_threshold"],
@@ -266,13 +201,30 @@ if __name__ == '__main__':
         randomized_rounding_bias=privacy_parameters["bias"],
         number_of_trustworthy_fl_clients=privacy_parameters["num_clients"],
         fl_rounds=privacy_parameters["num_fl_rounds"],
-        # approximate_dp_delta=0.9/740
+        privacy_amplification_sampling_ratio=privacy_parameters['privacy_amplification_sampling_ratio'],
+        approximate_dp_delta=privacy_parameters['approximate_dp_delta']
     )
 
+    # coarse_clips = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001]
+    # fine_clips1 = [0.001, 0.003, 0.005, 0.007, 0.009, 0.01]
+    # fine_clips2 = [0.02, 0.03, 0.05, 0.07, 0.09, 0.1]
+    # # best clip = 0.01
 
-    # print(accountant.concentrated_dp_epsilon_single_round())
-    print(accountant.subsampling_privacy_amplification(2,1))
-    # print(accountant.concentrated_dp_epsilon_fl())
-    # print(accountant._tau())
+    # # 0.00001 0.0001 0.0003 0.0005 0.0007 0.001
+    # granularities = [0.00001, 0.0001, 0.0003, 0.0005, 0.0007, 0.001]
+    # # granularities = [0.0001]
+    # # 0.0001 0.0003 0.0005 0.0007 0.0009
+    # noises = [0.0001, 0.0003, 0.0005, 0.0007, 0.0009]
+    # # best 0.0009
+    # epsilons = []
+    # for x in granularities:
+    #     accountant.gamma = x
+    #     # eps_rdp = accountant.fl_rdp_accountant(alpha=2)
+    #     eps_approx = accountant.fl_approximate_dp_accountant(amplify=False) # 
+    #     epsilons.append(eps_approx)
+    #     # print('hyperparm, approx-dp, rdp: ')
+    #     print(x, eps_approx)
+    #     # print('tau and delta squared: ', accountant._tau(), accountant._delta_squared())
+    # print(epsilons)
 
-
+    print(accountant.fl_approximate_dp_accountant(amplify=False))

@@ -85,7 +85,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         model=model,
         privacy_settings=privacy_settings,
         parameter_exchanger=SecureAggregationExchanger(),
-        checkpointer=checkpointer
+        checkpointer=checkpointer,
+        task_name='Fed-HeartDisease Distributed',
     )
 
     fl.server.start_server(

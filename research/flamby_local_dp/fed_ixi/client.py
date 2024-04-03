@@ -33,6 +33,11 @@ torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 from flamby.datasets.fed_ixi import Baseline
 
 class FedIXIFedAvgClient(DPScaffoldLoggingClient):
+
+    def set_task_name(self):
+        self.task_name ='Fed-IXI Local'
+        return self.task_name
+    
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(
             self.client_id, str(self.data_path)

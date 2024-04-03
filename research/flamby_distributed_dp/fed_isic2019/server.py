@@ -83,6 +83,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         parameter_exchanger=SecureAggregationExchanger(),
         checkpointer=checkpointer,
         privacy_settings=privacy_settings,
+        task_name='Fed-ISIC2019 Distributed'
     )
 
     fl.server.start_server(

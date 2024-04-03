@@ -1,7 +1,8 @@
 import argparse
 from functools import partial
 from typing import Any, Dict, Tuple
-
+from flwr.common.logger import log
+from logging import INFO
 import flwr as fl
 import numpy as np
 from flwr.common.parameter import ndarrays_to_parameters
@@ -87,12 +88,13 @@ def main(config: Dict[str, Any], checkpoint_dir) -> None:
         num_server_rounds=config["n_server_rounds"],
         strategy=strategy,
         warm_start=True,
-        checkpointer=checkpointer
+        checkpointer=checkpointer,
+        task_name='Fed-HeartDisease Local',
     )
 
     fl.server.start_server(
         server=server,
-        server_address="0.0.0.0:8080",
+        server_address=config['server_address'],
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
     
@@ -137,8 +139,13 @@ if __name__ == "__main__":
         "--hyperparameter_value", action="store", type=float, help="Tunable hyperparameter value."
     )
     args = parser.parse_args()
-
     config = load_config(args.config_path)
+    config['server_address'] = args.server_address
+    log(INFO, f'server address: {args.server_address}')
+    if args.hyperparameter_name == 'noise_multiplier':
+        config['noise_multiplier'] = args.hyperparameter_value
+
+
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
 

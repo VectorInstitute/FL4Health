@@ -24,6 +24,10 @@ SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
+HYPERPARAMETER_NAME=$5
+
+shift 5
+HYPERPARAMETER_VALUES=("$@")
 
 FOLDER="flamby_local_dp"
 
@@ -32,8 +36,8 @@ FOLDER="flamby_local_dp"
 SERVER_PORT=8100
 
 # Search through these hyperparameters
-HYPERPARAMETER_NAME="gaussian_noise_variance"
-HYPERPARAMETER_VALUES=(0.1)
+# HYPERPARAMETER_NAME="noise_multiplier"
+# HYPERPARAMETER_VALUES=(0.001 0.01 0.1 0.5 1 10)
 DEFAULT_LR=0.001
 
 # Create sweep folder
@@ -41,9 +45,15 @@ SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
+if [ "$HYPERPARAMETER_NAME" = "noise_multiplier" ]; then
+  ALIAS="noise"
+else 
+  ALIAS=$HYPERPARAMETER_NAME
+fi
+
 for HYPERPARAMETER_VALUE in "${HYPERPARAMETER_VALUES[@]}";
 do
-  EXPERIMENT_NAME="${HYPERPARAMETER_NAME}_${HYPERPARAMETER_VALUE}"
+  EXPERIMENT_NAME="${ALIAS}_${HYPERPARAMETER_VALUE}"
   echo "Beginning Experiment ${EXPERIMENT_NAME}"
   EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
   echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"

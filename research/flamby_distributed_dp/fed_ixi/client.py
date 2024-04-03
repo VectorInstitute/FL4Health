@@ -49,6 +49,7 @@ class FedIxiFedAvgClient(SecureAggregationClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
+            task_name='Fed-IXI Distributed',
         )
         self.client_number = client_number
         self.learning_rate = learning_rate

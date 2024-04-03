@@ -235,6 +235,7 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,
+        task_name: str = '',
     ) -> None:
         super().__init__(
             client_manager=client_manager,
@@ -251,6 +252,7 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
         )
 
         dir = checkpointer.best_checkpoint_path
+        self.task_name = task_name
 
         metrics_dir = os.path.join(os.path.dirname(dir), 
             'metrics'
@@ -266,6 +268,8 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
 
         with open(self.metrics_path, 'w+') as file:
             json.dump({
+                'party': 'server',
+                'task_name': self.task_name,
                 'privacy_hyperparameters': {
                     'noise_multiplier': noise_multiplier
                 }
@@ -360,9 +364,8 @@ class DPScaffoldLoggingServer(DPScaffoldServer):
 
                     with open(self.metrics_path, 'r') as file:
                         metrics_to_save = json.load(file)
-
                     metrics_to_save['current_round'] = current_round
-
+                    
                     if current_round == 1:
                         metrics_to_save['privacy_hyperparameters']['num_fl_rounds'] = num_rounds
 

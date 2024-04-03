@@ -274,6 +274,7 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
+        task_name: str = ''
     ) -> None:
         super().__init__(data_path=data_path, 
                          metrics=metrics,
@@ -283,6 +284,9 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
                          checkpointer=checkpointer)
         
         self.client_id = client_id
+
+        # Work around method to set task name.
+        self.set_task_name()
         
         metrics_dir = os.path.join(
             os.path.dirname(checkpointer.best_checkpoint_path),
@@ -304,6 +308,7 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
 
         with open(self.metrics_path, 'w+') as file:
             json.dump({
+                'task_name': self.task_name,
                 'id': self.client_id,
             },file)
 
@@ -339,6 +344,8 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
 
         with open(self.metrics_path, 'r') as file:
             metrics_to_save = json.load(file)
+            metrics_to_save['model_size'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            metrics_to_save['current_round'] = self.federated_round
 
             for key, value in metrics.items():
                 if key not in metrics_to_save:
@@ -351,11 +358,6 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
                     metrics_to_save[key] = [value]
                 else:
                     metrics_to_save[key].append(value)
-
-            if 'round' not in metrics_to_save:
-                metrics_to_save['round'] = [self.federated_round]
-            else:
-                metrics_to_save['round'].append(self.federated_round)
 
             if 'time' not in metrics_to_save:
                 metrics_to_save['time'] = [timeit.default_timer()-self.start_time]

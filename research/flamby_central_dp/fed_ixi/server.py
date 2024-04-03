@@ -67,12 +67,13 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     )
 
     privacy_settings = {
-        'gaussian_noise_variance': config['gaussian_noise_variance'],
+        'clip': config['clip'],
+        'epsilon': config['epsilon'],
     }
 
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['gaussian_noise_variance']
+    assert key in ['epsilon']
     log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
     log(INFO, f'{privacy_settings}')
@@ -85,6 +86,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         parameter_exchanger=SecureAggregationExchanger(),
         checkpointer=checkpointer,
         privacy_settings=privacy_settings,
+        task_name='Fed-IXI Central'
     )
     fl.server.start_server(
         server=server,

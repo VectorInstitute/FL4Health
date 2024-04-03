@@ -1,5 +1,5 @@
 # Parameters that describe server
-n_server_rounds: 3 #20 # The number of rounds to run FL
+n_server_rounds: 100 #20 # The number of rounds to run FL
 
 # Parameters that describe clients
 n_clients: 4 # The number of clients in the FL experiment
@@ -16,3 +16,4 @@ noise_multiplier: 1.0
 clipping_bound: 5.0
 
 gaussian_noise_variance: 10
+

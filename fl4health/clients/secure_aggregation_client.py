@@ -43,6 +43,7 @@ from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
 
+
 class SecureAggregationClient(BasicClient):
     def __init__(
         self,
@@ -53,11 +54,13 @@ class SecureAggregationClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
         checkpointer: Optional[TorchCheckpointer] = None,
-        client_id: str = uuid.uuid1()
+        client_id: str = uuid.uuid1(),
+        task_name: str = '',
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
 
         self.client_id = client_id
+        self.task_name = task_name
 
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.best_checkpoint_path),
@@ -104,8 +107,8 @@ class SecureAggregationClient(BasicClient):
 
         with open(self.metrics_path, 'w+') as file:
             json.dump({
-                'id': self.client_id,
-                'privacy_settings': self.privacy_settings,
+                'task_name': self.task_name,
+                'client_id': self.client_id,
             },file)
 
         assert 0 <= self.privacy_settings["bias"] < 1
@@ -135,6 +138,13 @@ class SecureAggregationClient(BasicClient):
                 # modulus may change at the start of each SecAgg if dropout occurs (refer to documentation)
                 self.crypto.set_arithmetic_modulus(modulus=config["arithmetic_modulus"])
                 self.privacy_settings['arithmetic_modulus'] = self.crypto.arithmetic_modulus
+
+                with open(self.metrics_path, 'r') as file:
+                    metrics_to_save = json.load(file)
+                    metrics_to_save['privacy_settings'] = self.privacy_settings
+
+                with open(self.metrics_path, 'w') as file:
+                    json.dump(metrics_to_save, file)
 
                 self.dropout_mode = config["dropout_mode"]
 
@@ -386,7 +396,8 @@ class SecureAggregationClient(BasicClient):
 
         with open(self.metrics_path, 'r') as file:
             metrics_to_save = json.load(file)
-            log(DEBUG, f'{metrics_to_save}, {type(metrics_to_save)}')
+            metrics_to_save['model_size'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            metrics_to_save['current_round'] = current_server_round
 
             for key, value in metrics.items():
                 if key not in metrics_to_save:
@@ -399,17 +410,11 @@ class SecureAggregationClient(BasicClient):
                     metrics_to_save[key] = [value]
                 else:
                     metrics_to_save[key].append(value)
-
-            if 'round' not in metrics_to_save:
-                metrics_to_save['round'] = [current_server_round]
-            else:
-                metrics_to_save['round'].append(current_server_round)
-
             
-            if 'arithmetic_modulus' not in metrics_to_save:
-                metrics_to_save['arithmetic_modulus'] = [self.privacy_settings['arithmetic_modulus']]
-            else:
-                metrics_to_save['arithmetic_modulus'].append(self.privacy_settings['arithmetic_modulus'])
+            # if 'arithmetic_modulus' not in metrics_to_save:
+            #     metrics_to_save['arithmetic_modulus'] = [self.privacy_settings['arithmetic_modulus']]
+            # else:
+            #     metrics_to_save['arithmetic_modulus'].append(self.privacy_settings['arithmetic_modulus'])
 
 
             if 'time' not in metrics_to_save:
@@ -530,6 +535,9 @@ class SecureAggregationClient(BasicClient):
         # self.echo('mask', mask)
         # vector *= 0
         vector += mask
+        log(INFO, f'Arithmetic modulus = {self.crypto.arithmetic_modulus}')
+        vector %= self.crypto.arithmetic_modulus
+
         # NOTE turn off weighted average
         # vector *= weight
 

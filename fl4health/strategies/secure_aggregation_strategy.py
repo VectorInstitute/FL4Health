@@ -172,6 +172,7 @@ class SecureAggregationStrategy(BasicFedAvg):
         Returns:
             Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
+        log(INFO, f'Arithmetic modulus = {arithmetic_modulus}')
         if not results:
             return None, {}
         # Do not aggregate if there are failures and failures are not accepted
@@ -195,7 +196,7 @@ class SecureAggregationStrategy(BasicFedAvg):
             for local_model_layers in local_models:
                 for k in range(num_layers):
                     global_model_layers[k] += local_model_layers[k]
-                    # global_model_layers[k] %= arithmetic_modulus
+                    global_model_layers[k] %= arithmetic_modulus
             # log(INFO, f'======= round {server_round} strategy')
             # log(INFO, global_model_layers)
             parameters_aggregated = ndarrays_to_parameters(global_model_layers)

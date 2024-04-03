@@ -25,9 +25,17 @@ import os
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from flwr.common.logger import log
 from logging import INFO
+from typing import Dict, Optional, Sequence, Tuple
+from fl4health.utils.metrics import Metric
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
+
 
 class FedHeartClient(DPScaffoldLoggingClient):
 
+    def set_task_name(self):
+        self.task_name = "Fed-HeartDisease Local"
+        return self.task_name
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
@@ -120,5 +128,5 @@ if __name__ == "__main__":
                               checkpointer=checkpointer, 
                               client_id=args.client_number)
 
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client)
     client.shutdown()

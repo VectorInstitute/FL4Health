@@ -8,7 +8,7 @@
 #SBATCH --mem=32G
 #SBATCH --partition=cpu
 #SBATCH --qos=normal
-#SBATCH --job-name=DDP
+#SBATCH --job-name=DDP-hl
 #SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_local/%j_%x.out"
 #SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_local/%j_%x.err"
 
@@ -72,7 +72,8 @@ FOLDER="flamby_local_dp"
 # Create the artifact directory
 mkdir -p "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+# RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+RUN_NAMES=( "Run1" )
 
 echo "Python Venv Path: ${VENV_PATH}"
 

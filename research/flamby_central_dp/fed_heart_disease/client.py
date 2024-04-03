@@ -45,6 +45,7 @@ class FedHeartDiseaseFedAvgClient(CentralDPClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
+            task_name='Fed-HeartDisease Central',
         )
         self.client_number = client_number
         self.learning_rate = learning_rate

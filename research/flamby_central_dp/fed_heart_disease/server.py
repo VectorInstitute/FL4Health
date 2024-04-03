@@ -64,12 +64,12 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     )
 
     privacy_settings = {
-        'gaussian_noise_variance': config['gaussian_noise_variance'],
+        'clip': config['clip'],
     }
 
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['gaussian_noise_variance']
+    assert key in ['epsilon']
     # log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
     # log(INFO, f'{privacy_settings}')
@@ -80,7 +80,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         model=model,
         privacy_settings=privacy_settings,
         parameter_exchanger=SecureAggregationExchanger(),
-        checkpointer=checkpointer
+        checkpointer=checkpointer,
+        task_name='Fed-HeartDisease Central',
     )
 
     fl.server.start_server(
