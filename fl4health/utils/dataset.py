@@ -65,7 +65,7 @@ class Cifar10Dataset(BaseDataset):
     ):
         cifar10_dataset = CIFAR10(data_path, train=train, download=True)
         self.data = torch.from_numpy(cifar10_dataset.data)
-        self.targets = torch.Tensor(cifar10_dataset.targets)
+        self.targets = torch.Tensor(cifar10_dataset.targets).long()
         self.transform = transform
         self.target_transform = target_transform
 
