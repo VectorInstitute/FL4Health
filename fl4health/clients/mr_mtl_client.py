@@ -71,12 +71,6 @@ class MrMtlClient(BasicClient):
         self.global_model: nn.Module
         self.init_global_model: nn.Module
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        """
-        Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
-        """
-        raise NotImplementedError
-
     def setup_client(self, config: Config) -> None:
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
