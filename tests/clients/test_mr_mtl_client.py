@@ -55,6 +55,7 @@ def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
     mr_mtl_client.init_global_model = SmallCnn()
+    mr_mtl_client.init_global_model.eval()
     mr_mtl_client.parameter_exchanger = FullParameterExchanger()
     config: Config = {}
     mr_mtl_client.criterion = torch.nn.CrossEntropyLoss()
