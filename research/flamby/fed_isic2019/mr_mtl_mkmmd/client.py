@@ -65,11 +65,8 @@ class FedIsic2019MrMtlClient(MrMtlClient):
         model: nn.Module = FedIsic2019MrMtlModel().to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
