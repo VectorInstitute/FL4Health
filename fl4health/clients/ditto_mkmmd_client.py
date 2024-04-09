@@ -51,7 +51,8 @@ class DittoClient(BasicClient):
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
             beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss.
                 Defaults to 20.
-            feature_l2_norm (Optional[float], optional): weight applied to the L2 norm of the features. Defaults to 0.0.
+            feature_l2_norm (Optional[float], optional): weight applied to the L2 norm of the features.
+            Defaults to 0.0.
         """
         super().__init__(
             data_path=data_path,
@@ -371,8 +372,8 @@ class DittoClient(BasicClient):
         Returns:
             Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the total loss
-                - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set 
-                from server config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated 
+                - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set
+                from server config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
                 values.
         """
 
