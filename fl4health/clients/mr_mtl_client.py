@@ -32,7 +32,7 @@ class MrMtlClient(BasicClient):
     ) -> None:
         """
         This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in
-        Cross-Silo Federated Learning. The idea is that we want to train personalized versions of the global model 
+        Cross-Silo Federated Learning. The idea is that we want to train personalized versions of the global model
         for each client. However despite Ditto we don't solve a separate solver for global model. We update
         global model with aggregated local models on the server-side and use those weights to also
         constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
@@ -48,11 +48,12 @@ class MrMtlClient(BasicClient):
                 checkpointing. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
-            lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
+            lam (float, optional): weight applied to the MR-MTL drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
             beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss.
                 Defaults to 20.
-            feature_l2_norm (Optional[float], optional): weight applied to the L2 norm of the features. Defaults to 0.0.
+            feature_l2_norm (Optional[float], optional): weight applied to the L2 norm of the features.
+            Defaults to 0.0.
         """
         super().__init__(
             data_path=data_path,
@@ -75,18 +76,6 @@ class MrMtlClient(BasicClient):
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """
         raise NotImplementedError
-
-    def set_optimizer(self, config: Config) -> None:
-        """
-        Ditto requires an optimizer for the global model and one for the local model. This function simply ensures that
-        the optimizers setup by the user have the proper keys and that there are two optimizers.
-
-        Args:
-            config (Config): The config from the server.
-        """
-        optimizers = self.get_optimizer(config)
-        assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
-        self.optimizers = optimizers
 
     def setup_client(self, config: Config) -> None:
         """
@@ -149,7 +138,7 @@ class MrMtlClient(BasicClient):
         global and local models are being initialized and use the FullParameterExchanger() to set all model weights.
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
-                model (global model for all but the first step of Ditto)
+                model (global model for all but the first step of MR-MTL)
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
             fitting_round (bool): Boolean that indicates whether the current federated learning
                 round is a fitting round or an evaluation round.
@@ -191,7 +180,7 @@ class MrMtlClient(BasicClient):
 
     def update_before_train(self, current_server_round: int) -> None:
         assert isinstance(self.model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL 
+        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL
         # update penalty term.
         self.init_global_model = self.clone_and_freeze_model(self.global_model)
 
@@ -308,7 +297,7 @@ class MrMtlClient(BasicClient):
                     keys and their respective calculated values.
         """
 
-        # Compute model loss + ditto constraint term
+        # Compute model loss + MR-MTL constraint term
         assert "prediction" in preds
         loss = self.criterion(preds["prediction"], target)
         total_loss = loss.clone()
@@ -338,10 +327,9 @@ class MrMtlClient(BasicClient):
         target: torch.Tensor,
     ) -> TrainingLosses:
         """
-        Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+        Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
+        function by including MR-MTL penalty loss which is the l2 inner product between the initial global model
+        weights and weights of the current model.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
@@ -351,8 +339,7 @@ class MrMtlClient(BasicClient):
 
         Returns:
             TrainingLosses: an instance of TrainingLosses containing backward loss and
-                additional losses indexed by name. Additional losses includes each loss component and the global model
-                loss tensor.
+                additional losses indexed by name. Additional losses includes each loss component of the total loss.
         """
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
@@ -360,11 +347,11 @@ class MrMtlClient(BasicClient):
         total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         assert additional_losses is not None
 
-        # Compute ditto drift loss
-        ditto_local_loss = self.get_mr_mtl_drift_loss()
-        additional_losses["ditto_loss"] = ditto_local_loss
+        # Compute mr-mtl drift loss
+        mr_mtl_local_loss = self.get_mr_mtl_drift_loss()
+        additional_losses["mr_mtl_loss"] = mr_mtl_local_loss
 
-        return TrainingLosses(backward=total_loss + ditto_local_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=total_loss + mr_mtl_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
@@ -385,9 +372,9 @@ class MrMtlClient(BasicClient):
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
-        For Ditto, we use the vanilla loss for the local model in checkpointing. However, during validation we also
+        For MR-MTL, we use the vanilla loss for the model in checkpointing. However, during validation we also
         compute the global model vanilla loss.
-        We also include a sanity check log which computes the ditto drift loss during evaluation to ensure that it
+        We also include a sanity check log which computes the MR-MTL drift loss during evaluation to ensure that it
         is non-zero.
 
         Args:
