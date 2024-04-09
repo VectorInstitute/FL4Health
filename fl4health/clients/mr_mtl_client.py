@@ -67,7 +67,6 @@ class MrMtlClient(BasicClient):
         self.beta_update_interval = beta_update_interval
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
-        self.global_model: nn.Module
         self.init_global_model: nn.Module
 
     def setup_client(self, config: Config) -> None:
@@ -78,13 +77,13 @@ class MrMtlClient(BasicClient):
         Args:
             config (Config): The config from the server.
         """
-        # Need to setup the global model here as well. It should be the same architecture as the local model so
+        # Need to setup the init global model here as well. It should be the same architecture as the model so
         # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
-        self.global_model = self.get_model(config).to(self.device)
+        self.init_global_model = self.get_model(config).to(self.device)
         # The rest of the setup is the same
         super().setup_client(config)
 
-    def get_mr_mtl_drift_loss(self) -> torch.Tensor:
+    def get_mr_drift_loss(self) -> torch.Tensor:
         """
         Compute the L2 inner product between the initial global weights for the round and the current local model
             weights. This loss function is added to the loss function for the local model when back propagating.
@@ -127,8 +126,8 @@ class MrMtlClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         The parameters being pass are to be routed to the global model and saved as the initial global model tensors to
-        be used in a penalty term in training the local model. In the first fitting round, we assume the both the
-        global and local models are being initialized and use the FullParameterExchanger() to set all model weights.
+        be used in a penalty term in training the local model.
+
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model (global model for all but the first step of MR-MTL)
@@ -140,42 +139,32 @@ class MrMtlClient(BasicClient):
                 first fitting round.
         """
         # Make sure that the proper components exist.
-        assert self.global_model is not None and self.model is not None
+        assert self.init_global_model is not None and self.model is not None
         assert self.parameter_exchanger is not None and isinstance(self.parameter_exchanger, FullParameterExchanger)
 
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
-        if current_server_round == 1 and fitting_round:
-            log(INFO, "Initializing the global and local models weights for the first time")
-            self.initialize_all_model_weights(parameters, config)
-        else:
-            # Route the parameters to the GLOBAL model in MR-MTL
-            assert self.parameter_exchanger is not None
-            log(INFO, "Setting the global model weights")
-            self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
-
-        # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
-        # respect to the tensors. These are used to form the MR-MTL local update penalty term.
-        self.initial_global_tensors = [
-            initial_layer_weights.detach().clone() for initial_layer_weights in self.global_model.parameters()
-        ]
-
-    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
-        """
-        If this is the first time we're initializing the model weights, we initialize both the global and the local
-        weights together.
-
-        Args:
-            parameters (NDArrays): Model parameters to be injected into the client model
-            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
-        """
-        self.parameter_exchanger.pull_parameters(parameters, self.model, config)
-        self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
+        # Route the parameters to the GLOBAL model in MR-MTL
+        assert self.parameter_exchanger is not None
+        log(INFO, "Setting the global model weights")
+        self.parameter_exchanger.pull_parameters(parameters, self.init_global_model, config)
 
     def update_before_train(self, current_server_round: int) -> None:
         assert isinstance(self.model, nn.Module)
-        # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL
+        # Freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL
         # update penalty term.
-        self.init_global_model = self.clone_and_freeze_model(self.global_model)
+        for param in self.init_global_model.parameters():
+            param.requires_grad = False
+        self.init_global_model.eval()
+
+        return super().update_before_train(current_server_round)
+
+
+    def update_before_train(self, current_server_round: int) -> None:
+        assert isinstance(self.model, nn.Module)
+        # Freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL
+        # update penalty term.
+        for param in self.init_global_model.parameters():
+            param.requires_grad = False
+        self.init_global_model.eval()
 
         return super().update_before_train(current_server_round)
 
@@ -335,16 +324,17 @@ class MrMtlClient(BasicClient):
                 additional losses indexed by name. Additional losses includes each loss component of the total loss.
         """
         # Check that both models are in training mode
-        assert self.global_model.training and self.model.training
+        assert not self.init_global_model.training and self.model.training
 
         total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
-        assert additional_losses is not None
+        if additional_losses is None:
+            additional_losses = {}
 
         # Compute mr-mtl drift loss
-        mr_mtl_local_loss = self.get_mr_mtl_drift_loss()
-        additional_losses["mr_mtl_loss"] = mr_mtl_local_loss
+        mr_local_loss = self.get_mr_drift_loss()
+        additional_losses["mr_loss"] = mr_local_loss
 
-        return TrainingLosses(backward=total_loss + mr_mtl_local_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=total_loss + mr_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
@@ -354,7 +344,7 @@ class MrMtlClient(BasicClient):
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
         # Set the global model to evaluate mode
-        self.global_model.eval()
+        self.init_global_model.eval()
         return super().validate()
 
     def compute_evaluation_loss(
@@ -381,7 +371,7 @@ class MrMtlClient(BasicClient):
                 indexed by name.
         """
         # Check that both models are in eval mode
-        assert not self.global_model.training and not self.model.training
+        assert not self.init_global_model.training and not self.model.training
 
         _, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         assert additional_losses is not None

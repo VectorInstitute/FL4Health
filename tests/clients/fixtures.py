@@ -13,6 +13,7 @@ from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.moon_client import MoonClient
+from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaHeadModule, FendaModel
@@ -37,6 +38,8 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
     elif type == DittoClient:
         client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
+    elif type == MrMtlClient:
+        client = MrMtlClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
     elif type == MoonClient:
         client = MoonClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = FullParameterExchanger()
