@@ -1,8 +1,8 @@
-# FedProx Federated Learning Example
+# MR-MTL Federated Learning Example
 
 In this example, we implement the MR-MTL algorithm from the paper [MR-MTL: On Privacy and Personalization in Cross-Silo Federated Learning
 ](https://arxiv.org/pdf/2206.07902.pdf). The method is somewhat related to FedProx and Ditto. Essentially, at the start of each client training round
-we do not update local model weights directly with the global model weights des, but instead we constrain the model weights to be close to the initial global model weights at the start of each client training round. Initial global model weights are computed by averaging the model weights at the end of the previous round. Such a mean-regularized training is done by adding a penalty term to the loss function that constrains the local model weights to be close to the initial global model weights. The strength of the penalty term is controlled by a hyperparameter $\lambda > 0$. To be more specific, the local model is trained using the same loss function as in FedAvg, but with the penalty term added. The penalty term is added to the loss function as follows:
+we do not update local model weights directly with the global model weights, but instead we constrain the model weights to be close to the initial global model weights at the start of each client training round. Initial global model weights are computed by averaging the model weights at the end of the previous round. Such mean-regularized training is done by adding a penalty term to the loss function that constrains the local model weights to be close to the initial global model weights. The strength of the penalty term is controlled by a hyperparameter $\lambda > 0$. To be more specific, the local model is trained using the same loss function as in FedAvg, but with the penalty term added. The penalty term is added to the loss function as follows:
 $$
 l_{w} + \lambda \Vert w - w_g \Vert_2^2,
 $$
