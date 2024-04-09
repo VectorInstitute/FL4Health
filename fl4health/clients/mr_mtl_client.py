@@ -164,7 +164,7 @@ class MrMtlClient(BasicClient):
                 additional losses indexed by name. Additional losses includes each loss component of the total loss.
         """
         # Check that both models are in training mode
-        assert self.init_global_model.training and self.model.training
+        assert not self.init_global_model.training and self.model.training
 
         total_loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
         if additional_losses is None:
