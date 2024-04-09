@@ -1,7 +1,6 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict
 
 import flwr as fl
 import torch
@@ -29,7 +28,7 @@ class MnistMrMtlClient(MrMtlClient):
 
     def get_model(self, config: Config) -> nn.Module:
         return MnistNet().to(self.device)
-    
+
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.AdamW(self.model.parameters(), lr=0.01)
 
