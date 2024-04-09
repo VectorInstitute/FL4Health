@@ -51,6 +51,7 @@ class DittoClient(BasicClient):
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
             beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss.
                 Defaults to 20.
+            feature_l2_norm (Optional[float], optional): weight applied to the L2 norm of the features. Defaults to 0.0.
         """
         super().__init__(
             data_path=data_path,
@@ -361,8 +362,6 @@ class DittoClient(BasicClient):
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
-        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
-        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
@@ -372,9 +371,9 @@ class DittoClient(BasicClient):
         Returns:
             Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the total loss
-                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
-                    `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
-                    keys and their respective calculated values.
+                - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set 
+                from server config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated 
+                values.
         """
 
         # Compute global model vanilla loss
