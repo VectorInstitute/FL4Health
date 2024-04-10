@@ -25,11 +25,11 @@ class MrMtlClient(BasicClient):
         lam: float = 1.0,
     ) -> None:
         """
-        This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in
-        Cross-Silo Federated Learning. The idea is that we want to train personalized versions of the global model
-        for each client. However despite Ditto we don't solve a separate solver for global model. We update
-        global model with aggregated local models on the server-side and use those weights to also
-        constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
+        This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in Cross-Silo
+        Federated Learning. The idea is that we want to train personalized versions of the global model for each
+        client. However despite Ditto we don't solve a separate solver for global model. We update initial global model
+        with aggregated local models on the server-side and use those weights to also constrain the training of a local
+        model. The constraint for this local model is identical to the FedProx loss.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -96,8 +96,8 @@ class MrMtlClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        For MR-MTL, we transfer the LOCAL model weights to the server to be aggregated and set as GLOBAL model weights
-        on client side.
+        For MR-MTL, we transfer the LOCAL model weights to the server to be aggregated and set as INITIAL GLOBAL model
+        weightson client side.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
@@ -110,8 +110,8 @@ class MrMtlClient(BasicClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
-        The parameters being pass are to be routed to the global model and saved as the initial global model tensors to
-        be used in a penalty term in training the local model.
+        The parameters being pass are to be routed to the initial global model to be used in a penalty term in
+        training the local model.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
@@ -150,8 +150,8 @@ class MrMtlClient(BasicClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss
-        function by including MR-MTL penalty loss which is the l2 inner product between the initial global model
-        weights and weights of the current model.
+        function by including Mean Regularized (MR) penalty loss which is the l2 inner product between the 
+        initial global model weights and weights of the current model.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
