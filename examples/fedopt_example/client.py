@@ -14,7 +14,7 @@ from examples.fedopt_example.client_data import LabelEncoder, Vocabulary, constr
 from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -68,9 +68,19 @@ class NewsClassifierClient(BasicClient):
                 metric.setup(self.label_encoder)
         super().setup_client(config)
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(
+        self,
+        input: TorchInputType,
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the prediction(s), and potentially features, of the model(s) given the input.
+
+        Args:
+            input (TorchInputType): the input to self.model's forward pass. TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
+        """
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
-        assert isinstance(self.model, LSTM)
+        assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)
         h0, c0 = self.model.init_hidden(self.batch_size)
         h0 = h0.to(self.device)
         c0 = c0.to(self.device)
