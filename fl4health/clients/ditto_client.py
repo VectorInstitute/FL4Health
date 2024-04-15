@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -206,15 +206,19 @@ class DittoClient(BasicClient):
         self.global_model.train()
         return super().train_by_steps(steps, current_round)
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(
+        self, input: TorchInputType, target: torch.Tensor
+    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
         As in the implementation there, steps of the global and local models are done in tandem and for the same
         number of steps.
 
         Args:
-            input (torch.Tensor): input tensor to be run through both the global and local models
-            target (torch.Tensor): target tensor to be used to compute a loss given each models outputs
+            input (TorchInputType): input tensor to be run through
+            both the global and local models. Here, TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
+            target (torch.Tensor): target tensor to be used to compute a loss given each models outputs.
 
         Returns:
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: Returns relevant loss values from both the global and local
@@ -245,12 +249,15 @@ class DittoClient(BasicClient):
         # Return dictionary of predictions where key is used to name respective MetricMeters
         return losses, preds
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(
+        self,
+        input: TorchInputType,
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
         Args:
-            input (torch.Tensor): Inputs to be fed into both models.
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into both models.
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
@@ -261,8 +268,17 @@ class DittoClient(BasicClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        global_preds = self.global_model(input)
-        local_preds = self.model(input)
+        if isinstance(input, torch.Tensor):
+            global_preds = self.global_model(input)
+            local_preds = self.model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of the forward method.
+            global_preds = self.global_model(**input)
+            local_preds = self.model(**input)
+        else:
+            raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
 
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.

@@ -38,6 +38,8 @@ wandb = "^0.16.1"
 torchtext = "^0.14.1"
 torchdata = "^0.7.0"
 torcheval = "^0.0.6"
+transformers = "^4.37.2"
+datasets = "^2.17.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4.3"

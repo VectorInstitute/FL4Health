@@ -5,9 +5,8 @@ from typing import Callable, Dict, Optional, Tuple, Union
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR10
 
-from fl4health.utils.dataset import BaseDataset, MnistDataset
+from fl4health.utils.dataset import BaseDataset, Cifar10Dataset, MnistDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
@@ -58,7 +57,7 @@ def load_cifar10_test_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    evaluation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
+    evaluation_set: BaseDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         evaluation_set = sampler.subsample(evaluation_set)
@@ -79,8 +78,8 @@ def load_cifar10_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    training_set = CIFAR10(str(data_dir), train=True, download=True, transform=transform)
-    validation_set = CIFAR10(str(data_dir), train=False, download=True, transform=transform)
+    training_set: BaseDataset = Cifar10Dataset(data_dir, train=True, transform=transform)
+    validation_set: BaseDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         training_set = sampler.subsample(training_set)
