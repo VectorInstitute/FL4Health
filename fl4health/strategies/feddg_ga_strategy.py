@@ -13,6 +13,12 @@ from flwr.server.strategy import FedAvg
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 
 
+class SignalForTypeException(Exception):
+    """Thrown when there is an error in `signal_for_type` function."""
+
+    pass
+
+
 class FairnessMetricType(Enum):
     """Defines the basic types for fairness metrics, their default names and their default signals"""
 
@@ -30,7 +36,7 @@ class FairnessMetricType(Enum):
 
         Returns: (float) -1.0 if FairnessMetricType.ACCURACY or 1.0 if FairnessMetricType.LOSS.
 
-        Raises: (Exception) if type is CUSTOM as the signal has to be defined by the user.
+        Raises: (SignalForTypeException) if type is CUSTOM as the signal has to be defined by the user.
         """
         # For loss values, large and **positive** gaps imply worse generalization of global
         # weights to local models. Therefore, we want to **increase** weight for these model
@@ -41,7 +47,7 @@ class FairnessMetricType(Enum):
             return -1.0
         if fairness_metric_type == FairnessMetricType.LOSS:
             return 1.0
-        raise Exception("This function should not be called with CUSTOM type.")
+        raise SignalForTypeException("This function should not be called with CUSTOM type.")
 
 
 class FairnessMetric:
@@ -147,6 +153,12 @@ class FedDgGaStrategy(FedAvg):
                 The step size to determine the magnitude of change for the adjustment weight. It has to be
                 0 < weight_step_size < 1. Optional, default is 0.2.
         """
+        if fraction_fit != 1.0 or fraction_evaluate != 1.0:
+            log(
+                WARNING,
+                "fraction_fit or fraction_evaluate are not 1.0. The behaviour of FedDG-GA is unknown in those cases.",
+            )
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -281,8 +293,7 @@ class FedDgGaStrategy(FedAvg):
             self.evaluation_metrics[cid] = eval_res.metrics
             # adding the loss to the metrics
             val_loss_key = FairnessMetricType.LOSS.value
-            assert loss_aggregated is not None
-            self.evaluation_metrics[cid][val_loss_key] = loss_aggregated
+            self.evaluation_metrics[cid][val_loss_key] = eval_res.loss
 
         # Updating the weights at the end of the training round
         cids = [client_proxy.cid for client_proxy, _ in results]
@@ -350,7 +361,7 @@ class FedDgGaStrategy(FedAvg):
 
             generalization_gaps.append(global_model_metric_value - local_model_metric_value)
 
-        # Calculating the normalized the generalization gaps
+        # Calculating the normalized generalization gaps
         generalization_gaps_ndarray = np.array(generalization_gaps)
         mean_generalization_gap = np.mean(generalization_gaps_ndarray)
         var_generalization_gaps = generalization_gaps_ndarray - mean_generalization_gap
@@ -362,7 +373,7 @@ class FedDgGaStrategy(FedAvg):
                 "Max variance in generalization gap is 0. Adjustment weights will remain the same. "
                 + f"Generalization gaps: {generalization_gaps}",
             )
-            normalized_generalization_gaps = np.zeros(len(generalization_gaps))
+            normalized_generalization_gaps = np.zeros_like(generalization_gaps)
         else:
             step_size = self.get_current_weight_step_size(server_round)
             normalized_generalization_gaps = (var_generalization_gaps * step_size) / max_var_generalization_gap
