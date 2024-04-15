@@ -135,15 +135,15 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
     assert parameters_array == [approx(1.0, abs=0.0005), approx(1.0666, abs=0.0005)]
 
     # test evaluate fit
-    loss_aggregated, _ = strategy.aggregate_evaluate(2, deepcopy(test_eval_results), [])
+    _, _ = strategy.aggregate_evaluate(2, deepcopy(test_eval_results), [])
 
     assert strategy.evaluation_metrics == {
-        test_cid_1: {**test_eval_metrics_1, test_val_loss_key: loss_aggregated},
-        test_cid_2: {**test_eval_metrics_2, test_val_loss_key: loss_aggregated},
+        test_cid_1: {**test_eval_metrics_1, test_val_loss_key: test_eval_results[0][1].loss},
+        test_cid_2: {**test_eval_metrics_2, test_val_loss_key: test_eval_results[1][1].loss},
     }
     assert strategy.adjustment_weights == {
-        test_cid_1: approx(0.5458, abs=0.0005),
-        test_cid_2: approx(0.4541, abs=0.0005),
+        test_cid_1: approx(0.2999, abs=0.0005),
+        test_cid_2: approx(0.7000, abs=0.0005),
     }
 
 
@@ -202,8 +202,8 @@ def test_update_weights_by_ga() -> None:
     strategy.update_weights_by_ga(2, test_cids)
 
     assert strategy.adjustment_weights == {
-        test_cids[0]: approx(0.4385, abs=0.0005),
-        test_cids[1]: approx(0.5614, abs=0.0005),
+        test_cids[0]: approx(0.2999, abs=0.0005),
+        test_cids[1]: approx(0.7000, abs=0.0005),
     }
 
 
