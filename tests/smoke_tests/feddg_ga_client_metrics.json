@@ -30,7 +30,7 @@
                 "train - local - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
                 "val - personal - accuracy": {"target_value": 0.8353, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8378,
-                "val - local - accuracy": 0.7261,
+                "val - local - accuracy": {"target_value": 0.7261, "custom_tolerance": 0.005},
                 "val - loss": {"target_value": 0.5607, "custom_tolerance": 0.005}
             },
             "loss_dict": {
@@ -52,7 +52,7 @@
                 "train - local - accuracy": 0.8421,
                 "val - personal - accuracy": {"target_value": 0.8505, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8793,
-                "val - local - accuracy": 0.7781,
+                "val - local - accuracy": {"target_value": 0.7781, "custom_tolerance": 0.005},
                 "val - loss": {"target_value": 0.4557, "custom_tolerance": 0.005}
             },
             "loss_dict": {
