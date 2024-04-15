@@ -13,7 +13,7 @@
             "metrics_aggregated": {
                 "val - personal - accuracy": {"target_value": 0.8353, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8378,
-                "val - local - accuracy": 0.7261
+                "val - local - accuracy": {"target_value": 0.7261, "custom_tolerance": 0.005}
             },
             "loss_aggregated": {"target_value": 0.5607, "custom_tolerance": 0.005}
         },
@@ -21,7 +21,7 @@
             "metrics_aggregated": {
                 "val - personal - accuracy": {"target_value": 0.8505, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8793,
-                "val - local - accuracy": 0.7781
+                "val - local - accuracy": {"target_value": 0.7781, "custom_tolerance": 0.005}
             },
             "loss_aggregated": {"target_value": 0.4557, "custom_tolerance": 0.005}
         }
