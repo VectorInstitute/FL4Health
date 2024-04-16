@@ -62,6 +62,17 @@ def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
 
     params = [val.cpu().numpy() for _, val in mr_mtl_client.model.state_dict().items()]
     mr_mtl_client.set_parameters(params, config, fitting_round=True)
+    mr_mtl_client.update_before_train(current_server_round=0)
+
+    # Make sure the local model is set to train
+    assert mr_mtl_client.model.training is True
+    for param in mr_mtl_client.model.parameters():
+        assert param.requires_grad is True
+
+    # Make sure the initial global model is not set to train
+    assert mr_mtl_client.init_global_model.training is False
+    for param in mr_mtl_client.init_global_model.parameters():
+        assert param.requires_grad is False
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
 

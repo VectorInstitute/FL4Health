@@ -27,9 +27,9 @@ class MrMtlClient(BasicClient):
         """
         This client implements the MR-MTL algorithm from MR-MTL: On Privacy and Personalization in Cross-Silo
         Federated Learning. The idea is that we want to train personalized versions of the global model for each
-        client. However despite Ditto we don't solve a separate solver for global model. We update initial global model
-        with aggregated local models on the server-side and use those weights to also constrain the training of a local
-        model. The constraint for this local model is identical to the FedProx loss.
+        client. However, instead of using a separate solver for the global model, as in Ditto, we update the initial
+        global model with aggregated local models on the server-side and use those weights to also constrain the
+        training of a local model. The constraint for this local model is identical to the FedProx loss.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -97,13 +97,13 @@ class MrMtlClient(BasicClient):
     def get_parameters(self, config: Config) -> NDArrays:
         """
         For MR-MTL, we transfer the LOCAL model weights to the server to be aggregated and set as INITIAL GLOBAL model
-        weightson client side.
+        weights on client side.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
 
         Returns:
-            NDArrays: GLOBAL model weights to be sent to the server for aggregation
+            NDArrays: LOCAL model weights to be sent to the server for aggregation
         """
         assert self.model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
@@ -111,7 +111,8 @@ class MrMtlClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         The parameters being pass are to be routed to the initial global model to be used in a penalty term in
-        training the local model.
+        training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
+        LOCAL model. Instead, we use the aggregated model to form the MR-MTL penalty term.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
@@ -133,8 +134,8 @@ class MrMtlClient(BasicClient):
         self.parameter_exchanger.pull_parameters(parameters, self.init_global_model, config)
 
     def update_before_train(self, current_server_round: int) -> None:
-        assert isinstance(self.model, nn.Module)
-        # Freeze the initial weights GLOBAL MODEL. These are used to form the MR-MTL
+        assert isinstance(self.init_global_model, nn.Module)
+        # Freeze the initial weights INIT GLOBAL MODEL. These are used to form the MR-MTL
         # update penalty term.
         for param in self.init_global_model.parameters():
             param.requires_grad = False
