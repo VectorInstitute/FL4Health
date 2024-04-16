@@ -202,7 +202,7 @@ class BasicClient(NumPyClient):
 
         self.metrics_reporter.add_to_metrics({"shutdown": datetime.datetime.now()})
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int]:
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
 
@@ -210,9 +210,9 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[Union[int, None], Union[int, None], int]: Returns the local_epochs, local_steps and
-                current_server_round. Ensures only one of local_epochs and local_steps is defined in the config
-                and sets the one that is not to None.
+            Tuple[Union[int, None], Union[int, None], int, bool]: Returns the local_epochs, local_steps,
+                current_server_round and evaluate_after_fit. Ensures only one of local_epochs and local_steps
+                is defined in the config and sets the one that is not to None.
 
         Raises:
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
@@ -231,8 +231,13 @@ class BasicClient(NumPyClient):
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
+        try:
+            evaluate_after_fit = self.narrow_config_type(config, "evaluate_after_fit", bool)
+        except ValueError:
+            evaluate_after_fit = False
+
         # Either local epochs or local steps is none based on what key is passed in the config
-        return local_epochs, local_steps, current_server_round
+        return local_epochs, local_steps, current_server_round, evaluate_after_fit
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
@@ -249,7 +254,7 @@ class BasicClient(NumPyClient):
         Raises:
             ValueError: If local_steps or local_epochs is not specified in config.
         """
-        local_epochs, local_steps, current_server_round = self.process_config(config)
+        local_epochs, local_steps, current_server_round, evaluate_after_fit = self.process_config(config)
 
         if not self.initialized:
             self.setup_client(config)
@@ -274,6 +279,11 @@ class BasicClient(NumPyClient):
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
         self.update_after_train(local_steps, loss_dict)
 
+        # Check if we should run an evaluation with validation data after fit
+        # (for example, this is used by FedDGGA)
+        if evaluate_after_fit:
+            metrics.update(self.evaluate_after_fit())
+
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={
@@ -289,6 +299,20 @@ class BasicClient(NumPyClient):
             self.num_train_samples,
             metrics,
         )
+
+    def evaluate_after_fit(self) -> Dict[str, Scalar]:
+        """
+        Run self.validate right after fit to collect metrics on the local model against validation data.
+
+        Returns: (Dict[str, Scalar]) a dictionary with the metrics.
+
+        """
+        loss, metric_values = self.validate()
+        metrics_after_fit = {
+            **metric_values,  # type: ignore
+            "val - loss": loss,
+        }
+        return metrics_after_fit
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
