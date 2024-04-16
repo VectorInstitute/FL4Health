@@ -6,7 +6,7 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -73,7 +73,9 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(
+        self, input: TorchInputType, target: torch.Tensor
+    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -82,13 +84,16 @@ class EnsembleClient(BasicClient):
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 
         Args:
-            input (torch.Tensor): The input to be fed into the model.
+            input (TorchInputType): The input to be fed into the model.
+            TorchInputType is simply an alias for the union of torch.Tensor and
+            Dict[str, torch.Tensor].
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
+        assert isinstance(input, torch.Tensor)
         for optimizer in self.optimizers.values():
             optimizer.zero_grad()
 
