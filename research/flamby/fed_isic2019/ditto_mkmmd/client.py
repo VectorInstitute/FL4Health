@@ -15,7 +15,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from fl4health.clients.ditto_mkmmd_client import DittoClient
+from fl4health.clients.ditto_mkmmd_client import DittoMkmmdClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -23,7 +23,7 @@ from research.flamby.fed_isic2019.ditto_mkmmd.ditto_model import FedIsic2019Ditt
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-class FedIsic2019DittoClient(DittoClient):
+class FedIsic2019DittoClient(DittoMkmmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -34,7 +34,7 @@ class FedIsic2019DittoClient(DittoClient):
         lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
-        feature_l2_norm: float = 1,
+        feature_l2_norm_weight: float = 1,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -45,7 +45,7 @@ class FedIsic2019DittoClient(DittoClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            feature_l2_norm=feature_l2_norm,
+            feature_l2_norm_weight=feature_l2_norm_weight,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
         mkmmd_loss_weight=args.mu,
-        feature_l2_norm=args.l2,
+        feature_l2_norm_weight=args.l2,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

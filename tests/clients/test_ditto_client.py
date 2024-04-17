@@ -20,6 +20,7 @@ def test_setting_initial_weights(get_client: DittoClient) -> None:  # noqa
 
     params = [val.cpu().numpy() + 1.0 for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(int(config["current_server_round"]))
 
     # First fitting round we should set both the global and local models to params and store the global model values
     assert ditto_client.initial_global_tensors is not None
@@ -39,6 +40,7 @@ def test_setting_initial_weights(get_client: DittoClient) -> None:  # noqa
     config = {"current_server_round": 2}
     params = [param + 1.0 for param in params]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(int(config["current_server_round"]))
     # Make sure that we saved the right parameters
     for layer_init_global_tensor, layer_params in zip(ditto_client.initial_global_tensors, params):
         assert pytest.approx(torch.sum(layer_init_global_tensor - layer_params), abs=0.0001) == 0.0
@@ -60,6 +62,7 @@ def test_forming_ditto_loss(get_client: DittoClient) -> None:  # noqa
 
     params = [val.cpu().numpy() + 0.1 for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(int(config["current_server_round"]))
 
     ditto_loss = ditto_client.get_ditto_drift_loss()
 
@@ -79,6 +82,7 @@ def test_compute_loss(get_client: DittoClient) -> None:  # noqa
 
     params = [val.cpu().numpy() for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(int(config["current_server_round"]))
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
 
