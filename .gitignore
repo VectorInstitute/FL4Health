@@ -4,11 +4,13 @@ examples/secure_aggregation_example/log/
 examples/secure_aggregation_example/plots/
 log*/
 plots*/
+*.jpeg
+*.pdf
+*.png
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.jpeg
 # C extensions
 *.so
 

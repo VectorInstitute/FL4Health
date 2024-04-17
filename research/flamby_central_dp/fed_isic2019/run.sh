@@ -3,7 +3,7 @@ shift 1
 HYPERPARAMETER_VALUES=("$@")
 clear 
 # scancel --me 
-rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_central/ log/fed_isic2019_central/ 
+rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_central/ logs/log/fed_isic2019_central/ 
 
 mkdir -p /scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_central/
 mkdir -p /scratch/ssd004/scratch/xuejzhao/log/fed_isic2019_central/

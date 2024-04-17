@@ -2,9 +2,25 @@ import torch
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline
 
-from research.flamby.utils import shutoff_group_norm_tracking
+# from research.flamby.utils import shutoff_group_norm_tracking
 from opacus.validators import ModuleValidator
 
+
+from torchvision.models import swin_v2_t
+class Swin(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = swin_v2_t(weights="IMAGENET1K_V1")
+        errors = ModuleValidator.validate(self.model, strict=False)
+        print(errors)
+        while len(errors) != 0:
+            print('more erorrs')
+            self.model = ModuleValidator.fix(self.model)
+            errors = ModuleValidator.validate(self.model, strict=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.model(x)
+        return x
 
 class ModifiedBaseline(nn.Module):
     """FedAdam implements server-side momentum in aggregating the updates from each client. For layers that carry state
@@ -20,7 +36,43 @@ class ModifiedBaseline(nn.Module):
 
     def __init__(self) -> None:
         super().__init__()
-        self.model = ModuleValidator.fix(Baseline())
+        # self.model = torch.hub.load('pytorch/vision:v0.10.0', 'vgg11', pretrained=True)
+        self.model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+
+        errors = ModuleValidator.validate(self.model, strict=False)
+        print(errors)
+        while len(errors) != 0:
+            print('more erorrs')
+            self.model = ModuleValidator.fix(self.model)
+            errors = ModuleValidator.validate(self.model, strict=False)
+        # shutoff_group_norm_tracking(self.model)
+        
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.model(x)
+        return x
+
+class ModifiedBaseline_(nn.Module):
+    """FedAdam implements server-side momentum in aggregating the updates from each client. For layers that carry state
+    that must remain non-negative, like BatchNormalization layers (present in FedIXI U-Net), they may become negative
+    due to momentum carrying updates past the origin. For Batch Normalization this means that the variance state
+    estimated during training and applied during evaluation may become negative. This blows up the model. In order
+    to get around this issue, we modify all batch normalization layers in the FedIXI U-Net to not carry such state by
+    setting track_running_stats to false.
+
+    NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size of the
+    baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA and APFL
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+        errors = ModuleValidator.validate(self.model, strict=False)
+        print(errors)
+        while len(errors) != 0:
+            print('more erorr')
+            self.model = ModuleValidator.fix(self.model)
+            errors = ModuleValidator.validate(self.model, strict=False)
         # shutoff_group_norm_tracking(self.model)
         
 

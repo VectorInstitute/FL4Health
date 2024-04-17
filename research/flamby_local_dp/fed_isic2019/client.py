@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.utils.config import load_config
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
 
 from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 
@@ -41,13 +41,13 @@ class FedIsic2019FedAvgClient(DPScaffoldLoggingClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_id, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=4, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedISICImageClassifier().to(self.device)
-        return model
+        # model: nn.Module = FedISICImageClassifier().to(self.device)
+        return Swin().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         # return torch.optim.AdamW(self.model.parameters(), lr=0.05)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000,)
 
     # Shutdown the client gracefully
     client.shutdown()

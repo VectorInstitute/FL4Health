@@ -18,15 +18,19 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, To
 from fl4health.clients.central_dp_client import CentralDPClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets 
 from fl4health.utils.config import load_config
 
-from research.flamby_central_dp.fed_isic2019.model import ModifiedBaseline
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline
 
+from research.flamby_local_dp.fed_isic2019.model import FedISICImageClassifier, Swin
+
+
+batch_size = 64
 
 class FedIsic2019FedAvgClient(CentralDPClient):
     def __init__(
@@ -39,6 +43,7 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
+        batch_size = 64
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -48,27 +53,34 @@ class FedIsic2019FedAvgClient(CentralDPClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
-            task_name='Fed-ISIC2019 Central'
+            task_name='Fed-ISIC2019 Central',
+            learning_rate=learning_rate,
+            batch_size=batch_size
+
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
+        self.batch_size = batch_size
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+        # flamby_datasets/fed_isic2019/
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=4, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=self.batch_size, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedISICImageClassifier().to(self.device)
-        return model
+        return Swin().to(self.device)
+
 
     def get_optimizer(self, config: Config) -> Optimizer:
+        # self.learning_rate = 5e-4
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_criterion(self, config: Config) -> _Loss:
@@ -140,6 +152,11 @@ if __name__ == "__main__":
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     config = load_config(args.config_path)
+    key, value = args.hyperparameter_name, args.hyperparameter_value
+    if key == 'lr':
+        args.learning_rate = value
+        log(INFO, f'args.learning_rate set to {args.learning_rate}')
+
 
     
     client = FedIsic2019FedAvgClient(
@@ -149,9 +166,10 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        batch_size=batch_size
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)
 
     # Shutdown the client gracefully
     client.shutdown()

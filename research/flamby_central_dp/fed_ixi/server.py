@@ -68,12 +68,11 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     privacy_settings = {
         'clip': config['clip'],
-        'epsilon': config['epsilon'],
     }
 
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['epsilon']
+    assert key in ['stdev']
     log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
     log(INFO, f'{privacy_settings}')

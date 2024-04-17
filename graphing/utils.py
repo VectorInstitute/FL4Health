@@ -103,38 +103,29 @@ def plot_run(training_task, metric_name, hp_value, dp_type, hp_type, plot_more=T
 def heart_disease_plot_by_hp(metric_name='train_meter_FedHeartDisease_accuracy'):
 
     # ---------------------- Edit (start) ---------------------------------
+    s_central = ' 0.01 0.008 0.009 0.011 0.012 '
     experiment_1 = {
-        'dp_type': 'central_revised',
-        'hp_type': 'epsilon',
-        'hp_values': ['0.001', '0.01', '0.1', '1', '5', '10']
-    }
-
-    experiment_2 = {
         'dp_type': 'central',
-        'hp_type': 'epsilon',
-        'hp_values': ['0.001', '0.01', '0.1', '1', '5', '10']
+        'hp_type': 'stdev',
+        'hp_values': s_central.split()
     }
 
-    experiment_3 = {
+    s_distributed = ' 0.002 0.00225 0.0025 0.00275 0.0025'
+    experiment_2 = {
         'dp_type': 'distributed',
         'hp_type': 'noise',
-        'hp_values': ['0.001', '0.005', '0.01', '0.05', '0.5', '1']
+        'hp_values': s_distributed.split()
     }
-    # experiment_3['hp_type'] = 'clipping_threshold'
-    # experiment_3['hp_values'] = ['0.001', '0.005', '0.009', '0.1', '0.2', '0.3', '100']
-    # experiment_3['hp_values'] = ['0.005', '0.009', '0.01', '0.03', '100']
 
-    experiment_3['hp_type'] = 'noise'
-    experiment_3['hp_values'] = [0.0001, 0.0003, 0.0005, 0.0007, 0.0009]
-
-    experiment_4 = {
+    s_local = ' 0.008 0.009 0.01 0.011 '
+    experiment_3 = {
         'dp_type': 'local',
         'hp_type': 'noise',
-        'hp_values': ['0.001', '0.01', '0.1', '0.5', '1', '10']
+        'hp_values': s_local.split()
     }
 
-    experiments = [experiment_1, experiment_2, experiment_3, experiment_4]
-    experiments = [experiment_3]
+    experiments = [experiment_1, experiment_2, experiment_3]
+
     training_task='fed_heart_disease'
     # ---------------------- Edit (end) ---------------------------------
 
@@ -152,31 +143,30 @@ def heart_disease_plot_by_hp(metric_name='train_meter_FedHeartDisease_accuracy')
 def isic2019_plot_by_hp(metric_name='train_meter_FedIsic2019_balanced_accuracy'):
 
     # ---------------------- Edit (start) ---------------------------------
+
+    s_central = ' 0.00001 '
     experiment_1 = {
-        'dp_type': 'central_revised',
-        'hp_type': 'epsilon',
-        'hp_values': ['1', '10000']
-    }
-
-    experiment_2 = {
         'dp_type': 'central',
-        'hp_type': 'epsilon',
-        'hp_values': ['0.001', '0.01', '0.1', '1', '5', '10']
+        'hp_type': 'stdev',
+        'hp_values': s_central.split()
     }
 
-    experiment_3 = {
+    s_distributed = ' '
+    experiment_2 = {
         'dp_type': 'distributed',
         'hp_type': 'noise',
-        'hp_values': [ '0.005', '0.01', '0.05', '0.5', '1']
+        'hp_values': s_distributed.split()
     }
 
-    experiment_4 = {
+    s_local = ' 0.1 '
+    experiment_3 = {
         'dp_type': 'local',
         'hp_type': 'noise',
-        'hp_values': ['0.001', '0.1', '0.5', '1', '10']
+        'hp_values': s_local.split()
     }
 
-    experiments = [experiment_1, experiment_2, experiment_3, experiment_4]
+    experiments = [experiment_1, experiment_2, experiment_3]
+    experiments = [experiment_1, experiment_3]
 
     training_task = 'fed_isic2019'
     # ---------------------- Edit (end) ---------------------------------
@@ -188,7 +178,7 @@ def isic2019_plot_by_hp(metric_name='train_meter_FedIsic2019_balanced_accuracy')
         hp_values = exp['hp_values']      
 
         hp_value = hp_values.pop()
-        while len(hp_values) > 1:
+        while len(hp_values) > 0:
             plot_run(training_task=training_task, metric_name=metric_name, hp_value=hp_value, dp_type=dp_type, hp_type=hp_type, plot_more=True)
             hp_value = hp_values.pop()
         plot_run(training_task=training_task,  metric_name=metric_name, hp_value=hp_value, dp_type=dp_type, hp_type=hp_type, plot_more=False)
@@ -196,31 +186,29 @@ def isic2019_plot_by_hp(metric_name='train_meter_FedIsic2019_balanced_accuracy')
 def ixi_plot_by_hp(metric_name='train_meter_FedIXI_dice'):
 
     # ---------------------- Edit (start) ---------------------------------
+    s_central = ' 0.008 0.009 0.01 0.011 0.012 '
     experiment_1 = {
-        'dp_type': 'central_revised',
-        'hp_type': 'epsilon',
-        'hp_values': ['0.001', '0.01', '0.1', '1', '5']
-    }
-
-    experiment_2 = {
         'dp_type': 'central',
-        'hp_type': 'epsilon',
-        'hp_values': ['0.001', '0.01', '0.1', '1', '5', '10']
+        'hp_type': 'stdev',
+        'hp_values': s_central.split()
     }
 
-    experiment_3 = {
+    s_distributed = ' 0.0027 0.003 0.0033 0.0037 0.004 '
+    experiment_2 = {
         'dp_type': 'distributed',
         'hp_type': 'noise',
-        'hp_values': ['0.001', '0.005', '0.01', '0.05', '0.5', '1']
+        'hp_values': s_distributed.split()
     }
 
-    experiment_4 = {
+    s_local = ' 0.008 0.009 0.01 0.011 0.012 '
+    experiment_3 = {
         'dp_type': 'local',
         'hp_type': 'noise',
-        'hp_values': ['0.001', '0.01', '0.1', '0.5', '1', '10']
+        'hp_values': s_local.split()
     }
 
-    experiments = [experiment_1, experiment_2, experiment_3, experiment_4]
+    experiments = [experiment_1, experiment_2, experiment_3]
+
     training_task = 'fed_ixi'
     # ---------------------- Edit (end) ---------------------------------
 
@@ -420,12 +408,12 @@ def heart_disease_plot_by_dp_scheme(metric_name='train_meter_FedHeartDisease_acc
 if __name__ == '__main__':
     # accuracy
     heart_disease_plot_by_hp()
-    # isic2019_plot_by_hp()
-    # ixi_plot_by_hp()
+    isic2019_plot_by_hp()
+    ixi_plot_by_hp()
     # loss
     heart_disease_plot_by_hp('loss')
-    # isic2019_plot_by_hp('loss')
-    # ixi_plot_by_hp('loss')
+    isic2019_plot_by_hp('loss')
+    ixi_plot_by_hp('loss')
     # # compare accuracy across dp schemes
     # ixi_plot_by_dp_scheme()
     # isic2019_plot_by_dp_scheme()

@@ -3,6 +3,7 @@ from typing import Tuple
 from flamby.datasets.fed_heart_disease import FedHeartDisease
 from flamby.datasets.fed_isic2019 import FedIsic2019
 from flamby.datasets.fed_ixi import FedIXITiny
+from flamby.datasets.fed_tcga_brca import FedTcgaBrca
 from torch.utils.data import random_split
 import torch
 
@@ -48,3 +49,22 @@ def construct_fed_ixi_train_val_datasets(
     # ignore for now.
     train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2], generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu")))  # type: ignore
     return train_dataset, validation_dataset
+
+def construct_fed_tcga_brca_train_val_datasets(
+    client_number: int,
+    pooled: bool = False,
+) -> Tuple[FedTcgaBrca, FedTcgaBrca]:
+    full_train_dataset = FedTcgaBrca(
+        center=client_number,
+        train=True,
+        pooled=pooled,
+    )
+    # Something weird is happening with the typing of the split sequence in random split. Punting with a mypy
+    # ignore for now.
+    train_dataset, validation_dataset = tuple(random_split(full_train_dataset, [0.8, 0.2], generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu")))  # type: ignore
+    return train_dataset, validation_dataset
+
+if __name__ == '__main__':
+    a, b = construct_fed_tcga_brca_train_val_datasets(client_number=0)
+
+    print(type(a), len(b))

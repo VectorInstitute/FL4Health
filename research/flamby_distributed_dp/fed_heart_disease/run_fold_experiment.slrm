@@ -9,7 +9,7 @@
 #SBATCH --partition=cpu
 #SBATCH --qos=normal
 #SBATCH --time=8:00:00
-#SBATCH --job-name=DDP
+#SBATCH --job-name=DDP-hd
 #SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_distributed/%j_%x.out"
 #SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_distributed/%j_%x.err"
 

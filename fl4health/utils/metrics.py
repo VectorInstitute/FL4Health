@@ -8,7 +8,10 @@ import numpy as np
 import torch
 from flwr.common.typing import Optional, Scalar
 from sklearn import metrics
+from flwr.common.logger import log
+from logging import INFO
 
+from flamby.datasets.fed_tcga_brca import metric as c_index
 
 class Metric(ABC):
     """
@@ -58,7 +61,15 @@ class BinarySoftDiceCoefficient(Metric):
         # If both inputs are empty the dice coefficient should be equal 1
         dice[union == 0] = 1
         return torch.mean(dice).item()
-
+    
+class C_Index(Metric):
+    def __init__(self, name: str = "concordance index"):
+        super().__init__(name)
+        
+    def __call__(self, preds: torch.Tensor, target: torch.Tensor) -> Scalar:
+        target = target.cpu().detach()
+        preds = preds.cpu().detach()
+        return c_index(target, preds)
 
 class Accuracy(Metric):
     def __init__(self, name: str = "accuracy"):

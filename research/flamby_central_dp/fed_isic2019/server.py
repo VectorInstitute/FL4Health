@@ -25,13 +25,12 @@ import torch
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 
-from research.flamby_distributed_dp.fed_isic2019.model import ModifiedBaseline
-
-
 from fl4health.strategies.central_dp_strategy import CentralDPStrategy
 from fl4health.server.central_dp_server import CentralDPServer
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+from research.flamby_local_dp.fed_isic2019.model import FedISICImageClassifier
+# from research.flamby_central_dp.fed_isic2019.model import ModifiedBaseline
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, Swin
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -50,7 +49,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    model = FedISICImageClassifier()
+    model = Swin()
+    architecture = 'Swain Transformer'
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = CentralDPStrategy(
@@ -68,12 +68,12 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     privacy_settings = {
         'clip': config['clip'],
-        'epsilon': config['epsilon'],
+        'stdev': 1,
     }
 
     # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    assert key in ['epsilon']
+    assert key in ['stdev', 'lr', 'clip']
     log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
     privacy_settings[key] = value
     log(INFO, f'{privacy_settings}')
@@ -85,13 +85,15 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         parameter_exchanger=SecureAggregationExchanger(),
         checkpointer=checkpointer,
         privacy_settings=privacy_settings,
-        task_name='Fed-ISIC2019 Central'
+        task_name='Fed-ISIC2019 Central',
+        architecture=architecture,
     )
 
     fl.server.start_server(
         server=server,
         server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+        grpc_max_message_length=1600000000,
     )
 
     log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")

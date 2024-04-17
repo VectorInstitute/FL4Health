@@ -328,7 +328,10 @@ class SecureAggregationClient(BasicClient):
 
         # SecAgg changes dtypes to higher precision float
         # this change needs to be reverted before training to avoid error
-        self.revert_layer_dtype()
+        try:
+            self.revert_layer_dtype()
+        except AttributeError:
+            print("AttributeError encontered. Not reverting layer dtype")
 
         # log(INFO, f'-----model dtype list round {current_server_round} after reverting--------')
         # log(INFO, get_model_layer_types(self.model)==self.layer_dtypes)
@@ -857,6 +860,12 @@ class SecureAggregationClient(BasicClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
+            if False:
+                # be careful how many preds you print
+                log(INFO, '-----preds-----')
+                log(INFO, preds)
+                log(INFO, '-----target-----')
+                log(INFO, target)
             self.train_metric_meter_mngr.update(preds, target)
             self.update_after_step(step)
             self.total_steps += 1

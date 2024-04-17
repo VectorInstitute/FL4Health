@@ -9,7 +9,7 @@
 #SBATCH --time=6:00:00
 #SBATCH --partition=a40
 #SBATCH --qos=m2
-#SBATCH --job-name=DDP
+#SBATCH --job-name=DDP-id
 #SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/%j_%x.out"
 #SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_ixi_distributed/ %j_%x.err"
 

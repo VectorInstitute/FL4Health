@@ -260,7 +260,16 @@ class BasicClient(NumpyFlClient):
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            self.train_metric_meter_mngr.update(preds, target)
+            if True:
+                log(INFO, 'here are the preds')
+                log(INFO, preds)
+                log(INFO, 'here are the targets')
+                log(INFO, target)
+            try:
+                self.train_metric_meter_mngr.update(preds, target)
+            except ZeroDivisionError:
+                log(INFO, 'ZeroDivisionError encountered, skipping...')
+                continue
             self.update_after_step(step)
             self.total_steps += 1
 
@@ -288,7 +297,10 @@ class BasicClient(NumpyFlClient):
                 input, target = input.to(self.device), target.to(self.device)
                 losses, preds = self.val_step(input, target)
                 self.val_loss_meter.update(losses)
-                self.val_metric_meter_mngr.update(preds, target)
+                try:
+                    self.val_metric_meter_mngr.update(preds, target)
+                except ZeroDivisionError:
+                    log(INFO, 'ZeroDivisionError encountered, skipping ... ')
                 # log(INFO, '===== labels =====')
                 # log(INFO, target)
 

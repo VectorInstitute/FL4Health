@@ -6,6 +6,15 @@ from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 class ModifiedBaseline(nn.Module):
+    def __inti__(self):
+        self.model = torch.hub.load('pytorch/vision:v0.10.0', 'resnet18', pretrained=True)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.model(x)
+        return x
+
+
+class ModifiedBaseline_old(nn.Module):
     """FedAdam implements server-side momentum in aggregating the updates from each client. For layers that carry state
     that must remain non-negative, like BatchNormalization layers (present in FedIXI U-Net), they may become negative
     due to momentum carrying updates past the origin. For Batch Normalization this means that the variance state

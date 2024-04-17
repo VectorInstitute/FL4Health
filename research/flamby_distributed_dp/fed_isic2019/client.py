@@ -22,13 +22,13 @@ from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from fl4health.utils.config import load_config
 
-from research.flamby_distributed_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
-
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_tensor_type('torch.cuda.FloatTensor')
 # torch.set_default_dtype(torch.float64)
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
+
+
 
 
 class FedIsic2019FedAvgClient(SecureAggregationClient):
@@ -65,12 +65,12 @@ class FedIsic2019FedAvgClient(SecureAggregationClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=4, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=4, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedISICImageClassifier().to(self.device)
+        model: nn.Module = Swin().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

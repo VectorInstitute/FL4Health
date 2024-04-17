@@ -41,7 +41,7 @@ from fl4health.server.scaffold_server import DPScaffoldLoggingServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
 import os 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
@@ -53,7 +53,7 @@ torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = FedISICImageClassifier()
+    initial_model = Swin()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
 
     # model_weights = [val.detach().cpu().numpy() for val in initial_model.parameters() if val.requires_grad]
@@ -128,6 +128,7 @@ def main(config: Dict[str, Any], checkpoint_dir) -> None:
         server=server,
         server_address=config['server_address'],
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
+        grpc_max_message_length=1600000000,
     )
 
     server.shutdown()

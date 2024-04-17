@@ -32,12 +32,12 @@ FOLDER="flamby_local_dp"
 # FedISIC LR Hyperparmeters from paper are not suitable for AdamW
 # LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
-SERVER_PORT=8100
+SERVER_PORT=8200
 
 # Search through these hyperparameters
 # HYPERPARAMETER_NAME="noise_multiplier"
 # HYPERPARAMETER_VALUES=(0.001 0.01 0.1 0.5 1 10)
-DEFAULT_LR=0.001
+DEFAULT_LR=0.0005
 
 # Create sweep folder
 SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"

@@ -33,7 +33,7 @@ FOLDER="flamby_local_dp"
 
 # LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 
-SERVER_PORT=8100
+SERVER_PORT=8200
 
 # Search through these hyperparameters
 # HYPERPARAMETER_NAME="noise_multiplier"

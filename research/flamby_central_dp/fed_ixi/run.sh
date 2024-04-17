@@ -15,9 +15,7 @@ research/flamby_central_dp/fed_ixi/run_hp_sweep.sh \
     research/flamby_central_dp/fed_ixi/config.yaml \
     /scratch/ssd004/scratch/xuejzhao/log/fed_ixi_central/ \
     flamby_datasets/fed_ixi/ \
-    .venv/ \
-    $HYPERPARAMETER_NAME \
-    "${HYPERPARAMETER_VALUES[@]}"
+    .venv/ $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES[@]}"
 
 sleep 5
 
