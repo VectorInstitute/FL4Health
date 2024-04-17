@@ -3,8 +3,8 @@
     [Amplify] Wang et al, "Subsampled Rényi Differential Privacy and Analytical Moments Accountant"
         https://www.shivakasiviswanathan.com/AISTATS19.pdf
 
-    [DDG] The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
-            https://arxiv.org/pdf/2102.06387.pdf
+    [DDG] Kairouz et al, "The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation"
+            https://arxiv.org/pdf/2102.06387.pdf (This arXiv version contains detailed proofs.)
 
     [DDP-J] Journal version of [DDG]
             http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
@@ -215,8 +215,6 @@ class DDGaussAccountant:
         fl_rdp_unamplified = round(accountant.fl_rdp(rdp_order=rdp_order, amplify=False), ndecimals)
         fl_adp_unamplified = round(accountant.fl_approximate_dp(amplify=False, verbose=verbose), ndecimals)
 
-        delta = self.delta
-
         try:
             # amplified rdp requires rdp_order to be an integer
             fl_rdp_amplified = round(accountant.fl_rdp(rdp_order=int(rdp_order), amplify=True), ndecimals)
@@ -227,8 +225,8 @@ class DDGaussAccountant:
                 (alpha, single_round_rdp) = ({rdp_order}, {single_round_rdp})
                 (alpha, fl_rdp_unamplified) = ({int(rdp_order)}, {fl_rdp_unamplified})
                 (alpha, fl_rdp_amplified) = ({rdp_order}, {fl_rdp_amplified})
-                (fl_adp_unamplified, delta) = ({fl_adp_unamplified}, {delta})
-                (fl_adp_amplified, delta) = ({fl_adp_amplified}, {delta})
+                (fl_adp_unamplified, delta) = ({fl_adp_unamplified}, {self.delta})
+                (fl_adp_amplified, delta) = ({fl_adp_amplified}, {self.delta})
             """
         except OverflowError:
             report = f"""
@@ -236,7 +234,7 @@ class DDGaussAccountant:
                 (alpha, single_round_rdp) = ({rdp_order}, {single_round_rdp})
                 (alpha, fl_rdp_unamplified) = ({int(rdp_order)}, {fl_rdp_unamplified})
                 (alpha, fl_rdp_amplified) = (OverflowError)
-                (fl_adp_unamplified, delta) = ({fl_adp_unamplified}, {delta})
+                (fl_adp_unamplified, delta) = ({fl_adp_unamplified}, {self.delta})
                 (fl_adp_amplified, delta) = (OverflowError)
             """
 
