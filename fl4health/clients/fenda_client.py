@@ -49,7 +49,7 @@ class FendaClient(BasicClient):
             Each value associate with one of two contrastive losses in perfcl loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
-            mkmmd_loss_weights: Weights to be used for mkmmd losses. Fist value is for minimizing the distance
+            mkmmd_loss_weights: Weights to be used for mkmmd losses. First value is for minimizing the distance
             and second value is for maximizing the distance.
         """
         self.perfcl_loss_weights = perfcl_loss_weights

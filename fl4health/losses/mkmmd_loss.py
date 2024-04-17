@@ -37,7 +37,7 @@ class MkMmdLoss(torch.nn.Module):
         super().__init__()
         self.device = device
         if gammas is None:
-            # Note arange is not inclusive, so this ends up being [-3.5, 1] in steps of 0.5
+            # Note arange is not inclusive, so this ends up being [-3.5, 1] in steps of 0.25
             default_gamma_powers = torch.arange(-3.5, 1.25, 0.25, device=device)
             self.gammas = torch.pow(2.0, default_gamma_powers)
         else:

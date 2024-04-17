@@ -59,7 +59,10 @@ class DittoClient(BasicClient):
         """
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            """User Clients must define a function that returns a Dict[str, Optimizer] with keys "global" and "local"
+            defining separate optimizers for the global and local models of Ditto."""
+        )
 
     def set_optimizer(self, config: Config) -> None:
         """

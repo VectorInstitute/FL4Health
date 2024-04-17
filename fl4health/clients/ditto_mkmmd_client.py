@@ -1,4 +1,4 @@
-from logging import INFO
+from logging import ERROR, INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
@@ -29,10 +29,9 @@ class DittoMkmmdClient(DittoClient):
         feature_l2_norm_weight: Optional[float] = 0.0,
     ) -> None:
         """
-        This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
-        Personalization. The idea is that we want to train personalized versions of the global model for each client.
-        So we simultaneously train a global model that is aggregated on the server-side and use those weights to also
-        constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
+        This client implements the MK-MMD loss function in the Ditto framework. The MK-MMD loss is a measure of the
+        distance between the distributions of the features of the local model and init global of each round. The MK-MMD
+        loss is added to the local loss to penalize the local model for drifting away from the global model.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -61,6 +60,13 @@ class DittoMkmmdClient(DittoClient):
             lam=lam,
         )
         self.mkmmd_loss_weight = mkmmd_loss_weight
+        if self.mkmmd_loss_weight == 0:
+            log(
+                ERROR,
+                """MK-MMD loss weight is set to 0. As MK-MMD loss will not be computed,
+                please use vanilla DittoClient instead.""",
+            )
+
         self.feature_l2_norm_weight = feature_l2_norm_weight
         self.beta_update_interval = beta_update_interval
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
@@ -76,16 +82,17 @@ class DittoMkmmdClient(DittoClient):
         return super().update_before_train(current_server_round)
 
     def update_after_step(self, step: int) -> None:
-        if step % self.beta_update_interval == 0:
-            if self.mkmmd_loss_weight and self.init_global_model:
-                # Get the feature distribution of the local and init global features with evaluation mode
-                local_distribution, init_global_distribution = self.update_buffers(self.model, self.init_global_model)
-                # Update betas for the MK-MMD loss based on gathered features during training
-                if self.mkmmd_loss_weight != 0:
-                    self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
-                        X=local_distribution, Y=init_global_distribution, lambda_m=1e-5
-                    )
-                    log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss.betas.squeeze()}.")
+        if step % self.beta_update_interval == 0 and self.mkmmd_loss_weight != 0:
+            assert self.mkmmd_loss_weight is not None
+            assert self.init_global_model is not None
+            # Get the feature distribution of the local and init global features with evaluation mode
+            local_distribution, init_global_distribution = self.update_buffers(self.model, self.init_global_model)
+            # Update betas for the MK-MMD loss based on gathered features during training
+            if self.mkmmd_loss_weight != 0:
+                self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
+                    X=local_distribution, Y=init_global_distribution, lambda_m=1e-5
+                )
+                log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss.betas.squeeze()}.")
 
         return super().update_after_step(step)
 
@@ -96,31 +103,42 @@ class DittoMkmmdClient(DittoClient):
         assert isinstance(local_model, MoonModel)
         assert isinstance(init_global_model, MoonModel)
 
+        # Save the initial state of the local model to restore it after the buffer is populated
         init_state_local_model = local_model.training
 
-        # Set local model to evaluation mode
+        # Set local model to evaluation mode, as ae don't want to create a computational graph
+        # for the local model when populating the local buffer with features to compute optimal
+        # betas for the MK-MMD loss
         local_model.eval()
 
+        # Make sure the local model is in evaluation mode before populating the local buffer
         assert not local_model.training
+
+        # Make sure the init global model is in evaluation mode before populating the global buffer
+        # as it was cloned and frozen from the global model
         assert not init_global_model.training
 
         local_buffer = []
         init_global_buffer = []
 
         with torch.no_grad():
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
+            for input, _ in self.train_loader:
+                input = input.to(self.device)
                 _, local_features = local_model(input)
                 _, init_global_features = init_global_model(input)
 
+                # Flatten the features to compute optimal betas for the MK-MMD loss
                 local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
                 init_global_buffer.append(
                     init_global_features["features"].reshape(len(init_global_features["features"]), -1)
                 )
 
+        # Restore the initial state of the local model
         if init_state_local_model:
             local_model.train()
 
+        # The buffers are in shape (batch_size, feature_size). We need to stack them along the batch dimension
+        # (dim=0) to get a tensor of shape (num_samples, feature_size)
         return torch.cat(local_buffer, dim=0), torch.cat(init_global_buffer, dim=0)
 
     def predict(
@@ -145,6 +163,7 @@ class DittoMkmmdClient(DittoClient):
         assert isinstance(self.model, MoonModel)
         assert isinstance(self.global_model, MoonModel)
 
+        # We use features from init_global_model to compute the MK-MMD loss not the global_model
         global_preds, _ = self.global_model(input)
         local_preds, features = self.model(input)
 
@@ -153,6 +172,7 @@ class DittoMkmmdClient(DittoClient):
                 AssertionError(
                     "To compute the MK-MMD loss, the client model and the init_global_model must be of type MoonModel."
                 )
+            # Compute the features of the init_global_model
             _, init_global_features = self.init_global_model(input)
             features.update({"init_global_features": init_global_features["features"]})
 
@@ -173,7 +193,7 @@ class DittoMkmmdClient(DittoClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            Tuple[torch.Tensor, Dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set
                 from server config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
@@ -189,7 +209,8 @@ class DittoMkmmdClient(DittoClient):
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
             if self.feature_l2_norm_weight:
-                feature_l2_norm_loss = torch.linalg.norm(features["features"])
+                # Compute the average L2 norm of the features over the batch
+                feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
                 total_loss += self.feature_l2_norm_weight * feature_l2_norm_loss
                 additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
