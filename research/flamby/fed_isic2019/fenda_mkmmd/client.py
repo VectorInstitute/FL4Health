@@ -19,7 +19,7 @@ from fl4health.checkpointing.checkpointer import (
     LatestTorchCheckpointer,
     TorchCheckpointer,
 )
-from fl4health.clients.mk_mmd_clients.fenda_mkmmd_client import FendaMkmmdClient
+from fl4health.clients.mkmmd_clients.fenda_mkmmd_client import FendaMkmmdClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
