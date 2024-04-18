@@ -13,7 +13,7 @@ class InvalidConfigError(ValueError):
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
-    """Load Configuration Dictionairy"""
+    """Load Configuration Dictionary"""
 
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
@@ -24,7 +24,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
 
 
 def check_config(config: Dict[str, Any]) -> None:
-    """Check if Configuration Dictionairy is valid"""
+    """Check if Configuration Dictionary is valid"""
 
     # Check for presence of required keys
     for req_key in REQUIRED_CONFIG.keys():

@@ -53,7 +53,7 @@ def test_dirichlet_sampler() -> None:
 
     _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)
 
-    # Assert that the new distribution is different from the orginal distribution
+    # Assert that the new distribution is different from the original distribution
     assert p_val < 0.01
 
     # Testing
@@ -65,5 +65,5 @@ def test_dirichlet_sampler() -> None:
 
     _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)
 
-    # Assert that the new distribution is different from the orginal distribution
+    # Assert that the new distribution is different from the original distribution
     assert p_val < 0.01

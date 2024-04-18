@@ -149,7 +149,7 @@ def test_binary_soft_dice_coefficient_alt_threshold() -> None:
     dice_of_one = metric(all_one_quarter_logits, all_ones_targets)
     pytest.approx(dice_of_one, abs=0.001) == 1.0
 
-    # Test with a none threshold to ensure that the continous dice coefficient is calculated
+    # Test with a none threshold to ensure that the continuous dice coefficient is calculated
     metric = BinarySoftDiceCoefficient(logits_threshold=None)
     all_one_tenth_logits = 0.1 * torch.ones((10, 1, 10, 10, 10))
     continuous_dice = metric(all_one_tenth_logits, all_ones_targets)
@@ -255,10 +255,10 @@ def test_metric_manager() -> None:
 
     mm = MetricManager([F1(), Accuracy()], "test")
 
-    for lgts, trgt in zip(logits_list, target_list):
-        preds = {"prediction": lgts}
-        mm.update(preds, trgt)
-    mtrcs = mm.compute()
+    for logits, target in zip(logits_list, target_list):
+        preds = {"prediction": logits}
+        mm.update(preds, target)
+    metrics = mm.compute()
 
-    assert mtrcs["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
-    assert mtrcs["test - prediction - accuracy"] == 0.8
+    assert metrics["test - prediction - F1 score"] == pytest.approx(0.80285714285, abs=0.00001)
+    assert metrics["test - prediction - accuracy"] == 0.8

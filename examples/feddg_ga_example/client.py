@@ -58,6 +58,6 @@ if __name__ == "__main__":
     set_all_random_seeds(args.seed)
 
     client = MnistApflClient(data_path, [Accuracy()], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
 
     client.metrics_reporter.dump()

@@ -151,7 +151,7 @@ if __name__ == "__main__":
         data_partition=args.data_partition,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

@@ -58,7 +58,7 @@ class Metric(ABC):
         Resets metric.
 
         Raises:
-            NotImplmentedError: To be defined in the classes expending this class.
+            NotImplementedError: To be defined in the classes expending this class.
         """
         raise NotImplementedError
 
@@ -139,7 +139,7 @@ class SimpleMetric(Metric, ABC):
                 to define key in metrics dictionary.
 
         Raises:
-            AssertionError: Input and rarget lists must be non empty.
+            AssertionError: Input and target lists must be non empty.
 
         Returns:
             Metrics: A dictionary of string and Scalar representing the computed metric
@@ -181,7 +181,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         logits_threshold: Optional[float] = 0.5,
     ):
         """
-        Binary DICE Coeffiecient Metric with configurable spatial dimensions and logits threshold.
+        Binary DICE Coefficient Metric with configurable spatial dimensions and logits threshold.
 
         Args:
             name (str): Name of the metric.
@@ -190,8 +190,8 @@ class BinarySoftDiceCoefficient(SimpleMetric):
                 The default assumes that the images are 3D and have shape:
                 batch_size, channel, spatial, spatial, spatial.
             logits_threshold: This is a threshold value where values above are classified as 1
-                and those below are mapped to 0. If the threshod is None, then no thresholding is performed
-                and a continuous or "soft" DICE coeff. is computed.
+                and those below are mapped to 0. If the threshold is None, then no thresholding is performed
+                and a continuous or "soft" DICE coefficient is computed.
         """
         self.epsilon = epsilon
         self.spatial_dimensions = spatial_dimensions
@@ -260,7 +260,7 @@ class BalancedAccuracy(SimpleMetric):
 class ROC_AUC(SimpleMetric):
     def __init__(self, name: str = "ROC_AUC score"):
         """
-        Area under the Reciever Operator Curve (AUCROC) metric for classification. For more information:
+        Area under the Receiver Operator Curve (AUCROC) metric for classification. For more information:
         https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
         """
         super().__init__(name)

@@ -73,5 +73,5 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
     client = MnistFedPerClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

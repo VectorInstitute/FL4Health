@@ -71,7 +71,7 @@ class EnsembleModel(nn.Module):
         assert all(preds.shape == preds_list[0].shape for preds in preds_list)
         preds_dimension = list(preds_list[0].shape)
 
-        # If larger than two dimensions, we map to 2D to perfom voting operation (and reshape later)
+        # If larger than two dimensions, we map to 2D to perform voting operation (and reshape later)
         if len(preds_dimension) > 2:
             preds_list = [preds.reshape(-1, preds_dimension[-1]) for preds in preds_list]
 

@@ -13,7 +13,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import ServerPerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServerWithCheckpointing
 
 

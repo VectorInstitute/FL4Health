@@ -8,7 +8,7 @@ from flwr.server.history import History
 from flwr.server.server import fit_clients
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
 from fl4health.strategies.scaffold import Scaffold
@@ -116,7 +116,7 @@ class ScaffoldServer(FlServer):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """
-        Run the SCAFFOLD FL algortihm for a fixed number of rounds. This overrides the base server fit class just to
+        Run the SCAFFOLD FL algorithm for a fixed number of rounds. This overrides the base server fit class just to
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
 
         Args:
@@ -178,7 +178,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
                 local gradients. The clients will perform a training pass (without updating the weights) in order to
                 provide a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
-            delta (Optional[float], optional): The delta value for epislon-delta DP accounting. If None it defaults to
+            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
         """
         ScaffoldServer.__init__(

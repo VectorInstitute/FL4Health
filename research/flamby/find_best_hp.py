@@ -83,5 +83,5 @@ if __name__ == "__main__":
 
     log(INFO, f"Hyperparameter Sweep Directory: {args.hp_sweep_dir}")
     log(INFO, f"Experiment Names: {args.experiment_name}")
-    log(INFO, f"Is Partial Effiecient Net: {args.is_partial_efficient_net}")
+    log(INFO, f"Is Partial Efficient Net: {args.is_partial_efficient_net}")
     main(args.hp_sweep_dir, args.experiment_name, args.is_partial_efficient_net)

@@ -107,7 +107,7 @@ class WarmedUpModule:
                     pretrained_state = self.pretrained_model_state[pretrained_key]
                     if original_state.size() == pretrained_state.size():
                         matching_state[key] = pretrained_state
-                        log(INFO, "Succesful matching states.")
+                        log(INFO, "Successful matching states.")
                     else:
                         log(
                             WARNING,
