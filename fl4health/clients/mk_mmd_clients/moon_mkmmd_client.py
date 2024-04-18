@@ -1,4 +1,4 @@
-from logging import INFO, ERROR
+from logging import ERROR, INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
@@ -9,7 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.moon_client import MoonClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
-from fl4health.utils.losses import  LossMeterType
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -45,7 +45,7 @@ class MoonMkmmdClient(MoonClient):
             len_old_models_buffer=len_old_models_buffer,
         )
         self.mkmmd_loss_weights = mkmmd_loss_weights
-        if self.mkmmd_loss_weights == (0,0):
+        if self.mkmmd_loss_weights == (0, 0):
             log(
                 ERROR,
                 "MK-MMD loss weight is set to (0,0). As none of MK-MMD losses will not be computed, ",
@@ -56,9 +56,7 @@ class MoonMkmmdClient(MoonClient):
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
         self.beta_update_interval = beta_update_interval
 
-
         self.betas_optimized = False
-
 
     def update_before_train(self, current_server_round: int) -> None:
 
