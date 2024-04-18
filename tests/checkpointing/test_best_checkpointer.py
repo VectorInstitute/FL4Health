@@ -22,7 +22,7 @@ def test_best_metric_checkpointer() -> None:
     assert none_checkpoint
     min_checkpointer.best_metric = 0.15
 
-    # Second checkpoint shouldn't happen since it's smaller
+    # Second checkpoint should happen since it's smaller
     smaller_metric_checkpoint = min_checkpointer._should_checkpoint(0.12)
     assert smaller_metric_checkpoint
 
