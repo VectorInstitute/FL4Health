@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wanb import ClientWandBReporter
+from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
@@ -899,7 +899,7 @@ class BasicClient(NumPyClient):
     def update_before_train(self, current_server_round: int) -> None:
         """
         Hook method called before training with the number of current server rounds performed.
-        For example, used by Moon and Fenda to save global modules after aggregation.
+        For example, used by Moon and FENDA to save global modules after aggregation.
 
         Args:
             current_server_round (int): The number of current server round.
@@ -911,7 +911,7 @@ class BasicClient(NumPyClient):
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training. Also used by Moon and Fenda to save trained modules weights before
+        returned during training. Also used by Moon and FENDA to save trained modules weights before
         aggregation.
 
         Args:

@@ -141,7 +141,7 @@ class EvaluateServer(Server):
         client_instructions = self.configure_evaluate()
 
         if not client_instructions:
-            log(INFO, "Federated Evaluaton: no clients selected, cancel")
+            log(INFO, "Federated Evaluation: no clients selected, cancel")
             return None
         log(
             INFO,

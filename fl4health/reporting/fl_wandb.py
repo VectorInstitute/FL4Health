@@ -21,7 +21,7 @@ class WandBReporter:
         config: Dict[str, Any],
         local_log_directory: str = "./fl_wandb_logs",
     ) -> None:
-        # Name of the project underwhich to store all of the logged values
+        # Name of the project under which to store all of the logged values
         self.project_name = project_name
         # Name of the run under the group (server or client associated)
         self.run_name = run_name
@@ -97,7 +97,7 @@ class ServerWandBReporter(WandBReporter):
 
     def report_metrics(self, server_rounds: int, history: History) -> None:
         # Servers construct a history object that collects aggregated metrics over the set of server rounds conducted.
-        # So we need to reformat the history object into a W and B loggable object
+        # So we need to reformat the history object into a W and B log-able object
         history_to_log: List[Dict[str, Scalar]] = [
             {"server_round": server_round} for server_round in range(server_rounds)
         ]

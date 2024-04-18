@@ -45,5 +45,5 @@ if __name__ == "__main__":
 
     client = MnistDPScaffoldClient(data_path=data_path, metrics=[Accuracy()], device=DEVICE)
 
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

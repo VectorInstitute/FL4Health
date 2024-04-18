@@ -14,7 +14,7 @@ from fl4health.privacy.fl_accountants import (
     FlClientLevelAccountantFixedSamplingNoReplacement,
     FlClientLevelAccountantPoissonSampling,
 )
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
@@ -46,7 +46,7 @@ class ClientLevelDPFedAvgServer(FlServer):
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
-            delta (Optional[float], optional): The delta value for epislon-delta DP accounting. If None it defaults to
+            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
         """
         super().__init__(

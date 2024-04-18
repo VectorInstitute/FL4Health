@@ -34,7 +34,7 @@ class FendaClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        """This module is used to init fenda client with various auxiliary loss functions.
+        """This module is used to init FENDA client with various auxiliary loss functions.
         These losses will be activated only when their weights are not 0.0.
         Args:
             data_path: Path to the data directory.
@@ -43,8 +43,8 @@ class FendaClient(BasicClient):
             loss_meter_type: Type of loss meter to be used.
             checkpointer: Checkpointer to be used for checkpointing.
             temperature: Temperature to be used for contrastive loss.
-            perfcl_loss_weights: Weights to be used for perfcl loss.
-            Each value associate with one of two contrastive losses in perfcl loss.
+            perfcl_loss_weights: Weights to be used for PerFCL loss.
+            Each value associate with one of two contrastive losses in PerFCL loss.
             cos_sim_loss_weight: Weight to be used for cosine similarity loss.
             contrastive_loss_weight: Weight to be used for contrastive loss.
             and second value is for maximizing the distance.
@@ -76,7 +76,7 @@ class FendaClient(BasicClient):
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
-            index by name. Specificaly the features of the model, features of the global model and features of
+            index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
         assert isinstance(input, torch.Tensor)
@@ -118,7 +118,7 @@ class FendaClient(BasicClient):
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:
         """
         Cosine similarity loss aims to minimize the similarity among current local features and current global
-        features of fenda model.
+        features of FENDA model.
         """
         assert len(local_features) == len(global_features)
         return torch.abs(self.cos_sim(local_features, global_features)).mean()
@@ -145,7 +145,7 @@ class FendaClient(BasicClient):
         aggregated_global_features: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Perfcl loss implemented based on https://www.sciencedirect.com/science/article/pii/S0031320323002078.
+        PerFCL loss implemented based on https://www.sciencedirect.com/science/article/pii/S0031320323002078.
 
         This paper introduced two contrastive loss functions:
         1- First one aims to enhance the similarity between the current global features (z_s) and aggregated global
@@ -153,7 +153,7 @@ class FendaClient(BasicClient):
         and old global features (hat{z_s}) as negative pairs.
         2- Second one aims to enhance the similarity between the current local features (z_p) and old local features
         (hat{z_p}) as positive pairs while reducing the similarity between the current local features (z_p) and
-        aggregated lobal features (z_g) as negative pairs.
+        aggregated global features (z_g) as negative pairs.
         """
 
         global_contrastive_loss = self.contrastive_loss(

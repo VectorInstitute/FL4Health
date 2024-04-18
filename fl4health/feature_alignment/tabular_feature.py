@@ -10,7 +10,11 @@ MetaData = Union[Dict[str, int], List[Scalar]]
 
 class TabularFeature:
     def __init__(
-        self, feature_name: str, feature_type: TabularType, fill_value: Optional[Scalar], metadata: MetaData = []
+        self,
+        feature_name: str,
+        feature_type: TabularType,
+        fill_value: Optional[Scalar],
+        metadata: Optional[MetaData] = None,
     ) -> None:
         """
         Information that represents a tabular feature.
@@ -20,7 +24,7 @@ class TabularFeature:
             feature_type (TabularType): data type of the feature.
             fill_value (Optional[Scalar]): the default fill value for this feature when it is missing in a dataframe.
             metadata (MetaData, optional): metadata associated with this feature.
-            For example, if the feature is categorical, then metadata would be all the categories. Defaults to [].
+            For example, if the feature is categorical, then metadata would be all the categories. Defaults to None.
         """
         self.feature_name = feature_name
         self.feature_type = feature_type
@@ -30,7 +34,10 @@ class TabularFeature:
             self.fill_value = TabularType.get_default_fill_value(self.feature_type)
         else:
             self.fill_value = fill_value
-        self.metadata = metadata
+        if metadata:
+            self.metadata = metadata
+        else:
+            self.metadata = []
 
     def get_feature_name(self) -> str:
         return self.feature_name

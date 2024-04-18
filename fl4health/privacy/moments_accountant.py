@@ -144,7 +144,7 @@ class MomentsAccountant:
             of selections performed over a specified population size.
             For non-FL DP-SGD: This is the ratio of batch size to dataset size
             (L/N, from Deep Learning with Differential Privacy).
-            For FL with clientside DP-SGD (no noise on server side, instance level privacy): This is the ratio of
+            For FL with client-side DP-SGD (no noise on server side, instance level privacy): This is the ratio of
             client sampling probability to client data point probability q*(b_k/n_k)
             For FL with client privacy: This is the sampling of clients from the client population
             NOTE: If a sequence of strategies is given, they must be all of the same kind (that is poisson or subset,
@@ -153,8 +153,8 @@ class MomentsAccountant:
             Differential Privacy, z in some other implementations).
          Updates: This is the number of noise applications to the update weights.
             For non-FL DP-SGD: This is the number of updates run (epochs*batches per epoch)
-            For FL w/ clientside DP-SGD (instance DP): This is the number of batches run per client (if selected
-            everytime), server_updates*epochs per server update*batches per epoch
+            For FL w/ client-side DP-SGD (instance DP): This is the number of batches run per client (if selected
+            every time), server_updates*epochs per server update*batches per epoch
             For FL with client privacy: Number of server updates
          Delta: This is the delta in (epsilon, delta)-Privacy, that we require."""
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)
@@ -180,7 +180,7 @@ class MomentsAccountant:
             of selections performed over a specified population size.
             For non-FL DP-SGD: This is the ratio of batch size to dataset size
             (L/N, from Deep Learning with Differential Privacy).
-            For FL with clientside DP-SGD (no noise on server side, instance level privacy): This is the ratio of
+            For FL with client-side DP-SGD (no noise on server side, instance level privacy): This is the ratio of
             client sampling probability to client data point probability q*(b_k/n_k)
             For FL with client privacy: This is the sampling of clients from the client population
             NOTE: If a sequence of strategies is given, they must be all of the same kind (that is poisson or subset,
@@ -189,8 +189,8 @@ class MomentsAccountant:
             Differential Privacy, z in some other implementations).
          Updates: This is the number of noise applications to the update weights.
             For non-FL DP-SGD: This is the number of updates run (epochs*batches per epoch)
-            For FL w/ clientside DP-SGD (instance DP): This is the number of batches run per client (if selected
-            everytime), server_updates*epochs per server update*batches per epoch
+            For FL w/ client-side DP-SGD (instance DP): This is the number of batches run per client (if selected
+            every time), server_updates*epochs per server update*batches per epoch
             For FL with client privacy: Number of server updates
          epsilon: This is the epsilon in (epsilon, delta)-Privacy, that we require."""
         self._validate_accountant_input(sampling_strategies, noise_multiplier, updates)

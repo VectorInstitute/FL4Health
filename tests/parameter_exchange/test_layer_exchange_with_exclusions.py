@@ -45,7 +45,7 @@ def test_nested_model_exclusion() -> None:
     # Modify the weights to be zero before putting them back in the module.
     exchanger.pull_parameters([0.0 * p for p in shared_layer_list], model)
 
-    # Excluded weights should be the same as before, these two weights are actually tied together in the unet
+    # Excluded weights should be the same as before, these two weights are actually tied together in the U-net
     assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.norm_layer.weight, bn_weights))
     assert torch.all(torch.eq(model.encoder.encoding_blocks[0].conv2.block[1].weight, bn_weights))
 

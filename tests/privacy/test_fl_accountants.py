@@ -52,7 +52,7 @@ def test_instance_accountant_reproduce_results() -> None:
         assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
 
 
-def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
+def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
     # This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
     # The bounds are actually tighter than those of the paper due to an improvement in the sharpness of such bounds in
     # 2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the
@@ -133,12 +133,12 @@ def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
             assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
 
 
-def test_user_level_accoutant_with_equivalent_trajectories() -> None:
+def test_user_level_accountant_with_equivalent_trajectories() -> None:
     # Tests whether performing the same process in a sequence of accountant processes is equivalent to a gathered
     # set of accounting
     trajectory_length = 3
-    noise_mulitplier = 1.0
-    noise_multipliers = [noise_mulitplier] * trajectory_length
+    noise_multiplier = 1.0
+    noise_multipliers = [noise_multiplier] * trajectory_length
     sampling_rate = 0.2
     sampling_rates = [sampling_rate] * trajectory_length
     updates = 10000
@@ -146,7 +146,7 @@ def test_user_level_accoutant_with_equivalent_trajectories() -> None:
     target_delta = 1 / pow(pow(10, 9), 1.1)
 
     trajectory_accountant = FlClientLevelAccountantPoissonSampling(sampling_rates, noise_multipliers)
-    non_trajectory_accountant = FlClientLevelAccountantPoissonSampling(sampling_rate, noise_mulitplier)
+    non_trajectory_accountant = FlClientLevelAccountantPoissonSampling(sampling_rate, noise_multiplier)
 
     trajectory_epsilon = trajectory_accountant.get_epsilon(updates_trajectory, target_delta)
 
@@ -156,7 +156,7 @@ def test_user_level_accoutant_with_equivalent_trajectories() -> None:
     assert pytest.approx(non_trajectory_epsilon, abs=0.01) == trajectory_epsilon
 
 
-def test_user_level_accoutant_with_longer_trajectories() -> None:
+def test_user_level_accountant_with_longer_trajectories() -> None:
     # Tests whether performing the same process in a sequence of accountant processes is equivalent to a gathered
     # set of accounting
     increasing_noise_accountant = FlClientLevelAccountantPoissonSampling([0.2] * 3, [1.0, 1.2, 1.4])

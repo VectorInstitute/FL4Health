@@ -77,7 +77,7 @@ def main(config: Dict[str, Any]) -> None:
         clipping_quantile=config["clipping_quantile"],
         initial_clipping_bound=config["clipping_bound"],
         weight_noise_multiplier=config["server_noise_multiplier"],
-        clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
+        clipping_noise_multiplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_aggregation=config["weighted_averaging"],
     )

@@ -30,7 +30,7 @@ class PcaModule(nn.Module):
               If q is too far away from the actual rank k of the data matrix, then the resulting
               rank-q svd approximation is not guaranteed to be a good approximation of the data matrix.
 
-              2. If low_rank is set to True, then a value q for rank_estimation can be choosen
+              2. If low_rank is set to True, then a value q for rank_estimation can be chosen
               according to the following criteria:
                 in general,
                 k <= q <= min(2*k, m, n). For large low-rank

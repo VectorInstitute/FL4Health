@@ -12,7 +12,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters

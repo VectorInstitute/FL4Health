@@ -15,7 +15,7 @@ seed = 83
 small_rank = 16
 
 
-# For more inforamtion of this type hint,
+# For more information of this type hint,
 # see https://docs.python.org/3.8/library/typing.html#typing.Generator/
 @pytest.fixture
 def setup_random_seeds() -> Generator[None, None, None]:

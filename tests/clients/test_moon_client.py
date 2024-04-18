@@ -49,7 +49,7 @@ def test_setting_global_model(get_client: MoonClient) -> None:  # noqa
     for i in range(len(params)):
         assert (params[i] == global_params[i]).all()
 
-    # Make sure the globa model is not set to train
+    # Make sure the global model is not set to train
     assert moon_client.global_model.training is False
     for param in moon_client.global_model.parameters():
         assert param.requires_grad is False

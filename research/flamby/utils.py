@@ -44,8 +44,8 @@ def get_all_run_folders(artifact_dir: str) -> List[str]:
 
 def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -> None:
     with open(eval_write_path, "w") as f:
-        for key, metric_vaue in results.items():
-            f.write(f"{key}: {metric_vaue}\n")
+        for key, metric_value in results.items():
+            f.write(f"{key}: {metric_value}\n")
 
 
 def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:

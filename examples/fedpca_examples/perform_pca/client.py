@@ -45,4 +45,4 @@ if __name__ == "__main__":
     # should use the same random seed.
     set_all_random_seeds(seed)
     client = MnistFedPCAClient(data_path=data_path, device=DEVICE, model_save_path=components_save_path)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

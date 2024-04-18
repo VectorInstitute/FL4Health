@@ -105,7 +105,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
     def subsample(self, dataset: D) -> D:
         """
-        Returns a new dataset where samples are selected based on a dirichlet dsitribution over labels
+        Returns a new dataset where samples are selected based on a dirichlet distribution over labels
         """
         total_num_samples = int(len(dataset) * self.sample_percentage)
         targets = dataset.targets
