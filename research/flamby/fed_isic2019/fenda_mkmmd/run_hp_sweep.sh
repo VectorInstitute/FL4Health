@@ -12,7 +12,7 @@
 # Example:
 # ./research/flamby/fed_isic2019/fenda_mkmmd/run_hp_sweep.sh \
 #   research/flamby/fed_isic2019/fenda_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/fenda/ \
+#   research/flamby/fed_isic2019/fenda_mkmmd/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -33,7 +33,7 @@ GAMMA_VALUES=( 0 0.1 1 10 )
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 

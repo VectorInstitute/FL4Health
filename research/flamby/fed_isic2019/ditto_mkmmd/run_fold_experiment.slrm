@@ -22,17 +22,19 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
-#   lambda value \
+#   mu value \
+#   l2 value \
 #   server_address
 #
 # Example:
 # sbatch research/flamby/fed_isic2019/ditto_mkmmd/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/ditto_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/ditto/hp_results/ \
+#   research/flamby/fed_isic2019/ditto_mkmmd/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.01 \
+#   0.1 \
 #   0.0.0.0:8080
 #
 # Notes:

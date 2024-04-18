@@ -12,7 +12,7 @@
 # Example:
 # ./research/flamby/fed_isic2019/ditto_mkmmd/run_hp_sweep.sh \
 #   research/flamby/fed_isic2019/ditto_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/ditto/ \
+#   research/flamby/fed_isic2019/ditto_mkmmd/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -32,7 +32,7 @@ L2_VALUES=( 0.01 0.1 1.0 )
 SERVER_PORT=8100
 
 # Create sweep folder
-SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results_mkmmd"
+SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 

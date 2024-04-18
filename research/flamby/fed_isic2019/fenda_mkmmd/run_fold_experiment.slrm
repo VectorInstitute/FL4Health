@@ -22,15 +22,19 @@
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
+#   mu_value \
+#   gamma_value \
 #   server_address
 #
 # Example:
 # sbatch research/flamby/fed_isic2019/fenda_mkmmd/run_fold_experiment.slrm \
 #   research/flamby/fed_isic2019/fenda_mkmmd/config.yaml \
-#   research/flamby/fed_isic2019/fenda/hp_results/ \
+#   research/flamby/fed_isic2019/fenda_mkmmd/hp_results/ \
 #   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
+#   10 \
+#   10 \
 #   0.0.0.0:8080
 #
 # Notes:
@@ -70,8 +74,8 @@ GAMMA=$8
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
 
-RUN_NAMES=( "Run1" )
-SEEDS=(2021 )
+RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+SEEDS=(2021 2022 2023 2024 2025)
 
 echo "Python Venv Path: ${VENV_PATH}"
 

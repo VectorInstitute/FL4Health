@@ -16,7 +16,7 @@ An example is something like
 ``` bash
 ./research/flamby/fed_isic2019/fenda_mkmmd/run_hp_sweep.sh \
    research/flamby/fed_isic2019/fenda_mkmmd/config.yaml \
-   research/flamby/fed_isic2019/fenda/ \
+   research/flamby/fed_isic2019/fenda_mkmmd/ \
    /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
    /h/demerson/vector_repositories/fl4health_env/
 ```

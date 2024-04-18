@@ -120,14 +120,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the auxiliary losses",
+        help="Weight for the distance minimizing MK-MMD losses",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weight for the auxiliary lossess",
+        help="Weight for the distance maximizing Mk-MMD lossess",
         required=False,
     )
     parser.add_argument(
