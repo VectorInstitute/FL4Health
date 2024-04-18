@@ -209,11 +209,11 @@ class DittoMkmmdClient(DittoClient):
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
-            if self.feature_l2_norm_weight:
-                # Compute the average L2 norm of the features over the batch
-                feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
-                total_loss += self.feature_l2_norm_weight * feature_l2_norm_loss
-                additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
+        if self.feature_l2_norm_weight:
+            # Compute the average L2 norm of the features over the batch
+            feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
+            total_loss += self.feature_l2_norm_weight * feature_l2_norm_loss
+            additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
 
         additional_losses["total_loss"] = total_loss
 

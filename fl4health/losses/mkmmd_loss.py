@@ -51,6 +51,7 @@ class MkMmdLoss(torch.nn.Module):
         else:
             assert betas.shape == (self.kernel_num, 1)
             self.betas = betas.to(self.device)
+        assert torch.abs(torch.sum(self.betas) - 1) < 0.00001
 
         self.minimize_type_two_error = minimize_type_two_error
 

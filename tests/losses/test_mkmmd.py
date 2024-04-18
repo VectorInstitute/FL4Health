@@ -37,7 +37,8 @@ Y = torch.Tensor(
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-mkmmd_loss = MkMmdLoss(DEVICE, gammas=torch.Tensor([2, 1, 1 / 2]), betas=torch.Tensor([1.5, 2.0, -1.0]).reshape(-1, 1))
+mkmmd_loss = MkMmdLoss(DEVICE, gammas=torch.Tensor([2, 1, 1 / 2]))
+mkmmd_loss.betas = torch.Tensor([1.5, 2.0, -1.0]).reshape(-1, 1).to(DEVICE)
 quads = mkmmd_loss.construct_quadruples(X, Y)
 inner_products = mkmmd_loss.compute_euclidean_inner_products(quads)
 all_h_us = mkmmd_loss.compute_all_h_u_from_inner_products(inner_products)
