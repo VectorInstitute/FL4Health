@@ -14,7 +14,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling

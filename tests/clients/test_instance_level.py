@@ -55,10 +55,10 @@ def test_instance_level_client(get_client: InstanceLevelPrivacyClient) -> None: 
 def test_privacy_validate_and_fix() -> None:
     # Get a network where opacus needs to replace the batch norms
     model: nn.Module = MnistNetWithBnAndFrozen(True)
-    model, reinit_optimizer = privacy_validate_and_fix_modules(model)
+    model, reinitialize_optimizer = privacy_validate_and_fix_modules(model)
 
-    # We should need to reinit the optimizer parameters
-    assert reinit_optimizer
+    # We should need to reinitialize the optimizer parameters
+    assert reinitialize_optimizer
     # The batch norm in the model should have been replaced with a GroupNorm
     assert type(model.bn) == torch.nn.modules.normalization.GroupNorm
 

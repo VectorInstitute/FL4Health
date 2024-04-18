@@ -14,7 +14,7 @@ strategy = ClientLevelDPFedAvgM(
     server_learning_rate=0.5,
     clipping_learning_rate=0.5,
     weight_noise_multiplier=2.0,
-    clipping_noise_mutliplier=5.0,
+    clipping_noise_multiplier=5.0,
 )
 
 

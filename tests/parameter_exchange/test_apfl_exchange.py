@@ -46,7 +46,7 @@ def test_apfl_layer_exchange() -> None:
             assert np.array_equal(layer_parameters, model_state_dict[layer_name])
 
     input = torch.ones((3, 1, 10, 10))
-    # APFL returns a dict with personal, global and local predicitons
+    # APFL returns a dict with personal, global and local predictions
     # Assert return values of each prediction type is correct dim
     preds = model(input)
     personal_shape = preds["personal"].shape

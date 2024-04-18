@@ -88,9 +88,9 @@ def test_encoding(create_df1: pd.DataFrame) -> None:
     assert encoder.get_target_dimension() == 1
 
     # Test that to_json and from_json methods work as expected.
-    jstr = encoder.to_json()
+    json_string = encoder.to_json()
 
-    encoder_new = TabularFeaturesInfoEncoder.from_json(jstr)
+    encoder_new = TabularFeaturesInfoEncoder.from_json(json_string)
     assert encoder_new.get_feature_columns() == ["Age", "Name", "Sex"]
     assert encoder_new.get_target_columns() == ["Wealth"]
     assert len(encoder_new.features_by_type(TabularType.ORDINAL)) == 2

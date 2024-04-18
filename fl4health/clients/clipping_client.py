@@ -20,7 +20,7 @@ from fl4health.utils.metrics import Metric
 class NumpyClippingClient(BasicClient):
     """
     Client that clips updates being sent to the server where noise is added.
-    Used to obtain Client Level Differenital Privacy in FL setting.
+    Used to obtain Client Level Differential Privacy in FL setting.
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class NumpyClippingClient(BasicClient):
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
-        # network froebenius norm
+        # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
     def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:

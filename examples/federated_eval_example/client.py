@@ -70,5 +70,5 @@ if __name__ == "__main__":
         device=DEVICE,
         model_checkpoint_path=client_checkpoint_path,
     )
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

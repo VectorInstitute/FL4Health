@@ -24,5 +24,5 @@ class MoonModel(nn.Module):
         features = (
             {"features": features} if not self.flatten_features else {"features": features.reshape(len(features), -1)}
         )
-        # Return preds and features as seperate dictionary as in fenda base
+        # Return preds and features as separate dictionary as in FENDA base
         return preds, features

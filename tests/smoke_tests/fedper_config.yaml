@@ -7,4 +7,4 @@ local_steps: 5 # The number of local steps (one per batch) to complete for clien
 batch_size: 32 # The batch size for client training
 
 # Downsampling settings per client
-downsampling_ratio: 0.1 # percentage of original mnist data to keep for minority numbers
+downsampling_ratio: 0.1 # percentage of original MNIST data to keep for minority numbers

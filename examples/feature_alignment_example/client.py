@@ -100,4 +100,4 @@ if __name__ == "__main__":
     client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", ["LOSgroupNum"])
     # This call demonstrates how the user may specify a particular sklearn pipeline for a specific feature.
     client.preset_specific_pipeline("NumNotes", MaxAbsScaler())
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())

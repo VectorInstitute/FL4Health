@@ -10,7 +10,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config

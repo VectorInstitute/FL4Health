@@ -1,7 +1,7 @@
 from pathlib import Path
 from unittest import mock
 
-from fl4health.reporting.fl_wanb import ClientWandBReporter, ServerWandBReporter
+from fl4health.reporting.fl_wandb import ClientWandBReporter, ServerWandBReporter
 
 
 def test_server_wandb_reporter(tmp_path: Path) -> None:
