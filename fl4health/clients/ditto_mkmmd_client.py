@@ -63,8 +63,8 @@ class DittoMkmmdClient(DittoClient):
         if self.mkmmd_loss_weight == 0:
             log(
                 ERROR,
-                """MK-MMD loss weight is set to 0. As MK-MMD loss will not be computed,
-                please use vanilla DittoClient instead.""",
+                "MK-MMD loss weight is set to 0. As MK-MMD loss will not be computed, ",
+                "please use vanilla DittoClient instead.",
             )
 
         self.feature_l2_norm_weight = feature_l2_norm_weight
@@ -103,10 +103,11 @@ class DittoMkmmdClient(DittoClient):
         assert isinstance(local_model, MoonModel)
         assert isinstance(init_global_model, MoonModel)
 
-        # Save the initial state of the local model to restore it after the buffer is populated
+        # Save the initial state of the local model to restore it after the buffer is populated,
+        # however as init global model is already cloned and frozen, we don't need to save its state.
         init_state_local_model = local_model.training
 
-        # Set local model to evaluation mode, as ae don't want to create a computational graph
+        # Set local model to evaluation mode, as we don't want to create a computational graph
         # for the local model when populating the local buffer with features to compute optimal
         # betas for the MK-MMD loss
         local_model.eval()
@@ -115,7 +116,7 @@ class DittoMkmmdClient(DittoClient):
         assert not local_model.training
 
         # Make sure the init global model is in evaluation mode before populating the global buffer
-        # as it was cloned and frozen from the global model
+        # as it is already cloned and frozen from the global model
         assert not init_global_model.training
 
         local_buffer = []
@@ -137,7 +138,7 @@ class DittoMkmmdClient(DittoClient):
         if init_state_local_model:
             local_model.train()
 
-        # The buffers are in shape (batch_size, feature_size). We need to stack them along the batch dimension
+        # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
         # (dim=0) to get a tensor of shape (num_samples, feature_size)
         return torch.cat(local_buffer, dim=0), torch.cat(init_global_buffer, dim=0)
 
@@ -169,7 +170,7 @@ class DittoMkmmdClient(DittoClient):
 
         if self.mkmmd_loss_weight != 0:
             if not isinstance(self.model, MoonModel) or not isinstance(self.init_global_model, MoonModel):
-                AssertionError(
+                raise AssertionError(
                     "To compute the MK-MMD loss, the client model and the init_global_model must be of type MoonModel."
                 )
             # Compute the features of the init_global_model

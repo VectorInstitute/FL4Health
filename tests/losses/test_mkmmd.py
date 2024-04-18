@@ -279,6 +279,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_vi_local)
     regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(19)).to(DEVICE)
     unnormalized_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
+    unnormalized_betas = torch.clamp(unnormalized_betas, min=0)
     assert pytest.approx(torch.mm(unnormalized_betas.t(), hat_d_per_kernel_local), abs=0.0001) == 1.0000
 
     betas_local = default_mkmmd.optimize_betas(X, Y, lambda_m)

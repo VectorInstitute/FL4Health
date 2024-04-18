@@ -43,9 +43,10 @@ class ContrastiveLoss(torch.nn.Module):
 
         assert self.temperature is not None
         if len(positive_pairs) != 1:
-            AssertionError(
-                """Each feature can have one positive pair.
-                Thus positive pairs should be a tensor of shape (1, n_samples, n_features)"""
+            raise AssertionError(
+                "Each feature can have one positive pair. ",
+                "Thus positive pairs should be a tensor of shape (1, n_samples, n_features) ",
+                f"rather than {positive_pairs.shape}",
             )
         positive_pair = positive_pairs[0]
         assert len(features) == len(positive_pair)

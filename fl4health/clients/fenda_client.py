@@ -153,7 +153,8 @@ class FendaClient(BasicClient):
         global_buffer = []
         aggregated_buffer = []
 
-        # Save the state of the local and global modules
+        # Save the state of the local and global modules, however as aggregated module is already
+        # cloned and frozen, we don't need to save its state.
         init_state_local_module = local_module.training
         init_state_global_module = global_module.training
 
@@ -173,6 +174,7 @@ class FendaClient(BasicClient):
                 aggregated_features = aggregated_module.forward(input)
 
                 # Local feature are same as old local features
+                # Flatten the features to compute optimal betas for the MK-MMD loss
                 local_buffer.append(local_features.reshape(len(local_features), -1))
                 global_buffer.append(global_features.reshape(len(global_features), -1))
                 aggregated_buffer.append(aggregated_features.reshape(len(aggregated_features), -1))
@@ -183,6 +185,8 @@ class FendaClient(BasicClient):
         if init_state_global_module:
             global_module.train()
 
+        # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
+        # (dim=0) to get a tensor of shape (num_samples, feature_size)
         return torch.cat(local_buffer), torch.cat(global_buffer), torch.cat(aggregated_buffer)
 
     def get_cosine_similarity_loss(self, local_features: torch.Tensor, global_features: torch.Tensor) -> torch.Tensor:

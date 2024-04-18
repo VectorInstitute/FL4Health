@@ -26,7 +26,7 @@ class MkMmdLoss(torch.nn.Module):
             device (torch.device): Device onto which tensors should be moved
             gammas (Optional[torch.Tensor], optional): These are known as the length-scales of the RBF functions used
                 to compute the Mk-MMD distances. The length of this list defines the number of kernels used in the
-                norm measurement. If none, a default of 29 kernels is used. Defaults to None.
+                norm measurement. If none, a default of 19 kernels is used. Defaults to None.
             betas (Optional[torch.Tensor], optional): These are the linear coefficients used on the basis of kernels
                 to compute the Mk-MMD measure. If not provided, a unit-length, random default is constructed. These
                 can be optimized using the functions of this class. Defaults to None.
@@ -271,6 +271,9 @@ class MkMmdLoss(torch.nn.Module):
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
             unnormalized_betas = self.get_best_vertex_for_objective_function(hat_d_per_kernel, regularized_Q_k)
+
+        # We want to ensure that the betas are non-negative
+        unnormalized_betas = torch.clamp(unnormalized_betas, min=0)
         optimized_betas = (1.0 / torch.sum(unnormalized_betas)) * unnormalized_betas
         return optimized_betas
 
