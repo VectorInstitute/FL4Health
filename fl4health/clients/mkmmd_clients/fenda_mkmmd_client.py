@@ -37,8 +37,9 @@ class FendaMkmmdClient(FendaClient):
             cos_sim_loss_weight=cos_sim_loss_weight,
             contrastive_loss_weight=contrastive_loss_weight,
         )
-        """This module is used to init fenda client with various auxiliary loss functions.
-        These losses will be activated only when their weights are not 0.0.
+        """This module is used to implement the FENDA client with MK-MMD loss. The MK-MMD loss is used to minimize the
+        distance between the global and aggregated global features and maximize the distance between the local and
+        aggregated global features.
         Args:
             data_path: Path to the data directory.
             metrics: List of metrics to be used for evaluation.
@@ -53,7 +54,7 @@ class FendaMkmmdClient(FendaClient):
             mkmmd_loss_weights: Weights to be used for mkmmd losses. First value is for minimizing the distance
             and second value is for maximizing the distance.
         """
-    
+
         self.mkmmd_loss_weights = mkmmd_loss_weights
         self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
@@ -156,6 +157,7 @@ class FendaMkmmdClient(FendaClient):
         # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
         # (dim=0) to get a tensor of shape (num_samples, feature_size)
         return torch.cat(local_buffer), torch.cat(global_buffer), torch.cat(aggregated_buffer)
+
     def get_mkmmd_loss(
         self,
         local_features: torch.Tensor,
@@ -164,6 +166,8 @@ class FendaMkmmdClient(FendaClient):
     ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor]]:
         """
         MK-MMD loss aims to compute the distance among given two distributions with optimized betas.
+        We compute the MK-MMD loss for minimizing the distance between the global and aggregated global features
+        and maximizing the distance between the local and aggregated global features.
         """
         assert self.mkmmd_loss_weights is not None
         assert local_features.shape == aggregated_global_features.shape
@@ -184,9 +188,8 @@ class FendaMkmmdClient(FendaClient):
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
-        For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
-        client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
-
+        In addition to inherited losses, this method also computes the MK-MMD losses if the weights are provided
+        and adds them to the total loss and additional losses dictionary.
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
             features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
