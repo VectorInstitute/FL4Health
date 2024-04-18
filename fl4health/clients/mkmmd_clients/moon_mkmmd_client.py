@@ -14,12 +14,6 @@ from fl4health.utils.metrics import Metric
 
 
 class MoonMkmmdClient(MoonClient):
-    """
-    This client implements the MOON algorithm from Model-Contrastive Federated Learning. The key idea of MOON
-    is to utilize the similarity between model representations to correct the local training of individual parties,
-    i.e., conducting contrastive learning in model-level.
-    """
-
     def __init__(
         self,
         data_path: Path,
@@ -34,6 +28,23 @@ class MoonMkmmdClient(MoonClient):
         mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
         feature_l2_norm_weight: Optional[float] = None,
     ) -> None:
+        """
+        This module is used to implement the MOON client with MK-MMD loss. The MK-MMD loss is used to minimize the
+        distance between the local and global feature distributions and maximize the distance between the local and
+        old feature distributions.
+        Args:
+            data_path (Path): Path to the data directory.
+            metrics (Sequence[Metric]): Sequence of metrics to evaluate the model.
+            device (torch.device): Device to run the model on.
+            loss_meter_type (LossMeterType): Type of loss meter to use.
+            temperature (float): Temperature parameter for the contrastive loss.
+            len_old_models_buffer (int): Length of the buffer to store old models.
+            beta_update_interval (int): Number of steps after which to update the betas.
+            checkpointer (Optional[TorchCheckpointer]): Checkpointer to save and load the model.
+            contrastive_weight (Optional[float]): Weight for the contrastive loss.
+            mkmmd_loss_weights (Optional[Tuple[float, float]]): Weights for the MK-MMD loss.
+            feature_l2_norm_weight (Optional[float]): Weight for the feature L2 norm loss.
+        """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -65,30 +76,41 @@ class MoonMkmmdClient(MoonClient):
 
         return super().update_before_train(current_server_round)
 
+    def _should_optimize_betas(self, step: int) -> bool:
+        step_at_interval = (step > 0) and (step % self.beta_update_interval == 0)
+        valid_components_present = (
+            (self.mkmmd_loss_weights is not None)
+            and (len(self.old_models_list) > 0)
+            and (self.global_model is not None)
+        )
+        return step_at_interval and valid_components_present
+
     def update_after_step(self, step: int) -> None:
-        if step > 0 and step % self.beta_update_interval == 0:
-            if self.mkmmd_loss_weights and len(self.old_models_list) > 0 and self.global_model:
-                # Get the feature distribution of the old, local and global models with evaluation mode
-                local_distribution, global_distribution, old_distribution = self.update_buffers(
-                    self.model, self.global_model, self.old_models_list[-1]
+        if self._should_optimize_betas(step):
+            # Get the feature distribution of the most recent old model, plus local and global models
+            # with evaluation mode
+            assert self.global_model is not None
+            local_distribution, global_distribution, old_distribution = self.update_buffers(
+                self.model, self.global_model, self.old_models_list[-1]
+            )
+            assert self.mkmmd_loss_weights is not None
+            # Update betas for the MK-MMD loss
+            if self.mkmmd_loss_weights[0] != 0:
+                self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                    X=local_distribution, Y=global_distribution, lambda_m=1e-5
                 )
-                # Update betas for the MK-MMD loss
-                if self.mkmmd_loss_weights[0] != 0:
-                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
-                        X=local_distribution, Y=global_distribution, lambda_m=1e-5
-                    )
-                    log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss_min.betas.squeeze()}.")
+                log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss_min.betas.squeeze()}.")
 
-                if self.mkmmd_loss_weights[1] != 0:
-                    self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
-                        X=local_distribution,
-                        Y=old_distribution,
-                        lambda_m=1e-5,
-                    )
-                    log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
+            if self.mkmmd_loss_weights[1] != 0:
+                self.mkmmd_loss_max.betas = self.mkmmd_loss_max.optimize_betas(
+                    X=local_distribution,
+                    Y=old_distribution,
+                    lambda_m=1e-5,
+                )
+                log(INFO, f"Set optimized betas to maximize distance: {self.mkmmd_loss_max.betas.squeeze()}.")
 
-                # Betas have been optimized
-                self.betas_optimized = True
+            # Betas have been optimized
+            self.betas_optimized = True
 
         return super().update_after_step(step)
 
@@ -139,7 +161,8 @@ class MoonMkmmdClient(MoonClient):
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
-        For MOON, the loss is the total loss and the additional losses are the loss, contrastive loss, and total loss.
+        In addition to inherited losses from parent MoonClient, this method also computes the MK-MMD losses
+        if the weights are provided and adds them to the total loss and additional losses dictionary.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.

@@ -1,7 +1,9 @@
+from logging import ERROR
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
@@ -37,9 +39,11 @@ class FendaMkmmdClient(FendaClient):
             cos_sim_loss_weight=cos_sim_loss_weight,
             contrastive_loss_weight=contrastive_loss_weight,
         )
-        """This module is used to implement the FENDA client with MK-MMD loss. The MK-MMD loss is used to minimize the
+        """
+        This module is used to implement the FENDA client with MK-MMD loss. The MK-MMD loss is used to minimize the
         distance between the global and aggregated global features and maximize the distance between the local and
         aggregated global features.
+
         Args:
             data_path: Path to the data directory.
             metrics: List of metrics to be used for evaluation.
@@ -56,6 +60,12 @@ class FendaMkmmdClient(FendaClient):
         """
 
         self.mkmmd_loss_weights = mkmmd_loss_weights
+        if self.mkmmd_loss_weights == (0, 0):
+            log(
+                ERROR,
+                "MK-MMD loss weight is set to (0,0). As none of MK-MMD losses will not be computed, ",
+                "please use vanilla FendaClient instead.",
+            )
         self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
 
@@ -188,8 +198,8 @@ class FendaMkmmdClient(FendaClient):
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
-        In addition to inherited losses, this method also computes the MK-MMD losses if the weights are provided
-        and adds them to the total loss and additional losses dictionary.
+        In addition to inherited losses from parent FendaClient, this method also computes the MK-MMD losses
+        if the weights are provided and adds them to the total loss and additional losses dictionary.
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
             features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
