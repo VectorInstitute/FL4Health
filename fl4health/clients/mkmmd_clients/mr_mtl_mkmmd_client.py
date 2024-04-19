@@ -6,8 +6,8 @@ import torch
 from flwr.common.logger import log
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.basic_client import TorchInputType
+from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import LossMeterType
@@ -180,7 +180,7 @@ class MrMtlMkmmdClient(MrMtlClient):
         Returns:
             Tuple[torch.Tensor, Dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
-                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server 
+                - A dictionary with `loss`, `total_loss` and, based on client attributes set from server
                 config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
                 values.
         """
