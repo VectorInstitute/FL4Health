@@ -17,6 +17,7 @@ class MkMmdLoss(torch.nn.Module):
         gammas: Optional[torch.Tensor] = None,
         betas: Optional[torch.Tensor] = None,
         minimize_type_two_error: bool = True,
+        normalize_features: bool = False,
     ) -> None:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
@@ -33,6 +34,8 @@ class MkMmdLoss(torch.nn.Module):
             minimize_type_two_error (Optional[bool], optional): Whether we're aiming to minimize the type II error in
                 optimizing the betas or maximize it. The first coincides with trying to minimize feature distance. The
                 second coincides with trying to maximize their feature distance. Defaults to True.
+            normalize_features (Optional[bool], optional): Whether to normalize the features to have unit length before
+                computing the MK-MMD and optimizing betas. Defaults to False.
         """
         super().__init__()
         self.device = device
@@ -54,6 +57,7 @@ class MkMmdLoss(torch.nn.Module):
         assert torch.abs(torch.sum(self.betas) - 1) < 0.00001
 
         self.minimize_type_two_error = minimize_type_two_error
+        self.normalize_features = normalize_features
 
     def construct_quadruples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
@@ -123,6 +127,10 @@ class MkMmdLoss(torch.nn.Module):
         return torch.mean(all_h_u_per_v_i, dim=1, keepdim=True)
 
     def compute_mkmmd(self, X: torch.Tensor, Y: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
+        # Normalize the features if necessary to have unit length
+        if self.normalize_features:
+            X = self.normalize(X)
+            Y = self.normalize(Y)
         # In this function, we assume that X, Y: n_samples, n_features are the same size and that beta is a tensor of
         # shape number of kernels x 1
         all_h_u_per_vi = self.compute_all_h_u_per_v_i(X, Y)
@@ -240,7 +248,15 @@ class MkMmdLoss(torch.nn.Module):
             regularized_Q_k, p, G, h, hat_d_per_kernel.t(), b
         ).t()
 
+    def normalize(self, X: torch.Tensor) -> torch.Tensor:
+        return torch.div(X, torch.linalg.norm(X, dim=1))
+
     def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
+        # Normalize the features if necessary to have unit length
+        if self.normalize_features:
+            X = self.normalize(X)
+            Y = self.normalize(Y)
+
         # In this function, we assume that X, Y: n_samples, n_features
         all_h_u_per_v_i = self.compute_all_h_u_per_v_i(X, Y)
 
