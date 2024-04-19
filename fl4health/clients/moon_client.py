@@ -29,7 +29,7 @@ class MoonClient(BasicClient):
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
         checkpointer: Optional[TorchCheckpointer] = None,
-        contrastive_weight: Optional[float] = None,
+        contrastive_weight: float = 0,
     ) -> None:
         super().__init__(
             data_path=data_path,

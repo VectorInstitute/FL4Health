@@ -22,11 +22,11 @@ class MoonMkmmdClient(MoonClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
-        beta_update_interval: int = 20,
         checkpointer: Optional[TorchCheckpointer] = None,
-        contrastive_weight: Optional[float] = None,
-        mkmmd_loss_weights: Optional[Tuple[float, float]] = None,
-        feature_l2_norm_weight: Optional[float] = None,
+        contrastive_weight: float = 0,
+        mkmmd_loss_weights: Tuple[float, float] = (10, 10),
+        feature_l2_norm_weight: float = 0,
+        beta_global_update_interval: Optional[int] = 20,
     ) -> None:
         """
         This module is used to implement the MOON client with MK-MMD loss. The MK-MMD loss is used to minimize the
@@ -36,14 +36,18 @@ class MoonMkmmdClient(MoonClient):
             data_path (Path): Path to the data directory.
             metrics (Sequence[Metric]): Sequence of metrics to evaluate the model.
             device (torch.device): Device to run the model on.
-            loss_meter_type (LossMeterType): Type of loss meter to use.
-            temperature (float): Temperature parameter for the contrastive loss.
-            len_old_models_buffer (int): Length of the buffer to store old models.
-            beta_update_interval (int): Number of steps after which to update the betas.
-            checkpointer (Optional[TorchCheckpointer]): Checkpointer to save and load the model.
-            contrastive_weight (Optional[float]): Weight for the contrastive loss.
-            mkmmd_loss_weights (Optional[Tuple[float, float]]): Weights for the MK-MMD loss.
-            feature_l2_norm_weight (Optional[float]): Weight for the feature L2 norm loss.
+            loss_meter_type (LossMeterType, optional): Type of loss meter to use.
+                Defaults to LossMeterType.AVERAGE.
+            temperature (float, optional): Temperature parameter for the contrastive loss. Defaults to 0.5.
+            len_old_models_buffer (int, optional): Length of the buffer to store old models. Defaults to 1.
+            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to save and load the model.
+                Defaults to None.
+            contrastive_weight (float, optional): Weight for the contrastive loss.
+            mkmmd_loss_weights (Tuple[float, float], optional): Weights for the MK-MMD loss.
+            feature_l2_norm_weight (float, optional): Weight for the feature L2 norm loss.
+            beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
+                MK-MMD loss. Defaults to 20. If set to None, the betas will be updated for each individual batch.
+                If set to 0, the betas will not be updated.
         """
         super().__init__(
             data_path=data_path,
@@ -65,8 +69,13 @@ class MoonMkmmdClient(MoonClient):
         self.feature_l2_norm_weight = feature_l2_norm_weight
         self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
         self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
-        self.beta_update_interval = beta_update_interval
-
+        self.beta_global_update_interval = beta_global_update_interval
+        if self.beta_global_update_interval is None:
+            log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")
+        elif self.beta_global_update_interval == 0:
+            log(INFO, "Betas for the MK-MMD loss will not be updated.")
+        else:
+            log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
         self.betas_optimized = False
 
     def update_before_train(self, current_server_round: int) -> None:
@@ -77,23 +86,19 @@ class MoonMkmmdClient(MoonClient):
         return super().update_before_train(current_server_round)
 
     def _should_optimize_betas(self, step: int) -> bool:
-        step_at_interval = (step > 0) and (step % self.beta_update_interval == 0)
-        valid_components_present = (
-            (self.mkmmd_loss_weights is not None)
-            and (len(self.old_models_list) > 0)
-            and (self.global_model is not None)
-        )
+        assert self.beta_global_update_interval is not None
+        step_at_interval = (step > 0) and (step % self.beta_global_update_interval == 0)
+        valid_components_present = (len(self.old_models_list) > 0) and (self.global_model is not None)
         return step_at_interval and valid_components_present
 
     def update_after_step(self, step: int) -> None:
-        if self._should_optimize_betas(step):
+        if self.beta_global_update_interval is not None and self._should_optimize_betas(step):
             # Get the feature distribution of the most recent old model, plus local and global models
             # with evaluation mode
             assert self.global_model is not None
             local_distribution, global_distribution, old_distribution = self.update_buffers(
                 self.model, self.global_model, self.old_models_list[-1]
             )
-            assert self.mkmmd_loss_weights is not None
             # Update betas for the MK-MMD loss
             if self.mkmmd_loss_weights[0] != 0:
                 self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
@@ -177,18 +182,23 @@ class MoonMkmmdClient(MoonClient):
 
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
-        if (
-            self.mkmmd_loss_weights
-            and "global_features" in features
-            and "old_features" in features
-            and self.betas_optimized
-        ):
+        if "global_features" in features and "old_features" in features and self.betas_optimized:
             if self.mkmmd_loss_weights[0] != 0:
+                if self.beta_global_update_interval is None:
+                    # Update betas for the MK-MMD loss for each individual batch
+                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                        X=features["features"], Y=features["global_features"], lambda_m=1e-5
+                    )
                 mkmmd_loss_min = self.mkmmd_loss_min(features["features"], features["global_features"])
                 total_loss += self.mkmmd_loss_weights[0] * mkmmd_loss_min
                 additional_losses["mkmmd_loss_min"] = mkmmd_loss_min
 
             if self.mkmmd_loss_weights[1] != 0:
+                if self.beta_global_update_interval is None:
+                    # Update betas for the MK-MMD loss for each individual batch
+                    self.mkmmd_loss_min.betas = self.mkmmd_loss_min.optimize_betas(
+                        X=features["features"], Y=features["old_features"], lambda_m=1e-5
+                    )
                 mkmmd_loss_max = self.mkmmd_loss_max(features["features"], features["old_features"][-1])
                 total_loss -= self.mkmmd_loss_weights[1] * mkmmd_loss_max
                 additional_losses["mkmmd_loss_max"] = mkmmd_loss_max

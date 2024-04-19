@@ -25,8 +25,8 @@ class DittoMkmmdClient(DittoClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
-        beta_update_interval: int = 20,
-        feature_l2_norm_weight: Optional[float] = 0.0,
+        feature_l2_norm_weight: float = 0.0,
+        beta_global_update_interval: Optional[int] = 20,
     ) -> None:
         """
         This client implements the MK-MMD loss function in the Ditto framework. The MK-MMD loss is a measure of the
@@ -46,10 +46,11 @@ class DittoMkmmdClient(DittoClient):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            beta_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss.
-                Defaults to 20.
-            feature_l2_norm_weight (Optional[float], optional): weight applied to the L2 norm of the features.
+            feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
             Defaults to 0.0.
+            beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
+                MK-MMD loss. Defaults to 20. If set to None, the betas will be updated for each individual batch.
+                If set to 0, the betas will not be updated.
         """
         super().__init__(
             data_path=data_path,
@@ -68,7 +69,14 @@ class DittoMkmmdClient(DittoClient):
             )
 
         self.feature_l2_norm_weight = feature_l2_norm_weight
-        self.beta_update_interval = beta_update_interval
+        self.beta_global_update_interval = beta_global_update_interval
+        if self.beta_global_update_interval is None:
+            log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")
+        elif self.beta_global_update_interval == 0:
+            log(INFO, "Betas for the MK-MMD loss will not be updated.")
+        else:
+            log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
+
         self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
         self.init_global_model: nn.Module
@@ -81,9 +89,14 @@ class DittoMkmmdClient(DittoClient):
 
         return super().update_before_train(current_server_round)
 
+    def _should_optimize_betas(self, step: int) -> bool:
+        assert self.beta_global_update_interval is not None
+        step_at_interval = step % self.beta_global_update_interval == 0
+        valid_components_present = self.init_global_model is not None
+        return step_at_interval and valid_components_present
+
     def update_after_step(self, step: int) -> None:
-        if step % self.beta_update_interval == 0 and self.mkmmd_loss_weight != 0:
-            assert self.mkmmd_loss_weight is not None
+        if self.beta_global_update_interval is not None and self._should_optimize_betas(step):
             assert self.init_global_model is not None
             # Get the feature distribution of the local and init global features with evaluation mode
             local_distribution, init_global_distribution = self.update_buffers(self.model, self.init_global_model)
@@ -205,6 +218,11 @@ class DittoMkmmdClient(DittoClient):
         if self.mkmmd_loss_weight != 0:
             assert "init_global_features" in features
             assert "features" in features
+            if self.beta_global_update_interval is None:
+                # Update betas for the MK-MMD loss based on computed features during training
+                self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
+                    X=features["features"], Y=features["init_global_features"], lambda_m=1e-5
+                )
             # Compute MK-MMD loss
             mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
