@@ -10,6 +10,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.clients.moon_client import MoonClient
@@ -38,6 +39,8 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
     elif type == DittoClient:
         client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
+    elif type == FedRepClient:
+        client = FedRepClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == MrMtlClient:
         client = MrMtlClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
     elif type == MoonClient:

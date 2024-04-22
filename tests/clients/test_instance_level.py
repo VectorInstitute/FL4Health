@@ -32,7 +32,7 @@ class DummyDataset(BaseDataset):
         return self.data[index], self.targets[index]
 
 
-class TestClient(InstanceLevelPrivacyClient):
+class ClientForTest(InstanceLevelPrivacyClient):
     def get_model(self, config: Config) -> nn.Module:
         model = MnistNetWithBnAndFrozen(freeze_cnn_layer=True).to(self.device)
         model.bn.weight = nn.Parameter(10 * torch.ones_like(model.bn.weight))
@@ -64,7 +64,7 @@ def test_privacy_validate_and_fix() -> None:
 
 
 def test_instance_level_client_with_changes() -> None:  # noqa
-    client = TestClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client = ClientForTest(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.model = client.get_model({})
     client.noise_multiplier = 1.0
     client.clipping_bound = 5.0
