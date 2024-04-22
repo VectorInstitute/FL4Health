@@ -51,11 +51,11 @@ class CifarFedRepClient(FedRepClient):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
-    parser.add_argument("--dataset_dir", action="store", type=str, help="Path to the local dataset")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    data_dir = Path(args.dataset_dir)
+    data_dir = Path(args.dataset_path)
     client = CifarFedRepClient(data_dir, [Accuracy("accuracy")], DEVICE)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
