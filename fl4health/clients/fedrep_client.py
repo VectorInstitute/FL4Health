@@ -165,6 +165,9 @@ class FedRepClient(BasicClient):
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
+        For FedRep, this coordinates calling the right training functions based on the passed steps. We need to
+        override the functionality of the BasicClient to allow for two distinct training passes of the model, as
+        required by FedRep.
 
         Args:
             parameters (NDArrays): The parameters of the model to be used in fit.
@@ -175,7 +178,8 @@ class FedRepClient(BasicClient):
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
-            ValueError: If local_steps or local_epochs is not specified in config.
+            ValueError: If the steps or epochs for the representation and head module training processes are are
+                correctly specified.
         """
         (
             (local_head_epochs, local_rep_epochs, local_head_steps, local_rep_steps),
@@ -296,13 +300,12 @@ class FedRepClient(BasicClient):
         """
         Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf
         In order to reuse the train_step functionality, we switch between the appropriate optimizers depending on the
-        clients training model (HEAD vs. REPRESENTATION)
+        clients training mode (HEAD vs. REPRESENTATION)
 
         Args:
-            input (TorchInputType): input tensor to be run through
-            both the global and local models. Here, TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor].
-            target (torch.Tensor): target tensor to be used to compute a loss given each models outputs.
+            input (TorchInputType): input tensor to be run through the model. Here, TorchInputType is simply an alias
+                for the union of torch.Tensor and Dict[str, torch.Tensor].
+            target (torch.Tensor): target tensor to be used to compute a loss given the model's outputs.
 
         Returns:
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with

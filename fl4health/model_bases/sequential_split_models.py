@@ -32,7 +32,7 @@ class SequentiallySplitModel(nn.Module):
 class SequentiallySplitExchangeBaseModel(SequentiallySplitModel, PartialLayerExchangeModel):
     """
     This model is a specific type of sequentially split model, where we specify the layers to be exchanged as being
-    the base_module.
+    those belonging to the base_module.
     """
 
     def layers_to_exchange(self) -> List[str]:
