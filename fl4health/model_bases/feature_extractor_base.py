@@ -12,7 +12,7 @@ class FeatureExtractorModel:
         self.model = model
         self.output_layers = output_layers
         if flatten_features is None:
-            self.flatten_features: Sequence[bool] = [True for _ in range(len(self.feature_extraction_layers))]
+            self.flatten_features: Sequence[bool] = [True for _ in range(len(output_layers))]
         else:
             self.flatten_features = flatten_features
         if len(self.flatten_features) != len(self.output_layers):
