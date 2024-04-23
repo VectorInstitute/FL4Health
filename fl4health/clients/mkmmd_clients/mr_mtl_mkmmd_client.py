@@ -9,7 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.model_bases.moon_base import MoonModel
+from fl4health.model_bases.feature_extractor_base import FeatureExtractorModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -101,8 +101,8 @@ class MrMtlMkmmdClient(MrMtlClient):
         self, local_model: torch.nn.Module, init_global_model: torch.nn.Module
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Update the feature buffer of the local and global features."""
-        assert isinstance(local_model, MoonModel)
-        assert isinstance(init_global_model, MoonModel)
+        assert isinstance(local_model, FeatureExtractorModel)
+        assert isinstance(init_global_model, FeatureExtractorModel)
 
         # Save the initial state of the local model to restore it after the buffer is populated,
         # however as init global model is already cloned and frozen, we don't need to save its state.
@@ -162,13 +162,16 @@ class MrMtlMkmmdClient(MrMtlClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        assert isinstance(self.model, MoonModel)
+        assert isinstance(self.model, FeatureExtractorModel)
         preds, features = self.model(input)
 
         if self.mkmmd_loss_weight != 0:
-            if not isinstance(self.model, MoonModel) or not isinstance(self.init_global_model, MoonModel):
+            if not isinstance(self.model, FeatureExtractorModel) or not isinstance(
+                self.init_global_model, FeatureExtractorModel
+            ):
                 raise AssertionError(
-                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type MoonModel."
+                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type ",
+                    "FeatureExtractorModel.",
                 )
             # Compute the features of the init_global_model
             _, init_global_features = self.init_global_model(input)

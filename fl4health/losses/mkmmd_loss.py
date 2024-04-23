@@ -249,7 +249,7 @@ class MkMmdLoss(torch.nn.Module):
         ).t()
 
     def normalize(self, X: torch.Tensor) -> torch.Tensor:
-        return torch.div(X, torch.linalg.norm(X, dim=1))
+        return torch.div(X, torch.linalg.norm(X, dim=1).unsqueeze(dim=1))
 
     def optimize_betas(self, X: torch.Tensor, Y: torch.Tensor, lambda_m: float = 1e-5) -> torch.Tensor:
         # Normalize the features if necessary to have unit length

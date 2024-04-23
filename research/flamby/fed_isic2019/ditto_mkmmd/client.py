@@ -7,7 +7,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -16,11 +16,16 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkmmdClient
+from fl4health.model_bases.feature_extractor_base import FeatureExtractorModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.ditto_mkmmd.ditto_model import FedIsic2019DittoModel
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+
+FED_ISIC2019_BASELINE_LAYERS = []
+for i in range(16):
+    FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
+FED_ISIC2019_BASELINE_LAYERS += ["base_model._dropout"]
 
 
 class FedIsic2019DittoClient(DittoMkmmdClient):
@@ -35,8 +40,10 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
+        mkmmd_loss_depth: int = 1,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -45,6 +52,7 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
+            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
         )
         self.client_number = client_number
@@ -62,7 +70,11 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIsic2019DittoModel().to(self.device)
+        model: nn.Module = FeatureExtractorModel(
+            model=Baseline(),
+            output_layers=self.feature_extraction_layers,
+            flatten_features=[True for _ in range(len(self.feature_extraction_layers))],
+        ).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
@@ -135,6 +147,14 @@ if __name__ == "__main__":
         help="Weight for the feature l2 norm loss as a regularizer",
         required=False,
     )
+    parser.add_argument(
+        "mkmmd_loss_depth",
+        action="store",
+        type=int,
+        help="Depth of applying the mkmmd loss",
+        required=False,
+        default=1,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -156,8 +176,9 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        mkmmd_loss_weight=args.mu,
         feature_l2_norm_weight=args.l2,
+        mkmmd_loss_depth=args.mkmmd_loss_depth,
+        mkmmd_loss_weight=args.mu,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)

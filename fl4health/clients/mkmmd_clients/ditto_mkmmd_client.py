@@ -10,7 +10,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.model_bases.moon_base import MoonModel
+from fl4health.model_bases.feature_extractor_base import FeatureExtractorModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -25,6 +25,7 @@ class DittoMkmmdClient(DittoClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
+        feature_extraction_layers: Sequence[str] = [],
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: Optional[int] = 20,
     ) -> None:
@@ -46,6 +47,8 @@ class DittoMkmmdClient(DittoClient):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
+            feature_extraction_layers (Sequence[str], optional): list of layer names to extract features from. Defaults
+                to an empty list.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
             Defaults to 0.0.
             beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
@@ -76,8 +79,10 @@ class DittoMkmmdClient(DittoClient):
             log(INFO, "Betas for the MK-MMD loss will not be updated.")
         else:
             log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
-
-        self.mkmmd_loss = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
+        self.feature_extraction_layers = feature_extraction_layers
+        self.mkmmd_losses = {}
+        for layer in self.feature_extraction_layers:
+            self.mkmmd_losses[layer] = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
         self.init_global_model: nn.Module
 
@@ -99,22 +104,22 @@ class DittoMkmmdClient(DittoClient):
         if self.beta_global_update_interval is not None and self._should_optimize_betas(step):
             assert self.init_global_model is not None
             # Get the feature distribution of the local and init global features with evaluation mode
-            local_distribution, init_global_distribution = self.update_buffers(self.model, self.init_global_model)
+            local_distributions, init_global_distributions = self.update_buffers(self.model, self.init_global_model)
             # Update betas for the MK-MMD loss based on gathered features during training
             if self.mkmmd_loss_weight != 0:
-                self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
-                    X=local_distribution, Y=init_global_distribution, lambda_m=1e-5
-                )
-                log(INFO, f"Set optimized betas to minimize distance: {self.mkmmd_loss.betas.squeeze()}.")
+                for layer in self.feature_extraction_layers:
+                    self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
+                        X=local_distributions[layer], Y=init_global_distributions[layer], lambda_m=1e-5
+                    )
 
         return super().update_after_step(step)
 
     def update_buffers(
         self, local_model: torch.nn.Module, init_global_model: torch.nn.Module
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """Update the feature buffer of the local and global features."""
-        assert isinstance(local_model, MoonModel)
-        assert isinstance(init_global_model, MoonModel)
+        assert isinstance(local_model, FeatureExtractorModel)
+        assert isinstance(init_global_model, FeatureExtractorModel)
 
         # Save the initial state of the local model to restore it after the buffer is populated,
         # however as init global model is already cloned and frozen, we don't need to save its state.
@@ -132,28 +137,32 @@ class DittoMkmmdClient(DittoClient):
         # as it is already cloned and frozen from the global model
         assert not init_global_model.training
 
-        local_buffer = []
-        init_global_buffer = []
-
+        local_buffers: Dict[str, torch.Tensor] = {}
+        init_global_buffers: Dict[str, torch.Tensor] = {}
         with torch.no_grad():
-            for input, _ in self.train_loader:
+            for i, (input, _) in enumerate(self.train_loader):
                 input = input.to(self.device)
                 _, local_features = local_model(input)
                 _, init_global_features = init_global_model(input)
 
-                # Flatten the features to compute optimal betas for the MK-MMD loss
-                local_buffer.append(local_features["features"].reshape(len(local_features["features"]), -1))
-                init_global_buffer.append(
-                    init_global_features["features"].reshape(len(init_global_features["features"]), -1)
-                )
+                assert len(local_features) == len(init_global_features)
+                for layer in self.feature_extraction_layers:
+                    if i == 0:
+                        local_buffers[layer] = local_features[layer]
+                        init_global_buffers[layer] = init_global_features[layer]
+                    else:
+                        # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
+                        # (dim=0) to get a tensor of shape (num_samples, feature_size)
+                        local_buffers[layer] = torch.cat([local_buffers[layer], local_features[layer]], dim=0)
+                        init_global_buffers[layer] = torch.cat(
+                            [init_global_buffers[layer], init_global_features[layer]], dim=0
+                        )
 
         # Restore the initial state of the local model
         if init_state_local_model:
             local_model.train()
 
-        # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
-        # (dim=0) to get a tensor of shape (num_samples, feature_size)
-        return torch.cat(local_buffer, dim=0), torch.cat(init_global_buffer, dim=0)
+        return local_buffers, init_global_buffers
 
     def predict(
         self,
@@ -174,21 +183,26 @@ class DittoMkmmdClient(DittoClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        assert isinstance(self.model, MoonModel)
-        assert isinstance(self.global_model, MoonModel)
+        assert isinstance(self.model, FeatureExtractorModel)
+        assert isinstance(self.global_model, FeatureExtractorModel)
 
         # We use features from init_global_model to compute the MK-MMD loss not the global_model
         global_preds, _ = self.global_model(input)
         local_preds, features = self.model(input)
 
         if self.mkmmd_loss_weight != 0:
-            if not isinstance(self.model, MoonModel) or not isinstance(self.init_global_model, MoonModel):
+            if not isinstance(self.model, FeatureExtractorModel) or not isinstance(
+                self.init_global_model, FeatureExtractorModel
+            ):
                 raise AssertionError(
-                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type MoonModel."
+                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type ",
+                    "FeatureExtractorModel.",
                 )
             # Compute the features of the init_global_model
             _, init_global_features = self.init_global_model(input)
-            features.update({"init_global_features": init_global_features["features"]})
+
+            for key in init_global_features:
+                features[" ".join(["init_global", key])] = init_global_features[key]
 
         return {"global": global_preds["prediction"], "local": local_preds["prediction"]}, features
 
@@ -216,15 +230,17 @@ class DittoMkmmdClient(DittoClient):
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
         if self.mkmmd_loss_weight != 0:
-            assert "init_global_features" in features
-            assert "features" in features
             if self.beta_global_update_interval is None:
                 # Update betas for the MK-MMD loss based on computed features during training
-                self.mkmmd_loss.betas = self.mkmmd_loss.optimize_betas(
-                    X=features["features"], Y=features["init_global_features"], lambda_m=1e-5
-                )
+                for layer in self.feature_extraction_layers:
+                    self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
+                        X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
+                    )
             # Compute MK-MMD loss
-            mkmmd_loss = self.mkmmd_loss(features["features"], features["init_global_features"])
+
+            mkmmd_loss = torch.tensor(0.0, device=self.device)
+            for layer in self.feature_extraction_layers:
+                mkmmd_loss += self.mkmmd_losses[layer](features[layer], features[" ".join(["init_global", layer])])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss
         if self.feature_l2_norm_weight:
