@@ -50,7 +50,7 @@ class DittoMkmmdClient(DittoClient):
             feature_extraction_layers (Sequence[str], optional): list of layer names to extract features from. Defaults
                 to an empty list.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
-            Defaults to 0.0.
+                Defaults to 0.0.
             beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
                 MK-MMD loss. Defaults to 20. If set to None, the betas will be updated for each individual batch.
                 If set to 0, the betas will not be updated.
@@ -237,7 +237,6 @@ class DittoMkmmdClient(DittoClient):
                         X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
                     )
             # Compute MK-MMD loss
-
             mkmmd_loss = torch.tensor(0.0, device=self.device)
             for layer in self.feature_extraction_layers:
                 mkmmd_loss += self.mkmmd_losses[layer](features[layer], features[" ".join(["init_global", layer])])

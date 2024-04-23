@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.moon_client import MoonClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.model_bases.feature_extractor_base import FeatureExtractorModel
+from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -123,9 +123,9 @@ class MoonMkmmdClient(MoonClient):
         self, local_model: torch.nn.Module, global_model: torch.nn.Module, old_local_model: torch.nn.Module
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Update the feature buffer of the local and global features."""
-        assert isinstance(local_model, FeatureExtractorModel)
-        assert isinstance(global_model, FeatureExtractorModel)
-        assert isinstance(old_local_model, FeatureExtractorModel)
+        assert isinstance(local_model, MoonModel)
+        assert isinstance(global_model, MoonModel)
+        assert isinstance(old_local_model, MoonModel)
 
         local_buffer = []
         global_buffer = []
