@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
@@ -22,7 +22,7 @@ class DittoClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
         lam: float = 1.0,
     ) -> None:
         """

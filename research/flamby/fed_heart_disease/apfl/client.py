@@ -13,11 +13,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.utils.losses import LossMeterType
@@ -35,7 +32,7 @@ class FedHeartDiseaseApflClient(ApflClient):
         learning_rate: float,
         alpha_learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -130,11 +127,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientSideCheckpointModule(pre_aggregation=None, post_aggregation=post_aggregation_checkpointer)
 
     client = FedHeartDiseaseApflClient(
         data_path=args.dataset_dir,

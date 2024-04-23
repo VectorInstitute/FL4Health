@@ -14,7 +14,8 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from transformers import BertForSequenceClassification
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -35,7 +36,7 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
         learning_rate: float,
         sparsity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         store_initial_model: bool = True,
     ) -> None:
@@ -147,7 +148,9 @@ if __name__ == "__main__":
     # Checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = ClientSideCheckpointModule(
+        pre_aggregation=None, post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = BertSparseTensorExchangeClient(
         data_path,

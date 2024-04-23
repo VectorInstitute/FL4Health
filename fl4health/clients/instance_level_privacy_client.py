@@ -5,7 +5,7 @@ import torch
 from flwr.common.typing import Config
 from opacus import PrivacyEngine
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.losses import LossMeterType
@@ -23,7 +23,7 @@ class InstanceLevelPrivacyClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,

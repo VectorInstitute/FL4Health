@@ -14,11 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
@@ -36,7 +33,7 @@ class FedIsic2019PerFclClient(FendaClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
         extra_loss_weights: Tuple[float, float] = (10, 10),
     ) -> None:
         super().__init__(
@@ -128,14 +125,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weights for the Perfcl loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weights for the Perfcl loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper",
         required=False,
     )
     args = parser.parse_args()
@@ -152,11 +149,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientSideCheckpointModule(pre_aggregation=None, post_aggregation=post_aggregation_checkpointer)
 
     client = FedIsic2019PerFclClient(
         data_path=Path(args.dataset_dir),

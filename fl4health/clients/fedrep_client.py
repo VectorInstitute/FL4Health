@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_side_module import CheckpointMode, ClientSideCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -34,7 +34,7 @@ class FedRepClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientSideCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, metrics_reporter)
@@ -211,8 +211,11 @@ class FedRepClient(BasicClient):
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
-        if evaluate_after_fit:
-            metrics.update(self.evaluate_after_fit())
+        if self._should_evaluate_after_fit(evaluate_after_fit):
+            validation_loss, validation_metrics = self.evaluate_after_fit()
+            metrics.update(validation_metrics)
+            # We perform a pre-aggregation checkpoint if applicable
+            self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,

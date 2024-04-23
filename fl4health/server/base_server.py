@@ -114,11 +114,13 @@ class FlServer(Server):
         # This function is used for converting server parameters into a torch model that can be checkpointed
         raise NotImplementedError()
 
-    def _maybe_checkpoint(self, checkpoint_metric: float, server_round: int) -> None:
+    def _maybe_checkpoint(
+        self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
+    ) -> None:
         if self.checkpointer:
             try:
                 model = self._hydrate_model_for_checkpointing()
-                self.checkpointer.maybe_checkpoint(model, checkpoint_metric)
+                self.checkpointer.maybe_checkpoint(model, loss_aggregated, metrics_aggregated)
             except NotImplementedError:
                 # Checkpointer is defined but there is no server-side model hydration to produce a model from the
                 # server state. This is not a deal breaker, but may be unintended behavior and the user will be warned
@@ -175,7 +177,7 @@ class FlServer(Server):
         if eval_round_results:
             loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
-                self._maybe_checkpoint(loss_aggregated, server_round)
+                self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
 
             self.metrics_reporter.add_to_metrics_at_round(
                 server_round,
