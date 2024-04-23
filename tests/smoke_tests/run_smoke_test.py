@@ -574,7 +574,7 @@ if __name__ == "__main__":
         run_smoke_test(
             server_python_path="examples.ditto_example.server",
             client_python_path="examples.ditto_example.client",
-            config_path="tests/smoke_tests/ditto_example.yaml",
+            config_path="tests/smoke_tests/ditto_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
         )
     )
