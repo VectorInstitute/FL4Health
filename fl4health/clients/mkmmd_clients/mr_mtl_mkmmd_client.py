@@ -9,7 +9,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.model_bases.feature_extractor_base import FeatureExtractorModel
+from fl4health.model_bases.feature_extractor_wrapper import FeatureExtractorModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
