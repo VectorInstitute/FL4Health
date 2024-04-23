@@ -146,7 +146,7 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    checkpointer = ClientSideCheckpointModule(pre_aggregation=None, post_aggregation=post_aggregation_checkpointer)
+    checkpointer = ClientSideCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedHeartDiseaseDittoClient(
         data_path=Path(args.dataset_dir),

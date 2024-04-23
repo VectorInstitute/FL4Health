@@ -144,7 +144,7 @@ if __name__ == "__main__":
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
-    checkpointer = ClientSideCheckpointModule(pre_aggregation=None, post_aggregation=post_aggregation_checkpointer)
+    checkpointer = ClientSideCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiFedPerClient(
         data_path=Path(args.dataset_dir),

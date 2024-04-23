@@ -39,9 +39,7 @@ class MnistFedAvgClient(BasicClient):
         # Checkpointing is crucial for the warm up process
         checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
         post_aggregation_checkpointer = LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
-        self.checkpointer = ClientSideCheckpointModule(
-            pre_aggregation=None, post_aggregation=post_aggregation_checkpointer
-        )
+        self.checkpointer = ClientSideCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)

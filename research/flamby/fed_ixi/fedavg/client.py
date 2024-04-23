@@ -117,7 +117,7 @@ if __name__ == "__main__":
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
     checkpointer = ClientSideCheckpointModule(
-        pre_aggregation=None, post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
     client = FedIxiFedAvgClient(
