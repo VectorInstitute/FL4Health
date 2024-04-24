@@ -14,7 +14,7 @@ class CheckpointMode(Enum):
     POST_AGGREGATION = "post_aggregation"
 
 
-class ClientSideCheckpointModule:
+class ClientCheckpointModule:
     def __init__(
         self, pre_aggregation: Optional[TorchCheckpointer] = None, post_aggregation: Optional[TorchCheckpointer] = None
     ) -> None:

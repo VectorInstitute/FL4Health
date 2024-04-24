@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
@@ -22,7 +22,7 @@ class PartialWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         store_initial_model: bool = False,
     ) -> None:

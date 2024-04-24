@@ -15,7 +15,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
@@ -33,7 +33,7 @@ class FedIxiDittoClient(DittoClient):
         learning_rate: float,
         lam: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -148,7 +148,7 @@ if __name__ == "__main__":
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
-    checkpointer = ClientSideCheckpointModule(post_aggregation=post_aggregation_checkpointer)
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiDittoClient(
         data_path=Path(args.dataset_dir),

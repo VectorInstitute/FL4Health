@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_side_module import CheckpointMode, ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -34,7 +34,7 @@ class FedRepClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, metrics_reporter)

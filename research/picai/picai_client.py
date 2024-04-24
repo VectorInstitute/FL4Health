@@ -5,7 +5,7 @@ import torch
 from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import ClientPerRoundCheckpointer
-from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -18,7 +18,7 @@ class PicaiClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         intermediate_checkpoint_dir: Path = Path("./"),
         data_partition: Optional[int] = None,
     ) -> None:

@@ -15,7 +15,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.checkpointing.client_side_module import ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.moon_client import MoonClient
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -35,7 +35,7 @@ class FedIxiFedPerClient(MoonClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -144,7 +144,7 @@ if __name__ == "__main__":
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
-    checkpointer = ClientSideCheckpointModule(post_aggregation=post_aggregation_checkpointer)
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiFedPerClient(
         data_path=Path(args.dataset_dir),

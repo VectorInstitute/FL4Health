@@ -3,7 +3,7 @@ from pathlib import Path
 import torch
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_side_module import CheckpointMode, ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from tests.test_utils.models_for_test import LinearTransform
 
 
@@ -12,7 +12,7 @@ def test_client_side_module(tmp_path: Path) -> None:
     checkpoint_dir.mkdir()
     pre_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg.pkl")
     post_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "post_agg.pkl")
-    checkpointer = ClientSideCheckpointModule(
+    checkpointer = ClientCheckpointModule(
         pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
     )
 

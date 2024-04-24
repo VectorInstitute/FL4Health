@@ -15,7 +15,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.client_side_module import CheckpointMode, ClientSideCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ClientWandBReporter
@@ -34,7 +34,7 @@ class BasicClient(NumPyClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientSideCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
