@@ -4,6 +4,7 @@ from logging import INFO
 from typing import Any, Dict
 
 import flwr as fl
+from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
@@ -12,7 +13,6 @@ from fl4health.utils.config import load_config
 from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.ditto_mkmmd.ditto_model import FedIsic2019DittoModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
 from research.flamby.utils import fit_config, summarize_model_info
 
@@ -26,7 +26,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    model = FedIsic2019DittoModel()
+    model = Baseline()
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
