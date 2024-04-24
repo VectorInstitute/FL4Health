@@ -14,8 +14,8 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, Net
 from fl4health.clients.scaffold_client import InstanceLevelPrivacyClient
 from fl4health.utils.dataset import BaseDataset
-from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
 from tests.clients.fixtures import get_client  # noqa
 
 

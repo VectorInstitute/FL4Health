@@ -7,9 +7,9 @@ from opacus import PrivacyEngine
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
 
 
 class InstanceLevelPrivacyClient(BasicClient):

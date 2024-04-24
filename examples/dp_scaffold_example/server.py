@@ -13,8 +13,8 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.scaffold_server import DPScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import privacy_validate_and_fix_modules
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
 
 
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
