@@ -5,12 +5,13 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.typing import Config
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
-from fl4health.model_bases.feature_extractor_wrapper import FeatureExtractorModel
+from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -25,7 +26,7 @@ class DittoMkmmdClient(DittoClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
-        feature_extraction_layers: Sequence[str] = [],
+        flatten_feature_extraction_layers: Dict[str, bool] = {},
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: Optional[int] = 20,
     ) -> None:
@@ -47,8 +48,8 @@ class DittoMkmmdClient(DittoClient):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Sequence[str], optional): list of layer names to extract features from. Defaults
-                to an empty list.
+            flatten_feature_extraction_layers (Dict[str, bool], optional): Dictionary of layers to extract features
+                from them and whether to flatten them. Defaults to {}.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
             beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
@@ -79,20 +80,36 @@ class DittoMkmmdClient(DittoClient):
             log(INFO, "Betas for the MK-MMD loss will not be updated.")
         else:
             log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
-        self.feature_extraction_layers = feature_extraction_layers
+        self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
         self.mkmmd_losses = {}
-        for layer in self.feature_extraction_layers:
+        for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
 
         self.init_global_model: nn.Module
+        self.local_feature_extractor: FeatureExtractorBuffer
+        self.init_global_feature_extractor: FeatureExtractorBuffer
+
+    def setup_client(self, config: Config) -> None:
+        super().setup_client(config)
+        self.local_feature_extractor = FeatureExtractorBuffer(
+            model=self.model,
+            flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
+        )
 
     def update_before_train(self, current_server_round: int) -> None:
+        super().update_before_train(current_server_round)
         assert isinstance(self.global_model, nn.Module)
+        # Register hooks to extract features from the local model if not already registered
+        self.local_feature_extractor._maybe_register_hooks()
         # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
         self.init_global_model = self.clone_and_freeze_model(self.global_model)
-
-        return super().update_before_train(current_server_round)
+        self.init_global_feature_extractor = FeatureExtractorBuffer(
+            model=self.init_global_model,
+            flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
+        )
+        # Register hooks to extract features from the init global model if not already registered
+        self.init_global_feature_extractor._maybe_register_hooks()
 
     def _should_optimize_betas(self, step: int) -> bool:
         assert self.beta_global_update_interval is not None
@@ -107,7 +124,7 @@ class DittoMkmmdClient(DittoClient):
             local_distributions, init_global_distributions = self.update_buffers(self.model, self.init_global_model)
             # Update betas for the MK-MMD loss based on gathered features during training
             if self.mkmmd_loss_weight != 0:
-                for layer in self.feature_extraction_layers:
+                for layer in self.flatten_feature_extraction_layers.keys():
                     self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
                         X=local_distributions[layer], Y=init_global_distributions[layer], lambda_m=1e-5
                     )
@@ -118,8 +135,12 @@ class DittoMkmmdClient(DittoClient):
         self, local_model: torch.nn.Module, init_global_model: torch.nn.Module
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """Update the feature buffer of the local and global features."""
-        assert isinstance(local_model, FeatureExtractorModel)
-        assert isinstance(init_global_model, FeatureExtractorModel)
+
+        self.local_feature_extractor.clear_buffers()
+        self.init_global_feature_extractor.clear_buffers()
+
+        self.local_feature_extractor.enable_accumulating_features()
+        self.init_global_feature_extractor.enable_accumulating_features()
 
         # Save the initial state of the local model to restore it after the buffer is populated,
         # however as init global model is already cloned and frozen, we don't need to save its state.
@@ -137,32 +158,28 @@ class DittoMkmmdClient(DittoClient):
         # as it is already cloned and frozen from the global model
         assert not init_global_model.training
 
-        local_buffers: Dict[str, torch.Tensor] = {}
-        init_global_buffers: Dict[str, torch.Tensor] = {}
         with torch.no_grad():
             for i, (input, _) in enumerate(self.train_loader):
                 input = input.to(self.device)
-                _, local_features = local_model(input)
-                _, init_global_features = init_global_model(input)
-
-                assert len(local_features) == len(init_global_features)
-                for layer in self.feature_extraction_layers:
-                    if i == 0:
-                        local_buffers[layer] = local_features[layer]
-                        init_global_buffers[layer] = init_global_features[layer]
-                    else:
-                        # The buffers are in shape (batch_size, feature_size). We tack them along the batch dimension
-                        # (dim=0) to get a tensor of shape (num_samples, feature_size)
-                        local_buffers[layer] = torch.cat([local_buffers[layer], local_features[layer]], dim=0)
-                        init_global_buffers[layer] = torch.cat(
-                            [init_global_buffers[layer], init_global_features[layer]], dim=0
-                        )
-
+                # Pass the input through the local model to populate the local_feature_extractor buffer
+                _ = local_model(input)
+                # Pass the input through the init global model to populate the local_feature_extractor buffer
+                _ = init_global_model(input)
+        local_distributions: Dict[str, torch.Tensor] = self.local_feature_extractor.get_extracted_features()
+        init_global_distributions: Dict[
+            str, torch.Tensor
+        ] = self.init_global_feature_extractor.get_extracted_features()
         # Restore the initial state of the local model
         if init_state_local_model:
             local_model.train()
 
-        return local_buffers, init_global_buffers
+        self.local_feature_extractor.disable_accumulating_features()
+        self.init_global_feature_extractor.disable_accumulating_features()
+
+        self.local_feature_extractor.clear_buffers()
+        self.init_global_feature_extractor.clear_buffers()
+
+        return local_distributions, init_global_distributions
 
     def predict(
         self,
@@ -183,28 +200,24 @@ class DittoMkmmdClient(DittoClient):
             ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
             forward.
         """
-        assert isinstance(self.model, FeatureExtractorModel)
-        assert isinstance(self.global_model, FeatureExtractorModel)
 
         # We use features from init_global_model to compute the MK-MMD loss not the global_model
-        global_preds, _ = self.global_model(input)
-        local_preds, features = self.model(input)
-
+        global_preds = self.global_model(input)
+        local_preds = self.model(input)
+        features = self.local_feature_extractor.get_extracted_features()
         if self.mkmmd_loss_weight != 0:
-            if not isinstance(self.model, FeatureExtractorModel) or not isinstance(
-                self.init_global_model, FeatureExtractorModel
-            ):
-                raise AssertionError(
-                    "To compute the MK-MMD loss, the client model and the init_global_model must be of type ",
-                    "FeatureExtractorModel.",
-                )
             # Compute the features of the init_global_model
-            _, init_global_features = self.init_global_model(input)
-
-            for key in init_global_features:
+            _ = self.init_global_model(input)
+            init_global_features = self.init_global_feature_extractor.get_extracted_features()
+            for key in init_global_features.keys():
                 features[" ".join(["init_global", key])] = init_global_features[key]
 
-        return {"global": global_preds["prediction"], "local": local_preds["prediction"]}, features
+        return {"global": global_preds, "local": local_preds}, features
+
+    def _maybe_checkpoint(self, current_metric_value: float) -> None:
+        # Hooks need to be removed before checkpointing the model
+        self.local_feature_extractor.remove_hooks()
+        super()._maybe_checkpoint(current_metric_value)
 
     def compute_loss_and_additional_losses(
         self,
@@ -232,13 +245,13 @@ class DittoMkmmdClient(DittoClient):
         if self.mkmmd_loss_weight != 0:
             if self.beta_global_update_interval is None:
                 # Update betas for the MK-MMD loss based on computed features during training
-                for layer in self.feature_extraction_layers:
+                for layer in self.flatten_feature_extraction_layers.keys():
                     self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
                         X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
                     )
             # Compute MK-MMD loss
             mkmmd_loss = torch.tensor(0.0, device=self.device)
-            for layer in self.feature_extraction_layers:
+            for layer in self.flatten_feature_extraction_layers.keys():
                 mkmmd_loss += self.mkmmd_losses[layer](features[layer], features[" ".join(["init_global", layer])])
             total_loss += self.mkmmd_loss_weight * mkmmd_loss
             additional_losses["mkmmd_loss"] = mkmmd_loss

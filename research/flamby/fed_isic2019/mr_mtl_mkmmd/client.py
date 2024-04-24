@@ -16,7 +16,6 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkmmdClient
-from fl4health.model_bases.feature_extractor_wrapper import FeatureExtractorModel
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -43,7 +42,6 @@ class FedIsic2019MrMtlClient(MrMtlMkmmdClient):
         mkmmd_loss_depth: int = 1,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
-
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -52,7 +50,9 @@ class FedIsic2019MrMtlClient(MrMtlMkmmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
+            flatten_feature_extraction_layers={
+                key: True for key in FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :]
+            },
             feature_l2_norm_weight=feature_l2_norm_weight,
         )
         self.client_number = client_number
@@ -70,11 +70,7 @@ class FedIsic2019MrMtlClient(MrMtlMkmmdClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FeatureExtractorModel(
-            model=Baseline(),
-            output_layers=self.feature_extraction_layers,
-            flatten_features=[True for _ in range(len(self.feature_extraction_layers))],
-        ).to(self.device)
+        model: nn.Module = Baseline().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -145,7 +141,7 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "mkmmd_loss_depth",
+        "--mkmmd_loss_depth",
         action="store",
         type=int,
         help="Depth of applying the mkmmd loss",
