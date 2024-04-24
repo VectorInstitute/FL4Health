@@ -103,7 +103,7 @@ class MrMtlMkmmdClient(MrMtlClient):
 
     def _should_optimize_betas(self, step: int) -> bool:
         assert self.beta_global_update_interval is not None
-        step_at_interval = step % self.beta_global_update_interval == 0
+        step_at_interval = (step - 1) % self.beta_global_update_interval == 0
         valid_components_present = self.init_global_model is not None
         return step_at_interval and valid_components_present
 
