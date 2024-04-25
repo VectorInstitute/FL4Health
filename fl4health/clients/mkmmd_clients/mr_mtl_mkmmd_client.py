@@ -27,7 +27,7 @@ class MrMtlMkmmdClient(MrMtlClient):
         mkmmd_loss_weight: float = 10.0,
         flatten_feature_extraction_layers: Dict[str, bool] = {},
         feature_l2_norm_weight: float = 0.0,
-        beta_global_update_interval: Optional[int] = 20,
+        beta_global_update_interval: int = 20,
     ) -> None:
         """
         This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
@@ -51,8 +51,8 @@ class MrMtlMkmmdClient(MrMtlClient):
                 from them and whether to flatten them. Defaults to {}.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
-            beta_global_update_interval (Optional[int], optional): interval at which to update the betas for the
-                MK-MMD loss. Defaults to 20. If set to None, the betas will be updated for each individual batch.
+            beta_global_update_interval (int, optional): interval at which to update the betas for the
+                MK-MMD loss. Defaults to 20. If set to -1, the betas will be updated for each individual batch.
                 If set to 0, the betas will not be updated.
         """
         super().__init__(
@@ -73,12 +73,14 @@ class MrMtlMkmmdClient(MrMtlClient):
 
         self.feature_l2_norm_weight = feature_l2_norm_weight
         self.beta_global_update_interval = beta_global_update_interval
-        if self.beta_global_update_interval is None:
+        if self.beta_global_update_interval == -1:
             log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")
         elif self.beta_global_update_interval == 0:
             log(INFO, "Betas for the MK-MMD loss will not be updated.")
-        else:
+        elif self.beta_global_update_interval > 0:
             log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
+        else:
+            raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
         self.mkmmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():

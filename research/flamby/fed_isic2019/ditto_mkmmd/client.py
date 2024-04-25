@@ -40,6 +40,7 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
+        beta_global_update_interval: int = 20,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
@@ -54,6 +55,7 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
                 key: True for key in FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :]
             },
             feature_l2_norm_weight=feature_l2_norm_weight,
+            beta_global_update_interval=beta_global_update_interval,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -154,6 +156,14 @@ if __name__ == "__main__":
         required=False,
         default=1,
     )
+    parser.add_argument(
+        "--beta_update_interval",
+        action="store",
+        type=int,
+        help="Interval for updating the beta values",
+        required=False,
+        default=20,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -183,6 +193,7 @@ if __name__ == "__main__":
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,
         mkmmd_loss_weight=args.mu,
+        beta_global_update_interval=args.beta_update_interval,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
