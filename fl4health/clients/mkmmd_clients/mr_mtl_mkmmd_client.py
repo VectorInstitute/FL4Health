@@ -203,7 +203,7 @@ class MrMtlMkmmdClient(MrMtlClient):
             for key in init_global_features.keys():
                 features[" ".join(["init_global", key])] = init_global_features[key]
 
-        return preds, features
+        return {"prediction": preds}, features
 
     def _maybe_checkpoint(self, current_metric_value: float) -> None:
         # Hooks need to be removed before checkpointing the model
