@@ -1,0 +1,89 @@
+#!/bin/bash
+
+#SBATCH --gres=gpu:a40:1
+#SBATCH --qos=normal
+#SBATCH --mem=64GB
+#SBATCH -c 16
+#SBATCH --time=12:00:00
+#SBATCH --signal=B:USR1@60
+#SBATCH --job-name=nnunet_picai_train
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+
+# Process Inputs
+DATASET_NAME=$1
+CONFIG=$2
+FOLD=$3
+VENV_PATH=$4
+PLANS_IDENTIFIER=${5:-''} # Default value of empty string
+PRETAINED_WEIGHTS=${6:-''} # Default value of empty string
+
+# Log input information
+echo "Dataset Name : ${DATASET_NAME}"
+echo "Config: ${CONFIG}"
+echo "Dataset Fold: ${FOLD}"
+echo "Python Env Path: ${VENV_PATH}"
+
+if [[ -z "${PLANS_IDENTIFIER}" ]]; then
+	echo "Plans Identifier: ${PLANS_IDENTIFIER}"
+fi
+
+if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
+	echo "Pretrained Weights: ${PRETRAINED_WEIGHTS}"
+fi
+
+# Setup before running training
+source ${VENV_PATH}bin/activate
+base_dir="$nnUNet_results/${DATASET_NAME}"
+
+# Function returning array of args passed to nnUNetv2_train command
+get_nnunet_train_args() {
+	local checkpoint_bool=$1
+	local arg_list = ( $DATASET_NAME $CONFIG $FOLD )
+
+	if [[ -z "${PLANS_IDENTIFIER}" ]]; then
+		arg_list += ${PLANS_IDENTIFIER}
+	fi
+	if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
+		arg_list += ${PRETRAINED_WEIGHTS}
+	fi
+	if [ "$checkpoint_bool" = true ]; then
+		arg_list += "$checkpoint_bool"
+	fi
+	return args_list
+}
+
+# Function that is called to requeue current slurm job
+handler()
+{
+	echo "Requeue $SLURM_JOB_ID at $(date)"
+	scontrol requeue $SLURM_JOB_ID
+}
+
+# Function that checks whether to start or resume training, gets train_args
+# and runs  training
+nnunet_train()
+{
+	if [ -z "$(ls -A $base_dir)" ]; then
+		echo "Start training from scratch as $(date)"
+		get_nnunet_train_args false
+		local train_args = $?
+		nnUNetv2_train $DATASET_NAME $CONFIG $FOLD
+	else
+		echo "Start training from checkpoint as $(date)"
+		get_nnunet_train_args true
+		local train_args = $?
+		nnUNetv2_train $DATASET_NAME $CONFIG $FOLD --c
+	fi
+	nnUNetv2_train "${train_args[@]}"
+
+}
+
+# Trap is used to handle signals or errors that occur during execution
+# Here we pass the handler function to initiate a requeue when we get a
+# signal that the job will be killed due to time limit 60 seconds prior
+trap handler SIGUSR1
+
+# Script must be ran in the background (async) to be able to trap signal
+nnunet_train &
+wait
