@@ -68,7 +68,7 @@ def test_aggregate() -> None:
         client3_parameters, (client3_indices, client3_shapes, client3_tensor_names)
     )
 
-    weights_results = [
+    weights_results = weights_results = [
         (client1_res, client_train_sizes[0]),
         (client2_res, client_train_sizes[1]),
         (client3_res, client_train_sizes[2]),

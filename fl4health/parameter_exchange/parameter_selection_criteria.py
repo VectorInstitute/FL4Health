@@ -61,6 +61,13 @@ def _calculate_drift_norm(t1: torch.Tensor, t2: torch.Tensor, normalize: bool) -
     return drift_norm.item()
 
 
+def _calculate_tensor_norm(t: torch.Tensor, normalize: bool) -> float:
+    tensor_norm = torch.linalg.norm(t)
+    if normalize:
+        tensor_norm /= torch.numel(t)
+    return tensor_norm.item()
+
+
 def select_layers_by_threshold(
     threshold: float,
     normalize: bool,
@@ -102,6 +109,8 @@ def select_layers_by_percentage(
     model_states = model.state_dict()
 
     for layer_name, layer_param in model_states.items():
+        if "bn" in layer_name:
+            continue
         layer_param_past = initial_model_states[layer_name]
         drift_norm = _calculate_drift_norm(layer_param, layer_param_past, normalize)
         names_to_norm_drift[layer_name] = drift_norm
@@ -112,6 +121,38 @@ def select_layers_by_percentage(
         names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x], reverse=select_drift_more
     )[:(num_param_exchange)]
     return [model_states[name].cpu().numpy() for name in param_to_exchange_names], param_to_exchange_names
+
+
+def select_layers_by_percentage_large_final_norm(
+    exchange_percentage: float,
+    normalize: bool,
+    model: nn.Module,
+    initial_model: nn.Module,
+) -> Tuple[NDArrays, List[str]]:
+    names_to_norm_drift = {}
+    model_states = model.state_dict()
+
+    for layer_name, layer_param in model_states.items():
+        tensor_norm = _calculate_tensor_norm(layer_param, normalize)
+        names_to_norm_drift[layer_name] = tensor_norm
+
+    total_param_num = len(names_to_norm_drift.keys())
+    num_param_exchange = int(math.ceil(total_param_num * exchange_percentage))
+    param_to_exchange_names = sorted(names_to_norm_drift.keys(), key=lambda x: names_to_norm_drift[x], reverse=True)[
+        :(num_param_exchange)
+    ]
+    return [model_states[name].cpu().numpy() for name in param_to_exchange_names], param_to_exchange_names
+
+
+def select_non_bn_layers(model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
+    model_states = model.state_dict()
+    param_to_exchange_names = []
+    param_to_exchange = []
+    for layer_name, layer_param in model_states.items():
+        if not ("bn" in layer_name):
+            param_to_exchange_names.append(layer_name)
+            param_to_exchange.append(layer_param.cpu().numpy())
+    return param_to_exchange, param_to_exchange_names
 
 
 # Score generating functions used for selecting arbitrary sets of weights.

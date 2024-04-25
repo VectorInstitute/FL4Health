@@ -46,12 +46,12 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         """Calling the score generating function to produce parameter scores."""
         return self.score_gen_function(model, initial_model)
 
-    def _check_unique_score(self, param_scores: Tensor) -> None:
+    def _check_unique_score(self, param_scores: Tensor, tensor_name: str) -> None:
         unique_score_values = torch.unique(input=param_scores, sorted=False, return_inverse=False, return_counts=False)
         if len(unique_score_values) == 1:
             log(
                 WARNING,
-                """All parameters have the same score.
+                f"""All parameters of {tensor_name} have the same score {unique_score_values.item()}.
                 The number of parameters selected may not match the intended sparsity level.""",
             )
 
@@ -105,7 +105,10 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             # Sanity check.
             assert model_tensor.shape == param_scores.shape
 
-            self._check_unique_score(param_scores=param_scores)
+            if "bn" in tensor_name:
+                continue
+
+            self._check_unique_score(param_scores=param_scores, tensor_name=tensor_name)
 
             # Use score_threshold to produce sparse tensors.
             model_tensor_sparse = torch.where(param_scores >= score_threshold, input=model_tensor, other=0)

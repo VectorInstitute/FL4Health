@@ -1,7 +1,9 @@
+from logging import INFO
 from typing import Callable, List, Optional, Set, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -123,6 +125,7 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
     ) -> NDArrays:
         assert initial_model is not None
         layers_to_transfer, layer_names = self.select_parameters(model, initial_model)
+        log(INFO, f"Layers to be exchanged: {layer_names}")
         return self.pack_parameters(layers_to_transfer, layer_names)
 
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
