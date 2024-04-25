@@ -120,6 +120,9 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
+        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
+    )
+    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -154,6 +157,10 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
+    log(INFO, f"Lambda: {args.lam}")
+    log(INFO, f"Mu: {args.mu}")
+    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
+    log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
@@ -168,13 +175,14 @@ if __name__ == "__main__":
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
+        lam=args.lam,
         checkpointer=checkpointer,
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,
         mkmmd_loss_weight=args.mu,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()
