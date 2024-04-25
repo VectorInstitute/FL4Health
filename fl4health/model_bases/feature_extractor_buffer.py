@@ -33,10 +33,11 @@ class FeatureExtractorBuffer:
     def _maybe_register_hooks(self) -> None:
         # Register hooks if they are not already registered. Hooks extract the output of the selected layers.
         if len(self.fhooks) == 0:
-            log(INFO, "Registering hooks.")
+            log(INFO, "Starting to register hooks:")
             named_layers = dict(self.model.named_modules())
             for layer in named_layers.keys():
                 if layer in self.flatten_feature_extraction_layers.keys():
+                    log(INFO, f"Registering hook for layer: {layer}")
                     self.fhooks.append(getattr(self.model, layer).register_forward_hook(self.forward_hook(layer)))
         else:
             log(INFO, "Hooks already registered.")
