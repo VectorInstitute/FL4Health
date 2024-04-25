@@ -7,27 +7,23 @@ from typing import Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
-from fl4health.clients.mkmmd_clients.fenda_mkmmd_client import FendaMkmmdClient
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.clients.mkmmd_clients.moon_mkmmd_client import MoonMkmmdClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.fenda_mkmmd.fenda_model import FedIsic2019FendaModel
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.fed_heart_disease.moon_mkmmd.moon_model import FedHeartDiseaseMoonModel
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedIsic2019FendaClient(FendaMkmmdClient):
+class FedHeartDiseaseMoonClient(MoonMkmmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -36,8 +32,9 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
         mkmmd_loss_weights: Tuple[float, float] = (10, 10),
+        feature_l2_norm_weight: float = 1,
+        checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -46,6 +43,7 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             mkmmd_loss_weights=mkmmd_loss_weights,
+            feature_l2_norm_weight=feature_l2_norm_weight,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -54,7 +52,7 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
             self.client_number, str(self.data_path)
         )
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -62,7 +60,7 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIsic2019FendaModel(frozen_blocks=13, turn_off_bn_tracking=False).to(self.device)
+        model: nn.Module = FedHeartDiseaseMoonModel().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -85,7 +83,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(
@@ -105,7 +103,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
         required=True,
     )
     parser.add_argument(
@@ -122,20 +120,22 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the auxiliary losses",
+        help="Weight for the distance minimizing MK-MMD losses",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weight for the auxiliary losses",
+        help="Weight for the distance maximizing Mk-MMD lossess",
         required=False,
     )
     parser.add_argument(
-        "--no_federated_checkpointing",
-        action="store_true",
-        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
+        "--l2",
+        action="store",
+        type=float,
+        help="Weight for the feature l2 norm loss",
+        required=False,
     )
     args = parser.parse_args()
 
@@ -143,28 +143,23 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
-        if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
-    )
+    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
-    client = FedIsic2019FendaClient(
+    client = FedHeartDiseaseMoonClient(
         data_path=Path(args.dataset_dir),
-        metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+        metrics=[Accuracy("FedHeartDisease_accuracy")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
         mkmmd_loss_weights=(args.mu, args.gamma),
+        feature_l2_norm_weight=args.l2,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

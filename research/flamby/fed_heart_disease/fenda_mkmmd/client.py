@@ -7,7 +7,7 @@ from typing import Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
+from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -21,13 +21,13 @@ from fl4health.checkpointing.checkpointer import (
 )
 from fl4health.clients.mkmmd_clients.fenda_mkmmd_client import FendaMkmmdClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.fed_isic2019.fenda_mkmmd.fenda_model import FedIsic2019FendaModel
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from research.flamby.fed_heart_disease.fenda_mkmmd.fenda_model import FedHeartDiseaseFendaModel
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 
 
-class FedIsic2019FendaClient(FendaMkmmdClient):
+class FedHeartDiseaseFendaClient(FendaMkmmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -54,7 +54,7 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
+        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
             self.client_number, str(self.data_path)
         )
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -62,7 +62,7 @@ class FedIsic2019FendaClient(FendaMkmmdClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedIsic2019FendaModel(frozen_blocks=13, turn_off_bn_tracking=False).to(self.device)
+        model: nn.Module = FedHeartDiseaseFendaModel().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
         required=True,
     )
     parser.add_argument(
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
         required=True,
     )
     parser.add_argument(
@@ -157,9 +157,9 @@ if __name__ == "__main__":
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
-    client = FedIsic2019FendaClient(
+    client = FedHeartDiseaseFendaClient(
         data_path=Path(args.dataset_dir),
-        metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+        metrics=[Accuracy("FedHeartDisease_accuracy")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
@@ -167,7 +167,10 @@ if __name__ == "__main__":
         mkmmd_loss_weights=(args.mu, args.gamma),
     )
 
-    fl.client.start_client(server_address=args.server_address, client=client.to_client())
+    fl.client.start_client(
+        server_address=args.server_address,
+        client=client.to_client(),
+    )
 
     # Shutdown the client gracefully
     client.shutdown()

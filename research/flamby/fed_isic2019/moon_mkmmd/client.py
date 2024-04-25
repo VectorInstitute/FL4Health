@@ -162,7 +162,7 @@ if __name__ == "__main__":
         feature_l2_norm_weight=args.l2,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()
