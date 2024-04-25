@@ -67,6 +67,8 @@ VENV_PATH=$4
 CLIENT_LR=$5
 SERVER_ADDRESS=$6
 CLIENT_MU=$7
+CLIENT_GAMMA=$8
+CLIENT_L2=$9
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
