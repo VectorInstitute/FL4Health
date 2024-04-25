@@ -98,6 +98,10 @@ class MrMtlMkmmdClient(MrMtlClient):
         super().update_before_train(current_server_round)
         # Register hooks to extract features from the local model if not already registered
         self.local_feature_extractor._maybe_register_hooks()
+        self.init_global_feature_extractor = FeatureExtractorBuffer(
+            model=self.init_global_model,
+            flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
+        )
         # Register hooks to extract features from the init global model if not already registered
         self.init_global_feature_extractor._maybe_register_hooks()
 
