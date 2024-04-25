@@ -4,7 +4,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.model_bases.moon_base import MoonModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -45,12 +45,13 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
 
-    def predict(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
-            input (torch.Tensor): Inputs to be fed into the model.
+            input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
+            for the union of torch.Tensor and Dict[str, torch.Tensor].
 
         Returns:
             Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
@@ -58,6 +59,7 @@ class MoonClient(BasicClient):
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
         """
+        assert isinstance(input, torch.Tensor)
         preds, features = self.model(input)
         # If there are no models in the old_models_list, we don't compute the features for the contrastive loss
         if len(self.old_models_list) > 0:

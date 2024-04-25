@@ -78,7 +78,7 @@ class Scaffold(BasicFedAvg):
                 Defaults to None.
             model (Optional[nn.Module], optional): If provided and initial_control_variates is not, this is used to
                 set the server control variates and the initial control variates on the client side to all zeros.
-                If initial_control_variates are provided, they take precendence. Defaults to None.
+                If initial_control_variates are provided, they take precedence. Defaults to None.
         """
 
         self.server_model_weights = parameters_to_ndarrays(initial_parameters)
@@ -203,7 +203,7 @@ class Scaffold(BasicFedAvg):
 
     def compute_parameter_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes elementwise difference of two lists of NDarray where elements in params_2 are subtracted from
+        Computes element-wise difference of two lists of NDarray where elements in params_2 are subtracted from
         elements in params_1.
 
         Args:
@@ -211,7 +211,7 @@ class Scaffold(BasicFedAvg):
             params_2 (NDArrays): Parameters to subtract from params_1.
 
         Returns:
-            NDArrays: Elementwise subtraction result across all numpy arrays.
+            NDArrays: Element-wise subtraction result across all numpy arrays.
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
 
@@ -250,7 +250,7 @@ class Scaffold(BasicFedAvg):
             params (List[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
-            NDArrays: elementwise average over the list of numpy arrays.
+            NDArrays: element-wise average over the list of numpy arrays.
         """
         num_clients = len(params)
 

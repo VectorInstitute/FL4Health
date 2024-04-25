@@ -54,7 +54,7 @@ class FedProxClient(BasicClient):
         ]
 
         # network l2 inner product tensor
-        # NOTE: Scaling by 1/2 is for consistency with the original fedprox paper.
+        # NOTE: Scaling by 1/2 is for consistency with the original Fedprox paper.
         return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
 
     def get_parameters(self, config: Config) -> NDArrays:

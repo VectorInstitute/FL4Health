@@ -538,8 +538,8 @@ class Encoder(nn.Module):
     def forward(self, x: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
         skip_connections: List[torch.Tensor] = []
         for encoding_block in self.encoding_blocks:
-            x, skip_connnection = encoding_block(x)
-            skip_connections.append(skip_connnection)
+            x, skip_connection = encoding_block(x)
+            skip_connections.append(skip_connection)
         return skip_connections, x
 
     @property
@@ -648,7 +648,7 @@ def get_downsampling_layer(dimensions: int, pooling_type: str, kernel_size: int 
     return class_(kernel_size)
 
 
-# Autoencder: encder and decoder units
+# Autoencoder: encoder and decoder units
 class VariationalEncoder(nn.Module):
     def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
         super().__init__()

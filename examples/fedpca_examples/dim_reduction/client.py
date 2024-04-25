@@ -79,5 +79,5 @@ if __name__ == "__main__":
     # should use the same random seed.
     set_all_random_seeds(seed)
     client = MnistFedPcaClient(data_path, [Accuracy("accuracy")], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

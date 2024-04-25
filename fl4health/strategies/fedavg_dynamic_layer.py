@@ -26,6 +26,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
         *,
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
+        min_fit_clients: int = 2,
+        min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: Optional[
             Callable[
@@ -49,6 +51,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
+            min_fit_clients (int, optional): Minimum number of clients used during fitting. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             evaluate_fn (Optional[
                 Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
@@ -75,6 +79,8 @@ class FedAvgDynamicLayer(BasicFedAvg):
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             evaluate_fn=evaluate_fn,
             on_fit_config_fn=on_fit_config_fn,
@@ -151,7 +157,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Args:
             results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
-                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                aggregated on the server-side and the number of training samples held on each client. In this scheme,
                 the clients pack the layer weights into the results object along with the weight values to allow for
                 alignment during aggregation.
 
@@ -172,7 +178,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Args:
             results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
-                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                aggregated on the server-side and the number of training samples held on each client. In this scheme,
                 the clients pack the layer weights into the results object along with the weight values to allow for
                 alignment during aggregation.
 
@@ -204,7 +210,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
 
         Args:
             results (List[Tuple[NDArrays, int]]): The weight results from each client's local training that need to be
-                aggregated on the server-side and the number of training samples held on each clien. In this scheme,
+                aggregated on the server-side and the number of training samples held on each client. In this scheme,
                 the clients pack the layer weights into the results object along with the weight values to allow for
                 alignment during aggregation.
 

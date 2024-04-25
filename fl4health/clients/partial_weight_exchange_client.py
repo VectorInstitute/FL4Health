@@ -62,7 +62,7 @@ class PartialWeightExchangeClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Setup the components of the client neccessary for client side training and parameter exchange. Mostly handled
+        Setup the components of the client necessary for client side training and parameter exchange. Mostly handled
         by a call to the basic client flow, but also sets up the initial model to facilitate storage of initial
         parameters during training
 

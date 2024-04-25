@@ -58,7 +58,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         clipping_quantile: float = 0.5,
         initial_clipping_bound: float = 0.1,
         weight_noise_multiplier: float = 1.0,
-        clipping_noise_mutliplier: float = 1.0,
+        clipping_noise_multiplier: float = 1.0,
         beta: float = 0.9,
     ) -> None:
         """
@@ -87,7 +87,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Optional[Parameters], optional): Initial global model parameters. This strategy assumes
-                that the initial parameters is not None. So they need to be set inspite of the optional tag.
+                that the initial parameters is not None. So they need to be set in spite of the optional tag.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
@@ -111,7 +111,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 clipping quantile described above. NOTE: If Adaptive clipping is turned off, this is the clipping
                 bound through out FL training.. Defaults to 0.1.
             weight_noise_multiplier (float, optional): Noise multiplier for the noising of gradients. Defaults to 1.0.
-            clipping_noise_mutliplier (float, optional): Noise multiplier for the noising of clipping bits.
+            clipping_noise_multiplier (float, optional): Noise multiplier for the noising of clipping bits.
                 Defaults to 1.0.
             beta (float, optional): Momentum weight for previous weight updates. If it is 0, there is no momentum.
                 Defaults to 0.9.
@@ -143,7 +143,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self.clipping_quantile = clipping_quantile
         self.clipping_bound = initial_clipping_bound
         self.weight_noise_multiplier = weight_noise_multiplier
-        self.clipping_noise_mutliplier = clipping_noise_mutliplier
+        self.clipping_noise_multiplier = clipping_noise_multiplier
         self.beta = beta
 
         # Parameter Packer to handle packing and unpacking parameters with clipping bit
@@ -164,14 +164,14 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         This is done to ensure the privacy accountant computes the correct privacy values.
 
         Raises:
-            ValueError: If the noise multipler and the clipping noise multiplier are not well related then we'll end up
-                with a sqrt of a negative number. If this happens a value error is raised.
+            ValueError: If the noise multiplier and the clipping noise multiplier are not well related then we'll end
+                up with a sqrt of a negative number. If this happens a value error is raised.
 
         Returns:
             float: The modified noise multiplier when performing adaptive clipping.
         """
         # Modifying the noise multiplier as in Algorithm 1 of Differentially Private Learning with Adaptive Clipping
-        sqrt_argument = pow(self.weight_noise_multiplier, -2.0) - pow(2.0 * self.clipping_noise_mutliplier, -2.0)
+        sqrt_argument = pow(self.weight_noise_multiplier, -2.0) - pow(2.0 * self.clipping_noise_multiplier, -2.0)
         if sqrt_argument < 0.0:
             raise ValueError(
                 "Noise Multiplier modification will fail. The relationship of the weight and clipping noise "
@@ -254,7 +254,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
     def update_clipping_bound(self, clipping_bits: NDArrays) -> None:
         """
-        This addes noise to the clipping bits returned by the clients and then updates the server-side clipping bound
+        This adds noise to the clipping bits returned by the clients and then updates the server-side clipping bound
         using this information.
 
         Args:
@@ -262,7 +262,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             in order to update the clipping bound on the server side.
         """
         noised_clipping_bits_sum = gaussian_noisy_aggregate_clipping_bits(
-            clipping_bits, self.clipping_noise_mutliplier
+            clipping_bits, self.clipping_noise_multiplier
         )
         self._update_clipping_bound_with_noised_bits(noised_clipping_bits_sum)
 

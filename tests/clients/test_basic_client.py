@@ -3,11 +3,14 @@ from pathlib import Path
 from typing import Dict, Optional, Union
 from unittest.mock import MagicMock
 
+import freezegun
 import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
 
 from fl4health.clients.basic_client import BasicClient
+
+freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -75,14 +78,42 @@ def test_metrics_reporter_evaluate() -> None:
     }
 
 
+def test_evaluate_after_fit_enabled() -> None:
+    fl_client = MockBasicClient()
+
+    fl_client.fit([], {"current_server_round": 2, "local_epochs": 0, "evaluate_after_fit": True})
+
+    fl_client.validate.assert_called_once()  # type: ignore
+
+
+def test_evaluate_after_fit_disabled() -> None:
+    fl_client = MockBasicClient()
+
+    fl_client.fit([], {"current_server_round": 2, "local_epochs": 0, "evaluate_after_fit": False})
+    fl_client.validate.assert_not_called()  # type: ignore
+
+    fl_client.fit([], {"current_server_round": 2, "local_epochs": 0})
+    fl_client.validate.assert_not_called()  # type: ignore
+
+
 class MockBasicClient(BasicClient):
     def __init__(
         self,
         loss_dict: Optional[Dict[str, float]] = None,
         metrics: Optional[Dict[str, Scalar]] = None,
-        loss: Optional[float] = None,
+        loss: Optional[float] = 0,
     ):
         super().__init__(Path(""), [], torch.device(0))
+
+        self.mock_loss_dict = loss_dict
+        if self.mock_loss_dict is None:
+            self.mock_loss_dict = {}
+
+        self.mock_metrics = metrics
+        if self.mock_metrics is None:
+            self.mock_metrics = {}
+
+        self.mock_loss = loss
 
         # Mocking attributes
         self.train_loader = MagicMock()
@@ -93,11 +124,11 @@ class MockBasicClient(BasicClient):
         self.set_parameters = MagicMock()  # type: ignore
         self.get_parameters = MagicMock()  # type: ignore
         self.train_by_epochs = MagicMock()  # type: ignore
-        self.train_by_epochs.return_value = loss_dict, metrics
+        self.train_by_epochs.return_value = self.mock_loss_dict, self.mock_metrics
         self.train_by_steps = MagicMock()  # type: ignore
-        self.train_by_steps.return_value = loss_dict, metrics
+        self.train_by_steps.return_value = self.mock_loss_dict, self.mock_metrics
         self.validate = MagicMock()  # type: ignore
-        self.validate.return_value = loss, metrics
+        self.validate.return_value = self.mock_loss, self.mock_metrics
         self.get_model = MagicMock()  # type: ignore
         self.get_data_loaders = MagicMock()  # type: ignore
         mock_data_loader = MagicMock()  # type: ignore

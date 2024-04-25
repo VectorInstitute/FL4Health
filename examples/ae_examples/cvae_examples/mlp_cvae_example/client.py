@@ -103,5 +103,5 @@ if __name__ == "__main__":
     # Here we use simple one_hot_encoding but it can be any vector.
     condition_vector = torch.nn.functional.one_hot(torch.tensor(args.condition), num_classes=args.num_conditions)
     client = CondAutoEncoderClient(data_path, [], DEVICE, condition_vector)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

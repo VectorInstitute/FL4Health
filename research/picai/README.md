@@ -1,6 +1,6 @@
 #  Overview
 
-The [PI-CAI](https://pi-cai.grand-challenge.org/) (Prostate Imaging: Cancer AI) is a collection of MRI exams to train and vaildate AI algorithms for detection of Clinically Significant Prostate Cancer Detection (csPCa). This folder is focused on providing examples and utilities for performing experiments on the PICAI dataset for csPCa using both centralized and a federated setup. The federated learning examples heavily leverage the [fl4health package](/README.md) to conveniently apply state-of-the-art FL techniques to real world datasets. To this end, there is currently two examples:
+The [PI-CAI](https://pi-cai.grand-challenge.org/) (Prostate Imaging: Cancer AI) is a collection of MRI exams to train and validate AI algorithms for detection of Clinically Significant Prostate Cancer Detection (csPCa). This folder is focused on providing examples and utilities for performing experiments on the PICAI dataset for csPCa using both centralized and a federated setup. The federated learning examples heavily leverage the [fl4health package](/README.md) to conveniently apply state-of-the-art FL techniques to real world datasets. To this end, there is currently two examples:
 - [U-Net on PICAI with Centralized Setup](/research/picai/central)
 - [U-Net on PICAI with Federated Setup with FedAvg](/research/picai/fedavg)
 
@@ -37,7 +37,7 @@ The dataset is partitioned into multiple splits corresponding to the different p
 ```
 
 For each patient exam in this dataset, the following information is available:
-- **Clinicial Variables:** patient age, prostate volume, PSA level, PSA density (as reported in their diagnostic reports)
+- **Clinical Variables:** patient age, prostate volume, PSA level, PSA density (as reported in their diagnostic reports)
 - **Acquisition Variables:** scanner manufacturer, scanner model name, diffusion b-value, and
 - **bpMRI Scans:** acquired using Siemens Healthineers or Philips Medical Systems-based scanners with surface coils.
 - **Annotations:** Human or AI Derived Annotations of csPCa lesions (if any) in MR Sequences
@@ -63,7 +63,7 @@ where **<patient_id>** is a unique identifier for a given patient.
 <patient_id>_<study_id>_<sequence_id>.mha
 ```
 
-**<study_id>** uniquely identifies a particular study and **<sequence_id>** specifies the sequence type (ie `_t2w`, `_hbv` or `_adc`). Together the **<patient_id**> and the **<study_id>** uniquely identify an exam. For example, `patient_id=10417` has two exams with `study_id=1000424` and `study_id=1000425`. Hence, this patient has two different T2W sequences (as well as two different ADC and DWI sequences) availabe at:
+**<study_id>** uniquely identifies a particular study and **<sequence_id>** specifies the sequence type (ie `_t2w`, `_hbv` or `_adc`). Together the **<patient_id**> and the **<study_id>** uniquely identify an exam. For example, `patient_id=10417` has two exams with `study_id=1000424` and `study_id=1000425`. Hence, this patient has two different T2W sequences (as well as two different ADC and DWI sequences) available at:
 
 ```
 /ssd003/projects/aieng/public/PICAI/input/images/10417/10417_1000424_t2w.mha
@@ -114,7 +114,7 @@ and the corresponding label
 ```
 
 ### Cross Validation Splits
-The PICAI compeititon has prepared pre-determined 5-fold cross-validation splits of all 1500 cases. The splits do not contain patient overlap between train and validation splits. As part of the aforementioned preprocessing, a json file is generated for the train and validation dataset for each fold. This file specifies the set of paths for images and corresponding labels for dataset (train or validation) for a specific fold. The train dataset file for a specific fold **<fold_id>** is available on the cluster at:
+The PICAI competition has prepared pre-determined 5-fold cross-validation splits of all 1500 cases. The splits do not contain patient overlap between train and validation splits. As part of the aforementioned preprocessing, a json file is generated for the train and validation dataset for each fold. This file specifies the set of paths for images and corresponding labels for dataset (train or validation) for a specific fold. The train dataset file for a specific fold **<fold_id>** is available on the cluster at:
 
 ```
 /ssd003/projects/aieng/public/PICAI/workdir/results/UNet/overviews/Task2203_picai_baseline/PI-CAI_train-fold-<fold_id>.json

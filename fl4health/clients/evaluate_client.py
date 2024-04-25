@@ -65,7 +65,7 @@ class EvaluateClient(BasicClient):
         self.wandb_reporter = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
-        raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
+        raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         raise ValueError("Fit is not implemented for an Evaluation-Only Client")
@@ -209,7 +209,7 @@ class EvaluateClient(BasicClient):
                         log(
                             WARNING,
                             f"metric_name: {metric_name} already exists in dictionary. "
-                            "Please ensure that this is intended behavor",
+                            "Please ensure that this is intended behavior",
                         )
                     metrics[metric_name] = metric_value
         elif local_metrics:
