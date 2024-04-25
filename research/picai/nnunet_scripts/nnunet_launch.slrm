@@ -12,21 +12,18 @@
 
 # Process Inputs
 DATASET_NAME=$1
-CONFIG=$2
+UNET_CONFIG=$2
 FOLD=$3
 VENV_PATH=$4
 PLANS_IDENTIFIER=${5:-''} # Default value of empty string
-PRETAINED_WEIGHTS=${6:-''} # Default value of empty string
+PRETAINED_WEIGHTS=${6:-'plans'} # Default value of empty string
 
 # Log input information
 echo "Dataset Name : ${DATASET_NAME}"
-echo "Config: ${CONFIG}"
+echo "Config: ${UNET_CONFIG}"
 echo "Dataset Fold: ${FOLD}"
 echo "Python Env Path: ${VENV_PATH}"
-
-if [[ -z "${PLANS_IDENTIFIER}" ]]; then
-	echo "Plans Identifier: ${PLANS_IDENTIFIER}"
-fi
+echo "Plans Identifier: ${PLANS_IDENTIFIER}"
 
 if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
 	echo "Pretrained Weights: ${PRETRAINED_WEIGHTS}"
@@ -34,21 +31,18 @@ fi
 
 # Setup before running training
 source ${VENV_PATH}bin/activate
-base_dir="$nnUNet_results/${DATASET_NAME}"
+BASE_DIR="$nnUNet_results/${DATASET_NAME}/nnUNetTrainer__${PLANS_IDENTIFIER}__${UNET_CONFIG}/"
 
 # Function returning array of args passed to nnUNetv2_train command
 get_nnunet_train_args() {
 	local checkpoint_bool=$1
-	local arg_list = ( $DATASET_NAME $CONFIG $FOLD )
+	local arg_list = ( $DATASET_NAME $UNET_CONFIG $FOLD $PLANS_IDENTIFIER)
 
-	if [[ -z "${PLANS_IDENTIFIER}" ]]; then
-		arg_list += ${PLANS_IDENTIFIER}
-	fi
 	if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
 		arg_list += ${PRETRAINED_WEIGHTS}
 	fi
 	if [ "$checkpoint_bool" = true ]; then
-		arg_list += "$checkpoint_bool"
+		arg_list += "--c"
 	fi
 	return args_list
 }
@@ -64,16 +58,14 @@ handler()
 # and runs  training
 nnunet_train()
 {
-	if [ -z "$(ls -A $base_dir)" ]; then
+	if [ -z "$(ls -A $BASE_DIR)" ]; then
 		echo "Start training from scratch as $(date)"
 		get_nnunet_train_args false
 		local train_args = $?
-		nnUNetv2_train $DATASET_NAME $CONFIG $FOLD
 	else
 		echo "Start training from checkpoint as $(date)"
 		get_nnunet_train_args true
 		local train_args = $?
-		nnUNetv2_train $DATASET_NAME $CONFIG $FOLD --c
 	fi
 	nnUNetv2_train "${train_args[@]}"
 
