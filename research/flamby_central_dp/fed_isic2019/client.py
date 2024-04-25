@@ -20,15 +20,10 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets 
 from fl4health.utils.config import load_config
-
+from research.isic_custom_models import BaseLineFrozenBN
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
-# torch.set_default_dtype(torch.float64)
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline
-
-from research.flamby_local_dp.fed_isic2019.model import FedISICImageClassifier, Swin
-
 
 batch_size = 64
 
@@ -70,18 +65,16 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=self.batch_size, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
 
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return Swin().to(self.device)
-
+        return BaseLineFrozenBN().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        # self.learning_rate = 5e-4
-        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        return torch.optim.AdamW(self.model.parameters(), lr=0.001)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()

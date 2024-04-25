@@ -28,7 +28,7 @@ torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
 from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
 
-
+from research.isic_custom_models import BaseLineFrozenBN
 
 
 class FedIsic2019FedAvgClient(SecureAggregationClient):
@@ -65,16 +65,16 @@ class FedIsic2019FedAvgClient(SecureAggregationClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Swin().to(self.device)
+        model: nn.Module = BaseLineFrozenBN().to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        return torch.optim.AdamW(self.model.parameters(), lr=0.001)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()

@@ -75,6 +75,8 @@ class InstanceLevelPrivacyClient(BasicClient):
         # log(INFO, '<<<<< optimizer start <<<<<')
         # log(INFO, list(it))
         # log(INFO, '>>>> optimiaer end >>>>>')
+        self.noise_multiplier = 1e-16
+        self.clipping_bound = 1e16
         
         self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
             module=self.model,
@@ -83,6 +85,7 @@ class InstanceLevelPrivacyClient(BasicClient):
             noise_multiplier=self.noise_multiplier,
             max_grad_norm=self.clipping_bound,
             clipping="flat",
+            poisson_sampling=False
             # grad_sample_mode="ew"
         )
         # log(INFO, 'finished setting opacus')

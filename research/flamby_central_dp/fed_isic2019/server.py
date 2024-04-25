@@ -22,15 +22,14 @@ from research.flamby.utils import (
 )
 import torch
 
-from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 
 from fl4health.strategies.central_dp_strategy import CentralDPStrategy
 from fl4health.server.central_dp_server import CentralDPServer
 
-from research.flamby_local_dp.fed_isic2019.model import FedISICImageClassifier
-# from research.flamby_central_dp.fed_isic2019.model import ModifiedBaseline
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, Swin
+
+from research.isic_custom_models import BaseLineFrozenBN
+from flamby.datasets.fed_isic2019 import Baseline
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -49,8 +48,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    model = Swin()
-    architecture = 'Swain Transformer'
+    model = BaseLineFrozenBN()
+    architecture = 'BaseLineFrozenBN'
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = CentralDPStrategy(

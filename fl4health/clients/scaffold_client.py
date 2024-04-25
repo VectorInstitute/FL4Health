@@ -272,7 +272,7 @@ class DPScaffoldLoggingClient(DPScaffoldClient):
         device: torch.device,
         client_id: str = uuid.uuid1(),
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        metric_meter_type: MetricMeterType = MetricMeterType.AVERAGE,
+        metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
         task_name: str = ''
     ) -> None:

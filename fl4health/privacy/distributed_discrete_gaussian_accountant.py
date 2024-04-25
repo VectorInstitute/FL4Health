@@ -209,16 +209,16 @@ class DDGaussAccountant:
         verbose = False
         ndecimals = 2
 
-        single_round_cdp = round(accountant.single_fl_round_concentrated_dp(), ndecimals)
-        single_round_rdp = round(accountant.single_fl_round_renyi_dp(rdp_order), ndecimals)
+        single_round_cdp = round(self.single_fl_round_concentrated_dp(), ndecimals)
+        single_round_rdp = round(self.single_fl_round_renyi_dp(rdp_order), ndecimals)
 
-        fl_rdp_unamplified = round(accountant.fl_rdp(rdp_order=rdp_order, amplify=False), ndecimals)
-        fl_adp_unamplified = round(accountant.fl_approximate_dp(amplify=False, verbose=verbose), ndecimals)
+        fl_rdp_unamplified = round(self.fl_rdp(rdp_order=rdp_order, amplify=False), ndecimals)
+        fl_adp_unamplified = round(self.fl_approximate_dp(amplify=False, verbose=verbose), ndecimals)
 
         try:
             # amplified rdp requires rdp_order to be an integer
-            fl_rdp_amplified = round(accountant.fl_rdp(rdp_order=int(rdp_order), amplify=True), ndecimals)
-            fl_adp_amplified = round(accountant.fl_approximate_dp(amplify=True, verbose=verbose), ndecimals)
+            fl_rdp_amplified = round(self.fl_rdp(rdp_order=int(rdp_order), amplify=True), ndecimals)
+            fl_adp_amplified = round(self.fl_approximate_dp(amplify=True, verbose=verbose), ndecimals)
 
             report = f"""
                 single_round_cdp = {single_round_cdp}
@@ -261,14 +261,14 @@ if __name__ == '__main__':
 
     # Fed-ISIC2019
     isic_train_size = int(0.8 * 23247)
-    isic_batch_size = 64
+    isic_batch_size = 6*8
 
     parameters = {
-        'l2_norm_clip': 1,
-        'private_vector_dimension': 28406122,
+        'l2_norm_clip': 0.1,
+        'private_vector_dimension': 4_017_796,
         'granularity': 1e-6, 
         'noise_scale': 1.212e-3, 
-        'n_trustworthy_clients': 3,
+        'n_trustworthy_clients': 23247,
         'n_fl_rounds': 100,
         'privacy_amplification_sampling_ratio': isic_batch_size/isic_train_size,
         'bias': exp(-0.5), 

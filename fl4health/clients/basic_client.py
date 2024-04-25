@@ -225,7 +225,6 @@ class BasicClient(NumpyFlClient):
             metrics = self.train_metric_meter_mngr.compute()
             losses = self.train_loss_meter.compute()
             loss_dict = losses.as_dict()
-
             # Log results and maybe report via WANDB
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
@@ -246,25 +245,27 @@ class BasicClient(NumpyFlClient):
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
-                if torch.numel(input) == 0:
-                    log(INFO, 'Zero batch detected in train_by_steps, skipping...')
-                    continue
+
+                c = 0
+                while torch.numel(input) == 0:
+                    c += 1
+                    train_iterator = iter(self.train_loader)
+                    input, target = next(train_iterator)
+                    log(INFO, f'Zero batch detected for {c}-th time inside train_by_step.')
+
             except StopIteration:
                 # StopIteration is thrown if dataset ends
                 # reinitialize data loader
-                train_iterator = iter(self.train_loader)
-                input, target = next(train_iterator)
-                if torch.numel(input) == 0:
-                    log(INFO, 'Zero batch detected inside train_by_steps StopIteration, skipping...')
-                    continue
+                c = 0
+                while torch.numel(input) == 0:
+                    c += 1
+                    train_iterator = iter(self.train_loader)
+                    input, target = next(train_iterator)
+                    log(INFO, f'Zero batch detected for {c}-th time inside train_by_step.')
+
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
-            if True:
-                log(INFO, 'here are the preds')
-                log(INFO, preds)
-                log(INFO, 'here are the targets')
-                log(INFO, target)
             try:
                 self.train_metric_meter_mngr.update(preds, target)
             except ZeroDivisionError:
@@ -272,11 +273,14 @@ class BasicClient(NumpyFlClient):
                 continue
             self.update_after_step(step)
             self.total_steps += 1
-
-        losses = self.train_loss_meter.compute()
+            try:
+                losses = self.train_loss_meter.compute()
+            except AssertionError:
+                log(INFO, '----------AssertionError Met---------')
+                continue
+            
         loss_dict = losses.as_dict()
         metrics = self.train_metric_meter_mngr.compute()
-
         # Log results and maybe report via WANDB
         self._handle_logging(loss_dict, metrics, current_round=current_round)
         self._handle_reporting(loss_dict, metrics, current_round=current_round)

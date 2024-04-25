@@ -39,6 +39,9 @@ import uuid
 import timeit
 
 from fl4health.privacy_mechanisms.gaussian_mechanism import gaussian_mechanism
+from statistics import mean
+from opacus import PrivacyEngine
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
@@ -56,23 +59,34 @@ class SecureAggregationClient(BasicClient):
         checkpointer: Optional[TorchCheckpointer] = None,
         client_id: str = uuid.uuid1(),
         task_name: str = '',
+        num_mini_clients = 8,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, metric_meter_type, checkpointer)
 
         self.client_id = client_id
         self.task_name = task_name
 
+        self.num_mini_clients = num_mini_clients
+
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.best_checkpoint_path),
             'temp'
         )
+        self.temporary_dir = temporary_dir
 
         if not os.path.exists(temporary_dir):
             os.makedirs(temporary_dir)
 
+        # path for model vector 
         self.temporary_model_path = os.path.join(
             temporary_dir,
             f'client_{self.client_id}_initial_model.pth'
+        )
+
+        # path to torch.save() model
+        self.temporary_model_state_path = os.path.join(
+            temporary_dir,
+            f'client_{self.client_id}_initial_model_state.pth'
         )
 
         metrics_dir = os.path.join(
@@ -257,6 +271,24 @@ class SecureAggregationClient(BasicClient):
                 }
 
         return response_dict
+    
+    def setup_opacus(self) -> None:
+        privacy_engine = PrivacyEngine()
+
+        # hard coded in for now
+        self.noise_multiplier = 1e-16
+        self.clipping_bound = 1e16
+
+        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.train_loader,
+            noise_multiplier=self.noise_multiplier,
+            max_grad_norm=self.clipping_bound,
+            clipping="flat",
+            poisson_sampling=False
+        )
+
 
     # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -265,6 +297,7 @@ class SecureAggregationClient(BasicClient):
         log(INFO, f' start of client server round {current_server_round}')
         if not self.initialized:
             self.setup_client(config)
+            self.setup_opacus()
 
         # log(DEBUG, f'Client model on round {current_server_round} prior to set_parameter()')
         # log(DEBUG, vectorize_model(self.model))
@@ -275,7 +308,7 @@ class SecureAggregationClient(BasicClient):
         # log(DEBUG, f'Client model on round {current_server_round} after call to set_parameter()')
         # log(DEBUG, vectorize_model(self.model))
 
-        # store initial model for getting model delta
+        # store initial model vector for computing model delta
         vector_0 = vectorize_model(self.model)
         torch.save(vector_0, self.temporary_model_path)
         del vector_0
@@ -341,21 +374,82 @@ class SecureAggregationClient(BasicClient):
         #     log(DEBUG, name)
         #     log(DEBUG, layer.dtype)
 
+        # miniclients metrics and losses
+        collective_metrics = {}
+        collective_losses = {}
 
         if local_epochs is not None:
-            log(INFO, 'Training by epochs')
-            loss_dict, metrics, training_set_size = self.train_by_epochs(local_epochs, current_server_round)
-            local_steps = len(self.train_loader) * local_epochs  # total steps over training round
-            self.num_train_samples = training_set_size
+            # initial model
+            torch.save(self.model.state_dict(), self.temporary_model_state_path)
+
+            for id in range(1, 1+ self.num_mini_clients):
+                log(INFO, f'Training by epochs: {local_epochs} local epochs')
+                self.model.load_state_dict(torch.load(self.temporary_model_state_path))
+                loss_dict, metrics, training_set_size = self.train_by_epochs(local_epochs, current_server_round)
+
+                for k, v in metrics.items():
+                    if k not in collective_metrics:
+                        collective_metrics[k] = [v]
+                    else:
+                        collective_metrics[k].append(v)
+
+                for k, v in loss_dict.items():
+                    if k not in collective_losses:
+                        collective_losses[k] = [v]
+                    else:
+                        collective_losses[k].append(v)
+
+                local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+
+            # assumes no sampling: train size is constant for each miniclient
+            self.num_train_samples = self.num_mini_clients * training_set_size
+
         elif local_steps is not None:
-            log(INFO, 'Training by steps')
-            loss_dict, metrics, training_set_size = self.train_by_steps(local_steps, current_server_round)
-            self.num_train_samples = training_set_size
+
+            # initial model
+            torch.save(self.model.state_dict(), self.temporary_model_state_path)
+            for id in range(1, 1+ self.num_mini_clients):
+                log(INFO, f'Mini-client {id} training by steps: {local_steps} local steps')
+                self.model.load_state_dict(torch.load(self.temporary_model_state_path))
+
+                # appropriately aggregate these metrics and losses
+                loss_dict, metrics, training_set_size = self.train_by_steps(local_steps, current_server_round)
+
+                for k, v in metrics.items():
+                    if k not in collective_metrics:
+                        collective_metrics[k] = [v]
+                    else:
+                        collective_metrics[k].append(v)
+
+                for k, v in loss_dict.items():
+                    if k not in collective_losses:
+                        collective_losses[k] = [v]
+                    else:
+                        collective_losses[k].append(v)
+
+                trained_mini_model_vector = vectorize_model(self.model)
+                path = os.path.join(self.temporary_dir,f'client_{self.client_id}_mini_client_{id}.pth')
+                torch.save(trained_mini_model_vector, path)
+                del trained_mini_model_vector
+
+
+            # assumes no sampling: train size is constant for each miniclient
+            self.num_train_samples = self.num_mini_clients * training_set_size
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
+        mean_metrics = {}
+        for k, v in collective_metrics.items():
+            mean_metrics[k] = mean(v)
+
+        mean_losses = {}
+        for k, v in collective_losses.items():
+            mean_losses[k] = mean(v)
+            
+
+
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps, loss_dict)
+        self.update_after_train(local_steps, mean_losses)
         # if current_server_round > 0 :
             # log(INFO, '-----metrics------')
             # log(INFO, self.metrics)
@@ -402,13 +496,13 @@ class SecureAggregationClient(BasicClient):
             metrics_to_save['model_size'] = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
             metrics_to_save['current_round'] = current_server_round
 
-            for key, value in metrics.items():
+            for key, value in mean_metrics.items():
                 if key not in metrics_to_save:
                     metrics_to_save[key] = [value]
                 else:
                     metrics_to_save[key].append(value)
 
-            for key, value in loss_dict.items():
+            for key, value in mean_losses.items():
                 if key not in metrics_to_save:
                     metrics_to_save[key] = [value]
                 else:
@@ -436,12 +530,33 @@ class SecureAggregationClient(BasicClient):
             # log(DEBUG, f'finished recording metrics for round {current_server_round}')
 
         return (
-            self.process_model_post_training(),
+            self.secure_and_privatize(),
             self.num_train_samples,
-            metrics,
+            mean_metrics,
         )
     
-    def process_model_post_training(self) -> NDArrays:
+    def secure_and_privatize(self) -> NDArrays:
+        vector = self.process_model_post_training(mini_client_id=1)
+        for id in range(2, 1+self.num_mini_clients):
+            vector += self.process_model_post_training(mini_client_id=id)
+            # DEBUG
+            log(INFO, f'Arithmetic modulus = {self.crypto.arithmetic_modulus}')
+            vector %= self.crypto.arithmetic_modulus
+
+        mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
+        # self.echo('mask', mask)
+        # vector *= 0
+        vector += mask
+        vector %= self.crypto.arithmetic_modulus
+
+        vector_np = vector.cpu().numpy()
+
+        # find average delta or max delta
+        delta = vector_np
+
+        return [vector_np, delta, vectorize_model(self.model).cpu().numpy()]
+    
+    def process_model_post_training(self, mini_client_id: int) -> torch.Tensor:
         """ We send model delta to the server. See Algorithm 1 in 
         Ref
             The Distributed Discrete Gaussian Mechanism for Federated Learning with Secure Aggregation
@@ -456,7 +571,9 @@ class SecureAggregationClient(BasicClient):
         # reshape model tensors and concatenate into a vector
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
         vector_0: torch.Tensor = torch.load(self.temporary_model_path).to(device=device)
-        vector_1: torch.Tensor = vectorize_model(self.model).to(device=device)
+
+        mini_client_model_path = os.path.join(self.temporary_dir,f'client_{self.client_id}_mini_client_{mini_client_id}.pth')
+        vector_1: torch.Tensor = torch.load(mini_client_model_path).to(device=device)
         # self.echo('trained model', vector_1)
         # log(INFO, f'vector_0 dtyle: {vector_0.dtype}, numel {vector_0.numel()}')
         # log(INFO, f'vector_1 dtyle: {vector_1.dtype} numel {vector_1.numel()}')
@@ -489,7 +606,10 @@ class SecureAggregationClient(BasicClient):
         
         # adjust for scaling of model vector by the weight (often the train data size)
         # weighted_clip = c * weight
+
+        # NOTE the vector should already be clipped by opacus 
         vector = clip_vector(vector=vector, clip=c, granularity=g)
+
         # log(DEBUG, 'weighted')
         # log(DEBUG, vector[:100])
         # x'' = H(Dx')
@@ -534,34 +654,7 @@ class SecureAggregationClient(BasicClient):
         # log(DEBUG,'after noising')
         # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
-        mask = torch.tensor(self.crypto.get_pair_mask_sum(vector_dim=self.padded_model_dim, allow_dropout=False))
-        # self.echo('mask', mask)
-        # vector *= 0
-        vector += mask
-        log(INFO, f'Arithmetic modulus = {self.crypto.arithmetic_modulus}')
-        vector %= self.crypto.arithmetic_modulus
-
-        # NOTE turn off weighted average
-        # vector *= weight
-
-        # log(INFO,'Added mask')
-        # log(INFO, vector[:100])
-        # processed = []
-        # i = 0
-        # for layer in self.model.state_dict().values():
-        #     j = i + layer.numel()
-        #     tensor = vector[i: j].reshape(layer.size()) # de-vectorize
-        #     processed.append(tensor.cpu().numpy())
-        #     i = j
-        # log(INFO, vector.dtype)
-        # log(INFO, vector)
-        vector_np = vector.cpu().numpy()
-        # log(INFO, f' end of client server round, post processing ends, torch dtype is {vector.dtype}, np dtype is {vector_np.dtype}<<< ')
-        # import numpy as np 
-        # vector_np = self.crypto.client_integer * np.ones(vector_np.size) + mask.cpu().numpy()
-        # self.echo('sent to server', vector_np)
-
-        return [vector_np, delta.cpu().numpy(), vectorize_model(self.model).cpu().numpy()]
+        return vector
     
 
 
@@ -857,6 +950,10 @@ class SecureAggregationClient(BasicClient):
                 input, target = next(train_iterator)
 
             datasize += list(input.shape)[0]
+            
+            # DEBUG
+            log(INFO, f'===input dim: {input.shape}===')
+
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)

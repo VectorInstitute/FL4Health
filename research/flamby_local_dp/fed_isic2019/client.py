@@ -23,13 +23,14 @@ from torch.utils.data import DataLoader
 
 from fl4health.utils.config import load_config
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
-
+from research.isic_custom_models import BaseLineFrozenBN
 from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
 from flamby.datasets.fed_isic2019 import Baseline
+
+
 
 class FedIsic2019FedAvgClient(DPScaffoldLoggingClient):
 
@@ -41,17 +42,16 @@ class FedIsic2019FedAvgClient(DPScaffoldLoggingClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_id, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=64, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
         # model: nn.Module = FedISICImageClassifier().to(self.device)
-        return Swin().to(self.device)
+        return BaseLineFrozenBN().to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        # return torch.optim.AdamW(self.model.parameters(), lr=0.05)
-        return torch.optim.SGD(self.model.parameters(), lr=0.05)
+        return torch.optim.AdamW(self.model.parameters(), lr=0.001)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
@@ -129,6 +129,7 @@ if __name__ == "__main__":
         device=DEVICE,
         client_id=args.client_number,
         checkpointer=checkpointer,
+        metric_meter_type= MetricMeterType.ACCUMULATION
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000,)

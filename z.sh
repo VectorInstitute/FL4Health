@@ -5,6 +5,7 @@ EXPERIMENT=$1
 cancel_present_jobs=0
 lightweight=0
 clean_up=1
+erase_checkpoints=1
 
 
 if [[ $clean_up == 1 ]]; then
@@ -12,10 +13,13 @@ if [[ $clean_up == 1 ]]; then
     echo removing logs and cancelling jobs ... 
     scancel --me
     sleep 3
-    rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/ logs/log/
+    rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/ logs/
     squeue --me
 fi
 
+if [[ $erase_checkpoints == 1 ]]; then
+    bash clean.sh
+fi
 
 central_experiments () {
 
@@ -33,11 +37,12 @@ central_experiments () {
     if [[ $lightweight == 0 ]]; then
         # client is 3
         HYPERPARAMETER_VALUES_ISIC=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
+        HYPERPARAMETER_VALUES_ISIC=(0.000001)
         bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
 
         # client is 3
-        HYPERPARAMETER_VALUES_IXI=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
-        bash research/flamby_central_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
+        # HYPERPARAMETER_VALUES_IXI=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
+        # bash research/flamby_central_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
 
         # # client is 4
         # HYPERPARAMETER_VALUES_TCGA_BRCA=( 0.0002 0.0006 0.001 0.0014 0.0018 )
@@ -60,12 +65,13 @@ local_experiments () {
     # bash research/flamby_local_dp/fed_heart_disease/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_HEART[@]}"
 
     if [[ $lightweight == 0 ]]; then
-        # HYPERPARAMETER_VALUES_ISIC=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
-        # bash research/flamby_local_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
+        HYPERPARAMETER_VALUES_ISIC=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
+        HYPERPARAMETER_VALUES_ISIC=( 0.000001 )
+        bash research/flamby_local_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
 
-        # client is 3
-        HYPERPARAMETER_VALUES_IXI=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
-        bash research/flamby_local_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
+        # # client is 3
+        # HYPERPARAMETER_VALUES_IXI=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
+        # bash research/flamby_local_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
 
         # HYPERPARAMETER_VALUES_TCGA_BRCA=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
         # bash research/flamby_local_dp/fed_tcga_brca/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_TCGA_BRCA[@]}"
@@ -89,12 +95,13 @@ distributed_experiments () {
 
     if [[ $lightweight == 0 ]]; then
         # client is 3
-        HYPERPARAMETER_VALUES_IXI=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
+        HYPERPARAMETER_VALUES_ISIC=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
+        HYPERPARAMETER_VALUES_ISIC=( 0.00000002 )
         bash research/flamby_distributed_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
 
         # client is 3
-        HYPERPARAMETER_VALUES_IXI=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
-        bash research/flamby_distributed_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
+        # HYPERPARAMETER_VALUES_IXI=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
+        # bash research/flamby_distributed_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
 
         # # client is 4
         # HYPERPARAMETER_VALUES_TCGA_BRCA=( 0.0001 0.0003 0.0005 0.0007 0.0009 )
@@ -111,9 +118,9 @@ just_isic () {
         squeue --me
     fi
 
-    HYPERPARAMETER_NAME_CENTRAL="stdev"
-    HYPERPARAMETER_VALUES_ISIC_CENTRAL=( 0.00001 )
-    bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME_CENTRAL "${HYPERPARAMETER_VALUES_ISIC_CENTRAL[@]}"
+    # HYPERPARAMETER_NAME_CENTRAL="stdev"
+    # HYPERPARAMETER_VALUES_ISIC_CENTRAL=( 0.00001 )
+    # bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME_CENTRAL "${HYPERPARAMETER_VALUES_ISIC_CENTRAL[@]}"
 
     # HYPERPARAMETER_NAME_DISTRIBUTED="noise_scale"
     # HYPERPARAMETER_VALUES_ISIC_DISTRIBUTED=( 0.00001 )
@@ -147,9 +154,9 @@ just_tcga_brca () {
 
 custom () {
 
-    HYPERPARAMETER_NAME="stdev"
-    HYPERPARAMETER_VALUES_ISIC=( 0.0001 )
-    bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
+    # HYPERPARAMETER_NAME="stdev"
+    # HYPERPARAMETER_VALUES_ISIC=( 0.0001 )
+    # bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
 
     # HYPERPARAMETER_NAME_DISTRIBUTED="noise_scale"
     # HYPERPARAMETER_VALUES_DISTRIBUTED=( 0.0001 )
@@ -159,8 +166,10 @@ custom () {
     # HYPERPARAMETER_VALUES_LOCAL=( 0.0001 )
     # bash research/flamby_local_dp/fed_tcga_brca/run.sh $HYPERPARAMETER_NAME_LOCAL "${HYPERPARAMETER_VALUES_LOCAL[@]}"
 
+    # central_experiments
+    # local_experiments
+    distributed_experiments
 }
-
 
 case ${EXPERIMENT} in
     "all")
@@ -185,6 +194,9 @@ case ${EXPERIMENT} in
     ;;
     "custom")
         custom
+    ;;
+    "erase-checkpoints")
+        bash clean.sh 
     ;;
     *)
     echo "$1 is invalid argument"

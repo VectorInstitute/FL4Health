@@ -5,17 +5,15 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
-#SBATCH --time=6:00:00
-#SBATCH --partition=a40
-#SBATCH --qos=m2
+#SBATCH --partition=a100
+#SBATCH --qos=a100_xuejzhao 
 #SBATCH --job-name=DDP-9c
 #SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_central/%j_%x.out"
 #SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_central/%j_%x.err"
 
 ###############################################
 # Usage:
-#
+#SBATCH --time=6:00:00
 # sbatch research/flamby/fed_isic2019/fedavg/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \

@@ -41,11 +41,12 @@ from fl4health.server.scaffold_server import DPScaffoldLoggingServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin, BaseLineFrozenBN
 import os 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
 from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from research.isic_custom_models import BaseLineFrozenBN
 
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -53,7 +54,7 @@ torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    initial_model = Swin()
+    initial_model = BaseLineFrozenBN()
     model_weights = [val.cpu().numpy() for _, val in initial_model.state_dict().items()]
 
     # model_weights = [val.detach().cpu().numpy() for val in initial_model.parameters() if val.requires_grad]
@@ -98,8 +99,9 @@ def main(config: Dict[str, Any], checkpoint_dir) -> None:
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     # Initialize Scaffold strategy to handle aggregation of weights and corresponding control variates
+    log(INFO, f'sampling rate >>> {config["client_sampling_rate"]}')
     strategy = Scaffold(
-        fraction_fit=config["client_sampling_rate"],
+        fraction_fit=1,
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,

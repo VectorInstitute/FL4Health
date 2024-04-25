@@ -27,6 +27,8 @@ from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggr
 
 from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
 
+from research.isic_custom_models import BaseLineFrozenBN
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -45,7 +47,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
-    model = Swin()
+    model = BaseLineFrozenBN()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = SecureAggregationStrategy(

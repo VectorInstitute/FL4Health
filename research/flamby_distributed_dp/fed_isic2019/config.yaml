@@ -1,14 +1,14 @@
 # Parameters that describe server
-n_server_rounds: 100 # 30 # The number of rounds to run FL
+n_server_rounds: 1000 # 30 # The number of rounds to run FL
 
 # Parameters that describe clients
-n_clients: 3 # The number of clients in the FL experiment
+n_clients: 6 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)
-batch_size: 4  # The batch size for client training (NOT USED FOR FLAMBY)
-local_steps: 15 # The number of local training steps to perform.
+batch_size: 1  # The batch size for client training (NOT USED FOR FLAMBY)
+local_steps: 1 # The number of local training steps to perform.
 
 # privacy settings (defaults to discrete Gaussian noise)
-clipping_threshold: 2
+clipping_threshold: 1000000000
 granularity: 0.000001
 noise_scale: 0.001
 bias: 0.607

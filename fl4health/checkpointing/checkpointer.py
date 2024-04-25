@@ -56,7 +56,7 @@ class BestMetricTorchCheckpointer(TorchCheckpointer):
                 f"{self.comparison_str} Best metric ({self.best_metric})",
             )
             self.best_metric = comparison_metric
-            torch.save(model, self.best_checkpoint_path)
+            # torch.save(model, self.best_checkpoint_path)
         else:
             log(
                 INFO,

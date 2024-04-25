@@ -25,6 +25,7 @@ import json
 import os
 import uuid 
 import timeit
+from opacus import PrivacyEngine
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -90,6 +91,23 @@ class CentralDPClient(BasicClient):
                 'batch_size': self.batch_size
             },file)
 
+    def setup_opacus(self) -> None:
+        privacy_engine = PrivacyEngine()
+
+        # hard coded in for now
+        self.noise_multiplier = 1e-16
+        self.clipping_bound = 1e16
+
+        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
+            module=self.model,
+            optimizer=self.optimizer,
+            data_loader=self.train_loader,
+            noise_multiplier=self.noise_multiplier,
+            max_grad_norm=self.clipping_bound,
+            clipping="flat",
+            poisson_sampling=False
+        )
+
     # Orchestrate training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
 
@@ -98,9 +116,9 @@ class CentralDPClient(BasicClient):
 
         if not self.initialized:
             self.setup_client(config)
+            self.setup_opacus()
             self.model_dim = sum(param.numel() for param in self.model.state_dict().values())
             self.start_time=timeit.default_timer()
-
         # local model <- global model
         self.set_parameters(parameters, config)
 

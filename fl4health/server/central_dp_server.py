@@ -308,7 +308,7 @@ class CentralDPServer(FlServerWithCheckpointing):
             log(INFO, delta[:10])
             log(INFO, '----------------')
 
-        if True:
+        if False:
             delta *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(delta, ord=2))
             log(INFO, '------clipped')
             log(INFO, delta[:10])

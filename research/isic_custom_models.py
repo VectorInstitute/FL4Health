@@ -4,6 +4,7 @@ from flamby.datasets.fed_isic2019 import Baseline
 
 # from research.flamby.utils import shutoff_group_norm_tracking
 from opacus.validators import ModuleValidator
+from research.flamby.utils import shutoff_batch_norm_tracking
 
 
 from torchvision.models import swin_v2_t
@@ -27,7 +28,8 @@ class BaseLineFrozenBN(nn.Module):
         #     if isinstance(module, nn.BatchNorm2d):
         #         module.requires_grad_(False)
         #         module.eval()
-        # freeze_bn(self.model)
+        shutoff_batch_norm_tracking(self.model)
+        freeze_bn(self.model)
     def forward(self, x):
         return self.model(x)
 
@@ -146,7 +148,3 @@ class FedISICImageClassifier(nn.Module):
 
         return x
     
-
-if __name__ == '__main__':
-    m = BaseLineFrozenBN()
-    torch.save(m, 'frozen.pth')
