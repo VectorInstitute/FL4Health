@@ -17,7 +17,7 @@ class MkMmdLoss(torch.nn.Module):
         gammas: Optional[torch.Tensor] = None,
         betas: Optional[torch.Tensor] = None,
         minimize_type_two_error: bool = True,
-        normalize_features: bool = False,
+        normalize_features: bool = True,
     ) -> None:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
@@ -35,7 +35,7 @@ class MkMmdLoss(torch.nn.Module):
                 optimizing the betas or maximize it. The first coincides with trying to minimize feature distance. The
                 second coincides with trying to maximize their feature distance. Defaults to True.
             normalize_features (Optional[bool], optional): Whether to normalize the features to have unit length before
-                computing the MK-MMD and optimizing betas. Defaults to False.
+                computing the MK-MMD and optimizing betas. Defaults to True.
         """
         super().__init__()
         self.device = device
