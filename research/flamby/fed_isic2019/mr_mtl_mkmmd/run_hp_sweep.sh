@@ -47,32 +47,32 @@ do
     do
       for L2_VALUE in "${L2_VALUES[@]}";
       do
-          for MKMMD_LOSS_DEPTH in "${MKMMD_LOSS_DEPTHS[@]}";
+        for MKMMD_LOSS_DEPTH in "${MKMMD_LOSS_DEPTHS[@]}";
+        do
+          for BETA_INTERVAL in "${BETA_INTERVALS[@]}";
           do
-            for BETA_INTERVAL in "${BETA_INTERVALS[@]}";
-            do
-              EXPERIMENT_NAME="lr_${LR_VALUE}_lam_${LAM_VALUE}_mu_${MU_VALUE}_l2_${L2_VALUE}_depth_${MKMMD_LOSS_DEPTH}_beta_${BETA_INTERVAL}"
-            echo "Beginning Experiment ${EXPERIMENT_NAME}"
-            EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
-            echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
-            mkdir "${EXPERIMENT_DIRECTORY}"
-            SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
-            echo "Server Address: ${SERVER_ADDRESS}"
-            SBATCH_COMMAND="research/flamby/fed_isic2019/mr_mtl_mkmmd/run_fold_experiment.slrm \
-              ${SERVER_CONFIG_PATH} \
-              ${EXPERIMENT_DIRECTORY} \
-              ${DATASET_DIR} \
-              ${VENV_PATH} \
-              ${LR_VALUE} \
-              ${LAM_VALUE} \
-              ${MU_VALUE} \
-              ${L2_VALUE} \
-              ${MKMMD_LOSS_DEPTH} \
-              ${BETA_INTERVAL} \
-              ${SERVER_ADDRESS}"
-            echo "Running sbatch command ${SBATCH_COMMAND}"
-            sbatch ${SBATCH_COMMAND}
-            ((SERVER_PORT=SERVER_PORT+1))
+          EXPERIMENT_NAME="lr_${LR_VALUE}_lam_${LAM_VALUE}_mu_${MU_VALUE}_l2_${L2_VALUE}_depth_${MKMMD_LOSS_DEPTH}_beta_${BETA_INTERVAL}"
+          echo "Beginning Experiment ${EXPERIMENT_NAME}"
+          EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
+          echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
+          mkdir "${EXPERIMENT_DIRECTORY}"
+          SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
+          echo "Server Address: ${SERVER_ADDRESS}"
+          SBATCH_COMMAND="research/flamby/fed_isic2019/mr_mtl_mkmmd/run_fold_experiment.slrm \
+          ${SERVER_CONFIG_PATH} \
+          ${EXPERIMENT_DIRECTORY} \
+          ${DATASET_DIR} \
+          ${VENV_PATH} \
+          ${LR_VALUE} \
+          ${LAM_VALUE} \
+          ${MU_VALUE} \
+          ${L2_VALUE} \
+          ${MKMMD_LOSS_DEPTH} \
+          ${BETA_INTERVAL} \
+          ${SERVER_ADDRESS}"
+          echo "Running sbatch command ${SBATCH_COMMAND}"
+          sbatch ${SBATCH_COMMAND}
+          ((SERVER_PORT=SERVER_PORT+1))
           done
         done
       done
