@@ -66,8 +66,12 @@ class FendaMkmmdClient(FendaClient):
                 "MK-MMD loss weight is set to (0,0). As none of MK-MMD losses will not be computed, ",
                 "please use vanilla FendaClient instead.",
             )
-        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
-        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
+        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True, normalize_features=True).to(
+            self.device
+        )
+        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False, normalize_features=True).to(
+            self.device
+        )
 
     def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         """

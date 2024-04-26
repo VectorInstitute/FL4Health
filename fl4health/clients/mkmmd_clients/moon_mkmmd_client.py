@@ -67,8 +67,12 @@ class MoonMkmmdClient(MoonClient):
                 "please use vanilla MoonClient instead.",
             )
         self.feature_l2_norm_weight = feature_l2_norm_weight
-        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
-        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False).to(self.device)
+        self.mkmmd_loss_min = MkMmdLoss(device=self.device, minimize_type_two_error=True, normalize_features=True).to(
+            self.device
+        )
+        self.mkmmd_loss_max = MkMmdLoss(device=self.device, minimize_type_two_error=False, normalize_features=True).to(
+            self.device
+        )
         self.beta_global_update_interval = beta_global_update_interval
         if self.beta_global_update_interval is None:
             log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")

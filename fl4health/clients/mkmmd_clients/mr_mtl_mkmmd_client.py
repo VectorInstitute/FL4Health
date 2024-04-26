@@ -84,7 +84,9 @@ class MrMtlMkmmdClient(MrMtlClient):
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
         self.mkmmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():
-            self.mkmmd_losses[layer] = MkMmdLoss(device=self.device, minimize_type_two_error=True).to(self.device)
+            self.mkmmd_losses[layer] = MkMmdLoss(
+                device=self.device, minimize_type_two_error=True, normalize_features=True
+            ).to(self.device)
 
         self.local_feature_extractor: FeatureExtractorBuffer
         self.init_global_feature_extractor: FeatureExtractorBuffer
