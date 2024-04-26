@@ -1,5 +1,5 @@
-from logging import WARNING
-from typing import Tuple
+from logging import INFO, WARNING
+from typing import Any, Tuple
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -32,6 +32,16 @@ def privacy_validate_and_fix_modules(model: nn.Module) -> Tuple[nn.Module, bool]
 
 
 def convert_model_to_opacus_model(
-    model: nn.Module, grad_sample_mode: str = "hooks", loss_reduction: str = "mean", batch_first: bool = True
+    model: nn.Module, grad_sample_mode: str = "hooks", *args: Any, **kwargs: Any
 ) -> GradSampleModule:
-    return wrap_model(model, grad_sample_mode=grad_sample_mode, batch_first=batch_first, loss_reduction=loss_reduction)
+    if isinstance(model, GradSampleModule):
+        log(INFO, f"Provided model is already of type {type(model)}, skipping conversion to Opacus model type")
+        return model
+    return wrap_model(model, grad_sample_mode=grad_sample_mode, *args, **kwargs)
+
+
+def map_model_to_opacus_model(
+    model: nn.Module, grad_sample_mode: str = "hooks", *args: Any, **kwargs: Any
+) -> GradSampleModule:
+    model, _ = privacy_validate_and_fix_modules(model)
+    return convert_model_to_opacus_model(model, grad_sample_mode, *args, **kwargs)

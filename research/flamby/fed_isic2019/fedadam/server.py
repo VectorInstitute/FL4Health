@@ -11,8 +11,8 @@ from flwr.server.strategy import FedAdam
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.flamby.fed_isic2019.fedadam.fedadam_model import FedAdamEfficientNet
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import fit_config

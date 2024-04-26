@@ -10,8 +10,8 @@ from flwr.server.server import fit_clients
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
-from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
-from fl4health.strategies.scaffold import Scaffold
+from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
+from fl4health.strategies.scaffold import OpacusScaffold, Scaffold
 
 
 class ScaffoldServer(FlServer):
@@ -133,14 +133,14 @@ class ScaffoldServer(FlServer):
         return super().fit(num_rounds=num_rounds, timeout=timeout)
 
 
-class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
+class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
     def __init__(
         self,
         client_manager: ClientManager,
         noise_multiplier: int,
         batch_size: int,
         num_server_rounds: int,
-        strategy: Scaffold,
+        strategy: OpacusScaffold,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
@@ -181,6 +181,8 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
         """
+        # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
+        assert isinstance(strategy, OpacusScaffold)
         ScaffoldServer.__init__(
             self,
             client_manager=client_manager,
@@ -189,7 +191,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
             checkpointer=checkpointer,
             warm_start=warm_start,
         )
-        InstanceLevelDPServer.__init__(
+        InstanceLevelDpServer.__init__(
             self,
             client_manager=client_manager,
             strategy=strategy,
@@ -217,4 +219,4 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDPServer):
         """
         assert isinstance(self.strategy, Scaffold)
         # Now that we initialized the parameters for scaffold, call instance level privacy fit
-        return InstanceLevelDPServer.fit(self, num_rounds=num_rounds, timeout=timeout)
+        return InstanceLevelDpServer.fit(self, num_rounds=num_rounds, timeout=timeout)
