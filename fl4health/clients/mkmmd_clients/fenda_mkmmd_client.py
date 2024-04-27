@@ -219,7 +219,7 @@ class FendaMkmmdClient(FendaClient):
 
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
-        if self.mkmmd_loss_weights:
+        if self.mkmmd_loss_weights and self.aggregated_global_module:
             mkmmd_loss_min, mkmmd_loss_max = self.get_mkmmd_loss(
                 local_features=features["local_features"],
                 global_features=features["global_features"],
