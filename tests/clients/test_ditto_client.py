@@ -20,6 +20,7 @@ def test_setting_initial_weights(get_client: DittoClient) -> None:  # noqa
 
     params = [val.cpu().numpy() + 1.0 for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(1)
 
     # First fitting round we should set both the global and local models to params and store the global model values
     assert ditto_client.initial_global_tensors is not None
@@ -39,6 +40,7 @@ def test_setting_initial_weights(get_client: DittoClient) -> None:  # noqa
     config = {"current_server_round": 2}
     params = [param + 1.0 for param in params]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(2)
     # Make sure that we saved the right parameters
     for layer_init_global_tensor, layer_params in zip(ditto_client.initial_global_tensors, params):
         assert pytest.approx(torch.sum(layer_init_global_tensor - layer_params), abs=0.0001) == 0.0
@@ -56,13 +58,18 @@ def test_forming_ditto_loss(get_client: DittoClient) -> None:  # noqa
     ditto_client = get_client
     ditto_client.global_model = SmallCnn()
     ditto_client.parameter_exchanger = FullParameterExchanger()
+    ditto_client.lam = 1.0
     config: Config = {"current_server_round": 2}
 
     params = [val.cpu().numpy() + 0.1 for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(4)
 
-    ditto_loss = ditto_client.get_ditto_drift_loss()
+    ditto_loss = ditto_client.ditto_loss_function(
+        ditto_client.model, ditto_client.initial_global_tensors, ditto_client.lam
+    )
 
+    assert ditto_client.lam == 1.0
     assert pytest.approx(ditto_loss.detach().item(), abs=0.02) == (ditto_client.lam / 2.0) * (
         1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32
     )
@@ -76,9 +83,11 @@ def test_compute_loss(get_client: DittoClient) -> None:  # noqa
     ditto_client.parameter_exchanger = FullParameterExchanger()
     config: Config = {"current_server_round": 2}
     ditto_client.criterion = torch.nn.CrossEntropyLoss()
+    ditto_client.lam = 1.0
 
     params = [val.cpu().numpy() for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
+    ditto_client.update_before_train(4)
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
 
@@ -93,5 +102,6 @@ def test_compute_loss(get_client: DittoClient) -> None:  # noqa
     ditto_client.model.eval()
     evaluation_loss = ditto_client.compute_evaluation_loss(preds, {}, target)
     assert isinstance(training_loss.backward, dict)
+    assert pytest.approx(54.7938, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()

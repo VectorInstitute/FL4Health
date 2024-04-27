@@ -14,7 +14,7 @@ from tests.test_utils.models_for_test import SmallCnn
 def test_setting_global_weights(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
-    mr_mtl_client.init_global_model = SmallCnn()
+    mr_mtl_client.initial_global_model = SmallCnn()
     mr_mtl_client.parameter_exchanger = FullParameterExchanger()
     config: Config = {}
 
@@ -24,7 +24,7 @@ def test_setting_global_weights(get_client: MrMtlClient) -> None:  # noqa
 
     # We should set only init global model to params and store the global model values
     # Make sure that we saved the right parameters
-    for layer_init_global_tensor, layer_params in zip(mr_mtl_client.init_global_model.parameters(), params):
+    for layer_init_global_tensor, layer_params in zip(mr_mtl_client.initial_global_model.parameters(), params):
         assert pytest.approx(torch.sum(layer_init_global_tensor.detach() - layer_params), abs=0.0001) == 0.0
 
     # Make sure the local model was kept same
@@ -36,16 +36,19 @@ def test_setting_global_weights(get_client: MrMtlClient) -> None:  # noqa
 def test_forming_mr_loss(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
-    mr_mtl_client.init_global_model = SmallCnn()
+    mr_mtl_client.initial_global_model = SmallCnn()
     mr_mtl_client.parameter_exchanger = FullParameterExchanger()
     config: Config = {}
 
     params = [val.cpu().numpy() + 0.1 for _, val in mr_mtl_client.model.state_dict().items()]
     mr_mtl_client.set_parameters(params, config, fitting_round=True)
+    mr_mtl_client.update_before_train(4)
 
-    mr_loss = mr_mtl_client.get_mr_drift_loss()
+    mr_mtl_loss = mr_mtl_client.mr_mtl_loss_function(
+        mr_mtl_client.model, mr_mtl_client.initial_global_tensors, mr_mtl_client.lam
+    )
 
-    assert pytest.approx(mr_loss.detach().item(), abs=0.02) == (mr_mtl_client.lam / 2.0) * (
+    assert pytest.approx(mr_mtl_loss.detach().item(), abs=0.02) == (mr_mtl_client.lam / 2.0) * (
         1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32
     )
 
@@ -54,15 +57,16 @@ def test_forming_mr_loss(get_client: MrMtlClient) -> None:  # noqa
 def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
-    mr_mtl_client.init_global_model = SmallCnn()
-    mr_mtl_client.init_global_model.eval()
+    mr_mtl_client.initial_global_model = SmallCnn()
+    mr_mtl_client.initial_global_model.eval()
     mr_mtl_client.parameter_exchanger = FullParameterExchanger()
     config: Config = {}
     mr_mtl_client.criterion = torch.nn.CrossEntropyLoss()
+    mr_mtl_client.lam = 1.0
 
     params = [val.cpu().numpy() for _, val in mr_mtl_client.model.state_dict().items()]
     mr_mtl_client.set_parameters(params, config, fitting_round=True)
-    mr_mtl_client.update_before_train(current_server_round=0)
+    mr_mtl_client.update_before_train(current_server_round=4)
 
     # Make sure the local model is set to train
     assert mr_mtl_client.model.training is True
@@ -70,8 +74,8 @@ def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
         assert param.requires_grad is True
 
     # Make sure the initial global model is not set to train
-    assert mr_mtl_client.init_global_model.training is False
-    for param in mr_mtl_client.init_global_model.parameters():
+    assert mr_mtl_client.initial_global_model.training is False
+    for param in mr_mtl_client.initial_global_model.parameters():
         assert param.requires_grad is False
 
     perturbed_params = [layer_weights + 0.1 for layer_weights in params]
@@ -86,5 +90,6 @@ def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
     mr_mtl_client.model.eval()
     evaluation_loss = mr_mtl_client.compute_evaluation_loss(preds, {}, target)
     assert isinstance(training_loss.backward, dict)
+    assert pytest.approx(54.7938, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
