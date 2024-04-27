@@ -260,7 +260,7 @@ async def run_smoke_test(
     # client assertions
     client_errors = []
     for i in range(len(full_client_outputs)):
-        assert "error" in full_client_outputs[i].lower(), (
+        assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
         )
         assert "Disconnect and shut down" in full_client_outputs[i], (
