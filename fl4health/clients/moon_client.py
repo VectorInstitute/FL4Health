@@ -1,4 +1,4 @@
-from logging import ERROR
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
@@ -40,7 +40,7 @@ class MoonClient(BasicClient):
         )
         self.contrastive_weight = contrastive_weight
         if self.contrastive_weight == 0:
-            log(ERROR, "Contrastive loss weight is set to 0, thus Contrastive loss will not be computed.")
+            log(INFO, "Contrastive loss weight is set to 0, thus Contrastive loss will not be computed.")
         self.contrastive_loss = ContrastiveLoss(self.device, temperature=temperature)
         # Saving previous local models and global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
