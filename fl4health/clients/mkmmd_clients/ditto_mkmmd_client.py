@@ -254,11 +254,15 @@ class DittoMkmmdClient(DittoClient):
                         X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
                     )
             # Compute MK-MMD loss
-            mkmmd_loss = torch.tensor(0.0, device=self.device)
+            total_mkmmd_loss = torch.tensor(0.0, device=self.device)
             for layer in self.flatten_feature_extraction_layers.keys():
-                mkmmd_loss += self.mkmmd_losses[layer](features[layer], features[" ".join(["init_global", layer])])
-            total_loss += self.mkmmd_loss_weight * mkmmd_loss
-            additional_losses["mkmmd_loss"] = mkmmd_loss
+                layer_mkmmd_loss = self.mkmmd_losses[layer](
+                    features[layer], features[" ".join(["init_global", layer])]
+                )
+                additional_losses["_".join(["mkmmd_loss", layer])] = total_mkmmd_loss
+                total_mkmmd_loss += layer_mkmmd_loss
+            total_loss += self.mkmmd_loss_weight * total_mkmmd_loss
+            additional_losses["mkmmd_loss_total"] = total_mkmmd_loss
         if self.feature_l2_norm_weight:
             # Compute the average L2 norm of the features over the batch
             feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
