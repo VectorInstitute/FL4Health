@@ -86,7 +86,7 @@ class DittoMkmmdClient(DittoClient):
         self.mkmmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
-                device=self.device, minimize_type_two_error=True, normalize_features=True
+                device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
             ).to(self.device)
 
         self.init_global_model: nn.Module

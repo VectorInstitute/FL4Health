@@ -18,6 +18,7 @@ class MkMmdLoss(torch.nn.Module):
         betas: Optional[torch.Tensor] = None,
         minimize_type_two_error: bool = True,
         normalize_features: bool = False,
+        layer_name: Optional[str] = None,
     ) -> None:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
@@ -36,6 +37,7 @@ class MkMmdLoss(torch.nn.Module):
                 second coincides with trying to maximize their feature distance. Defaults to True.
             normalize_features (Optional[bool], optional): Whether to normalize the features to have unit length before
                 computing the MK-MMD and optimizing betas. Defaults to False.
+            layer_name (Optional[str], optional): The name of the layer to extract features from. Defaults to None.
         """
         super().__init__()
         self.device = device
@@ -58,6 +60,7 @@ class MkMmdLoss(torch.nn.Module):
 
         self.minimize_type_two_error = minimize_type_two_error
         self.normalize_features = normalize_features
+        self.layer_name = layer_name
 
     def construct_quadruples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
@@ -282,7 +285,10 @@ class MkMmdLoss(torch.nn.Module):
                 unnormalized_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
             except Exception as e:
                 # If we can't solve the QP due to infeasibility, then we keep the previous betas
-                log(INFO, f"{e} We keep previous betas.")
+                if self.layer_name is not None:
+                    log(INFO, f"{e} We keep previous betas for layer {self.layer_name}.")
+                else:
+                    log(INFO, f"{e} We keep previous betas.")
                 unnormalized_betas = self.betas
         else:
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
