@@ -122,7 +122,7 @@ class DittoMkmmdClient(DittoClient):
         return step_at_interval and valid_components_present
 
     def update_after_step(self, step: int) -> None:
-        if self.beta_global_update_interval is not None and self._should_optimize_betas(step):
+        if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
             assert self.init_global_model is not None
             # Get the feature distribution of the local and init global features with evaluation mode
             local_distributions, init_global_distributions = self.update_buffers(self.model, self.init_global_model)
@@ -247,7 +247,7 @@ class DittoMkmmdClient(DittoClient):
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
         if self.mkmmd_loss_weight != 0:
-            if self.beta_global_update_interval is None:
+            if self.beta_global_update_interval == -1:
                 # Update betas for the MK-MMD loss based on computed features during training
                 for layer in self.flatten_feature_extraction_layers.keys():
                     self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
