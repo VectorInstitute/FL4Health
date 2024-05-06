@@ -131,6 +131,7 @@ class BestLossTorchCheckpointer(FunctionTorchCheckpointer):
                 checkpointer will not create it if it does not.
             checkpoint_name (str): Name of the checkpoint to be saved.
         """
+
         # The BestLossTorchCheckpointer just uses the provided loss to scoring checkpoints. More complicated
         # approaches may be used by other classes.
         def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:

@@ -111,6 +111,7 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
             checkpoint_dir (str): Directory to save checkpoint state to
             checkpoint_name (str): Name of the file to which state is to be saved to.
         """
+
         # This function is required by the parent class, but not used in the LatestOpacusCheckpointer
         def latest_score_function(loss: float, _: Dict[str, Scalar]) -> float:
             return 0.0
@@ -137,6 +138,7 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
                 checkpointer will not create it if it does not.
             checkpoint_name (str): Name of the checkpoint to be saved.
         """
+
         # The BestLossOpacusCheckpointer just uses the provided loss to scoring checkpoints. More complicated
         # approaches may be used by other classes.
         def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:

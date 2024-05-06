@@ -182,7 +182,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 being 1/total_samples in the FL run. Defaults to None.
         """
         # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
-        assert isinstance(strategy, OpacusScaffold)
+        assert isinstance(
+            strategy, OpacusScaffold
+        ), f"Strategy much be of type OpacusScaffold to handle Opacus models but is of type {type(strategy)}"
         ScaffoldServer.__init__(
             self,
             client_manager=client_manager,
