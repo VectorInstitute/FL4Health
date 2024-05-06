@@ -106,22 +106,18 @@ class FunctionTorchCheckpointer(TorchCheckpointer):
             )
 
 
-def null_score_function(loss: float, _: Dict[str, Scalar]) -> float:
-    return 0.0
-
-
 class LatestTorchCheckpointer(FunctionTorchCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
+        # This function is required by the parent class, but not used in the LatestTorchCheckpointer
+        def null_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+            return 0.0
+
         super().__init__(checkpoint_dir, checkpoint_name, null_score_function, False)
 
     def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
         torch.save(model, self.best_checkpoint_path)
-
-
-def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
-    return loss
 
 
 class BestLossTorchCheckpointer(FunctionTorchCheckpointer):
@@ -135,6 +131,11 @@ class BestLossTorchCheckpointer(FunctionTorchCheckpointer):
                 checkpointer will not create it if it does not.
             checkpoint_name (str): Name of the checkpoint to be saved.
         """
+        # The BestLossTorchCheckpointer just uses the provided loss to scoring checkpoints. More complicated
+        # approaches may be used by other classes.
+        def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+            return loss
+
         super().__init__(
             checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
         )
