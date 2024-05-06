@@ -17,7 +17,7 @@ class OpacusCheckpointer(FunctionTorchCheckpointer):
     fixes this issue.
     """
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: Dict[str, Scalar]) -> None:
         """
         Overriding the checkpointing strategy of the FunctionTorchCheckpointer to save model state dictionaries
         instead of using the torch.save workflow.
@@ -49,8 +49,8 @@ class OpacusCheckpointer(FunctionTorchCheckpointer):
 
     def _process_state_dict_keys(self, opacus_state_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
-        # State dictionary keys for Opacus modules will be prefixed with an _module. So we remove these when loading
-        # the state information into a standard torch model.
+        State dictionary keys for Opacus modules will be prefixed with an _module. So we remove these when loading
+        the state information into a standard torch model.
 
         Args:
             opacus_state_dict (Dict[str, Any]): A state dictionary produced by an Opacus GradSamplingModule
@@ -101,10 +101,6 @@ class OpacusCheckpointer(FunctionTorchCheckpointer):
             target_model.load_state_dict(model_state_dict, strict=True)
 
 
-def latest_score_function(loss: float, _: Dict[str, Scalar]) -> float:
-    return 0.0
-
-
 class LatestOpacusCheckpointer(OpacusCheckpointer):
     def __init__(self, checkpoint_dir: str, checkpoint_name: str) -> None:
         """
@@ -115,19 +111,19 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
             checkpoint_dir (str): Directory to save checkpoint state to
             checkpoint_name (str): Name of the file to which state is to be saved to.
         """
+        # This function is required by the parent class, but not used in the LatestOpacusCheckpointer
+        def latest_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+            return 0.0
+
         super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, False)
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, _: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: Dict[str, Scalar]) -> None:
         assert isinstance(
             model, GradSampleModule
         ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
         self._extract_and_save_state(model)
-
-
-def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
-    return loss
 
 
 class BestLossOpacusCheckpointer(OpacusCheckpointer):
@@ -141,11 +137,16 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
                 checkpointer will not create it if it does not.
             checkpoint_name (str): Name of the checkpoint to be saved.
         """
+        # The BestLossOpacusCheckpointer just uses the provided loss to scoring checkpoints. More complicated
+        # approaches may be used by other classes.
+        def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+            return loss
+
         super().__init__(
             checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
         )
 
-    def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: Dict[str, Scalar]) -> None:
         assert isinstance(
             model, GradSampleModule
         ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
