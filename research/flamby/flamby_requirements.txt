@@ -180,7 +180,7 @@ torcheval==0.0.7
 torchinfo==1.8.0
 torchtext==0.15.2
 torchvision==0.15.2
-tqdm==4.65.0
+tqdm==4.66.3
 traceback2==1.4.0
 types-protobuf==4.23.0.1
 types-PyYAML==6.0.12.10
