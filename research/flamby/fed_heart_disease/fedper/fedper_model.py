@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fedper_base import FedPerModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 
 
 class BaseLogistic(nn.Module):
@@ -34,7 +34,7 @@ class HeadClassifier(nn.Module):
         return x
 
 
-class FedHeartDiseaseFedPerModel(FedPerModel):
+class FedHeartDiseaseFedPerModel(SequentiallySplitExchangeBaseModel):
     def __init__(self) -> None:
         base_module = BaseLogistic()
         head_module = HeadClassifier(10)
