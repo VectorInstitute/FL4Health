@@ -11,8 +11,8 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_heart_disease.moon.moon_model import FedHeartDiseaseMoonModel
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer

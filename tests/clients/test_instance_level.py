@@ -12,7 +12,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, Net
-from fl4health.clients.scaffold_client import InstanceLevelPrivacyClient
+from fl4health.clients.scaffold_client import InstanceLevelDpClient
 from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
@@ -32,7 +32,7 @@ class DummyDataset(BaseDataset):
         return self.data[index], self.targets[index]
 
 
-class ClientForTest(InstanceLevelPrivacyClient):
+class ClientForTest(InstanceLevelDpClient):
     def get_model(self, config: Config) -> nn.Module:
         model = MnistNetWithBnAndFrozen(freeze_cnn_layer=True).to(self.device)
         model.bn.weight = nn.Parameter(10 * torch.ones_like(model.bn.weight))
@@ -42,8 +42,8 @@ class ClientForTest(InstanceLevelPrivacyClient):
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
 
-@pytest.mark.parametrize("type,model", [(InstanceLevelPrivacyClient, Net())])
-def test_instance_level_client(get_client: InstanceLevelPrivacyClient) -> None:  # noqa
+@pytest.mark.parametrize("type,model", [(InstanceLevelDpClient, Net())])
+def test_instance_level_client(get_client: InstanceLevelDpClient) -> None:  # noqa
     client = get_client
     client.setup_opacus_objects({})
 

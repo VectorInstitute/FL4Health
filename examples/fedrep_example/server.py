@@ -14,8 +14,8 @@ from examples.models.sequential_split_models import (
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def fit_config(

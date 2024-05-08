@@ -13,7 +13,7 @@ from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.fedper_client import FedPerClient
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
+from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
@@ -51,8 +51,8 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         client.parameter_exchanger = FullParameterExchanger()
     elif type == FendaClient:
         client = FendaClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-    elif type == InstanceLevelPrivacyClient:
-        client = InstanceLevelPrivacyClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    elif type == InstanceLevelDpClient:
+        client = InstanceLevelDpClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.noise_multiplier = 1.0
         client.clipping_bound = 5.0
     elif type == DPScaffoldClient:

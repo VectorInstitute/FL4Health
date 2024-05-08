@@ -12,9 +12,9 @@ from fl4health.utils.metrics import Metric
 from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
 
 
-class InstanceLevelPrivacyClient(BasicClient):
+class InstanceLevelDpClient(BasicClient):
     """
-    Client for Instance Differentially Private Federated Averaging
+    Client for Instance/Record level Differentially Private Federated Averaging
     """
 
     def __init__(
