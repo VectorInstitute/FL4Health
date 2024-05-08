@@ -80,7 +80,6 @@ class SingleNodeTrainer:
         return loss, {"predictions": preds}
 
     def train_by_epochs(self, epochs: int, train_metric_mngr: MetricManager, val_metric_mngr: MetricManager) -> None:
-
         for epoch in range(self.epoch, epochs):
             train_metric_mngr.clear()
             val_metric_mngr.clear()
