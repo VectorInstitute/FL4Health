@@ -51,7 +51,6 @@ def main(config: Dict[str, Any]) -> None:
     initial_model = SequentiallySplitExchangeBaseModel(
         base_module=SequentialGlobalFeatureExtractorMnist(),
         head_module=SequentialLocalPredictionHeadMnist(),
-        flatten_features=True,
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

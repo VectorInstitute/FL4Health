@@ -57,7 +57,7 @@ class SequentiallySplitModel(nn.Module):
         """
         Run a forward pass using the sequentially split modules base_module -> head_module. Features from the
         base_module are stored either in their original shapes are flattened to be of shape (batch_size, -1) depending
-        on self.flatted_features
+        on self.flatten_features
 
         Args:
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
