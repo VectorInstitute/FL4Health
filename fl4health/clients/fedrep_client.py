@@ -41,24 +41,48 @@ class FedRepClient(BasicClient):
         self.fedrep_train_mode = FedRepTrainMode.HEAD
 
     def _prepare_train_representations(self) -> None:
+        """
+        Handles the components switching needed to train the representation submodule as required by FedRep. This
+        includes:
+            1) Setting the training mode enum to know which optimizer should be stepping during training
+            2) Unfreezing the base module, which represents the feature extractor (if frozen)
+            3) Freezing the weights of the head module representing the classification layers.
+        """
         assert isinstance(self.model, FedRepModel)
         self.fedrep_train_mode = FedRepTrainMode.REPRESENTATION
         self.model.unfreeze_base_module()
         self.model.freeze_head_module()
 
     def _prepare_train_head(self) -> None:
+        """
+        Handles the components switching needed to train the classification submodule as required by FedRep. This
+        includes:
+            1) Setting the training mode enum to know which optimizer should be stepping during training
+            2) Freezing the base module, which represents the feature extractor.
+            3) Unfreezing the weights of the head module representing the classification layers (if frozen).
+        """
         assert isinstance(self.model, FedRepModel)
         self.fedrep_train_mode = FedRepTrainMode.HEAD
         self.model.unfreeze_head_module()
         self.model.freeze_base_module()
 
     def _prefix_loss_and_metrics_dictionaries(
-        self, prefix: str, loss_dict: Dict[str, float], metrics: Dict[str, Scalar]
+        self, prefix: str, loss_dict: Dict[str, float], metrics_dict: Dict[str, Scalar]
     ) -> None:
+        """
+        This method is used to added the provided prefix string to the keys of both the loss_dict and the metrics_dict
+        This function is used to separate the losses and metrics values obtained during local training of the head and
+        feature extraction modules of FedRep, which occur separately and sequentially for the approach.
+
+        Args:
+            prefix (str): Prefix to be attached to all keys of the provided dictionaries.
+            loss_dict (Dict[str, float]): Dictionary of loss values obtained during training.
+            metrics (Dict[str, Scalar]): Dictionary of metrics values measured during training
+        """
         for loss_key in list(loss_dict):
             loss_dict[f"{prefix}_{loss_key}"] = loss_dict.pop(loss_key)
-        for metrics_key in list(metrics):
-            metrics[f"{prefix}_{metrics_key}"] = metrics.pop(metrics_key)
+        for metrics_key in list(metrics_dict):
+            metrics_dict[f"{prefix}_{metrics_key}"] = metrics_dict.pop(metrics_key)
 
     def _extract_epochs_or_steps_specified(self, config: Config) -> EpochsAndStepsTuple:
         """
@@ -111,7 +135,7 @@ class FedRepClient(BasicClient):
         """
         Method to ensure the required keys are present in config and extracts values to be returned. We override this
         functionality from the BasicClient, because FedRep has slightly different requirements. That is, one needs
-        to specify a number of epochs or steps to do for BOTH the head module AND then the representation module
+        to specify a number of epochs or steps to do for BOTH the head module AND the representation module
 
         Args:
             config (Config): The config from the server.
@@ -250,20 +274,24 @@ class FedRepClient(BasicClient):
         # First we train the head module for head_epochs with the representations frozen in place
         self._prepare_train_head()
         log(INFO, f"Beginning FedRep Head Training Phase for {head_epochs} Epochs")
-        loss_dict_head, metrics_head = self.train_by_epochs(head_epochs, current_round)
+        loss_dict_head, metrics_dict_head = self.train_by_epochs(head_epochs, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for head training")
-        self._prefix_loss_and_metrics_dictionaries("head", loss_dict_head, metrics_head)
+        # The loss and metrics coming from train_by_epochs are generically keyed, for example "backward." To avoid
+        # clashing or being overwritten by the rep module training below, we prefix these keys.
+        self._prefix_loss_and_metrics_dictionaries("head", loss_dict_head, metrics_dict_head)
 
         # Second we train the representation module for rep_epochs with the head module frozen in place
         self._prepare_train_representations()
         log(INFO, f"Beginning FedRep Representation Training Phase for {rep_epochs} Epochs")
-        loss_dict_rep, metrics_rep = self.train_by_epochs(rep_epochs, current_round)
+        loss_dict_rep, metrics_dict_rep = self.train_by_epochs(rep_epochs, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for Rep training")
-        self._prefix_loss_and_metrics_dictionaries("rep", loss_dict_rep, metrics_rep)
+        # The loss and metrics coming from train_by_epochs are generically keyed, for example "backward." To avoid
+        # clashing or being overwritten by the head module training above, we prefix these keys.
+        self._prefix_loss_and_metrics_dictionaries("rep", loss_dict_rep, metrics_dict_rep)
         log(INFO, "Merging the loss and training dictionaries")
         loss_dict_head.update(loss_dict_rep)
-        metrics_head.update(metrics_rep)
-        return loss_dict_head, metrics_head
+        metrics_dict_head.update(metrics_dict_rep)
+        return loss_dict_head, metrics_dict_head
 
     def train_fedrep_by_steps(
         self, head_steps: int, rep_steps: int, current_round: Optional[int] = None
@@ -282,20 +310,24 @@ class FedRepClient(BasicClient):
         # First we train the head module for head_steps with the representations frozen in place
         self._prepare_train_head()
         log(INFO, f"Beginning FedRep Head Training Phase for {head_steps} Steps")
-        loss_dict_head, metrics_head = self.train_by_steps(head_steps, current_round)
+        loss_dict_head, metrics_dict_head = self.train_by_steps(head_steps, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for head training")
-        self._prefix_loss_and_metrics_dictionaries("head", loss_dict_head, metrics_head)
+        # The loss and metrics coming from train_by_steps are generically keyed, for example "backward." To avoid
+        # clashing or being overwritten by the rep module training below, we prefix these keys.
+        self._prefix_loss_and_metrics_dictionaries("head", loss_dict_head, metrics_dict_head)
 
         # Second we train the representation module for rep_steps with the head module frozen in place
         self._prepare_train_representations()
         log(INFO, f"Beginning FedRep Representation Training Phase for {rep_steps} Steps")
-        loss_dict_rep, metrics_rep = self.train_by_steps(rep_steps, current_round)
+        loss_dict_rep, metrics_dict_rep = self.train_by_steps(rep_steps, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for Rep training")
-        self._prefix_loss_and_metrics_dictionaries("rep", loss_dict_rep, metrics_rep)
+        # The loss and metrics coming from train_by_steps are generically keyed, for example "backward." To avoid
+        # clashing or being overwritten by the head module training above, we prefix these keys.
+        self._prefix_loss_and_metrics_dictionaries("rep", loss_dict_rep, metrics_dict_rep)
         log(INFO, "Merging the loss and training dictionaries")
         loss_dict_head.update(loss_dict_rep)
-        metrics_head.update(metrics_rep)
-        return loss_dict_head, metrics_head
+        metrics_dict_head.update(metrics_dict_rep)
+        return loss_dict_head, metrics_dict_head
 
     def train_step(
         self, input: TorchInputType, target: torch.Tensor
