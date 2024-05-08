@@ -10,6 +10,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
+from fl4health.clients.fedper_client import FedPerClient
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
@@ -41,6 +42,8 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
     elif type == FedRepClient:
         client = FedRepClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    elif type == FedPerClient:
+        client = FedPerClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == MrMtlClient:
         client = MrMtlClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
     elif type == MoonClient:

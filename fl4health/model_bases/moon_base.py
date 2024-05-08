@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Tuple
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -23,17 +23,25 @@ class MoonModel(SequentiallySplitModel):
                 they are passed to the head_module. Defaults to None.
         """
 
-        # Features are forced to be stored in this model, as it is expected to always be used with the contrastive
-        # loss function.
-        super().__init__(base_module, head_module)
+        # Features are forced to be stored and flattened in this model, as it is expected to always be used with the
+        # contrastive loss function.
+        super().__init__(base_module, head_module, flatten_features=True)
         self.projection_module = projection_module
 
-    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        # input is expected to be of shape (batch_size, *)
-        x = self.base_module.forward(input)
-        features = self.projection_module.forward(x) if self.projection_module else x
-        predictions = {"prediction": self.head_module.forward(features)}
+    def sequential_forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Overriding the sequential forward of the SequentiallySplitModel parent to allow for the injection of a
+        projection module into the forward pass. The remainder of the functionality stays the same. That is,
+        We run a forward pass using the sequentially split modules base_module -> head_module.
 
-        # Return preds and features
-        # Features to be returned are always flattened to be compatible with contrastive loss calculations
-        return predictions, {"features": features.reshape(len(features), -1)}
+        Args:
+            input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
+        """
+        x = self.base_module.forward(input)
+        # A projection module is optionally specified for MOON models. If no module is provided, it is simply skipped
+        features = self.projection_module.forward(x) if self.projection_module else x
+        predictions = self.head_module.forward(features)
+        return predictions, features
