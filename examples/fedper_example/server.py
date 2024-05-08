@@ -12,7 +12,7 @@ from examples.models.sequential_split_models import (
     SequentialLocalPredictionHeadMnist,
 )
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.model_bases.fedper_base import FedPerModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -47,10 +47,10 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = FedPerModel(
-        global_feature_extractor=SequentialGlobalFeatureExtractorMnist(),
-        local_prediction_head=SequentialLocalPredictionHeadMnist(),
-        flatten_features=True,
+    # FedPer Models are just SequentiallySplitExchangeBaseModel
+    initial_model = SequentiallySplitExchangeBaseModel(
+        base_module=SequentialGlobalFeatureExtractorMnist(),
+        head_module=SequentialLocalPredictionHeadMnist(),
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

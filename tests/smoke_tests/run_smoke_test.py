@@ -155,7 +155,7 @@ async def run_smoke_test(
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
     startup_messages = [
-        # printed by fedprox, apfl, basic_example, fedbn, fedper, FENDA, fl_plus_local_ft and moon
+        # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft and moon
         "FL starting",
         # printed by scaffold
         "Using Warm Start Strategy. Waiting for clients to be available for polling",

@@ -15,7 +15,7 @@ from examples.models.sequential_split_models import (
     SequentialLocalPredictionHeadMnist,
 )
 from fl4health.clients.fedper_client import FedPerClient
-from fl4health.model_bases.fedper_base import FedPerModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
@@ -40,9 +40,9 @@ class MnistFedPerClient(FedPerClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FedPerModel(
-            global_feature_extractor=SequentialGlobalFeatureExtractorMnist(),
-            local_prediction_head=SequentialLocalPredictionHeadMnist(),
+        model: nn.Module = SequentiallySplitExchangeBaseModel(
+            base_module=SequentialGlobalFeatureExtractorMnist(),
+            head_module=SequentialLocalPredictionHeadMnist(),
         ).to(self.device)
         return model
 
