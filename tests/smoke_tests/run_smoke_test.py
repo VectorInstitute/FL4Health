@@ -155,7 +155,7 @@ async def run_smoke_test(
     # times out after 20s of inactivity if it doesn't find the log message
     full_server_output = ""
     startup_messages = [
-        # printed by fedprox, apfl, basic_example, fedbn, fedper, fenda, fl_plus_local_ft and moon
+        # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft and moon
         "FL starting",
         # printed by scaffold
         "Using Warm Start Strategy. Waiting for clients to be available for polling",
@@ -559,6 +559,22 @@ if __name__ == "__main__":
             server_python_path="examples.fedper_example.server",
             client_python_path="examples.fedper_example.client",
             config_path="tests/smoke_tests/fedper_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedrep_example.server",
+            client_python_path="examples.fedrep_example.client",
+            config_path="tests/smoke_tests/fedrep_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.ditto_example.server",
+            client_python_path="examples.ditto_example.client",
+            config_path="tests/smoke_tests/ditto_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
         )
     )
