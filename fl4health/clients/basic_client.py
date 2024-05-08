@@ -15,7 +15,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ClientWandBReporter
@@ -34,7 +34,7 @@ class BasicClient(NumPyClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
@@ -91,16 +91,16 @@ class BasicClient(NumPyClient):
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
 
-    def _maybe_checkpoint(self, current_metric_value: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """
-        If checkpointer exists, maybe checkpoint model based on the current comparison metric value.
+        If checkpointer exists, maybe checkpoint model based on the provided metric values.
 
         Args:
-            current_metric_value (float): The metric value obtained by the current model.
-                Used to decide if to checkpoint model by checkpointer.
+            loss (float): validation loss to potentially be used for checkpointing
+            metrics (Dict[str, float]): validation metrics to potentially be used for checkpointing
         """
         if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, current_metric_value)
+            self.checkpointer.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
 
     def generate_hash(self, length: int = 8) -> str:
         """
@@ -281,8 +281,11 @@ class BasicClient(NumPyClient):
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
-        if evaluate_after_fit:
-            metrics.update(self.evaluate_after_fit())
+        if self._should_evaluate_after_fit(evaluate_after_fit):
+            validation_loss, validation_metrics = self.evaluate_after_fit()
+            metrics.update(validation_metrics)
+            # We perform a pre-aggregation checkpoint if applicable
+            self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -300,7 +303,7 @@ class BasicClient(NumPyClient):
             metrics,
         )
 
-    def evaluate_after_fit(self) -> Dict[str, Scalar]:
+    def evaluate_after_fit(self) -> Tuple[float, Dict[str, Scalar]]:
         """
         Run self.validate right after fit to collect metrics on the local model against validation data.
 
@@ -308,11 +311,12 @@ class BasicClient(NumPyClient):
 
         """
         loss, metric_values = self.validate()
+        # The computed loss value is packed into the metrics dictionary, perhaps for use on the server-side
         metrics_after_fit = {
             **metric_values,  # type: ignore
             "val - loss": loss,
         }
-        return metrics_after_fit
+        return loss, metrics_after_fit
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
@@ -336,12 +340,16 @@ class BasicClient(NumPyClient):
         )
 
         self.set_parameters(parameters, config, fitting_round=False)
-        loss, metric_values = self.validate()
+        loss, metrics = self.validate()
+
+        # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
+        # NOTE: This assumes that the loss returned in the checkpointing loss
+        self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={
-                "evaluate_metrics": metric_values,
+                "evaluate_metrics": metrics,
                 "loss": loss,
             },
         )
@@ -351,8 +359,26 @@ class BasicClient(NumPyClient):
         return (
             loss,
             self.num_val_samples,
-            metric_values,
+            metrics,
         )
+
+    def _should_evaluate_after_fit(self, evaluate_after_fit: bool) -> bool:
+        """
+        Function to determine whether to trigger an evaluation of the model on the validation set immediately after
+        completing the local training round. The user can request this explicitly by setting evaluate_after_fit to
+        true in the config, or implicitly by specifying a pre-aggregation checkpoint module.
+
+        Args:
+            evaluate_after_fit (bool): Whether the user explicitly specified that they would like an evaluate after
+                fit to be performed through the config.
+
+        Returns:
+            bool: Whether to perform an evaluation on the client validation set after fitting.
+        """
+        pre_aggregation_checkpointing_enabled = (
+            self.checkpointer is not None and self.checkpointer.pre_aggregation is not None
+        )
+        return evaluate_after_fit or pre_aggregation_checkpointing_enabled
 
     def _handle_logging(
         self,
@@ -631,8 +657,6 @@ class BasicClient(NumPyClient):
         metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
-        # Checkpoint based on loss which is output of user defined compute_loss method
-        self._maybe_checkpoint(loss_dict["checkpoint"])
         return loss_dict["checkpoint"], metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:

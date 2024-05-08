@@ -5,7 +5,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
@@ -30,7 +30,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -237,7 +237,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,

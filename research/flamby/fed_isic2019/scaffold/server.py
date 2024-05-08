@@ -8,7 +8,7 @@ import flwr as fl
 from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
@@ -29,7 +29,7 @@ def main(
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = FixedSamplingByFractionClientManager()
     model = Baseline()
@@ -59,7 +59,7 @@ def main(
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()

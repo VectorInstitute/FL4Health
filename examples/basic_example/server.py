@@ -9,7 +9,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
@@ -43,7 +43,7 @@ def main(config: Dict[str, Any]) -> None:
     model = Net()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
+    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl")
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

@@ -7,7 +7,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
@@ -48,7 +48,7 @@ def main(config: Dict[str, Any]) -> None:
 
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name, maximize=False)
+    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedProx(

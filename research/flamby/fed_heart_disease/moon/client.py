@@ -14,7 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.moon_client import MoonClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -33,7 +34,7 @@ class FedHeartDiseaseMoonClient(MoonClient):
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         contrastive_weight: float = 10,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -133,7 +134,7 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
     client = FedHeartDiseaseMoonClient(
         data_path=Path(args.dataset_dir),
