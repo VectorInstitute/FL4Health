@@ -4,7 +4,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.typing import Config
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.losses.contrastive_loss import ContrastiveLoss
 from fl4health.model_bases.fenda_base import FendaModel
@@ -21,8 +21,8 @@ class FendaClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
-        temperature: float = 0.5,
+        checkpointer: Optional[ClientCheckpointModule] = None,
+        temperature: Optional[float] = 0.5,
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,

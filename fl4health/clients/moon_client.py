@@ -5,10 +5,10 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.logger import log
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.losses.contrastive_loss import ContrastiveLoss
-from fl4health.model_bases.moon_base import MoonModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
@@ -26,9 +26,9 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
-        checkpointer: Optional[TorchCheckpointer] = None,
         contrastive_weight: float = 0,
     ) -> None:
         super().__init__(
@@ -77,7 +77,7 @@ class MoonClient(BasicClient):
         return preds, features
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
-        assert isinstance(self.model, MoonModel)
+        assert isinstance(self.model, SequentiallySplitModel)
         # Save the parameters of the old LOCAL model
         old_model = self.clone_and_freeze_model(self.model)
         self.old_models_list.append(old_model)

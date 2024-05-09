@@ -8,8 +8,9 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -22,7 +23,7 @@ class DittoClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
     ) -> None:
         """
@@ -54,6 +55,7 @@ class DittoClient(BasicClient):
         self.initial_global_tensors: List[torch.Tensor]
         self.lam = lam
         self.global_model: nn.Module
+        self.ditto_loss_function = WeightDriftLoss(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
@@ -89,29 +91,6 @@ class DittoClient(BasicClient):
         self.global_model = self.get_model(config).to(self.device)
         # The rest of the setup is the same
         super().setup_client(config)
-
-    def get_ditto_drift_loss(self) -> torch.Tensor:
-        """
-        Compute the L2 inner product between the initial global weights for the round and the current local model
-            weights. This loss function is added to the loss function for the local model when back propagating.
-
-        Returns:
-            torch.Tensor: Returns the L2 inner product between the initial global weights of the round and the current
-                local model weights.
-        """
-        assert self.initial_global_tensors is not None and self.lam is not None
-        # Using parameters to ensure the same ordering as exchange
-        local_model_weights = [layer_weights for layer_weights in self.model.parameters()]
-        assert len(self.initial_global_tensors) == len(local_model_weights)
-        assert len(self.initial_global_tensors) > 0
-
-        layer_inner_products: List[torch.Tensor] = [
-            torch.pow(torch.linalg.norm(initial_layer_weights - iteration_layer_weights), 2.0)
-            for initial_layer_weights, iteration_layer_weights in zip(self.initial_global_tensors, local_model_weights)
-        ]
-
-        # network l2 inner product tensor weighted by lambda
-        return (self.lam / 2.0) * torch.stack(layer_inner_products).sum()
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -355,8 +334,9 @@ class DittoClient(BasicClient):
         assert additional_losses is not None
 
         # Compute ditto drift loss
-        ditto_local_loss = self.get_ditto_drift_loss()
+        ditto_local_loss = self.ditto_loss_function(self.model, self.initial_global_tensors, self.lam)
         additional_losses["ditto_loss"] = ditto_local_loss
+
 
         return TrainingLosses(backward=total_loss + ditto_local_loss, additional_losses=additional_losses)
 

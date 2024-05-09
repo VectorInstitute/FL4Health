@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from flamby.datasets.fed_ixi.model import ConvolutionalBlock
 
-from fl4health.model_bases.fedper_base import FedPerModel
-from research.flamby.fed_ixi.fedper.fedper_feature_extractor import FedPerFeatureExtactor
+from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from research.flamby.fed_ixi.fedper.fedper_feature_extractor import FedPerFeatureExtractor
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
@@ -54,7 +54,7 @@ class BaseUNetFeatureExtractor(nn.Module):
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = FedPerFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = FedPerFeatureExtractor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -63,7 +63,7 @@ class BaseUNetFeatureExtractor(nn.Module):
         return x
 
 
-class FedIxiFedPerModel(FedPerModel):
+class FedIxiFedPerModel(SequentiallySplitExchangeBaseModel):
     def __init__(
         self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 12, monte_carlo_dropout: float = 0.0
     ) -> None:

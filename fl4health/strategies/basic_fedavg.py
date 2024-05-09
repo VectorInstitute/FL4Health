@@ -18,10 +18,12 @@ from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
+from opacus import GradSampleModule
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 class BasicFedAvg(FedAvg, StrategyWithPolling):
@@ -305,3 +307,90 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             log(WARNING, "No evaluate_metrics_aggregation_fn provided")
 
         return loss_aggregated, metrics_aggregated
+
+
+class OpacusBasicFedAvg(BasicFedAvg):
+    """Configurable FedAvg strategy implementation."""
+
+    # pylint: disable=too-many-arguments,too-many-instance-attributes
+    def __init__(
+        self,
+        *,
+        model: GradSampleModule,
+        fraction_fit: float = 1.0,
+        fraction_evaluate: float = 1.0,
+        min_fit_clients: int = 2,
+        min_evaluate_clients: int = 2,
+        min_available_clients: int = 2,
+        evaluate_fn: Optional[
+            Callable[
+                [int, NDArrays, Dict[str, Scalar]],
+                Optional[Tuple[float, Dict[str, Scalar]]],
+            ]
+        ] = None,
+        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        accept_failures: bool = True,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_aggregation: bool = True,
+        weighted_eval_losses: bool = True,
+    ) -> None:
+        """
+        This strategy is a simple extension of the BasicFedAvg strategy to force the model being federally trained to
+        be an valid Opacus GradSampleModule and, thereby, ensure that associated the parameters are aligned with
+        those of Opacus based models used by the InstanceLevelDpClient.
+
+        Args:
+            model (GradSampleModule): The model architecture to be federally trained. When using this strategy,
+                the model must be of type Opacus GradSampleModule. This model will then be used to set
+                initialize_parameters as the initial parameters to be used by all clients.
+            fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
+                larger than `fraction_fit * available_clients`, `min_fit_clients` will still be sampled.
+                Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation. In case
+                `min_evaluate_clients` is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
+                will still be sampled. Defaults to 1.0.
+            min_fit_clients (int, optional): _description_. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system.
+                Defaults to 2.
+            evaluate_fn (Optional[
+                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+            ]):
+                Optional function used for central server-side evaluation. Defaults to None.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure server-side central validation by providing a Config dictionary.
+                Defaults to None.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
+                average or a uniform average. FedAvg default is weighted average by client dataset counts.
+                Defaults to True.
+            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
+                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
+                counts. Defaults to True.
+        """
+        super().__init__(
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
+            min_available_clients=min_available_clients,
+            evaluate_fn=evaluate_fn,
+            on_fit_config_fn=on_fit_config_fn,
+            on_evaluate_config_fn=on_evaluate_config_fn,
+            accept_failures=accept_failures,
+            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_aggregation=weighted_aggregation,
+            weighted_eval_losses=weighted_eval_losses,
+        )
+        assert isinstance(model, GradSampleModule), "Provided model must be Opacus type GradSampleModule"
+        # Setting the initial parameters to correspond with those of the provided model
+        self.initial_parameters = get_all_model_parameters(model)

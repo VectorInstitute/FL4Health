@@ -34,7 +34,7 @@ class PicaiServer(FlServerWithCheckpointing):
         intermediate_checkpoint_dir: Path = Path("./"),
     ) -> None:
         """
-        A simple extension of the FlServerWithCheckpointing that adds tolerance to pre-emptions by checkpointing
+        A simple extension of the FlServerWithCheckpointing that adds tolerance to preemptions by checkpointing
         the server state each round and loading from checkpoint on initialization if it exists.
 
         Args:

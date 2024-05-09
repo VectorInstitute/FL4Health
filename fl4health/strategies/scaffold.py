@@ -16,10 +16,12 @@ from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
+from opacus import GradSampleModule
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 class Scaffold(BasicFedAvg):
@@ -345,3 +347,87 @@ class Scaffold(BasicFedAvg):
         )
 
         return server_control_variates
+
+
+class OpacusScaffold(Scaffold):
+    def __init__(
+        self,
+        *,
+        model: GradSampleModule,
+        fraction_fit: float = 1.0,
+        fraction_evaluate: float = 1.0,
+        min_available_clients: int = 2,
+        evaluate_fn: Optional[
+            Callable[
+                [int, NDArrays, Dict[str, Scalar]],
+                Optional[Tuple[float, Dict[str, Scalar]]],
+            ]
+        ] = None,
+        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        accept_failures: bool = True,
+        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_eval_losses: bool = True,
+        learning_rate: float = 1.0,
+    ) -> None:
+        """
+        A simple extension of the Scaffold strategy to force the model being federally trained to be an valid Opacus
+        GradSamplingModule and, thereby, ensure that associated the parameters are aligned with those of Opacus based
+        models used by the InstanceLevelDpClient.
+
+        Args:
+            model (nn.Module): The model architecture to be federally trained. When using this strategy, the provided
+                model must be of type Opacus GradSampleModule. This model will then be used to set
+                initialize_parameters as the initial parameters to be used by all clients AND the
+                initial_control_variates.
+                **NOTE**: The initial_control_variates are all initialized to zero, as recommended in the SCAFFOLD
+                paper. If one wants a specific type of control variate initialization, this class will need to be
+                overridden.
+            fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
+            fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
+            min_available_clients (int, optional): Minimum number of total clients in the system.
+                Defaults to 2.
+            evaluate_fn (Optional[
+                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+            ]):
+                Optional function used for central server-side evaluation. Defaults to None.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+                Function used to configure training by providing a configuration dictionary. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+               Function used to configure server-side central validation by providing a Config dictionary.
+               Defaults to None.
+            accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+                Defaults to None.
+            weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
+                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
+                counts. Defaults to True.
+            learning_rate (float, optional): Learning rate for server side optimization. Defaults to 1.0.
+        """
+        assert isinstance(model, GradSampleModule), "Provided model must be Opacus type GradSampleModule"
+        # Setting the initial parameters to correspond with those of the provided model
+        initial_parameters = get_all_model_parameters(model)
+        # Initializing the control variates to be uniformly zero using the structure of the provided model.
+        initial_control_variates = ndarrays_to_parameters(
+            [np.zeros_like(val.data) for val in model.parameters() if val.requires_grad]
+        )
+
+        super().__init__(
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_available_clients=min_available_clients,
+            evaluate_fn=evaluate_fn,
+            on_fit_config_fn=on_fit_config_fn,
+            on_evaluate_config_fn=on_evaluate_config_fn,
+            accept_failures=accept_failures,
+            initial_parameters=initial_parameters,
+            fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
+            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            weighted_eval_losses=weighted_eval_losses,
+            initial_control_variates=initial_control_variates,
+            model=None,
+            learning_rate=learning_rate,
+        )
