@@ -4,6 +4,7 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
+from opacus.optimizers.optimizer import DPOptimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
@@ -13,7 +14,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from opacus.optimizers.optimizer import DPOptimizer
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
