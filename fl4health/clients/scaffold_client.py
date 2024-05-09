@@ -226,7 +226,7 @@ class ScaffoldClient(BasicClient):
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
-class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):
+class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
 
