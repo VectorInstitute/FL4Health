@@ -5,9 +5,9 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
+from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -30,7 +30,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -226,6 +226,7 @@ class ScaffoldClient(BasicClient):
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
+
 class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
@@ -239,7 +240,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -250,7 +251,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):
             checkpointer=checkpointer,
         )
 
-        InstanceLevelPrivacyClient.__init__(
+        InstanceLevelDpClient.__init__(
             self,
             data_path=data_path,
             metrics=metrics,

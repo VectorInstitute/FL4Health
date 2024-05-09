@@ -191,6 +191,8 @@ class FedProx(BasicFedAvg):
         Args:
             loss (float): This is the loss to which we compare the previous loss seen by the server. For FedProx this
             should be the aggregated training loss seen by each client participating in training.
+            NOTE: For FedProx, this loss is exchanged (along with the weights) by each client and is the VANILLA loss
+            that does not include the proximal loss.
         """
 
         if self.adaptive_proximal_weight:

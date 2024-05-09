@@ -38,7 +38,6 @@ class PicaiFedAvgClient(PicaiClient):
         overviews_dir: Path,
         data_partition: Optional[int] = None,
     ) -> None:
-
         super().__init__(
             data_path,
             metrics,

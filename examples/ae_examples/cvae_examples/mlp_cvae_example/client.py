@@ -85,7 +85,7 @@ if __name__ == "__main__":
         "--condition",
         action="store",
         type=int,
-        help="Condition is the clinet's ID (ex. '1', '2', etc)",
+        help="Condition is the client's ID (ex. '1', '2', etc)",
     )
     parser.add_argument(
         "--num_conditions",

@@ -14,8 +14,8 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 
 
