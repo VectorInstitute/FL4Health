@@ -13,6 +13,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from opacus.optimizers.optimizer import DPOptimizer
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -222,7 +223,10 @@ class ScaffoldClient(BasicClient):
             config (Config): The config from the server.
         """
         super().setup_client(config)
-        assert all(isinstance(opt, torch.optim.SGD) for opt in self.optimizers.values())
+        if isinstance(self, DPScaffoldClient):
+            assert isinstance(self.optimizers["global"], DPOptimizer)
+        else:
+            assert isinstance(self.optimizers["global"], torch.optim.SGD)
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
