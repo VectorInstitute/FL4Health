@@ -21,7 +21,7 @@ def test_setting_initial_weights(get_client: DittoClient) -> None:  # noqa
     params = [val.cpu().numpy() + 1.0 for _, val in ditto_client.model.state_dict().items()]
     ditto_client.set_parameters(params, config, fitting_round=True)
     ditto_client.update_before_train(1)
-    
+
     # First fitting round we should set both the global and local models to params and store the global model values
     assert ditto_client.initial_global_tensors is not None
     # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)

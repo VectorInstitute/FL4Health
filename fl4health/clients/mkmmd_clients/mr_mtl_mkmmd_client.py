@@ -4,9 +4,9 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
@@ -22,7 +22,7 @@ class MrMtlMkmmdClient(MrMtlClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
         flatten_feature_extraction_layers: Dict[str, bool] = {},
@@ -103,7 +103,7 @@ class MrMtlMkmmdClient(MrMtlClient):
         # Register hooks to extract features from the local model if not already registered
         self.local_feature_extractor._maybe_register_hooks()
         self.init_global_feature_extractor = FeatureExtractorBuffer(
-            model=self.init_global_model,
+            model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
         )
         # Register hooks to extract features from the init global model if not already registered
@@ -112,14 +112,14 @@ class MrMtlMkmmdClient(MrMtlClient):
     def _should_optimize_betas(self, step: int) -> bool:
         assert self.beta_global_update_interval is not None
         step_at_interval = (step - 1) % self.beta_global_update_interval == 0
-        valid_components_present = self.init_global_model is not None
+        valid_components_present = self.initial_global_model is not None
         return step_at_interval and valid_components_present
 
     def update_after_step(self, step: int) -> None:
         if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
-            assert self.init_global_model is not None
+            assert self.initial_global_model is not None
             # Get the feature distribution of the local and init global features with evaluation mode
-            local_distributions, init_global_distributions = self.update_buffers(self.model, self.init_global_model)
+            local_distributions, init_global_distributions = self.update_buffers(self.model, self.initial_global_model)
             # Update betas for the MK-MMD loss based on gathered features during training
             if self.mkmmd_loss_weight != 0:
                 for layer in self.flatten_feature_extraction_layers.keys():
@@ -202,17 +202,17 @@ class MrMtlMkmmdClient(MrMtlClient):
         features = self.local_feature_extractor.get_extracted_features()
         if self.mkmmd_loss_weight != 0:
             # Compute the features of the init_global_model
-            _ = self.init_global_model(input)
+            _ = self.initial_global_model(input)
             init_global_features = self.init_global_feature_extractor.get_extracted_features()
             for key in init_global_features.keys():
                 features[" ".join(["init_global", key])] = init_global_features[key]
 
         return {"prediction": preds}, features
 
-    def _maybe_checkpoint(self, current_metric_value: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
-        super()._maybe_checkpoint(current_metric_value)
+        super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
 
     def compute_loss_and_additional_losses(
         self,

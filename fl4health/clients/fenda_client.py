@@ -22,7 +22,7 @@ class FendaClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        temperature: Optional[float] = 0.5,
+        temperature: float = 0.5,
         perfcl_loss_weights: Optional[Tuple[float, float]] = None,
         cos_sim_loss_weight: Optional[float] = None,
         contrastive_loss_weight: Optional[float] = None,

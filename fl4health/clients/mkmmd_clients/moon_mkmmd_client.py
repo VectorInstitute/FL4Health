@@ -5,7 +5,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.logger import log
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.moon_client import MoonClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.moon_base import MoonModel
@@ -22,7 +22,7 @@ class MoonMkmmdClient(MoonClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         temperature: float = 0.5,
         len_old_models_buffer: int = 1,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         contrastive_weight: float = 0,
         mkmmd_loss_weights: Tuple[float, float] = (10, 10),
         feature_l2_norm_weight: float = 0,

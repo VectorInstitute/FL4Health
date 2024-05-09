@@ -337,7 +337,6 @@ class DittoClient(BasicClient):
         ditto_local_loss = self.ditto_loss_function(self.model, self.initial_global_tensors, self.lam)
         additional_losses["ditto_loss"] = ditto_local_loss
 
-
         return TrainingLosses(backward=total_loss + ditto_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:

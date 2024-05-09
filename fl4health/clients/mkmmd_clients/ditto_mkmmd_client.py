@@ -5,9 +5,9 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
@@ -23,7 +23,7 @@ class DittoMkmmdClient(DittoClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
         flatten_feature_extraction_layers: Dict[str, bool] = {},
@@ -218,10 +218,10 @@ class DittoMkmmdClient(DittoClient):
 
         return {"global": global_preds, "local": local_preds}, features
 
-    def _maybe_checkpoint(self, current_metric_value: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
-        super()._maybe_checkpoint(current_metric_value)
+        super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
 
     def compute_loss_and_additional_losses(
         self,
