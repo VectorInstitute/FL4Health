@@ -44,7 +44,9 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
         # Scaffold require vanilla SGD as optimizer
-        self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
+        # self.optimizers: Dict[str, torch.optim.SGD]
+        self.optimizers: Dict[str, torch.optim.Optimizer]
+
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
@@ -221,10 +223,11 @@ class ScaffoldClient(BasicClient):
             config (Config): The config from the server.
         """
         super().setup_client(config)
+        assert all(isinstance(opt, torch.optim.SGD) for opt in self.optimizers.values())
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
-class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
 
