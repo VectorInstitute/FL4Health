@@ -1,4 +1,5 @@
-from typing import Sequence, Union, Optional, Tuple, Iterable
+from typing import Iterable, Optional, Sequence, Tuple, Union
+
 import numpy as np
 import SimpleITK as sitk
 
@@ -8,7 +9,7 @@ def resample_img(
     out_spacing: Sequence[float] = (2.0, 2.0, 2.0),
     out_size: Optional[Sequence[int]] = None,
     is_label: bool = False,
-    pad_value: Optional[Union[float, int]] = 0.,
+    pad_value: Optional[Union[float, int]] = 0.0,
 ) -> sitk.Image:
     """
     Resample images to target resolution spacing
@@ -23,9 +24,7 @@ def resample_img(
     if out_size is None:
         # calculate output size in voxels
         out_size = [
-            int(np.round(
-                size * (spacing_in / spacing_out)
-            ))
+            int(np.round(size * (spacing_in / spacing_out)))
             for size, spacing_in, spacing_out in zip(original_size, original_spacing, out_spacing)
         ]
 
@@ -86,8 +85,10 @@ def input_verification_crop_or_pad(
         else:
             # verify size
             if list(size) != list(size_zyx):
-                raise ValueError(f"Size and physical size do not match. Size: {size}, physical size: "
-                                 f"{physical_size}, spacing: {spacing_zyx}, size_zyx: {size_zyx}.")
+                raise ValueError(
+                    f"Size and physical size do not match. Size: {size}, physical size: "
+                    f"{physical_size}, spacing: {spacing_zyx}, size_zyx: {size_zyx}."
+                )
 
     if isinstance(image, sitk.Image):
         # determine shape and convert convention of (z, y, x) to (x, y, z) for SimpleITK
@@ -99,8 +100,9 @@ def input_verification_crop_or_pad(
         shape = image.shape
         size = list(size)
     rank = len(size)
-    assert rank <= len(shape) <= rank + 1, \
-        f"Example size doesn't fit image size. Got shape={shape}, output size={size}"
+    assert (
+        rank <= len(shape) <= rank + 1
+    ), f"Example size doesn't fit image size. Got shape={shape}, output size={size}"
 
     return shape, size
 
@@ -143,7 +145,7 @@ def crop_or_pad(
             padding[i][1] = size[i] - shape[i] - padding[i][0]
         else:
             # create slicer object to crop image
-            idx_start = int(np.floor((shape[i] - size[i]) / 2.))
+            idx_start = int(np.floor((shape[i] - size[i]) / 2.0))
             idx_end = idx_start + size[i]
             slicer[i] = slice(idx_start, idx_end)
 

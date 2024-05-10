@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import os
-from functools import reduce
+from abc import abstractmethod
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from functools import partial, reduce
 from pathlib import Path
-from typing import Sequence, List
+from typing import Dict, List, Sequence
+
 import numpy as np
 import SimpleITK as sitk
-
-from dataclasses import dataclass
-from abc import abstractmethod
-
 from preprocessing_utils import crop_or_pad, resample_img
 
 
@@ -16,6 +18,9 @@ class PicaiPreprocessingSettings:
     spacing: Sequence[int]
     size: Sequence[int]
     physical_size: Sequence[int]
+    scans_write_dir: str
+    annotation_write_dir: str
+    modality_suffix_map: Dict[str, str] = {"t2w": "001", "adc": "001", "hbv": "002"}
 
 
 @dataclass
@@ -35,15 +40,26 @@ class MriExam:
         self.scans: List[sitk.Image]
         self.annotation: sitk.Image
 
-    def __post_init__(self) -> None:
-        self.scans = self.read_scans()
-        self.annotation = self.read_annotation()
+    def read(self) -> None:
+        valid_suffixes = tuple(
+            [f"{suffix}.{self.file_extension}" for suffix in self.settings.modality_suffix_map.keys()]
+        )
+        self.scans = [
+            sitk.ReadImage(path) for path in sorted(os.listdir(self.scans_dir)) if path.endswith(valid_suffixes)
+        ]
+        self.annotation = sitk.ReadImage(self.annotations_path)
+        assert len(self.scans) != 0
 
-    def read_scans(self) -> List[sitk.Image]:
-        return [sitk.ReadImage(path) for path in os.listdir(self.scans_dir) if path.endswith(self.file_extension)]
-
-    def read_annotation(self) -> sitk.Image:
-        return sitk.ReadImage(self.annotations_path)
+    def write(self) -> None:
+        valid_suffixes = tuple(
+            [f"{suffix}.{self.file_extension}" for suffix in self.settings.modality_suffix_map.keys()]
+        )
+        scan_paths = [path for path in sorted(os.listdir(self.scans_dir)) if path.endswith(valid_suffixes)]
+        for path, scan in zip(scan_paths, self.scans):
+            f = path.split("/")[-1][:-4]
+            pp_f = f[:3] + self.settings.modality_suffix_map[f[-3:]] + ".nii.gz"
+            pp_path = os.path.join(self.settings.scans_write_dir, pp_f)
+            sitk.WriteImage(scan, pp_path, useCompression=True)
 
 
 class PreprocessingTransform:
@@ -73,10 +89,7 @@ class ResampleToFirstScan(PreprocessingTransform):
 class Resample(PreprocessingTransform):
     def __call__(self, mri: MriExam) -> MriExam:
         # resample scans to target resolution
-        mri.scans = [
-            resample_img(scan, mri.settings.spacing, is_label=False)
-            for scan in mri.scans
-        ]
+        mri.scans = [resample_img(scan, mri.settings.spacing, is_label=False) for scan in mri.scans]
 
         # resample annotation to target resolution
         mri.annotation = resample_img(mri.annotation, mri.settings.spacing, is_label=True)
@@ -132,5 +145,15 @@ class AlignOriginAndDirection(PreprocessingTransform):
         return mri
 
 
-def preprocess(transformations: Sequence[PreprocessingTransform], mri: MriExam) -> MriExam:
-    return reduce(lambda acc, f: f(acc), transformations, mri)
+def apply_transform(mri: MriExam, transforms: Sequence[PreprocessingTransform]) -> None:
+    mri.read()
+    reduce(lambda acc, f: f(acc), transforms, mri)
+
+
+def preprocess(mris: List[MriExam], transforms: Sequence[PreprocessingTransform], num_threads: int = 4) -> None:
+    f = partial(apply_transform, transforms=transforms)
+    if num_threads >= 2:
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            executor.map(f, mris)
+    else:
+        map(f, mris)
