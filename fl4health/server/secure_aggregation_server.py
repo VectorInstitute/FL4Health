@@ -159,8 +159,6 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         # self.client_manager().wait_for(3, timeout=timeout)
 
         # option 2, work around
-        # log(INFO, f'round 0 preconfigure +++++')
-        # log(INFO, parameters_to_ndarrays(self.parameters))
         self.fit_round(server_round=0, timeout=timeout)
         # log(INFO, f'round 0 preconfigure end ----')
         # TODO when eliminating option 2, be sure to adjust the client fit()
@@ -342,50 +340,23 @@ class SecureAggregationServer(FlServerWithCheckpointing):
         delta_aggregate /= received_model_count
         model_aggregate /= received_model_count
 
-        log(INFO, '+++++ server sees this (start) ++++++++') 
-        # log(INFO, 'secure_private_delta') 
-        # log(INFO, vector) 
-        # log(INFO, 'true delta') 
-        # log(INFO, delta_aggregate) 
-        # log(INFO, delta_aggregate) 
-        log(INFO, 'delta: max error, l1-error') 
         l_inf = torch.linalg.vector_norm(vector-delta_aggregate, ord=float('inf'))
         l_1 = torch.linalg.vector_norm(vector-delta_aggregate, ord=1)
         log(INFO, f'{l_inf}, {l_1}')
 
-        # log(INFO, 'true average model') 
-        # log(INFO, model_aggregate) 
-        # log(INFO, 'secure_private_average_model') 
         model_vector = vector + torch.load(self.temporary_model_path).to(device=device) 
-        # log(INFO, model_vector) 
-        log(INFO, 'model: max error, l1-error') 
         l_inf = torch.linalg.vector_norm(model_aggregate-model_vector, ord=float('inf'))
         l_1 = torch.linalg.vector_norm(model_aggregate-model_vector, ord=1)
         l_2 = torch.linalg.vector_norm(model_aggregate-model_vector, ord=2)
-        log(INFO, f'{l_inf}, {l_1}')
-        log(INFO, '+++++ server sees this (end) ++++++++') 
-        # log(INFO, vector)
-        # set global model
-        # log(INFO,'------model delta after transform------')
-        # log(INFO, vector[:30]) 
-
         # NOTE vector is the model delta
         model_vector = vector + torch.load(self.temporary_model_path).to(device=device) 
-        # log(INFO,f'------server send to client on round {current_round}------')
-        # log(INFO, model_vector) 
+
         torch.save(model_vector, self.temporary_model_path)
         self.server_model = unvectorize_model(self.server_model, model_vector)
         self.revert_layer_dtype()
-        # log(INFO, get_model_layer_types(self.server_model))
-        # for name, layer in self.server_model.state_dict().items():
-        #     log(DEBUG, name)
-        #     log(DEBUG, f'current_round: {current_round}')
-        #     log(DEBUG, layer)
         self.parameters = ndarrays_to_parameters(
             [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
         )
-        # log(INFO, 'parameters_to_ndarrays(self.parameters)')
-        # log(INFO, parameters_to_ndarrays(self.parameters))
 
         if self.dropout_mode:
             unmaksed_params = self.unmasking(
@@ -1072,190 +1043,3 @@ class SecureAggregationServer(FlServerWithCheckpointing):
             log(INFO, f'round {self.current_server_round}')
             log(INFO, f'{message}')
             log(INFO, to_print)
-
-class CentralDPSecAggServer(SecureAggregationServer):
-    """Server adds centralized Gaussian DP-noise."""
-    def __init__(
-        self,
-        client_manager: ClientManager,
-        strategy: SecureAggregationStrategy,
-        model: Module,
-        parameter_exchanger: ExchangerType,
-        privacy_settings,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
-        timeout: Optional[float] = 30,
-        shamir_reconstruction_threshold: int = 2,
-        dropout_mode=False,
-    ) -> None:
-        super().__init__(
-            client_manager= client_manager,
-            strategy = strategy,
-            model = model,
-            parameter_exchanger = parameter_exchanger,
-            privacy_settings = privacy_settings,
-            wandb_reporter = wandb_reporter,
-            checkpointer = checkpointer,
-            timeout = timeout,
-            shamir_reconstruction_threshold = shamir_reconstruction_threshold,
-            dropout_mode=dropout_mode,
-        )
-    
-        def secure_aggregation(self, current_round, timeout) -> Any:
-            """Returns metrics"""
-            self.setup(current_round)
-            self.advertise_keys(current_round)
-            self.share_keys(current_round)
-
-            params, metrics, responded_clients, dropped_clients, train_size, received_model_count = \
-            self.masked_input_collection(
-                current_round=current_round, timeout=timeout, arithmetic_modulus=self.crypto.arithmetic_modulus
-            )
-
-            assert len(responded_clients) == received_model_count
-
-            # server procedure to post-process sum
-            # global_model_layers = tuple(map(
-            #     lambda np_layer: torch.flatten(torch.from_numpy(np_layer)),
-            #     parameters_to_ndarrays(params)
-            # ))
-            # vector = torch.cat(global_model_layers) # padded vector
-            # vector.map_(
-            #     vector, 
-            #     lambda component, _ : component - self.crypto.arithmetic_modulus/2     
-            # )   
-
-            # y = (gamma D)(H^T z')
-            # vector = torch.matmul(
-            #     # the inverse matrix is itself
-            #     generate_walsh_hadamard_matrix(exponent=get_exponent(vector.numel())), 
-            #     vector
-            # )
-            # log(DEBUG, '=====dtype====')
-            # log(DEBUG, params.dtype)
-            # log(DEBUG, params)
-            # log(DEBUG, '=====torch====')
-            
-
-            # log(INFO, f'Arithmetic modulus {self.crypto.arithmetic_modulus}')
-            secure_private_aggregate, delta_aggregate, model_aggregate = params
-
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            delta_aggregate = torch.from_numpy(delta_aggregate).to(device=device)
-            model_aggregate = torch.from_numpy(model_aggregate).to(device=device)
-            
-            # self.echo('after aggregation', secure_private_aggregate)
-            vector = shift_transform(secure_private_aggregate, self.crypto.arithmetic_modulus)
-            assert self.crypto.arithmetic_modulus % 2 == 0
-            half = self.crypto.arithmetic_modulus // 2
-
-            # NOTE vector is the model delta
-            # vector = modular_clipping(vector=params, a=-half, b=half)
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            vector = torch.from_numpy(vector).to(device=device)
-            # log(DEBUG, vector.dtype)
-            # log(DEBUG, vector)
-            # log(DEBUG, '=====fwht====')
-            vector = fwht(vector)
-            # log(DEBUG, vector)
-            # Hadamard product
-            vector = torch.mul(
-                self.privacy_settings['granularity'] * generate_random_sign_vector(dim=vector.numel(), seed=0),
-                vector
-            )
-            # remove padding zeros and divide to average
-            vector = vector[:self.crypto.model_dimension] 
-            delta_aggregate = delta_aggregate[:self.crypto.model_dimension] 
-            model_aggregate = model_aggregate[:self.crypto.model_dimension] 
-
-            # NOTE we are not doing weighted average
-            # vector /= train_size
-
-            # NOTE this is unweighted average
-            vector /= received_model_count
-
-            # add noise
-            stdev = self.privacy_settings['noise_scale'] / self.privacy_settings['granularity']
-            vector += gaussian_mechanism(dim=self.crypto.model_dimension, standard_deviation=stdev).to(device=device)
-
-            delta_aggregate /= received_model_count
-            model_aggregate /= received_model_count
-
-            log(INFO, '+++++ server sees this (start) ++++++++') 
-            # log(INFO, 'secure_private_delta') 
-            # log(INFO, vector) 
-            # log(INFO, 'true delta') 
-            # log(INFO, delta_aggregate) 
-            # log(INFO, delta_aggregate) 
-            log(INFO, 'delta: max error, l1-error') 
-            l_inf = torch.linalg.vector_norm(vector-delta_aggregate, ord=float('inf'))
-            l_1 = torch.linalg.vector_norm(vector-delta_aggregate, ord=1)
-            log(INFO, f'{l_inf}, {l_1}')
-
-            # log(INFO, 'true average model') 
-            # log(INFO, model_aggregate) 
-            # log(INFO, 'secure_private_average_model') 
-            model_vector = vector + torch.load(self.temporary_model_path).to(device=device) 
-            # log(INFO, model_vector) 
-            log(INFO, 'model: max error, l1-error') 
-            l_inf = torch.linalg.vector_norm(model_aggregate-model_vector, ord=float('inf'))
-            l_1 = torch.linalg.vector_norm(model_aggregate-model_vector, ord=1)
-            log(INFO, f'{l_inf}, {l_1}')
-            log(INFO, '+++++ server sees this (end) ++++++++') 
-            # log(INFO, vector)
-            # set global model
-            # log(INFO,'------model delta after transform------')
-            # log(INFO, vector[:30]) 
-
-            # NOTE vector is the model delta
-            model_vector = vector + torch.load(self.temporary_model_path).to(device=device) 
-            # log(INFO,f'------server send to client on round {current_round}------')
-            # log(INFO, model_vector) 
-            torch.save(model_vector, self.temporary_model_path)
-            self.server_model = unvectorize_model(self.server_model, model_vector)
-            self.revert_layer_dtype()
-            # log(INFO, get_model_layer_types(self.server_model))
-            # for name, layer in self.server_model.state_dict().items():
-            #     log(DEBUG, name)
-            #     log(DEBUG, f'current_round: {current_round}')
-            #     log(DEBUG, layer)
-            self.parameters = ndarrays_to_parameters(
-                [layer.cpu().numpy() for layer in self.server_model.state_dict().values()]
-            )
-            # log(INFO, 'parameters_to_ndarrays(self.parameters)')
-            # log(INFO, parameters_to_ndarrays(self.parameters))
-
-            if self.dropout_mode:
-                unmaksed_params = self.unmasking(
-                    round=current_round, timeout=timeout, responded=responded_clients, dropped=dropped_clients
-                )
-
-            return metrics, l_inf.item(), received_model_count
-
-class LocalDPSecAggServer(SecureAggregationServer):
-    def __init__(
-        self,
-        client_manager: ClientManager,
-        strategy: SecureAggregationStrategy,
-        model: Module,
-        parameter_exchanger: ExchangerType,
-        privacy_settings,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
-        timeout: Optional[float] = 30,
-        shamir_reconstruction_threshold: int = 2,
-
-        dropout_mode=False,
-    ) -> None:
-        super().__init__(
-            client_manager= client_manager,
-            strategy = strategy,
-            model = model,
-            parameter_exchanger = parameter_exchanger,
-            privacy_settings = privacy_settings,
-            wandb_reporter = wandb_reporter,
-            checkpointer = checkpointer,
-            timeout = timeout,
-            shamir_reconstruction_threshold = shamir_reconstruction_threshold,
-            dropout_mode=dropout_mode,
-        )

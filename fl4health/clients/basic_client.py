@@ -115,13 +115,6 @@ class BasicClient(NumpyFlClient):
 
         self.set_parameters(parameters, config)
         loss, metric_values = self.validate()
-        # log(INFO, '======evaluate outputs - start ========')
-        # log(INFO, f'val sample size {self.num_val_samples}')
-        # log(INFO, loss)
-        # log(INFO, metric_values)
-        # log(INFO, '======evaluate outputs -end ========')
-        # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
-        # calculation results.
         return (
             loss,
             self.num_val_samples,
@@ -196,11 +189,7 @@ class BasicClient(NumpyFlClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds = self.predict(input)
-            # log(INFO, 'validation step start')
-            # log(INFO, f'prediction {preds}')
             losses = self.compute_loss(preds, target)
-            # log(INFO, f'losses {losses.as_dict()}')
-            # log(INFO, 'validation step end')
         return losses, preds
 
     def train_by_epochs(
@@ -367,15 +356,6 @@ class BasicClient(NumpyFlClient):
         User can override for more complex logic.
         """
         preds = self.model(input)
-        # d = sum(p.numel() for p in self.model.state_dict().values())
-        # log(INFO, f'predict function start, model size {d}')
-        # for k, v in self.model.state_dict().items():
-        #     log(INFO, f'{k}, {v.dtype}')
-        
-        # log(INFO, f'input {input}')
-        # log(INFO, f'pred {preds}')
-        # log(INFO, 'predict function end')
-
         if isinstance(preds, dict):
             return preds
         elif isinstance(preds, torch.Tensor):
@@ -394,8 +374,6 @@ class BasicClient(NumpyFlClient):
         """
         loss = self.criterion(preds["prediction"], target)
         losses = Losses(checkpoint=loss, backward=loss)
-        # log(INFO, f'=====compute loss: {losses.as_dict()} =====')
-
         return losses
 
     def set_optimizer(self, config: Config) -> None:

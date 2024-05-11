@@ -1,12 +1,15 @@
+import os 
 import argparse
 from functools import partial
 from typing import Any, Dict, Tuple
-from flwr.common.logger import log
 from logging import INFO
+
 import flwr as fl
-import numpy as np
+from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
+
+import numpy as np
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -14,11 +17,9 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.server.scaffold_server import DPScaffoldLoggingServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
 from flamby.datasets.fed_tcga_brca import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
-
-import os 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
 from research.flamby_central_dp.fed_tcga_brca.model import Fed_TCGA_BRCA_LargeBaseline
 

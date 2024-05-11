@@ -22,14 +22,12 @@ from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from fl4health.utils.config import load_config
 
+from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
+from research.isic_custom_models import BaseLineFrozenBN
+
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_tensor_type('torch.cuda.FloatTensor')
 # torch.set_default_dtype(torch.float64)
-
-from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin
-
-from research.isic_custom_models import BaseLineFrozenBN
-
 
 class FedIsic2019FedAvgClient(SecureAggregationClient):
     def __init__(

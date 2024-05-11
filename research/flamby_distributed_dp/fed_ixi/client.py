@@ -18,13 +18,12 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, To
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from fl4health.clients.secure_aggregation_client import SecureAggregationClient
-
 from fl4health.utils.config import load_config
-from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
 
+from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
 from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
+from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
 class FedIxiFedAvgClient(SecureAggregationClient):

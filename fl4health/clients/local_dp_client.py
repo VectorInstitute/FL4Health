@@ -1,3 +1,0 @@
-
-class LocalDPClient():
-    pass

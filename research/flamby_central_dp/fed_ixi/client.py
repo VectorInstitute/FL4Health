@@ -3,7 +3,6 @@ import os
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
-
 import flwr as fl
 import torch
 import torch.nn as nn
@@ -19,16 +18,12 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
-
-
 from fl4health.utils.config import load_config
+from fl4health.clients.central_dp_client import CentralDPClient
+from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 from research.flamby_central_dp.fed_ixi.model import ModifiedBaseline
 
-from fl4health.clients.central_dp_client import CentralDPClient
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
-
-import torch
-from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 
 
 class FedIxiFedAvgClient(CentralDPClient):

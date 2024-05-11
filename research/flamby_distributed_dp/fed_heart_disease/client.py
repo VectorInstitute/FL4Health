@@ -19,10 +19,10 @@ from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, To
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from fl4health.clients.secure_aggregation_client import SecureAggregationClient
 from fl4health.utils.config import load_config
 
+from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')

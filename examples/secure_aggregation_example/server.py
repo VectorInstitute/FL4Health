@@ -35,6 +35,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
     config = load_config(args.config_path)
 
+    # privacy settings 
+    privacy_settings = {
+        'clipping_threshold': config['clipping_threshold'],
+        'granularity': config['granularity'],
+        'model_integer_range': 1 << config['model_integer_range_exponent'],   
+        'noise_scale': config['noise_scale'],
+        'bias': config['bias'],
+    }
+
     # global model (server side)
     model = Net()
 
@@ -63,7 +72,8 @@ if __name__ == "__main__":
         strategy=strategy,
         checkpointer=BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False),
         shamir_reconstruction_threshold=config["shamir_reconstruction_threshold"],
-        model_integer_range=config["model_integer_range"],
+        task_name='secure_aggregation_example',
+        privacy_settings=privacy_settings
     )
 
     # run server

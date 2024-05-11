@@ -83,29 +83,3 @@ def devectorize_model(vect, size_array) -> torch.nn.Module:
         vect_array.append(unflattend)
         i = j
     return vect_array
-
-
-if __name__ == "__main__":
-    # # tests
-
-    # x = generate_diagonal_matrix(10)
-    # print(x)
-
-    # class TinyModel(torch.nn.Module):
-    #     def __init__(self):
-    #         super(TinyModel, self).__init__()
-    #         self.linear1 = torch.nn.Linear(3, 2)
-
-    # tinymodel = TinyModel()
-    # x = l2_norm(tinymodel)
-
-    # y = torch.zeros(1)
-    # for _, val in tinymodel.state_dict().items():
-    #     y += LA.norm(val) ** 2
-    # y = torch.sqrt(y)
-    # print(x, y)
-
-    a = torch.ones(3)
-    b = torch.zeros(4)
-    c = torch.cat([a, b])
-    print(c, len(c))

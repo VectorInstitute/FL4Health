@@ -3,20 +3,21 @@ from functools import partial
 from typing import Any, Dict, Tuple
 from flwr.common.logger import log
 from logging import INFO
+import os 
 import flwr as fl
 import numpy as np
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config, Parameters
 
+from flamby.datasets.fed_heart_disease import Baseline
+
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.scaffold_server import DPScaffoldLoggingServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
-
-from flamby.datasets.fed_heart_disease import Baseline
-import os 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline

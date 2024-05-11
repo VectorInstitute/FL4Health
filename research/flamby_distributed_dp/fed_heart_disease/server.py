@@ -3,6 +3,7 @@ import os
 from functools import partial
 from logging import INFO
 from typing import Any, Dict
+import torch
 
 import flwr as fl
 from flamby.datasets.fed_heart_disease import Baseline
@@ -24,10 +25,6 @@ from research.flamby.utils import (
     get_initial_model_parameters,
     summarize_model_info,
 )
-
-
-import torch
-
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 
 

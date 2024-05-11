@@ -12,6 +12,10 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
+from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
+from fl4health.server.secure_aggregation_server import SecureAggregationServer
+
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
@@ -20,13 +24,7 @@ from research.flamby.utils import (
     get_initial_model_parameters,
     summarize_model_info,
 )
-
-from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-from fl4health.server.secure_aggregation_server import SecureAggregationServer
-
 from research.flamby_distributed_dp.fed_ixi.model import ModifiedBaseline
-
 from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 
 

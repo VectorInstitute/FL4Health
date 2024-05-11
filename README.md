@@ -1,4 +1,29 @@
+# Secure-Aggregation 
+This branch implements secure aggregation, distributed discrete Gaussian mechanism. Many of the SecAgg related folder and files are labeled with secure_aggregation, except some utility and DP mechanisms together with their accountants. Experimental code all have run files that shows one how to run the experiments. The master run file is 
+```sh
+secure_aggregation_run_script.sh
+```
+Detailed documentation are in `secure_aggregation_documentation`. This documentation can be served by running the commands
 
+```sh
+cd secure_aggregation_documentation/
+mkdocs serve -a '127.0.0.1:8000'
+```
+If you are running this from the Vector cluster, you can use VS code to forward the port and open the documentation on you local browser. You can change the port number from 8000 to another number if the port is already occupied.
+
+you should see
+![documentation picture](secure_aggregation_documentation/documentation_pic.png)
+
+## Research 
+The `research` folder contains experimental code for distributed, central, local DP settings.
+
+## Beta Features
+The miniclient modificiation to original DDGauss algorithm.
+
+## Warning 
+1. Environment versions are frozen in `secure_aggregation_requirements.txt`.
+2. Becareful of conflicting ports when running multiple FLs at once with the master run file
+`secure_aggregation_run_script.sh`.
 
 # FL4Health
 

@@ -1,7 +1,7 @@
-import torch
-import torch.nn as nn
+import torch 
+import torch.nn as nn 
+import torch.nn.functional as F
 from flamby.datasets.fed_ixi import Baseline
-
 # from research.flamby.utils import shutoff_group_norm_tracking, shutoff_batch_norm_tracking
 from opacus.validators import ModuleValidator
 
@@ -30,12 +30,6 @@ class ModifiedBaseline(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.model(x)
         return x
-
-
-import torch 
-import torch.nn as nn 
-import torch.nn.functional as F
-
 
 # Fed-IXI batch tensor shape [batch_size, 1 channel, 48, 60, 48]
 

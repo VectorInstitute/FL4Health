@@ -8,7 +8,6 @@ from flwr.common.logger import log
 from torch.linalg import vector_norm
 
 
-
 def bernoulli_exp(gamma: float) -> int:
     """
     Draws a sample from Bernoulli(exp(-gamma))
@@ -204,7 +203,6 @@ def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, u
 
     upper_bound = min(upper_bound_1, upper_bound_2)
 
-    #     # TODO paralleize this for loop with Numba
     # def round(vector, round_down_probabilities, dim) -> torch.Tensor:
     #     rounding_instructions = torch.bernoulli(round_down_probabilities)
 

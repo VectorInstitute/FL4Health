@@ -12,3 +12,12 @@ shamir_reconstruction_threshold: 2
 # Other configs
 local_epochs: 1
 checkpoint_path: "examples/secure_aggregation_example"
+
+# privacy parameters
+clipping_threshold: 100
+granularity: 0.000001
+noise_scale: 0.00001
+bias: 0.607
+
+# not used by client directly
+model_integer_range_exponent: 16   # modulus = 2^model_integer_range_exponent

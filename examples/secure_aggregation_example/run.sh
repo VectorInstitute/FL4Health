@@ -46,7 +46,7 @@ else
     for (( i=1; i<=${num_clients}; i++ ))
     do
         log_path="examples/secure_aggregation_example/log/client_${i}.out"
-        nohup python -m examples.secure_aggregation_example.client > ${log_path} 2>&1 & array[${#array[@]}]=$!
+        nohup python -m examples.secure_aggregation_example.client --client_number="$i" > ${log_path} 2>&1 & array[${#array[@]}]=$!
     done
     echo "saving pid to file"
     echo "${array[*]}"
@@ -57,13 +57,3 @@ else
         clean
     fi
 fi
-
-
-
-# echo "killing processes"
-# for i in "${array[@]}"
-# do
-#     echo "bye $i"
-#     kill -9 "$i"
-# done
-# echo "done"

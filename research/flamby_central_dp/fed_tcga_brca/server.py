@@ -3,9 +3,10 @@ import os
 from functools import partial
 from logging import INFO
 from typing import Any, Dict
+import torch
 
 import flwr as fl
-from flamby.datasets.fed_heart_disease import Baseline
+from flamby.datasets.fed_tcga_brca import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
@@ -13,10 +14,10 @@ from flwr.server.strategy import FedAvg
 from fl4health.strategies.central_dp_strategy import CentralDPStrategy
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.server.central_dp_server import CentralDPServer
-
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
+from research.flamby_central_dp.fed_tcga_brca.model import Fed_TCGA_BRCA_LargeBaseline
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
@@ -24,13 +25,8 @@ from research.flamby.utils import (
     get_initial_model_parameters,
     summarize_model_info,
 )
-
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 
-from flamby.datasets.fed_tcga_brca import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
-
-import torch
-from research.flamby_central_dp.fed_tcga_brca.model import Fed_TCGA_BRCA_LargeBaseline
 
 # torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_tensor_type('torch.cuda.FloatTensor')

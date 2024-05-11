@@ -1,12 +1,11 @@
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import Baseline
-
-# from research.flamby.utils import shutoff_group_norm_tracking
-from opacus.validators import ModuleValidator
-
-
 from torchvision.models import swin_v2_t
+
+from flamby.datasets.fed_isic2019 import Baseline
+# from research.flamby.utils import shutoff_group_norm_tracking
+
+from opacus.validators import ModuleValidator
 
 def freeze_bn(net):
     #https://discuss.pytorch.org/t/how-to-freeze-bn-layers-while-training-the-rest-of-network-mean-and-var-wont-freeze/89736/12

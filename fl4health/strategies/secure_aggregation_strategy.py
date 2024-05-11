@@ -1,5 +1,7 @@
 from logging import DEBUG, INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
+from functools import reduce
+import numpy as np
 
 from flwr.common import (
     FitRes,
@@ -21,10 +23,6 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 Requests = List[Tuple[ClientProxy, GetPropertiesIns]]
 Request = Tuple[ClientProxy, GetPropertiesIns]
-
-from functools import reduce
-
-import numpy as np
 
 
 class SecureAggregationStrategy(BasicFedAvg):

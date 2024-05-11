@@ -308,13 +308,8 @@ class CentralDPServer(FlServerWithCheckpointing):
             log(INFO, delta[:10])
             log(INFO, '----------------')
 
-        if False:
-            delta *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(delta, ord=2))
-            log(INFO, '------clipped')
-            log(INFO, delta[:10])
-            delta += gaussian_mechanism(dim=self.model_dimension, stdev=stdev)
-            log(INFO, '------noised')
-            log(INFO, delta[:10])
+        delta *= torch.min(torch.ones(1), clip / torch.linalg.vector_norm(delta, ord=2))
+        delta += gaussian_mechanism(dim=self.model_dimension, stdev=stdev)
         model_vector = torch.load(self.temporary_model_path).to(device=device) 
         model_vector += delta 
 

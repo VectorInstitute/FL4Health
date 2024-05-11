@@ -1,36 +1,37 @@
 import argparse
 import os
-
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
+from logging import INFO
 
-import flwr as fl
 import torch
 import torch.nn as nn
+from torch.utils.data import DataLoader
 
-from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+import flwr as fl
 from flwr.common.logger import log
-from logging import INFO
 from flwr.common.typing import Config
+
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
 
+from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric, MetricMeterType
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer, BestMetricCheckpointWeights
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
-from torch.utils.data import DataLoader
-
+from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 from fl4health.utils.config import load_config
 
+from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
 
-from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
+from flamby.datasets.fed_ixi import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_ixi import Baseline
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
-from flamby.datasets.fed_ixi import Baseline
+
 
 class FedIXIFedAvgClient(DPScaffoldLoggingClient):
 

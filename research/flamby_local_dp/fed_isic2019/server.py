@@ -1,56 +1,48 @@
 import argparse
 import os
 from functools import partial
+from typing import Any, Dict, Tuple
+from logging import INFO
 
-from typing import Any, Dict
+import torch
+import numpy as np
 
 import flwr as fl
-from logging import INFO
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
+from flwr.common.parameter import ndarrays_to_parameters
+from flwr.common.typing import Config, Parameters
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
-from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
+from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.server.secure_aggregation_server import CentralDPSecAggServer
+from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.server.scaffold_server import DPScaffoldLoggingServer
+from fl4health.strategies.scaffold import Scaffold
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+
+from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
 from research.flamby.utils import (
     evaluate_metrics_aggregation_fn,
     fit_config,
     fit_metrics_aggregation_fn,
     get_initial_model_parameters,
 )
-import torch
-
-from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-
-import argparse
-from functools import partial
-from typing import Any, Dict, Tuple
-
-import flwr as fl
-import numpy as np
-from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Parameters
 
 from examples.models.cnn_model import MnistNet
 from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.scaffold_server import DPScaffoldLoggingServer
-from fl4health.strategies.scaffold import Scaffold
-from fl4health.utils.config import load_config
 
 from research.flamby_local_dp.fed_isic2019.model import ModifiedBaseline, FedISICImageClassifier, Swin, BaseLineFrozenBN
-import os 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from research.isic_custom_models import BaseLineFrozenBN
 
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
+
 def get_initial_model_information() -> Tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.

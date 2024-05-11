@@ -1,34 +1,32 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
-
+from logging import INFO
+from typing import Dict, Optional, Sequence, Tuple
+import os 
 import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.typing import Config
+from flwr.common.logger import log
+
+
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
+
 from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
+from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.utils.losses import Losses, LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
 
 from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
-
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
-import os 
-
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from flwr.common.logger import log
-from logging import INFO
-from typing import Dict, Optional, Sequence, Tuple
-from fl4health.utils.metrics import Metric
-from fl4health.utils.losses import Losses, LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
 
 
 class FedHeartClient(DPScaffoldLoggingClient):

@@ -9,8 +9,6 @@ import torch
     https://proceedings.neurips.cc/paper/2020/file/b53b3a3d6ab90ce0268229151c9bde11-Paper.pdf
 """
 
-
-
 @jit(nopython=True)
 def bernoulli_exp(negative_gamma: float) -> int:
     """Draws Bernoulli sample with probability exp(negative_gamma).
@@ -57,9 +55,6 @@ def discrete_gaussian_sampler(variance: float) -> int:
 def generate_discrete_gaussian_vector(dim: int, variance: float) -> np.array:
     """Assume dim is a power of 2."""
     return np.array([discrete_gaussian_sampler(variance) for _ in prange(dim)])
-
-
-
 
 @jit(nopython=True)
 def wiki_fwht(a) -> None:
@@ -130,53 +125,3 @@ def shift_transform(vect: np.array, r: int) -> np.array:
 @jit(nopython=True)
 def modular_clipping(vector: np.array, a: int, b: int) -> np.array:
     return vector - (b-a) * np.floor((vector-a)/(b-a))
-
-# dimen = 27
-# x = torch.rand(2**dimen)
-# # print('here is x', x)
-# z = fwht(x) 
-# # print('here is fwht', z)
-
-# # print('here is x', x)
-# y = x.numpy()
-# # print('here is y', y)
-# wiki_fwht(y)
-# y = torch.from_numpy(y)
-# # print('here is tranformed by wiki', y)
-# # print('here is x', x)
-
-
-# print(torch.max(y-z))
-
-
-
-# for i in prange(3):
-#     t0 = time.perf_counter()
-#     # on dim = 2^28 the run time is 1 min.
-#     a = generate_discrete_gaussian_vector(dim=2**28, variance=100)
-#     t1 = time.perf_counter()
-#     print(t1-t0)
-
-
-if __name__ == '__main__':
-    print(shift_transform(np.array([-10 , -9, -3, -2 , 0, 1, 2, 5, 3, 9, 10]), 4))
-
-        
-
-
-        
-# @jit(nopython=True)
-# def shift_transform(vect: np.array, r: int) -> np.array:
-#     m = r % 2
-#     half = r // 2
-
-#     assert m  == 0
-
-#     for i in prange(vect.size):
-#         component = vect[i] % r
-#         if 0 <= component <= half:
-#             continue
-#         else:
-#             vect[i] = component - r
-
-#     return vect

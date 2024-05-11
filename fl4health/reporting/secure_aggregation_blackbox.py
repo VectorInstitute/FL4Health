@@ -3,7 +3,6 @@ import json
 
 ROUND = int
 
-
 class BlackBox:
     def __init__(self):
         self.current_fl_round: ROUND = 0
@@ -34,6 +33,3 @@ class BlackBox:
         with open('report.json', 'w') as json_file:
             json.dump(self.report, json_file)
 
-
-r = BlackBox()
-print(r)

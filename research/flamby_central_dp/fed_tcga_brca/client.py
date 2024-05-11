@@ -20,13 +20,11 @@ from fl4health.utils.metrics import Accuracy, Metric, MetricMeterType, C_Index
 from research.flamby.flamby_data_utils import construct_fed_tcga_brca_train_val_datasets
 from fl4health.clients.central_dp_client import CentralDPClient
 from fl4health.utils.config import load_config
-# torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 from research.flamby.fed_heart_disease.large_baseline import FedHeartDiseaseLargeBaseline
 from flamby.datasets.fed_tcga_brca import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
-# import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from research.flamby_central_dp.fed_tcga_brca.model import Fed_TCGA_BRCA_LargeBaseline
 
-
+# torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Fed_TCGA_BRCA_Client(CentralDPClient):
     def __init__(

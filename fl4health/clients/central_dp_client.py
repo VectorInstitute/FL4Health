@@ -1,31 +1,23 @@
-from fl4health.clients.basic_client import BasicClient
-
-
-import pickle
 from logging import DEBUG, INFO, WARN
 from pathlib import Path
 from random import random
 from typing import Dict, Optional, Sequence, Tuple
-import time
-import torch
-from flwr.common.logger import log
-from flwr.common.typing import Config, List, NDArrays, Scalar
-
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-from fl4health.privacy_mechanisms.index import PrivacyMechanismIndex
-
-from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Metric, MetricMeterType
-from fl4health.server.secure_aggregation_utils import vectorize_model
-
 import json 
 import os
 import uuid 
 import timeit
 from opacus import PrivacyEngine
+import torch
+
+from flwr.common.logger import log
+from flwr.common.typing import Config, List, NDArrays, Scalar
+
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.losses import LossMeterType
+from fl4health.utils.metrics import Metric, MetricMeterType
+from fl4health.server.secure_aggregation_utils import vectorize_model
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -94,7 +86,7 @@ class CentralDPClient(BasicClient):
     def setup_opacus(self) -> None:
         privacy_engine = PrivacyEngine()
 
-        # hard coded in for now
+        # NOTE hard coded in for now
         self.noise_multiplier = 1e-16
         self.clipping_bound = 1e16
 
@@ -253,9 +245,6 @@ class CentralDPClient(BasicClient):
 
         losses = self.train_loss_meter.compute()
         loss_dict = losses.as_dict()
-        # log(INFO, '==========Training losses start==========')
-        # log(INFO, loss_dict)
-        # log(INFO, '==========Training losses end==========')
         metrics = self.train_metric_meter_mngr.compute()
 
         # Log results and maybe report via WANDB

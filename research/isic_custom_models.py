@@ -1,12 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from flamby.datasets.fed_isic2019 import Baseline
-
-# from research.flamby.utils import shutoff_group_norm_tracking
 from opacus.validators import ModuleValidator
 from research.flamby.utils import shutoff_batch_norm_tracking
-
-
 from torchvision.models import swin_v2_t
 
 def freeze_bn(net):
@@ -106,9 +103,7 @@ class ModifiedBaseline_(nn.Module):
         x = self.model(x)
         return x
 
-import torch 
-import torch.nn as nn 
-import torch.nn.functional as F
+
 
 class FedISICImageClassifier(nn.Module):
     def __init__(self):

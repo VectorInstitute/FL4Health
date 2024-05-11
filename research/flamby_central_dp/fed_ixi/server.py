@@ -3,6 +3,7 @@ import os
 from functools import partial
 from logging import INFO
 from typing import Any, Dict
+import torch
 
 import flwr as fl
 from flamby.datasets.fed_ixi import Baseline
@@ -10,6 +11,9 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
+from fl4health.strategies.central_dp_strategy import CentralDPStrategy
+from fl4health.server.central_dp_server import CentralDPServer
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
@@ -20,15 +24,7 @@ from research.flamby.utils import (
     get_initial_model_parameters,
     summarize_model_info,
 )
-
-from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
-
-from fl4health.strategies.central_dp_strategy import CentralDPStrategy
-from fl4health.server.central_dp_server import CentralDPServer
-
 from research.flamby_local_dp.fed_ixi.model import ModifiedBaseline, FedIXIUNet
-
-import torch
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 

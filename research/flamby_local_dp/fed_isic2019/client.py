@@ -1,36 +1,34 @@
 import argparse
 import os
-
+from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
-from flwr.common.logger import log
-from logging import INFO
-from flwr.common.typing import Config
+from torch.utils.data import DataLoader
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_isic2019 import Baseline
+
+from flwr.common.logger import log
+from flwr.common.typing import Config
+
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
-from torch.utils.data import DataLoader
-
+from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 from fl4health.utils.config import load_config
 
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 from research.isic_custom_models import BaseLineFrozenBN
-from fl4health.clients.scaffold_client import DPScaffoldLoggingClient
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 # torch.set_default_dtype(torch.float64)
-from flamby.datasets.fed_isic2019 import Baseline
-
-
 
 class FedIsic2019FedAvgClient(DPScaffoldLoggingClient):
 

@@ -149,20 +149,6 @@ class ScaffoldClient(BasicClient):
             model_params for model_params in self.model.parameters() if model_params.requires_grad
         ]
 
-        # for name, module in self.model.named_parameters():
-        #     if module.grad is None:
-        #         log(INFO, '-------parameters (start)--------')
-        #         log(INFO, f'name: {name}, module: {module}')
-        #         log(INFO, module.grad_sample)
-        #         log(INFO, '------parameters (end)---------')
-
-
-
-        # for name, module in self.model.named_modules():
-        #     log(INFO, '------modules (start)---------')
-        #     log(INFO, f'name: {name}, module: {module}')
-        #     log(INFO, '------modules (end)---------')
-
         for param, client_cv, server_cv in zip(
             model_params_with_grad, self.client_control_variates, self.server_control_variates
         ):
