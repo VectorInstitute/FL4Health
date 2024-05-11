@@ -12,7 +12,7 @@ if [[ $clean_up == 1 ]]; then
     echo removing logs and cancelling jobs ... 
     scancel --me
     sleep 3
-    rm -rf /scratch/ssd004/scratch/xuejzhao/log_error/ logs/
+    rm -rf /scratch/ssd004/scratch/your_usrname_here/log_error/ logs/
     squeue --me
 fi
 

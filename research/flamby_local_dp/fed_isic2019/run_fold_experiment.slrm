@@ -10,8 +10,8 @@
 #SBATCH --partition=a40
 #SBATCH --qos=m2
 #SBATCH --job-name=DDP-9l
-#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_local/%j_%x.out"
-#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_isic2019_local/%j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_isic2019_local/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_isic2019_local/%j_%x.err"
 
 ###############################################
 # Usage:

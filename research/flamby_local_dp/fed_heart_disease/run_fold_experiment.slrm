@@ -9,8 +9,8 @@
 #SBATCH --partition=cpu
 #SBATCH --qos=normal
 #SBATCH --job-name=DDP-hl
-#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_local/%j_%x.out"
-#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_local/%j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_heart_disease_local/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_heart_disease_local/%j_%x.err"
 
 ###############################################
 # Usage:

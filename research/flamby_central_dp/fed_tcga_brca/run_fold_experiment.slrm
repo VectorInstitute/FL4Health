@@ -9,8 +9,8 @@
 #SBATCH --partition=cpu
 #SBATCH --qos=normal
 #SBATCH --job-name=DDP-tc
-#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_tcga_brca_central/%j_%x.out"
-#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_tcga_brca_central/%j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_tcga_brca_central/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_tcga_brca_central/%j_%x.err"
 
 ###############################################
 # Usage:

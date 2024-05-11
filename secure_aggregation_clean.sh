@@ -2,7 +2,7 @@
 
 # Define the array of folder paths
 folder_paths=(
-    "/h/xuejzhao/FL4Health/logs/"
+    "/h/your_usrname_here/FL4Health/logs/"
     # Add more folder paths as needed
 )
 

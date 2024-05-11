@@ -10,8 +10,8 @@
 #SBATCH --time=8:00:00
 #SBATCH --qos=normal
 #SBATCH --job-name=DDP-hc
-#SBATCH --output="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_central/%j_%x.out"
-#SBATCH --error="/scratch/ssd004/scratch/xuejzhao/log_error/fed_heart_disease_central/%j_%x.err"
+#SBATCH --output="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_heart_disease_central/%j_%x.out"
+#SBATCH --error="/scratch/ssd004/scratch/your_usrname_here/log_error/fed_heart_disease_central/%j_%x.err"
 
 ###############################################
 # Usage:
