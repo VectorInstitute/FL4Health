@@ -4,9 +4,9 @@ from torch.nn import Module
 
 
 # the following function is consumed by the server strategy
-def generate_config(local_epochs: int, batch_size: int, current_server_round: int) -> Config:
+def generate_config(local_steps: int, batch_size: int, current_server_round: int) -> Config:
     package = {
-        "local_epochs": local_epochs,
+        "local_steps": local_steps,
         "batch_size": batch_size,
         "current_server_round": current_server_round,
     }

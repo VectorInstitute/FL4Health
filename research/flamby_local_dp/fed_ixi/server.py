@@ -16,7 +16,6 @@ from flwr.common.typing import Config, Parameters
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
-from fl4health.server.secure_aggregation_server import CentralDPSecAggServer
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager

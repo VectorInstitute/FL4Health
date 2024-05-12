@@ -17,7 +17,7 @@ from fl4health.server.secure_aggregation_server import SecureAggregationServer
 from fl4health.strategies.secure_aggregation_strategy import SecureAggregationStrategy
 from fl4health.utils.config import load_config
 
-from .utils import generate_config, get_parameters
+from examples.secure_aggregation_example.utils import generate_config, get_parameters
 
 torch.set_default_dtype(torch.float64)
 DEFAULT_MODEL_INTEGER_RANGE = 1 << 30
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     model = Net()
 
     # consumed by strategy below
-    config_parial = partial(generate_config, config["local_epochs"], config["batch_size"])
+    config_parial = partial(generate_config, config["local_steps"], config["batch_size"])
 
     strategy = SecureAggregationStrategy(
         min_fit_clients=config["n_clients"],

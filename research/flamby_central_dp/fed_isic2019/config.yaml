@@ -4,10 +4,13 @@ n_server_rounds: 100 # 30 # The number of rounds to run FL
 # Parameters that describe clients
 n_clients: 3 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client (NOT USED FOR FLAMBY)
-batch_size: 1 # The batch size for client training (NOT USED FOR FLAMBY), set in client
-local_steps: 1 # 100 # The number of local training steps to perform.
+batch_size: 4 # The batch size for client training (NOT USED FOR FLAMBY), set in client
+local_steps: 15 # 100 # The number of local training steps to perform.
 
 # privacy settings (defaults to continuous Gaussian noise)
 # gaussian_noise_variance: 10
-clip: 20000
+clip: 1
+
+# We set stdev in the master file secure_aggregation_run_script.sh
+# If you want to set stdev here modify research/flamby_central_dp/fed_isic2019/server.py
 stdev: 1

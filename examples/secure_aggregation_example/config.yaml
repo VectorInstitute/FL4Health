@@ -10,7 +10,8 @@ shamir_reconstruction_threshold: 2
 # model_integer_range: 9999
 
 # Other configs
-local_epochs: 1
+# local_epochs: 1
+local_steps: 1
 checkpoint_path: "examples/secure_aggregation_example"
 
 # privacy parameters

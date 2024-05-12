@@ -3,7 +3,6 @@ import os
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
-
 import flwr as fl
 import torch
 import torch.nn as nn
@@ -15,17 +14,16 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from fl4health.clients.central_dp_client import CentralDPClient
+from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets 
 from fl4health.utils.config import load_config
+from fl4health.clients.central_dp_client import CentralDPClient
 from research.isic_custom_models import BaseLineFrozenBN
-
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
-batch_size = 64
 
 class FedIsic2019FedAvgClient(CentralDPClient):
     def __init__(
@@ -38,7 +36,6 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
-        batch_size = 64
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -48,33 +45,31 @@ class FedIsic2019FedAvgClient(CentralDPClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
-            task_name='Fed-ISIC2019 Central',
-            learning_rate=learning_rate,
-            batch_size=batch_size
-
+            task_name='Fed-ISIC2019 Central'
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
-        self.batch_size = batch_size
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        # flamby_datasets/fed_isic2019/
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=8, shuffle=False, generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-
+        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return BaseLineFrozenBN().to(self.device)
+        # NOTE: We set the out_channels_first_layer to 12 rather than the default of 8. This roughly doubles the size
+        # of the baseline model to be used (1106520 DOF). This is to allow for a fair parameter comparison with FENDA
+        # and APFL
+        model: nn.Module = BaseLineFrozenBN().to(self.device)
+        return model
 
     def get_optimizer(self, config: Config) -> Optimizer:
-        return torch.optim.AdamW(self.model.parameters(), lr=0.001)
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
@@ -93,7 +88,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed FedISIC Dataset (ex. path/to/fedisic2019/dataset)",
         required=True,
     )
     parser.add_argument(
@@ -117,6 +112,13 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to configuration file.",
+        default="config.yaml",
+    )
+    parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     hyperparameter_options = 'clipping_threshold, granularity, noise_scale, bias, model_integer_range_exponent'
@@ -125,13 +127,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--hyperparameter_value", action="store", type=float, help="Tunable hyperparameter value."
-    )
-    parser.add_argument(
-        "--config_path",
-        action="store",
-        type=str,
-        help="Path to configuration file.",
-        default="config.yaml",
     )
     args = parser.parse_args()
 
@@ -145,13 +140,17 @@ if __name__ == "__main__":
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     config = load_config(args.config_path)
+    privacy_settings = {
+        'stdev': config['stdev'],
+    }
+
+    # update privacy setting for tunable hyperparameter
     key, value = args.hyperparameter_name, args.hyperparameter_value
-    if key == 'lr':
-        args.learning_rate = value
-        log(INFO, f'args.learning_rate set to {args.learning_rate}')
+    assert key in ['stdev']
+    log(INFO, f'{type(key)}, {key}, {type(value)}, {value}')
+    privacy_settings[key] = value
+    log(INFO, f'{privacy_settings}')
 
-
-    
     client = FedIsic2019FedAvgClient(
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
@@ -159,10 +158,9 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        batch_size=batch_size
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client, grpc_max_message_length=1600000000)
+    fl.client.start_numpy_client(server_address=args.server_address, client=client)
 
     # Shutdown the client gracefully
     client.shutdown()

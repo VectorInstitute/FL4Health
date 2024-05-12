@@ -14,7 +14,6 @@ from flwr.server.strategy import FedAvg
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.utils.config import load_config
 from research.flamby.flamby_servers.full_exchange_server import FullExchangeServer
-from fl4health.server.secure_aggregation_server import CentralDPSecAggServer
 from fl4health.parameter_exchange.secure_aggregation_exchanger import SecureAggregationExchanger
 from fl4health.strategies.central_dp_strategy import CentralDPStrategy
 from fl4health.server.central_dp_server import CentralDPServer
@@ -62,7 +61,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     privacy_settings = {
         'clip': config['clip'],
-        'stdev': 1,
+        'stdev': config['stdev'],
     }
 
     # update privacy setting for tunable hyperparameter

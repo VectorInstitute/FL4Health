@@ -177,9 +177,6 @@ class MetricAccumulationMeter(MetricMeter):
 
     def compute(self) -> Dict[str, Scalar]:
         metric_values = []
-        log(INFO, '-------inside compute() start-------')
-        log(INFO, f'(acc in, acc targ)={len(self.accumulated_inputs)}, {len(self.accumulated_targets)}')
-        log(INFO, '-------inside compute() end-------')
 
         for n, pair in enumerate(zip(self.accumulated_inputs, self.accumulated_targets)):
             input, target = pair

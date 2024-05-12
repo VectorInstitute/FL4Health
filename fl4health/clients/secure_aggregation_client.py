@@ -759,10 +759,6 @@ class SecureAggregationClient(BasicClient):
                 input, target = next(train_iterator)
 
             datasize += list(input.shape)[0]
-            
-            # DEBUG
-            log(INFO, f'===input dim: {input.shape}===')
-
             input, target = input.to(self.device), target.to(self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
