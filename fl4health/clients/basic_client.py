@@ -74,7 +74,9 @@ class BasicClient(NumPyClient):
         self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
-        self.test_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses) #TODO: maybe change it into TestLosses? devid said no checkpoint
+        self.test_loss_meter = LossMeter[EvaluationLosses](
+            loss_meter_type, EvaluationLosses
+        )  # TODO: maybe change it into TestLosses? devid said no checkpoint
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Optional variable to store the weights that the client was initialized with during each round of training
@@ -344,9 +346,9 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
-        if hasattr(self, 'test_loader') and self.test_loader:
+        if hasattr(self, "test_loader") and self.test_loader:
             test_loss, test_metrics = self.testing()
-            metrics['test - loss'] = test_loss
+            metrics["test - loss"] = test_loss
             metrics.update(test_metrics)
 
         print("loss_dict, metrics:", loss, metrics)
@@ -395,7 +397,7 @@ class BasicClient(NumPyClient):
         current_round: Optional[int] = None,
         current_epoch: Optional[int] = None,
         is_validation: bool = False,
-        is_testing:bool = False
+        is_testing: bool = False,
     ) -> None:
         """
         Handles the logging of losses, metrics and other information to the output file.
@@ -674,8 +676,8 @@ class BasicClient(NumPyClient):
         # Checkpoint based on loss which is output of user defined compute_loss method
         self._maybe_checkpoint(loss_dict["checkpoint"])
         return loss_dict["checkpoint"], metrics
-    
-    def testing(self) -> Tuple[float, Dict[str, Scalar]]: #TODO: change the evalution loss to test loss
+
+    def testing(self) -> Tuple[float, Dict[str, Scalar]]:  # TODO: change the evalution loss to test loss
         """
         Test the current model on the entire test dataset.
 
@@ -924,7 +926,7 @@ class BasicClient(NumPyClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
-    
+
     def get_test_data_loaders(self, config: Config) -> Optional[DataLoader]:
         """
         User defined method that returns a PyTorch Test DataLoader
