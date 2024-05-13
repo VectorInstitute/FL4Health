@@ -74,6 +74,8 @@ class BasicClient(NumPyClient):
         self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
+        self.test_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses) #TODO: maybe change it into TestLosses? devid said no checkpoint
+        self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
@@ -87,6 +89,7 @@ class BasicClient(NumPyClient):
         self.optimizers: Dict[str, torch.optim.Optimizer]
         self.train_loader: DataLoader
         self.val_loader: DataLoader
+        self.test_loader: Optional[DataLoader]
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
@@ -320,7 +323,7 @@ class BasicClient(NumPyClient):
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
-        Evaluates the model on the validation set.
+        Evaluates the model on the validation set, and test set (if possible)
 
         Args:
             parameters (NDArrays): The parameters of the model to be evaluated.
@@ -328,7 +331,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[float, int, Dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-                validation set and the metric_values associated with evaluation.
+                validation/test set and the metric_values associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -341,10 +344,12 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
+        if hasattr(self, 'test_loader') and self.test_loader:
+            test_loss, test_metrics = self.testing()
+            metrics['test - loss'] = test_loss
+            metrics.update(test_metrics)
 
-        # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
-        # NOTE: This assumes that the loss returned in the checkpointing loss
-        self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
+        print("loss_dict, metrics:", loss, metrics)
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -387,6 +392,7 @@ class BasicClient(NumPyClient):
         current_round: Optional[int] = None,
         current_epoch: Optional[int] = None,
         is_validation: bool = False,
+        is_testing:bool = False
     ) -> None:
         """
         Handles the logging of losses, metrics and other information to the output file.
@@ -405,7 +411,12 @@ class BasicClient(NumPyClient):
 
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-        metric_prefix = "Validation" if is_validation else "Training"
+        if is_validation:
+            metric_prefix = "Validation"
+        elif is_testing:
+            metric_prefix = "Testing"
+        else:
+            metric_prefix = "Training"
         log(
             INFO,
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
@@ -657,6 +668,41 @@ class BasicClient(NumPyClient):
         metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
+        # Checkpoint based on loss which is output of user defined compute_loss method
+        self._maybe_checkpoint(loss_dict["checkpoint"])
+        return loss_dict["checkpoint"], metrics
+    
+    def testing(self) -> Tuple[float, Dict[str, Scalar]]: #TODO: change the evalution loss to test loss
+        """
+        Test the current model on the entire test dataset.
+
+        Raises:
+            ValueError: raised if the test loader is not defined.
+
+        Returns:
+            Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
+        """
+
+        if self.test_loader is None:
+            raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
+
+        self.model.eval()
+        self.test_metric_manager.clear()
+        self.test_loss_meter.clear()
+        with torch.no_grad():
+            for input, target in self.test_loader:
+                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                losses, preds = self.val_step(input, target)  # Assuming val_step is also applicable for test
+                self.test_loss_meter.update(losses)
+                self.test_metric_manager.update(preds, target)
+
+        # Compute losses and metrics over test set
+        loss_dict = self.test_loss_meter.compute().as_dict()
+        metrics = self.test_metric_manager.compute()
+        self._handle_logging(loss_dict, metrics, is_testing=True)
+
+        # Checkpoint based on loss which is output of user defined compute_loss method
+        self._maybe_checkpoint(loss_dict["checkpoint"])
         return loss_dict["checkpoint"], metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
@@ -689,6 +735,8 @@ class BasicClient(NumPyClient):
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
+        test_loader = self.get_test_data_loaders(config)
+        self.test_loader = test_loader
 
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
@@ -873,6 +921,20 @@ class BasicClient(NumPyClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
+    
+    def get_test_data_loaders(self, config: Config) -> Optional[DataLoader]:
+        """
+        User defined method that returns a PyTorch Test DataLoader
+
+        Args:
+            config (Config): The config from the server.
+
+        Returns:
+            Optional[Tuple[DataLoader, ...]]: Tuple of length 2. The optinal client test loader.
+                Defaults to None.
+
+        """
+        return None
 
     def get_criterion(self, config: Config) -> _Loss:
         """
