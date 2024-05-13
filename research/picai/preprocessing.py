@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import SimpleITK as sitk
@@ -15,24 +15,45 @@ from preprocessing_utils import crop_or_pad, resample_img
 
 @dataclass
 class PicaiPreprocessingSettings:
-    spacing: Sequence[int]
-    size: Sequence[int]
-    physical_size: Sequence[int]
-    scans_write_dir: str
-    annotation_write_dir: str
-    modality_suffix_map: Dict[str, str] = {"t2w": "001", "adc": "001", "hbv": "002"}
+    def __init__(
+        self,
+        scans_write_dir: Path,
+        annotation_write_dir: Path,
+        size: Optional[Sequence[int]],
+        physical_size: Optional[Sequence[float]],
+        spacing: Optional[Sequence[float]],
+        modality_suffix_map: Dict[str, str] = {"t2w": "001", "adc": "001", "hbv": "002"},
+    ) -> None:
+
+        self.scans_write_dir = scans_write_dir
+        self.annotation_write_dir = annotation_write_dir
+        self.size = size
+        self.physical_size = physical_size
+        self.spacing = spacing
+        self.modality_suffix_map = modality_suffix_map
+
+    def __post_init__(self) -> None:
+        if self.physical_size is None and self.spacing is not None and self.size is not None:
+            # calculate physical size
+            self.physical_size = [
+                voxel_spacing * num_voxels for voxel_spacing, num_voxels in zip(self.spacing, self.size)
+            ]
+
+        if self.spacing is None and self.physical_size is not None and self.size is not None:
+            # calculate spacing
+            self.spacing = [size / num_voxels for size, num_voxels in zip(self.physical_size, self.size)]
 
 
 @dataclass
 class MriExam:
     def __init__(
         self,
-        scans_dir: Path,
+        scan_paths: Sequence[Path],
         annotations_path: Path,
         settings: PicaiPreprocessingSettings,
         file_extension: str = "mha",
     ):
-        self.scans_dir = scans_dir
+        self.scan_paths = scan_paths
         self.annotations_path = annotations_path
         self.settings = settings
         self.file_extension = file_extension
@@ -41,25 +62,19 @@ class MriExam:
         self.annotation: sitk.Image
 
     def read(self) -> None:
-        valid_suffixes = tuple(
-            [f"{suffix}.{self.file_extension}" for suffix in self.settings.modality_suffix_map.keys()]
-        )
-        self.scans = [
-            sitk.ReadImage(path) for path in sorted(os.listdir(self.scans_dir)) if path.endswith(valid_suffixes)
-        ]
-        self.annotation = sitk.ReadImage(self.annotations_path)
         assert len(self.scans) != 0
+        self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
+        self.annotation = sitk.ReadImage(self.annotations_path)
 
     def write(self) -> None:
-        valid_suffixes = tuple(
-            [f"{suffix}.{self.file_extension}" for suffix in self.settings.modality_suffix_map.keys()]
-        )
-        scan_paths = [path for path in sorted(os.listdir(self.scans_dir)) if path.endswith(valid_suffixes)]
+        scan_paths = [path for path in sorted(self.scan_paths)]
         for path, scan in zip(scan_paths, self.scans):
-            f = path.split("/")[-1][:-4]
-            pp_f = f[:3] + self.settings.modality_suffix_map[f[-3:]] + ".nii.gz"
-            pp_path = os.path.join(self.settings.scans_write_dir, pp_f)
-            sitk.WriteImage(scan, pp_path, useCompression=True)
+            filename = os.path.basename(path)
+            file = filename.split(".")[0]
+            suffix = self.settings.modality_suffix_map[file[:-3]]
+            preprocessed_filename = file[:-3] + suffix + ".nii.gz"
+            preprocessed_path = os.path.join(self.settings.scans_write_dir, preprocessed_filename)
+            sitk.WriteImage(scan, preprocessed_path, useCompression=True)
 
 
 class PreprocessingTransform:
