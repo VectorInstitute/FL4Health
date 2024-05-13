@@ -673,8 +673,6 @@ class BasicClient(NumPyClient):
         metrics = self.val_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_validation=True)
 
-        # Checkpoint based on loss which is output of user defined compute_loss method
-        self._maybe_checkpoint(loss_dict["checkpoint"])
         return loss_dict["checkpoint"], metrics
 
     def testing(self) -> Tuple[float, Dict[str, Scalar]]:  # TODO: change the evalution loss to test loss
@@ -706,8 +704,6 @@ class BasicClient(NumPyClient):
         metrics = self.test_metric_manager.compute()
         self._handle_logging(loss_dict, metrics, is_testing=True)
 
-        # Checkpoint based on loss which is output of user defined compute_loss method
-        self._maybe_checkpoint(loss_dict["checkpoint"])
         return loss_dict["checkpoint"], metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
