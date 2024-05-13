@@ -350,6 +350,9 @@ class BasicClient(NumPyClient):
             metrics.update(test_metrics)
 
         print("loss_dict, metrics:", loss, metrics)
+        # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
+        # NOTE: This assumes that the loss returned in the checkpointing loss
+        self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
