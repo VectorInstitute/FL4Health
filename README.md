@@ -73,7 +73,7 @@ MOON adds a contrastive loss function that attempts to ensure that the feature r
 [FedDG-GA](https://arxiv.org/abs/2103.06030)
 </td>
 <td>
-FedDG-GA is a domain generalization approach that aims to ensure that the models trained during FL generalize well to unseen domains, potentially outside of the training distribution. The method applies an adjustment algorithm which modifies the weights used during weight aggregation on the server-side.
+FedDG-GA is a domain generalization approach that aims to ensure that the models trained during FL generalize well to unseen domains, potentially outside of the training distribution. The method applies an adjustment algorithm which modifies the client coefficients used during weighted averaging on the server-side.
 </td>
 </tr>
 <tr>
