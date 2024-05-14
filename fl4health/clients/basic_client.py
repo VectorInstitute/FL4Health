@@ -660,7 +660,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from validation or test.
-        
+
         Raises:
             ValueError: raised if the test loader is not defined when is_test is True.
         """
@@ -684,7 +684,7 @@ class BasicClient(NumPyClient):
         # Compute losses and metrics
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
-        
+
         if is_test:
             self._handle_logging(loss_dict, metrics, is_testing=True)
         else:
