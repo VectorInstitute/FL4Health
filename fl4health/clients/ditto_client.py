@@ -309,7 +309,7 @@ class DittoClient(BasicClient):
 
         return TrainingLosses(backward=local_loss + ditto_local_loss, additional_losses=additional_losses)
 
-    def validate(self, is_test:bool=False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
