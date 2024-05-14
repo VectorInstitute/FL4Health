@@ -347,11 +347,10 @@ class BasicClient(NumPyClient):
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
         if hasattr(self, "test_loader") and self.test_loader:
-            test_loss, test_metrics = self.testing()
+            test_loss, test_metrics = self.validate(is_test=True)
             metrics["test - loss"] = test_loss
             metrics.update(test_metrics)
 
-        print("loss_dict, metrics:", loss, metrics)
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
         # NOTE: This assumes that the loss returned in the checkpointing loss
         self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
@@ -408,6 +407,7 @@ class BasicClient(NumPyClient):
             current_round (Optional[int]): The current FL round (ie current server round).
             current_epoch (Optional[int]): The current epoch of local training.
             is_validation (bool): Whether or not this logging is for validation set.
+            is_testing (bool): Whether or not this logging is for test set.
         """
         initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
         initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
@@ -651,58 +651,44 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
         """
-        Validate the current model on the entire validation dataset.
+        Validate or test the current model on the entire validation or test dataset.
+
+        Args:
+            is_test (bool): Flag to indicate whether to perform testing instead of validation.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
-        """
-        self.model.eval()
-        self.val_metric_manager.clear()
-        self.val_loss_meter.clear()
-        with torch.no_grad():
-            for input, target in self.val_loader:
-                input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target)
-                self.val_loss_meter.update(losses)
-                self.val_metric_manager.update(preds, target)
-
-        # Compute losses and metrics over validation set
-        loss_dict = self.val_loss_meter.compute().as_dict()
-        metrics = self.val_metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_validation=True)
-
-        return loss_dict["checkpoint"], metrics
-
-    def testing(self) -> Tuple[float, Dict[str, Scalar]]:  # TODO: change the evalution loss to test loss
-        """
-        Test the current model on the entire test dataset.
-
+            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from validation or test.
+        
         Raises:
-            ValueError: raised if the test loader is not defined.
-
-        Returns:
-            Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
+            ValueError: raised if the test loader is not defined when is_test is True.
         """
+        loader = self.test_loader if is_test else self.val_loader
+        loss_meter = self.test_loss_meter if is_test else self.val_loss_meter
+        metric_manager = self.test_metric_manager if is_test else self.val_metric_manager
 
-        if self.test_loader is None:
+        if is_test and self.test_loader is None:
             raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
 
         self.model.eval()
-        self.test_metric_manager.clear()
-        self.test_loss_meter.clear()
+        metric_manager.clear()
+        loss_meter.clear()
         with torch.no_grad():
-            for input, target in self.test_loader:
+            for input, target in loader:
                 input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target)  # Assuming val_step is also applicable for test
-                self.test_loss_meter.update(losses)
-                self.test_metric_manager.update(preds, target)
+                losses, preds = self.val_step(input, target)
+                loss_meter.update(losses)
+                metric_manager.update(preds, target)
 
-        # Compute losses and metrics over test set
-        loss_dict = self.test_loss_meter.compute().as_dict()
-        metrics = self.test_metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_testing=True)
+        # Compute losses and metrics
+        loss_dict = loss_meter.compute().as_dict()
+        metrics = metric_manager.compute()
+        
+        if is_test:
+            self._handle_logging(loss_dict, metrics, is_testing=True)
+        else:
+            self._handle_logging(loss_dict, metrics, is_validation=True)
 
         return loss_dict["checkpoint"], metrics
 
