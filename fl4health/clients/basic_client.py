@@ -4,7 +4,7 @@ import random
 import string
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union, cast
 
 import torch
 import torch.nn as nn
@@ -666,11 +666,10 @@ class BasicClient(NumPyClient):
         """
         loader: Optional[DataLoader[Any]] = self.test_loader if is_test else self.val_loader
         if loader is None:
-            raise ValueError(
-                f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up."
-            )
+            raise ValueError(f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up.")
 
-        assert loader is not None  # This tells the type checker that loader is definitely not None here
+        # Use cast to explicitly tell the type checker that loader is not None
+        loader = cast(DataLoader[Any], loader)
 
         loader = self.test_loader if is_test else self.val_loader
         loss_meter = self.test_loss_meter if is_test else self.val_loss_meter
