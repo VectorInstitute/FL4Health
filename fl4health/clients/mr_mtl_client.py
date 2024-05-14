@@ -159,7 +159,7 @@ class MrMtlClient(BasicClient):
 
         return TrainingLosses(backward=total_loss + mr_mtl_loss, additional_losses=additional_losses)
 
-    def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test:bool=False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 

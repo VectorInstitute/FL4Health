@@ -651,7 +651,7 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test:bool=False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate or test the current model on the entire validation or test dataset.
 
