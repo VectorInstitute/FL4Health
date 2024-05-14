@@ -71,8 +71,10 @@ class LocalUNetFeatureExtractor(nn.Module):
 
 
 class GlobalUNetFeatureExtractor(nn.Module):
-    """Global FENDA module: We use a UNet with the classifier head stripped off to extract a set of features on which each
-    pixel of the image is classified.
+    """Global FENDA module.
+    We use a UNet with the classifier head stripped off to extract a set of features on
+    which each pixel of the image is classified.
+
     """
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
