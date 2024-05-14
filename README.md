@@ -68,6 +68,15 @@ MOON adds a contrastive loss function that attempts to ensure that the feature r
 </td>
 </tr>
 <tr>
+<td>
+
+[FedDG-GA](https://arxiv.org/abs/2103.06030)
+</td>
+<td>
+FedDG-GA is a domain generalization approach that aims to ensure that the models trained during FL generalize well to unseen domains, potentially outside of the training distribution. The method applies an adjustment algorithm which modifies the weights used during weight aggregation on the server-side.
+</td>
+</tr>
+<tr>
 <th style="text-align: left; width: 250px"> Personalized Methods </th>
 <th style="text-align: center; width: 350px"> Notes </th>
 </tr>
@@ -100,10 +109,28 @@ Trains a global feature extractor shared by all clients through FedAvg and a pri
 <tr>
 <td>
 
+[FedRep](https://arxiv.org/abs/2303.05206)
+</td>
+<td>
+Similar to FedPer, FedRep trains a global feature extractor shared by all clients through FedAvg and a private classifier that is unique to each client. However, FedRep breaks up the client-side training of these components into two phases. First the local classifier is trained with the feature extractor frozen. Next, the classifier is frozen and the feature extractor is trained.
+</td>
+</tr>
+<tr>
+<td>
+
 [Ditto](https://arxiv.org/abs/2012.04221)
 </td>
 <td>
 Trains a global model with FedAvg and a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous global model.
+</td>
+</tr>
+<tr>
+<td>
+
+[MR-MTL](https://arxiv.org/abs/2206.07902)
+</td>
+<td>
+Trains a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous aggregation of all client's models. Aggregation of the personal models is done through FedAvg. Unlike Ditto, no global model is optimized during client-side training.
 </td>
 </tr>
 <tr>
@@ -145,13 +172,13 @@ In addition to the FL strategies, we also support several differentially private
 - [Client-level FL privacy with Adaptive Clipping](https://arxiv.org/abs/1905.03871)
     - Weighted and Unweighted FedAvg
 
-The addition of Distributed Differential Privacy (DDP) with Secure Aggregation is also anticipated very soon.
+The addition of Distributed Differential Privacy (DDP) with Secure Aggregation is also anticipated soon.
 
 ## Components
 
 ### Checkpointing
 
-Contains modules associated with basic checkpointing. Currently only supports checkpointing of pytorch models. There are two basic forms of checkpointing available. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing.
+Contains modules associated with basic checkpointing. Currently only supports checkpointing of pytorch models. Generic scoring functions for determining whether to checkpoint a model are supported. There are two basic forms of checkpointing implemented out of the box for convenience. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing. The library currently supports server-side checkpointing of global models after weight aggregation. On the client-side, we support checkpointing local models on each client during local training and/or after weight aggregation from the server.
 
 ### Client Managers
 
