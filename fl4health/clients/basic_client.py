@@ -664,12 +664,13 @@ class BasicClient(NumPyClient):
         Raises:
             ValueError: raised if the test loader is not defined when is_test is True.
         """
+        if is_test and self.test_loader is None:
+            raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
+
         loader = self.test_loader if is_test else self.val_loader
         loss_meter = self.test_loss_meter if is_test else self.val_loss_meter
         metric_manager = self.test_metric_manager if is_test else self.val_metric_manager
 
-        if is_test and self.test_loader is None:
-            raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
 
         self.model.eval()
         metric_manager.clear()
@@ -684,7 +685,7 @@ class BasicClient(NumPyClient):
         # Compute losses and metrics
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
-
+        
         if is_test:
             self._handle_logging(loss_dict, metrics, is_testing=True)
         else:

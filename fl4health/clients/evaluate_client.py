@@ -146,7 +146,7 @@ class EvaluateClient(BasicClient):
         )
 
     def validate_on_model(
-        self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, is_global: bool
+        self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, data_loader: DataLoader, is_global: bool, is_test: bool
     ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
@@ -154,7 +154,7 @@ class EvaluateClient(BasicClient):
         model.to(self.device)
 
         with torch.no_grad():
-            for inputs, targets in self.data_loader:
+            for inputs, targets in data_loader:
                 inputs, targets = inputs.to(self.device), targets.to(self.device)
                 preds = {"prediction": model(inputs)}
                 losses = self.compute_evaluation_loss(preds, {}, targets)
@@ -164,26 +164,36 @@ class EvaluateClient(BasicClient):
 
         metrics = metric_meter.compute()
         losses = loss_meter.compute()
-        self._handle_logging(losses, metrics, is_global)
+        
+        if is_test:
+            self._handle_logging(losses, metrics, is_testing=True)
+        else:
+            self._handle_logging(losses, metrics, is_validation=True)
+        
         return losses, metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
         local_loss: Optional[EvaluationLosses] = None
         local_metrics: Optional[Dict[str, Scalar]] = None
 
         global_loss: Optional[EvaluationLosses] = None
         global_metrics: Optional[Dict[str, Scalar]] = None
 
+        if is_test and self.test_loader is None:
+            raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
+
+        data_loader = self.test_loader if is_test else self.val_loader
+
         if self.local_model:
-            log(INFO, "Performing evaluation on local model")
+            log(INFO, f"Performing {'testing' if is_test else 'evaluation'} on local model")
             local_loss, local_metrics = self.validate_on_model(
-                self.local_model, self.local_metric_manager, self.local_loss_meter, is_global=False
+                self.local_model, self.local_metric_manager, self.local_loss_meter, data_loader, is_global=False, is_test=is_test
             )
 
         if self.global_model:
-            log(INFO, "Performing evaluation on global model")
+            log(INFO, f"Performing {'testing' if is_test else 'evaluation'} on global model")
             global_loss, global_metrics = self.validate_on_model(
-                self.global_model, self.global_metric_manager, self.global_loss_meter, is_global=True
+                self.global_model, self.global_metric_manager, self.global_loss_meter, data_loader, is_global=True, is_test=is_test
             )
 
         # Store the losses in the metrics, since we can't return more than one loss.

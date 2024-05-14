@@ -309,7 +309,7 @@ class DittoClient(BasicClient):
 
         return TrainingLosses(backward=local_loss + ditto_local_loss, additional_losses=additional_losses)
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
@@ -318,7 +318,7 @@ class DittoClient(BasicClient):
         """
         # Set the global model to evaluate mode
         self.global_model.eval()
-        return super().validate()
+        return super().validate(is_test)
 
     def compute_evaluation_loss(
         self,
