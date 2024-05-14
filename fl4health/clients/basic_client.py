@@ -666,7 +666,9 @@ class BasicClient(NumPyClient):
         """
         loader = self.test_loader if is_test else self.val_loader
         if loader is None:
-            raise ValueError(f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up.")
+            raise ValueError(
+                f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up."
+            )
 
         loader = self.test_loader if is_test else self.val_loader
         loss_meter = self.test_loss_meter if is_test else self.val_loss_meter
