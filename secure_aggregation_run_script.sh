@@ -35,26 +35,26 @@ central_experiments () {
 
     HYPERPARAMETER_NAME="stdev"
 
-    # # client is 4
-    # HYPERPARAMETER_VALUES_HEART=( 0.0002 0.0006 0.001 0.0014 0.0018 )
-    # HYPERPARAMETER_VALUES_HEART=( 0.0001 )
-    # bash research/flamby_central_dp/fed_heart_disease/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_HEART[@]}"
+    # client is 4
+    HYPERPARAMETER_VALUES_HEART=( 0.0002 0.0006 0.001 0.0014 0.0018 )
+    HYPERPARAMETER_VALUES_HEART=( 0.0001 )
+    bash research/flamby_central_dp/fed_heart_disease/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_HEART[@]}"
 
     if [[ $lightweight == 0 ]]; then
         # client is 3
         HYPERPARAMETER_VALUES_ISIC=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
-        HYPERPARAMETER_VALUES_ISIC=(0.000001)
+        HYPERPARAMETER_VALUES_ISIC=( 0.000007 )
         bash research/flamby_central_dp/fed_isic2019/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_ISIC[@]}"
 
-        # # client is 3
-        # HYPERPARAMETER_VALUES_IXI=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
-        # HYPERPARAMETER_VALUES_IXI=(0.000001)
-        # bash research/flamby_central_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
+        # client is 3
+        HYPERPARAMETER_VALUES_IXI=( 0.0001732 0.0005196 0.0008660 0.001212 0.001559)
+        HYPERPARAMETER_VALUES_IXI=(0.000001)
+        bash research/flamby_central_dp/fed_ixi/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_IXI[@]}"
 
-        # # client is 4
-        # HYPERPARAMETER_VALUES_TCGA_BRCA=( 0.0002 0.0006 0.001 0.0014 0.0018 )
-        # HYPERPARAMETER_VALUES_TCGA_BRCA=(0.000001)
-        # bash research/flamby_central_dp/fed_tcga_brca/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_TCGA_BRCA[@]}"
+        # client is 4
+        HYPERPARAMETER_VALUES_TCGA_BRCA=( 0.0002 0.0006 0.001 0.0014 0.0018 )
+        HYPERPARAMETER_VALUES_TCGA_BRCA=(0.000001)
+        bash research/flamby_central_dp/fed_tcga_brca/run.sh $HYPERPARAMETER_NAME "${HYPERPARAMETER_VALUES_TCGA_BRCA[@]}"
         
     fi
 }

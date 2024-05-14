@@ -6,7 +6,6 @@ from typing import Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -14,18 +13,22 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
-from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets 
+
 from fl4health.utils.config import load_config
 from fl4health.clients.central_dp_client import CentralDPClient
+
+
 from research.isic_custom_models import BaseLineFrozenBN
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from fl4health.utils.metrics import BalancedAccuracy, Metric, MetricMeterType
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+
 
 torch.set_default_device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-class FedIsic2019FedAvgClient(CentralDPClient):
+class FedISICFedAvgClient(CentralDPClient):
     def __init__(
         self,
         data_path: Path,
@@ -36,6 +39,7 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         metric_meter_type: MetricMeterType = MetricMeterType.ACCUMULATION,
         checkpointer: Optional[TorchCheckpointer] = None,
+        batch_size: int = 8
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -45,10 +49,12 @@ class FedIsic2019FedAvgClient(CentralDPClient):
             metric_meter_type=metric_meter_type,
             checkpointer=checkpointer,
             client_id=client_number,
-            task_name='Fed-ISIC2019 Central'
+            task_name='Fed-ISIC Central', 
+            batch_size=batch_size,
         )
         self.client_number = client_number
         self.learning_rate = learning_rate
+        self.batch_size=batch_size
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -57,8 +63,8 @@ class FedIsic2019FedAvgClient(CentralDPClient):
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
-        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
+        val_loader = DataLoader(validation_dataset, batch_size=self.batch_size, shuffle=False,  generator=torch.Generator(device='cuda' if torch.cuda.is_available() else "cpu"))
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
@@ -88,7 +94,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedISIC Dataset (ex. path/to/fedisic2019/dataset)",
+        help="Path to the preprocessed FedISIC2019 Dataset (ex. path/to/fedISIC2019/dataset)",
         required=True,
     )
     parser.add_argument(
@@ -108,7 +114,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading (should be 0-5 for FedISIC2019)",
         required=True,
     )
     parser.add_argument(
@@ -151,13 +157,14 @@ if __name__ == "__main__":
     privacy_settings[key] = value
     log(INFO, f'{privacy_settings}')
 
-    client = FedIsic2019FedAvgClient(
+    client = FedISICFedAvgClient(
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
+        batch_size=8,
     )
 
     fl.client.start_numpy_client(server_address=args.server_address, client=client)
