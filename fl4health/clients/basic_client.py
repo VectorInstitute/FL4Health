@@ -736,7 +736,7 @@ class BasicClient(NumPyClient):
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
-        test_loader = self.get_test_data_loaders(config)
+        test_loader = self.get_test_data_loader(config)
         self.test_loader = test_loader
 
         # The following lines are type ignored because torch datasets are not "Sized"
@@ -923,7 +923,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_test_data_loaders(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         """
         User defined method that returns a PyTorch Test DataLoader
 
