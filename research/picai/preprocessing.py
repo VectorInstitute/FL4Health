@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import gc
 import os
 from abc import abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence
 
 import numpy as np
 import SimpleITK as sitk
@@ -20,9 +21,9 @@ class PicaiPreprocessingSettings:
         scans_write_dir: Path,
         annotation_write_dir: Path,
         size: Optional[Sequence[int]],
-        physical_size: Optional[Sequence[float]],
+        physical_size: Optional[Iterable[float]],
         spacing: Optional[Sequence[float]],
-        modality_suffix_map: Dict[str, str] = {"t2w": "001", "adc": "001", "hbv": "002"},
+        modality_suffix_map: Dict[str, str] = {"t2w": "0000", "adc": "0001", "hbv": "0002"},
     ) -> None:
 
         self.scans_write_dir = scans_write_dir
@@ -32,7 +33,6 @@ class PicaiPreprocessingSettings:
         self.spacing = spacing
         self.modality_suffix_map = modality_suffix_map
 
-    def __post_init__(self) -> None:
         if self.physical_size is None and self.spacing is not None and self.size is not None:
             # calculate physical size
             self.physical_size = [
@@ -62,7 +62,7 @@ class MriExam:
         self.annotation: sitk.Image
 
     def read(self) -> None:
-        assert len(self.scans) != 0
+        assert len(self.scan_paths) != 0
         self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
         self.annotation = sitk.ReadImage(self.annotations_path)
 
@@ -71,10 +71,14 @@ class MriExam:
         for path, scan in zip(scan_paths, self.scans):
             filename = os.path.basename(path)
             file = filename.split(".")[0]
-            suffix = self.settings.modality_suffix_map[file[:-3]]
+            suffix = self.settings.modality_suffix_map[file[-3:]]
             preprocessed_filename = file[:-3] + suffix + ".nii.gz"
             preprocessed_path = os.path.join(self.settings.scans_write_dir, preprocessed_filename)
             sitk.WriteImage(scan, preprocessed_path, useCompression=True)
+
+        annotation_filename = os.path.basename(self.annotations_path)
+        annotation_path = os.path.join(self.settings.annotation_write_dir, annotation_filename)
+        sitk.WriteImage(self.annotation, annotation_path, useCompression=True)
 
 
 class PreprocessingTransform:
@@ -116,6 +120,7 @@ class CentreCropAndOrPad(PreprocessingTransform):
     """Centre crop and/or pad scans and label"""
 
     def __call__(self, mri: MriExam) -> MriExam:
+        mri.annotation = crop_or_pad(mri.annotation, mri.settings.size, mri.settings.physical_size)
         mri.scans = [
             crop_or_pad(
                 scan,
@@ -124,8 +129,6 @@ class CentreCropAndOrPad(PreprocessingTransform):
             )
             for scan in mri.scans
         ]
-
-        mri.annotation = crop_or_pad(mri.annotation, mri.settings.size, mri.settings.physical_size)
 
         return mri
 
@@ -160,15 +163,25 @@ class AlignOriginAndDirection(PreprocessingTransform):
         return mri
 
 
-def apply_transform(mri: MriExam, transforms: Sequence[PreprocessingTransform]) -> None:
-    mri.read()
-    reduce(lambda acc, f: f(acc), transforms, mri)
+def apply_transform(mri: MriExam, transforms: Sequence[PreprocessingTransform]) -> bool:
+    try:
+        mri.read()
+        reduce(lambda acc, f: f(acc), transforms, mri)
+        mri.write()
+        del mri
+        gc.collect()
+        return True
+    except Exception:
+        return False
 
 
-def preprocess(mris: List[MriExam], transforms: Sequence[PreprocessingTransform], num_threads: int = 4) -> None:
+def preprocess(
+    mris: List[MriExam], transforms: Sequence[PreprocessingTransform], num_threads: int = 4
+) -> Sequence[bool]:
     f = partial(apply_transform, transforms=transforms)
     if num_threads >= 2:
+        print("yup")
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            executor.map(f, mris)
+            return list(executor.map(f, mris))
     else:
-        map(f, mris)
+        return list(map(f, mris))

@@ -1,4 +1,4 @@
-from typing import Iterable, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -53,7 +53,7 @@ def resample_img(
 
 def input_verification_crop_or_pad(
     image: sitk.Image,
-    size: Iterable[int] = (20, 256, 256),
+    size: Sequence[int] = (20, 256, 256),
     physical_size: Optional[Sequence[float]] = None,
 ) -> Tuple[Sequence[int], Sequence[int]]:
     """
