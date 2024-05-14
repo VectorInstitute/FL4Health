@@ -666,7 +666,9 @@ class BasicClient(NumPyClient):
         """
         loader: Optional[DataLoader[Any]] = self.test_loader if is_test else self.val_loader
         if loader is None:
-            raise ValueError(f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up.")
+            raise ValueError(
+                f"{'Test' if is_test else 'Validation'} loader is not defined. Please ensure the loader is properly set up."
+            )
 
         # Use cast to explicitly tell the type checker that loader is not None
         loader = cast(DataLoader[Any], loader)
