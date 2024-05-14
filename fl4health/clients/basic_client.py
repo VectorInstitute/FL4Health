@@ -671,7 +671,6 @@ class BasicClient(NumPyClient):
         loss_meter = self.test_loss_meter if is_test else self.val_loss_meter
         metric_manager = self.test_metric_manager if is_test else self.val_metric_manager
 
-
         self.model.eval()
         metric_manager.clear()
         loss_meter.clear()
@@ -685,7 +684,7 @@ class BasicClient(NumPyClient):
         # Compute losses and metrics
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
-        
+
         if is_test:
             self._handle_logging(loss_dict, metrics, is_testing=True)
         else:

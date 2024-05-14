@@ -146,7 +146,13 @@ class EvaluateClient(BasicClient):
         )
 
     def validate_on_model(
-        self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, data_loader: DataLoader, is_global: bool, is_test: bool
+        self,
+        model: nn.Module,
+        metric_meter: MetricManager,
+        loss_meter: LossMeter,
+        data_loader: DataLoader,
+        is_global: bool,
+        is_test: bool,
     ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
@@ -164,12 +170,12 @@ class EvaluateClient(BasicClient):
 
         metrics = metric_meter.compute()
         losses = loss_meter.compute()
-        
+
         if is_test:
             self._handle_logging(losses, metrics, is_testing=True)
         else:
             self._handle_logging(losses, metrics, is_validation=True)
-        
+
         return losses, metrics
 
     def validate(self, is_test=False) -> Tuple[float, Dict[str, Scalar]]:
@@ -187,13 +193,23 @@ class EvaluateClient(BasicClient):
         if self.local_model:
             log(INFO, f"Performing {'testing' if is_test else 'evaluation'} on local model")
             local_loss, local_metrics = self.validate_on_model(
-                self.local_model, self.local_metric_manager, self.local_loss_meter, data_loader, is_global=False, is_test=is_test
+                self.local_model,
+                self.local_metric_manager,
+                self.local_loss_meter,
+                data_loader,
+                is_global=False,
+                is_test=is_test,
             )
 
         if self.global_model:
             log(INFO, f"Performing {'testing' if is_test else 'evaluation'} on global model")
             global_loss, global_metrics = self.validate_on_model(
-                self.global_model, self.global_metric_manager, self.global_loss_meter, data_loader, is_global=True, is_test=is_test
+                self.global_model,
+                self.global_metric_manager,
+                self.global_loss_meter,
+                data_loader,
+                is_global=True,
+                is_test=is_test,
             )
 
         # Store the losses in the metrics, since we can't return more than one loss.
