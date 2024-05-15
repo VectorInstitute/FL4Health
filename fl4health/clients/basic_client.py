@@ -694,12 +694,16 @@ class BasicClient(NumPyClient):
         Returns:
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
-        val_loss, val_metrics = self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True)
+        val_loss, val_metrics = self._val_or_test(
+            self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True
+        )
         if hasattr(self, "test_loader") and self.test_loader:
-            test_loss, test_metrics = self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
+            test_loss, test_metrics = self._val_or_test(
+                self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True
+            )
             val_metrics["test - loss"] = test_loss
             val_metrics.update(test_metrics)
-        
+
         return val_loss, val_metrics
 
     # def testing(self) -> Tuple[float, Dict[str, Scalar]]:
