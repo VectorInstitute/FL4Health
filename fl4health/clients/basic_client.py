@@ -669,7 +669,7 @@ class BasicClient(NumPyClient):
         with torch.no_grad():
             for input, target in loader:
                 input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target) 
+                losses, preds = self.val_step(input, target)
                 loss_meter.update(losses)
                 metric_manager.update(preds, target)
 
