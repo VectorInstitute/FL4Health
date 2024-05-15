@@ -344,10 +344,10 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
-        if hasattr(self, "test_loader") and self.test_loader:
-            test_loss, test_metrics = self.testing()
-            metrics["test - loss"] = test_loss
-            metrics.update(test_metrics)
+        # if hasattr(self, "test_loader") and self.test_loader:
+        #     test_loss, test_metrics = self.validate()
+        #     metrics["test - loss"] = test_loss
+        #     metrics.update(test_metrics)
 
         print("loss_dict, metrics:", loss, metrics)
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
@@ -694,21 +694,27 @@ class BasicClient(NumPyClient):
         Returns:
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
-        return self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True)
+        val_loss, val_metrics = self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True)
+        if hasattr(self, "test_loader") and self.test_loader:
+            test_loss, test_metrics = self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
+            val_metrics["test - loss"] = test_loss
+            val_metrics.update(test_metrics)
+        
+        return val_loss, val_metrics
 
-    def testing(self) -> Tuple[float, Dict[str, Scalar]]:
-        """
-        Test the current model on the entire test dataset.
+    # def testing(self) -> Tuple[float, Dict[str, Scalar]]:
+    #     """
+    #     Test the current model on the entire test dataset.
 
-        Raises:
-            ValueError: raised if the test loader is not defined.
+    #     Raises:
+    #         ValueError: raised if the test loader is not defined.
 
-        Returns:
-            Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
-        """
-        if self.test_loader is None:
-            raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
-        return self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
+    #     Returns:
+    #         Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
+    #     """
+    #     if self.test_loader is None:
+    #         raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
+    #     return self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
