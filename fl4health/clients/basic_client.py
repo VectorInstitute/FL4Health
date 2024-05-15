@@ -74,7 +74,7 @@ class BasicClient(NumPyClient):
         self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
-        self.test_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)  # TODO: maybe change it?
+        self.test_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Optional variable to store the weights that the client was initialized with during each round of training
@@ -344,12 +344,7 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
-        # if hasattr(self, "test_loader") and self.test_loader:
-        #     test_loss, test_metrics = self.validate()
-        #     metrics["test - loss"] = test_loss
-        #     metrics.update(test_metrics)
 
-        print("loss_dict, metrics:", loss, metrics)
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
         # NOTE: This assumes that the loss returned in the checkpointing loss
         self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
@@ -654,18 +649,16 @@ class BasicClient(NumPyClient):
         loader: DataLoader,
         loss_meter: LossMeter,
         metric_manager: MetricManager,
-        is_validation: bool = False,
-        is_testing: bool = False,
+        is_validation: bool = True,
     ) -> Tuple[float, Dict[str, Scalar]]:
         """
-        Evaluate the model on the given dataset.
+        Evaluate the model on the given validation or test dataset.
 
         Args:
             loader (DataLoader): The data loader for the dataset (validation or test).
             loss_meter (LossMeter): The meter to track the losses.
             metric_manager (MetricManager): The manager to track the metrics.
-            is_validation (bool): Whether this evaluation is for validation. Default is False.
-            is_testing (bool): Whether this evaluation is for testing. Default is False.
+            is_validation (bool): Whether this evaluation is for validation or test. Default is True for validation.
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
@@ -676,49 +669,35 @@ class BasicClient(NumPyClient):
         with torch.no_grad():
             for input, target in loader:
                 input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target)  # Assuming val_step is also applicable for test
+                losses, preds = self.val_step(input, target) 
                 loss_meter.update(losses)
                 metric_manager.update(preds, target)
 
-        # Compute losses and metrics over dataset
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_validation=is_validation, is_testing=is_testing)
+        if is_validation:
+            self._handle_logging(loss_dict, metrics, is_validation=True)
+        else:
+            self._handle_logging(loss_dict, metrics, is_testing=True)
 
         return loss_dict["checkpoint"], metrics
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
-        Validate the current model on the entire validation dataset.
+        Validate the current model on the entire validation or test dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation (and test if present).
         """
-        val_loss, val_metrics = self._val_or_test(
-            self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True
-        )
+        val_loss, val_metrics = self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
         if hasattr(self, "test_loader") and self.test_loader:
             test_loss, test_metrics = self._val_or_test(
-                self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True
+                self.test_loader, self.test_loss_meter, self.test_metric_manager, is_validation=False
             )
             val_metrics["test - loss"] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics
-
-    # def testing(self) -> Tuple[float, Dict[str, Scalar]]:
-    #     """
-    #     Test the current model on the entire test dataset.
-
-    #     Raises:
-    #         ValueError: raised if the test loader is not defined.
-
-    #     Returns:
-    #         Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
-    #     """
-    #     if self.test_loader is None:
-    #         raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
-    #     return self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """

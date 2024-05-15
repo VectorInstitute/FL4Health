@@ -135,8 +135,6 @@ class MockBasicClient(BasicClient):
         self.train_by_steps.return_value = self.mock_loss_dict, self.mock_metrics
         self._val_or_test = MagicMock()  # type: ignore
         self._val_or_test.return_value = self.mock_loss, self.mock_metrics
-        # self.validate = MagicMock()  # type: ignore
-        # self.validate.return_value = self.mock_loss, self.mock_metrics
         self.get_model = MagicMock()  # type: ignore
         self.get_data_loaders = MagicMock()  # type: ignore
         mock_data_loader = MagicMock()  # type: ignore
