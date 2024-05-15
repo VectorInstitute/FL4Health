@@ -687,7 +687,8 @@ class BasicClient(NumPyClient):
         Validate the current model on the entire validation or test dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation (and test if present).
+            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
+                from validation (and test if present).
         """
         val_loss, val_metrics = self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
         if hasattr(self, "test_loader") and self.test_loader:
