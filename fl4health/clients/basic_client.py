@@ -646,22 +646,24 @@ class BasicClient(NumPyClient):
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
-    
-    def _val_or_test(self, loader: DataLoader[Any], loss_meter: Any, metric_manager: Any) -> Tuple[Dict[str, float], Dict[str, float]]:
-            self.model.eval()
-            metric_manager.clear()
-            loss_meter.clear()
-            with torch.no_grad():
-                for input, target in loader:
-                    input, target = self._move_input_data_to_device(input), target.to(self.device)
-                    losses, preds = self.val_step(input, target)
-                    loss_meter.update(losses)
-                    metric_manager.update(preds, target)
 
-            # Compute losses and metrics
-            loss_dict = loss_meter.compute().as_dict()
-            metrics = metric_manager.compute()
-            return loss_dict, metrics
+    def _val_or_test(
+        self, loader: DataLoader[Any], loss_meter: Any, metric_manager: Any
+    ) -> Tuple[Dict[str, float], Dict[str, float]]:
+        self.model.eval()
+        metric_manager.clear()
+        loss_meter.clear()
+        with torch.no_grad():
+            for input, target in loader:
+                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                losses, preds = self.val_step(input, target)
+                loss_meter.update(losses)
+                metric_manager.update(preds, target)
+
+        # Compute losses and metrics
+        loss_dict = loss_meter.compute().as_dict()
+        metrics = metric_manager.compute()
+        return loss_dict, metrics
 
     def validate(self) -> Tuple[float, Dict[str, float]]:
         """
@@ -681,11 +683,12 @@ class BasicClient(NumPyClient):
         self._handle_logging(val_loss_dict, val_metrics, is_validation=True)
 
         if self.test_loader:
-            test_loss_dict, test_metrics = self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
+            test_loss_dict, test_metrics = self._val_or_test(
+                self.val_loader, self.val_loss_meter, self.val_metric_manager
+            )
             self._handle_logging(test_loss_dict, test_metrics, is_testing=True)
             val_metrics["test - loss"] = test_loss_dict["checkpoint"]
             val_metrics.update(test_metrics)
-
 
         return val_loss_dict["checkpoint"], val_metrics
 
