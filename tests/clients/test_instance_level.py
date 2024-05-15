@@ -60,7 +60,7 @@ def test_privacy_validate_and_fix() -> None:
     # We should need to reinitialize the optimizer parameters
     assert reinitialize_optimizer
     # The batch norm in the model should have been replaced with a GroupNorm
-    assert type(model.bn) == torch.nn.modules.normalization.GroupNorm
+    assert isinstance(model.bn, torch.nn.modules.normalization.GroupNorm)
 
 
 def test_instance_level_client_with_changes() -> None:  # noqa
@@ -74,7 +74,7 @@ def test_instance_level_client_with_changes() -> None:  # noqa
     client.setup_opacus_objects({})
 
     # We should properly replace the model batch norm layer with GroupNorm
-    assert type(client.model.bn) == torch.nn.modules.normalization.GroupNorm
+    assert isinstance(client.model.bn, torch.nn.modules.normalization.GroupNorm)
     original_param_objects = original_optimizers["global"].param_groups[0]["params"]
     new_param_objects = client.optimizers["global"].param_groups[0]["params"]
     # All layers should be identical except the new GroupNorm weight vs. the old BatchNorm weight, which we set to 10

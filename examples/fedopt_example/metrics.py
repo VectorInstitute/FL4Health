@@ -138,9 +138,9 @@ class CompoundMetric(Metric):
             summary_dict = outcome.summarize()
             sum_f1 += outcome.get_f1()
 
-            results[
-                outcome.class_name
-            ] = f"[{outcome.true_positive}, {outcome.false_positive}, {outcome.false_negative}]"
+            results[outcome.class_name] = (
+                f"[{outcome.true_positive}, {outcome.false_positive}, {outcome.false_negative}]"
+            )
 
             for metric_name, metric_value in summary_dict.items():
                 log_string = f"{log_string}\n{metric_name}:{str(metric_value)}"
