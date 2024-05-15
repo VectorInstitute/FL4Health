@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import SimpleITK as sitk
@@ -20,7 +20,7 @@ class PreprocessingSettings:
         scans_write_dir: Path,
         annotation_write_dir: Path,
         size: Optional[Sequence[int]],
-        physical_size: Optional[Iterable[float]],
+        physical_size: Optional[Sequence[float]],
         spacing: Optional[Sequence[float]],
     ) -> None:
         """
@@ -40,12 +40,11 @@ class PreprocessingSettings:
         self.scans_write_dir = scans_write_dir
         self.annotation_write_dir = annotation_write_dir
         self.size = size
-        self.physical_size = physical_size
         self.spacing = spacing
 
-        if self.physical_size is None and self.spacing is not None and self.size is not None:
+        if physical_size is None and self.spacing is not None and self.size is not None:
             # calculate physical size
-            self.physical_size = [
+            self.physical_size: Sequence[float] = [
                 voxel_spacing * num_voxels for voxel_spacing, num_voxels in zip(self.spacing, self.size)
             ]
 
