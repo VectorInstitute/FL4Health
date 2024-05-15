@@ -649,6 +649,37 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
+    def _val_or_test(self, loader, loss_meter, metric_manager, is_validation=False, is_testing=False) -> Tuple[float, Dict[str, Scalar]]:
+        """
+        Evaluate the model on the given dataset.
+
+        Args:
+            loader (DataLoader): The data loader for the dataset (validation or test).
+            loss_meter (LossMeter): The meter to track the losses.
+            metric_manager (MetricManager): The manager to track the metrics.
+            is_validation (bool): Whether this evaluation is for validation. Default is False.
+            is_testing (bool): Whether this evaluation is for testing. Default is False.
+
+        Returns:
+            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+        """
+        self.model.eval()
+        metric_manager.clear()
+        loss_meter.clear()
+        with torch.no_grad():
+            for input, target in loader:
+                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                losses, preds = self.val_step(input, target)  # Assuming val_step is also applicable for test
+                loss_meter.update(losses)
+                metric_manager.update(preds, target)
+
+        # Compute losses and metrics over dataset
+        loss_dict = loss_meter.compute().as_dict()
+        metrics = metric_manager.compute()
+        self._handle_logging(loss_dict, metrics, is_validation=is_validation, is_testing=is_testing)
+
+        return loss_dict["checkpoint"], metrics
+
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
@@ -656,24 +687,9 @@ class BasicClient(NumPyClient):
         Returns:
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
-        self.model.eval()
-        self.val_metric_manager.clear()
-        self.val_loss_meter.clear()
-        with torch.no_grad():
-            for input, target in self.val_loader:
-                input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target)
-                self.val_loss_meter.update(losses)
-                self.val_metric_manager.update(preds, target)
+        return self._val_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager, is_validation=True)
 
-        # Compute losses and metrics over validation set
-        loss_dict = self.val_loss_meter.compute().as_dict()
-        metrics = self.val_metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_validation=True)
-
-        return loss_dict["checkpoint"], metrics
-
-    def testing(self) -> Tuple[float, Dict[str, Scalar]]:  # TODO: change the evalution loss to test loss
+    def testing(self) -> Tuple[float, Dict[str, Scalar]]:
         """
         Test the current model on the entire test dataset.
 
@@ -683,26 +699,9 @@ class BasicClient(NumPyClient):
         Returns:
             Tuple[float, Dict[str, Scalar]]: The test loss and a dictionary of metrics from test.
         """
-
         if self.test_loader is None:
             raise ValueError("Test loader is not defined. Please ensure test loader is properly set up.")
-
-        self.model.eval()
-        self.test_metric_manager.clear()
-        self.test_loss_meter.clear()
-        with torch.no_grad():
-            for input, target in self.test_loader:
-                input, target = self._move_input_data_to_device(input), target.to(self.device)
-                losses, preds = self.val_step(input, target)  # Assuming val_step is also applicable for test
-                self.test_loss_meter.update(losses)
-                self.test_metric_manager.update(preds, target)
-
-        # Compute losses and metrics over test set
-        loss_dict = self.test_loss_meter.compute().as_dict()
-        metrics = self.test_metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_testing=True)
-
-        return loss_dict["checkpoint"], metrics
+        return self._val_or_test(self.test_loader, self.test_loss_meter, self.test_metric_manager, is_testing=True)
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
