@@ -60,7 +60,7 @@ def test_metrics_reporter_fit() -> None:
 def test_metrics_reporter_evaluate() -> None:
     test_current_server_round = 2
     test_loss = 123.123
-    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234, "test - loss": 123.123}
+    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
 
     fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics)
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
@@ -80,6 +80,8 @@ def test_metrics_reporter_evaluate() -> None:
 
 def test_evaluate_after_fit_enabled() -> None:
     fl_client = MockBasicClient()
+    fl_client.validate = MagicMock()  # type: ignore
+    fl_client.validate.return_value = fl_client.mock_loss, fl_client.mock_metrics
 
     fl_client.fit([], {"current_server_round": 2, "local_epochs": 0, "evaluate_after_fit": True})
 
@@ -88,6 +90,8 @@ def test_evaluate_after_fit_enabled() -> None:
 
 def test_evaluate_after_fit_disabled() -> None:
     fl_client = MockBasicClient()
+    fl_client.validate = MagicMock()  # type: ignore
+    fl_client.validate.return_value = fl_client.mock_loss, fl_client.mock_metrics
 
     fl_client.fit([], {"current_server_round": 2, "local_epochs": 0, "evaluate_after_fit": False})
     fl_client.validate.assert_not_called()  # type: ignore
