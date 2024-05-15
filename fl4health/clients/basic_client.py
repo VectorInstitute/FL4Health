@@ -649,7 +649,14 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def _val_or_test(self, loader: DataLoader, loss_meter: LossMeter, metric_manager: MetricManager, is_validation: bool = False, is_testing: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def _val_or_test(
+        self,
+        loader: DataLoader,
+        loss_meter: LossMeter,
+        metric_manager: MetricManager,
+        is_validation: bool = False,
+        is_testing: bool = False,
+    ) -> Tuple[float, Dict[str, Scalar]]:
         """
         Evaluate the model on the given dataset.
 
