@@ -60,8 +60,7 @@ def test_metrics_reporter_fit() -> None:
 def test_metrics_reporter_evaluate() -> None:
     test_current_server_round = 2
     test_loss = 123.123
-    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
-    final_test_metrics = {"test_metric": 1234, "test - loss": 123.123}
+    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234, "test - loss": 123.123}
 
     fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics)
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
@@ -73,7 +72,7 @@ def test_metrics_reporter_evaluate() -> None:
             test_current_server_round: {
                 "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
                 "loss": test_loss,
-                "evaluate_metrics": final_test_metrics,
+                "evaluate_metrics": test_metrics,
             },
         },
     }
@@ -129,10 +128,10 @@ class MockBasicClient(BasicClient):
         self.train_by_epochs.return_value = self.mock_loss_dict, self.mock_metrics
         self.train_by_steps = MagicMock()  # type: ignore
         self.train_by_steps.return_value = self.mock_loss_dict, self.mock_metrics
-        self.validate = MagicMock()  # type: ignore
-        self.validate.return_value = self.mock_loss, self.mock_metrics
-        self.testing = MagicMock()  # type: ignore
-        self.testing.return_value = self.mock_loss, self.mock_metrics
+        self._val_or_test = MagicMock()  # type: ignore
+        self._val_or_test.return_value = self.mock_loss, self.mock_metrics
+        # self.validate = MagicMock()  # type: ignore
+        # self.validate.return_value = self.mock_loss, self.mock_metrics
         self.get_model = MagicMock()  # type: ignore
         self.get_data_loaders = MagicMock()  # type: ignore
         mock_data_loader = MagicMock()  # type: ignore
