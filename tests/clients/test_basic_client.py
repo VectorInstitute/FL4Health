@@ -61,6 +61,7 @@ def test_metrics_reporter_evaluate() -> None:
     test_current_server_round = 2
     test_loss = 123.123
     test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
+    test_metrics_final: Dict[str, Union[bool, bytes, float, int, str]] = {'test_metric': 1234, 'test - loss': 123.123}
 
     fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics)
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
@@ -72,7 +73,7 @@ def test_metrics_reporter_evaluate() -> None:
             test_current_server_round: {
                 "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
                 "loss": test_loss,
-                "evaluate_metrics": test_metrics,
+                "evaluate_metrics": test_metrics_final,
             },
         },
     }
