@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence
+from typing import Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import SimpleITK as sitk
@@ -81,7 +81,7 @@ class Case(ABC):
         self.annotation = sitk.ReadImage(self.annotations_path)
 
     @abstractmethod
-    def write(self) -> None:
+    def write(self) -> Tuple[Sequence[Path], Path]:
         """
         Abstract method to be implemented by children that writes the preprocessed scans and annotation
         to their destination.
@@ -111,12 +111,13 @@ class PicaiCase(Case):
         self.scans: List[sitk.Image]
         self.annotation: sitk.Image
 
-    def write(self) -> None:
+    def write(self) -> Tuple[Sequence[Path], Path]:
         """
         Writes preprocessed scans and annotations from PICAI dataset to disk.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         scan_paths = [path for path in sorted(self.scan_paths)]
+        preprocessed_scan_paths = []
         for path, scan in zip(scan_paths, self.scans):
             scan_filename = os.path.basename(path)
             scan_filename_without_extension = scan_filename.split(".")[0]
@@ -124,10 +125,13 @@ class PicaiCase(Case):
             preprocessed_scan_filename = scan_filename_without_extension[:-3] + suffix + ".nii.gz"
             preprocessed_scan_path = Path(os.path.join(self.settings.scans_write_dir, preprocessed_scan_filename))
             sitk.WriteImage(scan, preprocessed_scan_path, useCompression=True)
+            preprocessed_scan_paths.append(preprocessed_scan_path)
 
         annotation_filename = os.path.basename(self.annotations_path)
-        preprocessed_annotation_path = os.path.join(self.settings.annotation_write_dir, annotation_filename)
+        preprocessed_annotation_path = Path(os.path.join(self.settings.annotation_write_dir, annotation_filename))
         sitk.WriteImage(self.annotation, preprocessed_annotation_path, useCompression=True)
+
+        return preprocessed_scan_paths, preprocessed_annotation_path
 
 
 class PreprocessingException(Exception):
@@ -263,7 +267,7 @@ class AlignOriginAndDirection(PreprocessingTransform):
         return mri
 
 
-def apply_transform(mri: Case, transforms: Sequence[PreprocessingTransform]) -> None:
+def apply_transform(mri: Case, transforms: Sequence[PreprocessingTransform]) -> Tuple[Sequence[Path], Path]:
     """
     Reads in scans and annotation, applies sequence of transformations, and writes resulting case to disk.
 
@@ -277,13 +281,15 @@ def apply_transform(mri: Case, transforms: Sequence[PreprocessingTransform]) -> 
     try:
         mri.read()
         processed_mri = reduce(lambda acc, f: f(acc), transforms, mri)
-        processed_mri.write()
+        return processed_mri.write()
     except Exception as e:
         error_path_string = ", ".join([str(path) for path in mri.scan_paths] + [str(mri.annotations_path)])
         raise PreprocessingException(f"Error preprocessing case with following paths: {error_path_string}") from e
 
 
-def preprocess(mris: List[Case], transforms: Sequence[PreprocessingTransform], num_threads: int = 4) -> None:
+def preprocess(
+    mris: List[Case], transforms: Sequence[PreprocessingTransform], num_threads: int = 4
+) -> Sequence[Tuple[Sequence[Path], Path]]:
     """
     Preprocesses a list of cases according to the specified transformations.
 
@@ -298,7 +304,6 @@ def preprocess(mris: List[Case], transforms: Sequence[PreprocessingTransform], n
     f = partial(apply_transform, transforms=transforms)
     if num_threads >= 2:
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            executor.map(f, mris)
+            return list(executor.map(f, mris))
     else:
-        for mri in mris:
-            f(mri)
+        return list(map(f, mris))

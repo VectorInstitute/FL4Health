@@ -1,7 +1,8 @@
 import argparse
+import json
 import os
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 from preprocessing import (
     AlignOriginAndDirection,
@@ -17,17 +18,56 @@ DEFAULT_TRANSFORMS = [Resample(), CentreCropAndOrPad(), ResampleToFirstScan(), A
 DEFAULT_MODALITY_SUFFIXES = ["adc", "t2w", "hbv"]
 
 
+def generate_dataset_json(
+    paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]], write_dir: Path, splits_path: Optional[Path] = None
+) -> None:
+    if splits_path is None:
+        json_dict = {}
+        json_dict["image_paths"], json_dict["label_paths"] = zip(*paths_for_each_sample)
+        write_path = os.path.join(write_dir, "train-fold-all.json")
+        with open(write_path, "w") as f:
+            json.dump(json_dict, f)
+    else:
+        with open(splits_path, "r") as splits_f:
+            splits = json.load(splits_f)
+            for i, split in enumerate(splits):
+                train_json_dict, val_json_dict = {}, {}
+                train_paths_for_each_sample = [
+                    tup
+                    for tup in paths_for_each_sample
+                    if any([subject_id in str(tup[1]) for subject_id in split["train"]])
+                ]
+                val_paths_for_each_sample = [
+                    tup
+                    for tup in paths_for_each_sample
+                    if any([subject_id in str(tup[1]) for subject_id in split["val"]])
+                ]
+                train_json_dict["image_paths"], train_json_dict["label_paths"] = zip(*train_paths_for_each_sample)
+                val_json_dict["image_paths"], train_json_dict["label_paths"] = zip(*val_paths_for_each_sample)
+
+                train_write_path = os.path.join(write_dir, f"train-fold-{i}.json")
+                val_write_path = os.path.join(write_dir, f"val-fold-{i}.json")
+
+                with open(train_write_path, "w") as f:
+                    json.dump(train_json_dict, f)
+
+                with open(val_write_path, "w") as f:
+                    json.dump(val_json_dict, f)
+
+
 def preprare_data(
     scans_read_dir: Path,
     annotation_read_dir: Path,
     scans_write_dir: Path,
     annotation_write_dir: Path,
+    overview_write_dir: Path,
     size: Optional[Sequence[int]] = None,
     physical_size: Optional[Sequence[int]] = None,
     spacing: Optional[Sequence[int]] = None,
     scan_extension: str = "mha",
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
+    splits_path: Optional[Path] = None,
 ) -> None:
     settings = PreprocessingSettings(
         scans_write_dir,
@@ -52,7 +92,8 @@ def preprare_data(
         sample = PicaiCase(scan_paths, annotation_path, settings)
         samples.append(sample)
 
-    preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)
+    paths_for_each_sample = preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)
+    generate_dataset_json(paths_for_each_sample, overview_write_dir, splits_path)
 
 
 def main() -> None:
@@ -61,6 +102,9 @@ def main() -> None:
     parser.add_argument("--annotation_read_dir", type=str, required=True, help="Directory to read annotation from.")
     parser.add_argument("--scans_write_dir", type=str, required=True, help="Directory to write scans to.")
     parser.add_argument("--annotation_write_dir", type=str, required=True, help="Directory to write annotation to.")
+    parser.add_argument(
+        "--overview_write_dir", type=str, required=True, help="Directory to write dataset overviews to."
+    )
     parser.add_argument(
         "--size",
         type=int,
@@ -88,7 +132,10 @@ def main() -> None:
     parser.add_argument(
         "--annotation_extension", type=str, required=False, default="nii.gz", help="Directory to write annotation to."
     )
-    parser.add_argument("--num_threads", type=str, default=4, help="Number of threads to use during preprocessing.")
+    parser.add_argument("--num_threads", type=int, default=4, help="Number of threads to use during preprocessing.")
+    parser.add_argument(
+        "--splits_path", type=str, default=None, help="The path to the json file containing the splits."
+    )
 
     args = parser.parse_args()
     preprare_data(
@@ -96,11 +143,13 @@ def main() -> None:
         args.annotation_read_dir,
         args.scans_write_dir,
         args.annotation_write_dir,
+        args.overview_write_dir,
         tuple(args.size) if args.size is not None else None,
         tuple(args.physical_size) if args.physical_size is not None else None,
         tuple(args.spacing) if args.spacing is not None else None,
         args.scan_extension,
         args.annotation_extension,
+        args.split_path,
     )
 
 
