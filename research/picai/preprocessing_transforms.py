@@ -6,24 +6,36 @@ import SimpleITK as sitk
 
 def resample_img(
     image: sitk.Image,
-    out_spacing: Sequence[float] = (2.0, 2.0, 2.0),
-    out_size: Optional[Sequence[int]] = None,
+    spacing: Sequence[float] = (2.0, 2.0, 2.0),
+    size: Optional[Sequence[int]] = None,
     is_label: bool = False,
     pad_value: Optional[Union[float, int]] = 0.0,
 ) -> sitk.Image:
     """
-    Resample images to target resolution spacing
+    Resample images to target resolution spacing.
+
+    Adapted from https://github.com/DIAGNijmegen/picai_prep.
+
+    Args:
+        image (sitk.Image): Image to be resized.
+        spacing (Sequence[float]): Spacing between voxels along each dimentsion.
+        size (Sequence[int]): Target size in voxels (z, y, x).
+        is_label (bool): Whether or not this is an annotation.
+        pad_value (Optional[Union[float, int]]): Amount of padding to use.
+
+    Returns:
+        sitk.Image: The resampled image.
     """
     # get original spacing and size
     original_spacing = image.GetSpacing()
     original_size = image.GetSize()
 
     # convert PICAI z, y, x convention to SimpleITK's convention
-    out_spacing = list(out_spacing)[::-1]
+    out_spacing = list(spacing)[::-1]
 
-    if out_size is None:
+    if size is None:
         # calculate output size in voxels
-        out_size = [
+        size = [
             int(np.round(size * (spacing_in / spacing_out)))
             for size, spacing_in, spacing_out in zip(original_size, original_spacing, out_spacing)
         ]
@@ -35,7 +47,7 @@ def resample_img(
     # set up resampler
     resample = sitk.ResampleImageFilter()
     resample.SetOutputSpacing(list(out_spacing))
-    resample.SetSize(out_size)
+    resample.SetSize(size)
     resample.SetOutputDirection(image.GetDirection())
     resample.SetOutputOrigin(image.GetOrigin())
     resample.SetTransform(sitk.Transform())
@@ -57,18 +69,21 @@ def input_verification_crop_or_pad(
     physical_size: Optional[Sequence[float]] = None,
 ) -> Tuple[Sequence[int], Sequence[int]]:
     """
-    Calculate target size for cropping and/or padding input image
+    Calculate target size for cropping and/or padding input image.
 
-    Parameters:
-    - image: image to be resized (sitk.Image or numpy.ndarray)
-    - size: target size in voxels (z, y, x)
-    - physical_size: target size in mm (z, y, x)
+    Adapted from https://github.com/DIAGNijmegen/picai_prep.
+
+    Args:
+        image (sitk.Image): Image to be resized.
+        size (Sequence[int]): Target size in voxels (z, y, x).
+        physical_size: Target size in mm (z, y, x)
 
     Either size or physical_size must be provided.
 
     Returns:
-    - shape of original image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
-    - size of target image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
+        Tuple[Sequence[int], Sequence[int]]:
+            Shape of original image (in convention of SimpleITK (x, y, z) or numpy (z, y, x)) and
+            Size of target image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
     """
     # input conversion and verification
     if physical_size is not None:
@@ -114,17 +129,19 @@ def crop_or_pad(
     crop_only: bool = False,
 ) -> sitk.Image:
     """
-    Resize image by cropping and/or padding
+    Resize image by cropping and/or padding.
 
-    Parameters:
-    - image: image to be resized (sitk.Image or numpy.ndarray)
-    - size: target size in voxels (z, y, x)
-    - physical_size: target size in mm (z, y, x)
+    Adapted from https://github.com/DIAGNijmegen/picai_prep.
+
+    Args:
+        image (sitk.Image): Image to be resized.
+        size (Sequence[int]): Target size in voxels (z, y, x).
+        physical_size: Target size in mm (z, y, x)
 
     Either size or physical_size must be provided.
 
     Returns:
-    - resized image (same type as input)
+        sitk.Image: Cropped or padded image.
     """
     # input conversion and verification
     shape, size = input_verification_crop_or_pad(image, size, physical_size)

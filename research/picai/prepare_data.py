@@ -6,8 +6,8 @@ from typing import Optional, Sequence
 from preprocessing import (
     AlignOriginAndDirection,
     CentreCropAndOrPad,
-    MriExam,
-    PicaiPreprocessingSettings,
+    PicaiCase,
+    PreprocessingSettings,
     Resample,
     ResampleToFirstScan,
     preprocess,
@@ -29,7 +29,7 @@ def preprare_data(
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
 ) -> None:
-    settings = PicaiPreprocessingSettings(
+    settings = PreprocessingSettings(
         scans_write_dir,
         annotation_write_dir,
         size,
@@ -49,7 +49,7 @@ def preprare_data(
             path for path in sorted(os.listdir(scans_path)) if path.endswith(valid_suffixes) and study_id in path
         ]
         scan_paths = [Path(os.path.join(scans_path, f)) for f in scan_filenames]
-        sample = MriExam(scan_paths, annotation_path, settings)
+        sample = PicaiCase(scan_paths, annotation_path, settings)
         samples.append(sample)
 
     preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)

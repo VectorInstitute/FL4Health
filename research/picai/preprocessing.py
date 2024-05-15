@@ -1,21 +1,20 @@
 from __future__ import annotations
 
-import gc
 import os
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial, reduce
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Iterable, List, Optional, Sequence
 
 import numpy as np
 import SimpleITK as sitk
-from preprocessing_utils import crop_or_pad, resample_img
+from preprocessing_transforms import crop_or_pad, resample_img
 
 
 @dataclass
-class PicaiPreprocessingSettings:
+class PreprocessingSettings:
     def __init__(
         self,
         scans_write_dir: Path,
@@ -23,15 +22,26 @@ class PicaiPreprocessingSettings:
         size: Optional[Sequence[int]],
         physical_size: Optional[Iterable[float]],
         spacing: Optional[Sequence[float]],
-        modality_suffix_map: Dict[str, str] = {"t2w": "0000", "adc": "0001", "hbv": "0002"},
     ) -> None:
+        """
+        Dataclass encapsulating parameters of preprocessing.
+
+        Args:
+            scans_write_dir (Path): The directory to write the preprocessed scans.
+            annotation_write_dir (Path): The directory to write the preprocessed annotation.
+            size (Optional[Sequence[int]]): Sequence of ints representing size of scan in voxels along each dimension.
+                If None, preprocessed scans and annotations retain their original size.
+            physical_size (Optional[Iterable[float]]): Sequence of floats representing actual size in mm
+                along each dimension. If None and size and spacing are not None, physical_size will be inferred.
+            spacing (Optional[Sequence[float]]): Spacing between voxels along each dimensions.
+                If None, preprocessed scans and annotations retain their orginal spacing.
+        """
 
         self.scans_write_dir = scans_write_dir
         self.annotation_write_dir = annotation_write_dir
         self.size = size
         self.physical_size = physical_size
         self.spacing = spacing
-        self.modality_suffix_map = modality_suffix_map
 
         if self.physical_size is None and self.spacing is not None and self.size is not None:
             # calculate physical size
@@ -39,57 +49,124 @@ class PicaiPreprocessingSettings:
                 voxel_spacing * num_voxels for voxel_spacing, num_voxels in zip(self.spacing, self.size)
             ]
 
-        if self.spacing is None and self.physical_size is not None and self.size is not None:
-            # calculate spacing
-            self.spacing = [size / num_voxels for size, num_voxels in zip(self.physical_size, self.size)]
 
-
-@dataclass
-class MriExam:
+class Case(ABC):
     def __init__(
         self,
         scan_paths: Sequence[Path],
         annotations_path: Path,
-        settings: PicaiPreprocessingSettings,
-        file_extension: str = "mha",
-    ):
+        settings: PreprocessingSettings,
+    ) -> None:
+        """
+        Class representing a case (set of scans along with annotations) along with its preprocessing settings.
+
+        Args:
+            scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
+            annotation_write_dir (Path): The path where the annotation associated with the Case is located.
+            settings (PreprocessingSettings): The settings determining how the case is preprocessed.
+        """
         self.scan_paths = scan_paths
         self.annotations_path = annotations_path
         self.settings = settings
-        self.file_extension = file_extension
 
         self.scans: List[sitk.Image]
         self.annotation: sitk.Image
 
     def read(self) -> None:
+        """
+        Reads in scans and annotation into the corresponding scans and annotation attribute.
+        """
         assert len(self.scan_paths) != 0
         self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
         self.annotation = sitk.ReadImage(self.annotations_path)
 
+    @abstractmethod
     def write(self) -> None:
+        """
+        Abstract method to be implemented by children that writes the preprocessed scans and annotation
+        to their destination.
+        """
+        raise NotImplementedError
+
+
+class PicaiCase(Case):
+    def __init__(
+        self,
+        scan_paths: Sequence[Path],
+        annotations_path: Path,
+        settings: PreprocessingSettings,
+    ) -> None:
+        """
+        Class representing a case from the PICAI dataset.
+
+        Args:
+            scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
+            annotation_write_dir (Path): The path where the annotation associated with the Case is located.
+            settings (PreprocessingSettings): The settings determining how the case is preprocessed.
+        """
+        self.scan_paths = scan_paths
+        self.annotations_path = annotations_path
+        self.settings = settings
+
+        self.scans: List[sitk.Image]
+        self.annotation: sitk.Image
+
+    def write(self) -> None:
+        """
+        Writes preprocessed scans and annotations from PICAI dataset to disk.
+        """
+        modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         scan_paths = [path for path in sorted(self.scan_paths)]
         for path, scan in zip(scan_paths, self.scans):
-            filename = os.path.basename(path)
-            file = filename.split(".")[0]
-            suffix = self.settings.modality_suffix_map[file[-3:]]
-            preprocessed_filename = file[:-3] + suffix + ".nii.gz"
-            preprocessed_path = os.path.join(self.settings.scans_write_dir, preprocessed_filename)
-            sitk.WriteImage(scan, preprocessed_path, useCompression=True)
+            scan_filename = os.path.basename(path)
+            scan_filename_without_extension = scan_filename.split(".")[0]
+            suffix = modality_suffix_map[scan_filename_without_extension[-3:]]
+            preprocessed_scan_filename = scan_filename_without_extension[:-3] + suffix + ".nii.gz"
+            preprocessed_scan_path = Path(os.path.join(self.settings.scans_write_dir, preprocessed_scan_filename))
+            sitk.WriteImage(scan, preprocessed_scan_path, useCompression=True)
 
         annotation_filename = os.path.basename(self.annotations_path)
-        annotation_path = os.path.join(self.settings.annotation_write_dir, annotation_filename)
-        sitk.WriteImage(self.annotation, annotation_path, useCompression=True)
+        preprocessed_annotation_path = os.path.join(self.settings.annotation_write_dir, annotation_filename)
+        sitk.WriteImage(self.annotation, preprocessed_annotation_path, useCompression=True)
 
 
-class PreprocessingTransform:
+class PreprocessingException(Exception):
+    """
+    Custom exception to be thrown during a failed attempt at processing a Case.
+    """
+
+    pass
+
+
+class PreprocessingTransform(ABC):
+    """Abstract class that represents a transform to be applied to a case."""
+
     @abstractmethod
-    def __call__(self, mri: MriExam) -> MriExam:
+    def __call__(self, mri: Case) -> Case:
+        """
+        Abstract method to be implemented by children that applies a transformation
+        to the input Case and returns the resulting Case.
+
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The Case after the transformation has been applied.
+        """
         raise NotImplementedError
 
 
 class ResampleToFirstScan(PreprocessingTransform):
-    def __call__(self, mri: MriExam) -> MriExam:
-        """Resample scans and label to the first scan"""
+    def __call__(self, mri: Case) -> Case:
+        """
+        Resample scans and label to the first scan.
+
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The resampled Case.
+        """
         # set up resampler to resolution, field of view, etc. of first scan
         resampler = sitk.ResampleImageFilter()  # default linear
         resampler.SetReferenceImage(mri.scans[0])
@@ -106,7 +183,16 @@ class ResampleToFirstScan(PreprocessingTransform):
 
 
 class Resample(PreprocessingTransform):
-    def __call__(self, mri: MriExam) -> MriExam:
+    def __call__(self, mri: Case) -> Case:
+        """
+        Resamples scan to a given size.
+
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The resampled Case.
+        """
         # resample scans to target resolution
         mri.scans = [resample_img(scan, mri.settings.spacing, is_label=False) for scan in mri.scans]
 
@@ -117,9 +203,16 @@ class Resample(PreprocessingTransform):
 
 
 class CentreCropAndOrPad(PreprocessingTransform):
-    """Centre crop and/or pad scans and label"""
+    def __call__(self, mri: Case) -> Case:
+        """
+        Centre crop and/or pad scans and label.
 
-    def __call__(self, mri: MriExam) -> MriExam:
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The Case after centre crop and/or padding.
+        """
         mri.annotation = crop_or_pad(mri.annotation, mri.settings.size, mri.settings.physical_size)
         mri.scans = [
             crop_or_pad(
@@ -134,9 +227,16 @@ class CentreCropAndOrPad(PreprocessingTransform):
 
 
 class AlignOriginAndDirection(PreprocessingTransform):
-    """Align the origin and direction of each scan, and label"""
+    def __call__(self, mri: Case) -> Case:
+        """
+        Align the origin and direction of each scan, and label.
 
-    def __call__(self, mri: MriExam) -> MriExam:
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The Case after aligning origin and direction.
+        """
         case_origin, case_direction, case_spacing = None, None, None
         for scan in mri.scans:
             # copy metadata of first scan (nnUNet and nnDetection require this to match exactly)
@@ -163,25 +263,42 @@ class AlignOriginAndDirection(PreprocessingTransform):
         return mri
 
 
-def apply_transform(mri: MriExam, transforms: Sequence[PreprocessingTransform]) -> bool:
+def apply_transform(mri: Case, transforms: Sequence[PreprocessingTransform]) -> None:
+    """
+    Reads in scans and annotation, applies sequence of transformations, and writes resulting case to disk.
+
+    Args:
+        mri (Case): The case to be processed.
+        transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
+
+    Raises:
+        PreprocessingException if an error occurs during preprocessing.
+    """
     try:
         mri.read()
-        reduce(lambda acc, f: f(acc), transforms, mri)
-        mri.write()
-        del mri
-        gc.collect()
-        return True
-    except Exception:
-        return False
+        processed_mri = reduce(lambda acc, f: f(acc), transforms, mri)
+        processed_mri.write()
+    except Exception as e:
+        error_path_string = ", ".join([str(path) for path in mri.scan_paths] + [str(mri.annotations_path)])
+        raise PreprocessingException(f"Error preprocessing case with following paths: {error_path_string}") from e
 
 
-def preprocess(
-    mris: List[MriExam], transforms: Sequence[PreprocessingTransform], num_threads: int = 4
-) -> Sequence[bool]:
+def preprocess(mris: List[Case], transforms: Sequence[PreprocessingTransform], num_threads: int = 4) -> None:
+    """
+    Preprocesses a list of cases according to the specified transformations.
+
+    Args:
+        mris (List[Case]): A list of cases to be preprocessed.
+        transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
+        nums_threads (int): The number of threads to use for preprocessing.
+
+    Raises:
+        PreprocessingException if an error occurs during preprocessing of any of the cases.
+    """
     f = partial(apply_transform, transforms=transforms)
     if num_threads >= 2:
-        print("yup")
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            return list(executor.map(f, mris))
+            executor.map(f, mris)
     else:
-        return list(map(f, mris))
+        for mri in mris:
+            f(mri)
