@@ -65,7 +65,7 @@ def test_forming_ditto_loss(get_client: DittoClient) -> None:  # noqa
     ditto_client.set_parameters(params, config, fitting_round=True)
     ditto_client.update_before_train(4)
 
-    ditto_loss = ditto_client.ditto_loss_function(
+    ditto_loss = ditto_client.ditto_drift_loss_function(
         ditto_client.model, ditto_client.initial_global_tensors, ditto_client.lam
     )
 
