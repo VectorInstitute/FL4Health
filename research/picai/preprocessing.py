@@ -71,19 +71,29 @@ class Case(ABC):
         self.scans: List[sitk.Image]
         self.annotation: sitk.Image
 
+    @abstractmethod
     def read(self) -> None:
         """
-        Reads in scans and annotation into the corresponding scans and annotation attribute.
+        Abstract method to be implemented by children that reads the preprocessed scans and annotation
+        into memory.
+
+        Raises:
+            NotImplementedError
         """
-        assert len(self.scan_paths) != 0
-        self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
-        self.annotation = sitk.ReadImage(self.annotations_path)
+        raise NotImplementedError
 
     @abstractmethod
     def write(self) -> Tuple[Sequence[Path], Path]:
         """
         Abstract method to be implemented by children that writes the preprocessed scans and annotation
-        to their destination.
+        to their destination and returns the file paths.
+
+        Returns:
+            Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+                for the scans and the second entry is the file path to the correpsonding annotation.
+
+        Raises:
+            NotImplementedError
         """
         raise NotImplementedError
 
@@ -103,16 +113,24 @@ class PicaiCase(Case):
             annotation_write_dir (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
-        self.scan_paths = scan_paths
-        self.annotations_path = annotations_path
-        self.settings = settings
+        super().__init__(scan_paths, annotations_path, settings)
 
-        self.scans: List[sitk.Image]
-        self.annotation: sitk.Image
+    def read(self) -> None:
+        """
+        Reads in scans and annotation into the corresponding scans and annotation attribute.
+        """
+        assert len(self.scan_paths) != 0
+        self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
+        self.annotation = sitk.ReadImage(self.annotations_path)
 
     def write(self) -> Tuple[Sequence[Path], Path]:
         """
-        Writes preprocessed scans and annotations from PICAI dataset to disk.
+        Writes preprocessed scans and annotations from PICAI dataset to disk
+        and returns the scan file paths and annotation file path in a tuple.
+
+        Returns:
+            Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+                for the scans and the second entry is the file path to the correpsonding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         scan_paths = [path for path in sorted(self.scan_paths)]
@@ -266,13 +284,41 @@ class AlignOriginAndDirection(PreprocessingTransform):
         return mri
 
 
+class BinarizeAnnotation(PreprocessingTransform):
+    def __call__(self, mri: Case) -> Case:
+        """
+        Binarize the granular ISUP ≥ 2 annotations.
+
+        Args:
+            mri (Case): The case to be processed.
+
+        Returns:
+            Case: The Case after binarizing the annotation.
+        """
+        annotation_array = sitk.GetArrayFromImage(mri.annotation)
+
+        # convert granular PI-CAI csPCa annotation to binary csPCa annotation
+        annotation_array = (annotation_array >= 1).astype("uint8")
+
+        # convert label back to SimpleITK
+        new_annotation = sitk.GetImageFromArray(annotation_array)
+        new_annotation.CopyInformation(mri.annotation)
+        mri.annotation = new_annotation
+        return mri
+
+
 def apply_transform(mri: Case, transforms: Sequence[PreprocessingTransform]) -> Tuple[Sequence[Path], Path]:
     """
     Reads in scans and annotation, applies sequence of transformations, and writes resulting case to disk.
+    Returns tuple with scan paths and corresponding annotation path.
 
     Args:
         mri (Case): The case to be processed.
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
+
+    Returns:
+        Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
+            for the scans and the second entry is the file path to the correpsonding annotation.
 
     Raises:
         PreprocessingException if an error occurs during preprocessing.
@@ -296,6 +342,10 @@ def preprocess(
         mris (List[Case]): A list of cases to be preprocessed.
         transforms (Sequence[PreprocessingTransform]): The sequence of transformation to be applied.
         nums_threads (int): The number of threads to use for preprocessing.
+
+    Returns:
+        Sequence[Tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
+        file paths for the scans and the second entry is the file path to the correpsonding annotation.
 
     Raises:
         PreprocessingException if an error occurs during preprocessing of any of the cases.

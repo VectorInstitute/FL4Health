@@ -4,8 +4,11 @@ import os
 from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
+import numpy as np
+import SimpleITK as sitk
 from preprocessing import (
     AlignOriginAndDirection,
+    BinarizeAnnotation,
     CentreCropAndOrPad,
     PicaiCase,
     PreprocessingSettings,
@@ -14,23 +17,47 @@ from preprocessing import (
     preprocess,
 )
 
-DEFAULT_TRANSFORMS = [Resample(), CentreCropAndOrPad(), ResampleToFirstScan(), AlignOriginAndDirection()]
+DEFAULT_TRANSFORMS = [
+    Resample(),
+    CentreCropAndOrPad(),
+    ResampleToFirstScan(),
+    AlignOriginAndDirection(),
+    BinarizeAnnotation(),
+]
+
+
+def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> Sequence[float]:
+    _, annotation_paths = zip(*paths_for_each_sample)
+    case_labels = []
+    for path in annotation_paths:
+        annotation = sitk.ReadImage(path)
+        annotation_array = sitk.GetArrayFromImage(annotation)
+        case_label = float(np.max(annotation_array))
+        case_labels.append(case_label)
+    return case_labels
 
 
 def generate_dataset_json(
-    paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]], write_dir: Path, splits_path: Optional[Path] = None
+    paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]],
+    write_dir: Path,
+    splits_path: Optional[Path] = None,
 ) -> None:
 
+    labels = get_labels(paths_for_each_sample)
+
     # Since we are storing paths inside a json file, we need to convert to strings to be serializable.
-    string_paths_for_each_sample = [(list(map(str, tup[0])), str(tup[1])) for tup in paths_for_each_sample]
+    # Also pack in label for each samples in the tuple containing scan paths and annotation path.
+    scan_annotation_label_list = [
+        (list(map(str, tup[0])), str(tup[1]), lbl) for tup, lbl in zip(paths_for_each_sample, labels)
+    ]
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        json_dict = {}
-        json_dict["image_paths"], json_dict["label_paths"] = zip(*string_paths_for_each_sample)
+        d = {}
+        d["image_paths"], d["label_paths"], d["case_label"] = zip(*scan_annotation_label_list)
         write_path = os.path.join(write_dir, "train-fold-all.json")
         with open(write_path, "w") as f:
-            json.dump(json_dict, f)
+            json.dump(d, f)
     else:
         # If splits_path is not None, create a dataset overview for each split
         with open(splits_path, "r") as splits_f:
@@ -39,29 +66,29 @@ def generate_dataset_json(
         for i, split in enumerate(splits):
             # Add image (scan) and label (annotation) paths that include any subject ids from split
             # For both train and val
-            train_json_dict, val_json_dict = {}, {}
-            train_paths_for_each_sample = [
+            train_d, val_d = {}, {}
+            train_list = [
                 tup
-                for tup in string_paths_for_each_sample
+                for tup in scan_annotation_label_list
                 if any([subject_id in str(tup[1]) for subject_id in split["train"]])
             ]
-            val_paths_for_each_sample = [
+            val_list = [
                 tup
-                for tup in string_paths_for_each_sample
+                for tup in scan_annotation_label_list
                 if any([subject_id in str(tup[1]) for subject_id in split["val"]])
             ]
-            train_json_dict["image_paths"], train_json_dict["label_paths"] = zip(*train_paths_for_each_sample)
-            val_json_dict["image_paths"], val_json_dict["label_paths"] = zip(*val_paths_for_each_sample)
+            train_d["image_paths"], train_d["label_paths"], train_d["case_label"] = zip(*train_list)
+            val_d["image_paths"], val_d["label_paths"], val_d["case_label"] = zip(*val_list)
 
             # Create path of json files and write to disk
             train_write_path = os.path.join(write_dir, f"train-fold-{i}.json")
             val_write_path = os.path.join(write_dir, f"val-fold-{i}.json")
 
             with open(train_write_path, "w") as f:
-                json.dump(train_json_dict, f)
+                json.dump(train_d, f)
 
             with open(val_write_path, "w") as f:
-                json.dump(val_json_dict, f)
+                json.dump(val_d, f)
 
 
 def preprare_data(
@@ -114,6 +141,8 @@ def preprare_data(
         # Create sample and add to list of cases to be processed.
         sample = PicaiCase(scan_paths, annotation_path, settings)
         samples.append(sample)
+        if len(samples) == 25:
+            break
 
     # Preprocess list of samples, generate dataset overviews and write them to disk
     paths_for_each_sample = preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)
