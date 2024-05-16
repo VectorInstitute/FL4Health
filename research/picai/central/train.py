@@ -29,9 +29,9 @@ def main() -> None:
     parser.add_argument("--num_classes", type=int, default=2, help="Number of classes at train-time")
 
     # training hyperparameters
-    parser.add_argument("--num_epochs", type=int, default=5, help="Number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=3, help="Number of training epochs")
     parser.add_argument("--checkpoint_dir", type=str, required=True, help="Path to save model checkpoints")
-    parser.add_argument("--batch_size", type=int, default=8, help="Mini-batch size")
+    parser.add_argument("--batch_size", type=int, default=4, help="Mini-batch size")
 
     # Dataloading arguments
     parser.add_argument("--num_workers", type=int, default=4, help="Number of workers to use in dataloader")

@@ -1,4 +1,4 @@
-## Intro to nnUNet 
+## Intro to nnUNet
 [nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics medical dataset. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks accross modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
 
 ### Setting Environment Variables
@@ -32,7 +32,7 @@ Dataset001_BrainTumour/
 The expected files in each directory are defined as follows:
 - **imagesTr**: Images belonging to the training cases.
 - **labelsTr**: Ground truth segmentation maps for the training cases.
-- **dataset.json**: Metadata about the dataset. 
+- **dataset.json**: Metadata about the dataset.
 
 For information about the dataset formatting, visit the [nnUNet Dataset Formatting Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md).
 
@@ -59,15 +59,15 @@ Many training hyperparameters such as patch size and network topology differ bet
 Consequently, the plans need to be aligned between the two tasks. In this README we outline how to finetune a model (that has already been trained on a source dataset) on target dataset.
 
 ### Terminology
-- **Source Dataset**: The dataset which the model has already been trained on. 
+- **Source Dataset**: The dataset which the model has already been trained on.
 - **Target Dataset**: The dataset that we wish to finetune the model on.
 
-### Pretraining on the Source Dataset (Optional) 
+### Pretraining on the Source Dataset (Optional)
 If you have not already pretrained on the source dataset, proceed with standard nnUNet training procedure. The first step in this process is to extract the plan from the source dataset and preprocess it accordingly:
 ```
 nnUNetv2_plan_and_preprocess -d SOURCE_DATASET
 ```
-Next, train the model on the source dataset: 
+Next, train the model on the source dataset:
 ```
 nnUNetv2_train SOURCE_DATASET UNET_CONFIGURATION FOLD
 ```
@@ -87,7 +87,7 @@ nnUNetv2_move_plans_between_datasets -s SOURCE_DATASET -t TARGET_DATASET -sp SOU
 **Note:** EVERYTHING is transferred between the datasets. Not just the network topology, batch size and patch size but also the normalization scheme!
 
 ### Preprocessing Target Dataset and FineTuning
-Now that the plan has been transferred, the target dataset can be preprocessed: 
+Now that the plan has been transferred, the target dataset can be preprocessed:
 ```
 nnUNetv2_preprocess -d TARGET_DATSET -plans_name TARGET_PLANS_IDENTIFIER
 ```
@@ -96,3 +96,14 @@ Then we can proceed with finetuning on the target dataset:
 nnUNetv2_train TARGET_DATASET CONFIG FOLD -pretrained_weights PATH_TO_CHECKPOINT
 ```
 where PATH_TO_CHECKPOINT is the path to the model weights of the pretrained model.
+
+## Running nnUNet Scripts
+For convenience, two scripts have been made available: `nnunet_launch.slrm` and `nnunet_launch_fold.slrm`:
+`nnunet_launch.slrm` is a slurm script to launch a training job on an already configured experiment (ie planning and preprocessing have occured). It automatically handles checkpointing and relaunching. Optionally takes a a path to set of pretrained weight to start training from. The script can be invoked as follows:
+```
+sbatch nnunet_launch.slrm DATASET_NAME UNET_CONFIG FOLD VENV_PATH PLANS_IDENTIFIER PRETRAINED_WEIGHTS
+```
+`nnunet_launch_fold_experiment.slrm` is a higher level script that does planning and preprocessing on the dataset then subsequently launches 5 instances of the `nnunet_launch.slrm` script on different trainingand validation splits. Optionally starts training from a set of pretrained weights. The script can be invoked as follows:
+```
+sbatch nnunet_launch_fold_experiment.slrm DATASET_NAME UNET_CONFIG VENV_PATH PLANS_IDENTIFIER PRETRAINED_WEIGHTS SOURCE_DATASET_NAME SOURCE_PLANS_IDENTIFIER
+```

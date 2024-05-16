@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+
 import SimpleITK as sitk
 
 
@@ -21,27 +22,22 @@ def prepare_annotations(human_annotations_dir: str, ai_annotations_dir: str, ann
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    human_annotations_dir_default = ("/ssd003/projects/aieng/public/PICAI/input/picai_labels/"
-                                     "csPCa_lesion_delineations/human_expert/resampled")
-    ai_annotations_dir_default = ("/ssd003/projects/aieng/public/PICAI/input/picai_labels/"
-                                  "csPCa_lesion_delineations/AI/Bosma22a")
-    annotations_write_dir_default = ("/ssd003/projects/aieng/public/PICAI/input/picai_labels"
-                                     "/csPCa_lesion_delineations/all_annotations_resampled")
-    parser.add_argument(
-        "--human_annotations_dir",
-        default=human_annotations_dir_default,
-        type=str
+    human_annotations_dir_default = (
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/" "csPCa_lesion_delineations/human_expert/resampled"
     )
+    ai_annotations_dir_default = (
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels/" "csPCa_lesion_delineations/AI/Bosma22a"
+    )
+    annotations_write_dir_default = (
+        "/ssd003/projects/aieng/public/PICAI/input/picai_labels" "/csPCa_lesion_delineations/all_annotations_resampled"
+    )
+    parser.add_argument("--human_annotations_dir", default=human_annotations_dir_default, type=str)
     parser.add_argument(
         "--ai_annotations_dir",
         default=ai_annotations_dir_default,
         type=str,
     )
-    parser.add_argument(
-        "--annotations_write_dir",
-        default=annotations_write_dir_default,
-        type=str
-    )
+    parser.add_argument("--annotations_write_dir", default=annotations_write_dir_default, type=str)
     args = parser.parse_args()
 
     prepare_annotations(args.human_annotations_dir, args.ai_annotations_dir, args.annotations_write_dir)
