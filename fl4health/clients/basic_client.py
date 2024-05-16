@@ -767,7 +767,7 @@ class BasicClient(NumPyClient):
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
