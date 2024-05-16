@@ -141,8 +141,6 @@ def preprare_data(
         # Create sample and add to list of cases to be processed.
         sample = PicaiCase(scan_paths, annotation_path, settings)
         samples.append(sample)
-        if len(samples) == 25:
-            break
 
     # Preprocess list of samples, generate dataset overviews and write them to disk
     paths_for_each_sample = preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)

@@ -51,7 +51,7 @@ class PicaiFedAvgClient(PicaiClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_img_paths, train_seg_paths, class_proportions = get_img_and_seg_paths(
-            self.overviews_dir, self.data_path, int(config["fold_id"]), True
+            self.overviews_dir, int(config["fold_id"]), True
         )
         if self.data_partition is not None:
             assert isinstance(config["n_clients"], int)
@@ -72,9 +72,7 @@ class PicaiFedAvgClient(PicaiClient):
             get_seg_transform(),
             num_workers=2,
         )
-        val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(
-            self.overviews_dir, self.data_path, int(config["fold_id"]), True
-        )
+        val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(self.overviews_dir, int(config["fold_id"]), True)
 
         if self.data_partition is not None:
             val_img_paths_list, val_seg_paths_list = split_img_and_seg_paths(val_img_paths, val_seg_paths, 2)
