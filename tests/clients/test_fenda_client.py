@@ -18,10 +18,10 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
 
     assert isinstance(fenda_client.model, FendaModel)
     params_local = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.local_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.first_module.state_dict().items()
     ]
     params_global = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.global_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.second_module.state_dict().items()
     ]
     loss = {
         "loss": 0.0,
@@ -59,7 +59,7 @@ def test_setting_global_model(get_fenda_client: FendaClient) -> None:  # noqa
     assert isinstance(fenda_client.model, FendaModel)
 
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.global_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.second_module.state_dict().items()
     ]
     fenda_client.update_before_train(0)
 
@@ -95,10 +95,10 @@ def test_setting_old_models(get_fenda_client: FendaClient) -> None:  # noqa
     assert isinstance(fenda_client.model, FendaModel)
 
     local_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.local_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.first_module.state_dict().items()
     ]
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.global_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy()) for _, val in fenda_client.model.second_module.state_dict().items()
     ]
     loss = {
         "loss": 0.0,

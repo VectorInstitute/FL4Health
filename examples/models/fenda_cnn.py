@@ -2,16 +2,16 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
-class FendaClassifier(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode) -> None:
+class FendaClassifier(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(120 * 2, 84)
         self.fc2 = nn.Linear(84, 10)
 
-    def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         # Assuming tensors are "batch first" so join column-wise
         return torch.concat([local_tensor, global_tensor], dim=1)
 

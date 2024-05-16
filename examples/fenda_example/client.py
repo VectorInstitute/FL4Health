@@ -12,7 +12,8 @@ from torch.utils.data import DataLoader
 
 from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
@@ -37,9 +38,9 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(
-            self.device
-        )
+        model: nn.Module = FendaModel(
+            LocalCnn(), GlobalCnn(), FendaClassifier(ParallelFeatureJoinMode.CONCATENATE)
+        ).to(self.device)
         return model
 
     def get_optimizer(self, config: Config) -> Optimizer:

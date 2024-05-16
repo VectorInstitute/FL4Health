@@ -18,7 +18,7 @@ from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel, ParallelSplitHeadModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
@@ -105,7 +105,9 @@ def get_apfl_client(type: type, model: nn.Module) -> ApflClient:
 
 
 @pytest.fixture
-def get_fenda_client(local_module: nn.Module, global_module: nn.Module, head_module: FendaHeadModule) -> FendaClient:
+def get_fenda_client(
+    local_module: nn.Module, global_module: nn.Module, head_module: ParallelSplitHeadModule
+) -> FendaClient:
     client = FendaClient(
         data_path=Path(""),
         metrics=[Accuracy()],
