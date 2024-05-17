@@ -686,7 +686,8 @@ class BasicClient(NumPyClient):
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
-        Validate the current model on the entire validation or potentially an entire test dataset if it has been defined.
+        Validate the current model on the entire validation
+            or potentially an entire test dataset if it has been defined.
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
@@ -924,7 +925,8 @@ class BasicClient(NumPyClient):
         """
         User defined method that returns a PyTorch Test DataLoader.
         By default, this function returns None, assuming that there is no test dataset to be used.
-        If the user would like to load and evaluate a dataset, they need only override this function in their client class.
+        If the user would like to load and evaluate a dataset,
+            they need only override this function in their client class.
 
         Args:
             config (Config): The config from the server.

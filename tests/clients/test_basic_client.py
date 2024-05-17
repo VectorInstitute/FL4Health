@@ -1,17 +1,14 @@
 import datetime
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 from unittest.mock import MagicMock
 
 import freezegun
 import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
-from torch.utils.data import DataLoader
 
 from fl4health.clients.basic_client import BasicClient, LoggingMode
-from fl4health.utils.losses import LossMeter
-from fl4health.utils.metrics import MetricManager
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
