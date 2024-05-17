@@ -14,7 +14,9 @@ Principally, this repository contains the federated learning (FL) engine aimed a
 
 The library source code is housed in the `fl4health` folder. This library is built on the foundational components of [Flower](https://flower.dev/), an open-source FL library in its own right. The documentation is [here](https://flower.dev/docs/framework/index.html). This library contains a number of unique components that extend the functionality of Flower in a number of directions.
 
-## Summary of Approaches
+If you have questions about the library or suggestions for new additions feel free to reach out to david.emerson@vectorinstitute.ai
+
+## Summary of Currently Implemented Approaches
 
 The present set of FL approaches implemented in the library are:
 <table>
