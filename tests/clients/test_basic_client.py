@@ -62,7 +62,7 @@ def test_metrics_reporter_evaluate() -> None:
     test_loss = 123.123
     test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
     test_metrics_testing: Dict[str, Scalar] = {"testing_metric": 1234}
-    test_metrics: Dict[str, Scalar] = {"test_metric": 1234, "testing_metric": 1234, "test - loss": 123.123}
+    test_metrics = {"test_metric": 1234, "testing_metric": 1234, "test - loss": 123.123}
 
     fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics, test_set_metrics=test_metrics_testing)
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
