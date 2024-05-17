@@ -27,6 +27,7 @@ from fl4health.utils.metrics import Metric, MetricManager
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
 
+
 class LoggingMode(Enum):
     TRAIN = "Training"
     VALIDATION = "Validation"
@@ -676,7 +677,7 @@ class BasicClient(NumPyClient):
                 loss_meter.update(losses)
                 metric_manager.update(preds, target)
 
-    # Compute losses and metrics over validation set
+        # Compute losses and metrics over validation set
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
         self._handle_logging(loss_dict, metrics, logging_mode=logging_mode)
