@@ -5,8 +5,11 @@ from unittest.mock import MagicMock
 
 import freezegun
 import torch
+from torch.utils.data import DataLoader
 from flwr.common import Scalar
 from freezegun import freeze_time
+from fl4health.utils.losses import LossMeter
+from fl4health.utils.metrics import MetricManager
 
 from fl4health.clients.basic_client import BasicClient, LoggingMode
 
@@ -150,7 +153,7 @@ class MockBasicClient(BasicClient):
         self._validate_or_test = MagicMock()  # type: ignore
         self._validate_or_test.side_effect = self.mock_validate_or_test
 
-    def mock_validate_or_test(self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION):
+    def mock_validate_or_test(self, loader: DataLoader, loss_meter:LossMeter, metric_manager:MetricManager, logging_mode: LoggingMode=LoggingMode.VALIDATION):
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
         else:
