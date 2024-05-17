@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple
 from unittest.mock import MagicMock
 
 import freezegun
@@ -159,7 +159,7 @@ class MockBasicClient(BasicClient):
         loss_meter: LossMeter,
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
-    ):
+    ) -> Tuple[float, Dict[str, Scalar]]:
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
         else:
