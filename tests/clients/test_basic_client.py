@@ -8,7 +8,7 @@ import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, LoggingMode
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
@@ -38,7 +38,7 @@ def test_metrics_reporter_shutdown() -> None:
 def test_metrics_reporter_fit() -> None:
     test_current_server_round = 2
     test_loss_dict = {"test_loss": 123.123}
-    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
+    test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
 
     fl_client = MockBasicClient(loss_dict=test_loss_dict, metrics=test_metrics)
     fl_client.fit([], {"current_server_round": test_current_server_round, "local_epochs": 0})
@@ -60,10 +60,11 @@ def test_metrics_reporter_fit() -> None:
 def test_metrics_reporter_evaluate() -> None:
     test_current_server_round = 2
     test_loss = 123.123
-    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
-    test_metrics_final: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234, "test - loss": 123.123}
+    test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
+    test_metrics_testing: Dict[str, Scalar] = {"testing_metric": 1234}
+    test_metrics: Dict[str, Scalar] = {"test_metric": 1234, "testing_metric": 1234, "test - loss": 123.123}
 
-    fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics)
+    fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics, test_set_metrics = test_metrics_testing)
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
 
     assert fl_client.metrics_reporter.metrics == {
@@ -73,7 +74,7 @@ def test_metrics_reporter_evaluate() -> None:
             test_current_server_round: {
                 "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
                 "loss": test_loss,
-                "evaluate_metrics": test_metrics_final,
+                "evaluate_metrics": test_metrics,
             },
         },
     }
@@ -106,6 +107,7 @@ class MockBasicClient(BasicClient):
         self,
         loss_dict: Optional[Dict[str, float]] = None,
         metrics: Optional[Dict[str, Scalar]] = None,
+        test_set_metrics: Optional[Dict[str, Scalar]] = None,
         loss: Optional[float] = 0,
     ):
         super().__init__(Path(""), [], torch.device(0))
@@ -117,6 +119,8 @@ class MockBasicClient(BasicClient):
         self.mock_metrics = metrics
         if self.mock_metrics is None:
             self.mock_metrics = {}
+
+        self.mock_metrics_test = test_set_metrics
 
         self.mock_loss = loss
 
@@ -133,8 +137,6 @@ class MockBasicClient(BasicClient):
         self.train_by_epochs.return_value = self.mock_loss_dict, self.mock_metrics
         self.train_by_steps = MagicMock()  # type: ignore
         self.train_by_steps.return_value = self.mock_loss_dict, self.mock_metrics
-        self._val_or_test = MagicMock()  # type: ignore
-        self._val_or_test.return_value = self.mock_loss, self.mock_metrics
         self.get_model = MagicMock()  # type: ignore
         self.get_data_loaders = MagicMock()  # type: ignore
         mock_data_loader = MagicMock()  # type: ignore
@@ -144,3 +146,12 @@ class MockBasicClient(BasicClient):
         self.get_test_data_loader.return_value = mock_data_loader
         self.get_optimizer = MagicMock()  # type: ignore
         self.get_criterion = MagicMock()  # type: ignore
+
+        self._validate_or_test = MagicMock()  # type: ignore
+        self._validate_or_test.side_effect = self.mock_validate_or_test
+
+    def mock_validate_or_test(self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION):
+        if logging_mode == LoggingMode.VALIDATION:
+            return self.mock_loss, self.mock_metrics
+        else:
+            return self.mock_loss, self.mock_metrics_test
