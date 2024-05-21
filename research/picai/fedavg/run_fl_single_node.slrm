@@ -71,13 +71,13 @@ SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
 echo "Server logging at: ${SERVER_OUTPUT_FILE}"
 echo "Launching Server"
 
-nohup python -m research.picai.fedavg.server --config_path ${SERVER_CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} --n_clients ${N_CLIENTS} > ${SERVER_OUTPUT_FILE} 2>&1 &
+nohup python -m research.picai.fedavg.server --config_path ${CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} --n_clients ${N_CLIENTS} > ${SERVER_OUTPUT_FILE} 2>&1 &
 
 # Sleep for 20 seconds to allow the server to come up.
 sleep 20
 
 # Start n number of clients and divert the outputs to their own files
-END=$(($N_CLIENTS - 1))
+END=$(($N_CLIENTS))
 for i in $(seq 1 $END);
 do
     CLIENT_NAME="client_${i}"
