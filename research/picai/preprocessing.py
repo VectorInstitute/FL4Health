@@ -120,7 +120,7 @@ class PicaiCase(Case):
         Reads in scans and annotation into the corresponding scans and annotation attribute.
         """
         assert len(self.scan_paths) != 0
-        self.scans = [sitk.ReadImage(path) for path in sorted(self.scan_paths)]
+        self.scans = [sitk.ReadImage(path) for path in self.scan_paths]
         self.annotation = sitk.ReadImage(self.annotations_path)
 
     def write(self) -> Tuple[Sequence[Path], Path]:
