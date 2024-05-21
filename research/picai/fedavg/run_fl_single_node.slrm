@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:rtx6000:1
+#SBATCH --gres=gpu:1
 #SBATCH --qos=normal
 #SBATCH --mem=64GB
 #SBATCH -c 16
-#SBATCH --time=2:00:00
+#SBATCH --time=12:00:00
 #SBATCH --signal=B:USR1@60
-#SBATCH --job-name=central_picai
+#SBATCH --job-name=fedavg_picai
 #SBATCH --output=fedavg_picai_%j_%x.out
 #SBATCH --error=fedavg_picai_%j_%x.err
 

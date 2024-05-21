@@ -95,4 +95,4 @@ Then we can proceed with finetuning on the target dataset:
 ```
 nnUNetv2_train TARGET_DATASET CONFIG FOLD -pretrained_weights PATH_TO_CHECKPOINT
 ```
-where PATH_TO_CHECKPOINT is the path to the model weights of the pretrained model.
+where `PATH_TO_CHECKPOINT` is the path to the model weights of the pretrained model.

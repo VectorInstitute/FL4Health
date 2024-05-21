@@ -132,7 +132,7 @@ Each preprocessed image sample is stored on the cluster at the following path:
 /ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw/Dataset003_PICAI/imagesTr/<patient_id>_<exam_id>_<modality_id>.nii.gz
 ```
 
-Thus, all preprocessed images are written to the same directory. Each scan is uniquely identified with a **<patient_id>** and **<study_id>** described above, along with a **<modality_id>**. The **<modality_id>** specifies what type the scan is. In our case, the **<modality_id>**has the following mapping:
+Thus, all preprocessed images are written to the same directory. Each scan is uniquely identified with a **<patient_id>** and **<study_id>** described above, along with a **<modality_id>**. The **<modality_id>** specifies what type the scan is. In our case, the **<modality_id>** has the following mapping:
 - 0000: T2W Scan
 - 0001: ADC Scan
 - 0002: HBV Scan
