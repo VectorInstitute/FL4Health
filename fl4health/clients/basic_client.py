@@ -687,7 +687,7 @@ class BasicClient(NumPyClient):
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation
-            or potentially an entire test dataset if it has been defined.
+            and potentially an entire test dataset if it has been defined.
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
@@ -734,8 +734,7 @@ class BasicClient(NumPyClient):
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
-        test_loader = self.get_test_data_loader(config)
-        self.test_loader = test_loader
+        self.test_loader = self.get_test_data_loader(config)
 
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
