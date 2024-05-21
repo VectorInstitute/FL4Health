@@ -9,7 +9,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSplitHeadClassifier
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
@@ -59,7 +59,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(ParallelFeatureJoinMode.CONCATENATE))
+    initial_model = FendaModel(
+        LocalCnn(), GlobalCnn(), ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE)
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

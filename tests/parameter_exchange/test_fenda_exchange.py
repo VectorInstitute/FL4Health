@@ -56,10 +56,10 @@ def test_fenda_join_and_layer_exchange() -> None:
     )
     fenda_layers_to_exchange = sorted(model.layers_to_exchange())
     assert fenda_layers_to_exchange == [
-        "global_module.conv1.bias",
-        "global_module.conv1.weight",
-        "global_module.fc1.bias",
-        "global_module.fc1.weight",
+        "second_module.conv1.bias",
+        "second_module.conv1.weight",
+        "second_module.fc1.bias",
+        "second_module.fc1.weight",
     ]
     parameter_exchanger = FixedLayerExchanger(fenda_layers_to_exchange)
     parameters_to_exchange = parameter_exchanger.push_parameters(model)

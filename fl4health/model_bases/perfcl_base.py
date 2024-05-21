@@ -14,7 +14,7 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
         )
 
     def layers_to_exchange(self) -> List[str]:
-        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("first_module.")]
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("second_module.")]
 
     def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)

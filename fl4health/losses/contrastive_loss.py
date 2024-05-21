@@ -1,7 +1,8 @@
 import torch
+import torch.nn as nn
 
 
-class ContrastiveLoss(torch.nn.Module):
+class ContrastiveLoss(nn.Module):
     def __init__(
         self,
         device: torch.device,
@@ -41,7 +42,10 @@ class ContrastiveLoss(torch.nn.Module):
         """
         # TODO: We can extend it to support multiple positive pairs using multi-label classification
 
-        assert self.temperature is not None
+        features = features.to(self.device)
+        positive_pairs = positive_pairs.to(self.device)
+        negative_pairs = negative_pairs.to(self.device)
+
         if len(positive_pairs) != 1:
             raise AssertionError(
                 "Each feature can have one positive pair. ",

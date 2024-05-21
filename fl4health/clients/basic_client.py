@@ -842,13 +842,15 @@ class BasicClient(NumPyClient):
         self.optimizers = {"global": optimizer}
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
-        """Clone and freeze model for use in various loss calculation.
+        """
+        Clones and freezes a models weights. This is to preserve the model in its current state while decoupling in
+        any way from the original model object or any training.
 
         Args:
-            model (nn.Module): model to clone and freeze
+            model (nn.Module): Model to clone and freeze
 
         Returns:
-            nn.Module: cloned and frozen model
+            nn.Module: Cloned and frozen model
         """
 
         cloned_model = copy.deepcopy(model)
@@ -923,6 +925,7 @@ class BasicClient(NumPyClient):
     def update_before_train(self, current_server_round: int) -> None:
         """
         Hook method called before training with the number of current server rounds performed.
+        NOTE: This method is called immediately AFTER the aggregated parameters are received from the server.
         For example, used by Moon and FENDA to save global modules after aggregation.
 
         Args:

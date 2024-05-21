@@ -5,7 +5,7 @@ from flamby.datasets.fed_ixi.model import ConvolutionalBlock
 
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
-from research.flamby.fed_ixi.perfcl.perfcl_feature_extractor import PerFclFeatureExtactor
+from research.flamby.fed_ixi.perfcl.perfcl_feature_extractor import PerFclFeatureExtractor
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
@@ -62,7 +62,7 @@ class LocalUNetFeatureExtractor(nn.Module):
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = PerFclFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = PerFclFeatureExtractor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -80,7 +80,7 @@ class GlobalUNetFeatureExtractor(nn.Module):
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = PerFclFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = PerFclFeatureExtractor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 

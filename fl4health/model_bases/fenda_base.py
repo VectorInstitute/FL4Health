@@ -14,7 +14,7 @@ class FendaModel(PartialLayerExchangeModel, ParallelSplitModel):
         )
 
     def layers_to_exchange(self) -> List[str]:
-        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("first_module.")]
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("second_module.")]
 
 
 class FendaModelWithFeatureState(FendaModel):

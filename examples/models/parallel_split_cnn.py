@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
-class FendaClassifier(ParallelSplitHeadModule):
+class ParallelSplitHeadClassifier(ParallelSplitHeadModule):
     def __init__(self, join_mode: ParallelFeatureJoinMode) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(120 * 2, 84)
