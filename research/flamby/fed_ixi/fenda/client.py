@@ -14,11 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
@@ -36,7 +33,7 @@ class FedIxiFendaClient(FendaClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         cos_sim_activate: bool = False,
         contrastive_activate: bool = False,
         extra_loss_weights: Optional[float] = None,
@@ -153,11 +150,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiFendaClient(
         data_path=Path(args.dataset_dir),

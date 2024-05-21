@@ -8,12 +8,12 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.models.mnist_model import MnistNet
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def fit_config(
@@ -47,7 +47,7 @@ def main(config: Dict[str, Any]) -> None:
     model = MnistNet(int(config["latent_dim"]) * 2)
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
-    checkpointer = BestMetricTorchCheckpointer(config["checkpoint_path"], "best_model.pkl", maximize=False)
+    checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl")
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(

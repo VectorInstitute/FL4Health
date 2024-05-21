@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.moon_base import MoonModel
@@ -18,8 +18,8 @@ def test_initializing_warm_up_module(tmp_path: Path) -> None:
 
     # Save a temporary model using checkpointer
     saved_model = SmallCnn()
-    checkpointer = BestMetricTorchCheckpointer(str(checkpoint_dir), "best_model.pkl", True)
-    checkpointer.maybe_checkpoint(saved_model, 0.7)
+    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer.maybe_checkpoint(saved_model, 0.7, {})
 
     # Save a temporary weights mapping dict
     weights_mapping_path = tmp_path.joinpath("data.json")

@@ -6,7 +6,7 @@ from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.fl_wandb import ServerWandBReporter
@@ -15,7 +15,7 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 
-class InstanceLevelDPServer(FlServer):
+class InstanceLevelDpServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -26,7 +26,7 @@ class InstanceLevelDPServer(FlServer):
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[OpacusCheckpointer] = None,
         delta: Optional[float] = None,
     ) -> None:
         """
@@ -46,12 +46,13 @@ class InstanceLevelDPServer(FlServer):
             local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            strategy (BasicFedAvg): The aggregation strategy to be used by the server to handle
-                client updates and other information potentially sent by the participating clients.
+            strategy (OpacusBasicFedAvg): The aggregation strategy to be used by the server to handle
+                client updates and other information potentially sent by the participating clients. this must be an
+                OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+            checkpointer (Optional[OpacusCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to

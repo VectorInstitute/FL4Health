@@ -6,8 +6,9 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
@@ -28,7 +29,7 @@ class FedProxClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -41,21 +42,7 @@ class FedProxClient(BasicClient):
         self.parameter_exchanger: ParameterExchangerWithPacking
         self.proximal_weight: float
         self.current_loss: float
-
-    def get_proximal_loss(self) -> torch.Tensor:
-        assert self.initial_tensors is not None
-        # Using parameters to ensure the same ordering as exchange
-        model_weights = [layer_weights for layer_weights in self.model.parameters()]
-        assert len(self.initial_tensors) == len(model_weights)
-
-        layer_inner_products: List[torch.Tensor] = [
-            torch.pow(torch.linalg.norm(initial_layer_weights - iteration_layer_weights), 2.0)
-            for initial_layer_weights, iteration_layer_weights in zip(self.initial_tensors, model_weights)
-        ]
-
-        # network l2 inner product tensor
-        # NOTE: Scaling by 1/2 is for consistency with the original Fedprox paper.
-        return (self.proximal_weight / 2.0) * torch.stack(layer_inner_products).sum()
+        self.proximal_loss_function = WeightDriftLoss(self.device)
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -93,11 +80,14 @@ class FedProxClient(BasicClient):
 
         super().set_parameters(server_model_state, config, fitting_round)
 
+    def update_before_train(self, current_server_round: int) -> None:
         # Saving the initial weights and detaching them so that we don't compute gradients with respect to the
         # tensors. These are used to form the FedProx loss.
         self.initial_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.model.parameters()
         ]
+
+        return super().update_before_train(current_server_round)
 
     def compute_training_loss(
         self,
@@ -123,7 +113,7 @@ class FedProxClient(BasicClient):
         if additional_losses is None:
             additional_losses = {}
 
-        proximal_loss = self.get_proximal_loss()
+        proximal_loss = self.proximal_loss_function(self.model, self.initial_tensors, self.proximal_weight)
         additional_losses["proximal_loss"] = proximal_loss
         # adding the vanilla loss to the additional losses to be used by update_after_train
         additional_losses["loss"] = loss

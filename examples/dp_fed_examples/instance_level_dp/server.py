@@ -1,19 +1,26 @@
 import argparse
+import string
 from functools import partial
+from random import choices
 from typing import Any, Dict, Optional
 
 import flwr as fl
 import torch.nn as nn
+from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Config
+from flwr.server.client_manager import ClientManager
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer, OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.instance_level_dp_server import InstanceLevelDPServer
-from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
+from fl4health.strategies.basic_fedavg import OpacusBasicFedAvg
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters, privacy_validate_and_fix_modules
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.privacy_utilities import map_model_to_opacus_model
 
 
 def construct_config(
@@ -53,12 +60,41 @@ def fit_config(
     )
 
 
-def get_model_and_validate() -> nn.Module:
-    # Create the model and use the Opacus validator to replace and layers that are not privacy compliant, such as
-    # BatchNorm layers. This is also done on the client side. So we enforce a match.
-    initial_model = Net()
-    modified_model, _ = privacy_validate_and_fix_modules(initial_model)
-    return modified_model
+class CifarInstanceLevelDPServerWithCheckpointing(InstanceLevelDpServer):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        model: nn.Module,
+        noise_multiplier: float,
+        batch_size: int,
+        num_server_rounds: int,
+        strategy: OpacusBasicFedAvg,
+        local_epochs: Optional[int] = None,
+        local_steps: Optional[int] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[OpacusCheckpointer] = None,
+        delta: Optional[float] = None,
+    ) -> None:
+        super().__init__(
+            client_manager,
+            noise_multiplier,
+            batch_size,
+            num_server_rounds,
+            strategy,
+            local_epochs,
+            local_steps,
+            wandb_reporter,
+            checkpointer,
+            delta,
+        )
+        self.parameter_exchanger = FullParameterExchanger()
+        self.server_model = model
+
+    # Setting up a hydration method so that checkpointing can happen on the server side
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
+        return self.server_model
 
 
 def main(config: Dict[str, Any]) -> None:
@@ -72,14 +108,15 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = get_model_and_validate()
+    initial_model = map_model_to_opacus_model(Net())
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
     # Server performs simple FedAveraging with Instance Level Differential Privacy
     # Must be FedAvg sampling to ensure privacy loss is computed correctly
-    strategy = BasicFedAvg(
+    strategy = OpacusBasicFedAvg(
+        model=initial_model,
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
@@ -88,12 +125,16 @@ def main(config: Dict[str, Any]) -> None:
         on_fit_config_fn=fit_config_fn,
         # We use the same fit config function, as nothing changes for eval
         on_evaluate_config_fn=fit_config_fn,
-        # Server side weight initialization
-        initial_parameters=get_all_model_parameters(initial_model),
     )
 
-    server = InstanceLevelDPServer(
+    client_name = "".join(choices(string.ascii_uppercase, k=5))
+    checkpoint_dir = "examples/dp_fed_examples/instance_level_dp/"
+    checkpoint_name = f"server_{client_name}_best_model.pkl"
+
+    server = CifarInstanceLevelDPServerWithCheckpointing(
         client_manager=client_manager,
+        model=initial_model,
+        checkpointer=BestLossOpacusCheckpointer(checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name),
         strategy=strategy,
         noise_multiplier=config["noise_multiplier"],
         local_epochs=config.get("local_epochs"),

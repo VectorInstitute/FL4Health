@@ -11,8 +11,8 @@ from flwr.server.strategy import FedAvg
 
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.picai.model_utils import get_model
 from research.picai.picai_server import PicaiServer
 

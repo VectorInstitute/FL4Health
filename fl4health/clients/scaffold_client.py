@@ -4,10 +4,11 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config, NDArrays
+from opacus.optimizers.optimizer import DPOptimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
+from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -30,7 +31,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -43,8 +44,9 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        # Scaffold require vanilla SGD as optimizer
-        self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
+        # Scaffold require vanilla SGD as optimizer, will assert during setup_client
+        self.optimizers: Dict[str, torch.optim.Optimizer]
+
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
@@ -221,10 +223,14 @@ class ScaffoldClient(BasicClient):
             config (Config): The config from the server.
         """
         super().setup_client(config)
+        if isinstance(self, DPScaffoldClient):
+            assert isinstance(self.optimizers["global"], DPOptimizer)
+        else:
+            assert isinstance(self.optimizers["global"], torch.optim.SGD)
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
-class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
 
@@ -237,7 +243,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -248,7 +254,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             checkpointer=checkpointer,
         )
 
-        InstanceLevelPrivacyClient.__init__(
+        InstanceLevelDpClient.__init__(
             self,
             data_path=data_path,
             metrics=metrics,

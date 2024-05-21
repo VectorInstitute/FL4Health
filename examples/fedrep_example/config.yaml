@@ -1,0 +1,13 @@
+# Parameters that describe server
+n_server_rounds: 10 # The number of rounds to run FL
+
+# Parameters that describe clients
+n_clients: 3 # The number of clients in the FL experiment
+batch_size: 64 # The batch size for client training
+
+# Parameters controlling the Dirichlet sampler for inducing heterogeneity in the CIFAR dataset
+sample_percentage: 0.75
+beta: 1.0
+
+local_head_steps: 250 # number of local training steps for the FedRep head module
+local_rep_steps: 250 # number of local training steps for the FedRep representation module

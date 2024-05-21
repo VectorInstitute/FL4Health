@@ -11,7 +11,7 @@ from monai.data.dataloader import DataLoader
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, CentralPerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, CentralPerRoundCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -38,7 +38,7 @@ class SingleNodeTrainer:
             Path(checkpoint_dir), Path(per_round_checkpoint_name)
         )
         best_metric_checkpoint_name = "best_ckpt.pkl"
-        self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, best_metric_checkpoint_name, maximize=False)
+        self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -53,9 +53,9 @@ class SingleNodeTrainer:
 
         self.model, self.optimizer, self.epoch = self.per_epoch_checkpointer.load_checkpoint()
 
-    def _maybe_checkpoint(self, comparison_metric: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
         if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
+            self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
@@ -83,7 +83,6 @@ class SingleNodeTrainer:
         return loss, {"predictions": preds}
 
     def train_by_epochs(self, epochs: int, train_metric_mngr: MetricManager, val_metric_mngr: MetricManager) -> None:
-
         for epoch in range(self.epoch, epochs):
             train_metric_mngr.clear()
             val_metric_mngr.clear()
@@ -123,4 +122,4 @@ class SingleNodeTrainer:
         running_loss = running_loss / len(self.val_loader)
         metrics = val_metric_mngr.compute()
         self._handle_reporting(running_loss, metrics, is_validation=True)
-        self._maybe_checkpoint(running_loss)
+        self._maybe_checkpoint(running_loss, metrics)

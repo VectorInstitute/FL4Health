@@ -40,4 +40,4 @@ The argument `minority_numbers` specifies which digits (0-9) in the MNIST datase
 simulate non-IID data between clients. For example `--minority_numbers 1 2 3 4 5` will ensure that the client
 downsamples these digits (using the `downsampling_ratio` specified to the config).
 
-After both clients have been started federated learning should commence.
+After the clients have been started federated learning should commence.
