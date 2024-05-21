@@ -1,7 +1,9 @@
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
@@ -139,6 +141,7 @@ class PerFclClient(BasicClient):
             and self.old_global_module is not None
             and self.initial_global_module is not None
         ):
+            log(INFO, "All modules present for contrastive loss calculation. Calculating appropriate features.")
             # Pass the input through the old feature extractors and the initial global model after aggregation and
             # flatten them
             features["old_local_features"] = self._flatten(self.old_local_module.forward(input))
@@ -208,6 +211,7 @@ class PerFclClient(BasicClient):
         # If any of these are None then we don't compute the PerFCL loss. This will happen on the first client-side
         # training run.
         if self.old_local_module is None or self.old_global_module is None or self.initial_global_module is None:
+            log(INFO, "Not all modules present for contrastive loss calculation. Skipping.")
             return loss, {"loss": loss}
 
         total_loss = loss.clone()

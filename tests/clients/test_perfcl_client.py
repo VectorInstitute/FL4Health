@@ -199,7 +199,7 @@ def test_computing_loss(get_perfcl_client: PerFclClient) -> None:  # noqa
     global_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
     old_local_features = torch.tensor([[0, 0, 0], [0, 0, 0]]).float()
     old_global_features = torch.tensor([[0, 0, 0], [0, 0, 0]]).float()
-    aggregated_global_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
+    initial_global_features = torch.tensor([[1, 1, 1], [1, 1, 1]]).float()
     preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
     target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
     features = {
@@ -207,7 +207,7 @@ def test_computing_loss(get_perfcl_client: PerFclClient) -> None:  # noqa
         "old_local_features": old_local_features,
         "global_features": global_features,
         "old_global_features": old_global_features,
-        "initial_global_features": aggregated_global_features,
+        "initial_global_features": initial_global_features,
     }
 
     # In this case, we have not set the proper modules in the client to produce these features. So we should only
