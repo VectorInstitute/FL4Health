@@ -15,8 +15,8 @@ DATASET_NAME=$1
 UNET_CONFIG=$2
 FOLD=$3
 VENV_PATH=$4
-PLANS_IDENTIFIER=${5:-''} # Default value of empty string
-PRETAINED_WEIGHTS=${6:-'plans'} # Default value of plans string
+PLANS_IDENTIFIER=${5:-'plans'} # Default value of plans string
+PRETAINED_WEIGHTS=${6:-''} # Default value of empty string
 
 # Log input information
 echo "Dataset Name : ${DATASET_NAME}"

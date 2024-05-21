@@ -1,5 +1,5 @@
 ## Intro to nnUNet
-[nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics medical dataset. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks accross modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
+[nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics of a given medical dataset and availabel compute. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks across modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
 
 ### Setting Environment Variables
 nnUNet expects that three environmental variables have been set with their corresponding paths: `nnUNet_raw`, `nnUNet_preprocessed` and `nnUNet_results`. On the Vector cluster, these paths are as follows:
@@ -11,7 +11,7 @@ nnUNet_results="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_results"
 For information about setting the environment variables, visit the [nnUNet Environment Variables Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md)
 
 ### Dataset Formatting
-Datasets must be located in the nnUNet_raw folder. Each segmentation dataset is stored as a separate 'Dataset'. Datasets areassociated with a dataset ID, a three digit integer, and a dataset name (which you can freely choose): For example, Dataset005_Prostate has 'Prostate' as dataset name and the dataset id is 5. Datasets are stored in the nnUNet_raw folder like this:
+Datasets must be located in the nnUNet_raw folder. Each segmentation dataset is stored as a separate 'Dataset'. Datasets are associated with a dataset ID, a three digit integer, and a dataset name (which you can freely choose): For example, Dataset005_Prostate has 'Prostate' as dataset name and the dataset id is 5. Datasets are stored in the nnUNet_raw folder like this:
 ```
 nnUNet_raw/
 ├── Dataset001_BrainTumour
@@ -37,7 +37,7 @@ The expected files in each directory are defined as follows:
 For information about the dataset formatting, visit the [nnUNet Dataset Formatting Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md).
 
 ### Extracting Configuration, Preprocessing and Training
-In order to extract the configuration and run preprocessing, run the following commandL
+In order to extract the configuration and run preprocessing, run the following command:
 
 ```
 nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity
@@ -74,7 +74,7 @@ nnUNetv2_train SOURCE_DATASET UNET_CONFIGURATION FOLD
 where UNET_CONFIGURATION is a string that identifies the requested U-Net configuration (defaults: 2d, 3d_fullres, 3d_lowres, 3d_cascade_lowres). FOLD specifies which fold of the 5-fold-cross-validation is trained.
 
 ### Transferring Plan from Source to Target Dataset
-Assuming the model has already been trained on a source dataset, we can proceed  with transferring the plan from source to the target dataset. First, if its not yet available, extract the fingerprint of the target dataset:
+Assuming the model has already been trained on a source dataset, we can proceed  with transferring the plan from source to the target dataset. First, if it's not yet available, extract the fingerprint of the target dataset:
 ```
 nnUNetv2_extract_fingerprint -d TARGET_DATASET
 ```

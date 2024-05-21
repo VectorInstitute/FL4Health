@@ -15,7 +15,7 @@ VENV_PATH=$3
 PLANS_IDENTIFIER=${4:-'plans'}
 PRETAINED_WEIGHTS=${5:-''} # Default value of empty string
 SOURCE_DATASET_NAME=${6:-''} # Default value of empty string
-SOURCE_PLANS_IDENTIFIER=${7:-'plans'} # Default value of empty string
+SOURCE_PLANS_IDENTIFIER=${7:-'plans'} # Default value of plans string
 
 # Setup before running training
 source ${VENV_PATH}bin/activate

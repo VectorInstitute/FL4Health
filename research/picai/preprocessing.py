@@ -34,7 +34,7 @@ class PreprocessingSettings:
             physical_size (Optional[Iterable[float]]): Sequence of floats representing actual size in mm
                 along each dimension. If None and size and spacing are not None, physical_size will be inferred.
             spacing (Optional[Sequence[float]]): Spacing between voxels along each dimensions.
-                If None, preprocessed scans and annotations retain their orginal spacing.
+                If None, preprocessed scans and annotations retain their original spacing.
         """
 
         self.scans_write_dir = scans_write_dir
