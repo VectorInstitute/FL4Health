@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import flwr as fl
 import torch
@@ -21,7 +21,7 @@ class CifarClient(BasicClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
-    
+
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
