@@ -1,15 +1,14 @@
 #!/bin/bash
-
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
-#SBATCH --error=%j_%x.err
-#SBATCH --qos normal
-#SBATCH --gres=gpu:1
+#
+#SBATCH --gres=gpu:rtx6000:1
+#SBATCH --qos=normal
 #SBATCH --mem=64GB
+#SBATCH -c 16
+#SBATCH --time=2:00:00
+#SBATCH --signal=B:USR1@60
 #SBATCH --job-name=central_picai
-#SBATCH --output=%j_%x.out
+#SBATCH --output=central_picai_%j_%x.out
+#SBATCH --error=central_picai_%j_%x.err
 
 ###############################################
 # Usage:
@@ -55,4 +54,25 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID} --run_name ${RUN_NAME} > ${LOG_PATH} 2>&1
+# Function that is called to requeue current slurm job
+handler()
+{
+	echo "Requeue $SLURM_JOB_ID at $(date)"
+	scontrol requeue $SLURM_JOB_ID
+}
+
+# Function that checks whether to start or resume training, gets train_args
+# and runs  training
+train()
+{
+	python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID} --run_name ${RUN_NAME} > ${LOG_PATH} 2>&1
+}
+
+# Trap is used to handle signals or errors that occur during execution
+# Here we pass the handler function to initiate a requeue when we get a
+# signal that the job will be killed due to time limit 60 seconds prior
+trap handler SIGUSR1
+
+# Script must be ran in the background (async) to be able to trap signal
+train &
+wait

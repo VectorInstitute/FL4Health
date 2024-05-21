@@ -28,7 +28,10 @@ class SingleNodeTrainer:
         run_name: str,
     ) -> None:
         self.device = device
+        # Create checkpoint directory is it does not already exist.
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
+        if not os.path.exists(checkpoint_dir):
+            os.mkdir(checkpoint_dir)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         per_round_checkpoint_name = "ckpt.pkl"
         self.per_epoch_checkpointer = CentralPerRoundCheckpointer(
