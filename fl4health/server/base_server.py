@@ -184,7 +184,6 @@ class FlServer(Server):
             val_results.append((client_proxy, non_test_eval_res))
             test_results.append((client_proxy, test_eval_res))
 
-        print("val_results, test_results:", val_results, test_results)
         return val_results, test_results
 
     def _evaluate_round(
@@ -245,7 +244,8 @@ class FlServer(Server):
         if test_metric_found:
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
-            val_metrics_aggregated["test - loss - aggregated"] = float(test_loss_aggregated)
+            if test_loss_aggregated is not None:
+                val_metrics_aggregated["test - loss - aggregated"] = test_loss_aggregated
         return val_loss_aggregated, val_metrics_aggregated, (results, failures)
 
     def evaluate_round(
