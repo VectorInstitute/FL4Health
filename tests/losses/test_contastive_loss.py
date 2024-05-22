@@ -7,7 +7,6 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def test_contrastive_loss() -> None:
-
     # Default temperature is 0.5
     contrastive_loss = ContrastiveLoss(DEVICE)
 

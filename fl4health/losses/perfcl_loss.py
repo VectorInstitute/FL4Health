@@ -13,7 +13,6 @@ class PerFclLoss(nn.Module):
         global_feature_loss_temperature: float = 0.5,
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
-
         super().__init__()
         self.global_feature_contrastive_loss = ContrastiveLoss(device, global_feature_loss_temperature)
         self.local_feature_contrastive_loss = ContrastiveLoss(device, local_feature_loss_temperature)

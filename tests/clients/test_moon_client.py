@@ -163,33 +163,12 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
-def test_contrastive_loss(get_client: MoonClient) -> None:  # noqa
-    torch.manual_seed(42)
-    moon_client = get_client
-
-    global_features = torch.tensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
-    local_features = torch.tensor([[[1.0, 2.0], [2.0, 1.0]], [[2.0, 1.0], [1.0, -1.0]]])
-    previous_local_features = torch.tensor([[[1.0, 2.0], [2.0, 1.0]], [[1.0, 1.0], [1.0, 1.0]]])
-
-    # Default temperature is 0.5
-    contrastive_loss = moon_client.get_contrastive_loss(
-        features=local_features.reshape(len(local_features), -1),
-        global_features=global_features.reshape(len(global_features), -1),
-        old_features=previous_local_features.reshape(1, len(previous_local_features), -1),
-    )
-
-    assert pytest.approx(0.837868, abs=0.0001) == contrastive_loss
-
-    torch.seed()  # resetting the seed at the end, just to be safe
-
-
-@pytest.mark.parametrize("type,model", [(MoonClient, MoonModel(FeatureCnn(), HeadCnn()))])
 def test_computing_loss(get_client: MoonClient) -> None:  # noqa
     torch.manual_seed(42)
     moon_client = get_client
     # Dummy to ensure the compute loss function in the moon client is executed
     moon_client.old_models_list = [moon_client.model]
-    moon_client.contrastive_weight = 1.0
+    moon_client.contrastive_weight = 2.0
     moon_client.criterion = torch.nn.CrossEntropyLoss()
 
     global_features = torch.tensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
@@ -204,7 +183,7 @@ def test_computing_loss(get_client: MoonClient) -> None:  # noqa
         "old_features": previous_local_features.reshape(1, len(previous_local_features), -1),
     }
     expected_loss = 0.8132616
-    expected_total_loss = 0.837868 + 0.8132616
+    expected_total_loss = 2 * 0.837868 + 0.8132616
     expected_contrastive_loss = 0.837868
 
     total_loss, additional_losses = moon_client.compute_loss_and_additional_losses(preds, features, target)
@@ -214,7 +193,11 @@ def test_computing_loss(get_client: MoonClient) -> None:  # noqa
     assert pytest.approx(expected_loss, abs=0.0001) == additional_losses["loss"].item()
     assert pytest.approx(expected_total_loss, abs=0.0001) == additional_losses["total_loss"].item()
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(expected_loss, abs=0.0001) == evaluation_loss.checkpoint.item()
@@ -230,7 +213,7 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     moon_client = get_client
     # Dummy to ensure the compute loss with a blank model list is computed correctly
     moon_client.old_models_list = []
-    moon_client.contrastive_weight = 1.0
+    moon_client.contrastive_weight = 2.0
     moon_client.criterion = torch.nn.CrossEntropyLoss()
 
     global_features = torch.tensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
@@ -246,7 +229,11 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     }
     expected_loss = 0.8132616
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
 
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
@@ -258,7 +245,7 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     # Now lets set a local_model list entry and make sure everything comes out right.
     # Dummy to ensure the compute loss function in the moon client is executed
     moon_client.old_models_list = [moon_client.model]
-    expected_total_loss = 0.837868 + 0.8132616
+    expected_total_loss = 2 * 0.837868 + 0.8132616
     expected_contrastive_loss = 0.837868
 
     total_loss, additional_losses = moon_client.compute_loss_and_additional_losses(preds, features, target)
@@ -268,7 +255,11 @@ def test_computing_first_loss(get_client: MoonClient) -> None:  # noqa
     assert pytest.approx(expected_loss, abs=0.0001) == additional_losses["loss"].item()
     assert pytest.approx(expected_total_loss, abs=0.0001) == additional_losses["total_loss"].item()
 
+    # Make sure the model is set to train
+    moon_client.model.train()
     training_loss = moon_client.compute_training_loss(preds=preds, target=target, features=features)
+    # Make sure the model is set to eval
+    moon_client.model.eval()
     evaluation_loss = moon_client.compute_evaluation_loss(preds=preds, target=target, features=features)
     assert isinstance(training_loss.backward["backward"], torch.Tensor)
     assert pytest.approx(expected_loss, abs=0.0001) == evaluation_loss.checkpoint.item()
