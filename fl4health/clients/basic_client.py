@@ -743,7 +743,8 @@ class BasicClient(NumPyClient):
         # and as such, we will make that assumption.
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
-        self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
+        if self.test_loader:
+            self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
 
