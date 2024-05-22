@@ -126,7 +126,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     }
 
 
-@patch("fl4health.server.base_server.Server.evaluate_round")
+@patch("fl4health.server.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     test_round = 2

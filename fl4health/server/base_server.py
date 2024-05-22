@@ -1,15 +1,16 @@
 import datetime
-from logging import INFO, WARNING
+from logging import DEBUG, INFO, WARNING
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 import torch.nn as nn
-from flwr.common import Parameters
+from flwr.common import Parameters, EvaluateRes
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
+from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
-from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server
+from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
@@ -162,6 +163,90 @@ class FlServer(Server):
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
 
         return sample_counts
+    
+    def _split_metrics(self, results: List[Tuple[ClientProxy, EvaluateRes]]) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+        val_results = []
+        test_results = []
+        
+        for client_proxy, eval_res in results:
+            val_metrics = {k: v for k, v in eval_res.metrics.items() if not k.startswith("test - ")}
+            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith("test - ")}
+
+            # Remove loss and num_examples from test_metrics if they exist
+            test_loss = test_metrics.pop("test - loss")
+            test_num_examples = test_metrics.pop("test - num_examples")
+
+            non_test_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
+            test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
+
+            val_results.append((client_proxy, non_test_eval_res))
+            test_results.append((client_proxy, test_eval_res))
+
+        print("val_results, test_results:", val_results, test_results)
+        return val_results, test_results
+    
+    def _evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[
+        Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]
+    ]:
+        """Validate current global model on a number of clients."""
+        # Get clients and their respective instructions from strategy
+        client_instructions = self.strategy.configure_evaluate(
+            server_round=server_round,
+            parameters=self.parameters,
+            client_manager=self._client_manager,
+        )
+        if not client_instructions:
+            log(INFO, "evaluate_round %s: no clients selected, cancel", server_round)
+            return None
+        log(
+            DEBUG,
+            "evaluate_round %s: strategy sampled %s clients (out of %s)",
+            server_round,
+            len(client_instructions),
+            self._client_manager.num_available(),
+        )
+        # Collect `evaluate` results from all clients participating in this round
+        results, failures = evaluate_clients(
+            client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
+        )
+        log(
+            DEBUG,
+            "evaluate_round %s received %s results and %s failures for Validation",
+            server_round,
+            len(results),
+            len(failures),
+        )
+        test_metric_found = any(
+            any(k.startswith("test - ") for k in eval_res.metrics.keys())
+            for _, eval_res in results)
+        val_results = results
+        if test_metric_found:
+            val_results, test_results = self._split_metrics(results)
+            # Aggregate the evaluation results
+            test_aggregated_result: Tuple[
+                Optional[float],
+                Dict[str, Scalar],
+            ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
+            test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
+
+        # Aggregate the evaluation results
+        val_aggregated_result: Tuple[
+            Optional[float],
+            Dict[str, Scalar],
+        ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
+
+        val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
+        if test_metric_found:
+            for key, value in test_metrics_aggregated.items():
+                val_metrics_aggregated[key] = value
+            val_metrics_aggregated['test - loss - aggregated'] = test_loss_aggregated
+        return val_loss_aggregated, val_metrics_aggregated, (results, failures)
 
     def evaluate_round(
         self,
@@ -173,7 +258,7 @@ class FlServer(Server):
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
-        eval_round_results = super().evaluate_round(server_round, timeout)
+        eval_round_results = self._evaluate_round(server_round, timeout)
         if eval_round_results:
             loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
