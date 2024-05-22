@@ -175,8 +175,8 @@ class FlServer(Server):
             test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith("test - ")}
 
             # Remove loss and num_examples from test_metrics if they exist
-            test_loss = test_metrics.pop("test - loss")
-            test_num_examples = test_metrics.pop("test - num_examples")
+            test_loss = float(test_metrics.pop("test - loss"))
+            test_num_examples = int(test_metrics.pop("test - num_examples"))
 
             non_test_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
             test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
@@ -245,7 +245,7 @@ class FlServer(Server):
         if test_metric_found:
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
-            val_metrics_aggregated["test - loss - aggregated"] = test_loss_aggregated
+            val_metrics_aggregated["test - loss - aggregated"] = float(test_loss_aggregated)
         return val_loss_aggregated, val_metrics_aggregated, (results, failures)
 
     def evaluate_round(

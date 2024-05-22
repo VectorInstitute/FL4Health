@@ -700,7 +700,7 @@ class BasicClient(NumPyClient):
                 self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
             )
             # There will be no clashes due to the naming convention associated with the metric managers
-            val_metrics["test - num_examples"] = self.num_test_samples
+            val_metrics["test - num_examples"] = int(self.num_test_samples)
             val_metrics["test - loss"] = test_loss
             val_metrics.update(test_metrics)
 
