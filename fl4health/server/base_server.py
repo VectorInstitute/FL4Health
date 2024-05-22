@@ -3,7 +3,7 @@ from logging import DEBUG, INFO, WARNING
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar
 
 import torch.nn as nn
-from flwr.common import Parameters, EvaluateRes
+from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
@@ -163,11 +163,13 @@ class FlServer(Server):
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
 
         return sample_counts
-    
-    def _split_metrics(self, results: List[Tuple[ClientProxy, EvaluateRes]]) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+
+    def _split_metrics(
+        self, results: List[Tuple[ClientProxy, EvaluateRes]]
+    ) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
         val_results = []
         test_results = []
-        
+
         for client_proxy, eval_res in results:
             val_metrics = {k: v for k, v in eval_res.metrics.items() if not k.startswith("test - ")}
             test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith("test - ")}
@@ -184,14 +186,12 @@ class FlServer(Server):
 
         print("val_results, test_results:", val_results, test_results)
         return val_results, test_results
-    
+
     def _evaluate_round(
         self,
         server_round: int,
         timeout: Optional[float],
-    ) -> Optional[
-        Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]
-    ]:
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
         """Validate current global model on a number of clients."""
         # Get clients and their respective instructions from strategy
         client_instructions = self.strategy.configure_evaluate(
@@ -223,8 +223,8 @@ class FlServer(Server):
             len(failures),
         )
         test_metric_found = any(
-            any(k.startswith("test - ") for k in eval_res.metrics.keys())
-            for _, eval_res in results)
+            any(k.startswith("test - ") for k in eval_res.metrics.keys()) for _, eval_res in results
+        )
         val_results = results
         if test_metric_found:
             val_results, test_results = self._split_metrics(results)
@@ -245,7 +245,7 @@ class FlServer(Server):
         if test_metric_found:
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
-            val_metrics_aggregated['test - loss - aggregated'] = test_loss_aggregated
+            val_metrics_aggregated["test - loss - aggregated"] = test_loss_aggregated
         return val_loss_aggregated, val_metrics_aggregated, (results, failures)
 
     def evaluate_round(
