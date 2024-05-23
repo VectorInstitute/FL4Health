@@ -7,26 +7,32 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.constrained_fenda_client import ConstrainedFendaClient
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.fedper_client import FedPerClient
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.clients.fenda_const_client import FendaConstClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
+from fl4health.utils.fenda_loss_config import (
+    ConstrainedFendaLossConfig,
+    ContrastiveLossConfig,
+    CosSimLossConfig,
+    PerFclLossConfig,
+)
 from fl4health.utils.metrics import Accuracy
 
 
@@ -123,6 +129,28 @@ def get_fenda_client(
 
 
 @pytest.fixture
+def get_constrained_fenda_client(
+    local_module: nn.Module, global_module: nn.Module, head_module: ParallelSplitHeadModule
+) -> ConstrainedFendaClient:
+    device = torch.device("cpu")
+    perfcl_loss_config = PerFclLossConfig(device, 1.0, 1.0)
+    contrastive_loss_config = ContrastiveLossConfig(device, 1.0)
+    cos_sim_loss_config = CosSimLossConfig(device, 1.0)
+    fenda_loss_config = ConstrainedFendaLossConfig(perfcl_loss_config, cos_sim_loss_config, contrastive_loss_config)
+    client = ConstrainedFendaClient(
+        data_path=Path(""),
+        metrics=[Accuracy()],
+        device=device,
+        loss_configuration=fenda_loss_config,
+    )
+    fenda_model = FendaModelWithFeatureState(local_module, global_module, head_module, flatten_features=True)
+    client.model = fenda_model
+    client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
 def get_perfcl_client(
     local_module: nn.Module, global_module: nn.Module, head_module: ParallelSplitHeadModule
 ) -> PerFclClient:
@@ -136,24 +164,5 @@ def get_perfcl_client(
     perfcl_model = PerFclModel(local_module, global_module, head_module)
     client.model = perfcl_model
     client.parameter_exchanger = FixedLayerExchanger(perfcl_model.layers_to_exchange())
-    client.initialized = True
-    return client
-
-
-@pytest.fixture
-def get_fenda_const_client(
-    local_module: nn.Module, global_module: nn.Module, head_module: ParallelSplitHeadModule
-) -> FendaConstClient:
-    client = FendaConstClient(
-        data_path=Path(""),
-        metrics=[Accuracy()],
-        device=torch.device("cpu"),
-        perfcl_loss_weights=(1.0, 1.0),
-        cos_sim_loss_weight=0.0,
-        contrastive_loss_weight=0.0,
-    )
-    fenda_model = FendaModel(local_module, global_module, head_module)
-    client.model = fenda_model
-    client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())
     client.initialized = True
     return client

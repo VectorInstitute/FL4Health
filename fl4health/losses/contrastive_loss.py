@@ -35,7 +35,7 @@ class ContrastiveLoss(nn.Module):
         Args:
             features (torch.Tensor): Main features, shape (n_samples, n_features)
             positive_pairs (torch.Tensor): Positive pair of main features, shape (1, n_samples, n_features)
-            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs ,n_samples, n_features)
+            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, n_samples, n_features)
 
         Returns:
             torch.Tensor: Contrastive loss value

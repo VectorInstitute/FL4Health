@@ -101,7 +101,7 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_setting_aggregated_global_module(get_perfcl_client: PerFclClient) -> None:  # noqa
+def test_setting_initial_global_module(get_perfcl_client: PerFclClient) -> None:  # noqa
     torch.manual_seed(42)
     perfcl_client = get_perfcl_client
 
