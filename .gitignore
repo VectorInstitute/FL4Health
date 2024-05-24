@@ -146,6 +146,11 @@ settings.json
 **/datasets/mimic3d/mimic3d_hospital1.csv
 **/datasets/mimic3d/mimic3d_hospital2.csv
 **/datasets/agnews_data/**
+**/datasets/HAM10000**
+**/datasets/PAD-UFES-20**
+**/datasets/ISIC_2019**
+**/datasets/Derm7pt**
+**/datasets/release_v0**
 
 # logs
 
