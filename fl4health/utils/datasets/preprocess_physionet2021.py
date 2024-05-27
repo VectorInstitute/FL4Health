@@ -3,95 +3,88 @@ Data pre-processing: encode labels (age, diagnosis, patient id) and crop data.
 """
 
 import argparse
-import os
 import functools
-import math
-import linecache
 import glob
-import wfdb
-import numpy as np
-from scipy.interpolate import interp1d
-from pathlib import Path
-from typing import BinaryIO, Tuple, Union, List
-import scipy.io
-
+import linecache
+import math
+import os
 from multiprocessing import Pool
+from pathlib import Path
+from typing import BinaryIO, List, Tuple, Union
+
+import numpy as np
+import scipy.io
+import wfdb
+from scipy.interpolate import interp1d
+
 
 def get_physionet_weights(path_or_fp: Union[str, BinaryIO]) -> Tuple[List[set], np.ndarray]:
     def load_table():
         if isinstance(path_or_fp, str):
             ext = Path(path_or_fp).suffix
-            if ext != '.csv':
+            if ext != ".csv":
                 raise ValueError(f"Unsupported weights table format: {ext}")
 
         table = list()
-        with open(path_or_fp, 'r') as f:
+        with open(path_or_fp, "r") as f:
             for line in f:
-                arrs = [arr.strip() for arr in line.split(',')]
+                arrs = [arr.strip() for arr in line.split(",")]
                 table.append(arrs)
 
         rows = table[0][1:]
-        cols = [table[i+1][0] for i in range(len(rows))]
+        cols = [table[i + 1][0] for i in range(len(rows))]
 
-        assert (rows == cols)
+        assert rows == cols
 
-        values = np.stack(
-            [np.array(
-                [float(v) for v in row[1:]]
-            ) for row in table[1:]]
-        )
-        
+        values = np.stack([np.array([float(v) for v in row[1:]]) for row in table[1:]])
+
         return rows, cols, values
-    
+
     rows, cols, values = load_table()
 
-    rows = [set(row.split('|')) for row in rows]
-    cols = [set(col.split('|')) for col in cols]
-    assert (rows == cols)
+    rows = [set(row.split("|")) for row in rows]
+    cols = [set(col.split("|")) for col in cols]
+    assert rows == cols
 
     return rows, values
 
+
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("root", metavar="DIR",
-                       help="root directory containing mat files to pre-process")
-    parser.add_argument("--meta-dir",
-                       help="directory containing metadata for labeling (weights.csv)")
+    parser.add_argument("root", metavar="DIR", help="root directory containing mat files to pre-process")
+    parser.add_argument("--meta-dir", help="directory containing metadata for labeling (weights.csv)")
     parser.add_argument(
         "--subset",
         default="WFDB_CPSC2018, WFDB_CPSC2018_2, WFDB_Ga, WFDB_PTBXL, WFDB_ChapmanShaoxing, WFDB_Ningbo",
         type=str,
         help="comma separated list of sub-directories of data subsets to be preprocessed, "
-        "each of which is labeled seperately (e.g. WFDB_CPSC2018, WFDB_CPSC2018_2, ...)"
+        "each of which is labeled seperately (e.g. WFDB_CPSC2018, WFDB_CPSC2018_2, ...)",
     )
     parser.add_argument(
         "--leads",
         default="0,1,2,3,4,5,6,7,8,9,10,11",
         type=str,
         help="comma separated list of lead numbers. (e.g. 0,1 loads only lead I and lead II)"
-        "note that the order is following: [I, II, III, aVR, aVL, aVF, V1, V2, V3, V4, V5, V6]"
+        "note that the order is following: [I, II, III, aVR, aVL, aVF, V1, V2, V3, V4, V5, V6]",
     )
     parser.add_argument(
         "--sample-rate",
         default=500,
         type=int,
-        help="if set, data must be sampled by this sampling rate to be processed"
+        help="if set, data must be sampled by this sampling rate to be processed",
     )
     parser.add_argument(
         "--resample",
         default=False,
-        action='store_true',
-        help='if set, resample data to have a sample rate of --sample-rate'
+        action="store_true",
+        help="if set, resample data to have a sample rate of --sample-rate",
     )
-    parser.add_argument("--dest", type=str, metavar="DIR",
-                       help="output directory")
-    parser.add_argument("--ext", default="mat", type=str, metavar="EXT",
-                       help="extension to look for")
-    parser.add_argument("--sec", default=5, type=int,
-                       help="seconds to repeatedly crop to")
-    parser.add_argument("--workers", metavar="N", default=1, type=int,
-                       help="number of parallel workers")
+    parser.add_argument("--dest", type=str, metavar="DIR", help="output directory")
+    parser.add_argument("--ext", default="mat", type=str, metavar="EXT", help="extension to look for")
+    parser.add_argument("--sec", default=5, type=int, help="seconds to repeatedly crop to")
+    parser.add_argument("--workers", metavar="N", default=1, type=int, help="number of parallel workers")
     return parser
+
 
 def main(args):
     if not args.meta_dir:
@@ -109,12 +102,12 @@ def main(args):
             f"--meta-dir: {meta_path}"
         )
 
-    leads = args.leads.replace(' ','').split(',')
+    leads = args.leads.replace(" ", "").split(",")
     leads_to_load = [int(lead) for lead in leads]
-    subset = args.subset.replace(' ','').split(',')
+    subset = args.subset.replace(" ", "").split(",")
 
     pid_table = dict()
-    for i, fname in enumerate(glob.iglob(os.path.join(args.root, "**/*."+args.ext))):
+    for i, fname in enumerate(glob.iglob(os.path.join(args.root, "**/*." + args.ext))):
         pid_table[os.path.basename(fname)[:-4]] = i
 
     for s in subset:
@@ -127,59 +120,49 @@ def main(args):
         fnames = list(glob.iglob(search_path, recursive=True))
         chunk_size = math.ceil(len(fnames) / args.workers)
 
-        file_chunks = [fnames[i:i+chunk_size] for i in range(0, len(fnames), chunk_size)]
+        file_chunks = [fnames[i : i + chunk_size] for i in range(0, len(fnames), chunk_size)]
 
         func = functools.partial(
-            preprocess,
-            args,
-            pid_table,
-            classes,
-            os.path.join(args.dest, s.lstrip("WFDB_")),
-            leads_to_load
+            preprocess, args, pid_table, classes, os.path.join(args.dest, s.lstrip("WFDB_")), leads_to_load
         )
-        pool = Pool(processes = args.workers)
+        pool = Pool(processes=args.workers)
         pool.map(func, file_chunks)
         pool.close()
         pool.join()
 
+
 def preprocess(args, pid_table, classes, dest_path, leads_to_load, fnames):
     for fname in fnames:
-        fname = fname[:-(len(args.ext)+1)]
+        fname = fname[: -(len(args.ext) + 1)]
 
-        y = set(linecache.getline(fname + '.hea', 16).replace(',',' ').split()[1:])
+        y = set(linecache.getline(fname + ".hea", 16).replace(",", " ").split()[1:])
         label = np.zeros(len(classes), dtype=bool)
         for i, x in enumerate(classes):
             if x & y:
                 label[i] = 1
 
         try:
-            age = int(linecache.getline(fname + '.hea', 14).split()[1])
+            age = int(linecache.getline(fname + ".hea", 14).split()[1])
         except ValueError:
             age = 0
         except:
             print(fname)
-            raise ValueError('not supposed to be here.')
-        sex = 0 if linecache.getline(fname + '.hea', 15).split()[1] == "Male" else 1
+            raise ValueError("not supposed to be here.")
+        sex = 0 if linecache.getline(fname + ".hea", 15).split()[1] == "Male" else 1
 
-        sample_rate = int(linecache.getline(fname + '.hea', 1).split()[2])
+        sample_rate = int(linecache.getline(fname + ".hea", 1).split()[2])
 
-        if (
-            args.sample_rate
-            and sample_rate != args.sample_rate
-            and not args.resample
-        ):
+        if args.sample_rate and sample_rate != args.sample_rate and not args.resample:
             continue
 
-        try :
-            annot = wfdb.rdheader(
-                os.path.splitext(fname)[0]
-            ).__dict__
-        except :
+        try:
+            annot = wfdb.rdheader(os.path.splitext(fname)[0]).__dict__
+        except:
             print(fname)
             continue
 
-        sample = scipy.io.loadmat(fname)['val']
-        adc_gains = np.array(annot['adc_gain'])[:, None]
+        sample = scipy.io.loadmat(fname)["val"]
+        adc_gains = np.array(annot["adc_gain"])[:, None]
 
         if np.isnan(sample).any():
             print(f"detected nan value at: {fname}, so skipped")
@@ -189,14 +172,10 @@ def preprocess(args, pid_table, classes, dest_path, leads_to_load, fnames):
 
         length = sample.shape[-1]
 
-        if (
-            args.sample_rate
-            and sample_rate != args.sample_rate
-            and args.resample
-        ):
+        if args.sample_rate and sample_rate != args.sample_rate and args.resample:
             sample_size = length * (args.sample_rate / sample_rate)
             x = np.linspace(0, sample_size - 1, length)
-            f = interp1d(x, sample, kind='linear')
+            f = interp1d(x, sample, kind="linear")
             sample = f(list(range(int(sample_size))))
             sample_rate = args.sample_rate
             length = int(sample_size)
@@ -204,14 +183,15 @@ def preprocess(args, pid_table, classes, dest_path, leads_to_load, fnames):
         pid = pid_table[os.path.basename(fname)]
         for i, seg in enumerate(range(0, length, int(args.sec * sample_rate))):
             data = {}
-            data['age'] = age
-            data['sex'] = sex
-            data['label'] = label
-            data['patient_id'] = pid
-            data['curr_sample_rate'] = sample_rate
+            data["age"] = age
+            data["sex"] = sex
+            data["label"] = label
+            data["patient_id"] = pid
+            data["curr_sample_rate"] = sample_rate
             if seg + args.sec * sample_rate <= length:
-                data['feats'] = sample[leads_to_load, seg: int(seg + args.sec * sample_rate)]
+                data["feats"] = sample[leads_to_load, seg : int(seg + args.sec * sample_rate)]
                 scipy.io.savemat(os.path.join(dest_path, os.path.basename(fname) + f"_{i}.mat"), data)
+
 
 if __name__ == "__main__":
     parser = get_parser()

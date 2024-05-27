@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source "venv/bin/activate"                                          
+source "venv/bin/activate"
 
 n_clients_to_start=4
 config_path="examples/basic_example/config.yaml"
