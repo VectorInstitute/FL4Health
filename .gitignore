@@ -151,6 +151,8 @@ settings.json
 **/datasets/ISIC_2019**
 **/datasets/Derm7pt**
 **/datasets/release_v0**
+**/datasets/WFDB**
+**/datasets/ecg**
 
 # logs
 

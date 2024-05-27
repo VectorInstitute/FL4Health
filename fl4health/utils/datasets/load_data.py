@@ -134,3 +134,59 @@ def load_skin_cancer_test_data(
 # test_loader, test_num_examples = load_custom_test_data(
 #     dataset_name, batch_size, sampler=sampler
 # )
+
+# def get_split_loader(args, path, split=True) :
+#     split_dataset = FileECGDataset(
+#             manifest_path=path,
+#             sample_rate=500,
+#             max_sample_size=None,
+#             min_sample_size=None,
+#             pad=True,
+#             pad_leads=False,
+#             leads_to_load=None,
+#             label=True,
+#             normalize=False,
+#             num_buckets=0,
+#             compute_mask_indices=False,
+#             leads_bucket=None,
+#             bucket_selection="uniform",
+#             training=split, # True, False
+#             **{}
+#         )
+
+#     if split == True :
+#         sampler = RandomSampler(split_dataset)
+#     else :
+#         sampler = None
+
+#     data_size = len(split_dataset)
+
+#     data_loader = torch.utils.data.DataLoader(
+#             split_dataset,
+#             batch_size=args.batch_size,
+#             collate_fn = split_dataset.collator,
+#             sampler = sampler,
+#             num_workers = args.num_workers,
+#         )
+    
+#     return data_loader, data_size
+
+# def get_dataloader(args) :
+    
+#     train_loaders, valid_loaders, test_loaders = [], [], []
+#     client_weights = []
+
+#     for dataname in args.data_list :
+#         common_dir = f"{args.load_dir}/{dataname}/cinc"
+#         train_loader, train_size = get_split_loader( args, os.path.join( common_dir, "train.tsv" ) , split=True)
+#         valid_loader, valid_size = get_split_loader( args, os.path.join( common_dir, "valid.tsv" ) , split=False)
+#         test_loader, test_size = get_split_loader( args, os.path.join( common_dir, "test.tsv" ) , split=False)
+
+#         train_loaders.append( train_loader )
+#         valid_loaders.append( valid_loader )
+#         test_loaders.append( test_loader )
+#         client_weights.append( train_size )
+
+#     client_weighted = [ c_weight / sum(client_weights) for c_weight in client_weights ]
+
+#     return train_loaders, valid_loaders, test_loaders, client_weighted
