@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
+from typing import Optional, Tuple
 
 import flwr as fl
 import torch
@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.load_data import load_cifar10_data
+from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
 
 
@@ -21,6 +21,11 @@ class CifarClient(BasicClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
+
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
+        return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
