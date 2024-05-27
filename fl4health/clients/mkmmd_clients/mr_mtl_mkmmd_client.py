@@ -164,9 +164,9 @@ class MrMtlMkmmdClient(MrMtlClient):
                 # Pass the input through the init global model to populate the local_feature_extractor buffer
                 _ = init_global_model(input)
         local_distributions: Dict[str, torch.Tensor] = self.local_feature_extractor.get_extracted_features()
-        init_global_distributions: Dict[
-            str, torch.Tensor
-        ] = self.init_global_feature_extractor.get_extracted_features()
+        init_global_distributions: Dict[str, torch.Tensor] = (
+            self.init_global_feature_extractor.get_extracted_features()
+        )
         # Restore the initial state of the local model
         if init_state_local_model:
             local_model.train()
