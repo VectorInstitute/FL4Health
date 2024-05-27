@@ -72,7 +72,9 @@ class DittoMkmmdClient(DittoClient):
         self.deep_mmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.deep_mmd_losses[layer] = DeepMmdLoss(
-                device=self.device, input_size= self.size_feature_extraction_layers[layer] , layer_name=layer,
+                device=self.device,
+                input_size=self.size_feature_extraction_layers[layer],
+                layer_name=layer,
             ).to(self.device)
 
         self.init_global_model: nn.Module
@@ -100,7 +102,6 @@ class DittoMkmmdClient(DittoClient):
         )
         # Register hooks to extract features from the init global model if not already registered
         self.init_global_feature_extractor._maybe_register_hooks()
-
 
     def predict(
         self,
