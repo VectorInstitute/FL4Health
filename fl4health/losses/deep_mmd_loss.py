@@ -156,8 +156,8 @@ class DeepMmdLoss(torch.nn.Module):
         self.featurizer.train()
 
         # Adversarial ground truths
-        valid = torch.ones((X.shape[0], 1), device="cuda", requires_grad=False)
-        fake = torch.zeros((Y.shape[0], 1), device="cuda", requires_grad=False)
+        valid = torch.ones((X.shape[0], 1), device=self.device, requires_grad=False)
+        fake = torch.zeros((Y.shape[0], 1), device=self.device, requires_grad=False)
 
         X = torch.cat([X, Y], 0)
         Y = torch.cat([valid, fake], 0).squeeze().long()
