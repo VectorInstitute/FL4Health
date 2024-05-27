@@ -16,7 +16,7 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
-class DittoMkmmdClient(DittoClient):
+class DittoDeepMmdClient(DittoClient):
     def __init__(
         self,
         data_path: Path,
