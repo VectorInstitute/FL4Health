@@ -10,7 +10,7 @@ from flwr.common.typing import Config, Scalar
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
-from fl4health.losses.mkmmd_loss import MkMmdLoss
+from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -25,10 +25,9 @@ class DittoMkmmdClient(DittoClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
-        mkmmd_loss_weight: float = 10.0,
+        deep_mmd_loss_weight: float = 10.0,
         flatten_feature_extraction_layers: Dict[str, bool] = {},
-        feature_l2_norm_weight: float = 0.0,
-        beta_global_update_interval: int = 20,
+        size_feature_extraction_layers: Dict[str, int] = {},
     ) -> None:
         """
         This client implements the MK-MMD loss function in the Ditto framework. The MK-MMD loss is a measure of the
@@ -49,12 +48,8 @@ class DittoMkmmdClient(DittoClient):
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
             flatten_feature_extraction_layers (Dict[str, bool], optional): Dictionary of layers to extract features
-                from them and whether to flatten them. Defaults to {}.
-            feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
-                Defaults to 0.0.
-            beta_global_update_interval (int, optional): interval at which to update the betas for the
-                MK-MMD loss. Defaults to 20. If set to -1, the betas will be updated for each individual batch.
-                If set to 0, the betas will not be updated.
+                from them what is the flattened feature size. Defaults to {}. If it is -1 then the layer is not
+                flattened.
         """
         super().__init__(
             data_path=data_path,
@@ -64,29 +59,20 @@ class DittoMkmmdClient(DittoClient):
             checkpointer=checkpointer,
             lam=lam,
         )
-        self.mkmmd_loss_weight = mkmmd_loss_weight
-        if self.mkmmd_loss_weight == 0:
+        self.deep_mmd_loss_weight = deep_mmd_loss_weight
+        if self.deep_mmd_loss_weight == 0:
             log(
                 ERROR,
-                "MK-MMD loss weight is set to 0. As MK-MMD loss will not be computed, ",
+                "DEEP MMD loss weight is set to 0. As MK-MMD loss will not be computed, ",
                 "please use vanilla DittoClient instead.",
             )
 
-        self.feature_l2_norm_weight = feature_l2_norm_weight
-        self.beta_global_update_interval = beta_global_update_interval
-        if self.beta_global_update_interval == -1:
-            log(INFO, "Betas for the MK-MMD loss will be updated for each individual batch.")
-        elif self.beta_global_update_interval == 0:
-            log(INFO, "Betas for the MK-MMD loss will not be updated.")
-        elif self.beta_global_update_interval > 0:
-            log(INFO, f"Betas for the MK-MMD loss will be updated every {self.beta_global_update_interval} steps.")
-        else:
-            raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
-        self.mkmmd_losses = {}
+        self.size_feature_extraction_layers = size_feature_extraction_layers
+        self.deep_mmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():
-            self.mkmmd_losses[layer] = MkMmdLoss(
-                device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
+            self.deep_mmd_losses[layer] = DeepMmdLoss(
+                device=self.device, input_size= self.size_feature_extraction_layers[layer] , layer_name=layer,
             ).to(self.device)
 
         self.init_global_model: nn.Module
@@ -115,75 +101,6 @@ class DittoMkmmdClient(DittoClient):
         # Register hooks to extract features from the init global model if not already registered
         self.init_global_feature_extractor._maybe_register_hooks()
 
-    def _should_optimize_betas(self, step: int) -> bool:
-        assert self.beta_global_update_interval is not None
-        step_at_interval = (step - 1) % self.beta_global_update_interval == 0
-        valid_components_present = self.init_global_model is not None
-        return step_at_interval and valid_components_present
-
-    def update_after_step(self, step: int) -> None:
-        if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
-            assert self.init_global_model is not None
-            # Get the feature distribution of the local and init global features with evaluation mode
-            local_distributions, init_global_distributions = self.update_buffers(self.model, self.init_global_model)
-            # Update betas for the MK-MMD loss based on gathered features during training
-            if self.mkmmd_loss_weight != 0:
-                for layer in self.flatten_feature_extraction_layers.keys():
-                    self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
-                        X=local_distributions[layer], Y=init_global_distributions[layer], lambda_m=1e-5
-                    )
-
-        return super().update_after_step(step)
-
-    def update_buffers(
-        self, local_model: torch.nn.Module, init_global_model: torch.nn.Module
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        """Update the feature buffer of the local and global features."""
-
-        self.local_feature_extractor.clear_buffers()
-        self.init_global_feature_extractor.clear_buffers()
-
-        self.local_feature_extractor.enable_accumulating_features()
-        self.init_global_feature_extractor.enable_accumulating_features()
-
-        # Save the initial state of the local model to restore it after the buffer is populated,
-        # however as init global model is already cloned and frozen, we don't need to save its state.
-        init_state_local_model = local_model.training
-
-        # Set local model to evaluation mode, as we don't want to create a computational graph
-        # for the local model when populating the local buffer with features to compute optimal
-        # betas for the MK-MMD loss
-        local_model.eval()
-
-        # Make sure the local model is in evaluation mode before populating the local buffer
-        assert not local_model.training
-
-        # Make sure the init global model is in evaluation mode before populating the global buffer
-        # as it is already cloned and frozen from the global model
-        assert not init_global_model.training
-
-        with torch.no_grad():
-            for i, (input, _) in enumerate(self.train_loader):
-                input = input.to(self.device)
-                # Pass the input through the local model to populate the local_feature_extractor buffer
-                _ = local_model(input)
-                # Pass the input through the init global model to populate the local_feature_extractor buffer
-                _ = init_global_model(input)
-        local_distributions: Dict[str, torch.Tensor] = self.local_feature_extractor.get_extracted_features()
-        init_global_distributions: Dict[
-            str, torch.Tensor
-        ] = self.init_global_feature_extractor.get_extracted_features()
-        # Restore the initial state of the local model
-        if init_state_local_model:
-            local_model.train()
-
-        self.local_feature_extractor.disable_accumulating_features()
-        self.init_global_feature_extractor.disable_accumulating_features()
-
-        self.local_feature_extractor.clear_buffers()
-        self.init_global_feature_extractor.clear_buffers()
-
-        return local_distributions, init_global_distributions
 
     def predict(
         self,
@@ -209,7 +126,7 @@ class DittoMkmmdClient(DittoClient):
         global_preds = self.global_model(input)
         local_preds = self.model(input)
         features = self.local_feature_extractor.get_extracted_features()
-        if self.mkmmd_loss_weight != 0:
+        if self.deep_mmd_loss_weight != 0:
             # Compute the features of the init_global_model
             _ = self.init_global_model(input)
             init_global_features = self.init_global_feature_extractor.get_extracted_features()
@@ -246,29 +163,17 @@ class DittoMkmmdClient(DittoClient):
         """
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
-        if self.mkmmd_loss_weight != 0:
-            if self.beta_global_update_interval == -1:
-                # Update betas for the MK-MMD loss based on computed features during training
-                for layer in self.flatten_feature_extraction_layers.keys():
-                    self.mkmmd_losses[layer].betas = self.mkmmd_losses[layer].optimize_betas(
-                        X=features[layer], Y=features[" ".join(["init_global", layer])], lambda_m=1e-5
-                    )
-            # Compute MK-MMD loss
-            total_mkmmd_loss = torch.tensor(0.0, device=self.device)
+        if self.deep_mmd_loss_weight != 0:
+            # Compute DEEP-MMD loss
+            total_deep_mmd_loss = torch.tensor(0.0, device=self.device)
             for layer in self.flatten_feature_extraction_layers.keys():
-                layer_mkmmd_loss = self.mkmmd_losses[layer](
+                layer_deep_mmd_loss = self.deep_mmd_losses[layer](
                     features[layer], features[" ".join(["init_global", layer])]
                 )
-                additional_losses["_".join(["mkmmd_loss", layer])] = layer_mkmmd_loss
-                total_mkmmd_loss += layer_mkmmd_loss
-            total_loss += self.mkmmd_loss_weight * total_mkmmd_loss
-            additional_losses["mkmmd_loss_total"] = total_mkmmd_loss
-        if self.feature_l2_norm_weight:
-            # Compute the average L2 norm of the features over the batch
-            feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
-            total_loss += self.feature_l2_norm_weight * feature_l2_norm_loss
-            additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
-
+                additional_losses["_".join(["mkmmd_loss", layer])] = layer_deep_mmd_loss
+                total_deep_mmd_loss += layer_deep_mmd_loss
+            total_loss += self.deep_mmd_loss_weight * total_deep_mmd_loss
+            additional_losses["deep_mmd_loss_total"] = total_deep_mmd_loss
         additional_losses["total_loss"] = total_loss
 
         return total_loss, additional_losses
