@@ -38,14 +38,14 @@ class DeepMmdLoss(torch.nn.Module):
         layer_name: Optional[str] = None,
         is_training: bool = True,
     ) -> None:
+        super().__init__()
         self.device = device
         self.lr = lr
         self.layer_name = layer_name
         self.is_training = is_training
 
         # Initialize the model
-        self.featurizer = ModelLatentF(input_size, hidden_size, output_size)
-        self.featurizer.to(self.device)
+        self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
 
         # Initialize parameters
         self.epsilonOPT: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
