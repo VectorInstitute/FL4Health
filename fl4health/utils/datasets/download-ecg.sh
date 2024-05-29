@@ -110,3 +110,36 @@ python fl4health/utils/datasets/manifest.py \
     --combine_subsets "PTBXL" \
     --dest "${data_path}/ecg_manifest/PTBXL" \
     --valid-percent 0.1
+
+# Define the target directory
+REPO_URL="https://github.com/wns823/medical_federated"
+REPO_BRANCH="main"
+TARGET_DIR="fl4health/utils/datasets/fairseq_signals"
+EXTRACT_PATH="medical_federated-main/ecg_federated/fairseq_signals"
+
+# Check if the target directory exists
+if [ -d "$TARGET_DIR" ]; then
+    echo "Target directory $TARGET_DIR already exists. Doing nothing."
+    return 0 2>/dev/null || exit 0
+fi
+
+# Create the target directory
+mkdir -p "$TARGET_DIR"
+
+# Download the tarball of the repository
+echo "Downloading the repository tarball..."
+curl -L "$REPO_URL/archive/$REPO_BRANCH.tar.gz" -o repo.tar.gz
+
+# Extract the specific contents from the tarball
+echo "Extracting the specific contents from the tarball..."
+mkdir temp_extract
+tar -xzf repo.tar.gz -C temp_extract
+
+# Move the specific directory to the target directory
+mv temp_extract/$EXTRACT_PATH/* "$TARGET_DIR/"
+
+# Clean up
+echo "Cleaning up..."
+rm -rf repo.tar.gz temp_extract
+
+echo "Done. The contents have been extracted to $TARGET_DIR."

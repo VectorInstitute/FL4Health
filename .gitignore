@@ -153,6 +153,7 @@ settings.json
 **/datasets/release_v0**
 **/datasets/WFDB**
 **/datasets/ecg**
+**/datasets/fairseq_signals**
 
 # logs
 
