@@ -1,5 +1,6 @@
 import argparse
 import os
+from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
@@ -21,13 +22,12 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
-from collections import OrderedDict
 
-
-FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] =  OrderedDict()
+FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 for i in range(16):
     FED_ISIC2019_BASELINE_LAYERS[f"base_model._blocks.{i}"] = 64
 FED_ISIC2019_BASELINE_LAYERS["base_model._dropout"] = 128
+
 
 class FedIsic2019DittoClient(DittoDeepMmdClient):
     def __init__(
@@ -43,7 +43,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         deep_mmd_loss_depth: int = 1,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
-        size_feature_extraction_layers=OrderedDict(
+        size_feature_extraction_layers = OrderedDict(
             list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
         )
         super().__init__(
@@ -54,9 +54,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             checkpointer=checkpointer,
             lam=lam,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
-            flatten_feature_extraction_layers={
-                key: True for key in size_feature_extraction_layers
-            },
+            flatten_feature_extraction_layers={key: True for key in size_feature_extraction_layers},
             size_feature_extraction_layers=size_feature_extraction_layers,
         )
         self.client_number = client_number
