@@ -36,24 +36,24 @@ class DeepMmdLoss(torch.nn.Module):
         hidden_size: int = 10,
         output_size: int = 50,
         layer_name: Optional[str] = None,
-        is_training: bool = True,
+        training: bool = True,
     ) -> None:
         super().__init__()
         self.device = device
         self.lr = lr
         self.layer_name = layer_name
-        self.is_training = is_training
+        self.training = training
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
 
         # Initialize parameters
         self.epsilonOPT: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
-        self.epsilonOPT.requires_grad = self.is_training
+        self.epsilonOPT.requires_grad = self.training
         self.sigmaOPT: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
-        self.sigmaOPT.requires_grad = self.is_training
+        self.sigmaOPT.requires_grad = self.training
         self.sigma0OPT: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
-        self.sigma0OPT.requires_grad = self.is_training
+        self.sigma0OPT.requires_grad = self.training
 
         # Initialize optimizers
         self.optimizer_F = torch.optim.Adam(
@@ -106,7 +106,6 @@ class DeepMmdLoss(torch.nn.Module):
         V1 = torch.dot(hh.sum(1) / ny, hh.sum(1) / ny) / ny
         V2 = (hh).sum() / (nx) / nx
         varEst = 4 * (V1 - V2**2)
-        #         assert varEst != 0.0
         return mmd2, varEst, Kxyxy
 
     def MMDu(
@@ -154,6 +153,10 @@ class DeepMmdLoss(torch.nn.Module):
         """Train the kernel."""
 
         self.featurizer.train()
+        self.sigmaOPT.requires_grad = True
+        self.sigma0OPT.requires_grad = True
+        self.epsilonOPT.requires_grad = True
+
         features = torch.cat([X, Y], 0)
 
         # ------------------------------
@@ -162,18 +165,24 @@ class DeepMmdLoss(torch.nn.Module):
         # Initialize optimizer
         self.optimizer_F.zero_grad()
         # Compute output of deep network
-        modelu_output = self.featurizer(features)
+        model_output = self.featurizer(features)
         # Compute epsilon, sigma and sigma_0
         ep = torch.exp(self.epsilonOPT) / (1 + torch.exp(self.epsilonOPT))
         sigma = self.sigmaOPT**2
         sigma0_u = self.sigma0OPT**2
         # Compute Compute J (STAT_u)
-        TEMP = self.MMDu(modelu_output, X.shape[0], features.view(features.shape[0], -1), sigma, sigma0_u, ep)
-        mmd_value_temp = -1 * (TEMP[0])
-        if TEMP[1] is None:
+        mmd_value_temp, mmd_var_temp, _ = self.MMDu(
+            Fea=model_output,
+            len_s=X.shape[0],
+            Fea_org=features.view(features.shape[0], -1),
+            sigma=sigma,
+            sigma0=sigma0_u,
+            epsilon=ep,
+        )
+        if mmd_var_temp is None:
             raise AssertionError("Error: Variance of MMD is not computed. Please set is_var_computed=True.")
-        mmd_std_temp = torch.sqrt(TEMP[1] + 10 ** (-8))
-        STAT_u = torch.div(mmd_value_temp, mmd_std_temp)
+        mmd_std_temp = torch.sqrt(mmd_var_temp + 10 ** (-8))
+        STAT_u = torch.div(-1 * mmd_value_temp, mmd_std_temp)
         # Compute gradient
         STAT_u.backward()
         # Update weights using gradient descent
@@ -184,23 +193,32 @@ class DeepMmdLoss(torch.nn.Module):
         """Train the kernel."""
 
         self.featurizer.eval()
+        self.sigmaOPT.requires_grad = False
+        self.sigma0OPT.requires_grad = False
+        self.epsilonOPT.requires_grad = False
 
         features = torch.cat([X, Y], 0)
 
         # Compute output of deep network
-        modelu_output = self.featurizer(features)
+        model_output = self.featurizer(features)
         # Compute epsilon, sigma and sigma_0
         ep = torch.exp(self.epsilonOPT) / (1 + torch.exp(self.epsilonOPT))
         sigma = self.sigmaOPT**2
         sigma0_u = self.sigma0OPT**2
         # Compute Compute J (STAT_u)
-        TEMP = self.MMDu(modelu_output, X.shape[0], features.view(features.shape[0], -1), sigma, sigma0_u, ep)
-        mmd_value_temp = TEMP[0]
+        mmd_value_temp, _, _ = self.MMDu(
+            Fea=model_output,
+            len_s=X.shape[0],
+            Fea_org=features.view(features.shape[0], -1),
+            sigma=sigma,
+            sigma0=sigma0_u,
+            epsilon=ep,
+        )
 
         return mmd_value_temp
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
-        if self.is_training:
+        if self.training:
             self.train_kernel(Xs.clone().detach(), Xt.clone().detach())
 
         return self.compute_kernel(Xs, Xt)

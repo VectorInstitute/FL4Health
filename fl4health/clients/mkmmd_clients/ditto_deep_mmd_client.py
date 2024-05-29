@@ -149,6 +149,7 @@ class DittoDeepMmdClient(DittoClient):
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
+        We also need to set the training flag of the deep_mmd_losses to False to ensure that the model is in eval mode.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
@@ -161,7 +162,7 @@ class DittoDeepMmdClient(DittoClient):
                 indexed by name.
         """
         for layer in self.flatten_feature_extraction_layers.keys():
-            self.deep_mmd_losses[layer].is_training = False
+            self.deep_mmd_losses[layer].training = False
         return super().compute_evaluation_loss(preds, features, target)
 
     def compute_loss_and_additional_losses(
