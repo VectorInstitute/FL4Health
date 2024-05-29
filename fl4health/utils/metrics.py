@@ -7,6 +7,10 @@ import torch
 from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
+from enum import Enum
+
+class TestMetricPrefix(Enum):
+    TEST_PREFIX = "test - "
 
 
 class Metric(ABC):

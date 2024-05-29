@@ -22,7 +22,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.metrics import Metric, MetricManager, TestMetricPrefix
 
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
@@ -99,7 +99,7 @@ class BasicClient(NumPyClient):
         self.test_loader: Optional[DataLoader]
         self.num_train_samples: int
         self.num_val_samples: int
-        self.num_test_samples: Optional[int]
+        self.num_test_samples: Optional[int] = None
         self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
@@ -701,8 +701,8 @@ class BasicClient(NumPyClient):
             )
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
-                val_metrics["test - num_examples"] = int(self.num_test_samples)
-            val_metrics["test - loss"] = test_loss
+                val_metrics[TestMetricPrefix.TEST_PREFIX + "num_examples"] = self.num_test_samples
+            val_metrics[TestMetricPrefix.TEST_PREFIX + "loss"] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics

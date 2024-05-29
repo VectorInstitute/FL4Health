@@ -1,6 +1,6 @@
 import datetime
 from logging import DEBUG, INFO, WARNING
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
@@ -17,6 +17,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.metrics import TestMetricPrefix
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
@@ -164,27 +165,61 @@ class FlServer(Server):
 
         return sample_counts
 
-    def _split_metrics(
+    def _unpack_metrics(
         self, results: List[Tuple[ClientProxy, EvaluateRes]]
     ) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
         val_results = []
         test_results = []
 
         for client_proxy, eval_res in results:
-            val_metrics = {k: v for k, v in eval_res.metrics.items() if not k.startswith("test - ")}
-            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith("test - ")}
+            val_metrics = {k: v for k, v in eval_res.metrics.items() if not k.startswith(TestMetricPrefix.TEST_PREFIX)}
+            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith(TestMetricPrefix.TEST_PREFIX)}
 
-            # Remove loss and num_examples from test_metrics if they exist
-            test_loss = float(test_metrics.pop("test - loss"))
-            test_num_examples = int(test_metrics.pop("test - num_examples"))
+            if len(test_metrics) > 0:
+                assert TestMetricPrefix.TEST_PREFIX + "loss" in test_metrics and TestMetricPrefix.TEST_PREFIX + "num_examples" in test_metrics, (
+                    TestMetricPrefix.TEST_PREFIX + "loss and " + TestMetricPrefix.TEST_PREFIX + "num_examples keys must be present "
+                    "in test_metrics dictionary for aggregation"
+                )
+                # Remove loss and num_examples from test_metrics if they exist
+                test_loss = float(test_metrics.pop(TestMetricPrefix.TEST_PREFIX + "loss"))
+                test_num_examples = int(test_metrics.pop(TestMetricPrefix.TEST_PREFIX + "num_examples"))
+                test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
+                test_results.append((client_proxy, test_eval_res))
 
-            non_test_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
-            test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
-
-            val_results.append((client_proxy, non_test_eval_res))
-            test_results.append((client_proxy, test_eval_res))
+            val_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
+            val_results.append((client_proxy, val_eval_res))
 
         return val_results, test_results
+
+    def _handle_result_aggregation(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, EvaluateRes]],
+        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
+    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        val_results, test_results = self._unpack_metrics(results)
+
+        # Aggregate the validation results
+        val_aggregated_result: Tuple[
+            Optional[float],
+            Dict[str, Scalar],
+        ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
+        val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
+
+        # Aggregate the test results if they are present
+        if len(test_results) > 0:
+            test_aggregated_result: Tuple[
+                Optional[float],
+                Dict[str, Scalar],
+            ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
+            test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
+
+            for key, value in test_metrics_aggregated.items():
+                val_metrics_aggregated[key] = value
+            if test_loss_aggregated is not None:
+                val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX + "loss - aggregated"] = test_loss_aggregated
+
+        return val_loss_aggregated, val_metrics_aggregated
 
     def _evaluate_round(
         self,
@@ -221,31 +256,9 @@ class FlServer(Server):
             len(results),
             len(failures),
         )
-        test_metric_found = any(
-            any(k.startswith("test - ") for k in eval_res.metrics.keys()) for _, eval_res in results
-        )
-        val_results = results
-        if test_metric_found:
-            val_results, test_results = self._split_metrics(results)
-            # Aggregate the evaluation results
-            test_aggregated_result: Tuple[
-                Optional[float],
-                Dict[str, Scalar],
-            ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
-            test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
 
-        # Aggregate the evaluation results
-        val_aggregated_result: Tuple[
-            Optional[float],
-            Dict[str, Scalar],
-        ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
+        val_loss_aggregated, val_metrics_aggregated = self._handle_result_aggregation(server_round, results, failures)
 
-        val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
-        if test_metric_found:
-            for key, value in test_metrics_aggregated.items():
-                val_metrics_aggregated[key] = value
-            if test_loss_aggregated is not None:
-                val_metrics_aggregated["test - loss - aggregated"] = test_loss_aggregated
         return val_loss_aggregated, val_metrics_aggregated, (results, failures)
 
     def evaluate_round(

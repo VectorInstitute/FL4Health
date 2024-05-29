@@ -9,6 +9,7 @@ from flwr.common import Scalar
 from freezegun import freeze_time
 
 from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.utils.metrics import TestMetricPrefix
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
