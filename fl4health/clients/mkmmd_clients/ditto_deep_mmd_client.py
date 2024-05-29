@@ -12,7 +12,7 @@ from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
-from fl4health.utils.losses import LossMeterType
+from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 
 
@@ -140,6 +140,29 @@ class DittoDeepMmdClient(DittoClient):
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
+
+    def compute_evaluation_loss(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> EvaluationLosses:
+        """
+        Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
+
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+                in preds will be used to compute metrics.
+            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+
+        Returns:
+            EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
+                indexed by name.
+        """
+        for layer in self.flatten_feature_extraction_layers.keys():
+            self.deep_mmd_losses[layer].is_training = False
+        return super().compute_evaluation_loss(preds, features, target)
 
     def compute_loss_and_additional_losses(
         self,
