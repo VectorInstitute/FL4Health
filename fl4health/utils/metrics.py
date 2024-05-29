@@ -1,5 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
@@ -7,7 +8,7 @@ import torch
 from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
-from enum import Enum
+
 
 class TestMetricPrefix(Enum):
     TEST_PREFIX = "test - "

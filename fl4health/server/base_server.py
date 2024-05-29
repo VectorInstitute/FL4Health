@@ -17,9 +17,9 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.metrics import TestMetricPrefix
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+from fl4health.utils.metrics import TestMetricPrefix
 
 
 class FlServer(Server):
@@ -176,8 +176,14 @@ class FlServer(Server):
             test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith(TestMetricPrefix.TEST_PREFIX)}
 
             if len(test_metrics) > 0:
-                assert TestMetricPrefix.TEST_PREFIX + "loss" in test_metrics and TestMetricPrefix.TEST_PREFIX + "num_examples" in test_metrics, (
-                    TestMetricPrefix.TEST_PREFIX + "loss and " + TestMetricPrefix.TEST_PREFIX + "num_examples keys must be present "
+                assert (
+                    TestMetricPrefix.TEST_PREFIX + "loss" in test_metrics
+                    and TestMetricPrefix.TEST_PREFIX + "num_examples" in test_metrics
+                ), (
+                    TestMetricPrefix.TEST_PREFIX
+                    + "loss and "
+                    + TestMetricPrefix.TEST_PREFIX
+                    + "num_examples keys must be present "
                     "in test_metrics dictionary for aggregation"
                 )
                 # Remove loss and num_examples from test_metrics if they exist
