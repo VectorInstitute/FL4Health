@@ -173,26 +173,26 @@ class FlServer(Server):
 
         for client_proxy, eval_res in results:
             val_metrics = {
-                k: v for k, v in eval_res.metrics.items() if not k.startswith(str(TestMetricPrefix.TEST_PREFIX))
+                k: v for k, v in eval_res.metrics.items() if not k.startswith(TestMetricPrefix.TEST_PREFIX.value)
             }
             test_metrics = {
-                k: v for k, v in eval_res.metrics.items() if k.startswith(str(TestMetricPrefix.TEST_PREFIX))
+                k: v for k, v in eval_res.metrics.items() if k.startswith(TestMetricPrefix.TEST_PREFIX.value)
             }
 
             if len(test_metrics) > 0:
                 assert (
-                    str(TestMetricPrefix.TEST_PREFIX) + "loss" in test_metrics
-                    and str(TestMetricPrefix.TEST_PREFIX) + "num_examples" in test_metrics
+                    TestMetricPrefix.TEST_PREFIX.value + "loss" in test_metrics
+                    and TestMetricPrefix.TEST_PREFIX.value + "num_examples" in test_metrics
                 ), (
-                    str(TestMetricPrefix.TEST_PREFIX)
+                    TestMetricPrefix.TEST_PREFIX.value
                     + "loss and "
-                    + str(TestMetricPrefix.TEST_PREFIX)
+                    + TestMetricPrefix.TEST_PREFIX.value
                     + "num_examples keys must be present "
                     "in test_metrics dictionary for aggregation"
                 )
                 # Remove loss and num_examples from test_metrics if they exist
-                test_loss = float(test_metrics.pop(str(TestMetricPrefix.TEST_PREFIX) + "loss"))
-                test_num_examples = int(test_metrics.pop(str(TestMetricPrefix.TEST_PREFIX) + "num_examples"))
+                test_loss = float(test_metrics.pop(TestMetricPrefix.TEST_PREFIX.value + "loss"))
+                test_num_examples = int(test_metrics.pop(TestMetricPrefix.TEST_PREFIX.value + "num_examples"))
                 test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
                 test_results.append((client_proxy, test_eval_res))
 
@@ -227,7 +227,7 @@ class FlServer(Server):
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
             if test_loss_aggregated is not None:
-                val_metrics_aggregated[str(TestMetricPrefix.TEST_PREFIX) + "loss - aggregated"] = test_loss_aggregated
+                val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated"] = test_loss_aggregated
 
         return val_loss_aggregated, val_metrics_aggregated
 
