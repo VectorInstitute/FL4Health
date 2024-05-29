@@ -172,8 +172,12 @@ class FlServer(Server):
         test_results = []
 
         for client_proxy, eval_res in results:
-            val_metrics = {k: v for k, v in eval_res.metrics.items() if not k.startswith(str(TestMetricPrefix.TEST_PREFIX))}
-            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith(str(TestMetricPrefix.TEST_PREFIX))}
+            val_metrics = {
+                k: v for k, v in eval_res.metrics.items() if not k.startswith(str(TestMetricPrefix.TEST_PREFIX))
+            }
+            test_metrics = {
+                k: v for k, v in eval_res.metrics.items() if k.startswith(str(TestMetricPrefix.TEST_PREFIX))
+            }
 
             if len(test_metrics) > 0:
                 assert (
