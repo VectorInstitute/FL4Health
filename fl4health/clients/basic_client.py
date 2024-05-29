@@ -701,8 +701,8 @@ class BasicClient(NumPyClient):
             )
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
-                val_metrics[TestMetricPrefix.TEST_PREFIX + "num_examples"] = self.num_test_samples
-            val_metrics[TestMetricPrefix.TEST_PREFIX + "loss"] = test_loss
+                val_metrics[str(TestMetricPrefix.TEST_PREFIX) + "num_examples"] = self.num_test_samples
+            val_metrics[str(TestMetricPrefix.TEST_PREFIX) + "loss"] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics
