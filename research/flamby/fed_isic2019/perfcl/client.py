@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.fenda_client import FendaClient
+from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -24,7 +24,7 @@ from research.flamby.fed_isic2019.perfcl.perfcl_model import FedIsic2019PerFclMo
 from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
 
 
-class FedIsic2019PerFclClient(FendaClient):
+class FedIsic2019PerFclClient(PerFclClient):
     def __init__(
         self,
         data_path: Path,
@@ -34,7 +34,8 @@ class FedIsic2019PerFclClient(FendaClient):
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        extra_loss_weights: Tuple[float, float] = (10, 10),
+        mu: float = 10.0,
+        gamma: float = 10.0,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -42,11 +43,11 @@ class FedIsic2019PerFclClient(FendaClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            global_feature_contrastive_loss_weight=mu,
+            local_feature_contrastive_loss_weight=gamma,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-
-        self.perfcl_loss_weights = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -125,14 +126,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weights for the PerFCL loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (global feature constraint)",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weights for the PerFCL loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (local feature constraint)",
         required=False,
     )
     args = parser.parse_args()
@@ -163,7 +164,8 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        extra_loss_weights=(args.mu, args.gamma),
+        mu=args.mu,
+        gamma=args.gamma,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

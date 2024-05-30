@@ -2,17 +2,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
-class FendaClassifier(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode, stack_output_dimension: int) -> None:
+class FendaClassifier(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode, stack_output_dimension: int) -> None:
         super().__init__(join_mode)
         # Two layer DNN as a classifier head
         self.fc1 = nn.Linear(stack_output_dimension * 2, 1)
         self.dropout = nn.Dropout(0.3)
 
-    def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         local_tensor = local_tensor.flatten(start_dim=1)
         global_tensor = global_tensor.flatten(start_dim=1)
         # Assuming tensors are "batch first" so join column-wise
@@ -55,5 +56,5 @@ class FedHeartDiseaseFendaModel(FendaModel):
     def __init__(self) -> None:
         local_module = LocalLogistic()
         global_module = GlobalLogistic()
-        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, 5)
+        model_head = FendaClassifier(ParallelFeatureJoinMode.CONCATENATE, 5)
         super().__init__(local_module, global_module, model_head)
