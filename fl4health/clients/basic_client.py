@@ -22,7 +22,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric, MetricManager, TEST_NUM_EXAMPLES_KEY, TEST_LOSS_KEY
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
