@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader, RandomSampler
 
 from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.dataset_converter import DatasetConverter
-from fl4health.utils.datasets.fairseq_signals.data import FileECGDataset
+from fl4health.datasets.fairseq_signals.data import FileECGDataset
 from fl4health.utils.sampler import LabelBasedSampler
 
 
