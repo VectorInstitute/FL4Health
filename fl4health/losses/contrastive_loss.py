@@ -12,7 +12,6 @@ class ContrastiveLoss(nn.Module):
         This contrastive loss is implemented based on https://github.com/QinbinLi/MOON.
         Contrastive loss aims to enhance the similarity between the features and their positive pairs
         while reducing the similarity between the features and their negative pairs.
-
         Args:
             device (torch.device): device to use for computation
             temperature (float): temperature to scale the logits

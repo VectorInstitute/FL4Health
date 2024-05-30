@@ -895,7 +895,6 @@ class BasicClient(NumPyClient):
 
         Args:
             model (nn.Module): Model to clone and freeze
-
         Returns:
             nn.Module: Cloned and frozen model
         """
