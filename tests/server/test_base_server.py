@@ -155,7 +155,7 @@ def test_unpack_metrics() -> None:
         },
     )
 
-    results = [(client_proxy, eval_res)]
+    results: List[Tuple[ClientProxy, EvaluateRes]]  = [(client_proxy, eval_res)]
 
     val_results, test_results = fl_server._unpack_metrics(results)
     print("val_results, test_results", val_results, test_results)
@@ -188,7 +188,7 @@ def test_handle_result_aggregation() -> None:
             TestMetricPrefix.TEST_PREFIX.value + "accuracy": 0.85,
         },
     )
-    results = [(client_proxy, eval_res)]
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
     failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
     server_round = 1
