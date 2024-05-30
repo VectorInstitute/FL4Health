@@ -2,10 +2,11 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union, Dict
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk
+
 from research.picai.preprocessing import (
     AlignOriginAndDirection,
     BinarizeAnnotation,
@@ -50,9 +51,7 @@ def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> 
 
 
 def filter_split_on_subject_id(
-    scan_annotation_label_list: Sequence[Tuple[List[str], str, float]],
-    split: Dict[str, Sequence[str]],
-    train: bool
+    scan_annotation_label_list: Sequence[Tuple[List[str], str, float]], split: Dict[str, Sequence[str]], train: bool
 ) -> Dict[str, Union[Sequence[float], Sequence[str]]]:
     """
     Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
@@ -77,8 +76,9 @@ def filter_split_on_subject_id(
         if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
     ]
     labeled_data = {}
-    labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = \
-        zip(*filtered_scan_annotation_label_list)
+    labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
+        *filtered_scan_annotation_label_list
+    )
     return labeled_data
 
 
@@ -111,9 +111,10 @@ def generate_dataset_json(
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        labeled_data : Dict[str, Union[str, int]] = {}
+        labeled_data: Dict[str, Union[str, int]] = {}
         labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
-            *scan_annotation_label_list)
+            *scan_annotation_label_list
+        )
         write_path = os.path.join(write_dir, "train-fold-all.json")
         with open(write_path, "w") as f:
             json.dump(labeled_data, f)
@@ -176,7 +177,7 @@ def preprare_data(
         annotation_extension (str): The expected extension of annotation file paths.
         num_threads (str): The number of threads to use during preprocessing.
         splits_path (Optional[Path]): The path to the file containing the splits.
-        """
+    """
     settings = PreprocessingSettings(
         scans_write_dir,
         annotation_write_dir,
@@ -242,7 +243,7 @@ def main() -> None:
         nargs="+",
         required=False,
         help="Spacing in mm/pixel to convert images and annotations to (Depth x Height x Width)."
-        "Default is to keep as is."
+        "Default is to keep as is.",
     )
     parser.add_argument(
         "--physical_size",
@@ -256,7 +257,11 @@ def main() -> None:
         "--scan_extension", type=str, required=False, default="mha", help="The expected extension of scan files."
     )
     parser.add_argument(
-        "--annotation_extension", type=str, required=False, default="nii.gz", help="The expected extension of annotation files."
+        "--annotation_extension",
+        type=str,
+        required=False,
+        default="nii.gz",
+        help="The expected extension of annotation files.",
     )
     parser.add_argument("--num_threads", type=int, default=4, help="Number of threads to use during preprocessing.")
     parser.add_argument(
