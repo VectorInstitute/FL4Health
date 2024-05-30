@@ -85,11 +85,11 @@ def input_verification_crop_or_pad(
         image (sitk.Image): Image to be resized.
         size (Tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
-        physical_size (Tuple[int, int, int]): Target size in mm. (Number of Voxels x Spacing)
+        physical_size (Tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
             Expected to be in Depth x Height x Width format.
 
     Returns:
-        Tuple[Sequence[int], Sequence[int]]:
+        Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
             Shape of original image (in convention of SimpleITK (x, y, z) or numpy (z, y, x)) and
             Size of target image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
     """
@@ -148,7 +148,7 @@ def crop_or_pad(
         image (sitk.Image): Image to be resized.
         size (Tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
-        physical_size (Tuple[int, int, int]): Target size in mm. (Number of Voxels x Spacing)
+        physical_size (Tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
             Expected to be in Depth x Height x Width format.
 
     Returns:
