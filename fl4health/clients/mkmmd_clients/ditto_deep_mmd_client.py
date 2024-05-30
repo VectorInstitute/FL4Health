@@ -30,7 +30,7 @@ class DittoDeepMmdClient(DittoClient):
         size_feature_extraction_layers: Dict[str, int] = {},
     ) -> None:
         """
-        This client implements the DEEP-MMD loss function in the Ditto framework. 
+        This client implements the DEEP-MMD loss function in the Ditto framework.
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
