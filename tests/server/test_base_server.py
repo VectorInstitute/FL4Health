@@ -1,13 +1,14 @@
 import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
 from typing import List, Tuple
+from unittest.mock import Mock, patch
 
 import pytest
 import torch
 import torch.nn as nn
-from flwr.common import EvaluateRes, Status, Code, Metrics
+from flwr.common import Code, EvaluateRes, Metrics, Status
 from flwr.common.parameter import ndarrays_to_parameters
+from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from freezegun import freeze_time
 
@@ -16,16 +17,17 @@ from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
-from flwr.server.client_proxy import ClientProxy
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metrics import TestMetricPrefix
 from tests.test_utils.models_for_test import LinearTransform
 
 model = LinearTransform()
 
+
 def metrics_aggregation(to_aggregate: List[Tuple[int, Metrics]]) -> Metrics:
     # Select last set of metrics (dummy for test)
     return to_aggregate[-1][1]
+
 
 class DummyFLServer(FlServer):
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
@@ -133,11 +135,12 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
         },
     }
 
+
 def test_unpack_metrics():
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
-    
+
     # Mock evaluation results
     client_proxy = Mock(spec=ClientProxy)
     eval_res = EvaluateRes(
@@ -167,11 +170,12 @@ def test_unpack_metrics():
     assert test_results[0][1].metrics[TestMetricPrefix.TEST_PREFIX.value + "accuracy"] == 0.85
     assert test_results[0][1].loss == 0.8
 
+
 def test_handle_result_aggregation():
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
-    
+
     # Mock evaluation results
     client_proxy = Mock(spec=ClientProxy)
     eval_res = EvaluateRes(
@@ -200,6 +204,7 @@ def test_handle_result_aggregation():
     assert val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "accuracy"] == 0.85
     assert TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated" in val_metrics_aggregated
     assert val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated"] == 0.8
+
 
 @patch("fl4health.server.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
