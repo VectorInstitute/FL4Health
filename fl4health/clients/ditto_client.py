@@ -272,6 +272,36 @@ class DittoClient(BasicClient):
         assert isinstance(local_preds, torch.Tensor)
         return {"global": global_preds, "local": local_preds}, {}
 
+    def compute_loss_and_additional_losses(
+        self,
+        preds: Dict[str, torch.Tensor],
+        features: Dict[str, torch.Tensor],
+        target: torch.Tensor,
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        """
+        Computes the local model loss and any additional losses given predictions of the model and ground truth data.
+        Args:
+            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            target (torch.Tensor): Ground truth data to evaluate predictions against.
+        Returns:
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the model loss
+                - A dictionary with `local_loss`, `global_loss` as additionally reported loss values.
+        """
+
+        # Compute global model vanilla loss
+        assert "global" in preds
+        global_loss = self.criterion(preds["global"], target)
+
+        # Compute local model loss + ditto constraint term
+        assert "local" in preds
+        local_loss = self.criterion(preds["local"], target)
+
+        additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
+
+        return local_loss.clone(), additional_losses
+
     def compute_training_loss(
         self,
         preds: Dict[str, torch.Tensor],
@@ -298,20 +328,13 @@ class DittoClient(BasicClient):
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
 
-        # Compute global model vanilla loss
-        assert "global" in preds
-        global_loss = self.criterion(preds["global"], target)
-
-        # Compute local model loss + ditto constraint term
-        assert "local" in preds
-        local_loss = self.criterion(preds["local"], target)
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
 
         # Compute ditto drift loss
         ditto_local_loss = self.ditto_drift_loss_function(self.model, self.initial_global_tensors, self.lam)
+        additional_losses["ditto_loss"] = ditto_local_loss.clone()
 
-        additional_losses = {"ditto_loss": ditto_local_loss, "local_loss": local_loss, "global_loss": global_loss}
-
-        return TrainingLosses(backward=local_loss + ditto_local_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
 
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
@@ -347,15 +370,4 @@ class DittoClient(BasicClient):
         """
         # Check that both models are in eval mode
         assert not self.global_model.training and not self.model.training
-
-        # Compute global model vanilla loss
-        assert "global" in preds
-        global_loss = self.criterion(preds["global"], target)
-
-        # Compute local model vanilla loss
-        assert "local" in preds
-        local_loss = self.criterion(preds["local"], target)
-
-        additional_losses = {"local_loss": local_loss, "global_loss": global_loss}
-
-        return EvaluationLosses(checkpoint=local_loss, additional_losses=additional_losses)
+        return super().compute_evaluation_loss(preds, features, target)
