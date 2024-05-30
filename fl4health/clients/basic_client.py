@@ -2,6 +2,7 @@ import copy
 import datetime
 import random
 import string
+from enum import Enum
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
@@ -25,6 +26,12 @@ from fl4health.utils.metrics import Metric, MetricManager
 
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
+
+
+class LoggingMode(Enum):
+    TRAIN = "Training"
+    VALIDATION = "Validation"
+    TEST = "Testing"
 
 
 class BasicClient(NumPyClient):
@@ -75,6 +82,8 @@ class BasicClient(NumPyClient):
         self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
         self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
         self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
+        self.test_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
+        self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
@@ -88,6 +97,7 @@ class BasicClient(NumPyClient):
         self.optimizers: Dict[str, torch.optim.Optimizer]
         self.train_loader: DataLoader
         self.val_loader: DataLoader
+        self.test_loader: Optional[DataLoader]
         self.num_train_samples: int
         self.num_val_samples: int
         self.learning_rate: Optional[float] = None
@@ -321,7 +331,7 @@ class BasicClient(NumPyClient):
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
-        Evaluates the model on the validation set.
+        Evaluates the model on the validation set, and test set (if defined).
 
         Args:
             parameters (NDArrays): The parameters of the model to be evaluated.
@@ -329,7 +339,7 @@ class BasicClient(NumPyClient):
 
         Returns:
             Tuple[float, int, Dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
-                validation set and the metric_values associated with evaluation.
+                validation/test set and the metric_values associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
@@ -387,17 +397,17 @@ class BasicClient(NumPyClient):
         metrics_dict: Dict[str, Scalar],
         current_round: Optional[int] = None,
         current_epoch: Optional[int] = None,
-        is_validation: bool = False,
+        logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Handles the logging of losses, metrics and other information to the output file.
+        Handles the logging of losses, metrics, and other information to the output file.
 
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
             metrics_dict (Dict[str, Scalar]): A dictionary of the metric to log.
-            current_round (Optional[int]): The current FL round (ie current server round).
+            current_round (Optional[int]): The current FL round (i.e., current server round).
             current_epoch (Optional[int]): The current epoch of local training.
-            is_validation (bool): Whether or not this logging is for validation set.
+            logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
         """
         initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
         initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
@@ -406,7 +416,8 @@ class BasicClient(NumPyClient):
 
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-        metric_prefix = "Validation" if is_validation else "Training"
+
+        metric_prefix = logging_mode.value
         log(
             INFO,
             f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
@@ -636,29 +647,63 @@ class BasicClient(NumPyClient):
 
         return loss_dict, metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def _validate_or_test(
+        self,
+        loader: DataLoader,
+        loss_meter: LossMeter,
+        metric_manager: MetricManager,
+        logging_mode: LoggingMode = LoggingMode.VALIDATION,
+    ) -> Tuple[float, Dict[str, Scalar]]:
         """
-        Validate the current model on the entire validation dataset.
+        Evaluate the model on the given validation or test dataset.
+
+        Args:
+            loader (DataLoader): The data loader for the dataset (validation or test).
+            loss_meter (LossMeter): The meter to track the losses.
+            metric_manager (MetricManager): The manager to track the metrics.
+            logging_mode (LoggingMode): The LoggingMode for whether this evaluation is for validation or test.
+              Default is for validation.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
+        assert logging_mode in [LoggingMode.VALIDATION, LoggingMode.TEST], "logging_mode must be VALIDATION or TEST"
         self.model.eval()
-        self.val_metric_manager.clear()
-        self.val_loss_meter.clear()
+        metric_manager.clear()
+        loss_meter.clear()
         with torch.no_grad():
-            for input, target in self.val_loader:
+            for input, target in loader:
                 input, target = self._move_input_data_to_device(input), target.to(self.device)
                 losses, preds = self.val_step(input, target)
-                self.val_loss_meter.update(losses)
-                self.val_metric_manager.update(preds, target)
+                loss_meter.update(losses)
+                metric_manager.update(preds, target)
 
         # Compute losses and metrics over validation set
-        loss_dict = self.val_loss_meter.compute().as_dict()
-        metrics = self.val_metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, is_validation=True)
+        loss_dict = loss_meter.compute().as_dict()
+        metrics = metric_manager.compute()
+        self._handle_logging(loss_dict, metrics, logging_mode=logging_mode)
 
         return loss_dict["checkpoint"], metrics
+
+    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+        """
+        Validate the current model on the entire validation
+            and potentially an entire test dataset if it has been defined.
+
+        Returns:
+            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
+                from validation (and test if present).
+        """
+        val_loss, val_metrics = self._validate_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
+        if self.test_loader:
+            test_loss, test_metrics = self._validate_or_test(
+                self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
+            )
+            # There will be no clashes due to the naming convention associated with the metric managers
+            val_metrics["test - loss"] = test_loss
+            val_metrics.update(test_metrics)
+
+        return val_loss, val_metrics
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
@@ -690,6 +735,7 @@ class BasicClient(NumPyClient):
         train_loader, val_loader = self.get_data_loaders(config)
         self.train_loader = train_loader
         self.val_loader = val_loader
+        self.test_loader = self.get_test_data_loader(config)
 
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
@@ -876,6 +922,22 @@ class BasicClient(NumPyClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
+
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+        """
+        User defined method that returns a PyTorch Test DataLoader.
+        By default, this function returns None, assuming that there is no test dataset to be used.
+        If the user would like to load and evaluate a dataset,
+            they need only override this function in their client class.
+
+        Args:
+            config (Config): The config from the server.
+
+        Returns:
+            Optional[DataLoader]. The optional client test loader. Returns None.
+
+        """
+        return None
 
     def get_criterion(self, config: Config) -> _Loss:
         """
