@@ -100,7 +100,7 @@ class Case(ABC):
 
         Returns:
             Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
-                for the scans and the second entry is the file path to the correpsonding annotation.
+                for the scans and the second entry is the file path to the corresponding annotation.
 
         Raises:
             NotImplementedError
@@ -151,7 +151,7 @@ class PicaiCase(Case):
 
         Returns:
             Tuple[Sequence[Path], Path]: A tuple in which the first entry is a sequence of file paths
-                for the scans and the second entry is the file path to the correpsonding annotation.
+                for the scans and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
         scan_paths = [path for path in sorted(self.scan_paths)]
@@ -368,7 +368,7 @@ def preprocess(
 
     Returns:
         Sequence[Tuple[Sequence[Path], Path]]: A sequence of tuples in which the first entry is a sequence of
-        file paths for the scans and the second entry is the file path to the correpsonding annotation.
+        file paths for the scans and the second entry is the file path to the corresponding annotation.
 
     Raises:
         PreprocessingException if an error occurs during preprocessing of any of the cases.

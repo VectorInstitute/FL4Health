@@ -93,7 +93,7 @@ def generate_dataset_json(
     """
     Generates JSON file(s) that include the image_paths, label_paths and case_labels.
     If splits_path is supplied, a JSON file will be created for each of the splits.
-    If no splits_path is supllied, a single JSON file will be created with all of the samples.
+    If no splits_path is supplied, a single JSON file will be created with all of the samples.
 
     Args:
         paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
