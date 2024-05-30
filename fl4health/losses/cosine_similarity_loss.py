@@ -10,9 +10,11 @@ class CosineSimilarityLoss(nn.Module):
     def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         """
         Assumes that the tensors are provided "batch first"
+
         Args:
             x1 (torch.Tensor): First set of tensors to compute cosine sim
             x2 (torch.Tensor): Second set of tensors to compute cosine sim
+
         Returns:
             torch.Tensor: Mean absolute value of the cosine similarity between vectors across the mutual batch size.
         """

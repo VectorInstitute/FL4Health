@@ -30,10 +30,12 @@ class ContrastiveLoss(nn.Module):
         Compute the contrastive loss based on the features, positive pair and negative pairs. While every feature
         has a positive pair, it can have multiple negative pairs. The loss is computed based on the similarity
         between the feature and its positive pair.
+
         Args:
             features (torch.Tensor): Main features, shape (n_samples, n_features)
             positive_pairs (torch.Tensor): Positive pair of main features, shape (1, n_samples, n_features)
             negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, n_samples, n_features)
+
         Returns:
             torch.Tensor: Contrastive loss value
         """
