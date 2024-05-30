@@ -1,25 +1,20 @@
-import torch.nn.functional as F
-
 import torch
-
-from torch.nn import Module
-from torch.nn import Conv2d, BatchNorm2d
-from torch.nn import Flatten
-from torch.nn import Linear
-from torch.nn import MaxPool2d
-from torch.nn import ReLU
+import torch.nn.functional as F
+from torch.nn import BatchNorm2d, Conv2d, Flatten, Linear, MaxPool2d, Module, ReLU
 
 
 class ConvNet2(Module):
 
-    def __init__(self,
-                 in_channels: int,
-                 h: int = 32,
-                 w: int = 32,
-                 hidden: int = 2048,
-                 class_num: int = 10,
-                 use_bn: bool = True,
-                 dropout: float = .0) -> None:
+    def __init__(
+        self,
+        in_channels: int,
+        h: int = 32,
+        w: int = 32,
+        hidden: int = 2048,
+        class_num: int = 10,
+        use_bn: bool = True,
+        dropout: float = 0.0,
+    ) -> None:
         super(ConvNet2, self).__init__()
 
         self.conv1: Conv2d = Conv2d(in_channels, 32, 5, padding=2)
