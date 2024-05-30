@@ -26,7 +26,7 @@ from research.flamby.flamby_data_utils import construct_fedisic_train_val_datase
 FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 for i in range(16):
     FED_ISIC2019_BASELINE_LAYERS[f"base_model._blocks.{i}"] = 64
-FED_ISIC2019_BASELINE_LAYERS["base_model._dropout"] = 128
+FED_ISIC2019_BASELINE_LAYERS["base_model._dropout"] = 1280
 
 
 class FedIsic2019DittoClient(DittoDeepMmdClient):

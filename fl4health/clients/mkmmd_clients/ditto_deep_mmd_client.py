@@ -30,10 +30,7 @@ class DittoDeepMmdClient(DittoClient):
         size_feature_extraction_layers: Dict[str, int] = {},
     ) -> None:
         """
-        This client implements the MK-MMD loss function in the Ditto framework. The MK-MMD loss is a measure of the
-        distance between the distributions of the features of the local model and init global of each round. The MK-MMD
-        loss is added to the local loss to penalize the local model for drifting away from the global model.
-
+        This client implements the DEEP-MMD loss function in the Ditto framework. 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
@@ -46,7 +43,7 @@ class DittoDeepMmdClient(DittoClient):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
-            mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
+            deep_mmd_loss_weight (float, optional): weight applied to the DEEP-MMD loss. Defaults to 10.0.
             flatten_feature_extraction_layers (Dict[str, bool], optional): Dictionary of layers to extract features
                 from them what is the flattened feature size. Defaults to {}. If it is -1 then the layer is not
                 flattened.
@@ -63,7 +60,7 @@ class DittoDeepMmdClient(DittoClient):
         if self.deep_mmd_loss_weight == 0:
             log(
                 ERROR,
-                "DEEP MMD loss weight is set to 0. As MK-MMD loss will not be computed, ",
+                "DEEP MMD loss weight is set to 0. As DEEP-MMD loss will not be computed, ",
                 "please use vanilla DittoClient instead.",
             )
 
@@ -123,7 +120,7 @@ class DittoDeepMmdClient(DittoClient):
             forward.
         """
 
-        # We use features from init_global_model to compute the MK-MMD loss not the global_model
+        # We use features from init_global_model to compute the DEEP-MMD loss not the global_model
         global_preds = self.global_model(input)
         local_preds = self.model(input)
         features = self.local_feature_extractor.get_extracted_features()
@@ -183,7 +180,7 @@ class DittoDeepMmdClient(DittoClient):
             Tuple[torch.Tensor, Dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set
-                from server config, also `mkmmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
+                from server config, also `deep_mmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
                 values.
         """
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
@@ -195,7 +192,7 @@ class DittoDeepMmdClient(DittoClient):
                 layer_deep_mmd_loss = self.deep_mmd_losses[layer](
                     features[layer], features[" ".join(["init_global", layer])]
                 )
-                additional_losses["_".join(["mkmmd_loss", layer])] = layer_deep_mmd_loss
+                additional_losses["_".join(["deep_mmd_loss", layer])] = layer_deep_mmd_loss
                 total_deep_mmd_loss += layer_deep_mmd_loss
             total_loss += self.deep_mmd_loss_weight * total_deep_mmd_loss
             additional_losses["deep_mmd_loss_total"] = total_deep_mmd_loss
