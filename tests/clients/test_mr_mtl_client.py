@@ -44,7 +44,7 @@ def test_forming_mr_loss(get_client: MrMtlClient) -> None:  # noqa
     mr_mtl_client.set_parameters(params, config, fitting_round=True)
     mr_mtl_client.update_before_train(4)
 
-    mr_mtl_loss = mr_mtl_client.mr_mtl_loss_function(
+    mr_mtl_loss = mr_mtl_client.mr_mtl_drift_loss_function(
         mr_mtl_client.model, mr_mtl_client.initial_global_tensors, mr_mtl_client.lam
     )
 

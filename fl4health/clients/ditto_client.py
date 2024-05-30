@@ -39,8 +39,9 @@ class DittoClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
@@ -55,13 +56,16 @@ class DittoClient(BasicClient):
         self.initial_global_tensors: List[torch.Tensor]
         self.lam = lam
         self.global_model: nn.Module
-        self.ditto_loss_function = WeightDriftLoss(self.device)
+        self.ditto_drift_loss_function = WeightDriftLoss(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            "User Clients must define a function that returns a Dict[str, Optimizer] with keys 'global' and 'local' "
+            "defining separate optimizers for the global and local models of Ditto."
+        )
 
     def set_optimizer(self, config: Config) -> None:
         """
@@ -276,7 +280,7 @@ class DittoClient(BasicClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model we add to vanilla loss function by including Ditto penalty loss which is the l2 inner
+        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
         The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
 
@@ -303,7 +307,7 @@ class DittoClient(BasicClient):
         local_loss = self.criterion(preds["local"], target)
 
         # Compute ditto drift loss
-        ditto_local_loss = self.ditto_loss_function(self.model, self.initial_global_tensors, self.lam)
+        ditto_local_loss = self.ditto_drift_loss_function(self.model, self.initial_global_tensors, self.lam)
 
         additional_losses = {"ditto_loss": ditto_local_loss, "local_loss": local_loss, "global_loss": global_loss}
 
@@ -330,8 +334,6 @@ class DittoClient(BasicClient):
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
         For Ditto, we use the vanilla loss for the local model in checkpointing. However, during validation we also
         compute the global model vanilla loss.
-        We also include a sanity check log which computes the ditto drift loss during evaluation to ensure that it
-        is non-zero.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored

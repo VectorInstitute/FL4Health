@@ -55,7 +55,7 @@ class MrMtlClient(BasicClient):
         self.lam = lam
         self.initial_global_model: nn.Module
         self.initial_global_tensors: List[torch.Tensor]
-        self.mr_mtl_loss_function = WeightDriftLoss(self.device)
+        self.mr_mtl_drift_loss_function = WeightDriftLoss(self.device)
 
     def setup_client(self, config: Config) -> None:
         """
@@ -154,7 +154,7 @@ class MrMtlClient(BasicClient):
             additional_losses = {}
 
         # Compute mr-mtl drift loss
-        mr_mtl_loss = self.mr_mtl_loss_function(self.model, self.initial_global_tensors, self.lam)
+        mr_mtl_loss = self.mr_mtl_drift_loss_function(self.model, self.initial_global_tensors, self.lam)
         additional_losses["mr_loss"] = mr_mtl_loss
 
         return TrainingLosses(backward=total_loss + mr_mtl_loss, additional_losses=additional_losses)

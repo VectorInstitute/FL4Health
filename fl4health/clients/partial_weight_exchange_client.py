@@ -39,8 +39,9 @@ class PartialWeightExchangeClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
             store_initial_model (bool): Indicates whether the client should store a copy of the model weights
                 at the beginning of each training round. The model copy might be required to select the subset
                 of model parameters to be exchanged with the server, depending on the selection criterion used.

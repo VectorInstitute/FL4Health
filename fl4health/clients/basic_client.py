@@ -56,8 +56,9 @@ class BasicClient(NumPyClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
@@ -813,7 +814,7 @@ class BasicClient(NumPyClient):
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -888,13 +889,14 @@ class BasicClient(NumPyClient):
         self.optimizers = {"global": optimizer}
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
-        """Clone and freeze model for use in various loss calculation.
+        """
+        Clones and freezes a models weights. This is to preserve the model in its current state while decoupling in
+        any way from the original model object or any training.
 
         Args:
-            model (nn.Module): model to clone and freeze
-
+            model (nn.Module): Model to clone and freeze
         Returns:
-            nn.Module: cloned and frozen model
+            nn.Module: Cloned and frozen model
         """
 
         cloned_model = copy.deepcopy(model)
@@ -985,6 +987,7 @@ class BasicClient(NumPyClient):
     def update_before_train(self, current_server_round: int) -> None:
         """
         Hook method called before training with the number of current server rounds performed.
+        NOTE: This method is called immediately AFTER the aggregated parameters are received from the server.
         For example, used by Moon and FENDA to save global modules after aggregation.
 
         Args:
