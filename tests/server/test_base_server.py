@@ -19,8 +19,8 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metrics import TestMetricPrefix
-from tests.test_utils.models_for_test import LinearTransform
 from tests.test_utils.custom_client_proxy import CustomClientProxy
+from tests.test_utils.models_for_test import LinearTransform
 
 model = LinearTransform()
 
