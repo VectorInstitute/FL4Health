@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from unittest.mock import Mock, patch
 
 import pytest
@@ -20,6 +20,7 @@ from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metrics import TestMetricPrefix
 from tests.test_utils.models_for_test import LinearTransform
+from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 model = LinearTransform()
 
@@ -136,13 +137,12 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     }
 
 
-def test_unpack_metrics():
+def test_unpack_metrics() -> None:
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
 
-    # Mock evaluation results
-    client_proxy = Mock(spec=ClientProxy)
+    client_proxy = CustomClientProxy("1")
     eval_res = EvaluateRes(
         status=Status(Code.OK, "Success"),
         loss=1.0,
@@ -171,13 +171,12 @@ def test_unpack_metrics():
     assert test_results[0][1].loss == 0.8
 
 
-def test_handle_result_aggregation():
+def test_handle_result_aggregation() -> None:
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
 
-    # Mock evaluation results
-    client_proxy = Mock(spec=ClientProxy)
+    client_proxy = CustomClientProxy("1")
     eval_res = EvaluateRes(
         status=Status(Code.OK, "Success"),
         loss=1.0,
@@ -190,7 +189,7 @@ def test_handle_result_aggregation():
         },
     )
     results = [(client_proxy, eval_res)]
-    failures = []
+    failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
     server_round = 1
     val_loss_aggregated, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)
