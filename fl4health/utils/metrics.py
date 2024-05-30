@@ -11,8 +11,10 @@ from torchmetrics import Metric as TMetric
 
 
 class TestMetricPrefix(Enum):
-    TEST_PREFIX = "test - "
+    TEST_PREFIX = "test -"
 
+TEST_NUM_EXAMPLES_KEY = f"{TestMetricPrefix.TEST_PREFIX.value} num_examples"
+TEST_LOSS_KEY = f"{TestMetricPrefix.TEST_PREFIX.value} loss"
 
 class Metric(ABC):
     def __init__(self, name: str) -> None:

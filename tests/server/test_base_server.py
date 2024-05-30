@@ -18,7 +18,7 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
-from fl4health.utils.metrics import TestMetricPrefix
+from fl4health.utils.metrics import TestMetricPrefix, TEST_NUM_EXAMPLES_KEY, TEST_LOSS_KEY
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
@@ -149,25 +149,24 @@ def test_unpack_metrics() -> None:
         num_examples=10,
         metrics={
             "val - prediction - accuracy": 0.9,
-            TestMetricPrefix.TEST_PREFIX.value + "loss": 0.8,
-            TestMetricPrefix.TEST_PREFIX.value + "num_examples": 5,
-            TestMetricPrefix.TEST_PREFIX.value + "accuracy": 0.85,
+            TEST_LOSS_KEY: 0.8,
+            TEST_NUM_EXAMPLES_KEY: 5,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
         },
     )
 
     results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
 
     val_results, test_results = fl_server._unpack_metrics(results)
-    print("val_results, test_results", val_results, test_results)
 
     # Check the validation results
     assert len(val_results) == 1
     assert val_results[0][1].metrics["val - prediction - accuracy"] == 0.9
-    assert TestMetricPrefix.TEST_PREFIX.value + "loss" not in val_results[0][1].metrics
+    assert TEST_LOSS_KEY not in val_results[0][1].metrics
 
     # Check the test results
     assert len(test_results) == 1
-    assert test_results[0][1].metrics[TestMetricPrefix.TEST_PREFIX.value + "accuracy"] == 0.85
+    assert test_results[0][1].metrics[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
     assert test_results[0][1].loss == 0.8
 
 
@@ -183,9 +182,9 @@ def test_handle_result_aggregation() -> None:
         num_examples=10,
         metrics={
             "val - prediction - accuracy": 0.9,
-            TestMetricPrefix.TEST_PREFIX.value + "loss": 0.8,
-            TestMetricPrefix.TEST_PREFIX.value + "num_examples": 5,
-            TestMetricPrefix.TEST_PREFIX.value + "accuracy": 0.85,
+            TEST_LOSS_KEY: 0.8,
+            TEST_NUM_EXAMPLES_KEY: 5,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
         },
     )
     results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
@@ -199,10 +198,10 @@ def test_handle_result_aggregation() -> None:
     assert val_metrics_aggregated["val - prediction - accuracy"] == 0.9
 
     # Check the aggregated test metrics
-    assert TestMetricPrefix.TEST_PREFIX.value + "accuracy" in val_metrics_aggregated
-    assert val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "accuracy"] == 0.85
-    assert TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated" in val_metrics_aggregated
-    assert val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated"] == 0.8
+    assert f"{TestMetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
+    assert f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == 0.8
 
 
 @patch("fl4health.server.base_server.FlServer._evaluate_round")

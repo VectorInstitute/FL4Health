@@ -19,7 +19,7 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
-from fl4health.utils.metrics import TestMetricPrefix
+from fl4health.utils.metrics import TestMetricPrefix, TEST_NUM_EXAMPLES_KEY, TEST_LOSS_KEY
 
 
 class FlServer(Server):
@@ -181,18 +181,14 @@ class FlServer(Server):
 
             if len(test_metrics) > 0:
                 assert (
-                    TestMetricPrefix.TEST_PREFIX.value + "loss" in test_metrics
-                    and TestMetricPrefix.TEST_PREFIX.value + "num_examples" in test_metrics
+                    TEST_LOSS_KEY in test_metrics
+                    and TEST_NUM_EXAMPLES_KEY in test_metrics
                 ), (
-                    TestMetricPrefix.TEST_PREFIX.value
-                    + "loss and "
-                    + TestMetricPrefix.TEST_PREFIX.value
-                    + "num_examples keys must be present "
-                    "in test_metrics dictionary for aggregation"
+                    f"'{TEST_NUM_EXAMPLES_KEY}' and '{TEST_LOSS_KEY}' keys must be present in test_metrics dictionary for aggregation"
                 )
                 # Remove loss and num_examples from test_metrics if they exist
-                test_loss = float(test_metrics.pop(TestMetricPrefix.TEST_PREFIX.value + "loss"))
-                test_num_examples = int(test_metrics.pop(TestMetricPrefix.TEST_PREFIX.value + "num_examples"))
+                test_loss = float(test_metrics.pop(TEST_LOSS_KEY))
+                test_num_examples = int(test_metrics.pop(TEST_NUM_EXAMPLES_KEY))
                 test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
                 test_results.append((client_proxy, test_eval_res))
 
@@ -227,7 +223,7 @@ class FlServer(Server):
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
             if test_loss_aggregated is not None:
-                val_metrics_aggregated[TestMetricPrefix.TEST_PREFIX.value + "loss - aggregated"] = test_loss_aggregated
+                val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] = test_loss_aggregated
 
         return val_loss_aggregated, val_metrics_aggregated
 
