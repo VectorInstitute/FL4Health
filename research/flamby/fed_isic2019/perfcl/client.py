@@ -126,14 +126,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weights for the PerFCL loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (global feature constraint)",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weights for the PerFCL loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (local feature constraint)",
         required=False,
     )
     args = parser.parse_args()
