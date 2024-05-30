@@ -1,14 +1,14 @@
 ## Intro to nnUNet
-[nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics of a given medical dataset and availabel compute. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks across modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
+[nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics of a given medical dataset and available compute. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks across modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
 
 ### Setting Environment Variables
-nnUNet expects that three environmental variables have been set with their corresponding paths: `nnUNet_raw`, `nnUNet_preprocessed` and `nnUNet_results`. On the Vector cluster, these paths are as follows:
+nnUNet expects that three environmental variables have been set with their corresponding paths: `nnUNet_raw`, `nnUNet_preprocessed` and `nnUNet_results`. These paths must be set beforee a user can run any of the scripts. On the Vector cluster, these paths are as follows:
 ```
 nnUNet_raw="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw"
 nnUNet_preprocessed="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_preprocessed"
 nnUNet_results="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_results"
 ```
-For information about setting the environment variables, visit the [nnUNet Environment Variables Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md)
+By default, these paths are automatically set in the `nnunet_launch.slrm` script. Simply, change the paths in the script if you would like to use something different. For information about setting the environment variables, visit the [nnUNet Environment Variables Documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/set_environment_variables.md)
 
 ### Dataset Formatting
 Datasets must be located in the nnUNet_raw folder. Each segmentation dataset is stored as a separate 'Dataset'. Datasets are associated with a dataset ID, a three digit integer, and a dataset name (which you can freely choose): For example, Dataset005_Prostate has 'Prostate' as dataset name and the dataset id is 5. Datasets are stored in the nnUNet_raw folder like this:
@@ -42,7 +42,7 @@ In order to extract the configuration and run preprocessing, run the following c
 ```
 nnUNetv2_plan_and_preprocess -d DATASET_ID --verify_dataset_integrity
 ```
-nnUNetv2_plan_and_preprocess will create a new subfolder in your nnUNet_preprocessed folder named after the dataset. Once the command is completed there will be a dataset_fingerprint.json file as well as a nnUNetPlans.json file for youto look at (in case you are interested!). There will also be subfolders containing the preprocessed data for your UNet configurations.
+nnUNetv2_plan_and_preprocess will create a new subfolder in your nnUNet_preprocessed folder named after the dataset. Once the command is completed there will be a dataset_fingerprint.json file as well as a nnUNetPlans.json file for you to look at (in case you are interested!). There will also be subfolders containing the preprocessed data for your UNet configurations.
 
 The next step is to train the configured model on the preprocessed dataset:
 ```
@@ -82,7 +82,7 @@ Then the plan can be transferred from the source dataset to the target dataset:
 ```
 nnUNetv2_move_plans_between_datasets -s SOURCE_DATASET -t TARGET_DATASET -sp SOURCE_PLANS_IDENTIFIER -tp TARGET_PLANS_IDENTIFIER
 ```
-`SOURCE_PLANS_IDENTIFIER` is hereby probably nnUNetPlans (or simply plans) unless you changed the experiment planner in nnUNetv2_plan_and_preprocess. For `TARGET_PLANS_IDENTIFIER` we recommend you set something custom in order to not overwrite default plans.
+`SOURCE_PLANS_IDENTIFIER` is probably nnUNetPlans (or simply plans) unless you changed the experiment planner in nnUNetv2_plan_and_preprocess. For `TARGET_PLANS_IDENTIFIER` we recommend you set something custom in order to not overwrite default plans.
 
 **Note:** EVERYTHING is transferred between the datasets. Not just the network topology, batch size and patch size but also the normalization scheme!
 

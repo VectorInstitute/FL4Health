@@ -67,7 +67,6 @@ echo "Server logging at: ${SERVER_OUTPUT_FILE}"
 echo "Launching Server"
 
 
-echo "Finished FL Processes"
 
 handler()
 {
@@ -76,7 +75,7 @@ handler()
 }
 
 # Function that checks whether to start or resume training, gets train_args
-# and runs  training
+# and runs training
 train()
 {
     nohup python -m research.picai.fedavg.server --config_path ${CONFIG_PATH} --artifact_dir ${SERVER_LOG_DIR} --n_clients ${N_CLIENTS} > ${SERVER_OUTPUT_FILE} 2>&1 &
@@ -109,3 +108,5 @@ trap handler SIGUSR1
 # Script must be ran in the background (async) to be able to trap signal
 train &
 wait
+
+echo "Finished FL Processes"

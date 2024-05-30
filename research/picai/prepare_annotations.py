@@ -5,6 +5,14 @@ import SimpleITK as sitk
 
 
 def prepare_annotations(human_annotations_dir: str, ai_annotations_dir: str, annotations_write_dir: str) -> None:
+    """
+    Copy seperate annotation sources (ie human and ai-derived annotations) to a central location.
+
+    Args:
+        human_annotations_dir (str): The path to the folder containing human annotations.
+        ai_annotations_dir (str): The path to the folder containing ai-derived annotations.
+        annotations_write_dir (str): The path to copy the human and ai-derived annotations to.
+    """
     for filename in sorted(os.listdir(human_annotations_dir)):
         path = os.path.join(human_annotations_dir, filename)
         annotation_write_path = os.path.join(annotations_write_dir, filename)
@@ -15,6 +23,8 @@ def prepare_annotations(human_annotations_dir: str, ai_annotations_dir: str, ann
     for filename in os.listdir(ai_annotations_dir):
         path = os.path.join(ai_annotations_dir, filename)
         annotation_write_path = os.path.join(annotations_write_dir, filename)
+        # In cases where both a human and ai-derived annotation exist
+        # We use the human annotation
         if path.endswith(".nii.gz") and not os.path.exists(annotation_write_path):
             annotation = sitk.ReadImage(path)
             sitk.WriteImage(annotation, str(annotation_write_path), useCompression=True)

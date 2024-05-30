@@ -2,11 +2,11 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union, Dict
 
 import numpy as np
 import SimpleITK as sitk
-from preprocessing import (
+from research.picai.preprocessing import (
     AlignOriginAndDirection,
     BinarizeAnnotation,
     CentreCropAndOrPad,
@@ -27,14 +27,59 @@ DEFAULT_TRANSFORMS = [
 
 
 def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> Sequence[float]:
+    """
+    Get the label of each sample. The label is negative if no foreground objects exist, as per annotation,
+    else positive.
+
+    Args:
+        paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
+            is tuple where the first entry is a list of scan paths and the second in the annotation path.
+
+    Returns:
+        Sequence[float]: The label for each of the samples.
+    """
     _, annotation_paths = zip(*paths_for_each_sample)
     case_labels = []
     for path in annotation_paths:
         annotation = sitk.ReadImage(path)
         annotation_array = sitk.GetArrayFromImage(annotation)
+        # Check if the sample contains any foreground objects (ie Is this a positive or negative sample?)
         case_label = float(np.max(annotation_array))
         case_labels.append(case_label)
     return case_labels
+
+
+def filter_split_on_subject_id(
+    scan_annotation_label_list: Sequence[Tuple[List[str], str, float]],
+    split: Dict[str, Sequence[str]],
+    train: bool
+) -> Dict[str, Union[Sequence[float], Sequence[str]]]:
+    """
+    Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
+    Returns Dict with image paths, label paths and case labels
+
+    Args:
+        scan_annotation_label_list (Sequence[Tuple[List[str], str, float]]): A sequence where each member
+            is a tuple where the first entry is a list of scan paths, the second entry is the annotation
+            path and the third entry is the label of the sample.
+        split (Dict[str, Sequence[str]]): A Dict of sequences of subject_ids included in the current split.
+            Dict contains two keys: train and val.
+        train (bool): Whether to use the train or the test split.
+
+    Returns:
+        Dict[str, Union[Sequence[float], Sequence[str]]]: A Dict containing image_paths, label_paths
+            and case_label for each sample part of the split.
+    """
+    train_or_val_string = "train" if train else "val"
+    filtered_scan_annotation_label_list = [
+        (scan_paths, annotation_path, label)
+        for (scan_paths, annotation_path, label) in scan_annotation_label_list
+        if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
+    ]
+    labeled_data = {}
+    labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = \
+        zip(*filtered_scan_annotation_label_list)
+    return labeled_data
 
 
 def generate_dataset_json(
@@ -42,22 +87,36 @@ def generate_dataset_json(
     write_dir: Path,
     splits_path: Optional[Path] = None,
 ) -> None:
+    """
+    Generates JSON file(s) that include the image_paths, label_paths and case_labels.
+    If splits_path is supplied, a JSON file will be created for each of the splits.
+    If no splits_path is supllied, a single JSON file will be created with all of the samples.
 
+    Args:
+        paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
+            is tuple where the first entry is a list of scan paths and the second in the annotation path.
+        write_dir (Path): The directory to write the dataset file(s).
+        splits_path (Optional[Path]): The path to the desired spits. JSON file with key for each split.
+            Each key contains nested keys train and val. Inside the nested keys are lists of subject_id
+            strings to be included in the split.
+    """
     labels = get_labels(paths_for_each_sample)
 
     # Since we are storing paths inside a json file, we need to convert to strings to be serializable.
     # Also pack in label for each samples in the tuple containing scan paths and annotation path.
     scan_annotation_label_list = [
-        (list(map(str, tup[0])), str(tup[1]), lbl) for tup, lbl in zip(paths_for_each_sample, labels)
+        (list(map(str, scan_paths)), str(annotation_path), label)
+        for (scan_paths, annotation_path), label in zip(paths_for_each_sample, labels)
     ]
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        d = {}
-        d["image_paths"], d["label_paths"], d["case_label"] = zip(*scan_annotation_label_list)
+        labeled_data : Dict[str, Union[str, int]] = {}
+        labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
+            *scan_annotation_label_list)
         write_path = os.path.join(write_dir, "train-fold-all.json")
         with open(write_path, "w") as f:
-            json.dump(d, f)
+            json.dump(labeled_data, f)
     else:
         # If splits_path is not None, create a dataset overview for each split
         with open(splits_path, "r") as splits_f:
@@ -66,29 +125,18 @@ def generate_dataset_json(
         for i, split in enumerate(splits):
             # Add image (scan) and label (annotation) paths that include any subject ids from split
             # For both train and val
-            train_d, val_d = {}, {}
-            train_list = [
-                tup
-                for tup in scan_annotation_label_list
-                if any([subject_id in str(tup[1]) for subject_id in split["train"]])
-            ]
-            val_list = [
-                tup
-                for tup in scan_annotation_label_list
-                if any([subject_id in str(tup[1]) for subject_id in split["val"]])
-            ]
-            train_d["image_paths"], train_d["label_paths"], train_d["case_label"] = zip(*train_list)
-            val_d["image_paths"], val_d["label_paths"], val_d["case_label"] = zip(*val_list)
+            train_labeled_data = filter_split_on_subject_id(scan_annotation_label_list, split, train=True)
+            val_labeled_data = filter_split_on_subject_id(scan_annotation_label_list, split, train=False)
 
             # Create path of json files and write to disk
             train_write_path = os.path.join(write_dir, f"train-fold-{i}.json")
             val_write_path = os.path.join(write_dir, f"val-fold-{i}.json")
 
             with open(train_write_path, "w") as f:
-                json.dump(train_d, f)
+                json.dump(train_labeled_data, f)
 
             with open(val_write_path, "w") as f:
-                json.dump(val_d, f)
+                json.dump(val_labeled_data, f)
 
 
 def preprare_data(
@@ -105,6 +153,30 @@ def preprare_data(
     num_threads: int = 4,
     splits_path: Optional[Path] = None,
 ) -> None:
+    """
+    Runs preprocessing on data with specified settings.
+
+    Args:
+        scans_read_dir (Path): The path to read the scans from. Should be a directory with subdirectories
+            for each patient_id. Inside the subdirectories should be all the scan files for a given patient.
+        annotation_read_dir (Path): The path to read the annotations from. Should be a flat directory with all
+            annotation files.
+        scans_write_dir (Path): The path to write the scans to. All scans are written into same directory.
+        annotation_write_dir (Path): The path to write the scans to. All annotations are written into same directory.
+        overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
+            there is a train and validation file with scan paths, label paths and case labels.
+        size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in voxels.
+            Triplet of the form: Depth x Height x Width.
+        physica_size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in mm.
+            Simply the product of the number of voxels by the spacing along along a particular
+            dimension: Triplet of the form: Depth x Height x Width.
+        spacing (Optional[Sequence[int]]): Desired spacing of preprocessed scans in in mm/voxel.
+            Triplet of the form: Depth x Height x Width.
+        scan_extension (str): The expected extension of scan file paths.
+        annotation_extension (str): The expected extension of annotation file paths.
+        num_threads (str): The number of threads to use during preprocessing.
+        splits_path (Optional[Path]): The path to the file containing the splits.
+        """
     settings = PreprocessingSettings(
         scans_write_dir,
         annotation_write_dir,
@@ -116,10 +188,10 @@ def preprare_data(
 
     samples = []
     for annotation_filename in valid_annotation_filenames:
-        # Annotation filename is subject id (ie patient_id study id)
+        # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
         annotation_path = Path(os.path.join(annotation_read_dir, annotation_filename))
-        annotation_base_filename = annotation_filename.split(".")[0]
+        annotation_base_filename = annotation_path.stem
 
         # All of the scans for a given patient, even if there are multiple sets from different study ids,
         # are stored in a single folder under patient id in the raw data.
@@ -132,10 +204,11 @@ def preprare_data(
         ]
 
         # Extract the scans that we care about (t2w, adc, hbv) and store in a list ordered as we expect.
-        t2w_scan_filename = scan_filenames[[i for i, sf in enumerate(scan_filenames) if "t2w" in sf][0]]
-        adc_scan_path_filename = scan_filenames[[i for i, sf in enumerate(scan_filenames) if "adc" in sf][0]]
-        hbv_scan_path_filename = scan_filenames[[i for i, sf in enumerate(scan_filenames) if "hbv" in sf][0]]
-        ordered_scan_filenames = [t2w_scan_filename, adc_scan_path_filename, hbv_scan_path_filename]
+        t2w_scan_filename = [scan_filename for scan_filename in scan_filenames if "t2w" in scan_filename]
+        adc_scan_path_filename = [scan_filename for scan_filename in scan_filenames if "adc" in scan_filename]
+        hbv_scan_path_filename = [scan_filename for scan_filename in scan_filenames if "hbv" in scan_filename]
+        assert len(t2w_scan_filename) == 1 and len(adc_scan_path_filename) == 1 and len(hbv_scan_path_filename) == 1
+        ordered_scan_filenames = t2w_scan_filename + adc_scan_path_filename + hbv_scan_path_filename
         scan_paths = [Path(os.path.join(scans_path, f)) for f in ordered_scan_filenames]
 
         # Create sample and add to list of cases to be processed.
@@ -161,27 +234,29 @@ def main() -> None:
         type=int,
         nargs="+",
         required=False,
-        help="Size to convert images and annotations to. Default is to keep as is.",
+        help="Size in pixels to convert images and annotations to (Depth x Height x Width). Default is to keep as is.",
     )
     parser.add_argument(
         "--spacing",
         type=float,
         nargs="+",
         required=False,
-        help="Spacing to convert images and annotations to. Default is to keep as is.",
+        help="Spacing in mm/pixel to convert images and annotations to (Depth x Height x Width)."
+        "Default is to keep as is."
     )
     parser.add_argument(
         "--physical_size",
         type=float,
         nargs="+",
         required=False,
-        help="Size to convert images and annotations to. Default is to keep as is.",
+        help="Size in number of voxels * spacing to convert images and annotations to (Depth x Height x Width)"
+        "Default is to keep as is.",
     )
     parser.add_argument(
-        "--scan_extension", type=str, required=False, default="mha", help="Directory to write scans to."
+        "--scan_extension", type=str, required=False, default="mha", help="The expected extension of scan files."
     )
     parser.add_argument(
-        "--annotation_extension", type=str, required=False, default="nii.gz", help="Directory to write annotation to."
+        "--annotation_extension", type=str, required=False, default="nii.gz", help="The expected extension of annotation files."
     )
     parser.add_argument("--num_threads", type=int, default=4, help="Number of threads to use during preprocessing.")
     parser.add_argument(
@@ -189,6 +264,15 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    if args.size is not None and len(args.size) != 3:
+        raise ValueError("Argument size must have length 3")
+
+    if args.physical_size is not None and len(args.physical_size) != 3:
+        raise ValueError("Argument physical_size must have length 3")
+
+    if args.spacing is not None and len(args.spacing) != 3:
+        raise ValueError("Argument spacing must have length 3")
+
     preprare_data(
         args.scans_read_dir,
         args.annotation_read_dir,

@@ -62,7 +62,7 @@ handler()
 }
 
 # Function that checks whether to start or resume training, gets train_args
-# and runs  training
+# and runs training
 train()
 {
 	python ~/FL4Health/research/picai/central/train.py --checkpoint_dir ${LOG_DIR} --fold ${FOLD_ID} --run_name ${RUN_NAME} > ${LOG_PATH} 2>&1
@@ -73,6 +73,6 @@ train()
 # signal that the job will be killed due to time limit 60 seconds prior
 trap handler SIGUSR1
 
-# Script must be ran in the background (async) to be able to trap signal
+# Script must be run in the background (async) to be able to trap signal
 train &
 wait

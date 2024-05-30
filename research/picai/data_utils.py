@@ -1,9 +1,11 @@
 import json
+from logging import INFO
 import os
 import random
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple, Union
 
+from flwr.common.logger import log
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -179,7 +181,7 @@ def get_img_and_seg_paths(
     """
 
     # Make sure at least one sequence will be present
-    assert not (include_t2w is False and include_adc is False and include_hbv is False)
+    assert any([include_t2w, include_adc, include_hbv])
 
     # load dataset overview
     file_name = f"train-fold-{fold_id}.json" if train else f"val-fold-{fold_id}.json"
@@ -200,6 +202,16 @@ def get_img_and_seg_paths(
     # Determine class proportions
     class_ratio = [int(np.sum(file_json["case_label"])), int(len(img_paths) - np.sum(file_json["case_label"]))]
     class_proportions = class_ratio / np.sum(class_ratio)
+
+    dataset_type_string = "Train" if train else "Validation"
+    log(
+        INFO,
+        f"Dataset Type: {dataset_type_string} "
+        f"Fold ID: {str(fold_id)} "
+        f"Num Samples: {len(seg_paths)} "
+        f"Data Classes: {str(np.unique(file_json['case_label']))} "
+        f"Class Proportions: {str(np.unique(file_json['case_label']))}"
+    )
 
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
 
