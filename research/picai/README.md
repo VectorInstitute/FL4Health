@@ -105,8 +105,8 @@ The arguments are defined accordingly:
 - **scans_write_dir**: Base directory to write all preprocessed scans.
 - **annotations_write_dir**: Base directory to write all preprocessed annotations.
 - **overview_write_dir**: Base directory to write all dataset overviews (more details below).
-- **size**: Desired dimensions of preprocessed images in voxels/pixels. Triplet of the form Depth x Height x Weight.
-- **spacing**: Desired voxel spacing of preprocessed images in mm/voxel. Triplet of the form Depth x Height x Weight.
+- **size**: Desired dimensions of preprocessed scans in voxels/pixels. Triplet of the form: Depth x Height x Weight.
+- **spacing**: Desired voxel spacing of preprocessed images in mm/voxel. Triplet of the form: Depth x Height x Weight.
 - **num_threads**: The number of threads to use during data preprocessing. Defaults to 4.
 - **splits_path**: Optional path to the desired splits. Defaults to official picai splits.
 

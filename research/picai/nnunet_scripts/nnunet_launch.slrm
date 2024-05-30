@@ -63,7 +63,7 @@ handler()
 # and runs  training
 nnunet_train()
 {
-	local arg_list = null 
+	local arg_list = null
 	if [ -z "$(ls -A $BASE_DIR)" ]; then
 		echo "Start training from scratch as $(date)"
 		get_nnunet_train_args false # Sets arg_list

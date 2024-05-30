@@ -2,13 +2,15 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple, Union, Dict
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk
+
 from research.picai.preprocessing import (
     AlignOriginAndDirection,
     BinarizeAnnotation,
+    Case,
     CentreCropAndOrPad,
     PicaiCase,
     PreprocessingSettings,
@@ -50,9 +52,9 @@ def get_labels(paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]]) -> 
 
 
 def filter_split_on_subject_id(
-    scan_annotation_label_list: Sequence[Tuple[List[str], str, float]],
+    scan_annotation_label_list: Sequence[Tuple[Sequence[str], str, float]],
     split: Dict[str, Sequence[str]],
-    train: bool
+    train: bool,
 ) -> Dict[str, Union[Sequence[float], Sequence[str]]]:
     """
     Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
@@ -71,14 +73,15 @@ def filter_split_on_subject_id(
             and case_label for each sample part of the split.
     """
     train_or_val_string = "train" if train else "val"
-    filtered_scan_annotation_label_list = [
+    filtered_scan_annotation_label_list: Sequence[Tuple[Sequence[str], str, float]] = [
         (scan_paths, annotation_path, label)
         for (scan_paths, annotation_path, label) in scan_annotation_label_list
         if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
     ]
-    labeled_data = {}
-    labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = \
-        zip(*filtered_scan_annotation_label_list)
+    labeled_data: Dict[str, Union[Sequence[float], Sequence[str]]] = {}
+    labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
+        *filtered_scan_annotation_label_list
+    )
     return labeled_data
 
 
@@ -111,9 +114,10 @@ def generate_dataset_json(
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        labeled_data : Dict[str, Union[str, int]] = {}
+        labeled_data: Dict[str, Union[Sequence[str], Sequence[float]]] = {}
         labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
-            *scan_annotation_label_list)
+            *scan_annotation_label_list
+        )
         write_path = os.path.join(write_dir, "train-fold-all.json")
         with open(write_path, "w") as f:
             json.dump(labeled_data, f)
@@ -145,9 +149,9 @@ def preprare_data(
     scans_write_dir: Path,
     annotation_write_dir: Path,
     overview_write_dir: Path,
-    size: Optional[Sequence[int]] = None,
-    physical_size: Optional[Sequence[int]] = None,
-    spacing: Optional[Sequence[int]] = None,
+    size: Optional[Tuple[int, int, int]] = None,
+    physical_size: Optional[Tuple[int, int, int]] = None,
+    spacing: Optional[Tuple[int, int, int]] = None,
     scan_extension: str = "mha",
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
@@ -176,7 +180,7 @@ def preprare_data(
         annotation_extension (str): The expected extension of annotation file paths.
         num_threads (str): The number of threads to use during preprocessing.
         splits_path (Optional[Path]): The path to the file containing the splits.
-        """
+    """
     settings = PreprocessingSettings(
         scans_write_dir,
         annotation_write_dir,
@@ -186,7 +190,7 @@ def preprare_data(
     )
     valid_annotation_filenames = [f for f in os.listdir(annotation_read_dir) if f.endswith(annotation_extension)]
 
-    samples = []
+    samples: List[Case] = []
     for annotation_filename in valid_annotation_filenames:
         # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
@@ -242,7 +246,7 @@ def main() -> None:
         nargs="+",
         required=False,
         help="Spacing in mm/pixel to convert images and annotations to (Depth x Height x Width)."
-        "Default is to keep as is."
+        "Default is to keep as is.",
     )
     parser.add_argument(
         "--physical_size",
@@ -256,7 +260,11 @@ def main() -> None:
         "--scan_extension", type=str, required=False, default="mha", help="The expected extension of scan files."
     )
     parser.add_argument(
-        "--annotation_extension", type=str, required=False, default="nii.gz", help="The expected extension of annotation files."
+        "--annotation_extension",
+        type=str,
+        required=False,
+        default="nii.gz",
+        help="The expected extension of annotation files.",
     )
     parser.add_argument("--num_threads", type=int, default=4, help="Number of threads to use during preprocessing.")
     parser.add_argument(

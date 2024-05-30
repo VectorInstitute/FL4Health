@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -6,8 +6,8 @@ import SimpleITK as sitk
 
 def resample_img(
     image: sitk.Image,
-    spacing: Sequence[float] = (2.0, 2.0, 2.0),
-    size: Optional[Sequence[int]] = None,
+    spacing: Tuple[float, float, float] = (2.0, 2.0, 2.0),
+    size: Optional[Tuple[int, int, int]] = None,
     is_label: bool = False,
     pad_value: Optional[Union[float, int]] = 0.0,
 ) -> sitk.Image:
@@ -18,30 +18,38 @@ def resample_img(
 
     Args:
         image (sitk.Image): Image to be resized.
-        spacing (Sequence[float]): Spacing between voxels along each dimentsion.
-        size (Sequence[int]): Target size in voxels (z, y, x).
+        spacing (Tupe[float, float, float]): Target spacing between voxels in mm.
+            Expected to be in Depth x Height x Width format.
+        size (Tuple[int, int, int]): Target size in voxels.
+            Expected to be in Depth x Height x Width format.
         is_label (bool): Whether or not this is an annotation.
         pad_value (Optional[Union[float, int]]): Amount of padding to use.
 
     Returns:
         sitk.Image: The resampled image.
     """
-    # get original spacing and size
+    # get original spacing and size (x, y, z convention)
     original_spacing = image.GetSpacing()
     original_size = image.GetSize()
 
-    # convert PICAI z, y, x convention to SimpleITK's convention
-    out_spacing = list(spacing)[::-1]
+    # convert PICAI z, y, x (Depth x Height x Width) convention to SimpleITK's convention x, y, z
+    out_spacing = list(reversed(spacing))
 
     if size is None:
         # calculate output size in voxels
-        size = [
-            int(np.round(size * (spacing_in / spacing_out)))
-            for size, spacing_in, spacing_out in zip(original_size, original_spacing, out_spacing)
-        ]
+        size = (
+            int(np.round(original_size[0] * (original_spacing[0] / out_spacing[0]))),
+            int(np.round(original_size[1] * (original_spacing[1] / out_spacing[1]))),
+            int(np.round(original_size[2] * (original_spacing[2] / out_spacing[2]))),
+        )
+    else:
+        # If size is passed, we assume it is in z, y, x so we need to reverse.
+        size = (size[2], size[1], size[0])
 
     # determine pad value
     if pad_value is None:
+        # PixelIDValue is the default pixel value (which is used for padding)
+        # Defaults to 0
         pad_value = image.GetPixelIDValue()
 
     # set up resampler
@@ -65,9 +73,9 @@ def resample_img(
 
 def input_verification_crop_or_pad(
     image: sitk.Image,
-    size: Sequence[int] = (20, 256, 256),
-    physical_size: Optional[Sequence[float]] = None,
-) -> Tuple[Sequence[int], Sequence[int]]:
+    size: Tuple[int, int, int] = (20, 256, 256),
+    physical_size: Optional[Tuple[float, float, float]] = None,
+) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
     """
     Calculate target size for cropping and/or padding input image.
 
@@ -75,10 +83,10 @@ def input_verification_crop_or_pad(
 
     Args:
         image (sitk.Image): Image to be resized.
-        size (Sequence[int]): Target size in voxels (z, y, x).
-        physical_size: Target size in mm (z, y, x)
-
-    Either size or physical_size must be provided.
+        size (Tuple[int, int, int]): Target size in voxels.
+            Expected to be in Depth x Height x Width format.
+        physical_size (Tuple[int, int, int]): Target size in mm. (Number of Voxels x Spacing)
+            Expected to be in Depth x Height x Width format.
 
     Returns:
         Tuple[Sequence[int], Sequence[int]]:
@@ -90,9 +98,13 @@ def input_verification_crop_or_pad(
         # convert physical size to voxel size (only supported for SimpleITK)
         if not isinstance(image, sitk.Image):
             raise ValueError("Crop/padding by physical size is only supported for SimpleITK images.")
-        spacing_zyx = list(image.GetSpacing())[::-1]
-        size_zyx = [length / spacing for length, spacing in zip(physical_size, spacing_zyx)]
-        size_zyx = [int(np.round(x)) for x in size_zyx]
+        spacing_zyx = list(reversed(image.GetSpacing()))
+
+        size_zyx = (
+            int(np.round(physical_size[0] / spacing_zyx[0])),
+            int(np.round(physical_size[1] / spacing_zyx[1])),
+            int(np.round(physical_size[2] / spacing_zyx[2])),
+        )
 
         if size is None:
             # use physical size
@@ -108,12 +120,11 @@ def input_verification_crop_or_pad(
     if isinstance(image, sitk.Image):
         # determine shape and convert convention of (z, y, x) to (x, y, z) for SimpleITK
         shape = image.GetSize()
-        size = list(size)[::-1]
+        size = (size[2], size[1], size[0])
     else:
         # determine shape for numpy array
         assert isinstance(image, (np.ndarray, np.generic))
         shape = image.shape
-        size = list(size)
     rank = len(size)
     assert (
         rank <= len(shape) <= rank + 1
@@ -124,8 +135,8 @@ def input_verification_crop_or_pad(
 
 def crop_or_pad(
     image: sitk.Image,
-    size: Sequence[int] = (20, 256, 256),
-    physical_size: Optional[Sequence[float]] = None,
+    size: Tuple[int, int, int] = (20, 256, 256),
+    physical_size: Optional[Tuple[float, float, float]] = None,
     crop_only: bool = False,
 ) -> sitk.Image:
     """
@@ -135,10 +146,10 @@ def crop_or_pad(
 
     Args:
         image (sitk.Image): Image to be resized.
-        size (Sequence[int]): Target size in voxels (z, y, x).
-        physical_size: Target size in mm (z, y, x)
-
-    Either size or physical_size must be provided.
+        size (Tuple[int, int, int]): Target size in voxels.
+            Expected to be in Depth x Height x Width format.
+        physical_size (Tuple[int, int, int]): Target size in mm. (Number of Voxels x Spacing)
+            Expected to be in Depth x Height x Width format.
 
     Returns:
         sitk.Image: Cropped or padded image.
@@ -148,8 +159,8 @@ def crop_or_pad(
 
     # set identity operations for cropping and padding
     rank = len(size)
-    padding = [[0, 0] for _ in range(rank)]
-    slicer = [slice(None) for _ in range(rank)]
+    padding = [[0, 0]] * rank
+    slicer = [slice(None)] * rank
 
     # for each dimension, determine process (cropping or padding)
     for i in range(rank):

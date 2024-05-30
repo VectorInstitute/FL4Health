@@ -1,14 +1,14 @@
 import json
-from logging import INFO
 import os
 import random
+from logging import INFO
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple, Union
 
-from flwr.common.logger import log
 import numpy as np
 import torch
 import torch.nn.functional as F
+from flwr.common.logger import log
 from monai.data.dataloader import DataLoader
 from monai.data.image_dataset import ImageDataset
 from monai.transforms import Transform
@@ -210,7 +210,7 @@ def get_img_and_seg_paths(
         f"Fold ID: {str(fold_id)} "
         f"Num Samples: {len(seg_paths)} "
         f"Data Classes: {str(np.unique(file_json['case_label']))} "
-        f"Class Proportions: {str(np.unique(file_json['case_label']))}"
+        f"Class Proportions: {str(np.unique(file_json['case_label']))}",
     )
 
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
