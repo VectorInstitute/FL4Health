@@ -2,6 +2,8 @@
 
 # FL4Health
 
+![FL4Health Logo](./assets/fl4health_rect_logo_no_background.png)
+
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
 
 - [Summary of Approaches](#summary-of-approaches)
