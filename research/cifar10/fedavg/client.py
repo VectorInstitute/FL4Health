@@ -1,0 +1,51 @@
+import argparse
+from pathlib import Path
+from typing import Optional, Tuple
+
+import flwr as fl
+import torch
+import torch.nn as nn
+from flwr.common.typing import Config
+from torch.nn.modules.loss import _Loss
+from torch.optim import Optimizer
+from torch.utils.data import DataLoader
+
+from research.cifar10.model import ConvNet2
+from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
+from fl4health.utils.metrics import Accuracy
+from fl4health.utils.sampler import DirichletLabelBasedSampler
+
+
+class CifarClient(BasicClient):
+    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=1.0)
+        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size, sampler=sampler)
+        return train_loader, val_loader
+
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
+        return test_loader
+
+    def get_criterion(self, config: Config) -> _Loss:
+        return torch.nn.CrossEntropyLoss()
+
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
+
+    def get_model(self, config: Config) -> nn.Module:
+        return ConvNet2(in_channels=3).to(self.device)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="FL Client Main")
+    parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
+    args = parser.parse_args()
+
+    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    data_path = Path(args.dataset_path)
+    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
+    client.shutdown()
