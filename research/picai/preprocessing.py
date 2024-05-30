@@ -32,12 +32,12 @@ class PreprocessingSettings:
             size (Optional[Tuple[int, int, int]]): Tuple of 3 int representing size of scan in voxels.
                 In the format of Depth x Height x Width. If None, preprocessed scans and annotations retain
                 their original size.
-            physical_size (Optional[Iterable[float]]): Tuple of 3 float representing actual size in mm.
+            physical_size (Optional[Iterable[float]]): Tuple of 3 float representing actual size of scan in mm.
                 In the format of Depth x Height x Width. If None and size and spacing are not None,
                 physical_size will be inferred.
-            spacing (Optional[Sequence[float]]): Tuple of 3 float representing spacing between voxels in mm/voxel.
-                In the format of Depth x Height x Width. If None, preprocessed scans and annotations
-                retain their original spacing.
+            spacing (Optional[Sequence[float]]): Tuple of 3 float representing spacing between voxels
+                of scan in mm/voxel. In the format of Depth x Height x Width. If None,
+                preprocessed scans and annotations retain their original spacing.
         """
         self.scans_write_dir = scans_write_dir
         self.annotation_write_dir = annotation_write_dir

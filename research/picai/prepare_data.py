@@ -166,12 +166,13 @@ def preprare_data(
         annotation_read_dir (Path): The path to read the annotations from. Should be a flat directory with all
             annotation files.
         scans_write_dir (Path): The path to write the scans to. All scans are written into same directory.
-        annotation_write_dir (Path): The path to write the scans to. All annotations are written into same directory.
+        annotation_write_dir (Path): The path to write the annotations to.
+            All annotations are written into same directory.
         overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
             there is a train and validation file with scan paths, label paths and case labels.
         size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in voxels.
             Triplet of the form: Depth x Height x Width.
-        physica_size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in mm.
+        physical_size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in mm.
             Simply the product of the number of voxels by the spacing along along a particular
             dimension: Triplet of the form: Depth x Height x Width.
         spacing (Optional[Sequence[int]]): Desired spacing of preprocessed scans in in mm/voxel.
