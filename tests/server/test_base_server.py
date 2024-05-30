@@ -155,7 +155,7 @@ def test_unpack_metrics() -> None:
         },
     )
 
-    results: List[Tuple[ClientProxy, EvaluateRes]]  = [(client_proxy, eval_res)]
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
 
     val_results, test_results = fl_server._unpack_metrics(results)
     print("val_results, test_results", val_results, test_results)
