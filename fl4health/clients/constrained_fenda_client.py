@@ -9,10 +9,10 @@ from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.losses.fenda_loss_config import ConstrainedFendaLossConfig
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.utils.fenda_loss_config import ConstrainedFendaLossConfig
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 

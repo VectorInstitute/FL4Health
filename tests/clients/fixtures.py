@@ -19,6 +19,12 @@ from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
+from fl4health.losses.fenda_loss_config import (
+    ConstrainedFendaLossConfig,
+    ContrastiveLossConfig,
+    CosSimLossConfig,
+    PerFclLossConfig,
+)
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule
@@ -27,12 +33,6 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
-from fl4health.utils.fenda_loss_config import (
-    ConstrainedFendaLossConfig,
-    ContrastiveLossConfig,
-    CosSimLossConfig,
-    PerFclLossConfig,
-)
 from fl4health.utils.metrics import Accuracy
 
 
