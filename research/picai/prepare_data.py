@@ -150,8 +150,8 @@ def preprare_data(
     annotation_write_dir: Path,
     overview_write_dir: Path,
     size: Optional[Tuple[int, int, int]] = None,
-    physical_size: Optional[Tuple[int, int, int]] = None,
-    spacing: Optional[Tuple[int, int, int]] = None,
+    physical_size: Optional[Tuple[float, float, float]] = None,
+    spacing: Optional[Tuple[float, float, float]] = None,
     scan_extension: str = "mha",
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
@@ -170,12 +170,12 @@ def preprare_data(
             All annotations are written into same directory.
         overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
             there is a train and validation file with scan paths, label paths and case labels.
-        size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in voxels.
+        size (Optional[Tuple[int, int, int]]): Desired dimensions of preprocessed scans in voxels.
             Triplet of the form: Depth x Height x Width.
-        physical_size (Optional[Sequence[int]]): Desired dimensions of preprocessed scans in mm.
-            Simply the product of the number of voxels by the spacing along along a particular
+        physical_size (Optional[Tuple[float, float, float]]): Desired dimensions of preprocessed scans in mm.
+            Simply the product of the number of voxels by the spacing along a particular
             dimension: Triplet of the form: Depth x Height x Width.
-        spacing (Optional[Sequence[int]]): Desired spacing of preprocessed scans in in mm/voxel.
+        spacing (Optional[Tuple[float, float, float]]): Desired spacing of preprocessed scans in in mm/voxel.
             Triplet of the form: Depth x Height x Width.
         scan_extension (str): The expected extension of scan file paths.
         annotation_extension (str): The expected extension of annotation file paths.

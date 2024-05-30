@@ -16,7 +16,7 @@ pip install --upgrade pip poetry
 poetry install --with "picai"
 ```
 
-This will setup an environment with the proper dependencies to run the provided scripts out of the box. For more information about environment configuration, please refer to the [main documentation](/README.md).
+This will setup an environment with the proper dependencies to run the provided scripts out of the box. For more information about environment configuration, please refer to the [documentation](/CONTRIBUTING.md).
 
 ## Data
 ### Raw Dataset
@@ -105,8 +105,8 @@ The arguments are defined accordingly:
 - **scans_write_dir**: Base directory to write all preprocessed scans.
 - **annotations_write_dir**: Base directory to write all preprocessed annotations.
 - **overview_write_dir**: Base directory to write all dataset overviews (more details below).
-- **size**: Desired dimensions of preprocessed scans in voxels/pixels. Triplet of the form: Depth x Height x Weight.
-- **spacing**: Desired voxel spacing of preprocessed scans in mm/voxel. Triplet of the form: Depth x Height x Weight.
+- **size**: Desired dimensions of preprocessed scans in voxels/pixels. Triplet of the form: Depth x Height x Width.
+- **spacing**: Desired voxel spacing of preprocessed scans in mm/voxel. Triplet of the form: Depth x Height x Width.
 - **num_threads**: The number of threads to use during data preprocessing. Defaults to 4.
 - **splits_path**: Optional path to the desired splits. Defaults to official picai splits.
 

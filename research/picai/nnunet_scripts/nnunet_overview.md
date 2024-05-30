@@ -2,7 +2,7 @@
 [nnUNet](https://github.com/MIC-DKFZ/nnUNet) is an experiment configuration pipeline that automatically configures a segmentation model and associated training procedure based on the characteristics of a given medical dataset and available compute. Empirically, nnUNet demonstrates strong performance on a wide range of medical segmentation tasks across modalities such as MRI, CT and others. This document serves as a brief introduction to nnUNet as it relates to FL4Health and the PICAI dataset. For more information about nnUNEt, check out the extensive [documentation](https://github.com/MIC-DKFZ/nnUNet/tree/master/documentation).
 
 ### Setting Environment Variables
-nnUNet expects that three environmental variables have been set with their corresponding paths: `nnUNet_raw`, `nnUNet_preprocessed` and `nnUNet_results`. These paths must be set beforee a user can run any of the scripts. On the Vector cluster, these paths are as follows:
+nnUNet expects that three environmental variables have been set with their corresponding paths: `nnUNet_raw`, `nnUNet_preprocessed` and `nnUNet_results`. These paths must be set before a user can run any of the scripts. On the Vector cluster, these paths are as follows:
 ```
 nnUNet_raw="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw"
 nnUNet_preprocessed="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_preprocessed"

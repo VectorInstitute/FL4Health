@@ -18,7 +18,7 @@ def resample_img(
 
     Args:
         image (sitk.Image): Image to be resized.
-        spacing (Tupe[float, float, float]): Target spacing between voxels in mm.
+        spacing (Tuple[float, float, float]): Target spacing between voxels in mm.
             Expected to be in Depth x Height x Width format.
         size (Tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.

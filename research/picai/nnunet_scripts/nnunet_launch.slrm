@@ -42,7 +42,7 @@ BASE_DIR="$nnUNet_results/${DATASET_NAME}/nnUNetTrainer__${PLANS_IDENTIFIER}__${
 get_nnunet_train_args() {
 	# $1 Refers to the first argument of this function and not first argument of script
 	local checkpoint_bool=$1
-	arg_list = ( $DATASET_NAME $UNET_CONFIG $FOLD $PLANS_IDENTIFIER)
+	arg_list = ( $DATASET_NAME $UNET_CONFIG $FOLD $PLANS_IDENTIFIER )
 
 	if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
 		arg_list += ${PRETRAINED_WEIGHTS}
