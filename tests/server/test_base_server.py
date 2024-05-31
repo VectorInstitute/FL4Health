@@ -19,16 +19,11 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
 model = LinearTransform()
-
-
-def metrics_aggregation(to_aggregate: List[Tuple[int, Metrics]]) -> Metrics:
-    # Select last set of metrics (dummy for test)
-    return to_aggregate[-1][1]
-
 
 class DummyFLServer(FlServer):
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
@@ -139,7 +134,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
 
 def test_unpack_metrics() -> None:
     # Initialize the server with BasicFedAvg strategy
-    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
+    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
 
     client_proxy = CustomClientProxy("1")
@@ -172,11 +167,11 @@ def test_unpack_metrics() -> None:
 
 def test_handle_result_aggregation() -> None:
     # Initialize the server with BasicFedAvg strategy
-    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=metrics_aggregation)
+    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
     fl_server = FlServer(client_manager=Mock(), strategy=strategy)
 
-    client_proxy = CustomClientProxy("1")
-    eval_res = EvaluateRes(
+    client_proxy1 = CustomClientProxy("1")
+    eval_res1 = EvaluateRes(
         status=Status(Code.OK, "Success"),
         loss=1.0,
         num_examples=10,
@@ -187,7 +182,20 @@ def test_handle_result_aggregation() -> None:
             f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
         },
     )
-    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
+    client_proxy2 = CustomClientProxy("2")
+    eval_res2 = EvaluateRes(
+        status=Status(Code.OK, "Success"),
+        loss=2.0,
+        num_examples=20,
+        metrics={
+            "val - prediction - accuracy": 0.8,
+            TEST_LOSS_KEY: 1.6,
+            TEST_NUM_EXAMPLES_KEY: 10,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.75,
+        },
+    )
+    
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy1, eval_res1), (client_proxy2, eval_res2)]
     failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
     server_round = 1
@@ -195,14 +203,13 @@ def test_handle_result_aggregation() -> None:
 
     # Check the aggregated validation metrics
     assert "val - prediction - accuracy" in val_metrics_aggregated
-    assert val_metrics_aggregated["val - prediction - accuracy"] == 0.9
+    assert val_metrics_aggregated["val - prediction - accuracy"] == pytest.approx(0.8333, rel=1e-3)
 
     # Check the aggregated test metrics
     assert f"{TestMetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3) 
     assert f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == 0.8
-
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(1.333, rel=1e-3)
 
 @patch("fl4health.server.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
