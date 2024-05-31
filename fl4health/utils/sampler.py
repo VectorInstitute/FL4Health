@@ -1,9 +1,11 @@
 import math
+from logging import INFO
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Set, TypeVar
 
 import numpy as np
 import torch
+from flwr.common.logger import log
 
 from fl4health.utils.dataset import BaseDataset, DictionaryDataset
 
@@ -124,6 +126,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         super().__init__(unique_labels)
         self.hash_key = hash_key
         if self.hash_key is not None:
+            log(INFO, f"Setting seed to {self.hash_key} for Numpy Generator")
             np_generator = np.random.default_rng(self.hash_key)
             self.probabilities = np_generator.dirichlet(np.repeat(beta, self.num_classes))
         else:
@@ -143,6 +146,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         torch_generator = None
         if self.hash_key is not None:
+            log(INFO, f"Setting seed to {self.hash_key} for Torch Generator")
             torch_generator = torch.Generator()
             torch_generator.manual_seed(self.hash_key)
 
