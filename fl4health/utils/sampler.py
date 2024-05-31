@@ -54,7 +54,7 @@ class IndexLabelBasedSampler(LabelBasedSampler):
 
     def __init__(self, unique_labels: List[T], selected_indices: List[int]) -> None:
         super().__init__(unique_labels)
-        self.selected_indices = torch.Tensor(selected_indices)
+        self.selected_indices = torch.Tensor(selected_indices).long()
 
     def subsample(self, dataset: D) -> D:
         return self.select_by_indices(dataset, self.selected_indices)
@@ -131,6 +131,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
             self.probabilities = np_generator.dirichlet(np.repeat(beta, self.num_classes))
         else:
             self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
+        log(INFO, f"Setting probabilities to {self.probabilities}")
         self.sample_percentage = sample_percentage
 
     def subsample(self, dataset: D) -> D:
