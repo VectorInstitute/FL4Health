@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.load_data import load_cifar10_data
+from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -33,6 +33,7 @@ class CifarFedAvgClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
+        seed: int,
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
@@ -45,20 +46,30 @@ class CifarFedAvgClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        self.heterogeneity_level = heterogeneity_level
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
+        self.sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / self.client_number,
+            beta=heterogeneity_level,
+            hash_key=10 * seed + client_number,
+        )
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(
-            list(range(10)), sample_percentage=1.0 / self.client_number, beta=self.heterogeneity_level
+
+        train_loader, val_loader, _ = load_cifar10_data(
+            self.data_path, batch_size, validation_portion=0.2, sampler=self.sampler
         )
-        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
+
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=self.sampler)
+        return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
@@ -117,13 +128,6 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--mu",
-        action="store",
-        type=float,
-        help="Weight for the contrastive loss",
-        required=False,
-    )
-    parser.add_argument(
         "--beta",
         action="store",
         type=float,
@@ -138,7 +142,7 @@ if __name__ == "__main__":
     log(INFO, f"Learning Rate: {args.learning_rate}")
 
     # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed + args.client_number)
+    set_all_random_seeds(args.seed)
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
@@ -150,6 +154,7 @@ if __name__ == "__main__":
         metrics=[Accuracy("accuracy")],
         device=DEVICE,
         client_number=args.client_number,
+        seed=args.seed,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
         checkpointer=checkpointer,

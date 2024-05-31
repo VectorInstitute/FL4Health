@@ -1,3 +1,4 @@
+import random
 from logging import INFO
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple, Union
@@ -8,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.utils.dataset import BaseDataset, Cifar10Dataset, MnistDataset
 from fl4health.utils.dataset_converter import DatasetConverter
-from fl4health.utils.sampler import LabelBasedSampler
+from fl4health.utils.sampler import IndexLabelBasedSampler, LabelBasedSampler
 
 
 def load_mnist_data(
@@ -68,7 +69,7 @@ def load_cifar10_test_data(
 
 
 def load_cifar10_data(
-    data_dir: Path, batch_size: int, sampler: Optional[LabelBasedSampler] = None
+    data_dir: Path, batch_size: int, validation_portion: float = 0, sampler: Optional[LabelBasedSampler] = None
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load CIFAR-10 (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -78,8 +79,24 @@ def load_cifar10_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
+
     training_set: BaseDataset = Cifar10Dataset(data_dir, train=True, transform=transform)
-    validation_set: BaseDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
+    validation_set: BaseDataset
+    if validation_portion == 0:
+        validation_set = Cifar10Dataset(data_dir, train=False, transform=transform)
+    else:
+        validation_set = Cifar10Dataset(data_dir, train=True, transform=transform)
+        dataset_size = len(training_set)
+        validation_size = int(validation_portion * dataset_size)
+        dataset_indexes = list(range(dataset_size))
+        random.shuffle(dataset_indexes)
+
+        training_set = IndexLabelBasedSampler(list(range(10)), dataset_indexes[validation_size:]).subsample(
+            training_set
+        )
+        validation_set = IndexLabelBasedSampler(list(range(10)), dataset_indexes[:validation_size]).subsample(
+            validation_set
+        )
 
     if sampler is not None:
         training_set = sampler.subsample(training_set)

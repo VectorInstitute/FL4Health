@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Set, TypeVar
+from typing import Any, Dict, List, Optional, Set, TypeVar
 
 import numpy as np
 import torch
@@ -40,6 +40,22 @@ class LabelBasedSampler(ABC):
     @abstractmethod
     def subsample(self, dataset: D) -> D:
         raise NotImplementedError
+
+
+class IndexLabelBasedSampler(LabelBasedSampler):
+    """
+    This class is used to subsample a dataset based on the indices of the samples.
+    In particular, the IndexLabelBasedSampler explicitly selects samples based on the
+    selected_indices args used to construct the object. This is useful when you want to
+    select a specific subset of samples from a dataset for training and validation.
+    """
+
+    def __init__(self, unique_labels: List[T], selected_indices: List[int]) -> None:
+        super().__init__(unique_labels)
+        self.selected_indices = torch.Tensor(selected_indices)
+
+    def subsample(self, dataset: D) -> D:
+        return self.select_by_indices(dataset, self.selected_indices)
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):
@@ -98,9 +114,20 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
     np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
     """
 
-    def __init__(self, unique_labels: List[Any], sample_percentage: float = 0.5, beta: float = 100) -> None:
+    def __init__(
+        self,
+        unique_labels: List[Any],
+        hash_key: Optional[int] = None,
+        sample_percentage: float = 0.5,
+        beta: float = 100,
+    ) -> None:
         super().__init__(unique_labels)
-        self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
+        self.hash_key = hash_key
+        if self.hash_key is not None:
+            np_generator = np.random.default_rng(self.hash_key)
+            self.probabilities = np_generator.dirichlet(np.repeat(beta, self.num_classes))
+        else:
+            self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
         self.sample_percentage = sample_percentage
 
     def subsample(self, dataset: D) -> D:
@@ -114,10 +141,19 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probabilities]
 
+        torch_generator = None
+        if self.hash_key is not None:
+            torch_generator = torch.Generator()
+            torch_generator.manual_seed(self.hash_key)
+
         # For each class sample the given number of samples from the class specific indices
         # torch.multinomial is used to uniformly sample indices the size of given number of samples
         sampled_class_idx_list = [
-            class_idx[torch.multinomial(torch.ones(class_idx.size(0)), num_samples, replacement=True)]
+            class_idx[
+                torch.multinomial(
+                    torch.ones(class_idx.size(0)), num_samples, replacement=True, generator=torch_generator
+                )
+            ]
             for class_idx, num_samples in zip(class_idx_list, num_samples_per_class)
         ]
 
