@@ -31,7 +31,7 @@ def fit_config(
         "batch_size": batch_size,
         "local_epochs": local_epochs,
         "n_server_rounds": n_server_rounds,
-        "n_clients": n_clients,  
+        "n_clients": n_clients,
         "current_server_round": current_server_round,
     }
 

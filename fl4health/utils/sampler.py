@@ -1,6 +1,6 @@
 import math
-from logging import INFO
 from abc import ABC, abstractmethod
+from logging import INFO
 from typing import Any, Dict, List, Optional, Set, TypeVar
 
 import numpy as np

@@ -33,7 +33,6 @@ class CifarFedAvgClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         client_number: int,
-        seed: int,
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
@@ -47,13 +46,11 @@ class CifarFedAvgClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.client_number = client_number
-        self.seed = seed
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -62,7 +59,7 @@ class CifarFedAvgClient(BasicClient):
             list(range(10)),
             sample_percentage=1.0 / n_clients,
             beta=self.heterogeneity_level,
-            hash_key=10 * self.seed + self.client_number,
+            hash_key=self.client_number,
         )
         train_loader, val_loader, _ = load_cifar10_data(
             self.data_path, batch_size, validation_portion=0.2, sampler=sampler
@@ -76,7 +73,7 @@ class CifarFedAvgClient(BasicClient):
             list(range(10)),
             sample_percentage=1.0 / n_clients,
             beta=self.heterogeneity_level,
-            hash_key=10 * self.seed + self.client_number,
+            hash_key=self.client_number,
         )
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
         return test_loader
@@ -164,7 +161,6 @@ if __name__ == "__main__":
         metrics=[Accuracy("accuracy")],
         device=DEVICE,
         client_number=args.client_number,
-        seed=args.seed,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
         checkpointer=checkpointer,
