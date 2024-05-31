@@ -101,7 +101,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
+        help="Path to the preprocessed Cifar 10 Dataset",
         required=True,
     )
     parser.add_argument(
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
+        help="Number of the client for dataset loading",
         required=True,
     )
     parser.add_argument(

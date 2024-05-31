@@ -36,12 +36,14 @@ SWEEP_DIRECTORY="${ARTIFACT_DIR}hp_sweep_results"
 echo "Creating sweep folder at ${SWEEP_DIRECTORY}"
 mkdir ${SWEEP_DIRECTORY}
 
-for LR_VALUE in "${LR_VALUES[@]}"; do
-  for BETA_VALUE in "${BETA_VALUES[@]}";
+for BETA_VALUE in "${BETA_VALUES[@]}"; do
+  echo "Creating folder for beta ${BETA_VALUE}"
+  mkdir "${SWEEP_DIRECTORY}/beta_${BETA_VALUE}"
+  for LR_VALUE in "${LR_VALUES[@]}";
   do
     EXPERIMENT_NAME="lr_${LR_VALUE}_beta_${BETA_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
-    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
+    EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/beta_${BETA_VALUE}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
     mkdir "${EXPERIMENT_DIRECTORY}"
     SERVER_ADDRESS="0.0.0.0:${SERVER_PORT}"
