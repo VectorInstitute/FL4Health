@@ -149,7 +149,7 @@ do
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --heterogeneity_level ${CLIENT_BETA} \
+            --beta ${CLIENT_BETA} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

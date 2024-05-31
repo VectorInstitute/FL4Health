@@ -38,9 +38,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        batch_size=config["batch_size"],
-        local_epochs=config["local_epochs"],
-        n_server_rounds=config["n_server_rounds"],
+        config["batch_size"],
+        config["local_epochs"],
+        config["n_server_rounds"],
     )
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
