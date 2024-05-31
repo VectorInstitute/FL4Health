@@ -39,7 +39,7 @@ mkdir ${SWEEP_DIRECTORY}
 for LR_VALUE in "${LR_VALUES[@]}"; do
   for BETA_VALUE in "${BETA_VALUES[@]}";
   do
-    EXPERIMENT_NAME="lr_${LR_VALUE}_mu_${BETA_VALUE}"
+    EXPERIMENT_NAME="lr_${LR_VALUE}_beta_${BETA_VALUE}"
     echo "Beginning Experiment ${EXPERIMENT_NAME}"
     EXPERIMENT_DIRECTORY="${SWEEP_DIRECTORY}/${EXPERIMENT_NAME}/"
     echo "Creating experiment folder ${EXPERIMENT_DIRECTORY}"
