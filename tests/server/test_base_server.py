@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 import pytest
 import torch
 import torch.nn as nn
-from flwr.common import Code, EvaluateRes, Metrics, Status
+from flwr.common import Code, EvaluateRes, Status
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
