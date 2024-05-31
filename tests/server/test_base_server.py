@@ -18,12 +18,13 @@ from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingCl
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
 model = LinearTransform()
+
 
 class DummyFLServer(FlServer):
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
@@ -194,7 +195,7 @@ def test_handle_result_aggregation() -> None:
             f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.75,
         },
     )
-    
+
     results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy1, eval_res1), (client_proxy2, eval_res2)]
     failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
@@ -207,9 +208,12 @@ def test_handle_result_aggregation() -> None:
 
     # Check the aggregated test metrics
     assert f"{TestMetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3) 
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3)
     assert f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(1.333, rel=1e-3)
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(
+        1.333, rel=1e-3
+    )
+
 
 @patch("fl4health.server.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")

@@ -180,9 +180,7 @@ class FlServer(Server):
             }
 
             if len(test_metrics) > 0:
-                assert (
-                    TEST_LOSS_KEY in test_metrics and TEST_NUM_EXAMPLES_KEY in test_metrics
-                ),(
+                assert TEST_LOSS_KEY in test_metrics and TEST_NUM_EXAMPLES_KEY in test_metrics, (
                     f"'{TEST_NUM_EXAMPLES_KEY}' and '{TEST_LOSS_KEY}' keys must be present in "
                     "test_metrics dictionary for aggregation"
                 )
