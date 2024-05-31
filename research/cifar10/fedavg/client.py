@@ -47,28 +47,38 @@ class CifarFedAvgClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.client_number = client_number
+        self.seed = seed
+        self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
-        self.sampler = DirichletLabelBasedSampler(
-            list(range(10)),
-            sample_percentage=1.0 / self.client_number,
-            beta=heterogeneity_level,
-            hash_key=10 * seed + client_number,
-        )
+
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-
+        n_clients = self.narrow_config_type(config, "n_clients", int)
+        sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / n_clients,
+            beta=self.heterogeneity_level,
+            hash_key=10 * self.seed + self.client_number,
+        )
         train_loader, val_loader, _ = load_cifar10_data(
-            self.data_path, batch_size, validation_portion=0.2, sampler=self.sampler
+            self.data_path, batch_size, validation_portion=0.2, sampler=sampler
         )
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=self.sampler)
+        n_clients = self.narrow_config_type(config, "n_clients", int)
+        sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / n_clients,
+            beta=self.heterogeneity_level,
+            hash_key=10 * self.seed + self.client_number,
+        )
+        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
         return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:

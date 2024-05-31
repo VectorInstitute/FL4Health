@@ -24,12 +24,14 @@ def fit_config(
     batch_size: int,
     local_epochs: int,
     n_server_rounds: int,
+    n_clients: int,
     current_server_round: int,
 ) -> Config:
     return {
         "batch_size": batch_size,
         "local_epochs": local_epochs,
         "n_server_rounds": n_server_rounds,
+        "n_clients": n_clients,  
         "current_server_round": current_server_round,
     }
 
@@ -41,6 +43,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["batch_size"],
         config["local_epochs"],
         config["n_server_rounds"],
+        config["n_clients"],
     )
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
