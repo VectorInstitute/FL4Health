@@ -27,8 +27,8 @@ def fit_config(
     current_server_round: int,
 ) -> Config:
     return {
-        "local_epochs": local_epochs,
         "batch_size": batch_size,
+        "local_epochs": local_epochs,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_server_round,
     }
@@ -38,7 +38,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
-        config["batch_size"],
+        batch_size=config["batch_size"],
         local_epochs=config["local_epochs"],
         n_server_rounds=config["n_server_rounds"],
     )
