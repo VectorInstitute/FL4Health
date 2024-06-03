@@ -1,0 +1,50 @@
+#!/bin/bash
+
+#SBATCH --gres=gpu:0
+#SBATCH --mem=32G
+#SBATCH --partition=cpu
+#SBATCH --qos=normal
+#SBATCH --job-name=nnunet_picai_fold_experiment
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+
+# Process Inputs
+DATASET_NAME=$1
+UNET_CONFIG=$2
+VENV_PATH=$3
+PLANS_IDENTIFIER=${4:-'plans'}
+PRETAINED_WEIGHTS=${5:-''} # Default value of empty string
+SOURCE_DATASET_NAME=${6:-''} # Default value of empty string
+SOURCE_PLANS_IDENTIFIER=${7:-'plans'} # Default value of plans string
+
+# Setup before running training
+source ${VENV_PATH}bin/activate
+
+# Extract dataset fingerprint, configure training pipeline (plan) and run preprocessing on all fold
+if [ "${PRETRAINED_WEIGHTS}" -neq '' ] && [ "${SOURCE_DATASET_NAME}" -neq '' ]; then
+	echo "Planning experiments and preprocessing data for finetuning experiments"
+	nnUNetv2_move_plans_between_datasets \
+		-s ${SOURCE_DATASET_NAME} \
+		-t ${DATASET_NAME} \
+		-sp ${SOURCE_PLANS_IDENTIFIER} \
+		-tp ${PLANS_IDENTIFIER} \
+
+	nnUNetv2_preprocess -d ${DATASET_NAME} -plans_name ${SOURCE_PLANS_IDENTIFIER}
+else
+	nnUNetv2_plan_and_preprocess -d $DATASET_NAME --verify_dataset_intergrity
+fi
+
+FOLDS = ( "fold_0" "fold_1" "fold_2" "fold_3" "fold_4" )
+for FOLD in "${FOLDS[@]}";
+do
+    SBATCH_COMMAND="research/picai/nnunet_scripts/nnunet_launch.slrm \
+      ${DATASET_NAME} \
+      ${UNET_CONFIG} \
+      ${FOLD} \
+      ${VENV_PATH} \
+      ${PLANS_IDENTIFIER} \
+      ${PRETRAINED_WEIGHTS}"
+
+    echo "Running sbatch command ${SBATCH_COMMAND}"
+    sbatch ${SBATCH_COMMAND}
+done
