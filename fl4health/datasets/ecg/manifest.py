@@ -5,24 +5,6 @@ import random
 
 import scipy.io
 
-"""
-    Usage: python path/to/manifest.py \
-            /path/to/signals \
-            --subset $subsets \
-            --combine_subsets $combine_subsets \
-            --dest /path/to/manifest \
-            --ext $ext \
-            --valid-percent $valid
-
-
-python manifest.py \
-    /home/edlab/sjyang/ecg_preprocessed_data \
-    --subset "CPSC2018, CPSC2018_2"
-    --combine_subsets "CPSC2018, CPSC2018_2" \
-    --dest /home/edlab/sjyang/federated_ecg_manifest \
-    --valid-percent 0.1
-"""
-
 
 def get_parser():
     parser = argparse.ArgumentParser()

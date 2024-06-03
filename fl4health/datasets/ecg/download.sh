@@ -2,7 +2,7 @@
 
 # Define a variable to control the behavior (set to "true" to skip existing directories)
 SKIP_EXISTING=true
-data_path="fl4health/utils/datasets"
+data_path="fl4health/datasets/ecg"
 
 # Create the target directory if it doesn't exist
 mkdir -p "$data_path"
@@ -66,7 +66,7 @@ done
 echo "adjusted the .hea files for WFDB_Ga to align with the rest"
 
 Run the Python preprocessing script
-python fl4health/utils/datasets/preprocess_physionet2021.py \
+python fl4health/datasets/ecg/preprocess_physionet2021.py \
     "$data_path" \
     --meta-dir "$data_path" \
     --dest "${data_path}/ecg_preprocessed_data" \
@@ -76,35 +76,35 @@ python fl4health/utils/datasets/preprocess_physionet2021.py \
 
 mkdir ${data_path}/ecg_manifest
 
-python fl4health/utils/datasets/manifest.py \
+python fl4health/datasets/ecg/manifest.py \
     "${data_path}/ecg_preprocessed_data" \
     --subset "ChapmanShaoxing" \
     --combine_subsets "ChapmanShaoxing" \
     --dest "${data_path}/ecg_manifest/ChapmanShaoxing" \
     --valid-percent 0.1
 
-python fl4health/utils/datasets/manifest.py \
+python fl4health/datasets/ecg/manifest.py \
     "${data_path}/ecg_preprocessed_data" \
     --subset "CPSC2018, CPSC2018_2" \
     --combine_subsets "CPSC2018, CPSC2018_2" \
     --dest "${data_path}/ecg_manifest/CPSC2018" \
     --valid-percent 0.1
 
-python fl4health/utils/datasets/manifest.py \
+python fl4health/datasets/ecg/manifest.py \
     "${data_path}/ecg_preprocessed_data" \
     --subset "Ga" \
     --combine_subsets "Ga" \
     --dest "${data_path}/ecg_manifest/Ga" \
     --valid-percent 0.1
 
-python fl4health/utils/datasets/manifest.py \
+python fl4health/datasets/ecg/manifest.py \
     "${data_path}/ecg_preprocessed_data" \
     --subset "Ningbo" \
     --combine_subsets "Ningbo" \
     --dest "${data_path}/ecg_manifest/Ningbo" \
     --valid-percent 0.1
 
-python fl4health/utils/datasets/manifest.py \
+python fl4health/datasets/ecg/manifest.py \
     "${data_path}/ecg_preprocessed_data" \
     --subset "PTBXL" \
     --combine_subsets "PTBXL" \
@@ -114,7 +114,7 @@ python fl4health/utils/datasets/manifest.py \
 # Define the target directory
 REPO_URL="https://github.com/wns823/medical_federated"
 REPO_BRANCH="main"
-TARGET_DIR="fl4health/utils/datasets/fairseq_signals"
+TARGET_DIR="fl4health/datasets/ecg/fairseq_signals"
 EXTRACT_PATH="medical_federated-main/ecg_federated/fairseq_signals"
 
 # Check if the target directory exists

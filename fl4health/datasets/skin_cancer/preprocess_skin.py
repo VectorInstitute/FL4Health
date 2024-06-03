@@ -5,7 +5,7 @@ import pandas as pd
 
 if __name__ == "__main__":
 
-    data_path = "fl4health/utils/datasets"
+    data_path = "fl4health/datasets/skin_cancer"
 
     # Load GT file of ISIC-19
     ISIC_2019_path = f"{data_path}/ISIC_2019"

@@ -150,10 +150,11 @@ settings.json
 **/datasets/skin_cancer/PAD-UFES-20**
 **/datasets/skin_cancer/ISIC_2019**
 **/datasets/skin_cancer/Derm7pt**
-**/datasets/release_v0**
-**/datasets/WFDB**
-**/datasets/ecg**
-**/datasets/fairseq_signals**
+**/datasets/skin_cancer/release_v0**
+**/datasets/ecg/WFDB**
+**/datasets/ecg/ecg**
+**/datasets/ecg/fairseq_signals**
+**/datasets/ehr/eicu**
 
 # logs
 
