@@ -38,22 +38,27 @@ class PerFclLoss(nn.Module):
                 (saved at the start of client-side training) as negative pairs.
         Args:
             local_features (torch.Tensor): Features produced by the local feature extractor of the model during the
-                client-side training. Denoted as z_p in the original paper. Shape (n_samples, n_features)
+                client-side training. Denoted as z_p in the original paper. Shape (batch_size, n_features)
             old_local_features (torch.Tensor): Features produced by the FINAL local feature extractor of the model
                 from the PREVIOUS server round. Denoted as hat{z}_p in the original paper.
-                Shape (1, n_samples, n_features)
+                Shape (batch_size, n_features)
             global_features (torch.Tensor): Features produced by the global feature extractor of the model during the
-                client-side training. Denoted as z_s in the original paper. Shape (n_samples, n_features)
+                client-side training. Denoted as z_s in the original paper. Shape (batch_size, n_features)
             old_global_features (torch.Tensor): Features produced by the FINAL global feature extractor of the model
                 from the PREVIOUS server round. Denoted as hat{z}_s in the original paper.
-                Shape (n_pairs, n_samples, n_features)
+                Shape (batch_size, n_features)
             initial_global_features (torch.Tensor): Features produced by the INITIAL global feature extractor of the
                 model at the start of client-side training. This feature extractor is the AGGREGATED weights across
-                clients. Shape (1, n_samples, n_features)
+                clients. Shape (batch_size, n_features)
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: Tuple containing the two components of the PerFCL loss function to
                 be weighted and summed.
         """
+        # The more general contrastive loss function requires 3D tensors, where the first dimension is potentially
+        # greater than 1. For the PerFCL loss, this will always just be 1.
+        old_local_features = old_local_features.unsqueeze(0)
+        old_global_features = old_global_features.unsqueeze(0)
+        initial_global_features = initial_global_features.unsqueeze(0)
 
         global_feature_loss = self.global_feature_contrastive_loss(
             features=global_features,  # (z_s)
