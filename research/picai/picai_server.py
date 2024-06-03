@@ -49,7 +49,7 @@ class PicaiServer(FlServerWithCheckpointing):
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
-            intermediate_checkpoint_dir (Path): A directory to store and loach checkpoints from for the server
+            intermediate_checkpoint_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
         """
         assert wandb_reporter is None
@@ -65,7 +65,7 @@ class PicaiServer(FlServerWithCheckpointing):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         """
-        Overrides method in parent class to call custom fit_with_per_round_checkpointing that is resilitent
+        Overrides method in parent class to call custom fit_with_per_round_checkpointing that is resilient
         against pre-emptions.
 
         Args:
