@@ -1,4 +1,4 @@
-from logging import INFO
+from logging import WARNING
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
@@ -57,7 +57,7 @@ class ConstrainedFendaClient(BasicClient):
         else:
             # If no loss configuration has been define, set everything to zero. This is equivalent to vanilla FENDA
             log(
-                INFO,
+                WARNING,
                 "No loss configuration provided, defaulting to an empty configuration. "
                 "This is equivalent to running a vanilla FENDA client",
             )
@@ -192,39 +192,32 @@ class ConstrainedFendaClient(BasicClient):
         additional_losses = {"loss": loss}
 
         if self.loss_configuration.has_cos_sim_loss():
-            cos_sim_config = self.loss_configuration.cos_sim_loss_config
-            assert cos_sim_config is not None
-            cos_sim_loss = cos_sim_config.cos_sim_loss_function(
+            cos_sim_loss = self.loss_configuration.compute_cosine_similarity_loss(
                 features["local_features"], features["global_features"]
             )
-            total_loss += cos_sim_config.cos_sim_loss_weight * cos_sim_loss
+            total_loss += cos_sim_loss
             additional_losses["cos_sim_loss"] = cos_sim_loss
 
         if self.loss_configuration.has_contrastive_loss() and "old_local_features" in features:
-            contrastive_loss_config = self.loss_configuration.contrastive_loss_config
-            assert contrastive_loss_config is not None
-            contrastive_loss = contrastive_loss_config.contrastive_loss_function(
+            contrastive_loss = self.loss_configuration.compute_contrastive_loss(
                 features["local_features"],
                 features["old_local_features"].unsqueeze(0),
                 features["global_features"].unsqueeze(0),
             )
-            total_loss += contrastive_loss_config.contrastive_loss_weight * contrastive_loss
+            total_loss += contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
 
         if self.loss_configuration.has_perfcl_loss() and self._perfcl_keys_present(features):
-            perfcl_loss_config = self.loss_configuration.perfcl_loss_config
-            assert perfcl_loss_config is not None
-            global_feature_contrastive_loss, local_feature_contrastive_loss = perfcl_loss_config.perfcl_loss_function(
-                features["local_features"],
-                features["old_local_features"].unsqueeze(0),
-                features["global_features"],
-                features["old_global_features"].unsqueeze(0),
-                features["initial_global_features"].unsqueeze(0),
+            global_feature_contrastive_loss, local_feature_contrastive_loss = (
+                self.loss_configuration.compute_perfcl_loss(
+                    features["local_features"],
+                    features["old_local_features"],
+                    features["global_features"],
+                    features["old_global_features"],
+                    features["initial_global_features"],
+                )
             )
-            total_loss += (
-                perfcl_loss_config.global_feature_contrastive_loss_weight * global_feature_contrastive_loss
-                + perfcl_loss_config.local_feature_contrastive_loss_weight * local_feature_contrastive_loss
-            )
+            total_loss += global_feature_contrastive_loss + local_feature_contrastive_loss
             additional_losses["global_feature_contrastive_loss"] = global_feature_contrastive_loss
             additional_losses["local_feature_contrastive_loss"] = local_feature_contrastive_loss
 
