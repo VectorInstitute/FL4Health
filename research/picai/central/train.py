@@ -16,13 +16,10 @@ def main() -> None:
 
     # Data related arguments
     parser.add_argument(
-        "--base_dir", type=str, default="/ssd003/projects/aieng/public/PICAI/", help="Path to PICAI dataset"
-    )
-    parser.add_argument(
         "--overviews_dir",
         type=str,
-        default="/ssd003/projects/aieng/public/PICAI/workdir/results/UNet/overviews/Task2203_picai_baseline/",
-        help="Base path to training/validation data sheets",
+        default="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw/Dataset003_PICAI/overviews/",
+        help="Base path to training/validation data overviews",
     )
     parser.add_argument("--fold", type=int, required=True, help="Which fold to perform experiment")
     parser.add_argument("--run_name", type=str, required=True, help="String used to name run")
@@ -32,25 +29,36 @@ def main() -> None:
     parser.add_argument("--num_classes", type=int, default=2, help="Number of classes at train-time")
 
     # training hyperparameters
-    parser.add_argument("--num_epochs", type=int, default=5, help="Number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--checkpoint_dir", type=str, required=True, help="Path to save model checkpoints")
-    parser.add_argument("--batch_size", type=int, default=8, help="Mini-batch size")
+    parser.add_argument("--batch_size", type=int, default=4, help="Mini-batch size")
+
+    # Dataloading arguments
+    parser.add_argument("--num_workers", type=int, default=4, help="Number of workers to use in dataloader")
 
     args = parser.parse_args()
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     # Initialize dataloaders, model, loss and optimizer to creater trainer
     train_img_paths, train_seg_paths, train_class_proportions = get_img_and_seg_paths(
-        args.overviews_dir, args.base_dir, fold_id=args.fold, train=True
+        args.overviews_dir, fold_id=args.fold, train=True
     )
     train_loader = get_dataloader(
-        train_img_paths, train_seg_paths, args.batch_size, get_img_transform(), get_seg_transform(), num_workers=1
+        train_img_paths,
+        train_seg_paths,
+        args.batch_size,
+        get_img_transform(),
+        get_seg_transform(),
+        num_workers=args.num_workers,
     )
-    val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(
-        args.overviews_dir, args.base_dir, fold_id=args.fold, train=False
-    )
+    val_img_paths, val_seg_paths, _ = get_img_and_seg_paths(args.overviews_dir, fold_id=args.fold, train=False)
     val_loader = get_dataloader(
-        val_img_paths, val_seg_paths, args.batch_size, get_img_transform(), get_seg_transform(), num_workers=1
+        val_img_paths,
+        val_seg_paths,
+        args.batch_size,
+        get_img_transform(),
+        get_seg_transform(),
+        num_workers=args.num_workers,
     )
 
     model = get_model(device=device, spatial_dims=3, in_channels=args.num_channels, out_channels=args.num_classes)
