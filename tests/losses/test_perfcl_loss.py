@@ -17,10 +17,10 @@ def test_computing_loss() -> None:
 
     global_feature_loss, local_feature_loss = perfcl_loss_function(
         local_features,
-        old_local_features.unsqueeze(0),
+        old_local_features,
         global_features,
-        old_global_features.unsqueeze(0),
-        initial_global_features.unsqueeze(0),
+        old_global_features,
+        initial_global_features,
     )
 
     assert pytest.approx(0.126928046, abs=0.00001) == global_feature_loss.item()
@@ -38,10 +38,10 @@ def test_perfcl_loss() -> None:
 
     global_feature_loss, _ = perfcl_loss_function(
         local_features.reshape(len(local_features), -1),
-        old_local_features.reshape(len(old_local_features), -1).unsqueeze(0),
+        old_local_features.reshape(len(old_local_features), -1),
         global_features.reshape(len(global_features), -1),
-        old_global_features.reshape(len(old_global_features), -1).unsqueeze(0),
-        initial_global_features.reshape(len(initial_global_features), -1).unsqueeze(0),
+        old_global_features.reshape(len(old_global_features), -1),
+        initial_global_features.reshape(len(initial_global_features), -1),
     )
 
     assert pytest.approx(0.837868, abs=0.0001) == global_feature_loss

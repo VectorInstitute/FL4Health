@@ -273,6 +273,7 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
     if args.size is not None and len(args.size) != 3:
         raise ValueError("Argument size must have length 3")
     size = (int(args.size(0)), int(args.size(1)), int(args.size(2))) if args.size else None

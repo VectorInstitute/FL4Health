@@ -32,9 +32,9 @@ class ContrastiveLoss(nn.Module):
         between the feature and its positive pair.
 
         Args:
-            features (torch.Tensor): Main features, shape (n_samples, n_features)
-            positive_pairs (torch.Tensor): Positive pair of main features, shape (1, n_samples, n_features)
-            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, n_samples, n_features)
+            features (torch.Tensor): Main features, shape (batch_size, n_features)
+            positive_pairs (torch.Tensor): Positive pair of main features, shape (1, batch_size, n_features)
+            negative_pairs (torch.Tensor): Negative pairs of main features, shape (n_pairs, batch_size, n_features)
 
         Returns:
             torch.Tensor: Contrastive loss value
@@ -47,8 +47,8 @@ class ContrastiveLoss(nn.Module):
 
         if len(positive_pairs) != 1:
             raise AssertionError(
-                "Each feature can have one positive pair. ",
-                "Thus positive pairs should be a tensor of shape (1, n_samples, n_features) ",
+                "Each feature can have only one positive pair. ",
+                "Thus positive pairs should be a tensor of shape (1, batch_size, n_features) ",
                 f"rather than {positive_pairs.shape}",
             )
         positive_pair = positive_pairs[0]
