@@ -213,10 +213,10 @@ class PerFclClient(BasicClient):
         total_loss = loss.clone()
         global_feature_contrastive_loss, local_feature_contrastive_loss = self.perfcl_loss_function(
             features["local_features"],
-            features["old_local_features"].unsqueeze(0),
+            features["old_local_features"],
             features["global_features"],
-            features["old_global_features"].unsqueeze(0),
-            features["initial_global_features"].unsqueeze(0),
+            features["old_global_features"],
+            features["initial_global_features"],
         )
 
         total_loss += (
