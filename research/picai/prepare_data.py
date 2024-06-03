@@ -275,12 +275,20 @@ def main() -> None:
     args = parser.parse_args()
     if args.size is not None and len(args.size) != 3:
         raise ValueError("Argument size must have length 3")
+    size = (int(args.size(0)), int(args.size(1)), int(args.size(2))) if args.size else None
 
-    if args.physical_size is not None and len(args.physical_size) != 3:
-        raise ValueError("Argument physical_size must have length 3")
+    if args.physical_size is not None:
+        if len(args.physical_size) != 3:
+            raise ValueError("Argument physical_size must have length 3")
+    physical_size = (
+        (float(args.physical_size(0)), float(args.physical_size(1)), float(args.physical_size(2)))
+        if args.physical_size
+        else None
+    )
 
     if args.spacing is not None and len(args.spacing) != 3:
         raise ValueError("Argument spacing must have length 3")
+    spacing = (float(args.spacing(0)), float(args.spacing(1)), float(args.spacing(2))) if args.spacing else None
 
     preprare_data(
         args.scans_read_dir,
@@ -288,9 +296,9 @@ def main() -> None:
         args.scans_write_dir,
         args.annotation_write_dir,
         args.overview_write_dir,
-        tuple(args.size) if args.size is not None else None,
-        tuple(args.physical_size) if args.physical_size is not None else None,
-        tuple(args.spacing) if args.spacing is not None else None,
+        size,
+        physical_size,
+        spacing,
         args.scan_extension,
         args.annotation_extension,
         args.num_threads,
