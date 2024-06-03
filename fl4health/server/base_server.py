@@ -1,15 +1,16 @@
 import datetime
-from logging import INFO, WARNING
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar
+from logging import DEBUG, INFO, WARNING
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 import torch.nn as nn
-from flwr.common import Parameters
+from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
+from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
-from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server
+from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
@@ -18,6 +19,7 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
 
 
 class FlServer(Server):
@@ -163,6 +165,108 @@ class FlServer(Server):
 
         return sample_counts
 
+    def _unpack_metrics(
+        self, results: List[Tuple[ClientProxy, EvaluateRes]]
+    ) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+        val_results = []
+        test_results = []
+
+        for client_proxy, eval_res in results:
+            val_metrics = {
+                k: v for k, v in eval_res.metrics.items() if not k.startswith(TestMetricPrefix.TEST_PREFIX.value)
+            }
+            test_metrics = {
+                k: v for k, v in eval_res.metrics.items() if k.startswith(TestMetricPrefix.TEST_PREFIX.value)
+            }
+
+            if len(test_metrics) > 0:
+                assert TEST_LOSS_KEY in test_metrics and TEST_NUM_EXAMPLES_KEY in test_metrics, (
+                    f"'{TEST_NUM_EXAMPLES_KEY}' and '{TEST_LOSS_KEY}' keys must be present in "
+                    "test_metrics dictionary for aggregation"
+                )
+                # Remove loss and num_examples from test_metrics if they exist
+                test_loss = float(test_metrics.pop(TEST_LOSS_KEY))
+                test_num_examples = int(test_metrics.pop(TEST_NUM_EXAMPLES_KEY))
+                test_eval_res = EvaluateRes(eval_res.status, test_loss, test_num_examples, test_metrics)
+                test_results.append((client_proxy, test_eval_res))
+
+            val_eval_res = EvaluateRes(eval_res.status, eval_res.loss, eval_res.num_examples, val_metrics)
+            val_results.append((client_proxy, val_eval_res))
+
+        return val_results, test_results
+
+    def _handle_result_aggregation(
+        self,
+        server_round: int,
+        results: List[Tuple[ClientProxy, EvaluateRes]],
+        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
+    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+        val_results, test_results = self._unpack_metrics(results)
+
+        # Aggregate the validation results
+        val_aggregated_result: Tuple[
+            Optional[float],
+            Dict[str, Scalar],
+        ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
+        val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
+
+        # Aggregate the test results if they are present
+        if len(test_results) > 0:
+            test_aggregated_result: Tuple[
+                Optional[float],
+                Dict[str, Scalar],
+            ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
+            test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
+
+            for key, value in test_metrics_aggregated.items():
+                val_metrics_aggregated[key] = value
+            if test_loss_aggregated is not None:
+                val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] = (
+                    test_loss_aggregated
+                )
+
+        return val_loss_aggregated, val_metrics_aggregated
+
+    def _evaluate_round(
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        """Validate current global model on a number of clients."""
+        # Get clients and their respective instructions from strategy
+        client_instructions = self.strategy.configure_evaluate(
+            server_round=server_round,
+            parameters=self.parameters,
+            client_manager=self._client_manager,
+        )
+        if not client_instructions:
+            log(INFO, "evaluate_round %s: no clients selected, cancel", server_round)
+            return None
+        log(
+            DEBUG,
+            "evaluate_round %s: strategy sampled %s clients (out of %s)",
+            server_round,
+            len(client_instructions),
+            self._client_manager.num_available(),
+        )
+        # Collect `evaluate` results from all clients participating in this round
+        results, failures = evaluate_clients(
+            client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
+        )
+        log(
+            DEBUG,
+            "evaluate_round %s received %s results and %s failures for Validation",
+            server_round,
+            len(results),
+            len(failures),
+        )
+
+        val_loss_aggregated, val_metrics_aggregated = self._handle_result_aggregation(server_round, results, failures)
+
+        return val_loss_aggregated, val_metrics_aggregated, (results, failures)
+
     def evaluate_round(
         self,
         server_round: int,
@@ -173,7 +277,7 @@ class FlServer(Server):
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
-        eval_round_results = super().evaluate_round(server_round, timeout)
+        eval_round_results = self._evaluate_round(server_round, timeout)
         if eval_round_results:
             loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
