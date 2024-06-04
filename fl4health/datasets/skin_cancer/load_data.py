@@ -2,16 +2,16 @@ import json
 import os
 import random
 from logging import INFO
-from typing import Callable, Dict, Optional, Tuple, Union
 from pathlib import Path
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import torch
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader, RandomSampler
 
-from fl4health.utils.dataset import BaseDataset
 from fl4health.datasets.skin_cancer.dataset import SkinCancerDataset
+from fl4health.utils.dataset import BaseDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
@@ -55,22 +55,26 @@ def load_skin_cancer_data(
     valid_data = data[train_size : train_size + valid_size]
 
     if train_transform is None:
-        train_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomRotation(20),
-            transforms.ColorJitter(brightness=32. / 255., saturation=0.5),
-            transforms.Resize([256, 256]),
-            transforms.ToTensor(),
-            transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
-            ])
-        
+        train_transform = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomRotation(20),
+                transforms.ColorJitter(brightness=32.0 / 255.0, saturation=0.5),
+                transforms.Resize([256, 256]),
+                transforms.ToTensor(),
+                transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+            ]
+        )
+
     if train_transform is None:
-        test_transform = transforms.Compose([
-            transforms.Resize([256, 256]),
-            transforms.ToTensor(), 
-            transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0))
-            ])
+        test_transform = transforms.Compose(
+            [
+                transforms.Resize([256, 256]),
+                transforms.ToTensor(),
+                transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+            ]
+        )
 
     train_ds: BaseDataset = SkinCancerDataset(train_data, transform=train_transform)
     valid_ds: BaseDataset = SkinCancerDataset(valid_data, transform=test_transform)

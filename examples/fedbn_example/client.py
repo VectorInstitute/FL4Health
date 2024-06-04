@@ -14,10 +14,10 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.basic_client import BasicClient
+from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
@@ -40,7 +40,8 @@ class MnistFedBNClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
-        return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})   
+        return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
+
 
 class FedBNClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -62,6 +63,7 @@ class FedBNClient(BasicClient):
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
