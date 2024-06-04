@@ -76,7 +76,7 @@ unzip ${DIRECTORY}/ISIC_2019_Training_Input.zip -d ${DIRECTORY}/
 # Move the extracted directory and CSV files to ISIC_2019 directory
 echo "Organizing files..."
 mkdir -p ${DIRECTORY}/ISIC_2019
-mv ${DIRECTORY}/ISIC_2019_Training_Input ${DIRECTORY}/ISIC_2019/
+mv ${DIRECTORY}/ISIC_2019_Training_Input ${DIRECTORY}/ISIC_2019
 mv ${DIRECTORY}/ISIC_2019_Training_GroundTruth.csv ${DIRECTORY}/ISIC_2019/
 mv ${DIRECTORY}/ISIC_2019_Training_Metadata.csv ${DIRECTORY}/ISIC_2019/
 
