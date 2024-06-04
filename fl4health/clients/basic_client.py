@@ -22,7 +22,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
@@ -99,6 +99,7 @@ class BasicClient(NumPyClient):
         self.test_loader: Optional[DataLoader]
         self.num_train_samples: int
         self.num_val_samples: int
+        self.num_test_samples: Optional[int] = None
         self.learning_rate: Optional[float] = None
 
     def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
@@ -699,7 +700,9 @@ class BasicClient(NumPyClient):
                 self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
             )
             # There will be no clashes due to the naming convention associated with the metric managers
-            val_metrics["test - loss"] = test_loss
+            if self.num_test_samples is not None:
+                val_metrics[TEST_NUM_EXAMPLES_KEY] = self.num_test_samples
+            val_metrics[TEST_LOSS_KEY] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics
@@ -741,6 +744,8 @@ class BasicClient(NumPyClient):
         # and as such, we will make that assumption.
         self.num_train_samples = len(self.train_loader.dataset)  # type: ignore
         self.num_val_samples = len(self.val_loader.dataset)  # type: ignore
+        if self.test_loader:
+            self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
 
@@ -813,7 +818,7 @@ class BasicClient(NumPyClient):
         preds: Dict[str, torch.Tensor],
         features: Dict[str, torch.Tensor],
         target: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]:
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
