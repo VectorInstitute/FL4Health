@@ -4,7 +4,7 @@ from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArrays, Scalar
+from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
