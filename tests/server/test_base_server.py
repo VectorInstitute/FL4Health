@@ -1,11 +1,14 @@
 import datetime
 from pathlib import Path
+from typing import List, Tuple, Union
 from unittest.mock import Mock, patch
 
 import pytest
 import torch
 import torch.nn as nn
+from flwr.common import Code, EvaluateRes, Status
 from flwr.common.parameter import ndarrays_to_parameters
+from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from freezegun import freeze_time
 
@@ -14,6 +17,10 @@ from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
+from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
 model = LinearTransform()
@@ -126,7 +133,89 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     }
 
 
-@patch("fl4health.server.base_server.Server.evaluate_round")
+def test_unpack_metrics() -> None:
+    # Initialize the server with BasicFedAvg strategy
+    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
+    fl_server = FlServer(client_manager=Mock(), strategy=strategy)
+
+    client_proxy = CustomClientProxy("1")
+    eval_res = EvaluateRes(
+        status=Status(Code.OK, "Success"),
+        loss=1.0,
+        num_examples=10,
+        metrics={
+            "val - prediction - accuracy": 0.9,
+            TEST_LOSS_KEY: 0.8,
+            TEST_NUM_EXAMPLES_KEY: 5,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
+        },
+    )
+
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy, eval_res)]
+
+    val_results, test_results = fl_server._unpack_metrics(results)
+
+    # Check the validation results
+    assert len(val_results) == 1
+    assert val_results[0][1].metrics["val - prediction - accuracy"] == 0.9
+    assert TEST_LOSS_KEY not in val_results[0][1].metrics
+
+    # Check the test results
+    assert len(test_results) == 1
+    assert test_results[0][1].metrics[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
+    assert test_results[0][1].loss == 0.8
+
+
+def test_handle_result_aggregation() -> None:
+    # Initialize the server with BasicFedAvg strategy
+    strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
+    fl_server = FlServer(client_manager=Mock(), strategy=strategy)
+
+    client_proxy1 = CustomClientProxy("1")
+    eval_res1 = EvaluateRes(
+        status=Status(Code.OK, "Success"),
+        loss=1.0,
+        num_examples=10,
+        metrics={
+            "val - prediction - accuracy": 0.9,
+            TEST_LOSS_KEY: 0.8,
+            TEST_NUM_EXAMPLES_KEY: 5,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
+        },
+    )
+    client_proxy2 = CustomClientProxy("2")
+    eval_res2 = EvaluateRes(
+        status=Status(Code.OK, "Success"),
+        loss=2.0,
+        num_examples=20,
+        metrics={
+            "val - prediction - accuracy": 0.8,
+            TEST_LOSS_KEY: 1.6,
+            TEST_NUM_EXAMPLES_KEY: 10,
+            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.75,
+        },
+    )
+
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy1, eval_res1), (client_proxy2, eval_res2)]
+    failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
+
+    server_round = 1
+    val_loss_aggregated, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)
+
+    # Check the aggregated validation metrics
+    assert "val - prediction - accuracy" in val_metrics_aggregated
+    assert val_metrics_aggregated["val - prediction - accuracy"] == pytest.approx(0.8333, rel=1e-3)
+
+    # Check the aggregated test metrics
+    assert f"{TestMetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3)
+    assert f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(
+        1.333, rel=1e-3
+    )
+
+
+@patch("fl4health.server.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     test_round = 2
