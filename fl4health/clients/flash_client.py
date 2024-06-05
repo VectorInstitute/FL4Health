@@ -41,7 +41,6 @@ class FlashClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        gamma: Optional[float] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -50,34 +49,8 @@ class FlashClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        self.learning_rate: float
-        self.gamma: Optional[float] = gamma
-
-    def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
-        assert self.model is not None
-
-        # Unpack the parameters, assuming it includes model parameters and gamma
-        model_params, gamma = self.unpack_parameters(parameters)
-        self.gamma = gamma
-
-        super().set_parameters(model_params, config, fitting_round)
-
-    def unpack_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
-        # Unpack model parameters and gamma
-        model_params = parameters[:-1]
-        gamma = parameters[-1]
-        return model_params, gamma
-
-    def get_parameters(self, config: Config) -> NDArrays:
-        assert self.model is not None and self.parameter_exchanger is not None
-
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
-
-        # Include gamma in the parameters sent to the server
-        if self.gamma is not None:
-            model_weights.append(self.gamma)
-
-        return model_weights
+        self.gamma: Optional[float] = None
+        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
@@ -106,7 +79,7 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if abs(previous_loss - current_loss) < self.gamma/local_epoch:
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma/local_epoch:
                 log(INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}")
                 break
 
@@ -150,7 +123,7 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if abs(previous_loss - current_loss) < self.gamma/step:
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma/step:
                 log(INFO, f"Early stopping at step {step} with loss change {abs(previous_loss - current_loss)}")
                 break
 
@@ -172,5 +145,4 @@ class FlashClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
-        assert isinstance(self.optimizers["global"], torch.optim.SGD)
-        self.learning_rate = self.optimizers["global"].defaults["lr"]
+        self.gamma = self.narrow_config_type(config, "gamma", float)
