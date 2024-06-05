@@ -8,9 +8,6 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -32,7 +29,6 @@ class FlashClient(BasicClient):
             checkpointer=checkpointer,
         )
         self.gamma: Optional[float] = None
-        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
@@ -120,12 +116,6 @@ class FlashClient(BasicClient):
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
-
-    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        assert self.model is not None
-        model_size = len(self.model.state_dict())
-        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
-        return parameter_exchanger
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
