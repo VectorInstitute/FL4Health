@@ -130,9 +130,7 @@ class FLASH(FedOpt):
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
         # FLASH
-        delta_t: NDArrays = [
-            x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)
-        ]
+        delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
 
         # m_t
         if not self.m_t:
