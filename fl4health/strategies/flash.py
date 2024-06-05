@@ -1,7 +1,6 @@
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-
 from flwr.common import (
     FitRes,
     MetricsAggregationFn,
@@ -12,8 +11,8 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.server.client_proxy import ClientProxy
-
 from flwr.server.strategy import FedOpt
+
 
 class FLASH(FedOpt):
     """FLASH - Fast and Robust Federated Learning Through Approximate Second-Order Method.
@@ -58,7 +57,7 @@ class FLASH(FedOpt):
         Adaptive weighit parameter. Defaults to TODO
     tau : float, optional
         Controls the algorithm's degree of adaptability. Defaults to 1e-9.
-    
+
     """
 
     def __init__(
@@ -131,35 +130,27 @@ class FLASH(FedOpt):
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
         # Calculate delta_t
-        delta_t: NDArrays = [
-            x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)
-        ]
+        delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
 
         # m_t
         if not self.m_t:
             self.m_t = [np.zeros_like(x) for x in delta_t]
-        self.m_t = [
-            np.multiply(self.beta_1, x) + (1 - self.beta_1) * y
-            for x, y in zip(self.m_t, delta_t)
-        ]
+        self.m_t = [np.multiply(self.beta_1, x) + (1 - self.beta_1) * y for x, y in zip(self.m_t, delta_t)]
 
         # v_t
         if not self.v_t:
             self.v_t = [np.zeros_like(x) for x in delta_t]
-        self.v_t = [
-            self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y)
-            for x, y in zip(self.v_t, delta_t)
-        ]
+        self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
 
         # d_t
         if not self.d_t:
             self.d_t = [np.zeros_like(x) for x in delta_t]
         beta_3 = [
-            np.linalg.norm(v_prev) / (np.linalg.norm((delta ** 2) - v_prev) + np.linalg.norm(v_prev))
+            np.linalg.norm(v_prev) / (np.linalg.norm((delta**2) - v_prev) + np.linalg.norm(v_prev))
             for delta, v_prev in zip(delta_t, self.v_t)
         ]
         self.d_t = [
-            b3 * d_prev + (1 - b3) * ((delta ** 2) - v_prev)
+            b3 * d_prev + (1 - b3) * ((delta**2) - v_prev)
             for b3, d_prev, delta, v_prev in zip(beta_3, self.d_t, delta_t, self.v_t)
         ]
 

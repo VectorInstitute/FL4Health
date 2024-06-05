@@ -1,33 +1,21 @@
-import torch
-from flwr.client import NumPyClient
-from typing import Dict, Tuple, Optional
-from flwr.common.typing import NDArrays, Scalar
-from torch.utils.data import DataLoader
-
 from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
-from fl4health.clients.basic_client import BasicClient
+from flwr.client import NumPyClient
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
+from opacus.optimizers.optimizer import DPOptimizer
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-
-from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
-
-import torch
-from flwr.common.typing import Config, NDArrays
-from opacus.optimizers.optimizer import DPOptimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -57,7 +45,7 @@ class FlashClient(BasicClient):
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         self.model.train()
         local_step = 0
-        previous_loss = float('inf')
+        previous_loss = float("inf")
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
@@ -79,8 +67,10 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma/local_epoch:
-                log(INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}")
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / local_epoch:
+                log(
+                    INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}"
+                )
                 break
 
             previous_loss = current_loss
@@ -100,7 +90,7 @@ class FlashClient(BasicClient):
 
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
-        previous_loss = float('inf')
+        previous_loss = float("inf")
         for step in range(steps):
             try:
                 input, target = next(train_iterator)
@@ -123,7 +113,7 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma/step:
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / step:
                 log(INFO, f"Early stopping at step {step} with loss change {abs(previous_loss - current_loss)}")
                 break
 
