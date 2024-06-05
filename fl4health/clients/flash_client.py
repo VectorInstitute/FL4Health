@@ -1,23 +1,17 @@
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
-import torch.nn as nn
-from flwr.client import NumPyClient
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
-from opacus.optimizers.optimizer import DPOptimizer
-from torch.nn.modules.loss import _Loss
-from torch.optim import Optimizer
-from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.utils.losses import LossMeterType, TrainingLosses
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
