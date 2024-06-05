@@ -895,8 +895,8 @@ class BasicClient(NumPyClient):
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
         """
-        Clones and freezes a models weights. This is to preserve the model in its current state while decoupling in
-        any way from the original model object or any training.
+        Creates a clone of the model with frozen weights to be used in loss calculations so the original model is
+        preserved in its current state.
 
         Args:
             model (nn.Module): Model to clone and freeze
