@@ -11,7 +11,7 @@ class MoonModel(SequentiallySplitModel):
         self, base_module: nn.Module, head_module: nn.Module, projection_module: Optional[nn.Module] = None
     ) -> None:
         """
-        A MoonModel is a specific type of sequentially split model, where one may specify an optional projection
+        A MOON Model is a specific type of sequentially split model, where one may specify an optional projection
         module to be used for feature manipulation. The model always stores the features produced by the base module
         as they will be used in contrastive loss function calculations. These features are, also, always flattened to
         be compatible with such losses.
