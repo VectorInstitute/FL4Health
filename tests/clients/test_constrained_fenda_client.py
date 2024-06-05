@@ -149,7 +149,7 @@ def test_not_setting_global_model(get_constrained_fenda_client: ConstrainedFenda
     torch.manual_seed(42)
     const_fenda_client = get_constrained_fenda_client
     # Explicitly set the initial global module to None for the client.
-    const_fenda_client.loss_configuration.perfcl_loss_config = None
+    const_fenda_client.loss_container.perfcl_loss_config = None
 
     assert isinstance(const_fenda_client.model, FendaModelWithFeatureState)
     assert const_fenda_client.initial_global_module is None
@@ -220,8 +220,8 @@ def test_setting_not_setting_old_models(get_constrained_fenda_client: Constraine
     torch.manual_seed(42)
     const_fenda_client = get_constrained_fenda_client
     # Setting both loss configurations to None so that we don't bother saving the old local and global modules.
-    const_fenda_client.loss_configuration.contrastive_loss_config = None
-    const_fenda_client.loss_configuration.perfcl_loss_config = None
+    const_fenda_client.loss_container.contrastive_loss_config = None
+    const_fenda_client.loss_container.perfcl_loss_config = None
 
     assert const_fenda_client.old_local_module is None
     assert const_fenda_client.old_global_module is None

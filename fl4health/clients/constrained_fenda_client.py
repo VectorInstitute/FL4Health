@@ -8,16 +8,16 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.losses.fenda_loss_config import ConstrainedFendaLossConfig
+from fl4health.clients.basic_client import TorchInputType
+from fl4health.clients.fenda_client import FendaClient
+from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
-from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 
 
-class ConstrainedFendaClient(BasicClient):
+class ConstrainedFendaClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
@@ -25,7 +25,7 @@ class ConstrainedFendaClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        loss_configuration: Optional[ConstrainedFendaLossConfig] = None,
+        loss_container: Optional[ConstrainedFendaLossContainer] = None,
     ) -> None:
         """
         This class extends the functionality of FENDA training to include various kinds of constraints applied during
@@ -41,7 +41,7 @@ class ConstrainedFendaClient(BasicClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            loss_configuration (Optional[ConstrainedFendaLossConfig], optional): Configuration that determines which
+            loss_configuration (Optional[ConstrainedFendaLossContainer], optional): Configuration that determines which
                 losses will be applied during FENDA training. Defaults to None.
         """
         super().__init__(
@@ -52,16 +52,16 @@ class ConstrainedFendaClient(BasicClient):
             checkpointer=checkpointer,
         )
 
-        if loss_configuration:
-            self.loss_configuration = loss_configuration
+        if loss_container:
+            self.loss_container = loss_container
         else:
             # If no loss configuration has been define, set everything to zero. This is equivalent to vanilla FENDA
             log(
                 WARNING,
-                "No loss configuration provided, defaulting to an empty configuration. "
+                "No loss container provided, defaulting to an empty container. "
                 "This is equivalent to running a vanilla FENDA client",
             )
-            self.loss_configuration = ConstrainedFendaLossConfig(None, None, None)
+            self.loss_container = ConstrainedFendaLossContainer(None, None, None)
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
@@ -71,7 +71,7 @@ class ConstrainedFendaClient(BasicClient):
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModelWithFeatureState)
-        return FixedLayerExchanger(self.model.layers_to_exchange())
+        return super().get_parameter_exchanger(config)
 
     def _flatten(self, features: torch.Tensor) -> torch.Tensor:
         """
@@ -111,13 +111,13 @@ class ConstrainedFendaClient(BasicClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
         preds, features = self.model(input)
 
-        if self.loss_configuration.has_contrastive_loss() or self.loss_configuration.has_perfcl_loss():
+        if self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss():
             # If we have defined a contrastive loss function or PerFCL loss function, we attempt to save old local
             # features.
             if self.old_local_module is not None:
                 features["old_local_features"] = self._flatten(self.old_local_module.forward(input))
 
-        if self.loss_configuration.has_perfcl_loss():
+        if self.loss_container.has_perfcl_loss():
             # If a PerFCL loss function has been defined, then we also save two additional feature components.
             if self.old_global_module is not None:
                 features["old_global_features"] = self._flatten(self.old_global_module.forward(input))
@@ -139,7 +139,7 @@ class ConstrainedFendaClient(BasicClient):
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModelWithFeatureState)
 
-        if self.loss_configuration.has_contrastive_loss() or self.loss_configuration.has_perfcl_loss():
+        if self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss():
             self.old_local_module = self.clone_and_freeze_model(self.model.first_module)
             self.old_global_module = self.clone_and_freeze_model(self.model.second_module)
 
@@ -158,7 +158,7 @@ class ConstrainedFendaClient(BasicClient):
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, FendaModelWithFeatureState)
 
-        if self.loss_configuration.has_perfcl_loss():
+        if self.loss_container.has_perfcl_loss():
             self.initial_global_module = self.clone_and_freeze_model(self.model.second_module)
 
         super().update_before_train(current_server_round)
@@ -191,15 +191,15 @@ class ConstrainedFendaClient(BasicClient):
         total_loss = loss.clone()
         additional_losses = {"loss": loss}
 
-        if self.loss_configuration.has_cos_sim_loss():
-            cos_sim_loss = self.loss_configuration.compute_cosine_similarity_loss(
+        if self.loss_container.has_cosine_similarity_loss():
+            cosine_similarity_loss = self.loss_container.compute_cosine_similarity_loss(
                 features["local_features"], features["global_features"]
             )
-            total_loss += cos_sim_loss
-            additional_losses["cos_sim_loss"] = cos_sim_loss
+            total_loss += cosine_similarity_loss
+            additional_losses["cos_sim_loss"] = cosine_similarity_loss
 
-        if self.loss_configuration.has_contrastive_loss() and "old_local_features" in features:
-            contrastive_loss = self.loss_configuration.compute_contrastive_loss(
+        if self.loss_container.has_contrastive_loss() and "old_local_features" in features:
+            contrastive_loss = self.loss_container.compute_contrastive_loss(
                 features["local_features"],
                 features["old_local_features"].unsqueeze(0),
                 features["global_features"].unsqueeze(0),
@@ -207,15 +207,13 @@ class ConstrainedFendaClient(BasicClient):
             total_loss += contrastive_loss
             additional_losses["contrastive_loss"] = contrastive_loss
 
-        if self.loss_configuration.has_perfcl_loss() and self._perfcl_keys_present(features):
-            global_feature_contrastive_loss, local_feature_contrastive_loss = (
-                self.loss_configuration.compute_perfcl_loss(
-                    features["local_features"],
-                    features["old_local_features"],
-                    features["global_features"],
-                    features["old_global_features"],
-                    features["initial_global_features"],
-                )
+        if self.loss_container.has_perfcl_loss() and self._perfcl_keys_present(features):
+            global_feature_contrastive_loss, local_feature_contrastive_loss = self.loss_container.compute_perfcl_loss(
+                features["local_features"],
+                features["old_local_features"],
+                features["global_features"],
+                features["old_global_features"],
+                features["initial_global_features"],
             )
             total_loss += global_feature_contrastive_loss + local_feature_contrastive_loss
             additional_losses["global_feature_contrastive_loss"] = global_feature_contrastive_loss
