@@ -19,9 +19,11 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
     config: Config = {"current_server_round": 2}
 
     assert isinstance(perfcl_client.model, PerFclModel)
-    params_local = [copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.first_module.state_dict().values()]
+    params_local = [
+        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.first_feature_extractor.state_dict().values()
+    ]
     params_global = [
-        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_module.state_dict().values()
+        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_feature_extractor.state_dict().values()
     ]
 
     # "Do some training"
@@ -62,13 +64,15 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
         assert (params_global[i] == old_global_module_params[i]).all()
 
     # Now check that the local parameters were not modified in the server communication and the global parameters were.
-    new_params_local = [val.cpu().numpy() for val in perfcl_client.model.first_module.state_dict().values()]
+    new_params_local = [val.cpu().numpy() for val in perfcl_client.model.first_feature_extractor.state_dict().values()]
     assert len(params_local) > 0
     assert len(new_params_local) > 0
     for old_layer_global, new_layer_local in zip(params_local, new_params_local):
         np.testing.assert_allclose(old_layer_global, new_layer_local, rtol=1e-5, atol=0)
 
-    new_params_global = [val.cpu().numpy() for val in perfcl_client.model.second_module.state_dict().values()]
+    new_params_global = [
+        val.cpu().numpy() for val in perfcl_client.model.second_feature_extractor.state_dict().values()
+    ]
     assert len(global_params_from_server) > 0
     assert len(new_params_global) > 0
     for layer_from_server, new_layer_global in zip(global_params_from_server, new_params_global):
@@ -80,7 +84,9 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
 
     # old_local_module_params should differ from the "trained" local module weights by 0.1
     old_local_module_params = [val.cpu().numpy() for val in perfcl_client.old_local_module.state_dict().values()]
-    trained_local_module_params = [val.cpu().numpy() for val in perfcl_client.model.first_module.state_dict().values()]
+    trained_local_module_params = [
+        val.cpu().numpy() for val in perfcl_client.model.first_feature_extractor.state_dict().values()
+    ]
     for i in range(len(trained_local_module_params)):
         np.testing.assert_allclose(
             (trained_local_module_params[i] - 0.1), old_local_module_params[i], rtol=0, atol=1e-5
@@ -90,7 +96,7 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
     # aggregation perturbations)
     old_global_module_params = [val.cpu().numpy() for val in perfcl_client.old_global_module.state_dict().values()]
     trained_global_module_params = [
-        val.cpu().numpy() for val in perfcl_client.model.second_module.state_dict().values()
+        val.cpu().numpy() for val in perfcl_client.model.second_feature_extractor.state_dict().values()
     ]
     for i in range(len(trained_global_module_params)):
         np.testing.assert_allclose(
@@ -111,7 +117,7 @@ def test_setting_initial_global_module(get_perfcl_client: PerFclClient) -> None:
     assert isinstance(perfcl_client.model, PerFclModel)
 
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_module.state_dict().values()
+        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_feature_extractor.state_dict().values()
     ]
     perfcl_client.update_before_train(0)
     assert perfcl_client.initial_global_module is not None
@@ -146,9 +152,11 @@ def test_setting_old_models(get_perfcl_client: PerFclClient) -> None:  # noqa
     assert perfcl_client.old_global_module is None
     assert isinstance(perfcl_client.model, PerFclModel)
 
-    local_params = [copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.first_module.state_dict().values()]
+    local_params = [
+        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.first_feature_extractor.state_dict().values()
+    ]
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_module.state_dict().values()
+        copy.deepcopy(val.cpu().numpy()) for val in perfcl_client.model.second_feature_extractor.state_dict().values()
     ]
     loss = {
         "loss": 0.0,

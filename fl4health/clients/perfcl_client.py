@@ -158,9 +158,9 @@ class PerFclClient(BasicClient):
         """
         assert isinstance(self.model, PerFclModel)
         # First module is the local feature extractor for PerFcl Models
-        self.old_local_module = self.clone_and_freeze_model(self.model.first_module)
+        self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
         # Second module is the global feature extractor for PerFcl Models
-        self.old_global_module = self.clone_and_freeze_model(self.model.second_module)
+        self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_after_train(local_steps, loss_dict)
 
@@ -176,7 +176,7 @@ class PerFclClient(BasicClient):
         """
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, PerFclModel)
-        self.initial_global_module = self.clone_and_freeze_model(self.model.second_module)
+        self.initial_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_before_train(current_server_round)
 
