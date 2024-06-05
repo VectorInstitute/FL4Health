@@ -107,7 +107,7 @@ class FLASH(FedOpt):
             tau=tau,
         )
         self.gamma = gamma
-        self.d_t = None  # Drift-aware term
+        self.d_t: Optional[NDArrays] = None  # Drift-aware term
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
@@ -129,8 +129,10 @@ class FLASH(FedOpt):
 
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
-        # Calculate delta_t
-        delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
+        # FLASH
+        delta_t: NDArrays = [
+            x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)
+        ]
 
         # m_t
         if not self.m_t:
@@ -143,7 +145,7 @@ class FLASH(FedOpt):
         self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
 
         # d_t
-        if not self.d_t:
+        if self.d_t is None:
             self.d_t = [np.zeros_like(x) for x in delta_t]
         beta_3 = [
             np.linalg.norm(v_prev) / (np.linalg.norm((delta**2) - v_prev) + np.linalg.norm(v_prev))
