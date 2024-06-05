@@ -23,7 +23,7 @@ def from_pretrained(model_name: str, in_channels: int = 3, include_top: bool = F
 
 
 class HeadClassifier(nn.Module):
-    """Moon head module"""
+    """MOON head module"""
 
     def __init__(self, stack_output_dimension: int):
         super().__init__()
@@ -37,16 +37,15 @@ class HeadClassifier(nn.Module):
 
 
 class BaseEfficientNet(nn.Module):
-    """Moon feature extractor module
-    We use the EfficientNets architecture that many participants in the ISIC
-    competition have identified to work best.
+    """MOON feature extractor module
+    We use the EfficientNets architecture that many participants in the ISIC competition have identified to work best.
     See here the [reference paper](https://arxiv.org/abs/1905.11946)
     Thank you to [Luke Melas-Kyriazi](https://github.com/lukemelas) for his
-    [pytorch reimplementation of EfficientNets]
+    [pytorch re-implementation of EfficientNets]
     (https://github.com/lukemelas/EfficientNet-PyTorch).
     When loading the EfficientNet-B0 model, we strip off the FC layer to use the model as a feature extractor.
     There is an option to freeze a subset of the layers to reduce the number of trainable parameters. However,
-    it is not used in the Moon experiments.
+    it is not used in the MOON experiments.
     """
 
     def __init__(self, frozen_blocks: Optional[int] = 13, turn_off_bn_tracking: bool = False):

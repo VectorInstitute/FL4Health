@@ -44,7 +44,7 @@ class FedIxiFedPerClient(MoonClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        # Moon contrastive loss weight is set to None by default since we are not using it
+        # MOON contrastive loss weight is set to None by default since we are not using it
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 

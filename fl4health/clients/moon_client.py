@@ -26,9 +26,9 @@ class MoonClient(BasicClient):
         len_old_models_buffer: int = 1,
     ) -> None:
         """
-        This client implements the MOON algorithm from Model-Contrastive Federated Learning. The key idea of MOON
-        is to utilize the similarity between model representations to correct the local training of individual parties,
-        i.e., conducting contrastive learning in model-level.
+        This client implements the MOON algorithm from Model-Contrastive Federated Learning. The key idea of MOON is
+        to enforce similarity between representations from the global and current local model through a contrastive
+        loss to constrain the local training of individual parties in the non-IID setting.
 
         Args:
             data_path (Path): Path to the data directory.
@@ -72,7 +72,7 @@ class MoonClient(BasicClient):
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor]. Here, the Moon models require input to
+            for the union of torch.Tensor and Dict[str, torch.Tensor]. Here, the MOON models require input to
             simply be of type torch.Tensor
 
         Returns:

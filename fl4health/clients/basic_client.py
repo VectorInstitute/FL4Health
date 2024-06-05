@@ -993,7 +993,7 @@ class BasicClient(NumPyClient):
         """
         Hook method called before training with the number of current server rounds performed.
         NOTE: This method is called immediately AFTER the aggregated parameters are received from the server.
-        For example, used by Moon and FENDA to save global modules after aggregation.
+        For example, used by MOON and FENDA to save global modules after aggregation.
 
         Args:
             current_server_round (int): The number of current server round.
@@ -1005,7 +1005,7 @@ class BasicClient(NumPyClient):
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training. Also used by Moon and FENDA to save trained modules weights before
+        returned during training. Also used by MOON and FENDA to save trained modules weights before
         aggregation.
 
         Args:
