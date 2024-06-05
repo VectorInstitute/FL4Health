@@ -28,7 +28,7 @@ class PerFclClient(BasicClient):
         local_feature_contrastive_loss_weight: float = 1.0,
     ) -> None:
         """
-        This client is used to perform training client-side training associated with the PerFCL method derived in
+        This client is used to perform client-side training associated with the PerFCL method derived in
         https://www.sciencedirect.com/science/article/pii/S0031320323002078. The approach attempts to manipulate the
         training dynamics of a parallel weight split model with a global feature extractor, that is aggregated
         on the server-side with FedAvg and a local feature extractor that is only locally trained. This method is

@@ -30,7 +30,7 @@ class FendaClient(BasicClient):
             checkpointer=checkpointer,
         )
         """
-        This client is used to perform training client-side training associated with the FENDA method described in
+        This client is used to perform client-side training associated with the FENDA method described in
         https://arxiv.org/pdf/2309.16825. The approach splits a model being trained into parallel feature extractors
         whose latent feature spaces are then further processed by a classification head. The global feature extractor
         is federally trained with FedAvg and the local feature extractor and classification head are exclusively

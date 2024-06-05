@@ -7,7 +7,7 @@ from fl4health.losses.cosine_similarity_loss import CosineSimilarityLoss
 from fl4health.losses.perfcl_loss import PerFclLoss
 
 
-class PerFclLossConfig:
+class PerFclLossContainer:
     def __init__(
         self,
         device: torch.device,
@@ -21,33 +21,33 @@ class PerFclLossConfig:
         self.perfcl_loss_function = PerFclLoss(device, global_feature_loss_temperature, local_feature_loss_temperature)
 
 
-class CosSimLossConfig:
+class CosineSimilarityLossContainer:
     def __init__(self, device: torch.device, cos_sim_loss_weight: float) -> None:
         self.cos_sim_loss_weight = cos_sim_loss_weight
         self.cos_sim_loss_function = CosineSimilarityLoss(device)
 
 
-class ContrastiveLossConfig:
+class ContrastiveLossContainer:
     def __init__(self, device: torch.device, contrastive_loss_weight: float, temperature: float = 0.5) -> None:
         self.contrastive_loss_weight = contrastive_loss_weight
         self.contrastive_loss_function = ContrastiveLoss(device, temperature)
 
 
-class ConstrainedFendaLossConfig:
+class ConstrainedFendaLossContainer:
     def __init__(
         self,
-        perfcl_loss_config: Optional[PerFclLossConfig],
-        cos_sim_loss_config: Optional[CosSimLossConfig],
-        contrastive_loss_config: Optional[ContrastiveLossConfig],
+        perfcl_loss_config: Optional[PerFclLossContainer],
+        cosine_similarity_loss_config: Optional[CosineSimilarityLossContainer],
+        contrastive_loss_config: Optional[ContrastiveLossContainer],
     ) -> None:
         self.perfcl_loss_config = perfcl_loss_config
-        self.cos_sim_loss_config = cos_sim_loss_config
+        self.cos_sim_loss_config = cosine_similarity_loss_config
         self.contrastive_loss_config = contrastive_loss_config
 
     def has_perfcl_loss(self) -> bool:
         return self.perfcl_loss_config is not None
 
-    def has_cos_sim_loss(self) -> bool:
+    def has_cosine_similarity_loss(self) -> bool:
         return self.cos_sim_loss_config is not None
 
     def has_contrastive_loss(self) -> bool:
