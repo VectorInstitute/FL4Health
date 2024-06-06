@@ -30,7 +30,7 @@ class MnistFlashClient(FlashClient):
     def get_model(self, config: Config) -> nn.Module:
         return MnistNet().to(self.device)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> Optimizer:
         # Note that the global optimizer operates on self.global_model.parameters()
         return torch.optim.AdamW(self.model.parameters(), lr=0.01, weight_decay=0.001)
 
