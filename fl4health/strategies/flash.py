@@ -84,8 +84,7 @@ class FLASH(FedOpt):
         eta_l: float = 1e-1,
         beta_1: float = 0.9,
         beta_2: float = 0.99,
-        tau: float = 1e-9,
-        gamma: float = 0.04,
+        tau: float = 1e-9
     ) -> None:
         super().__init__(
             fraction_fit=fraction_fit,
@@ -106,7 +105,6 @@ class FLASH(FedOpt):
             beta_2=beta_2,
             tau=tau,
         )
-        self.gamma = gamma
         self.d_t: Optional[NDArrays] = None  # Drift-aware term
 
     def __repr__(self) -> str:
