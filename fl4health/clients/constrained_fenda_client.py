@@ -140,8 +140,8 @@ class ConstrainedFendaClient(FendaClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
 
         if self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss():
-            self.old_local_module = self.clone_and_freeze_model(self.model.first_module)
-            self.old_global_module = self.clone_and_freeze_model(self.model.second_module)
+            self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
+            self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_after_train(local_steps, loss_dict)
 
@@ -159,7 +159,7 @@ class ConstrainedFendaClient(FendaClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
 
         if self.loss_container.has_perfcl_loss():
-            self.initial_global_module = self.clone_and_freeze_model(self.model.second_module)
+            self.initial_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_before_train(current_server_round)
 

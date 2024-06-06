@@ -20,10 +20,12 @@ def test_getting_parameters(get_constrained_fenda_client: ConstrainedFendaClient
 
     assert isinstance(const_fenda_client.model, FendaModelWithFeatureState)
     params_local = [
-        copy.deepcopy(val.cpu().numpy()) for val in const_fenda_client.model.first_module.state_dict().values()
+        copy.deepcopy(val.cpu().numpy())
+        for val in const_fenda_client.model.first_feature_extractor.state_dict().values()
     ]
     params_global = [
-        copy.deepcopy(val.cpu().numpy()) for val in const_fenda_client.model.second_module.state_dict().values()
+        copy.deepcopy(val.cpu().numpy())
+        for val in const_fenda_client.model.second_feature_extractor.state_dict().values()
     ]
 
     # "Do some training"
@@ -66,13 +68,17 @@ def test_getting_parameters(get_constrained_fenda_client: ConstrainedFendaClient
         assert (params_global[i] == old_global_module_params[i]).all()
 
     # Now check that the local parameters were not modified in the server communication and the global parameters were.
-    new_params_local = [val.cpu().numpy() for val in const_fenda_client.model.first_module.state_dict().values()]
+    new_params_local = [
+        val.cpu().numpy() for val in const_fenda_client.model.first_feature_extractor.state_dict().values()
+    ]
     assert len(params_local) > 0
     assert len(new_params_local) > 0
     for old_layer_global, new_layer_local in zip(params_local, new_params_local):
         np.testing.assert_allclose(old_layer_global, new_layer_local, rtol=1e-5, atol=0)
 
-    new_params_global = [val.cpu().numpy() for val in const_fenda_client.model.second_module.state_dict().values()]
+    new_params_global = [
+        val.cpu().numpy() for val in const_fenda_client.model.second_feature_extractor.state_dict().values()
+    ]
     assert len(global_params_from_server) > 0
     assert len(new_params_global) > 0
     for layer_from_server, new_layer_global in zip(global_params_from_server, new_params_global):
@@ -85,7 +91,7 @@ def test_getting_parameters(get_constrained_fenda_client: ConstrainedFendaClient
     # old_local_module_params should differ from the "trained" local module weights by 0.1
     old_local_module_params = [val.cpu().numpy() for val in const_fenda_client.old_local_module.state_dict().values()]
     trained_local_module_params = [
-        val.cpu().numpy() for val in const_fenda_client.model.first_module.state_dict().values()
+        val.cpu().numpy() for val in const_fenda_client.model.first_feature_extractor.state_dict().values()
     ]
     for i in range(len(trained_local_module_params)):
         np.testing.assert_allclose(
@@ -98,7 +104,7 @@ def test_getting_parameters(get_constrained_fenda_client: ConstrainedFendaClient
         val.cpu().numpy() for val in const_fenda_client.old_global_module.state_dict().values()
     ]
     trained_global_module_params = [
-        val.cpu().numpy() for val in const_fenda_client.model.second_module.state_dict().values()
+        val.cpu().numpy() for val in const_fenda_client.model.second_feature_extractor.state_dict().values()
     ]
     for i in range(len(trained_global_module_params)):
         np.testing.assert_allclose(
@@ -117,7 +123,8 @@ def test_setting_global_model(get_constrained_fenda_client: ConstrainedFendaClie
     assert isinstance(const_fenda_client.model, FendaModelWithFeatureState)
 
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in const_fenda_client.model.second_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy())
+        for _, val in const_fenda_client.model.second_feature_extractor.state_dict().items()
     ]
 
     const_fenda_client.update_before_train(0)
@@ -171,10 +178,12 @@ def test_setting_old_models(get_constrained_fenda_client: ConstrainedFendaClient
     assert isinstance(const_fenda_client.model, FendaModelWithFeatureState)
 
     local_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in const_fenda_client.model.first_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy())
+        for _, val in const_fenda_client.model.first_feature_extractor.state_dict().items()
     ]
     global_params = [
-        copy.deepcopy(val.cpu().numpy()) for _, val in const_fenda_client.model.second_module.state_dict().items()
+        copy.deepcopy(val.cpu().numpy())
+        for _, val in const_fenda_client.model.second_feature_extractor.state_dict().items()
     ]
     loss = {
         "loss": 0.0,
