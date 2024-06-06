@@ -14,13 +14,13 @@ from research.picai.preprocessing import (
     CentreCropAndOrPad,
     PicaiCase,
     PreprocessingSettings,
-    Resample,
+    ResampleSpacing,
     ResampleToFirstScan,
     preprocess,
 )
 
 DEFAULT_TRANSFORMS = [
-    Resample(),
+    ResampleSpacing(),
     CentreCropAndOrPad(),
     ResampleToFirstScan(),
     AlignOriginAndDirection(),

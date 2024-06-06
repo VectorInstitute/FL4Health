@@ -6,7 +6,7 @@ import SimpleITK as sitk
 
 def resample_img(
     image: sitk.Image,
-    spacing: Tuple[float, float, float] = (2.0, 2.0, 2.0),
+    spacing: Tuple[float, float, float],
     size: Optional[Tuple[int, int, int]] = None,
     is_label: bool = False,
     pad_value: Optional[Union[float, int]] = 0.0,
@@ -33,7 +33,7 @@ def resample_img(
     original_size = image.GetSize()
 
     # convert PICAI z, y, x (Depth x Height x Width) convention to SimpleITK's convention x, y, z
-    out_spacing = list(reversed(spacing))
+    out_spacing = list(reversed(list(spacing)))
 
     if size is None:
         # calculate output size in voxels
@@ -135,7 +135,7 @@ def input_verification_crop_or_pad(
 
 def crop_or_pad(
     image: sitk.Image,
-    size: Tuple[int, int, int] = (20, 256, 256),
+    size: Tuple[int, int, int],
     physical_size: Optional[Tuple[float, float, float]] = None,
     crop_only: bool = False,
 ) -> sitk.Image:
@@ -157,13 +157,14 @@ def crop_or_pad(
     # input conversion and verification
     shape, size = input_verification_crop_or_pad(image, size, physical_size)
 
-    # set identity operations for cropping and padding
-    rank = len(size)
-    padding = [[0, 0]] * rank
-    slicer = [slice(None)] * rank
+    # Since the subarrays are being set in the below for loop
+    # We have to ensure that they are seperate lists
+    # and not the same reference (ie [[0, 0]] * rank)
+    padding = [[0, 0] for _ in range(len(size))]
+    slicer = [slice(None) for _ in range(len(size))]
 
     # for each dimension, determine process (cropping or padding)
-    for i in range(rank):
+    for i in range(len(size)):
         if shape[i] < size[i]:
             if crop_only:
                 continue
@@ -177,11 +178,13 @@ def crop_or_pad(
             idx_end = idx_start + size[i]
             slicer[i] = slice(idx_start, idx_end)
 
+    new_image = image[tuple(slicer)]
+
     # crop and/or pad image
-    if isinstance(image, sitk.Image):
+    if any(pad[0] > 0 or pad[1] > 0 for pad in padding):
+        # NOTE: For some reason
         pad_filter = sitk.ConstantPadImageFilter()
         pad_filter.SetPadLowerBound([pad[0] for pad in padding])
         pad_filter.SetPadUpperBound([pad[1] for pad in padding])
-        return pad_filter.Execute(image[tuple(slicer)])
-    else:
-        return sitk.GetImageFromArray(np.pad(image[tuple(slicer)], padding))
+        new_image = pad_filter.Execute(new_image)
+    return new_image
