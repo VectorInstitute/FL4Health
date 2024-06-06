@@ -23,16 +23,16 @@ class FlashClient(BasicClient):
     ) -> None:
         """
         This client is used to perform client-side training associated with the FLASH method described in
-        https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf. FLASH is designed to handle statistical 
-        heterogeneity and concept drift in federated learning through client-side early stopping and server-side 
+        https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf. FLASH is designed to handle statistical
+        heterogeneity and concept drift in federated learning through client-side early stopping and server-side
         drift-aware adaptive optimization.
-        
+
         Args:
             data_path (Path): Path to the data directory.
             metrics (Sequence[Metric]): List of metrics to be used for evaluation.
             device (torch.device): Device to be used for training.
             loss_meter_type (LossMeterType, optional): Type of loss meter to be used. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to do 
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to do
                 checkpointing during client-side training. No checkpointing is done if not provided. Defaults to None.
             gamma (float, optional): Threshold for early stopping based on the change in validation loss. Defaults to 0.04.
         """
