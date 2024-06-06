@@ -118,17 +118,20 @@ def test_global_loading_fenda_model_with_mapping() -> None:
     model = FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn())
     old_model = copy.deepcopy(model)
     warmup_module = WarmedUpModule(pretrained_model=pretrained_model)
-    warmup_module.weights_mapping_dict = {"second_module.conv1": "conv1", "second_module.conv2": "conv2"}
+    warmup_module.weights_mapping_dict = {
+        "second_feature_extractor.conv1": "conv1",
+        "second_feature_extractor.conv2": "conv2",
+    }
     warmup_module.load_from_pretrained(model)
 
     # Check if only the weights in mapping are loaded from pretrained model and if the weights not in mapping
     # are same with previous model as loading should not have any effect
     for key in model.state_dict().keys():
         if key in [
-            "second_module.conv1.weight",
-            "second_module.conv1.bias",
-            "second_module.conv2.weight",
-            "second_module.conv2.bias",
+            "second_feature_extractor.conv1.weight",
+            "second_feature_extractor.conv1.bias",
+            "second_feature_extractor.conv2.weight",
+            "second_feature_extractor.conv2.bias",
         ]:
             matching_key = warmup_module.get_matching_component(key)
             assert matching_key is not None
@@ -143,10 +146,10 @@ def test_global_and_local_loading_fenda_model_with_mapping() -> None:
     old_model = copy.deepcopy(model)
     warmup_module = WarmedUpModule(pretrained_model=pretrained_model)
     warmup_module.weights_mapping_dict = {
-        "second_module.conv1": "conv1",
-        "second_module.conv2": "conv2",
-        "first_module.conv1": "conv1",
-        "first_module.conv2": "conv2",
+        "second_feature_extractor.conv1": "conv1",
+        "second_feature_extractor.conv2": "conv2",
+        "first_feature_extractor.conv1": "conv1",
+        "first_feature_extractor.conv2": "conv2",
     }
     warmup_module.load_from_pretrained(model)
 
