@@ -2,15 +2,7 @@ import random
 from typing import List, Tuple
 
 import numpy as np
-from flwr.common import (
-    Code,
-    FitRes,
-    Metrics,
-    NDArrays,
-    Status,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.common import Code, FitRes, Metrics, NDArrays, Status, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.strategies.flash import FLASH

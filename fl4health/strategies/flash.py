@@ -84,7 +84,7 @@ class FLASH(FedOpt):
         eta_l: float = 1e-1,
         beta_1: float = 0.9,
         beta_2: float = 0.99,
-        tau: float = 1e-9
+        tau: float = 1e-9,
     ) -> None:
         super().__init__(
             fraction_fit=fraction_fit,
