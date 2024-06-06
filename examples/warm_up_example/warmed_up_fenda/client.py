@@ -13,9 +13,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSplitHeadClassifier
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
@@ -36,7 +37,6 @@ class MnistFendaClient(FendaClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            perfcl_loss_weights=(1.0, 1.0),
         )
 
         # Load the warmed up module
@@ -53,7 +53,9 @@ class MnistFendaClient(FendaClient):
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
+        return FendaModel(
+            LocalCnn(), GlobalCnn(), ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE)
+        ).to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
