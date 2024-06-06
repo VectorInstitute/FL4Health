@@ -31,10 +31,12 @@ class FlashClient(BasicClient):
             data_path (Path): Path to the data directory.
             metrics (Sequence[Metric]): List of metrics to be used for evaluation.
             device (torch.device): Device to be used for training.
-            loss_meter_type (LossMeterType, optional): Type of loss meter to be used. Defaults to LossMeterType.AVERAGE.
+            loss_meter_type (LossMeterType, optional):
+                Type of loss meter to be used. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to do
                 checkpointing during client-side training. No checkpointing is done if not provided. Defaults to None.
-            gamma (float, optional): Threshold for early stopping based on the change in validation loss. Defaults to 0.04.
+            gamma (float, optional):
+                Threshold for early stopping based on the change in validation loss. Defaults to 0.04.
         """
         super().__init__(
             data_path=data_path,
@@ -72,7 +74,7 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / local_epoch:
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / (local_step + 1):
                 log(
                     INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}"
                 )
@@ -118,7 +120,7 @@ class FlashClient(BasicClient):
             current_loss = loss_dict.get("backward", 0.0)
 
             # Early stopping check
-            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / step:
+            if self.gamma is not None and abs(previous_loss - current_loss) < self.gamma / (step + 1):
                 log(INFO, f"Early stopping at step {step} with loss change {abs(previous_loss - current_loss)}")
                 break
 
