@@ -44,4 +44,4 @@ def test_perfcl_loss() -> None:
         initial_global_features.reshape(len(initial_global_features), -1),
     )
 
-    assert pytest.approx(0.837868, abs=0.0001) == global_feature_loss.cpu()
+    assert pytest.approx(0.837868, abs=0.0001) == global_feature_loss.item()

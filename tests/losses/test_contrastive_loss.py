@@ -18,21 +18,21 @@ def test_contrastive_loss() -> None:
         features=local_features.reshape(len(local_features), -1),
         positive_pairs=global_features.reshape(1, len(global_features), -1),
         negative_pairs=previous_local_features.reshape(1, len(previous_local_features), -1),
-    ).cpu()
+    ).item()
 
     assert pytest.approx(0.837868, abs=0.0001) == loss_value
 
     features = torch.tensor([[1.0, 1.0, 1.0]]).float()
     positive_pairs = torch.tensor([[[1.0, 1.0, 1.0]]]).float()
     negative_pairs = torch.tensor([[[0.0, 0.0, 0.0]]]).float()
-    loss_value = contrastive_loss(features, positive_pairs, negative_pairs).cpu()
+    loss_value = contrastive_loss(features, positive_pairs, negative_pairs).item()
 
     assert loss_value == pytest.approx(0.1269, rel=0.01)
 
     features = torch.tensor([[0.0, 0.0, 0.0]]).float()
     positive_pairs = torch.tensor([[[1.0, 1.0, 1.0]]]).float()
     negative_pairs = torch.tensor([[[0.0, 0.0, 0.0]]]).float()
-    loss_value = contrastive_loss(features, positive_pairs, negative_pairs).cpu()
+    loss_value = contrastive_loss(features, positive_pairs, negative_pairs).item()
 
     assert loss_value == pytest.approx(0.6931, rel=0.01)
 

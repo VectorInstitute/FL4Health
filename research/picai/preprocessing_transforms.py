@@ -33,7 +33,7 @@ def resample_img(
     original_size = image.GetSize()
 
     # convert PICAI z, y, x (Depth x Height x Width) convention to SimpleITK's convention x, y, z
-    out_spacing = list(reversed(list(spacing)))
+    out_spacing = (spacing[2], spacing[1], spacing[0])
 
     if size is None:
         # calculate output size in voxels
