@@ -3,14 +3,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 from flamby.datasets.fed_ixi.model import ConvolutionalBlock
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode, FendaModel
-from research.flamby.fed_ixi.fenda.fenda_feature_extractor import FendaFeatureExtactor
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
+from research.flamby.fed_ixi.fenda.fenda_feature_extractor import FendaFeatureExtractor
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
-class FendaClassifier(FendaHeadModule):
+class FendaClassifier(ParallelSplitHeadModule):
     def __init__(
-        self, join_mode: FendaJoinMode, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0
+        self, join_mode: ParallelFeatureJoinMode, out_channels_first_layer: int, monte_carlo_dropout: float = 0.0
     ) -> None:
         super().__init__(join_mode)
 
@@ -42,7 +43,7 @@ class FendaClassifier(FendaHeadModule):
             activation=None,
         )
 
-    def local_global_concat(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_tensor: torch.Tensor, global_tensor: torch.Tensor) -> torch.Tensor:
         # Assuming tensors are "batch first", we concatenate along the channel dimension
         return torch.concat([local_tensor, global_tensor], dim=self.CHANNELS_DIMENSION)
 
@@ -61,7 +62,7 @@ class LocalUNetFeatureExtractor(nn.Module):
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = FendaFeatureExtractor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -79,7 +80,7 @@ class GlobalUNetFeatureExtractor(nn.Module):
 
     def __init__(self, turn_off_bn_tracking: bool = False, out_channels_first_layer: int = 8):
         super().__init__()
-        self.base_model = FendaFeatureExtactor(out_channels_first_layer=out_channels_first_layer)
+        self.base_model = FendaFeatureExtractor(out_channels_first_layer=out_channels_first_layer)
         if turn_off_bn_tracking:
             shutoff_batch_norm_tracking(self.base_model)
 
@@ -96,5 +97,7 @@ class FedIxiFendaModel(FendaModel):
         # is also set to 0 by default for FedIXI
         local_module = LocalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
         global_module = GlobalUNetFeatureExtractor(turn_off_bn_tracking, out_channels_first_layer)
-        model_head = FendaClassifier(FendaJoinMode.CONCATENATE, out_channels_first_layer, monte_carlo_dropout)
+        model_head = FendaClassifier(
+            ParallelFeatureJoinMode.CONCATENATE, out_channels_first_layer, monte_carlo_dropout
+        )
         super().__init__(local_module, global_module, model_head)

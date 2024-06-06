@@ -9,8 +9,8 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSplitHeadClassifier
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
+from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -45,7 +45,7 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = FendaModel(
+    initial_model = PerFclModel(
         LocalCnn(), GlobalCnn(), ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE)
     )
 
