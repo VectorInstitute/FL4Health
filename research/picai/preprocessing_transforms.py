@@ -182,7 +182,6 @@ def crop_or_pad(
 
     # crop and/or pad image
     if any(pad[0] > 0 or pad[1] > 0 for pad in padding):
-        # NOTE: For some reason
         pad_filter = sitk.ConstantPadImageFilter()
         pad_filter.SetPadLowerBound([pad[0] for pad in padding])
         pad_filter.SetPadUpperBound([pad[1] for pad in padding])

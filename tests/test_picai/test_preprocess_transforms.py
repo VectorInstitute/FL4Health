@@ -1,18 +1,20 @@
-from typing import Tuple, Sequence
 from functools import partial
 from pathlib import Path
+from typing import Sequence, Tuple
+
 import numpy as np
 import SimpleITK as sitk
 
 from research.picai.preprocessing import (
-    Case,
-    PreprocessingSettings,
-    ResampleToFirstScan,
-    ResampleSpacing,
-    CentreCropAndOrPad,
     AlignOriginAndDirection,
-    BinarizeAnnotation
+    BinarizeAnnotation,
+    Case,
+    CentreCropAndOrPad,
+    PreprocessingSettings,
+    ResampleSpacing,
+    ResampleToFirstScan,
 )
+
 mock_preprocessing_settings_partial = partial(
     PreprocessingSettings,
     scans_write_dir=Path(""),
@@ -28,7 +30,7 @@ class MockCase(Case):
         annotation_path: Path,
         settings: PreprocessingSettings,
         original_scan_sizes: Sequence[Tuple[int, int, int]] = [(256, 256, 20), (512, 512, 40), (128, 128, 10)],
-        original_annotation_size: Tuple[int, int, int] = (384, 384, 30)
+        original_annotation_size: Tuple[int, int, int] = (384, 384, 30),
     ) -> None:
         super().__init__(scan_paths, annotation_path, settings)
         self.original_scan_sizes = original_scan_sizes
@@ -54,8 +56,8 @@ def test_resample_to_first_scan() -> None:
     sizes = [item.GetSize() for item in new_case.scans + [new_case.annotation]]
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x : x == (20, 256, 256), sizes))
-    assert all(map(lambda x : x == (1.0, 1.0, 1.0), spacings))
+    assert all(map(lambda x: x == (20, 256, 256), sizes))
+    assert all(map(lambda x: x == (1.0, 1.0, 1.0), spacings))
 
 
 def test_resample_spacing() -> None:
@@ -68,7 +70,7 @@ def test_resample_spacing() -> None:
 
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x : x == (2.0, 2.0, 2.0), spacings))
+    assert all(map(lambda x: x == (2.0, 2.0, 2.0), spacings))
 
 
 def test_resample_crop_or_pad() -> None:
@@ -82,8 +84,8 @@ def test_resample_crop_or_pad() -> None:
     sizes = [item.GetSize() for item in new_case.scans + [new_case.annotation]]
     spacings = [item.GetSpacing() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x : x == (20, 256, 256), sizes))
-    assert all(map(lambda x : x == (1.0, 1.0, 1.0), spacings))
+    assert all(map(lambda x: x == (20, 256, 256), sizes))
+    assert all(map(lambda x: x == (1.0, 1.0, 1.0), spacings))
 
 
 def test_align_origin_and_direction() -> None:
@@ -97,8 +99,8 @@ def test_align_origin_and_direction() -> None:
     origins = [item.GetOrigin() for item in new_case.scans + [new_case.annotation]]
     dimensions = [item.GetDimension() for item in new_case.scans + [new_case.annotation]]
 
-    assert all(map(lambda x : x == origins[0], origins))
-    assert all(map(lambda x : x == dimensions[0], dimensions))
+    assert all(map(lambda x: x == origins[0], origins))
+    assert all(map(lambda x: x == dimensions[0], dimensions))
 
 
 def test_binarize_annotation() -> None:
