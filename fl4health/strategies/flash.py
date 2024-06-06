@@ -53,10 +53,11 @@ class FLASH(FedOpt):
         Momentum parameter. Defaults to 0.9.
     beta_2 : float, optional
         Second moment parameter. Defaults to 0.99.
-    beta_3 : float, optional
-        Adaptive weighit parameter. Defaults to TODO
     tau : float, optional
         Controls the algorithm's degree of adaptability. Defaults to 1e-9.
+    d_t : Optional[NDArrays]
+        Drift-aware term, initialized to None and updated during aggregation.
+        Helps adjust the effective learning rate to quickly adapt to concept drifts.
 
     """
 
@@ -105,7 +106,7 @@ class FLASH(FedOpt):
             beta_2=beta_2,
             tau=tau,
         )
-        self.d_t: Optional[NDArrays] = None  # Drift-aware term
+        self.d_t: Optional[NDArrays] = None
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
