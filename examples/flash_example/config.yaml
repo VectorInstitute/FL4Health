@@ -8,4 +8,4 @@ batch_size: 32 # The batch size for client training
 
 # Downsampling settings per client
 downsampling_ratio: 0.1 # percentage of original MNIST data to keep for minority numbers
-gamma: 0.04 # Early-stopping threshold for client training.
+gamma: 0.04 # Early-stopping threshold for client training
