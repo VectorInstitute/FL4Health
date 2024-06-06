@@ -1,12 +1,14 @@
 import json
 import os
 import random
+from logging import INFO
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from flwr.common.logger import log
 from monai.data.dataloader import DataLoader
 from monai.data.image_dataset import ImageDataset
 from monai.transforms import Transform
@@ -149,10 +151,16 @@ def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch
 
 
 def get_img_and_seg_paths(
-    overviews_dir: Path, base_dir: Path, fold_id: int, train: bool
+    overviews_dir: Path,
+    fold_id: int,
+    train: bool,
+    include_t2w: bool = True,
+    include_adc: bool = True,
+    include_hbv: bool = True,
 ) -> Tuple[List[List[str]], List[str], torch.Tensor]:
     """
     Gets the image paths, segmentation paths and label proportions for the specified fold.
+    Exclude t2w, adc or hbv scan if specified.
 
     Args:
         overviews_dir (Path): A path to the directory containing the marksheets that specify the
@@ -160,6 +168,9 @@ def get_img_and_seg_paths(
         base_dir (Path): The base path of the PICAI dataset.
         fold_id (int): The id of the fold to fetch the image segmentation paths for.
         train (bool): Whether to load the train dataset or the validation dataset.
+        include_t2w (bool): Whether or not to include t2w Sequence as part of the input data.
+        include_adc (bool): Whether or not to include adc Sequence as part of the input data.
+        include_hbv (bool): Whether or not to include hbv Sequence as part of the input data.
 
     Returns:
         Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
@@ -169,27 +180,38 @@ def get_img_and_seg_paths(
             torch tensor that give the class proportions.
     """
 
-    # load datasheets
-    file_name = f"PI-CAI_train-fold-{fold_id}.json" if train else f"PI-CAI_val-fold-{fold_id}.json"
+    # Make sure at least one sequence will be present
+    assert any([include_t2w, include_adc, include_hbv])
+
+    # load dataset overview
+    file_name = f"train-fold-{fold_id}.json" if train else f"val-fold-{fold_id}.json"
     file_path = os.path.join(overviews_dir, file_name)
     with open(Path(file_path)) as fp:
         file_json = json.load(fp)
 
+    # Determine valid file name endings (indicator for sequence type: T1, T2, ADC)
+    all_postfix = ("0000.nii.gz", "0001.nii.gz", "0002.nii.gz")
+    valid_postfix = tuple([item for flag, item in zip([include_t2w, include_adc, include_hbv], all_postfix) if flag])
+
     # load paths to images and labels
-    img_paths = [[os.path.join(base_dir, path) for path in path_list] for path_list in file_json["image_paths"]]
-    seg_paths = [os.path.join(base_dir, path) for path in file_json["label_paths"]]
+    img_paths = [
+        [path for path in path_list if path.endswith(valid_postfix)] for path_list in file_json["image_paths"]
+    ]
+    seg_paths = [path for path in file_json["label_paths"]]
 
     # Determine class proportions
     class_ratio = [int(np.sum(file_json["case_label"])), int(len(img_paths) - np.sum(file_json["case_label"]))]
     class_proportions = class_ratio / np.sum(class_ratio)
 
-    # Log dataset information
-    dataset_name = "Train" if train else "Validation"
-    print("Dataset Definition:", "-" * 80)
-    print(f"Fold Number: {fold_id}")
-    print("Data Classes:", list(np.unique(file_json["case_label"])))
-    print(f"{dataset_name} Class Weights: {class_proportions}")
-    print(f"{dataset_name} Samples [-:{class_ratio[1]};+:{class_ratio[0]}]: {len(seg_paths)}")
+    dataset_type_string = "Train" if train else "Validation"
+    log(
+        INFO,
+        f"Dataset Type: {dataset_type_string} "
+        f"Fold ID: {str(fold_id)} "
+        f"Num Samples: {len(seg_paths)} "
+        f"Data Classes: {str(np.unique(file_json['case_label']))} "
+        f"Class Proportions: {str(np.unique(file_json['case_label']))}",
+    )
 
     return img_paths, seg_paths, torch.from_numpy(class_proportions)
 
@@ -222,7 +244,7 @@ def split_img_and_seg_paths(
 
 
 def get_dataloader(
-    img_paths: Sequence[Sequence[str]],
+    img_paths: Union[Sequence[Sequence[str]], Sequence[str]],
     seg_paths: Sequence[str],
     batch_size: int,
     img_transform: Compose,

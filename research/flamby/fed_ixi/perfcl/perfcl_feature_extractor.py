@@ -5,7 +5,7 @@ import torch.nn as nn
 from flamby.datasets.fed_ixi.model import Decoder, Encoder, EncodingBlock
 
 
-class PerFclFeatureExtactor(nn.Module):
+class PerFclFeatureExtractor(nn.Module):
     """
     Adapted from
     https://pypi.org/project/unet/0.7.7/
