@@ -97,7 +97,6 @@ class MoonClient(BasicClient):
         if self.global_model is not None:
             _, global_model_features = self.global_model(input)
             features.update({"global_features": global_model_features["features"]})
-
         return preds, features
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
