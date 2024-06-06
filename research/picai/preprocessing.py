@@ -10,7 +10,8 @@ from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import SimpleITK as sitk
-from preprocessing_transforms import crop_or_pad, resample_img
+
+from research.picai.preprocessing_transforms import crop_or_pad, resample_img
 
 
 @dataclass
@@ -224,17 +225,18 @@ class ResampleToFirstScan(PreprocessingTransform):
         return case
 
 
-class Resample(PreprocessingTransform):
+class ResampleSpacing(PreprocessingTransform):
     def __call__(self, case: Case) -> Case:
         """
-        Resamples scan to a given size.
+        Resamples scan to target resolution spacing.
 
         Args:
             case (Case): The case to be processed.
 
         Returns:
-            Case: The resampled Case.
+            Case: The Case where scans and annotation have specified spacing.
         """
+        assert case.settings.spacing is not None
         # resample scans to target resolution
         case.scans = [resample_img(scan, case.settings.spacing, is_label=False) for scan in case.scans]
 
@@ -255,6 +257,7 @@ class CentreCropAndOrPad(PreprocessingTransform):
         Returns:
             Case: The Case after centre crop and/or padding.
         """
+        assert case.settings.size is not None
         case.annotation = crop_or_pad(case.annotation, case.settings.size, case.settings.physical_size)
         case.scans = [
             crop_or_pad(

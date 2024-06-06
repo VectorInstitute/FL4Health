@@ -12,7 +12,7 @@ def test_cosine_similarity_loss() -> None:
     # mean should be 2/3
     first_batch = torch.Tensor([[1, 2, 3], [1, 2, 3], [1, 0, 1]])
     second_batch = torch.Tensor([[1, 2, 3], [-1, -2, -3], [0, 2, 0]])
-    loss = cosine_similarity_loss_function(first_batch, second_batch)
+    loss = cosine_similarity_loss_function(first_batch, second_batch).item()
     assert pytest.approx(loss, abs=0.0001) == 2.0 / 3.0
 
 
