@@ -1,7 +1,6 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict
 
 import flwr as fl
 import torch
@@ -16,7 +15,6 @@ from examples.models.cnn_model import MnistNet
 from fl4health.clients.flash_client import FlashClient
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
-from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
