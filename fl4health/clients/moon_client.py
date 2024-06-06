@@ -24,7 +24,6 @@ class MoonClient(BasicClient):
         temperature: float = 0.5,
         contrastive_weight: float = 1.0,
         len_old_models_buffer: int = 1,
-        contrastive_weight: float = 0,
     ) -> None:
         """
         This client implements the MOON algorithm from Model-Contrastive Federated Learning. The key idea of MOON is
