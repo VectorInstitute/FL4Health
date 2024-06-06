@@ -51,7 +51,7 @@ def test_getting_parameters(get_fenda_client: FendaClient) -> None:  # noqa
 
 
 @pytest.mark.parametrize("local_module,global_module,head_module", [(FeatureCnn(), FeatureCnn(), FendaHeadCnn())])
-def test_computing_loss(get_fenda_client: FendaClient) -> None:  # noqa
+def test_computing_perfcl_loss(get_fenda_client: FendaClient) -> None:  # noqa
     torch.manual_seed(42)
     fenda_client = get_fenda_client
     fenda_client.criterion = torch.nn.CrossEntropyLoss()

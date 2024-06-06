@@ -1018,7 +1018,8 @@ class BasicClient(NumPyClient):
         """
         Hook method called after local train step on client. step is an integer that represents
         the local training step that was most recently completed. For example, used by the APFL
-        method to update the alpha value after a training a step.
+        method to update the alpha value after a training a step. Also used by the MOON, FENDA
+        and Ditto to update optimized beta value for MK-MMD loss after n steps.
 
         Args:
             step (int): The step number in local training that was most recently completed.

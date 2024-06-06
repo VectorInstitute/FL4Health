@@ -24,6 +24,7 @@ class MoonClient(BasicClient):
         temperature: float = 0.5,
         contrastive_weight: float = 1.0,
         len_old_models_buffer: int = 1,
+        contrastive_weight: float = 0,
     ) -> None:
         """
         This client implements the MOON algorithm from Model-Contrastive Federated Learning. The key idea of MOON is
@@ -97,6 +98,7 @@ class MoonClient(BasicClient):
         if self.global_model is not None:
             _, global_model_features = self.global_model(input)
             features.update({"global_features": global_model_features["features"]})
+
         return preds, features
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
