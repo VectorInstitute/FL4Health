@@ -119,4 +119,4 @@ class FlashClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
-        self.gamma = self.narrow_config_type(config, "gamma", float)
+        self.gamma = self.narrow_config_type(config, "gamma", float) if "gamma" in config else 0.04
