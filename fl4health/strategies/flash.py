@@ -55,7 +55,7 @@ class FLASH(FedOpt):
         Second moment parameter. Defaults to 0.99.
     tau : float, optional
         Controls the algorithm's degree of adaptability. Defaults to 1e-9.
-    d_t : Optional[NDArrays]
+    d_t : NDArrays, optional
         Drift-aware term, initialized to None and updated during aggregation.
         Helps adjust the effective learning rate to quickly adapt to concept drifts.
 
