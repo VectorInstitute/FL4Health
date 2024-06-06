@@ -17,7 +17,7 @@ from flwr.server.strategy import FedOpt
 class FLASH(FedOpt):
     """FLASH - Fast and Robust Federated Learning Through Approximate Second-Order Method.
 
-    Implementation based on https://arxiv.org/abs/2003.00295v5
+    Implementation based on https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf
 
     Parameters
     ----------
