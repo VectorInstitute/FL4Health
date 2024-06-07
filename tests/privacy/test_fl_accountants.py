@@ -49,7 +49,7 @@ def test_instance_accountant_reproduce_results() -> None:
             client_sampling_rate, z, epochs_per_server_round, client_batch_sizes, client_data_points
         )
         estimated_epsilon = accountant.get_epsilon(server_rounds, delta)
-        assert pytest.approx(epsilon, abs=0.015) == estimated_epsilon
+        assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
 
 
 def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
@@ -101,8 +101,8 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
             updates[2]: 1.685,
             updates[3]: 2.634,
             updates[4]: 7.810,
-            updates[5]: 30.375,
-            updates[6]: 155.738,
+            updates[5]: 30.388,
+            updates[6]: 160.853,
         },
         (n_clients[4], clients_per_round[4], noise_values[4]): {
             updates[0]: 0.162,
@@ -130,7 +130,7 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
             accountant = FlClientLevelAccountantPoissonSampling(q, z)
             estimated_epsilon = accountant.get_epsilon(t, d)
             expected_epsilon = expected_epsilons[t]
-            assert pytest.approx(expected_epsilon, abs=0.015) == estimated_epsilon
+            assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
 
 
 def test_user_level_accountant_with_equivalent_trajectories() -> None:
@@ -153,7 +153,7 @@ def test_user_level_accountant_with_equivalent_trajectories() -> None:
     non_trajectory_updates = updates * trajectory_length
     non_trajectory_epsilon = non_trajectory_accountant.get_epsilon(non_trajectory_updates, target_delta)
 
-    assert pytest.approx(non_trajectory_epsilon, abs=0.015) == trajectory_epsilon
+    assert pytest.approx(non_trajectory_epsilon, abs=0.01) == trajectory_epsilon
 
 
 def test_user_level_accountant_with_longer_trajectories() -> None:
