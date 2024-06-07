@@ -1,7 +1,6 @@
 # multi-kernel maximum mean discrepancy
 # cao bin, HKUST, China, binjacobcao@gmail.com
 # free to charge for academic communication
-
 from logging import INFO
 from typing import Optional
 
@@ -19,6 +18,7 @@ class MkMmdLoss(torch.nn.Module):
         minimize_type_two_error: bool = True,
         normalize_features: bool = False,
         layer_name: Optional[str] = None,
+        construct_quadruples_per_kernel: bool = False,
     ) -> None:
         """
         Compute the multi-kernel maximum mean discrepancy (MK-MMD) between the source and target domains. Also allows
@@ -61,6 +61,7 @@ class MkMmdLoss(torch.nn.Module):
         self.minimize_type_two_error = minimize_type_two_error
         self.normalize_features = normalize_features
         self.layer_name = layer_name
+        self.construct_quadruples_per_kernel = construct_quadruples_per_kernel
 
     def construct_quadruples(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
@@ -81,29 +82,82 @@ class MkMmdLoss(torch.nn.Module):
         # x and y. That is the inner product. Note that ||x - y||^2 = <x - y, x - y> = (x-y)^T(x-y)
         # For the quadruples of the form (x,  x', y, y') we need distances for (x, x'), (y, y'), (x, y'), (x, y')
         # NOTE: The inner product for a vector x^Tx is just the square and sum of the components of x
-        x_x_prime = torch.mean((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 1, :]) ** 2, dim=1, keepdim=True)
-        y_y_prime = torch.mean((v_i_quadruples[:, 2, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_y_prime = torch.mean((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_prime_y = torch.mean((v_i_quadruples[:, 1, :] - v_i_quadruples[:, 2, :]) ** 2, dim=1, keepdim=True)
-        # each inner product is a tensor of dimension len(v_i_quadruples), we return a tensor of shape
-        # len(v_i_quadruples) x 4
-        return torch.cat([x_x_prime, y_y_prime, x_y_prime, x_prime_y], dim=1)
+        x_x_prime = (
+            torch.sum((v_i_quadruples[:, 0, :] ** 2), dim=1).reshape(-1, 1)
+            + torch.sum((v_i_quadruples[:, 1, :] ** 2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(v_i_quadruples[:, 0, :], torch.transpose(v_i_quadruples[:, 1, :], 0, 1))
+        )
+        x_x_prime[x_x_prime < 0] = 0
+        y_y_prime = (
+            torch.sum((v_i_quadruples[:, 2, :] ** 2), dim=1).reshape(-1, 1)
+            + torch.sum((v_i_quadruples[:, 3, :] ** 2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(v_i_quadruples[:, 2, :], torch.transpose(v_i_quadruples[:, 3, :], 0, 1))
+        )
+        y_y_prime[y_y_prime < 0] = 0
+        x_y_prime = (
+            torch.sum((v_i_quadruples[:, 0, :] ** 2), dim=1).reshape(-1, 1)
+            + torch.sum((v_i_quadruples[:, 3, :] ** 2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(v_i_quadruples[:, 0, :], torch.transpose(v_i_quadruples[:, 3, :], 0, 1))
+        )
+        x_y_prime[x_y_prime < 0] = 0
+        x_prime_y = (
+            torch.sum((v_i_quadruples[:, 1, :] ** 2), dim=1).reshape(-1, 1)
+            + torch.sum((v_i_quadruples[:, 2, :] ** 2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(v_i_quadruples[:, 1, :], torch.transpose(v_i_quadruples[:, 2, :], 0, 1))
+        )
+        x_prime_y[x_prime_y < 0] = 0
+        # each inner product is a tensor of dimension len(v_i_quadruples) x len(v_i_quadruples), we return a
+        #  tensor of shape 4 x len(v_i_quadruples) x len(v_i_quadruples)
+        return torch.cat(
+            [x_x_prime.unsqueeze(0), y_y_prime.unsqueeze(0), x_y_prime.unsqueeze(0), x_prime_y.unsqueeze(0)], dim=0
+        )
 
-    def compute_h_u_from_inner_products(
-        self, inner_product_quadruples: torch.Tensor, gamma: torch.Tensor
-    ) -> torch.Tensor:
+    def compute_euclidean_inner_products_all(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        # We want to compute the RBF kernel values without using the quadruples. To do this, we need to compute
+        # ||x - y||^2 for x and y. That is the inner product. Note that ||x - y||^2 = <x - y, x - y> = (x-y)^T(x-y)
+        x_x_prime = (
+            torch.sum((X**2), dim=1).reshape(-1, 1)
+            + torch.sum((X**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(X, torch.transpose(X, 0, 1))
+        )
+        x_x_prime[x_x_prime < 0] = 0
+        y_y_prime = (
+            torch.sum((Y**2), dim=1).reshape(-1, 1)
+            + torch.sum((Y**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(Y, torch.transpose(Y, 0, 1))
+        )
+        y_y_prime[y_y_prime < 0] = 0
+        x_y_prime = (
+            torch.sum((X**2), dim=1).reshape(-1, 1)
+            + torch.sum((Y**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(X, torch.transpose(Y, 0, 1))
+        )
+        x_y_prime[x_y_prime < 0] = 0
+        x_prime_y = (
+            torch.sum((Y**2), dim=1).reshape(-1, 1)
+            + torch.sum((X**2), dim=1).reshape(1, -1)
+            - 2.0 * torch.mm(Y, torch.transpose(X, 0, 1))
+        )
+        x_prime_y[x_prime_y < 0] = 0
+        # each inner product is a tensor of dimension len(v_i_quadruples) x len(v_i_quadruples), we return a
+        # tensor of shape 4 x len(X) x len(Y)
+        return torch.cat(
+            [x_x_prime.unsqueeze(0), y_y_prime.unsqueeze(0), x_y_prime.unsqueeze(0), x_prime_y.unsqueeze(0)], dim=0
+        )
+
+    def compute_h_u_from_inner_products(self, inner_products: torch.Tensor, gamma: torch.Tensor) -> torch.Tensor:
         # Gamma should be of shape torch.Tensor([gamma])
         assert gamma.shape == (1,)
-        # inner_product_quadruples has shape number of v_i_quadruples x 4
+        # inner_products has shape number of 4 x v_i_quadruples x v_i_quadruples or 4 x len(X) x len(Y)
         # h_u_componets should have the same shape
-        h_u_components = torch.exp((-1 * inner_product_quadruples) / (2 * torch.pow(gamma, 2)))
+        h_u_components = torch.exp((-1 * inner_products) / gamma)
         # Each column of h_u_components should now be u(x_{2i-1}, x_{2i}), u(y_{2i-1}, y_{2i}), u(x_{2i-1}, y_{2i}),
         # and u(x_{2i}, y_{2i-1}), where u is the kernel_index^th kernel
         # So we compute:
         #   h_u[x_{2i-1}, x_{2i},y_{2i-1}, y_{2i}] =  u(x_{2i-1}, x_{2i}) + u(y_{2i-1}, y_{2i})
         # - u(x_{2i-1}, y_{2i}) - u(x_{2i}, y_{2i-1})
-        h_u = h_u_components[:, 0] + h_u_components[:, 1] - h_u_components[:, 2] - h_u_components[:, 3]
-        # this results in a matrix of shape 1 x number of v_i_quadruples
+        h_u = h_u_components[0, :] + h_u_components[1, :] - h_u_components[2, :] - h_u_components[3, :]
+        # this results in a matrix of shape 1 xlen(v_i_quadruples) x len(v_i_quadruples) or 1 x len(X) x len(Y)
         return h_u.unsqueeze(0)
 
     def compute_all_h_u_from_inner_products(self, inner_product_quadruples: torch.Tensor) -> torch.Tensor:
@@ -123,11 +177,18 @@ class MkMmdLoss(torch.nn.Module):
         all_h_u = self.compute_all_h_u_from_inner_products(inner_product_quadruples)
         return all_h_u
 
+    def compute_all_h_u_per_v_i_all(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
+        # We don't need to construct the quadruples here, we can just compute the inner products directly
+        inner_product = self.compute_euclidean_inner_products_all(X, Y)
+        # all_h_u has shape number of kernels x number of quadruples
+        all_h_u = self.compute_all_h_u_from_inner_products(inner_product)
+        return all_h_u
+
     def compute_hat_d_per_kernel(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_vi has shape number kernels x number of v_is. Each row is h_u(v_i) for kernel u with the ith
         # column being that kernel evaluated on v_i.
         # output shape is number of kernels x 1
-        return torch.mean(all_h_u_per_v_i, dim=1, keepdim=True)
+        return torch.mean(all_h_u_per_v_i, dim=(1, 2)).unsqueeze(1)
 
     def compute_mkmmd(self, X: torch.Tensor, Y: torch.Tensor, beta: torch.Tensor) -> torch.Tensor:
         # Normalize the features if necessary to have unit length
@@ -136,20 +197,19 @@ class MkMmdLoss(torch.nn.Module):
             Y = self.normalize(Y)
         # In this function, we assume that X, Y: n_samples, n_features are the same size and that beta is a tensor of
         # shape number of kernels x 1
-        all_h_u_per_vi = self.compute_all_h_u_per_v_i(X, Y)
+        if self.construct_quadruples_per_kernel:
+            all_h_u_per_vi = self.compute_all_h_u_per_v_i(X, Y)
+        else:
+            all_h_u_per_vi = self.compute_all_h_u_per_v_i_all(X, Y)
         hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_vi)
         # Take the dot product between the indivudal kernel hat_d values to scale by the basis coefficients
         return torch.mm(beta.t(), hat_d_per_kernel)[0][0]
 
     def create_h_u_delta_w_i(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
-        # all_h_u_per_v_i has dimension number kernels x number of v_i quadruples
-        n_kernels, n_v_i_s = all_h_u_per_v_i.shape
-        # if the number of v_is is not divisible by two just drop the final ones
-        if n_v_i_s % 2 == 1:
-            all_h_u_per_v_i = all_h_u_per_v_i[:, :-1]
+        # Implementing the new version of the h_u_delta_w_i calculation based on David's Notes
+        all_E_h_u_per_v_i = torch.mean(all_h_u_per_v_i, dim=(1, 2), keepdim=True)
         # pairing the h_u(v_i) values as h_u(v_{2i-1}), h_u(v_{2i}), think w_is from the paper
-        h_u_v_i_pairs = all_h_u_per_v_i.reshape(n_kernels, n_v_i_s // 2, 2)
-        return h_u_v_i_pairs[:, :, 0] - h_u_v_i_pairs[:, :, 1]
+        return all_h_u_per_v_i - all_E_h_u_per_v_i
 
     def compute_hat_Q_k(self, all_h_u_per_v_i: torch.Tensor) -> torch.Tensor:
         # all_h_u_per_v_i has dimension number kernels x number of v_i quadruples
@@ -157,17 +217,16 @@ class MkMmdLoss(torch.nn.Module):
 
         Q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         len_w_is = h_u_delta_w_i.shape[1]
-        for i in range(len_w_is):
-            # For each basis function we're adding in the value of h_{j, \Delta}(w_i)*h_{k, \Delta}(w_i) from the
-            # construction above to the proper entry in Q. Note that Q is symmetric. So we can construct the symmetric
-            # entries at the same time.
-            for j in range(self.kernel_num):
-                for k in range(j + 1):
-                    Q_k_matrix[j][k] += h_u_delta_w_i[j][i] * h_u_delta_w_i[k][i]
-                    if j != k:
-                        Q_k_matrix[k][j] += h_u_delta_w_i[j][i] * h_u_delta_w_i[k][i]
+        # For each basis function we're adding in the value of h_{j, \Delta}(w_i)*h_{k, \Delta}(w_i) from the
+        # construction above to the proper entry in Q. Note that Q is symmetric. So we can construct the symmetric
+        # entries at the same time.
+        for j in range(self.kernel_num):
+            for k in range(j + 1):
+                Q_k_matrix[j][k] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
+                if j != k:
+                    Q_k_matrix[k][j] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
         # Q_k_matrix has shape number of kernels x number of kernels
-        return Q_k_matrix / len_w_is
+        return Q_k_matrix / ((len_w_is) ** 2 - 1)
 
     def beta_with_extreme_kernel_base_values(
         self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor, minimize_type_two_error: bool = True
@@ -259,16 +318,17 @@ class MkMmdLoss(torch.nn.Module):
         if self.normalize_features:
             X = self.normalize(X)
             Y = self.normalize(Y)
-
         # In this function, we assume that X, Y: n_samples, n_features
-        all_h_u_per_v_i = self.compute_all_h_u_per_v_i(X, Y)
+        if self.construct_quadruples_per_kernel:
+            all_h_u_per_v_i = self.compute_all_h_u_per_v_i(X, Y)
+        else:
+            all_h_u_per_v_i = self.compute_all_h_u_per_v_i_all(X, Y)
 
         # shape of hat_d_per_kernel is number of kernels x 1
         hat_d_per_kernel = self.compute_hat_d_per_kernel(all_h_u_per_v_i)
         # check to see that at least one of them is positive. If none of them are positive, then select a single kernel
         # with largest hat_d, similar to the suggestion of Gretton et al. in "Optimal Kernel Choice for Large-Scale
         # Two-Sample Tests", 2012
-
         # shape of hat_Q_k is number of kernels x number of kernels
         hat_Q_k = self.compute_hat_Q_k(all_h_u_per_v_i)
         # Eigen shift hat_Q_k and scale by 2 as the QP setup scales by 1/2
