@@ -26,9 +26,10 @@ from research.cifar10.model import ConvNet2
 
 NUM_CLIENTS = 10
 BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
-BASELINE_LAYERS['bn1'] = 32768
-BASELINE_LAYERS['bn2'] = 16384
-BASELINE_LAYERS['fc1'] = 2048
+BASELINE_LAYERS["bn1"] = 32768
+BASELINE_LAYERS["bn2"] = 16384
+BASELINE_LAYERS["fc1"] = 2048
+
 
 class CifarDittoClient(DittoDeepMmdClient):
     def __init__(
@@ -45,9 +46,7 @@ class CifarDittoClient(DittoDeepMmdClient):
         deep_mmd_loss_depth: int = 1,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
-        size_feature_extraction_layers = OrderedDict(
-            list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
-        )
+        size_feature_extraction_layers = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -58,7 +57,6 @@ class CifarDittoClient(DittoDeepMmdClient):
             deep_mmd_loss_weight=deep_mmd_loss_weight,
             flatten_feature_extraction_layers={key: True for key in size_feature_extraction_layers},
             size_feature_extraction_layers=size_feature_extraction_layers,
-
         )
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
@@ -221,7 +219,6 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
         deep_mmd_loss_depth=args.deep_mmd_loss_depth,
         deep_mmd_loss_weight=args.mu,
-        
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

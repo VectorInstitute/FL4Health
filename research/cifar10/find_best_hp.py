@@ -17,9 +17,7 @@ def get_run_folders(hp_dir: str) -> List[str]:
     return [os.path.join(hp_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def get_weighted_loss_from_server_log(
-    run_folder_path: str
-) -> float:
+def get_weighted_loss_from_server_log(run_folder_path: str) -> float:
     server_log_path = os.path.join(run_folder_path, "server.out")
     with open(server_log_path, "r") as handle:
         files_lines = handle.readlines()
@@ -45,8 +43,6 @@ def main(hp_sweep_dir: str) -> None:
             best_folder = hp_folder
     log(INFO, f"Best Loss: {best_avg_loss}")
     log(INFO, f"Best Folder: {best_folder}")
-
-    
 
 
 if __name__ == "__main__":

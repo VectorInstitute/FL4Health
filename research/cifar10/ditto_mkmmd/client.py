@@ -24,7 +24,8 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.model import ConvNet2
 
 NUM_CLIENTS = 10
-BASELINE_LAYERS = ['bn1', 'bn2', 'fc1']
+BASELINE_LAYERS = ["bn1", "bn2", "fc1"]
+
 
 class CifarDittoClient(DittoMkmmdClient):
     def __init__(
@@ -51,9 +52,7 @@ class CifarDittoClient(DittoMkmmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            flatten_feature_extraction_layers={
-                key: True for key in BASELINE_LAYERS[-1 * mkmmd_loss_depth :]
-            },
+            flatten_feature_extraction_layers={key: True for key in BASELINE_LAYERS[-1 * mkmmd_loss_depth :]},
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
         )

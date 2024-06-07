@@ -14,8 +14,8 @@ from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-from research.cifar10.personal_server import PersonalServer
 from research.cifar10.model import ConvNet2
+from research.cifar10.personal_server import PersonalServer
 
 
 def fit_config(

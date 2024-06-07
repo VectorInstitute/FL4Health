@@ -1,24 +1,23 @@
 import argparse
 from logging import INFO
+from pathlib import Path
 from typing import Dict
 
 import torch
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
-from pathlib import Path
 
+from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.utils import (
     evaluate_cifar10_model,
-    load_local_model,
     get_all_run_folders,
-    load_global_model,
     get_metric_avg_std,
+    load_global_model,
+    load_local_model,
     write_measurement_results,
 )
-
-from fl4health.utils.sampler import DirichletLabelBasedSampler
-from fl4health.utils.load_data import load_cifar10_test_data
 
 NUM_CLIENTS = 10
 BATCH_SIZE = 32
@@ -48,10 +47,9 @@ def main(
             list(range(10)),
             sample_percentage=1.0 / NUM_CLIENTS,
             beta=heterogeneity_level,
-            hash_key= client_number,
+            hash_key=client_number,
         )
         test_loader, _ = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
-
 
         local_test_metrics = []
         server_test_metrics = []
@@ -69,9 +67,7 @@ def main(
 
             if eval_global_model:
                 server_model = load_global_model(run_folder_dir)
-                server_run_metric = evaluate_cifar10_model(
-                    server_model, test_loader, metrics, device, is_apfl
-                )
+                server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
