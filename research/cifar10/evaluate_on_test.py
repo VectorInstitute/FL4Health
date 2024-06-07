@@ -5,7 +5,6 @@ from typing import Dict
 
 import torch
 from flwr.common.logger import log
-from torch.utils.data import DataLoader
 
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
