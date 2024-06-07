@@ -7,7 +7,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.cnn_model import MnistNet
+from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -43,7 +43,7 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = MnistNet()
+    initial_model = Net()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
