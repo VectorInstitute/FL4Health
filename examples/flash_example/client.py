@@ -22,7 +22,10 @@ class CifarFlashClient(FlashClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         # sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size,)
+        train_loader, val_loader, _ = load_cifar10_data(
+            self.data_path,
+            batch_size,
+        )
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
