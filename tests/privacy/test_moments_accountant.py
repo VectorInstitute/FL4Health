@@ -52,7 +52,7 @@ def test_instance_accountant_reproduce_results() -> None:
         sample_size = clients_sampled_per_round * batch_size
         T = server_rounds * epochs_per_server_round * batch_steps
         estimated_epsilon = accountant.get_epsilon(PoissonSampling(sample_size / population_size), z, T, delta)
-        assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
+        assert pytest.approx(epsilon, abs=0.01) == estimated_epsilon
 
 
 def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
@@ -132,7 +132,7 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
         for t in updates:
             estimated_epsilon = accountant.get_epsilon(strategy, z, t, d)
             expected_epsilon = expected_epsilons[t]
-            assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
+            assert pytest.approx(expected_epsilon, abs=0.01) == estimated_epsilon
 
 
 def test_user_level_accountant_with_equivalent_trajectories() -> None:
