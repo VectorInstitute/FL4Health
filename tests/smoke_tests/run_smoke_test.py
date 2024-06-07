@@ -623,7 +623,7 @@ if __name__ == "__main__":
             server_python_path="examples.flash_example.server",
             client_python_path="examples.flash_example.client",
             config_path="tests/smoke_tests/flash_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar_data/",
         )
     )
     loop.close()
