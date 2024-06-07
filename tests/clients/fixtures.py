@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.constrained_fenda_client import ConstrainedFendaClient
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
@@ -18,8 +19,14 @@ from fl4health.clients.moon_client import MoonClient
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
+from fl4health.losses.fenda_loss_config import (
+    ConstrainedFendaLossContainer,
+    ContrastiveLossContainer,
+    CosineSimilarityLossContainer,
+    PerFclLossContainer,
+)
 from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -115,6 +122,28 @@ def get_fenda_client(
         device=torch.device("cpu"),
     )
     fenda_model = FendaModel(local_module, global_module, head_module)
+    client.model = fenda_model
+    client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_constrained_fenda_client(
+    local_module: nn.Module, global_module: nn.Module, head_module: ParallelSplitHeadModule
+) -> ConstrainedFendaClient:
+    device = torch.device("cpu")
+    perfcl_loss_config = PerFclLossContainer(device, 1.0, 1.0)
+    contrastive_loss_config = ContrastiveLossContainer(device, 1.0)
+    cos_sim_loss_config = CosineSimilarityLossContainer(device, 1.0)
+    fenda_loss_config = ConstrainedFendaLossContainer(perfcl_loss_config, cos_sim_loss_config, contrastive_loss_config)
+    client = ConstrainedFendaClient(
+        data_path=Path(""),
+        metrics=[Accuracy()],
+        device=device,
+        loss_container=fenda_loss_config,
+    )
+    fenda_model = FendaModelWithFeatureState(local_module, global_module, head_module, flatten_features=True)
     client.model = fenda_model
     client.parameter_exchanger = FixedLayerExchanger(fenda_model.layers_to_exchange())
     client.initialized = True
