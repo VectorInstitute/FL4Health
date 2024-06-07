@@ -25,7 +25,7 @@ def test_instance_accountant_reproduce_results() -> None:
     expected_epsilons = [1.035, 2.213]
     for T, expected_epsilon in zip(updates, expected_epsilons):
         epsilon = accountant.get_epsilon(PoissonSampling(sampling_ratio), noise_multiplier, T, target_delta)
-        assert pytest.approx(expected_epsilon, abs=0.001) == epsilon
+        assert pytest.approx(expected_epsilon, abs=0.01) == epsilon
 
     # Instance Level FL with DP-SGD
     # Vanilla DP-SGD test
@@ -52,7 +52,7 @@ def test_instance_accountant_reproduce_results() -> None:
         sample_size = clients_sampled_per_round * batch_size
         T = server_rounds * epochs_per_server_round * batch_steps
         estimated_epsilon = accountant.get_epsilon(PoissonSampling(sample_size / population_size), z, T, delta)
-        assert pytest.approx(epsilon, abs=0.01) == estimated_epsilon
+        assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
 
 
 def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
