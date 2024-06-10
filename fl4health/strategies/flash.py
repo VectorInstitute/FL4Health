@@ -11,6 +11,7 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.server.client_proxy import ClientProxy
+
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
@@ -89,7 +90,7 @@ class Flash(BasicFedAvg):
         weighted_aggregation: bool = False,
         weighted_eval_losses: bool = False,
     ) -> None:
-        
+
         super().__init__(
             fraction_fit=fraction_fit,
             fraction_evaluate=fraction_evaluate,
@@ -104,7 +105,7 @@ class Flash(BasicFedAvg):
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
             weighted_aggregation=weighted_aggregation,
-            weighted_eval_losses=weighted_eval_losses
+            weighted_eval_losses=weighted_eval_losses,
         )
         self.current_weights = parameters_to_ndarrays(initial_parameters)
         self.eta = eta
@@ -121,7 +122,7 @@ class Flash(BasicFedAvg):
         """Compute a string representation of the strategy."""
         rep = f"Flash(accept_failures={self.accept_failures})"
         return rep
-    
+
     def _update_d_t(self, delta_t, beta_3):
         if not self.d_t:
             self.d_t = [np.zeros_like(x) for x in delta_t]
