@@ -1,6 +1,6 @@
-# FLASH Federated Learning Example
+# Flash Federated Learning Example
 
-In this example, we implement the FLASH algorithm from the paper [FLASH: Fast and Robust Federated Learning Through Approximate Second-Order Method](https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf). This method enhances federated learning by addressing both statistical heterogeneity and concept drift issues.
+In this example, we implement the Flash algorithm from the paper [Flash: Concept Drift Adaptation in Federated Learning](https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf). This method enhances federated learning by addressing both statistical heterogeneity and concept drift issues.
 
 ### Running the Example
 

@@ -4,7 +4,7 @@ import numpy as np
 from flwr.common import Code, FitRes, Metrics, NDArrays, Status, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.server.client_proxy import ClientProxy
 
-from fl4health.strategies.flash import FLASH
+from fl4health.strategies.flash import Flash
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 
@@ -37,7 +37,7 @@ def metrics_aggregation(to_aggregate: List[Tuple[int, Metrics]]) -> Metrics:
 evaluate_metrics_aggregation_fn = metrics_aggregation
 fit_metrics_aggregation_fn = metrics_aggregation
 
-flash_strategy = FLASH(
+flash_strategy = Flash(
     evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
     fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
     fraction_evaluate=0.8,

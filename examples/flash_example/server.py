@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
+from fl4health.strategies.flash import Flash
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
@@ -46,7 +46,7 @@ def main(config: Dict[str, Any]) -> None:
     initial_model = Net()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = Flash(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds

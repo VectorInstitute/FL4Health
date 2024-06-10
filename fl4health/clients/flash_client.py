@@ -22,8 +22,8 @@ class FlashClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         """
-        This client is used to perform client-side training associated with the FLASH method described in
-        https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf. FLASH is designed to handle statistical
+        This client is used to perform client-side training associated with the Flash method described in
+        https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf. Flash is designed to handle statistical
         heterogeneity and concept drift in federated learning through client-side early stopping and server-side
         drift-aware adaptive optimization.
 
