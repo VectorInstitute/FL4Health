@@ -122,19 +122,20 @@ class Flash(BasicFedAvg):
         """Compute a string representation of the strategy."""
         rep = f"Flash(accept_failures={self.accept_failures})"
         return rep
-
-    def _update_d_t(self, delta_t, beta_3):
+ 
+    def _update_d_t(self, delta_t: NDArrays, beta_3: List[np.ndarray]) -> None:
+        """Update the drift-aware term d_t."""
         if not self.d_t:
             self.d_t = [np.zeros_like(x) for x in delta_t]
-
-        # Compute d_t
+        
         for i, (delta, v_prev, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
             d_t_j = []
             for j in range(len(delta)):
                 d_t_j.append(beta_3[i][j] * d_prev[j] + (1 - beta_3[i][j]) * ((delta[j] ** 2) - v_prev[j]))
             self.d_t[i] = np.array(d_t_j)
 
-    def _update_beta_3(self, delta_t):
+    def _update_beta_3(self, delta_t: NDArrays) -> List[np.ndarray]:
+        """Update the beta_3 term."""
         beta_3 = []
         for delta, v_prev in zip(delta_t, self.v_t):
             beta_3_j = []
@@ -145,15 +146,23 @@ class Flash(BasicFedAvg):
             beta_3.append(np.array(beta_3_j))
         return beta_3
 
-    def _update_v_t(self, delta_t: NDArrays):
+    def _update_v_t(self, delta_t: NDArrays) -> None:
+        """Update the second moment estimate v_t."""
         if not self.v_t:
             self.v_t = [np.zeros_like(x) for x in delta_t]
-        self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
+        self.v_t = [
+            self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y)
+            for x, y in zip(self.v_t, delta_t)
+        ]
 
-    def _update_m_t(self, delta_t: NDArrays):
+    def _update_m_t(self, delta_t: NDArrays) -> None:
+        """Update the first moment estimate m_t."""
         if not self.m_t:
             self.m_t = [np.zeros_like(x) for x in delta_t]
-        self.m_t = [np.multiply(self.beta_1, x) + (1 - self.beta_1) * y for x, y in zip(self.m_t, delta_t)]
+        self.m_t = [
+            np.multiply(self.beta_1, x) + (1 - self.beta_1) * y
+            for x, y in zip(self.m_t, delta_t)
+        ]
 
     def aggregate_fit(
         self,
