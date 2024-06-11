@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Union, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.logger import log
@@ -48,8 +48,10 @@ class FlashClient(BasicClient):
 
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
         local_epochs, local_steps, current_server_round, evaluate_after_fit = super().process_config(config)
-        if local_steps  is not None:
-            raise ValueError("Training by steps is not applicable for FLASH clients. Please define 'local_epochs' in your config instead")
+        if local_steps is not None:
+            raise ValueError(
+                "Training by steps is not applicable for FLASH clients. Please define 'local_epochs' in your config instead"
+            )
         return local_epochs, local_steps, current_server_round, evaluate_after_fit
 
     def train_by_epochs(
@@ -96,4 +98,3 @@ class FlashClient(BasicClient):
         super().setup_client(config)
         if "gamma" in config:
             self.gamma = self.narrow_config_type(config, "gamma", float)
-
