@@ -180,7 +180,7 @@ class Flash(BasicFedAvg):
         self._update_m_t(delta_t)
 
         # v_t
-        v_t_prev: NDArrays =  self.v_t
+        v_t_prev: NDArrays = self.v_t
         self._update_v_t(delta_t)
 
         # d_t
