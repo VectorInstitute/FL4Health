@@ -148,13 +148,13 @@ class Flash(BasicFedAvg):
 
     def _update_v_t(self, delta_t: NDArrays) -> None:
         """Update the second moment estimate v_t."""
-        if not self.v_t:
+        if self.v_t is None:
             self.v_t = [np.zeros_like(x) for x in delta_t]
         self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
 
     def _update_m_t(self, delta_t: NDArrays) -> None:
         """Update the first moment estimate m_t."""
-        if not self.m_t:
+        if self.m_t is None:
             self.m_t = [np.zeros_like(x) for x in delta_t]
         self.m_t = [np.multiply(self.beta_1, x) + (1 - self.beta_1) * y for x, y in zip(self.m_t, delta_t)]
 
