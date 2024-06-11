@@ -125,9 +125,8 @@ class Flash(BasicFedAvg):
 
     def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
         """Update the drift-aware term d_t."""
-        for attr in ["v_t", "d_t"]:
-            if getattr(self, attr) is None:
-                setattr(self, attr, [np.zeros_like(x) for x in delta_t])
+        assert self.v_t is not None
+        assert self.d_t is not None
         for i, (delta, v_prev, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
             d_t_j = []
             for j in range(len(delta)):
@@ -136,6 +135,8 @@ class Flash(BasicFedAvg):
 
     def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
         """Update the beta_3 term."""
+        assert self.v_t is not None
+        assert v_t_prev is not None
         beta_3 = []
         for delta, v, v_prev in zip(delta_t, self.v_t, v_t_prev):
             beta_3_j = []
@@ -148,14 +149,12 @@ class Flash(BasicFedAvg):
 
     def _update_v_t(self, delta_t: NDArrays) -> None:
         """Update the second moment estimate v_t."""
-        if self.v_t is None:
-            self.v_t = [np.zeros_like(x) for x in delta_t]
+        assert self.v_t is not None
         self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
 
     def _update_m_t(self, delta_t: NDArrays) -> None:
         """Update the first moment estimate m_t."""
-        if self.m_t is None:
-            self.m_t = [np.zeros_like(x) for x in delta_t]
+        assert self.m_t is not None
         self.m_t = [np.multiply(self.beta_1, x) + (1 - self.beta_1) * y for x, y in zip(self.m_t, delta_t)]
 
     def aggregate_fit(
@@ -173,17 +172,10 @@ class Flash(BasicFedAvg):
 
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
-        # Flash
         delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
-        # if self.m_t is None:
-        #     self.m_t = [np.zeros_like(x) for x in delta_t]
-        # if self.v_t is None:
-        #     self.v_t = [np.zeros_like(x) for x in delta_t]
-        # if self.d_t is None:
-        #     self.d_t = [np.zeros_like(x) for x in delta_t]
-        # for attr in ['m_t', 'v_t', 'd_t']:
-        #     if getattr(self, attr) is None:
-        #         setattr(self, attr, [np.zeros_like(x) for x in delta_t])
+        for attr in ['m_t', 'v_t', 'd_t']:
+            if getattr(self, attr) is None:
+                setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         # m_t
         self._update_m_t(delta_t)
 
@@ -196,9 +188,6 @@ class Flash(BasicFedAvg):
         self._update_d_t(delta_t, beta_3)
 
         # Update global weights
-        for attr in ["m_t", "v_t", "d_t"]:
-            if getattr(self, attr) is None:
-                setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         new_weights = [
             current_weight + self.eta * m_t / (np.sqrt(v_t) - d_t + self.tau)
             for current_weight, m_t, v_t, d_t in zip(self.current_weights, self.m_t, self.v_t, self.d_t)
