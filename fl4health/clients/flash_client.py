@@ -70,7 +70,7 @@ class FlashClient(BasicClient):
 
             metrics = self.train_metric_manager.compute()
             loss_dict = self.train_loss_meter.compute().as_dict()
-            current_loss,_ = self.validate()
+            current_loss, _ = self.validate()
 
             # Early stopping check
             if self.gamma is not None and previous_loss - current_loss >= self.gamma / (local_epoch + 1):

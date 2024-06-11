@@ -59,7 +59,7 @@ class Flash(BasicFedAvg):
                 Minimum number of clients used during validation. Defaults to 2.
             min_available_clients : int, optional
                 Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn : Optional[Callable[[int, NDArrays, Dict[str, Scalar]], 
+            evaluate_fn : Optional[Callable[[int, NDArrays, Dict[str, Scalar]],
                           Optional[Tuple[float, Dict[str, Scalar]]]]]
                 Optional function used for validation. Defaults to None.
             on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
@@ -90,7 +90,7 @@ class Flash(BasicFedAvg):
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
-            """
+        """
 
         super().__init__(
             fraction_fit=fraction_fit,
