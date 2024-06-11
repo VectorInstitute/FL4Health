@@ -50,7 +50,8 @@ class FlashClient(BasicClient):
         local_epochs, local_steps, current_server_round, evaluate_after_fit = super().process_config(config)
         if local_steps is not None:
             raise ValueError(
-                "Training by steps is not applicable for FLASH clients. Please define 'local_epochs' in your config instead"
+                "Training by steps is not applicable for FLASH clients.\
+                  Please define 'local_epochs' in your config instead"
             )
         return local_epochs, local_steps, current_server_round, evaluate_after_fit
 
