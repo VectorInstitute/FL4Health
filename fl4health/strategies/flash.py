@@ -125,8 +125,9 @@ class Flash(BasicFedAvg):
 
     def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
         """Update the drift-aware term d_t."""
-        if not self.d_t:
-            self.d_t = [np.zeros_like(x) for x in delta_t]
+        for attr in ['v_t', 'd_t']:
+            if getattr(self, attr) is None:
+                setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         for i, (delta, v_prev, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
             d_t_j = []
             for j in range(len(delta)):
