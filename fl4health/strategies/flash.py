@@ -126,10 +126,10 @@ class Flash(BasicFedAvg):
     def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
         """Update the drift-aware term d_t."""
         assert self.v_t is not None and self.d_t is not None
-        for i, (delta, v_prev, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
+        for i, (delta, v, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
             d_t_j = []
             for j in range(len(delta)):
-                d_t_j.append(beta_3[i][j] * d_prev[j] + (1 - beta_3[i][j]) * ((delta[j] ** 2) - v_prev[j]))
+                d_t_j.append(beta_3[i][j] * d_prev[j] + (1 - beta_3[i][j]) * ((delta[j] ** 2) - v[j]))
             self.d_t[i] = np.array(d_t_j)
 
     def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
@@ -148,12 +148,12 @@ class Flash(BasicFedAvg):
     def _update_v_t(self, delta_t: NDArrays) -> None:
         """Update the second moment estimate v_t."""
         assert self.v_t is not None
-        self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
+        self.v_t = [self.beta_2 * v + (1 - self.beta_2) * np.multiply(delta, delta) for v, delta in zip(self.v_t, delta_t)]
 
     def _update_m_t(self, delta_t: NDArrays) -> None:
         """Update the first moment estimate m_t."""
         assert self.m_t is not None
-        self.m_t = [np.multiply(self.beta_1, x) + (1 - self.beta_1) * y for x, y in zip(self.m_t, delta_t)]
+        self.m_t = [np.multiply(self.beta_1, m) + (1 - self.beta_1) * delta for m, delta in zip(self.m_t, delta_t)]
 
     def aggregate_fit(
         self,
