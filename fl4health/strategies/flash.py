@@ -148,7 +148,9 @@ class Flash(BasicFedAvg):
     def _update_v_t(self, delta_t: NDArrays) -> None:
         """Update the second moment estimate v_t."""
         assert self.v_t is not None
-        self.v_t = [self.beta_2 * v + (1 - self.beta_2) * np.multiply(delta, delta) for v, delta in zip(self.v_t, delta_t)]
+        self.v_t = [
+            self.beta_2 * v + (1 - self.beta_2) * np.multiply(delta, delta) for v, delta in zip(self.v_t, delta_t)
+        ]
 
     def _update_m_t(self, delta_t: NDArrays) -> None:
         """Update the first moment estimate m_t."""
