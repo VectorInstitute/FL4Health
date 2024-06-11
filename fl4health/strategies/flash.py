@@ -173,7 +173,7 @@ class Flash(BasicFedAvg):
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
         delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
-        for attr in ['m_t', 'v_t', 'd_t']:
+        for attr in ["m_t", "v_t", "d_t"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         # m_t
