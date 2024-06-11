@@ -123,7 +123,7 @@ class Flash(BasicFedAvg):
         rep = f"Flash(accept_failures={self.accept_failures})"
         return rep
 
-    def _update_d_t(self, delta_t: NDArrays, beta_3: List[np.ndarray]) -> None:
+    def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
         """Update the drift-aware term d_t."""
         if not self.d_t:
             self.d_t = [np.zeros_like(x) for x in delta_t]
@@ -134,14 +134,14 @@ class Flash(BasicFedAvg):
                 d_t_j.append(beta_3[i][j] * d_prev[j] + (1 - beta_3[i][j]) * ((delta[j] ** 2) - v_prev[j]))
             self.d_t[i] = np.array(d_t_j)
 
-    def _update_beta_3(self, delta_t: NDArrays) -> List[np.ndarray]:
+    def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
         """Update the beta_3 term."""
         beta_3 = []
-        for delta, v_prev in zip(delta_t, self.v_t):
+        for delta, v, v_prev in zip(delta_t, self.v_t, v_t_prev):
             beta_3_j = []
             for j in range(len(delta)):
                 norm_v_prev = np.linalg.norm(v_prev[j])
-                norm_diff = np.linalg.norm((delta[j] ** 2) - v_prev[j])
+                norm_diff = np.linalg.norm((delta[j] ** 2) - v[j])
                 beta_3_j.append(norm_v_prev / (norm_diff + norm_v_prev))
             beta_3.append(np.array(beta_3_j))
         return beta_3
@@ -180,10 +180,11 @@ class Flash(BasicFedAvg):
         self._update_m_t(delta_t)
 
         # v_t
+        v_t_prev: NDArrays =  self.v_t
         self._update_v_t(delta_t)
 
         # d_t
-        beta_3 = self._update_beta_3(delta_t)
+        beta_3 = self._update_beta_3(delta_t, v_t_prev)
         self._update_d_t(delta_t, beta_3)
 
         # Update global weights
