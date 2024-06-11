@@ -176,17 +176,21 @@ class Flash(BasicFedAvg):
         for attr in ["m_t", "v_t", "d_t"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
+        assert self.m_t is not None
+        assert self.v_t is not None
+        assert self.d_t is not None
         # m_t
         self._update_m_t(delta_t)
 
         # v_t
-        v_t_prev: NDArrays = self.v_t
+        assert self.v_t is not None
+        v_t_prev = self.v_t
         self._update_v_t(delta_t)
 
         # d_t
         beta_3 = self._update_beta_3(delta_t, v_t_prev)
         self._update_d_t(delta_t, beta_3)
-
+        
         # Update global weights
         new_weights = [
             current_weight + self.eta * m_t / (np.sqrt(v_t) - d_t + self.tau)
