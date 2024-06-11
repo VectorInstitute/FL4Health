@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Union, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -46,6 +46,12 @@ class FlashClient(BasicClient):
         # gamma: Threshold for early stopping based on the change in validation loss.
         self.gamma: Optional[float] = None
 
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
+        local_epochs, local_steps, current_server_round, evaluate_after_fit = super().process_config(config)
+        if local_steps  is not None:
+            raise ValueError("Training by steps is not applicable for FLASH clients. Please define 'local_epochs' in your config instead")
+        return local_epochs, local_steps, current_server_round, evaluate_after_fit
+
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
@@ -88,4 +94,6 @@ class FlashClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
-        self.gamma = self.narrow_config_type(config, "gamma", float) if "gamma" in config else 0.04
+        if "gamma" in config:
+            self.gamma = self.narrow_config_type(config, "gamma", float)
+
