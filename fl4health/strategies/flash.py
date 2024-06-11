@@ -125,8 +125,7 @@ class Flash(BasicFedAvg):
 
     def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
         """Update the drift-aware term d_t."""
-        assert self.v_t is not None
-        assert self.d_t is not None
+        assert self.v_t is not None and self.d_t is not None
         for i, (delta, v_prev, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
             d_t_j = []
             for j in range(len(delta)):
@@ -135,8 +134,7 @@ class Flash(BasicFedAvg):
 
     def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
         """Update the beta_3 term."""
-        assert self.v_t is not None
-        assert v_t_prev is not None
+        assert self.v_t is not None and v_t_prev is not None
         beta_3 = []
         for delta, v, v_prev in zip(delta_t, self.v_t, v_t_prev):
             beta_3_j = []
@@ -149,7 +147,6 @@ class Flash(BasicFedAvg):
 
     def _update_v_t(self, delta_t: NDArrays) -> None:
         """Update the second moment estimate v_t."""
-        assert self.v_t is not None
         self.v_t = [self.beta_2 * x + (1 - self.beta_2) * np.multiply(y, y) for x, y in zip(self.v_t, delta_t)]
 
     def _update_m_t(self, delta_t: NDArrays) -> None:
@@ -176,14 +173,11 @@ class Flash(BasicFedAvg):
         for attr in ["m_t", "v_t", "d_t"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
-        assert self.m_t is not None
-        assert self.v_t is not None
-        assert self.d_t is not None
+        assert self.m_t is not None and self.v_t is not None and self.d_t is not None
         # m_t
         self._update_m_t(delta_t)
 
         # v_t
-        assert self.v_t is not None
         v_t_prev = self.v_t
         self._update_v_t(delta_t)
 
