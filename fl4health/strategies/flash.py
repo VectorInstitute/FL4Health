@@ -195,7 +195,7 @@ class Flash(BasicFedAvg):
         self._update_d_t(delta_t, beta_3)
 
         # Update global weights
-        for attr in ['m_t', 'v_t', 'd_t']:
+        for attr in ["m_t", "v_t", "d_t"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         new_weights = [
