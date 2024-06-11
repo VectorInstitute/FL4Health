@@ -180,7 +180,7 @@ class Flash(BasicFedAvg):
         #     self.v_t = [np.zeros_like(x) for x in delta_t]
         # if self.d_t is None:
         #     self.d_t = [np.zeros_like(x) for x in delta_t]
-        for attr in ['m_t', 'v_t', 'd_t']:
+        for attr in ["m_t", "v_t", "d_t"]:
             if getattr(self, attr) is None:
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         # m_t
