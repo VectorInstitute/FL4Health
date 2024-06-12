@@ -1,7 +1,3 @@
-import subprocess
-import sys
-from typing import Any
-
 import pytest
 
 from fl4health.privacy.fl_accountants import (
@@ -9,12 +5,6 @@ from fl4health.privacy.fl_accountants import (
     FlClientLevelAccountantPoissonSampling,
     FlInstanceLevelAccountant,
 )
-
-
-def pip_list() -> Any:
-    args = [sys.executable, "-m", "pip", "list"]
-    p = subprocess.run(args, check=True, capture_output=True)
-    return p.stdout.decode()
 
 
 def test_instance_accountant_varying_sizes() -> None:
@@ -70,8 +60,77 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
     #   epsilon = min( rdp - math.log(delta) / (orders - 1) )
     # from https://arxiv.org/abs/1702.07476 Proposition 3 in v3 the results are reproduced exactly.
 
-    print(pip_list())
-    assert 1 == 0
+    noise_values = [1.0, 1.0, 1.0, 1.0, 3.0, 1.0]
+    n_clients = [pow(10, 5), pow(10, 6), pow(10, 6), pow(10, 6), pow(10, 6), pow(10, 9)]
+    clients_per_round = [pow(10, 2), pow(10, 1), pow(10, 3), pow(10, 4), pow(10, 3), pow(10, 3)]
+    sampling_probabilities = [c / n for c, n in zip(clients_per_round, n_clients)]
+    updates = [1, 10, 100, 1000, 10000, 100000, 1000000]
+    target_deltas = [1 / (pow(K, 1.1)) for K in n_clients]
+
+    expected_results = {
+        (n_clients[0], clients_per_round[0], noise_values[0]): {
+            updates[0]: 0.697,
+            updates[1]: 0.700,
+            updates[2]: 0.725,
+            updates[3]: 0.774,
+            updates[4]: 0.884,
+            updates[5]: 1.899,
+            updates[6]: 6.830,
+        },
+        (n_clients[1], clients_per_round[1], noise_values[1]): {
+            updates[0]: 0.504,
+            updates[1]: 0.504,
+            updates[2]: 0.504,
+            updates[3]: 0.504,
+            updates[4]: 0.507,
+            updates[5]: 0.530,
+            updates[6]: 0.532,
+        },
+        (n_clients[2], clients_per_round[2], noise_values[2]): {
+            updates[0]: 0.892,
+            updates[1]: 0.895,
+            updates[2]: 0.919,
+            updates[3]: 0.985,
+            updates[4]: 1.095,
+            updates[5]: 2.130,
+            updates[6]: 7.505,
+        },
+        (n_clients[3], clients_per_round[3], noise_values[3]): {
+            updates[0]: 1.366,
+            updates[1]: 1.525,
+            updates[2]: 1.685,
+            updates[3]: 2.634,
+            updates[4]: 7.810,
+            updates[5]: 30.388,
+            updates[6]: 160.853,
+        },
+        (n_clients[4], clients_per_round[4], noise_values[4]): {
+            updates[0]: 0.162,
+            updates[1]: 0.162,
+            updates[2]: 0.163,
+            updates[3]: 0.166,
+            updates[4]: 0.200,
+            updates[5]: 0.502,
+            updates[6]: 1.705,
+        },
+        (n_clients[5], clients_per_round[5], noise_values[5]): {
+            updates[0]: 0.684,
+            updates[1]: 0.685,
+            updates[2]: 0.685,
+            updates[3]: 0.690,
+            updates[4]: 0.712,
+            updates[5]: 0.712,
+            updates[6]: 0.712,
+        },
+    }
+
+    for K, C, z, q, d in zip(n_clients, clients_per_round, noise_values, sampling_probabilities, target_deltas):
+        expected_epsilons = expected_results[(K, C, z)]
+        for t in updates:
+            accountant = FlClientLevelAccountantPoissonSampling(q, z)
+            estimated_epsilon = accountant.get_epsilon(t, d)
+            expected_epsilon = expected_epsilons[t]
+            assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
 
 
 def test_user_level_accountant_with_equivalent_trajectories() -> None:
