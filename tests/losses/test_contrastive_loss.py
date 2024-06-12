@@ -1,14 +1,14 @@
 import pytest
 import torch
 
-from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def test_contrastive_loss() -> None:
     # Default temperature is 0.5
-    contrastive_loss = ContrastiveLoss(DEVICE)
+    contrastive_loss = MoonContrastiveLoss(DEVICE)
 
     global_features = torch.tensor([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]])
     local_features = torch.tensor([[[1.0, 2.0], [2.0, 1.0]], [[2.0, 1.0], [1.0, -1.0]]])
@@ -38,7 +38,7 @@ def test_contrastive_loss() -> None:
 
 
 def test_compute_negative_similarities() -> None:
-    contrastive_loss = ContrastiveLoss(DEVICE)
+    contrastive_loss = MoonContrastiveLoss(DEVICE)
     features = torch.tensor([[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]])
     negative_pairs = torch.Tensor(
         [[[1.0, 1.0, 1.0], [0.0, 0.0, 0.0]], [[-1.0, -1.0, -1.0], [1.0, 0.0, 0.0]], [[1.0, 0.0, 0.0], [0.0, 0.0, 0.0]]]

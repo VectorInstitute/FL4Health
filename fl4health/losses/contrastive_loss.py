@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
-class ContrastiveLoss(nn.Module):
+class MoonContrastiveLoss(nn.Module):
     def __init__(
         self,
         device: torch.device,
@@ -86,3 +87,31 @@ class ContrastiveLoss(nn.Module):
         labels = torch.zeros(features.size(0)).to(self.device).long()
 
         return self.cross_entropy_function(logits, labels)
+
+
+class ContrastiveLoss(nn.Module):
+    def __init__(self, device: torch.device, temperature: float = 0.05) -> None:
+        self.device = device
+        self.temperature = temperature
+
+    def forward(self, features: torch.Tensor, transformed_features: torch.Tensor) -> torch.Tensor:
+        assert features.shape[0] == transformed_features.shape[0]
+        batch_size = features.shape[0]
+
+        all_features = torch.concatenate([features, transformed_features], dim=0)
+        all_features = F.normalize(all_features, dim=-1)
+
+        similarity_matrix = torch.matmul(all_features, all_features.T)
+        similarity_ij = torch.diag(similarity_matrix, diagonal=batch_size)
+        similarity_ji = torch.diag(similarity_matrix, diagonal=-batch_size)
+
+        positives = torch.concatenate([similarity_ij, similarity_ji], dim=0)
+        numerator = torch.exp(positives / self.temperature).sum(dim=-1)
+
+        mask = torch.ones(2 * batch_size, 2 * batch_size) - torch.eye(2 * batch_size, 2 * batch_size)
+        similarity_matrix_without_diagonal = torch.mul(similarity_matrix, mask)
+        denominator = torch.exp(similarity_matrix_without_diagonal / self.temperature).sum(dim=-1)
+
+        losses = -torch.log(numerator / denominator)
+        loss = torch.sum(losses) / (2 * batch_size)
+        return loss
