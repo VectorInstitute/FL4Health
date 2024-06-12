@@ -21,7 +21,18 @@ client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 50)
 client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 50)
 client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 100)
 client3_res = construct_fit_res([np.full((3, 3), 4), np.full((4, 4), 4)], 0.4, 200)
-clients_res: List[Tuple[ClientProxy, FitRes]] = [
+clients_res_1: List[Tuple[ClientProxy, FitRes]] = [
+    (CustomClientProxy("c0"), client0_res),
+    (CustomClientProxy("c1"), client1_res),
+    (CustomClientProxy("c2"), client2_res),
+    (CustomClientProxy("c3"), client3_res),
+]
+
+client0_res = construct_fit_res([np.full((3, 3), 1.5), np.full((4, 4), 1.5)], 0.15, 60)
+client1_res = construct_fit_res([np.full((3, 3), 2.5), np.full((4, 4), 2.5)], 0.25, 60)
+client2_res = construct_fit_res([np.full((3, 3), 3.5), np.full((4, 4), 3.5)], 0.35, 110)
+client3_res = construct_fit_res([np.full((3, 3), 4.5), np.full((4, 4), 4.5)], 0.45, 210)
+clients_res_2: List[Tuple[ClientProxy, FitRes]] = [
     (CustomClientProxy("c0"), client0_res),
     (CustomClientProxy("c1"), client1_res),
     (CustomClientProxy("c2"), client2_res),
@@ -54,20 +65,117 @@ flash_strategy = Flash(
     tau=1e-9,
 )
 
-
 def test_flash_aggregate_fit() -> None:
-    empty_results, empty_metrics = flash_strategy.aggregate_fit(server_round=1, results=[], failures=[])
-    assert empty_results is None and not empty_metrics
+    # Calculate delta_t for round 1
+    aggregated_weights = [np.full((3, 3), 2.25), np.full((4, 4), 2.5)]
+    delta_t = [w - np.zeros_like(w) for w in aggregated_weights]
 
-    parameters, metrics = flash_strategy.aggregate_fit(server_round=1, results=clients_res, failures=[])
-    assert metrics["metric"] == 0.4
+    # Expected m_t, v_t, d_t, beta_3 for round 1
+    expected_m_t = [
+        0.1 * (np.ones((3, 3)) * 2.25),
+        0.1 * (np.ones((4, 4)) * 2.5)
+    ]
+    expected_v_t = [
+        0.01 * (np.ones((3, 3)) * 2.25**2),
+        0.01 * (np.ones((4, 4)) * 2.5**2)
+    ]
+    expected_d_t = [
+        np.ones((3, 3)) * (2.25**2 - 0.050625),
+        np.ones((4, 4)) * (2.5**2 - 0.0625)
+    ]
+    expected_beta_3 = [np.zeros((3, 3)), np.zeros((4, 4))]  # For the first update, beta_3 should be zero
 
-    # First layer weighted aggregate should be all -0.00352075
-    weighted_target_1 = np.ones((3, 3)) * (-0.00352075)
-    # Second layer weighted aggregate should be all -0.00337517
-    weighted_target_2 = np.ones((4, 4)) * (-0.00337517)
+    # Perform the first round of updates
+    v_t_prev = [np.zeros((3, 3)), np.zeros((4, 4))]  # Initial v_t_prev is zeros
+    flash_strategy.aggregate_fit(server_round=1, results=clients_res_1, failures=[])
+    beta_3 = flash_strategy._update_beta_3(delta_t, v_t_prev)
 
-    assert parameters is not None
-    aggregated_ndarrays = parameters_to_ndarrays(parameters)
-    assert np.allclose(weighted_target_1, aggregated_ndarrays[0])
-    assert np.allclose(weighted_target_2, aggregated_ndarrays[1])
+    # Assertions for round 1
+    assert flash_strategy.m_t is not None
+    for mt, expected in zip(flash_strategy.m_t, expected_m_t):
+        assert mt.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {mt.shape}"
+        assert np.allclose(mt, expected), f"Round 1: Expected {expected}, but got {mt}"
+
+    assert flash_strategy.v_t is not None
+    for vt, expected in zip(flash_strategy.v_t, expected_v_t):
+        assert vt.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {vt.shape}"
+        assert np.allclose(vt, expected), f"Round 1: Expected {expected}, but got {vt}"
+
+    assert flash_strategy.d_t is not None
+    for dt, expected in zip(flash_strategy.d_t, expected_d_t):
+        assert dt.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {dt.shape}"
+        assert np.allclose(dt, expected), f"Round 1: Expected {expected}, but got {dt}"
+
+    for b3, expected in zip(beta_3, expected_beta_3):
+        assert b3.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {b3.shape}"
+        assert np.allclose(b3, expected), f"Round 1: Expected {expected}, but got {b3}"
+
+    # Calculate new weights after round 1
+    new_weights_round1 = [
+        0.1 * expected_m_t[i] / (np.sqrt(expected_v_t[i]) - expected_d_t[i] + 1e-9)
+        for i in range(len(expected_m_t))
+    ]
+
+    # Assertions for new weights after round 1
+    for nw, expected in zip(flash_strategy.current_weights, new_weights_round1):
+        assert nw.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {nw.shape}"
+        assert np.allclose(nw, expected), f"Round 1: Expected new weights {expected}, but got {nw}"
+
+    # Calculate delta_t for round 2
+    new_aggregated_weights = [np.full((3, 3), 3.0), np.full((4, 4), 3.0)]
+    delta_t_round2 = [w - nw for w, nw in zip(new_aggregated_weights, new_weights_round1)]
+
+    # Expected m_t, v_t, d_t, beta_3 for round 2
+    expected_m_t_round2 = [
+        0.9 * expected_m_t[0] + 0.1 * delta_t_round2[0],
+        0.9 * expected_m_t[1] + 0.1 * delta_t_round2[1]
+    ]
+    expected_v_t_round2 = [
+        0.99 * expected_v_t[0] + 0.01 * (delta_t_round2[0]**2),
+        0.99 * expected_v_t[1] + 0.01 * (delta_t_round2[1]**2)
+    ]
+    expected_beta_3_round2 = [
+        0.050625 / (np.abs(delta_t_round2[0]**2 - expected_v_t_round2[0]) + 0.050625),
+        0.0625 / (np.abs(delta_t_round2[1]**2 - expected_v_t_round2[1]) + 0.0625)
+    ]
+    
+    expected_d_t_round2 = [
+        expected_beta_3_round2[0] * expected_d_t[0] + (1 - expected_beta_3_round2[0]) * ((delta_t_round2[0]**2) - expected_v_t_round2[0]),
+        expected_beta_3_round2[1] * expected_d_t[1] + (1 - expected_beta_3_round2[1]) * ((delta_t_round2[1]**2) - expected_v_t_round2[1])
+    ]
+
+    # Perform the second round of updates
+    v_t_prev_round2 = flash_strategy.v_t.copy()
+    flash_strategy.aggregate_fit(server_round=2, results=clients_res_2, failures=[])
+    beta_3_round2 = flash_strategy._update_beta_3(delta_t_round2, v_t_prev_round2)
+
+    # Assertions for round 2
+    assert flash_strategy.m_t is not None
+    for mt, expected in zip(flash_strategy.m_t, expected_m_t_round2):
+        assert mt.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {mt.shape}"
+        assert np.allclose(mt, expected), f"Round 2: Expected {expected}, but got {mt}"
+
+    assert flash_strategy.v_t is not None
+    for vt, expected in zip(flash_strategy.v_t, expected_v_t_round2):
+        assert vt.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {vt.shape}"
+        assert np.allclose(vt, expected), f"Round 2: Expected {expected}, but got {vt}"
+
+    assert flash_strategy.d_t is not None
+    for dt, expected in zip(flash_strategy.d_t, expected_d_t_round2):
+        assert dt.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {dt.shape}"
+        assert np.allclose(dt, expected), f"Round 2: Expected {expected}, but got {dt}"
+
+    for b3, expected in zip(beta_3_round2, expected_beta_3_round2):
+        assert b3.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {b3.shape}"
+        assert np.allclose(b3, expected), f"Round 2: Expected {expected}, but got {b3}"
+
+    # Calculate new weights after round 2
+    new_weights_round2 = [
+        new_weights_round1[i] + 0.1 * expected_m_t_round2[i] / (np.sqrt(expected_v_t_round2[i]) - expected_d_t_round2[i] + 1e-9)
+        for i in range(len(expected_m_t_round2))
+    ]
+
+    # Assertions for new weights after round 2
+    for nw, expected in zip(flash_strategy.current_weights, new_weights_round2):
+        assert nw.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {nw.shape}"
+        assert np.allclose(nw, expected), f"Round 2: Expected new weights {expected}, but got {nw}"
