@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Dict
+from typing import Dict
 
 import torch
 import torch.nn as nn
@@ -18,11 +18,7 @@ class FederatedSelfSupervisedModel(ABC, nn.Module):
 
 
 class FedSimClr(FederatedSelfSupervisedModel):
-    def __init__(
-        self,
-        model: nn.Module,
-        projection_head: nn.Module = nn.Identity()
-    ) -> None:
+    def __init__(self, model: nn.Module, projection_head: nn.Module = nn.Identity()) -> None:
         super().__init__(model)
         self.projection_head = projection_head
 
@@ -31,7 +27,7 @@ class FedSimClr(FederatedSelfSupervisedModel):
         return self.projection_head(features)
 
     def forward(self, inputs: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        assert ("input" in inputs and "transformed_input" in inputs)
+        assert "input" in inputs and "transformed_input" in inputs
 
         features = self.encode(inputs["input"])
         transformed_features = self.encode(inputs["transformed_input"])

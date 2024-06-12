@@ -1,29 +1,16 @@
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch.utils.data import Dataset
 from torchvision.datasets import CIFAR10, MNIST
 
 
-class BaseDataset(Dataset):
+class BaseDataset(ABC, Dataset):
     def __init__(self) -> None:
-        self.data: torch.Tensor
-        self.targets: torch.Tensor
         self.transform: Union[Callable, None]
         self.target_transform: Union[Callable, None]
-
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        data, target = self.data[index], self.targets[index]
-
-        if self.transform is not None:
-            data = self.transform(data.numpy())
-        if self.target_transform is not None:
-            target = self.target_transform(target.numpy())
-        return data, target
-
-    def __len__(self) -> int:
-        return len(self.targets)
 
     def update_transform(self, f: Callable) -> None:
         if self.transform:
@@ -39,8 +26,53 @@ class BaseDataset(Dataset):
         else:
             self.target_transform = g
 
+    @abstractmethod
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        raise NotImplementedError
 
-class MnistDataset(BaseDataset):
+    @abstractmethod
+    def __len__(self) -> int:
+        raise NotImplementedError
+
+
+class TensorDataset(BaseDataset):
+    def __init__(self) -> None:
+        super().__init__()
+        self.data: torch.Tensor
+        self.targets: Optional[torch.Tensor] = None
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        assert self.targets is not None
+
+        data, target = self.data[index], self.targets[index]
+
+        if self.transform is not None:
+            data = self.transform(data.numpy())
+
+        if self.target_transform is not None:
+            target = self.target_transform(target.numpy())
+
+        return data, target
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+
+class SslTensorDataset(TensorDataset):
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        data = self.data[index]
+
+        assert self.target_transform is not None
+
+        if self.transform is not None:
+            data = self.transform(data)
+
+        transformed_data = self.target_transform(data)
+
+        return data, transformed_data
+
+
+class MnistDataset(TensorDataset):
     def __init__(
         self,
         data_path: Path,
@@ -50,12 +82,12 @@ class MnistDataset(BaseDataset):
     ):
         mnist_dataset = MNIST(data_path, train=train, download=True)
         self.data = mnist_dataset.data
-        self.targets = mnist_dataset.targets
+        self.targets: torch.Tensor = mnist_dataset.targets
         self.transform = transform
         self.target_transform = target_transform
 
 
-class Cifar10Dataset(BaseDataset):
+class Cifar10Dataset(TensorDataset):
     def __init__(
         self,
         data_path: Path,
@@ -65,7 +97,7 @@ class Cifar10Dataset(BaseDataset):
     ):
         cifar10_dataset = CIFAR10(data_path, train=train, download=True)
         self.data = torch.from_numpy(cifar10_dataset.data)
-        self.targets = torch.Tensor(cifar10_dataset.targets).long()
+        self.targets: torch.Tensor = torch.Tensor(cifar10_dataset.targets).long()
         self.transform = transform
         self.target_transform = target_transform
 

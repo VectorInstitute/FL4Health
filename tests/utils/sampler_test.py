@@ -15,6 +15,9 @@ def test_minority_sampler() -> None:
 
     # Training
     ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=True)
+
+    assert ds.targets is not None
+
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     ds_new = sampler.subsample(ds)
@@ -28,6 +31,9 @@ def test_minority_sampler() -> None:
 
     # Testing
     ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=False)
+
+    assert ds.targets is not None
+
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     ds_new = sampler.subsample(ds)
@@ -46,9 +52,15 @@ def test_dirichlet_sampler() -> None:
 
     # Training
     ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=True)
+
+    assert ds.targets is not None
+
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     new_ds = sampler.subsample(ds)
+
+    assert new_ds.targets is not None
+
     new_samples_per_class = [new_ds.targets[new_ds.targets == i].size(0) for i in range(10)]
 
     _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)
@@ -58,9 +70,15 @@ def test_dirichlet_sampler() -> None:
 
     # Testing
     ds = MnistDataset(data_path=Path("examples/datasets/MNIST"), train=False)
+
+    assert ds.targets is not None
+
     samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
 
     new_ds = sampler.subsample(ds)
+
+    assert new_ds.targets is not None
+
     new_samples_per_class = [new_ds.targets[new_ds.targets == i].size(0) for i in range(10)]
 
     _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)

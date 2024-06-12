@@ -3,14 +3,14 @@ from typing import Tuple
 import torch
 from torch.utils.data import DataLoader
 
-from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter, DatasetConverter
 
 
-class DummyDataset(BaseDataset):
+class DummyDataset(TensorDataset):
     def __init__(self) -> None:
         self.data = torch.randn(100, 10, 8)
-        self.targets = torch.randint(5, (100,))
+        self.targets: torch.Tensor = torch.randint(5, (100,))
 
     def __len__(self) -> int:
         return len(self.data)
@@ -70,6 +70,9 @@ def test_autoencoder_converter_tensor_conditioned() -> None:
 def test_autoencoder_converter_label_conditioned() -> None:
     # Create a dummy dataset for testing
     dummy_dataset = DummyDataset()
+
+    assert dummy_dataset.targets is not None
+
     # Initialize the converter and convert the dataset.
     autoencoder_converter_label = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     autoencoder_converter_label.convert_dataset(dummy_dataset)
@@ -88,6 +91,9 @@ def test_pack_unpack() -> None:
     batch_size = 10
     # Create a dummy dataset for testing
     dummy_dataset = DummyDataset()
+
+    assert dummy_dataset.targets is not None
+
     # Initiate the data converter
     autoencoder_converter = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     # Convert the dataset

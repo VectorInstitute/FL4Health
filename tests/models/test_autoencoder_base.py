@@ -4,16 +4,16 @@ import torch
 from torch.utils.data import DataLoader
 
 from fl4health.model_bases.autoencoders_base import ConditionalVae, VariationalAe
-from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
 from tests.test_utils.models_for_test import VariationalDecoder, VariationalEncoder
 
 
-class DummyDataset(BaseDataset):
+class DummyDataset(TensorDataset):
     def __init__(self, data_size: int = 100) -> None:
         # 100 is the number of samples
         self.data = torch.randn(100, data_size)
-        self.targets = torch.randint(5, (data_size,))
+        self.targets: torch.Tensor = torch.randint(5, (data_size,))
 
     def __len__(self) -> int:
         return len(self.data)

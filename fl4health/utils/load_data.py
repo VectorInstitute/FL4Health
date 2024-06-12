@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
-from fl4health.utils.dataset import BaseDataset, Cifar10Dataset, MnistDataset
+from fl4health.utils.dataset import Cifar10Dataset, MnistDataset, TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
@@ -28,8 +28,8 @@ def load_mnist_data(
                 transforms.Normalize((0.5), (0.5)),
             ]
         )
-    train_ds: BaseDataset = MnistDataset(data_dir, train=True, transform=transform)
-    val_ds: BaseDataset = MnistDataset(data_dir, train=False, transform=transform)
+    train_ds: TensorDataset = MnistDataset(data_dir, train=True, transform=transform)
+    val_ds: TensorDataset = MnistDataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)
@@ -57,7 +57,7 @@ def load_cifar10_test_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    evaluation_set: BaseDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
+    evaluation_set: TensorDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         evaluation_set = sampler.subsample(evaluation_set)
@@ -78,8 +78,8 @@ def load_cifar10_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    training_set: BaseDataset = Cifar10Dataset(data_dir, train=True, transform=transform)
-    validation_set: BaseDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
+    training_set: TensorDataset = Cifar10Dataset(data_dir, train=True, transform=transform)
+    validation_set: TensorDataset = Cifar10Dataset(data_dir, train=False, transform=transform)
 
     if sampler is not None:
         training_set = sampler.subsample(training_set)
