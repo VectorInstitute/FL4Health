@@ -131,9 +131,8 @@ class Flash(BasicFedAvg):
             d_t = np.zeros_like(delta)
             for row in range(delta.shape[0]):
                 for col in range(delta.shape[1]):
-                    d_t[row, col] = (
-                        beta_3[i][row, col] * d_prev[row, col] + 
-                        (1 - beta_3[i][row, col]) * ((delta[row, col] ** 2) - v[row, col])
+                    d_t[row, col] = beta_3[i][row, col] * d_prev[row, col] + (1 - beta_3[i][row, col]) * (
+                        (delta[row, col] ** 2) - v[row, col]
                     )
             self.d_t[i] = d_t
 
