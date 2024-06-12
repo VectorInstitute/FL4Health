@@ -65,24 +65,16 @@ flash_strategy = Flash(
     tau=1e-9,
 )
 
+
 def test_flash_aggregate_fit() -> None:
     # Calculate delta_t for round 1
     aggregated_weights = [np.full((3, 3), 2.25), np.full((4, 4), 2.5)]
     delta_t = [w - np.zeros_like(w) for w in aggregated_weights]
 
     # Expected m_t, v_t, d_t, beta_3 for round 1
-    expected_m_t = [
-        0.1 * (np.ones((3, 3)) * 2.25),
-        0.1 * (np.ones((4, 4)) * 2.5)
-    ]
-    expected_v_t = [
-        0.01 * (np.ones((3, 3)) * 2.25**2),
-        0.01 * (np.ones((4, 4)) * 2.5**2)
-    ]
-    expected_d_t = [
-        np.ones((3, 3)) * (2.25**2 - 0.050625),
-        np.ones((4, 4)) * (2.5**2 - 0.0625)
-    ]
+    expected_m_t = [0.1 * (np.ones((3, 3)) * 2.25), 0.1 * (np.ones((4, 4)) * 2.5)]
+    expected_v_t = [0.01 * (np.ones((3, 3)) * 2.25**2), 0.01 * (np.ones((4, 4)) * 2.5**2)]
+    expected_d_t = [np.ones((3, 3)) * (2.25**2 - 0.050625), np.ones((4, 4)) * (2.5**2 - 0.0625)]
     expected_beta_3 = [np.zeros((3, 3)), np.zeros((4, 4))]  # For the first update, beta_3 should be zero
 
     # Perform the first round of updates
@@ -112,8 +104,7 @@ def test_flash_aggregate_fit() -> None:
 
     # Calculate new weights after round 1
     new_weights_round1 = [
-        0.1 * expected_m_t[i] / (np.sqrt(expected_v_t[i]) - expected_d_t[i] + 1e-9)
-        for i in range(len(expected_m_t))
+        0.1 * expected_m_t[i] / (np.sqrt(expected_v_t[i]) - expected_d_t[i] + 1e-9) for i in range(len(expected_m_t))
     ]
 
     # Assertions for new weights after round 1
@@ -128,20 +119,22 @@ def test_flash_aggregate_fit() -> None:
     # Expected m_t, v_t, d_t, beta_3 for round 2
     expected_m_t_round2 = [
         0.9 * expected_m_t[0] + 0.1 * delta_t_round2[0],
-        0.9 * expected_m_t[1] + 0.1 * delta_t_round2[1]
+        0.9 * expected_m_t[1] + 0.1 * delta_t_round2[1],
     ]
     expected_v_t_round2 = [
-        0.99 * expected_v_t[0] + 0.01 * (delta_t_round2[0]**2),
-        0.99 * expected_v_t[1] + 0.01 * (delta_t_round2[1]**2)
+        0.99 * expected_v_t[0] + 0.01 * (delta_t_round2[0] ** 2),
+        0.99 * expected_v_t[1] + 0.01 * (delta_t_round2[1] ** 2),
     ]
     expected_beta_3_round2 = [
-        0.050625 / (np.abs(delta_t_round2[0]**2 - expected_v_t_round2[0]) + 0.050625),
-        0.0625 / (np.abs(delta_t_round2[1]**2 - expected_v_t_round2[1]) + 0.0625)
+        0.050625 / (np.abs(delta_t_round2[0] ** 2 - expected_v_t_round2[0]) + 0.050625),
+        0.0625 / (np.abs(delta_t_round2[1] ** 2 - expected_v_t_round2[1]) + 0.0625),
     ]
-    
+
     expected_d_t_round2 = [
-        expected_beta_3_round2[0] * expected_d_t[0] + (1 - expected_beta_3_round2[0]) * ((delta_t_round2[0]**2) - expected_v_t_round2[0]),
-        expected_beta_3_round2[1] * expected_d_t[1] + (1 - expected_beta_3_round2[1]) * ((delta_t_round2[1]**2) - expected_v_t_round2[1])
+        expected_beta_3_round2[0] * expected_d_t[0]
+        + (1 - expected_beta_3_round2[0]) * ((delta_t_round2[0] ** 2) - expected_v_t_round2[0]),
+        expected_beta_3_round2[1] * expected_d_t[1]
+        + (1 - expected_beta_3_round2[1]) * ((delta_t_round2[1] ** 2) - expected_v_t_round2[1]),
     ]
 
     # Perform the second round of updates
@@ -171,7 +164,8 @@ def test_flash_aggregate_fit() -> None:
 
     # Calculate new weights after round 2
     new_weights_round2 = [
-        new_weights_round1[i] + 0.1 * expected_m_t_round2[i] / (np.sqrt(expected_v_t_round2[i]) - expected_d_t_round2[i] + 1e-9)
+        new_weights_round1[i]
+        + 0.1 * expected_m_t_round2[i] / (np.sqrt(expected_v_t_round2[i]) - expected_d_t_round2[i] + 1e-9)
         for i in range(len(expected_m_t_round2))
     ]
 
