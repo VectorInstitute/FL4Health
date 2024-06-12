@@ -128,22 +128,27 @@ class Flash(BasicFedAvg):
         """Update the drift-aware term d_t."""
         assert self.v_t is not None and self.d_t is not None
         for i, (delta, v, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
-            d_t_j = []
-            for j in range(len(delta)):
-                d_t_j.append(beta_3[i][j] * d_prev[j] + (1 - beta_3[i][j]) * ((delta[j] ** 2) - v[j]))
-            self.d_t[i] = np.array(d_t_j)
+            d_t = np.zeros_like(delta)
+            for row in range(delta.shape[0]):
+                for col in range(delta.shape[1]):
+                    d_t[row, col] = (
+                        beta_3[i][row, col] * d_prev[row, col] + 
+                        (1 - beta_3[i][row, col]) * ((delta[row, col] ** 2) - v[row, col])
+                    )
+            self.d_t[i] = d_t
 
     def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
         """Update the beta_3 term."""
         assert self.v_t is not None and v_t_prev is not None
         beta_3 = []
         for delta, v, v_prev in zip(delta_t, self.v_t, v_t_prev):
-            beta_3_j = []
-            for j in range(len(delta)):
-                norm_v_prev = np.linalg.norm(v_prev[j])
-                norm_diff = np.linalg.norm((delta[j] ** 2) - v[j])
-                beta_3_j.append(norm_v_prev / (norm_diff + norm_v_prev))
-            beta_3.append(np.array(beta_3_j))
+            beta_3_matrix = np.zeros_like(delta)
+            for row in range(delta.shape[0]):
+                for col in range(delta.shape[1]):
+                    norm_v_prev = np.linalg.norm(v_prev[row, col])
+                    norm_diff = np.linalg.norm((delta[row, col] ** 2) - v[row, col])
+                    beta_3_matrix[row, col] = norm_v_prev / (norm_diff + norm_v_prev)
+            beta_3.append(beta_3_matrix)
         return beta_3
 
     def _update_v_t(self, delta_t: NDArrays) -> None:
