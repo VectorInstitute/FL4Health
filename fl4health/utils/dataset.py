@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 from torch.utils.data import Dataset
-from torchvision.datasets import CIFAR10, MNIST
 
 
 class BaseDataset(ABC, Dataset):
@@ -36,10 +34,18 @@ class BaseDataset(ABC, Dataset):
 
 
 class TensorDataset(BaseDataset):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        data: torch.Tensor,
+        targets: Optional[torch.Tensor] = None,
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+    ) -> None:
         super().__init__()
-        self.data: torch.Tensor
-        self.targets: Optional[torch.Tensor] = None
+        self.data: torch.Tensor = data
+        self.targets: Optional[torch.Tensor] = targets
+        self.transform = transform
+        self.target_transform = target_transform
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         assert self.targets is not None
@@ -70,36 +76,6 @@ class SslTensorDataset(TensorDataset):
         transformed_data = self.target_transform(data)
 
         return data, transformed_data
-
-
-class MnistDataset(TensorDataset):
-    def __init__(
-        self,
-        data_path: Path,
-        train: bool,
-        transform: Union[None, Callable] = None,
-        target_transform: Union[None, Callable] = None,
-    ):
-        mnist_dataset = MNIST(data_path, train=train, download=True)
-        self.data = mnist_dataset.data
-        self.targets: torch.Tensor = mnist_dataset.targets
-        self.transform = transform
-        self.target_transform = target_transform
-
-
-class Cifar10Dataset(TensorDataset):
-    def __init__(
-        self,
-        data_path: Path,
-        train: bool,
-        transform: Union[None, Callable] = None,
-        target_transform: Union[None, Callable] = None,
-    ):
-        cifar10_dataset = CIFAR10(data_path, train=train, download=True)
-        self.data = torch.from_numpy(cifar10_dataset.data)
-        self.targets: torch.Tensor = torch.Tensor(cifar10_dataset.targets).long()
-        self.transform = transform
-        self.target_transform = target_transform
 
 
 class DictionaryDataset(Dataset):

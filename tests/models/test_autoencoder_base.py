@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 from torch.utils.data import DataLoader
 
@@ -9,17 +7,10 @@ from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
 from tests.test_utils.models_for_test import VariationalDecoder, VariationalEncoder
 
 
-class DummyDataset(TensorDataset):
-    def __init__(self, data_size: int = 100) -> None:
-        # 100 is the number of samples
-        self.data = torch.randn(100, data_size)
-        self.targets: torch.Tensor = torch.randint(5, (data_size,))
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.data[index], self.targets[index]
+def get_dummy_dataset(data_size: int = 100) -> TensorDataset:
+    data = torch.randn(100, data_size)
+    targets: torch.Tensor = torch.randint(5, (data_size,))
+    return TensorDataset(data=data, targets=targets)
 
 
 def test_variational_autoencoder_model_base() -> None:
@@ -33,7 +24,7 @@ def test_variational_autoencoder_model_base() -> None:
     autoencoder = VariationalAe(encoder=encoder, decoder=decoder)
 
     # Create a dummy dataset for testing
-    dummy_dataset = DummyDataset(data_vector_size)
+    dummy_dataset = get_dummy_dataset(data_vector_size)
     # Test AutoEncoderDatasetConverter with no condition.
     autoencoder_converter = AutoEncoderDatasetConverter(condition=None)
     converted_data = autoencoder_converter.convert_dataset(dummy_dataset)
@@ -53,7 +44,7 @@ def test_conditional_variational_autoencoder_model_base() -> None:
     # Data setting
     data_vector_size = 100
     # Create a dummy dataset for testing
-    dummy_dataset = DummyDataset(data_vector_size)
+    dummy_dataset = get_dummy_dataset(data_vector_size)
     # Test AutoEncoderDatasetConverter with condition based on data label.
     autoencoder_converter = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     converted_data = autoencoder_converter.convert_dataset(dummy_dataset)
