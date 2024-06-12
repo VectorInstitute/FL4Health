@@ -6,6 +6,8 @@ n_clients: 2 # The number of clients in the FL experiment
 local_epochs: 1 # The number of epochs to complete for client
 batch_size: 32 # The batch size for client training
 
-# Downsampling settings per client
-downsampling_ratio: 0.1 # percentage of original MNIST data to keep for minority numbers
+# Parameters controlling the Dirichlet sampler for inducing heterogeneity in the CIFAR dataset
+sample_percentage: 0.75
+beta: 1.0
+
 gamma: 0.04 # Early-stopping threshold for client training
