@@ -17,18 +17,14 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 def fit_config(
     batch_size: int,
-    n_server_rounds: int,
-    downsampling_ratio: float,
-    current_round: int,
+    current_server_round: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
-        "downsampling_ratio": downsampling_ratio,
-        "current_server_round": current_round,
+        "current_server_round": current_server_round,
     }
 
 
@@ -37,13 +33,12 @@ def main(config: Dict[str, Any]) -> None:
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
-        config["n_server_rounds"],
-        config["downsampling_ratio"],
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = Net()
+    # Initializing the model on the server side
+    model = Net()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = Flash(
@@ -56,7 +51,7 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_all_model_parameters(initial_model),
+        initial_parameters=get_all_model_parameters(model),
     )
 
     client_manager = SimpleClientManager()
