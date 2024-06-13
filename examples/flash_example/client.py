@@ -1,5 +1,4 @@
 import argparse
-from logging import INFO
 from pathlib import Path
 
 import flwr as fl
