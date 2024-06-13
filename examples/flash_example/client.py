@@ -45,4 +45,3 @@ if __name__ == "__main__":
     client = FlashClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
-
