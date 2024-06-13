@@ -97,6 +97,12 @@ class FlashClient(BasicClient):
 
             previous_loss = current_loss
 
+            # Break the outer loop as well if stopping early
+            if local_step >= 5:
+                break
+
+
+
         return loss_dict, metrics
 
     def setup_client(self, config: Config) -> None:
