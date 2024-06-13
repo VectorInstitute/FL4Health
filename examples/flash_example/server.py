@@ -33,8 +33,7 @@ def main(config: Dict[str, Any]) -> None:
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
-        local_epochs=config.get("local_epochs"),
-        local_steps=config.get("local_steps"),
+        local_epochs=config.get("local_epochs")
     )
 
     # Initializing the model on the server side
