@@ -49,16 +49,16 @@ def get_transforms() -> Tuple[Callable, Callable]:
     return input_transform, target_transform
 
 
-def get_ssl_dataloader(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader]:
+def get_pretrain_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader]:
     data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
-    train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets)
+    train_data, _, val_data, _ = split_data_and_targets(data, targets)
 
     input_transform, target_transform = get_transforms()
-    train_ds = SslTensorDataset(train_data, train_targets, input_transform, target_transform)
-    val_ds = SslTensorDataset(val_data, val_targets, input_transform, target_transform)
+    train_ds = SslTensorDataset(train_data, None, input_transform, target_transform)
+    val_ds = SslTensorDataset(val_data, None, input_transform, target_transform)
 
-    train_loader = DataLoader(train_ds, batch_size, shuffle=True, num_workers=3)
-    val_loader = DataLoader(val_ds, batch_size, shuffle=True, num_workers=3)
+    train_loader = DataLoader(train_ds, batch_size, shuffle=True, num_workers=1)
+    val_loader = DataLoader(val_ds, batch_size, shuffle=False, num_workers=1)
 
     return train_loader, val_loader
 
@@ -66,7 +66,7 @@ def get_ssl_dataloader(data_dir: Path, batch_size: int) -> Tuple[DataLoader, Dat
 class SslCifarClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader = get_ssl_dataloader(self.data_path, batch_size)
+        train_loader, val_loader = get_pretrain_dataset(self.data_path, batch_size)
         return train_loader, val_loader
 
     def get_criterion(self, config: Config) -> nn.Module:  # type: ignore
@@ -76,7 +76,7 @@ class SslCifarClient(BasicClient):
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        ssl_model = FedSimClrModel(SslEncoder(), SslProjectionHead(), SslPredictionHead())
+        ssl_model = FedSimClrModel(SslEncoder(), SslProjectionHead(), SslPredictionHead(), pretrain=True)
         return ssl_model.to(self.device)
 
     def transform_target(self, target: torch.Tensor) -> torch.Tensor:

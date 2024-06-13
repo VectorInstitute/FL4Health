@@ -91,28 +91,68 @@ class MoonContrastiveLoss(nn.Module):
 
 class ContrastiveLoss(nn.Module):
     def __init__(self, device: torch.device, temperature: float = 0.05) -> None:
+        """
+        Implementation of Normalized Temperature-Scaled Cross Entropy Loss (NT-Xent) proposed in
+        https://papers.nips.cc/paper_files/paper/2016/hash/6b180037abbebea991d8b1232f8a8ca9-Abstract.html
+        and notably used in SimCLR (https://arxiv.org/pdf/2002.05709) and FedSimCLR as proposed in Fed-X
+        (https://arxiv.org/pdf/2207.09158).
+
+        NT-Xent is a contrastive loss in which each feature has a positive pair and the rest of the features
+        are considered negative. It is computed based on the similarity of positive pairs relatice to negative
+        pairs.
+
+        Args:
+            device (torch.device): device to use for computation
+            temperature (float): temperature to scale the logits
+        """
         super().__init__()
         self.device = device
         self.temperature = temperature
 
     def forward(self, features: torch.Tensor, transformed_features: torch.Tensor) -> torch.Tensor:
-        assert features.shape[0] == transformed_features.shape[0]
+        """
+        Compute the contrastive loss based on the features and transformed_features. Given N features
+        and N transformed_features per batch, features[i] and transformed_features[i] are positive pairs
+        and the remaining 2N - 2 are negative pairs.
+
+        Args:
+            features (torch.Tensor): Features of input without transformation applied.
+                Shaped (batch_size, feature_dimension).
+            transformed_features (torch.Tensor): Features of input with transformation applied.
+                Shaped (batch_size, feature_dimension).
+
+        Returns:
+            torch.Tensor: Contrastive loss value
+        """
+
+        # Ensure features and transformed_features are same shape
+        assert features.shape == transformed_features.shape
         batch_size = features.shape[0]
 
+        # Concatenate features and transformed features. Normalize each feature with euclidean norm.
         all_features = torch.concatenate([features, transformed_features], dim=0)
         all_features = F.normalize(all_features, dim=-1)
 
+        # Compute similarity of each features with other features
+        # Equivalent to Cosine Similarity since feature are normalized
         similarity_matrix = torch.matmul(all_features, all_features.T)
+
+        # Extract positive pairs from similarity matrix
+        # Positive pairs are elements (i, j) offset from matrix by batch size
+        # As a result of stacking feature and transformed_features
         similarity_ij = torch.diag(similarity_matrix, diagonal=batch_size)
         similarity_ji = torch.diag(similarity_matrix, diagonal=-batch_size)
-
         positives = torch.concatenate([similarity_ij, similarity_ji], dim=0)
+
+        # Numerator is the sum of the exponent of positive similarities
         numerator = torch.exp(positives / self.temperature).sum(dim=-1)
 
+        # Denominator is all pair combinations except for diagonal which corresponds to a features similarity to itself
         mask = (torch.ones(2 * batch_size, 2 * batch_size) - torch.eye(2 * batch_size, 2 * batch_size)).to(self.device)
         similarity_matrix_without_diagonal = torch.mul(similarity_matrix, mask)
         denominator = torch.exp(similarity_matrix_without_diagonal / self.temperature).sum(dim=-1)
 
+        # Final loss negative log likelihood
         losses = -torch.log(numerator / denominator)
         loss = torch.sum(losses) / (2 * batch_size)
         return loss

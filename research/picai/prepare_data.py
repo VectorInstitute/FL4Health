@@ -196,7 +196,7 @@ def preprare_data(
         # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
         annotation_path = Path(os.path.join(annotation_read_dir, annotation_filename))
-        annotation_base_filename = annotation_path.stem
+        annotation_base_filename = annotation_filename.split(".")[0]
 
         # All of the scans for a given patient, even if there are multiple sets from different study ids,
         # are stored in a single folder under patient id in the raw data.
@@ -276,20 +276,20 @@ def main() -> None:
 
     if args.size is not None and len(args.size) != 3:
         raise ValueError("Argument size must have length 3")
-    size = (int(args.size(0)), int(args.size(1)), int(args.size(2))) if args.size else None
+    size = (int(args.size[0]), int(args.size[1]), int(args.size[2])) if args.size else None
 
     if args.physical_size is not None:
         if len(args.physical_size) != 3:
             raise ValueError("Argument physical_size must have length 3")
     physical_size = (
-        (float(args.physical_size(0)), float(args.physical_size(1)), float(args.physical_size(2)))
+        (float(args.physical_size[0]), float(args.physical_size[1]), float(args.physical_size[2]))
         if args.physical_size
         else None
     )
 
     if args.spacing is not None and len(args.spacing) != 3:
         raise ValueError("Argument spacing must have length 3")
-    spacing = (float(args.spacing(0)), float(args.spacing(1)), float(args.spacing(2))) if args.spacing else None
+    spacing = (float(args.spacing[0]), float(args.spacing[1]), float(args.spacing[2])) if args.spacing else None
 
     preprare_data(
         args.scans_read_dir,

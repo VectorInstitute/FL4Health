@@ -1,23 +1,25 @@
 import argparse
+from pathlib import Path
 from functools import partial
 from typing import Any, Dict, Optional
 
-import torch.nn as nn
 import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.model_bases.fed_ssl_base import FedSimClrModel
+import torch
+import torch.nn as nn
+
+from examples.utils.functions import make_dict_with_epochs_or_steps
+
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
-
-from examples.models.cnn_model import SslEncoder, SslProjectionHead, SslPredictionHead
-from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.model_bases.fed_ssl_base import FedSimClrModel
 
 
 def fit_config(
@@ -33,6 +35,14 @@ def fit_config(
     }
 
 
+def load_model(
+        model_path: Path = Path("examples/fedsimclr_example/fedsimclr_pretraining_example/best_model.pkl")
+) -> nn.Module:
+    prev_model = torch.load(model_path)
+    ssl_model = FedSimClrModel(encoder=prev_model.encoder, projection_head=prev_model.projection_head, prediction_head=prev_model.prediction_head, pretrain=False)
+    return ssl_model
+
+
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
@@ -43,7 +53,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    model: nn.Module = FedSimClrModel(SslEncoder(), SslProjectionHead(), SslPredictionHead())
+    model = load_model()
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl")
@@ -78,7 +88,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/fedsimclr_example/config.yaml",
+        default="examples/basic_example/config.yaml",
     )
     args = parser.parse_args()
 
