@@ -77,6 +77,11 @@ class FlashClient(BasicClient):
                 self.total_steps += 1
                 local_step += 1
 
+                # Add break condition to stop after a few steps for testing
+                if local_step >= 5:
+                    log(INFO, "Stopping early for testing purposes after 5 steps.")
+                    break
+
             metrics = self.train_metric_manager.compute()
             loss_dict = self.train_loss_meter.compute().as_dict()
             current_loss, _ = self.validate()
