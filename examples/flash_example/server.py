@@ -30,11 +30,7 @@ def fit_config(
 
 def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-    fit_config_fn = partial(
-        fit_config,
-        config["batch_size"],
-        local_epochs=config.get("local_epochs")
-    )
+    fit_config_fn = partial(fit_config, config["batch_size"], local_epochs=config.get("local_epochs"))
 
     # Initializing the model on the server side
     model = Net()
