@@ -82,7 +82,7 @@ class FlashClient(BasicClient):
             current_loss, _ = self.validate()
 
             # Early stopping check
-            if self.gamma is not None and previous_loss - current_loss >= self.gamma / (local_epoch + 1):
+            if self.gamma is not None and previous_loss - current_loss < self.gamma / (local_epoch + 1):
                 log(
                     INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}"
                 )
