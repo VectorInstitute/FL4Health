@@ -81,7 +81,9 @@ class FlashClient(BasicClient):
             loss_dict = self.train_loss_meter.compute().as_dict()
             current_loss, _ = self.validate()
 
-            # Early stopping check
+            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
+            self._handle_reporting(loss_dict, metrics, current_round=current_round)
+            
             if self.gamma is not None and previous_loss - current_loss < self.gamma / (local_epoch + 1):
                 log(
                     INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}"
@@ -89,9 +91,6 @@ class FlashClient(BasicClient):
                 break
 
             previous_loss = current_loss
-
-            self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
-            self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
 
