@@ -101,8 +101,6 @@ class FlashClient(BasicClient):
             if local_step >= 5:
                 break
 
-
-
         return loss_dict, metrics
 
     def setup_client(self, config: Config) -> None:
