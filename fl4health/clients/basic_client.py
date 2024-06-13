@@ -523,6 +523,7 @@ class BasicClient(NumPyClient):
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
+        target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
         # Compute backward pass and update parameters with optimizer
@@ -550,6 +551,7 @@ class BasicClient(NumPyClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict(input)
+            target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
@@ -942,6 +944,9 @@ class BasicClient(NumPyClient):
 
         """
         return None
+
+    def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+        return target
 
     def get_criterion(self, config: Config) -> _Loss:
         """

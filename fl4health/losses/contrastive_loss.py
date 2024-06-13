@@ -91,6 +91,7 @@ class MoonContrastiveLoss(nn.Module):
 
 class ContrastiveLoss(nn.Module):
     def __init__(self, device: torch.device, temperature: float = 0.05) -> None:
+        super().__init__()
         self.device = device
         self.temperature = temperature
 
@@ -108,7 +109,7 @@ class ContrastiveLoss(nn.Module):
         positives = torch.concatenate([similarity_ij, similarity_ji], dim=0)
         numerator = torch.exp(positives / self.temperature).sum(dim=-1)
 
-        mask = torch.ones(2 * batch_size, 2 * batch_size) - torch.eye(2 * batch_size, 2 * batch_size)
+        mask = (torch.ones(2 * batch_size, 2 * batch_size) - torch.eye(2 * batch_size, 2 * batch_size)).to(self.device)
         similarity_matrix_without_diagonal = torch.mul(similarity_matrix, mask)
         denominator = torch.exp(similarity_matrix_without_diagonal / self.temperature).sum(dim=-1)
 

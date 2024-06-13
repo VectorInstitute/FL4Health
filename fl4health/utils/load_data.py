@@ -27,15 +27,20 @@ def split_data_and_targets(
     return train_data, train_targets, val_data, val_targets
 
 
+def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+    mnist_dataset = MNIST(data_dir, train=train, download=True)
+    data = torch.Tensor(mnist_dataset.data)
+    targets = torch.Tensor(mnist_dataset.targets).long()
+    return data, targets
+
+
 def get_train_and_val_mnist_datasets(
     data_dir: Path,
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     validation_proportion: float = 0.2,
 ) -> Tuple[TensorDataset, TensorDataset]:
-    mnist_dataset = MNIST(data_dir, train=True, download=True)
-    data = torch.Tensor(mnist_dataset.data)
-    targets = torch.Tensor(mnist_dataset.targets).long()
+    data, targets = get_mnist_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets, validation_proportion)
 
@@ -81,16 +86,20 @@ def load_mnist_data(
     return train_loader, validation_loader, num_examples
 
 
+def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+    mnist_dataset = CIFAR10(data_dir, train=train, download=True)
+    data = torch.Tensor(mnist_dataset.data)
+    targets = torch.Tensor(mnist_dataset.targets).long()
+    return data, targets
+
+
 def get_train_and_val_cifar10_datasets(
     data_dir: Path,
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     validation_proportion: float = 0.2,
 ) -> Tuple[TensorDataset, TensorDataset]:
-
-    cifar_dataset = CIFAR10(data_dir, train=True, download=True)
-    data = torch.Tensor(cifar_dataset.data)
-    targets = torch.Tensor(cifar_dataset.targets).long()
+    data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets, validation_proportion)
 
@@ -137,10 +146,7 @@ def load_cifar10_test_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    cifar_dataset = CIFAR10(data_dir, train=False, download=True)
-    data = torch.from_numpy(cifar_dataset.data)
-    targets = torch.Tensor(cifar_dataset.targets).long()
-
+    data, targets = get_cifar10_data_and_target_tensors(data_dir, False)
     evaluation_set = TensorDataset(data, targets, transform)
 
     if sampler is not None:
