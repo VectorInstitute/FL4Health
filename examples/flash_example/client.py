@@ -9,7 +9,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import Net, MnistNet
+from examples.models.cnn_model import MnistNet, Net
 from fl4health.clients.flash_client import FlashClient
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -33,7 +33,8 @@ class CifarFlashClient(FlashClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
-    
+
+
 class MNISTFlashClient(FlashClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
