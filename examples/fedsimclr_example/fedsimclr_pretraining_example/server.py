@@ -11,7 +11,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.model_bases.fed_ssl_base import FedSimClrModel
+from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config

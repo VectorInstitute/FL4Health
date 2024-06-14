@@ -2,14 +2,16 @@ import pytest
 import torch
 import torch.nn.functional as F
 
-
-from fl4health.losses.contrastive_loss import MoonContrastiveLoss, ContrastiveLoss
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss, NtXentLoss
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def nt_xent(x1, x2, t=0.5):
-    """Fed-X Alternative Implementation of NT-Xent to Compare against"""
+def nt_xent(x1: torch.Tensor, x2: torch.Tensor, t: float = 0.5) -> torch.Tensor:
+    """
+    Fed-X Alternative Implementation of NT-Xent to Compare against.
+    https://github.com/Sungwon-Han/FEDX/blob/main/losses.py#L11
+    """
     x1 = F.normalize(x1, dim=1)
     x2 = F.normalize(x2, dim=1)
     batch_size = x1.size(0)
@@ -84,7 +86,7 @@ def test_compute_negative_similarities() -> None:
 
 
 def test_contrastive_loss() -> None:
-    contrastive_loss = ContrastiveLoss(DEVICE, temperature=0.5)
+    contrastive_loss = NtXentLoss(DEVICE, temperature=0.5)
 
     features = torch.stack([torch.arange(1, 11) for _ in range(10)]).float()
     transformed_features = torch.stack([torch.arange(10, 101, 10) for _ in range(10)]).T.float()
@@ -94,7 +96,7 @@ def test_contrastive_loss() -> None:
 
     assert result == pytest.approx(expected_result, rel=0.01)
 
-    contrastive_loss2 = ContrastiveLoss(DEVICE, temperature=0.1)
+    contrastive_loss2 = NtXentLoss(DEVICE, temperature=0.1)
 
     features2 = torch.stack([torch.arange(0, 41, 2) for _ in range(10)]).float()
     transformed_features2 = torch.stack([torch.arange(0, 101, 5) for _ in range(10)]).float()
@@ -104,7 +106,7 @@ def test_contrastive_loss() -> None:
 
     assert result2 == pytest.approx(expected_result2, rel=0.01)
 
-    contrastive_loss3 = ContrastiveLoss(DEVICE)
+    contrastive_loss3 = NtXentLoss(DEVICE)
 
     features3 = torch.ones((100, 128))
     transformed_features3 = torch.ones((10, 128))

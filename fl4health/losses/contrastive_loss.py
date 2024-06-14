@@ -89,7 +89,7 @@ class MoonContrastiveLoss(nn.Module):
         return self.cross_entropy_function(logits, labels)
 
 
-class ContrastiveLoss(nn.Module):
+class NtXentLoss(nn.Module):
     def __init__(self, device: torch.device, temperature: float = 0.05) -> None:
         """
         Implementation of Normalized Temperature-Scaled Cross Entropy Loss (NT-Xent) proposed in
