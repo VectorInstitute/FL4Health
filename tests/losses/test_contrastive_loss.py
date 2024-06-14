@@ -1,12 +1,29 @@
 import pytest
 import torch
+import torch.nn.functional as F
 
-from fl4health.losses.contrastive_loss import MoonContrastiveLoss
+
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss, ContrastiveLoss
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-def test_contrastive_loss() -> None:
+def nt_xent(x1, x2, t=0.5):
+    """Fed-X Alternative Implementation of NT-Xent to Compare against"""
+    x1 = F.normalize(x1, dim=1)
+    x2 = F.normalize(x2, dim=1)
+    batch_size = x1.size(0)
+    out = torch.cat([x1, x2], dim=0)
+    sim_matrix = torch.exp(torch.mm(out, out.t().contiguous()) / t)
+    mask = (torch.ones_like(sim_matrix) - torch.eye(2 * batch_size, device=sim_matrix.device)).bool()
+    sim_matrix = sim_matrix.masked_select(mask).view(2 * batch_size, -1)
+    pos_sim = torch.exp(torch.sum(x1 * x2, dim=-1) / t)
+    pos_sim = torch.cat([pos_sim, pos_sim], dim=0)
+    loss = (-torch.log(pos_sim / sim_matrix.sum(dim=-1))).mean()
+    return loss
+
+
+def test_moon_contrastive_loss() -> None:
     # Default temperature is 0.5
     contrastive_loss = MoonContrastiveLoss(DEVICE)
 
@@ -64,3 +81,33 @@ def test_compute_negative_similarities() -> None:
     # mismatch in feature dimension
     with pytest.raises(AssertionError):
         contrastive_loss.compute_negative_similarities(features, negative_pairs_2)
+
+
+def test_contrastive_loss() -> None:
+    contrastive_loss = ContrastiveLoss(DEVICE, temperature=0.5)
+
+    features = torch.stack([torch.arange(1, 11) for _ in range(10)]).float()
+    transformed_features = torch.stack([torch.arange(10, 101, 10) for _ in range(10)]).T.float()
+
+    result = contrastive_loss(features, transformed_features).item()
+    expected_result = nt_xent(features, transformed_features).item()
+
+    assert result == pytest.approx(expected_result, rel=0.01)
+
+    contrastive_loss2 = ContrastiveLoss(DEVICE, temperature=0.1)
+
+    features2 = torch.stack([torch.arange(0, 41, 2) for _ in range(10)]).float()
+    transformed_features2 = torch.stack([torch.arange(0, 101, 5) for _ in range(10)]).float()
+
+    result2 = contrastive_loss2(features2, transformed_features2).item()
+    expected_result2 = nt_xent(features2, transformed_features2, t=0.1).item()
+
+    assert result2 == pytest.approx(expected_result2, rel=0.01)
+
+    contrastive_loss3 = ContrastiveLoss(DEVICE)
+
+    features3 = torch.ones((100, 128))
+    transformed_features3 = torch.ones((10, 128))
+
+    with pytest.raises(AssertionError):
+        contrastive_loss3(features3, transformed_features3)
