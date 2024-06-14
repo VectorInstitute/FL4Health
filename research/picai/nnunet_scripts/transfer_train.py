@@ -10,7 +10,6 @@ Assumptions:
 import os
 from os import path
 import argparse
-import nnunetv2
 import nnunetv2.experiment_planning
 import nnunetv2.experiment_planning.plan_and_preprocess_api
 import nnunetv2.paths
@@ -53,17 +52,18 @@ def main() -> None:
     parser.add_argument('-tr', type=str, required=False, default='nnUNetTrainer', help="Use this flag to specify a custom trainer. Some alternatives are already provided by nnUNet. Eg. 'nnUNetTrainer_5epochs'")
     parser.add_argument('--skip_preprocessing', type=bool, required=False, default=False, help='Whether or not to skip the preprocessing step. Only set this to True if you have already run this command with preprocessing and only want to redo the fine-tuning')
 
-
     args = parser.parse_args()
-    pt_dataset_name = convert_id_to_dataset_name(args.pt_d)
 
     # Get fingerprint
     if args.pt_fingerprint is None:
         assert args.pt_d is not None, 'Either pt_d or pt_fingerprint needs to be provided. Missing both'
-        args.pt_fingerprint = path.join(nnunetv2.paths.nnUNet_preprocessed, pt_dataset_name, 'dataset_fingerprint.json')
+        pt_dataset_name = convert_id_to_dataset_name(args.pt_d)
+        args.pt_fingerprint = path.join(nnunetv2.paths.
+        nnUNet_preprocessed, pt_dataset_name, 'dataset_fingerprint.json')
 
     if args.pt_plans is None:
         assert args.pt_d is not None, 'Either pt_d or pt_plans needs to be provided. Missing both'
+        pt_dataset_name = convert_id_to_dataset_name(args.pt_d)
         args.pt_plans = path.join(nnunetv2.paths.nnUNet_preprocessed, pt_dataset_name, 'nnUNetPlans.json')
 
     transfer_metadata(
