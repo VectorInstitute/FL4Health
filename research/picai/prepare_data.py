@@ -196,6 +196,7 @@ def preprare_data(
         # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
         annotation_path = Path(os.path.join(annotation_read_dir, annotation_filename))
+        # split on filename instead of stem on path since extension can have multiple "." in it.
         annotation_base_filename = annotation_filename.split(".")[0]
 
         # All of the scans for a given patient, even if there are multiple sets from different study ids,
