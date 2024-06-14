@@ -1,28 +1,22 @@
 import argparse
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 import flwr as fl
-from flwr.common.typing import Config
-
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import (
-    SslEncoder,
-    SslPredictionHead,
-    SslProjectionHead
-)
-
+from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fed_ssl_base import FedSimClrModel
-from fl4health.utils.metrics import Accuracy
-from fl4health.utils.load_data import get_cifar10_data_and_target_tensors, split_data_and_targets
 from fl4health.utils.dataset import TensorDataset
+from fl4health.utils.load_data import get_cifar10_data_and_target_tensors, split_data_and_targets
+from fl4health.utils.metrics import Accuracy
 
 
 def get_finetune_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader]:
@@ -58,8 +52,12 @@ class CifarClient(BasicClient):
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        model = FedSimClrModel(encoder=SslEncoder(), projection_head=SslProjectionHead(),
-                               prediction_head=SslPredictionHead(), pretrain=False)
+        model = FedSimClrModel(
+            encoder=SslEncoder(),
+            projection_head=SslProjectionHead(),
+            prediction_head=SslPredictionHead(),
+            pretrain=False,
+        )
         return model.to(self.device)
 
 

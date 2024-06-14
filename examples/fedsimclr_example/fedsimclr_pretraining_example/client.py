@@ -1,27 +1,21 @@
 import argparse
 from pathlib import Path
-
-from typing import Tuple, Callable
+from typing import Callable, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
+import torchvision.transforms as transforms
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-import torchvision.transforms as transforms
-
-from examples.models.cnn_model import (
-    SslEncoder,
-    SslPredictionHead,
-    SslProjectionHead
-)
+from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.load_data import get_cifar10_data_and_target_tensors, split_data_and_targets
-from fl4health.utils.dataset import SslTensorDataset
-from fl4health.model_bases.fed_ssl_base import FedSimClrModel
 from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.model_bases.fed_ssl_base import FedSimClrModel
+from fl4health.utils.dataset import SslTensorDataset
+from fl4health.utils.load_data import get_cifar10_data_and_target_tensors, split_data_and_targets
 
 
 def get_transforms() -> Tuple[Callable, Callable]:
@@ -32,20 +26,20 @@ def get_transforms() -> Tuple[Callable, Callable]:
         ]
     )
 
-    color_jitter = transforms.ColorJitter(
-        0.8, 0.8, 0.8, 0.2
-    )
+    color_jitter = transforms.ColorJitter(0.8, 0.8, 0.8, 0.2)
     blur = transforms.GaussianBlur((3, 3), (0.1, 2.0))
 
-    target_transform = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(p=0.5),
-        transforms.RandomApply([color_jitter], p=0.8),
-        transforms.RandomApply([blur], p=0.5),
-        transforms.RandomGrayscale(p=0.2),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-    ])
+    target_transform = transforms.Compose(
+        [
+            transforms.ToPILImage(),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomApply([blur], p=0.5),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        ]
+    )
     return input_transform, target_transform
 
 

@@ -353,6 +353,7 @@ class FedRepClient(BasicClient):
 
         # Perform forward pass on the full model
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
         losses = self.compute_training_loss(preds, features, target)

@@ -99,6 +99,8 @@ class EnsembleClient(BasicClient):
             optimizer.zero_grad()
 
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
+
         losses = self.compute_training_loss(preds, features, target)
 
         for loss in losses.backward.values():

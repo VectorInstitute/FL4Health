@@ -2,22 +2,21 @@ import argparse
 from functools import partial
 from typing import Any, Dict, Optional
 
-import torch.nn as nn
 import flwr as fl
+import torch.nn as nn
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.model_bases.fed_ssl_base import FedSimClrModel
+from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
+from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.model_bases.fed_ssl_base import FedSimClrModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
-
-from examples.models.cnn_model import SslEncoder, SslProjectionHead, SslPredictionHead
-from examples.utils.functions import make_dict_with_epochs_or_steps
 
 
 def fit_config(
