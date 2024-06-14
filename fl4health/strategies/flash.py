@@ -162,7 +162,7 @@ class Flash(BasicFedAvg):
     #     assert self.m_t is not None
     #     self.m_t = [np.multiply(self.beta_1, m) + (1 - self.beta_1) * delta for m, delta in zip(self.m_t, delta_t)]
 
-    def _update_parameters(self, delta_t: NDArrays) -> NDArrays:
+    def _update_parameters(self, delta_t: NDArrays) -> None:
         """Update m_t, v_t, d_t, and beta_3 in a vectorized manner."""
         assert self.v_t is not None and self.m_t is not None and self.d_t is not None
 
