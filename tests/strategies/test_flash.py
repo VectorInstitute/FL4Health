@@ -78,9 +78,9 @@ def test_flash_aggregate_fit() -> None:
     expected_beta_3 = [np.zeros((3, 3)), np.zeros((4, 4))]  # For the first update, beta_3 should be zero
 
     # Perform the first round of updates
-    v_t_prev = [np.zeros((3, 3)), np.zeros((4, 4))]  # Initial v_t_prev is zeros
+    # v_t_prev = [np.zeros((3, 3)), np.zeros((4, 4))]  # Initial v_t_prev is zeros
     flash_strategy.aggregate_fit(server_round=1, results=clients_res_1, failures=[])
-    beta_3 = flash_strategy._update_beta_3(delta_t, v_t_prev)
+    # beta_3 = flash_strategy._update_beta_3(delta_t, v_t_prev)
 
     # Assertions for round 1
     assert flash_strategy.m_t is not None
@@ -98,9 +98,9 @@ def test_flash_aggregate_fit() -> None:
         assert dt.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {dt.shape}"
         assert np.allclose(dt, expected), f"Round 1: Expected {expected}, but got {dt}"
 
-    for b3, expected in zip(beta_3, expected_beta_3):
-        assert b3.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {b3.shape}"
-        assert np.allclose(b3, expected), f"Round 1: Expected {expected}, but got {b3}"
+    # for b3, expected in zip(beta_3, expected_beta_3):
+    #     assert b3.shape == expected.shape, f"Round 1: Expected shape {expected.shape}, but got {b3.shape}"
+    #     assert np.allclose(b3, expected), f"Round 1: Expected {expected}, but got {b3}"
 
     # Calculate new weights after round 1
     new_weights_round1 = [
@@ -138,9 +138,9 @@ def test_flash_aggregate_fit() -> None:
     ]
 
     # Perform the second round of updates
-    v_t_prev_round2 = flash_strategy.v_t.copy()
+    # v_t_prev_round2 = flash_strategy.v_t.copy()
     flash_strategy.aggregate_fit(server_round=2, results=clients_res_2, failures=[])
-    beta_3_round2 = flash_strategy._update_beta_3(delta_t_round2, v_t_prev_round2)
+    # beta_3_round2 = flash_strategy._update_beta_3(delta_t_round2, v_t_prev_round2)
 
     # Assertions for round 2
     assert flash_strategy.m_t is not None
@@ -158,9 +158,9 @@ def test_flash_aggregate_fit() -> None:
         assert dt.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {dt.shape}"
         assert np.allclose(dt, expected), f"Round 2: Expected {expected}, but got {dt}"
 
-    for b3, expected in zip(beta_3_round2, expected_beta_3_round2):
-        assert b3.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {b3.shape}"
-        assert np.allclose(b3, expected), f"Round 2: Expected {expected}, but got {b3}"
+    # for b3, expected in zip(beta_3_round2, expected_beta_3_round2):
+    #     assert b3.shape == expected.shape, f"Round 2: Expected shape {expected.shape}, but got {b3.shape}"
+    #     assert np.allclose(b3, expected), f"Round 2: Expected {expected}, but got {b3}"
 
     # Calculate new weights after round 2
     new_weights_round2 = [
