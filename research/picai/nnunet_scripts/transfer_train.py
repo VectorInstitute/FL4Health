@@ -2,7 +2,7 @@
 
 Assumptions:
 - The new dataset must be correctly formatted for nnUNet and present in the nnUnet_raw folder (see nnUNet installation instructions and environment variables)
-- The output of nnUNetv2_extract_fingerprint and nnUNetv2_plan_experiment for the pretraining dataset. Namely the dataset_fingerprint.json and nnUNetPlans.json
+- The output of nnUNetv2_extract_fingerprint and nnUNetv2_plan_experiment for the pretraining dataset must be provided. Namely the dataset_fingerprint.json and nnUNetPlans.json
 - The new dataset must have the same dimensions for the input and output images/volumes/masks as the dataset used for pretraining (ideally the same spacings as well as I assume this affects the model?)
 
 '''
@@ -18,24 +18,24 @@ import nnunetv2.run.run_training
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 import shutil
 
-def transfer_metadata(dataset_id, fingerprint_path, plans_path, pt_checkpoint_path):
+def transfer_metadata(ft_dataset_id, pt_fingerprint_path, pt_plans_path, pt_checkpoint_path):
     '''Transfers over the fingerprint and plans from the pretrained model.
 
     Args:
-        dataset_id (int): ID for the new finetuning dataset that is being used during training
-        fingerprint_path (str): Path to the json fingerprint for the dataset used during pretraining
-        plans_path (str): Path to the plans json for the dataset used during pretraining
+        ft_dataset_id (int): ID for the new finetuning dataset that is being used during training
+        pt_fingerprint_path (str): Path to the json fingerprint for the dataset used during pretraining
+        pt_plans_path (str): Path to the plans json for the dataset used during pretraining
         pt_checkpoint_path (str): Path to the model checkpoint of the pretrained model
     '''
 
-    dataset_name = convert_id_to_dataset_name(dataset_id) # Get name of dataset
+    dataset_name = convert_id_to_dataset_name(ft_dataset_id) # Get name of dataset
     dataset_pp_path = path.join(nnunetv2.paths.nnUNet_preprocessed, dataset_name) # Path to folder for preprocessed data
     if not path.exists(dataset_pp_path):
         os.mkdir(dataset_pp_path)
 
     # Copy over plans, fingerprint, checkpoint and dataset json
-    shutil.copy(fingerprint_path, path.join(dataset_pp_path, 'dataset_fingerprint.json'))
-    shutil.copy(plans_path, path.join(dataset_pp_path, 'nnUNetPlans.json'))
+    shutil.copy(pt_fingerprint_path, path.join(dataset_pp_path, 'dataset_fingerprint.json'))
+    shutil.copy(pt_plans_path, path.join(dataset_pp_path, 'nnUNetPlans.json'))
     shutil.copy(pt_checkpoint_path, path.join(dataset_pp_path, 'pretrained_weights.pth'))
 
 def main() -> None:
@@ -67,9 +67,9 @@ def main() -> None:
         args.pt_plans = path.join(nnunetv2.paths.nnUNet_preprocessed, pt_dataset_name, 'nnUNetPlans.json')
 
     transfer_metadata(
-        dataset_id=args.d,
-        fingerprint_path=args.pt_fingerprint,
-        plans_path=args.pt_plans,
+        ft_dataset_id=args.d,
+        pt_fingerprint_path=args.pt_fingerprint,
+        pt_plans_path=args.pt_plans,
         pt_checkpoint_path=args.pt_checkpoint
         )
     
