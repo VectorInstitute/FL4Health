@@ -6,7 +6,7 @@ import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
-from examples.models.cnn_model import MnistNet
+from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.flash import Flash
@@ -33,7 +33,7 @@ def main(config: Dict[str, Any]) -> None:
     fit_config_fn = partial(fit_config, config["batch_size"], local_epochs=config.get("local_epochs"))
 
     # Initializing the model on the server side
-    model = MnistNet()
+    model = Net()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = Flash(
