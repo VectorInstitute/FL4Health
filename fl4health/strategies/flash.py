@@ -170,16 +170,16 @@ class Flash(BasicFedAvg):
         for i, (delta, m, v, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
             # Update m_t
             self.m_t[i] = self.beta_1 * m + (1 - self.beta_1) * delta
-            
+
             # Update v_t
             self.v_t[i] = self.beta_2 * v + (1 - self.beta_2) * np.square(delta)
-            
+
             # Compute beta_3
             norm_v_prev = np.abs(v)
             norm_diff = np.abs(np.square(delta) - self.v_t[i])
             beta_3_matrix = norm_v_prev / (norm_diff + norm_v_prev)
             beta_3.append(beta_3_matrix)
-            
+
             # Update d_t
             self.d_t[i] = beta_3_matrix * d_prev + (1 - beta_3_matrix) * (np.square(delta) - self.v_t[i])
 
