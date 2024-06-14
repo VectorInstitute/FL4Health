@@ -114,7 +114,6 @@ class Flash(BasicFedAvg):
         self.tau = tau
         self.beta_1 = beta_1
         self.beta_2 = beta_2
-        self.beta_3: Optional[NDArrays] = None
         self.m_t: Optional[NDArrays] = None
         self.v_t: Optional[NDArrays] = None
         self.d_t: Optional[NDArrays] = None
@@ -124,49 +123,10 @@ class Flash(BasicFedAvg):
         rep = f"Flash(accept_failures={self.accept_failures})"
         return rep
 
-    # def _update_d_t(self, delta_t: NDArrays, beta_3: NDArrays) -> None:
-    #     """Update the drift-aware term d_t."""
-    #     assert self.v_t is not None and self.d_t is not None
-    #     for i, (delta, v, d_prev) in enumerate(zip(delta_t, self.v_t, self.d_t)):
-    #         d_t = np.zeros_like(delta)
-    #         for row in range(delta.shape[0]):
-    #             for col in range(delta.shape[1]):
-    #                 d_t[row, col] = beta_3[i][row, col] * d_prev[row, col] + (1 - beta_3[i][row, col]) * (
-    #                     (delta[row, col] ** 2) - v[row, col]
-    #                 )
-    #         self.d_t[i] = d_t
-
-    # def _update_beta_3(self, delta_t: NDArrays, v_t_prev: NDArrays) -> NDArrays:
-    #     """Update the beta_3 term."""
-    #     assert self.v_t is not None and v_t_prev is not None
-    #     beta_3 = []
-    #     for delta, v, v_prev in zip(delta_t, self.v_t, v_t_prev):
-    #         beta_3_matrix = np.zeros_like(delta)
-    #         for row in range(delta.shape[0]):
-    #             for col in range(delta.shape[1]):
-    #                 norm_v_prev = np.linalg.norm(v_prev[row, col])
-    #                 norm_diff = np.linalg.norm((delta[row, col] ** 2) - v[row, col])
-    #                 beta_3_matrix[row, col] = norm_v_prev / (norm_diff + norm_v_prev)
-    #         beta_3.append(beta_3_matrix)
-    #     return beta_3
-
-    # def _update_v_t(self, delta_t: NDArrays) -> None:
-    #     """Update the second moment estimate v_t."""
-    #     assert self.v_t is not None
-    #     self.v_t = [
-    #         self.beta_2 * v + (1 - self.beta_2) * np.multiply(delta, delta) for v, delta in zip(self.v_t, delta_t)
-    #     ]
-
-    # def _update_m_t(self, delta_t: NDArrays) -> None:
-    #     """Update the first moment estimate m_t."""
-    #     assert self.m_t is not None
-    #     self.m_t = [np.multiply(self.beta_1, m) + (1 - self.beta_1) * delta for m, delta in zip(self.m_t, delta_t)]
-
     def _update_parameters(self, delta_t: NDArrays) -> None:
         """Update m_t, v_t, d_t, and beta_3 in a vectorized manner."""
         assert self.v_t is not None and self.m_t is not None and self.d_t is not None
 
-        beta_3 = []
         for i, (delta, m, v, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
             # Update m_t
             self.m_t[i] = self.beta_1 * m + (1 - self.beta_1) * delta
@@ -178,7 +138,6 @@ class Flash(BasicFedAvg):
             norm_v_prev = np.abs(v)
             norm_diff = np.abs(np.square(delta) - self.v_t[i])
             beta_3_matrix = norm_v_prev / (norm_diff + norm_v_prev)
-            beta_3.append(beta_3_matrix)
 
             # Update d_t
             self.d_t[i] = beta_3_matrix * d_prev + (1 - beta_3_matrix) * (np.square(delta) - self.v_t[i])
