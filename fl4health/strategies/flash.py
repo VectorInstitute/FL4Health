@@ -88,8 +88,8 @@ class Flash(BasicFedAvg):
                 average or a uniform average. Flash default is a uniform average by the number of clients.
                 Defaults to False.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
-                averages or a uniform average. Flash default is a uniform average of the losses by dividing the total loss
-                by the number of clients. Defaults to False.
+                averages or a uniform average. Flash default is a uniform average of the losses by dividing
+                the total loss by the number of clients. Defaults to False.
         """
 
         super().__init__(
