@@ -133,7 +133,7 @@ async def run_smoke_test(
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config)
+    _preload_dataset(dataset_path, config, seed)
 
     # Start the server and capture its process object
     logger.info("Starting server...")
@@ -222,11 +222,9 @@ async def run_smoke_test(
     logger.info("Server has finished execution")
 
     # server assertions
-    """
     assert "error" not in full_server_output.lower(), (
         f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
     )
-    """
     if assert_evaluation_logs:
         assert f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output, (
             f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
@@ -259,11 +257,9 @@ async def run_smoke_test(
     # client assertions
     client_errors = []
     for i in range(len(full_client_outputs)):
-        """
         assert "error" not in full_client_outputs[i].lower(), (
             f"Full client output:\n{full_client_outputs[i]}\n" f"[ASSERT ERROR] Error message found for client {i}."
         )
-        """
         assert "Disconnect and shut down" in full_client_outputs[i], (
             f"Full client output:\n{full_client_outputs[i]}\n"
             f"[ASSERT ERROR] Shutdown message not found for client {i}."
@@ -285,7 +281,7 @@ async def run_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config) -> None:
+def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -298,12 +294,22 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
         # Creating a client and getting the data loaders will trigger
         # the dataset's download
         logger.info("Preloading MNIST dataset...")
-        load_mnist_data(Path(dataset_path), int(config["batch_size"]))
+
+        if seed is not None:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]), seed=seed)
+        else:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
+
         logger.info("Finished preloading MNIST dataset")
 
     elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
-        load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
+        if seed is not None:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]), seed=seed)
+        else:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
         logger.info("Finished preloading CIFAR10 dataset")
 
     else:
@@ -448,7 +454,6 @@ def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.fedprox_example.server",
@@ -482,7 +487,6 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
         )
     )
-    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.feddg_ga_example.server",
