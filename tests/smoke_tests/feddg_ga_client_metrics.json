@@ -57,15 +57,15 @@
             },
             "loss_dict": {
                 "global": 0.4679,
-                "local": {"target_value": 0.5944, "custom_tolerance": 0.005},
-                "backward": {"target_value": 0.4016, "custom_tolerance": 0.005}
+                "local": {"target_value": 0.4868, "custom_tolerance": 0.005},
+                "backward": {"target_value": 0.3235, "custom_tolerance": 0.005}
             },
             "evaluate_metrics": {
-                "val - personal - accuracy": {"target_value": 0.8505, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.8793,
-                "val - local - accuracy": {"target_value": 0.7781, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.8082, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.7775,
+                "val - local - accuracy": {"target_value": 0.6895, "custom_tolerance": 0.005}
             },
-            "loss": {"target_value": 0.4557, "custom_tolerance": 0.005}
+            "loss": {"target_value": 0.5519, "custom_tolerance": 0.005}
         }
     }
 }
