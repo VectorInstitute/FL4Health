@@ -25,13 +25,13 @@
         },
         "2": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.8859,
-                "train - global - accuracy": {"target_value": 0.9109, "custom_tolerance": 0.005},
-                "train - local - accuracy": {"target_value": 0.8609, "custom_tolerance": 0.005},
-                "val - personal - accuracy": {"target_value": 0.8353, "custom_tolerance": 0.005},
+                "train - personal - accuracy": 0.8609,
+                "train - global - accuracy": {"target_value": 0.8312, "custom_tolerance": 0.005},
+                "train - local - accuracy": {"target_value": 0.7953, "custom_tolerance": 0.005},
+                "val - personal - accuracy": {"target_value": 0.7181, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.8378,
-                "val - local - accuracy": {"target_value": 0.7261, "custom_tolerance": 0.005},
-                "val - loss": {"target_value": 0.5607, "custom_tolerance": 0.005}
+                "val - local - accuracy": {"target_value": 0.5407, "custom_tolerance": 0.005},
+                "val - loss": {"target_value": 0.8647, "custom_tolerance": 0.005}
             },
             "loss_dict": {
                 "global": 0.3091,
