@@ -6,15 +6,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import torch
 import yaml
 from flwr.common.typing import Config
 from pytest import approx
 from six.moves import urllib
 
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
-from fl4health.utils.metrics import Accuracy
-from fl4health.utils.random import set_all_random_seeds
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
@@ -463,7 +460,6 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
         )
     )
-    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.scaffold_example.server",
@@ -475,6 +471,7 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
         )
     )
+    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.apfl_example.server",
