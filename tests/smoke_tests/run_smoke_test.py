@@ -471,7 +471,6 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
         )
     )
-    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.apfl_example.server",
@@ -483,6 +482,7 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
         )
     )
+    """
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.feddg_ga_example.server",
