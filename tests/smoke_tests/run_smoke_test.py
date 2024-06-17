@@ -14,6 +14,7 @@ from six.moves import urllib
 
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
 from fl4health.utils.metrics import Accuracy
+from fl4health.utils.random import set_all_random_seeds
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
