@@ -44,7 +44,7 @@ class Flash(BasicFedAvg):
         weighted_aggregation: bool = False,
         weighted_eval_losses: bool = False,
     ) -> None:
-        """Flash - Concept Drift Adaptation in Federated Learning.
+        """Flash: Concept Drift Adaptation in Federated Learning.
 
         Implementation based on https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf
 
@@ -85,11 +85,11 @@ class Flash(BasicFedAvg):
             tau : float, optional
                 Controls the algorithm's degree of adaptability. Defaults to 1e-9.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
-                average or a uniform average. Flash default is uniform average over client.
-                Defaults to True.
+                average or a uniform average. Flash default is a uniform average by the number of clients.
+                Defaults to False.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
-                averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
-                counts. Defaults to True.
+                averages or a uniform average. Flash default is a uniform average of the losses by dividing the total loss by the number of clients.
+                Defaults to False.
         """
 
         super().__init__(
@@ -124,7 +124,7 @@ class Flash(BasicFedAvg):
         return rep
 
     def _update_parameters(self, delta_t: NDArrays) -> None:
-        """Update m_t, v_t, d_t, and beta_3 in a vectorized manner."""
+        """Update m_t, v_t, beta_3, and d_t per-element"""
         assert self.v_t is not None and self.m_t is not None and self.d_t is not None
 
         for i, (delta, m, v, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
@@ -163,10 +163,8 @@ class Flash(BasicFedAvg):
                 setattr(self, attr, [np.zeros_like(x) for x in delta_t])
         assert self.m_t is not None and self.v_t is not None and self.d_t is not None
 
-        # Update parameters
         self._update_parameters(delta_t)
 
-        # Update global weights
         new_weights = [
             current_weight + self.eta * m_t / (np.sqrt(v_t) - d_t + self.tau)
             for current_weight, m_t, v_t, d_t in zip(self.current_weights, self.m_t, self.v_t, self.d_t)
