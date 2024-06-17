@@ -18,7 +18,7 @@
         },
         "3": {
             "metrics_aggregated": {
-                "val - personal - accuracy": 0.8325,
+                "val - personal - accuracy": 0.8195,
                 "val - global - accuracy": 0.77,
                 "val - local - accuracy": 0.739
             },
