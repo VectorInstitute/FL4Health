@@ -13,7 +13,6 @@ from pytest import approx
 from six.moves import urllib
 
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
-from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.metrics import Accuracy
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
@@ -125,7 +124,6 @@ async def run_smoke_test(
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
     """
-    set_all_random_seeds(42)
     clear_metrics_folder()
 
     logger.info("Running smoke tests with parameters:")
