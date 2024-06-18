@@ -1,8 +1,10 @@
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
 import numpy as np
 import SimpleITK as sitk
+
 from research.picai.preprocessing import PicaiCase, PreprocessingSettings
 
 
@@ -32,11 +34,7 @@ def test_read_and_write_picai_case() -> None:
         sitk.WriteImage(hbv_sitk, hbv_filename)
         sitk.WriteImage(annotation_sitk, annotation_filename)
 
-        scan_paths = [
-            t2w_filename,
-            adc_filename,
-            hbv_filename
-        ]
+        scan_paths = [t2w_filename, adc_filename, hbv_filename]
 
         original_np_scans = [t2w, adc, hbv]
 
