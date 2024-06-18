@@ -120,12 +120,14 @@ class PicaiCase(Case):
         Class representing a case from the PICAI dataset.
 
         scan_paths filenames are assumed to have the following format: <patient_id>_<study_id>_<modality>.mha
-        where modality is a three letter string of ['t2w', 'adc', 'hbv']
+        where modality is a three letter string of ['t2w', 'adc', 'hbv']. Assumes the order of scan paths is
+        t2w, adc and hbv.
 
         annotation_path filename is assumed to have the following format: <patient_id>_<study_id>.nii.gz
 
         Args:
             scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
+                Assumes the order of scan paths is t2w, adc, hbv.
             annotation_write_dir (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
@@ -155,9 +157,8 @@ class PicaiCase(Case):
                 for the scans and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
-        scan_paths = [path for path in sorted(self.scan_paths)]
         preprocessed_scan_paths = []
-        for path, scan in zip(scan_paths, self.scans):
+        for path, scan in zip(self.scan_paths, self.scans):
             scan_filename = Path(os.path.basename(path))
             scan_filename_without_extension = scan_filename.stem
             suffix = modality_suffix_map[scan_filename_without_extension[-3:]]
