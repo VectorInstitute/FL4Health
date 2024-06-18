@@ -1,4 +1,4 @@
-# Basic Federated Self Supercised Learning Example with FedSimCLR
+# Basic Federated Self Supervised Learning Example with FedSimCLR
 This example provides a very simple implementation of federated self supervised learning (SSL) with FedSimCLR on the CIFAR dataset.
 FedSimCLR is a straightforward generalization of SimCLR (https://arxiv.org/pdf/2002.05709) to the federated setting presented in
 the Fed-X paper (https://arxiv.org/pdf/2207.09158). FL server expects two clients to be spun up (i.e. it will wait until two
