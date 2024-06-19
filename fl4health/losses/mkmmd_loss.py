@@ -321,7 +321,7 @@ class MkMmdLoss(torch.nn.Module):
     def get_best_vertex_for_objective_function(
         self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor
     ) -> torch.Tensor:
-        # vertices have shape num kernels x 1
+        # vertices_weights have shape num kernels x 1
         vertices_weights = self.compute_vertices(hat_d_per_kernel)
         maximum_value = -torch.inf
         best_index = 0
