@@ -120,12 +120,14 @@ class PicaiCase(Case):
         Class representing a case from the PICAI dataset.
 
         scan_paths filenames are assumed to have the following format: <patient_id>_<study_id>_<modality>.mha
-        where modality is a three letter string of ['t2w', 'adc', 'hbv']
+        where modality is a three letter string of ['t2w', 'adc', 'hbv']. NOTE: the ordering self.scan_path
+        and self.scans must remain consistent.
 
         annotation_path filename is assumed to have the following format: <patient_id>_<study_id>.nii.gz
 
         Args:
             scan_paths (Sequence[Path]): The set of paths where the scans associated with the Case are located.
+                NOTE: self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
             annotation_write_dir (Path): The path where the annotation associated with the Case is located.
             settings (PreprocessingSettings): The settings determining how the case is preprocessed.
         """
@@ -145,6 +147,7 @@ class PicaiCase(Case):
         and returns the scan file paths and annotation file path in a tuple.
 
         Assumes scan_paths and annotation_path filenames follow the format specified in class constructor.
+        NOTE: self.scans will inherit the ordering of scan_paths and must remain consistently ordered.
 
         Output scan_paths will be located at: scans_write_dir/<patient_id>_<stud_id>_<modality_id>.nii.gz
         where <modality_id> is a mapping from modality string to a 4 digit number specified by the mapping
@@ -155,9 +158,8 @@ class PicaiCase(Case):
                 for the scans and the second entry is the file path to the corresponding annotation.
         """
         modality_suffix_map = {"t2w": "0000", "adc": "0001", "hbv": "0002"}
-        scan_paths = [path for path in sorted(self.scan_paths)]
         preprocessed_scan_paths = []
-        for path, scan in zip(scan_paths, self.scans):
+        for path, scan in zip(self.scan_paths, self.scans):
             scan_filename = Path(os.path.basename(path))
             scan_filename_without_extension = scan_filename.stem
             suffix = modality_suffix_map[scan_filename_without_extension[-3:]]
