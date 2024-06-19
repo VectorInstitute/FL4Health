@@ -97,16 +97,22 @@ class FendaDittoClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         self.global_model = self.get_global_model(config).to(self.device)
         super().setup_client(config)
-        
+
         # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
-        for param1, param2 in zip(self.global_model.base_module.parameters(), self.model.second_feature_extractor.parameters()):
-            assert param1.shape == param2.shape, \
-                "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match."
+        for param1, param2 in zip(
+            self.global_model.base_module.parameters(), self.model.second_feature_extractor.parameters()
+        ):
+            assert (
+                param1.shape == param2.shape
+            ), "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match."
 
         # Check if shapes of self.model.second_feature_extractor and self.model.first_feature_extractor match
-        for param1, param2 in zip(self.model.second_feature_extractor.parameters(), self.model.first_feature_extractor.parameters()):
-            assert param1.shape == param2.shape, \
-                "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match."
+        for param1, param2 in zip(
+            self.model.second_feature_extractor.parameters(), self.model.first_feature_extractor.parameters()
+        ):
+            assert (
+                param1.shape == param2.shape
+            ), "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match."
 
     def get_parameters(self, config: Config) -> NDArrays:
         assert self.global_model is not None and self.parameter_exchanger is not None
@@ -138,8 +144,8 @@ class FendaDittoClient(BasicClient):
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
         self.model.second_feature_extractor.load_state_dict(
-                self.global_model.base_module.state_dict()
-            )  # feature extracor is given to FENDA model
+            self.global_model.base_module.state_dict()
+        )  # feature extracor is given to FENDA model
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
@@ -224,7 +230,7 @@ class FendaDittoClient(BasicClient):
 
         # Return dictionary of predictions where key is used to name respective MetricMeters
         return losses, preds
-    
+
     def predict(
         self,
         input: TorchInputType,
@@ -261,7 +267,7 @@ class FendaDittoClient(BasicClient):
         assert isinstance(global_preds, torch.Tensor)
         assert isinstance(local_preds, torch.Tensor)
         return {"global": global_preds, "local": local_preds}, {}
-    
+
     def compute_loss_and_additional_losses(
         self,
         preds: Dict[str, torch.Tensor],
@@ -333,7 +339,7 @@ class FendaDittoClient(BasicClient):
         additional_losses["ditto_loss"] = ditto_local_loss.clone()
 
         return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
-    
+
     def validate(self) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
