@@ -82,8 +82,9 @@ class FendaDittoClient(BasicClient):
         raise NotImplementedError
 
     def setup_client(self, config: Config) -> None:
-        assert self.checkpointer is not None and self.checkpointer.pre_aggregation is not None,\
-            "self.checkpointer.pre_aggregation must be present"
+        assert (
+            self.checkpointer is not None and self.checkpointer.pre_aggregation is not None
+        ), "self.checkpointer.pre_aggregation must be present"
         self.global_model = self.get_global_model(config).to(self.device)
         super().setup_client(config)
 
