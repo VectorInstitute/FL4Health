@@ -82,8 +82,9 @@ class FendaDittoClient(BasicClient):
         raise NotImplementedError
 
     def setup_client(self, config: Config) -> None:
-        assert self.checkpointer.pre_aggregation is not None, "self.checkpointer.pre_aggregation must be present"
-        self.global_model = self.get_model(config).to(self.device)
+        assert self.checkpointer is not None and self.checkpointer.pre_aggregation is not None,\
+            "self.checkpointer.pre_aggregation must be present"
+        self.global_model = self.get_global_model(config).to(self.device)
         super().setup_client(config)
 
     def get_parameters(self, config: Config) -> NDArrays:
@@ -234,6 +235,7 @@ class FendaDittoClient(BasicClient):
             ditto_local_loss = self.ditto_drift_loss_function(
                 self.model.second_feature_extractor, self.initial_global_tensors, self.lam
             )
+        additional_losses = additional_losses or {}
         additional_losses["ditto_loss"] = ditto_local_loss.clone()
 
         return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
