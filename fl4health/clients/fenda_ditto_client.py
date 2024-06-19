@@ -7,15 +7,13 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
-from fl4health.model_bases.fenda_base import FendaModel
-from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.utils.losses import TrainingLosses
-from fl4health.utils.metrics import Metric
-from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.utils.losses import LossMeterType
+from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.losses.weight_drift_loss import WeightDriftLoss
+from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
+from fl4health.utils.metrics import Metric
 
 
 class FendaDittoGlobalModel(nn.Module):
@@ -25,9 +23,8 @@ class FendaDittoGlobalModel(nn.Module):
         self.classifier = classifier
 
     def layers_to_exchange(self) -> List[str]:
-        return [
-            layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("feature_extractor.")
-        ]
+        return [layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("feature_extractor.")]
+
 
 class FendaDittoClient(BasicClient):
     def __init__(
@@ -68,7 +65,7 @@ class FendaDittoClient(BasicClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
-    
+
     def get_global_model(self, config: Config) -> FendaDittoGlobalModel:
         """
         User defined method that returns a Global Feature Model that is compatible with FENDA-FL model.
@@ -83,7 +80,7 @@ class FendaDittoClient(BasicClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
-    
+
     def setup_client(self, config: Config) -> None:
         assert self.checkpointer.pre_aggregation is not None, "self.checkpointer.pre_aggregation must be present"
         self.global_model = self.get_model(config).to(self.device)
@@ -104,7 +101,9 @@ class FendaDittoClient(BasicClient):
         else:
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
-            self.model.second_feature_extractor = self.global_model.feature_extractor # feature extracor is given to FENDA model
+            self.model.second_feature_extractor = (
+                self.global_model.feature_extractor
+            )  # feature extracor is given to FENDA model
 
     def update_before_train(self, current_server_round: int) -> None:
         self.initial_global_tensors = [
@@ -116,7 +115,7 @@ class FendaDittoClient(BasicClient):
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
-        self.model.second_feature_extractor = self.global_model # feature extracor is given to FENDA model
+        self.model.second_feature_extractor = self.global_model  # feature extracor is given to FENDA model
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
@@ -228,9 +227,13 @@ class FendaDittoClient(BasicClient):
 
         # Compute ditto drift loss
         if self.freeze_global_feature_extractor:
-            ditto_local_loss = self.ditto_drift_loss_function(self.model.first_feature_extractor, self.initial_global_tensors, self.lam)
+            ditto_local_loss = self.ditto_drift_loss_function(
+                self.model.first_feature_extractor, self.initial_global_tensors, self.lam
+            )
         else:
-            ditto_local_loss = self.ditto_drift_loss_function(self.model.second_feature_extractor, self.initial_global_tensors, self.lam)
+            ditto_local_loss = self.ditto_drift_loss_function(
+                self.model.second_feature_extractor, self.initial_global_tensors, self.lam
+            )
         additional_losses["ditto_loss"] = ditto_local_loss.clone()
 
         return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
