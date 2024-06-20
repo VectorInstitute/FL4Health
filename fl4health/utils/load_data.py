@@ -1,8 +1,8 @@
-import random
 from logging import INFO
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple, Union
 
+import numpy as np
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
@@ -69,7 +69,11 @@ def load_cifar10_test_data(
 
 
 def load_cifar10_data(
-    data_dir: Path, batch_size: int, validation_portion: float = 0, sampler: Optional[LabelBasedSampler] = None
+    data_dir: Path,
+    batch_size: int,
+    validation_portion: float = 0,
+    sampler: Optional[LabelBasedSampler] = None,
+    hash_key: Optional[int] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load CIFAR-10 (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -89,8 +93,12 @@ def load_cifar10_data(
         dataset_size = len(training_set)
         validation_size = int(validation_portion * dataset_size)
         dataset_indexes = list(range(dataset_size))
-        ## put a seed in here
-        random.shuffle(dataset_indexes)
+        # If hash_key is provided, use it to shuffle the dataset indexes and create a reproducible split
+        if hash_key is not None:
+            rng = np.random.default_rng(hash_key)
+            rng.shuffle(dataset_indexes)
+        else:
+            np.random.shuffle(dataset_indexes)
 
         training_set = IndexLabelBasedSampler(list(range(10)), dataset_indexes[validation_size:]).subsample(
             training_set

@@ -68,14 +68,21 @@ class CifarDittoClient(DittoDeepMmdClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         n_clients = self.narrow_config_type(config, "n_clients", int)
+        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
             sample_percentage=1.0 / n_clients,
             beta=self.heterogeneity_level,
             hash_key=self.client_number,
         )
+        # Set the same hash_key for the train_loader and val_loader to ensure the same data split
+        # of train and validation for all clients
         train_loader, val_loader, _ = load_cifar10_data(
-            self.data_path, batch_size, validation_portion=0.2, sampler=sampler
+            self.data_path,
+            batch_size,
+            validation_portion=0.2,
+            sampler=sampler,
+            hash_key=100,
         )
         return train_loader, val_loader
 
