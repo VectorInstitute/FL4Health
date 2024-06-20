@@ -89,6 +89,7 @@ def load_cifar10_data(
         dataset_size = len(training_set)
         validation_size = int(validation_portion * dataset_size)
         dataset_indexes = list(range(dataset_size))
+        ## put a seed in here
         random.shuffle(dataset_indexes)
 
         training_set = IndexLabelBasedSampler(list(range(10)), dataset_indexes[validation_size:]).subsample(

@@ -161,7 +161,6 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
             ]
             for class_idx, num_samples in zip(class_idx_list, num_samples_per_class)
         ]
-
         selected_indices = torch.cat(sampled_class_idx_list, dim=0).long()
 
         # Due to precision errors with previous rounding, sum of sample counts
