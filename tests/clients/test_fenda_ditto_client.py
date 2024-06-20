@@ -3,10 +3,10 @@ import torch
 from flwr.common import Config
 
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.model_bases.fenda_base import FendaModel
-from tests.clients.fixtures import get_client  # noqa
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from tests.clients.fixtures import get_client  # noqa
 from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn
 
 
@@ -22,11 +22,17 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(1)
 
-    global_model_params = [val.detach().clone() for name, val in fenda_ditto_client.global_model.state_dict().items()\
-                           if name.startswith("base_module.")]
+    global_model_params = [
+        val.detach().clone()
+        for name, val in fenda_ditto_client.global_model.state_dict().items()
+        if name.startswith("base_module.")
+    ]
 
-    fenda_model_params = [val.detach().clone() for name, val in fenda_ditto_client.model.state_dict().items() \
-                          if name.startswith("second_feature_extractor.")]
+    fenda_model_params = [
+        val.detach().clone()
+        for name, val in fenda_ditto_client.model.state_dict().items()
+        if name.startswith("second_feature_extractor.")
+    ]
 
     # First fitting round we should set both the global and local models to params and store the global model values
     assert fenda_ditto_client.initial_global_tensors is not None
@@ -47,11 +53,17 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     params = [param + 1.0 for param in params]
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(2)
-    global_model_params = [val.detach().clone() for name, val in fenda_ditto_client.global_model.state_dict().items()\
-                           if name.startswith("base_module.")]
+    global_model_params = [
+        val.detach().clone()
+        for name, val in fenda_ditto_client.global_model.state_dict().items()
+        if name.startswith("base_module.")
+    ]
 
-    fenda_model_params = [val.detach().clone() for name, val in fenda_ditto_client.model.state_dict().items() \
-                          if name.startswith("second_feature_extractor.")]
+    fenda_model_params = [
+        val.detach().clone()
+        for name, val in fenda_ditto_client.model.state_dict().items()
+        if name.startswith("second_feature_extractor.")
+    ]
     # Make sure that we saved the right parameters
     for layer_init_global_tensor, layer_params in zip(fenda_ditto_client.initial_global_tensors, params):
         assert pytest.approx(torch.sum(layer_init_global_tensor - layer_params), abs=0.0001) == 0.0
@@ -72,15 +84,17 @@ def test_forming_ditto_loss(get_client: FendaDittoClient) -> None:  # noqa
     fenda_ditto_client.lam = 1.0
     config: Config = {"current_server_round": 2}
     fenda_ditto_client.model.first_feature_extractor.load_state_dict(
-            fenda_ditto_client.global_model.base_module.state_dict()
-        )  # feature extracor is given to FENDA model
+        fenda_ditto_client.global_model.base_module.state_dict()
+    )  # feature extracor is given to FENDA model
 
     params = [val.cpu().numpy() + 0.1 for _, val in fenda_ditto_client.global_model.state_dict().items()]
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(4)
 
     ditto_loss = fenda_ditto_client.ditto_drift_loss_function(
-        fenda_ditto_client.model.first_feature_extractor, fenda_ditto_client.initial_global_tensors, fenda_ditto_client.lam
+        fenda_ditto_client.model.first_feature_extractor,
+        fenda_ditto_client.initial_global_tensors,
+        fenda_ditto_client.lam,
     )
 
     assert fenda_ditto_client.lam == 1.0
@@ -122,6 +136,7 @@ def test_compute_loss(get_client: FendaDittoClient) -> None:  # noqa
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
 
+
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn()))])
 def test_compute_loss_freeze_global_feature_extractor(get_client: FendaDittoClient) -> None:  # noqa
     torch.manual_seed(42)
@@ -154,4 +169,3 @@ def test_compute_loss_freeze_global_feature_extractor(get_client: FendaDittoClie
     assert pytest.approx(13.673, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
-
