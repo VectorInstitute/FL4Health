@@ -3,6 +3,7 @@ from logging import INFO
 from pathlib import Path
 from typing import Dict
 
+import torch
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config, Tuple
