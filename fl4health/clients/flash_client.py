@@ -87,7 +87,8 @@ class FlashClient(BasicClient):
             if self.gamma is not None and previous_loss - current_loss < self.gamma / (local_epoch + 1):
                 log(
                     INFO,
-                    f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)} and gamma {self.gamma}",
+                    f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}\
+                        and gamma {self.gamma}",
                 )
                 break
 
