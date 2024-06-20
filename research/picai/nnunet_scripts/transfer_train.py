@@ -1,3 +1,15 @@
+"""Automates simple transfer learning for nnUNetv2
+
+    Assumptions:
+        - nnUNetv2 must be properly set up (ie. required environment variables set)
+        - The finetuning dataset must be properly formatted and in the nnUNet_raw folder
+        - A plans file for the pretrained model must be present in the nnUNnet_preprocessed
+            under the folder of the dataset it was pretrained on.
+        - The dimensions and voxel spacings of the finetuning dataset must
+            be the same as the pretraining dataset
+        - The pretrained model must already be saved and stored as a pytorch ckpt
+"""
+
 import argparse
 import os
 import shutil
@@ -247,7 +259,7 @@ def main() -> None:
                 "device": device,
             }
             p = Process(target=run_training, kwargs=kwargs)
-            print("Starting training of {config}")
+            print(f"Starting training of {config}")
             p.start()
             p.join()
             print("Training Done")
