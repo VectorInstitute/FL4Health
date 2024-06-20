@@ -246,15 +246,14 @@ class MkMmdLoss(torch.nn.Module):
 
         Q_k_matrix: torch.Tensor = torch.zeros((self.kernel_num, self.kernel_num)).to(self.device)
         len_w_is = h_u_delta_w_i.shape[1]
-        for i in range(len_w_is):
-            # For each basis function we're adding in the value of h_{j, \Delta}(w_i)*h_{k, \Delta}(w_i) from the
-            # construction above to the proper entry in Q. Note that Q is symmetric. So we can construct the symmetric
-            # entries at the same time.
-            for j in range(self.kernel_num):
-                for k in range(j + 1):
-                    Q_k_matrix[j][k] += h_u_delta_w_i[j][i] * h_u_delta_w_i[k][i]
-                    if j != k:
-                        Q_k_matrix[k][j] += h_u_delta_w_i[j][i] * h_u_delta_w_i[k][i]
+        # For each basis function we're adding in the value of h_{j, \Delta}(w_i)*h_{k, \Delta}(w_i) from the
+        # construction above to the proper entry in Q. Note that Q is symmetric. So we can construct the symmetric
+        # entries at the same time.
+        for j in range(self.kernel_num):
+            for k in range(j + 1):
+                Q_k_matrix[j][k] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
+                if j != k:
+                    Q_k_matrix[k][j] += torch.sum(h_u_delta_w_i[j] * h_u_delta_w_i[k])
         # Q_k_matrix has shape number of kernels x number of kernels
         return Q_k_matrix / len_w_is
 
