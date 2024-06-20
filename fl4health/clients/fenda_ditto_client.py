@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
@@ -129,9 +128,9 @@ class FendaDittoClient(BasicClient):
         else:
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
-            self.model.second_feature_extractor.load_state_dict(
-                self.global_model.base_module.state_dict()
-            )  # feature extracor is given to FENDA model
+        self.model.second_feature_extractor.load_state_dict(
+            self.global_model.base_module.state_dict()
+        )  # feature extracor is given to FENDA model
 
     def update_before_train(self, current_server_round: int) -> None:
         self.initial_global_tensors = [
@@ -143,9 +142,6 @@ class FendaDittoClient(BasicClient):
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
-        self.model.second_feature_extractor.load_state_dict(
-            self.global_model.base_module.state_dict()
-        )  # feature extracor is given to FENDA model
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None
