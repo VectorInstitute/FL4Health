@@ -198,7 +198,7 @@ def main() -> None:
         "for 3d_fullres, 8 for 3d_lowres and 4 for everything else",
     )
     parser.add_argument(
-        "-device",
+        "--device",
         type=str,
         default="cuda",
         required=False,
@@ -213,6 +213,14 @@ def main() -> None:
         help="[OPTIONAL] Use this to skip the preprocessing step if you have"
         "already run this script with preprocessing for the given pretrained model"
         "and finetuning dataset",
+    )
+    parser.add_argument(
+        "-tr",
+        type=str,
+        default="nnUNetTrainer",
+        required=False,
+        help="[OPTIONAL] The name of the nnunet trainer class to use. The default"
+        "is nnUNetTrainer but nnUNet provides alternatives such as nnUNetTrainer_1epoch",
     )
 
     args = parser.parse_args()
@@ -253,7 +261,7 @@ def main() -> None:
                 "dataset_name_or_id": str(args.ft_id),
                 "configuration": config,
                 "fold": args.fold,
-                "trainer_class_name": "nnUNetTrainer_1epoch",
+                "trainer_class_name": args.tr,
                 "plans_identifier": tl_plans_identifier,
                 "pretrained_weights": pt_ckpt,
                 "device": device,
