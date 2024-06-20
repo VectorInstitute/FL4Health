@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import Dict
 
 import flwr as fl
-import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, Tuple
 from torch.nn.modules.loss import _Loss
