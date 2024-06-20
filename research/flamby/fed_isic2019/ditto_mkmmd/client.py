@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkmmdClient
+from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -28,7 +28,7 @@ for i in range(16):
 FED_ISIC2019_BASELINE_LAYERS += ["base_model._dropout"]
 
 
-class FedIsic2019DittoClient(DittoMkmmdClient):
+class FedIsic2019DittoClient(DittoMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -77,7 +77,8 @@ class FedIsic2019DittoClient(DittoMkmmdClient):
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
+        # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
+        # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         return {"global": global_optimizer, "local": local_optimizer}
@@ -175,6 +176,7 @@ if __name__ == "__main__":
     log(INFO, f"Mu: {args.mu}")
     log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
+    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)

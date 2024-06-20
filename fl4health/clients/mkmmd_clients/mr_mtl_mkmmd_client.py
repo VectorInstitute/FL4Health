@@ -15,7 +15,7 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
 
-class MrMtlMkmmdClient(MrMtlClient):
+class MrMtlMkMmdClient(MrMtlClient):
     def __init__(
         self,
         data_path: Path,

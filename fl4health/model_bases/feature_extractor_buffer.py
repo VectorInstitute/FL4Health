@@ -17,8 +17,9 @@ class FeatureExtractorBuffer:
 
         Args:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
-                extraction layers.
+            flatten_feature_extraction_layers (Dict[str, bool]):  Dictionary of layers to extract features from them
+                and whether to flatten them. Keys are the layer names that extracted from the named_modules and values
+                are boolean.
 
         Attributes:
             model (nn.Module): The neural network model.
@@ -63,23 +64,28 @@ class FeatureExtractorBuffer:
         """
         self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers.keys()}
 
-    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchicy: List[str]) -> nn.Module:
-        if len(layer_hierarchicy) == 1:
-            return getattr(module, layer_hierarchicy[0])
+    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
+        """
+        Traverse the hierarchical attribute of the module to get the most specific named module. This
+        function helps to allow the user to specify the generic name of high level modules in the model
+        instead of the full hierarchical name.
+        """
+        if len(layer_hierarchy) == 1:
+            return getattr(module, layer_hierarchy[0])
         else:
-            return self.get_hierarchical_attr(getattr(module, layer_hierarchicy[0]), layer_hierarchicy[1:])
+            return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
 
     def _maybe_register_hooks(self) -> None:
         """
         Checks if hooks are already registered and registers them if not.
-        Hooks extract the intermediat feature as output of the selected layers in the model.
+        Hooks extract the intermediate feature as output of the selected layers in the model.
         """
         if len(self.fhooks) == 0:
             log(INFO, "Starting to register hooks:")
             named_layers = dict(self.model.named_modules())
-            for layer in named_layers.keys():
+            for layer, _ in named_layers:
                 if layer in self.flatten_feature_extraction_layers.keys():
-                    # Split the layer name by '.' to get the hirarchial attribute
+                    # Split the layer name by '.' to get the hierarchical attribute
                     log(INFO, f"Registering hook for layer: {layer}")
                     layer_hierarchicy = layer.split(".")
                     self.fhooks.append(
@@ -92,8 +98,9 @@ class FeatureExtractorBuffer:
 
     def remove_hooks(self) -> None:
         """
-        Removes the hooks from the model for and clears the hook list. This method is used to remove any hooks that
-        have been added to the feature extractor buffer. It is typically called prior to checkpointing the model.
+        Removes the hooks from the model for checkpointing and clears the hook list. This method is used to remove
+        any hooks that have been added to the feature extractor buffer. It is typically called prior to checkpointing
+        the model.
 
         Returns:
             None
