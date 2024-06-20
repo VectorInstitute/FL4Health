@@ -114,9 +114,10 @@ class Flash(BasicFedAvg):
         self.tau = tau
         self.beta_1 = beta_1
         self.beta_2 = beta_2
-        self.m_t: Optional[NDArrays] = None
-        self.v_t: Optional[NDArrays] = None
-        self.d_t: Optional[NDArrays] = None
+        zero_weights = [np.zeros_like(x) for x in self.current_weights]
+        self.m_t: NDArrays = zero_weights.copy()
+        self.v_t: NDArrays = zero_weights.copy()
+        self.d_t: NDArrays = zero_weights.copy()
 
     def __repr__(self) -> str:
         """Compute a string representation of the strategy."""
@@ -125,22 +126,21 @@ class Flash(BasicFedAvg):
 
     def _update_parameters(self, delta_t: NDArrays) -> None:
         """Update m_t, v_t, beta_3, and d_t per-element"""
-        assert self.v_t is not None and self.m_t is not None and self.d_t is not None
-
-        for i, (delta, m, v, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
+        for i, (delta, m_prev, v_prev, d_prev) in enumerate(zip(delta_t, self.m_t, self.v_t, self.d_t)):
+            delta_squared = np.square(delta)
             # Update m_t
-            self.m_t[i] = self.beta_1 * m + (1 - self.beta_1) * delta
+            self.m_t[i] = self.beta_1 * m_prev + (1 - self.beta_1) * delta
 
             # Update v_t
-            self.v_t[i] = self.beta_2 * v + (1 - self.beta_2) * np.square(delta)
+            self.v_t[i] = self.beta_2 * v_prev + (1 - self.beta_2) * delta_squared
 
             # Compute beta_3
-            norm_v_prev = np.abs(v)
-            norm_diff = np.abs(np.square(delta) - self.v_t[i])
+            norm_v_prev = np.abs(v_prev)
+            norm_diff = np.abs(delta_squared - self.v_t[i])
             beta_3_matrix = norm_v_prev / (norm_diff + norm_v_prev)
 
             # Update d_t
-            self.d_t[i] = beta_3_matrix * d_prev + (1 - beta_3_matrix) * (np.square(delta) - self.v_t[i])
+            self.d_t[i] = beta_3_matrix * d_prev + (1 - beta_3_matrix) * (delta_squared - self.v_t[i])
 
     def aggregate_fit(
         self,
@@ -158,10 +158,6 @@ class Flash(BasicFedAvg):
         fedavg_weights_aggregate = parameters_to_ndarrays(fedavg_parameters_aggregated)
 
         delta_t: NDArrays = [x - y for x, y in zip(fedavg_weights_aggregate, self.current_weights)]
-        for attr in ["m_t", "v_t", "d_t"]:
-            if getattr(self, attr) is None:
-                setattr(self, attr, [np.zeros_like(x) for x in delta_t])
-        assert self.m_t is not None and self.v_t is not None and self.d_t is not None
 
         self._update_parameters(delta_t)
 

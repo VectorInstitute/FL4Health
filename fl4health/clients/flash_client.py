@@ -86,7 +86,7 @@ class FlashClient(BasicClient):
 
             if self.gamma is not None and previous_loss - current_loss < self.gamma / (local_epoch + 1):
                 log(
-                    INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)}"
+                    INFO, f"Early stopping at epoch {local_epoch} with loss change {abs(previous_loss - current_loss)} and gamma {self.gamma}"
                 )
                 break
 
@@ -98,3 +98,5 @@ class FlashClient(BasicClient):
         super().setup_client(config)
         if "gamma" in config:
             self.gamma = self.narrow_config_type(config, "gamma", float)
+        else:
+            log(INFO, "Gamma not present in config. Early stopping is disabled.")
