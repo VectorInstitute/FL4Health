@@ -12,14 +12,14 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.model_bases.fenda_base import FendaModel
+from examples.models.parallel_split_cnn import ParallelSplitHeadClassifier
 from examples.models.sequential_split_models import (
     SequentialGlobalFeatureExtractorMnist,
     SequentialLocalPredictionHeadMnist,
 )
-from examples.models.parallel_split_cnn import ParallelSplitHeadClassifier
-from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -33,7 +33,7 @@ class MnistFendaDittoClient(FendaDittoClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
-    
+
     def get_global_model(self, config: Config) -> SequentiallySplitExchangeBaseModel:
         return SequentiallySplitExchangeBaseModel(
             base_module=SequentialGlobalFeatureExtractorMnist(),
