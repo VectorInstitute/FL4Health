@@ -81,3 +81,13 @@ class DictionaryDataset(Dataset):
     def __len__(self) -> int:
         first_key = list(self.data.keys())[0]
         return len(self.data[first_key])
+
+
+class SyntheticDataset(BaseDataset):
+    def __init__(
+        self,
+        data: torch.Tensor,
+        targets: torch.Tensor,
+    ):
+        self.data = data
+        self.targets = targets

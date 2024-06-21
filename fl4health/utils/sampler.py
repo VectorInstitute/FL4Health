@@ -1,3 +1,4 @@
+import copy
 import math
 from abc import ABC, abstractmethod
 from logging import INFO
@@ -25,9 +26,10 @@ class LabelBasedSampler(ABC):
 
     def select_by_indices(self, dataset: D, selected_indices: torch.Tensor) -> D:
         if isinstance(dataset, BaseDataset):
-            dataset.targets = dataset.targets[selected_indices]
-            dataset.data = dataset.data[selected_indices]
-            return dataset
+            modified_dataset = copy.deepcopy(dataset)
+            modified_dataset.targets = dataset.targets[selected_indices]
+            modified_dataset.data = dataset.data[selected_indices]
+            return modified_dataset
         elif isinstance(dataset, DictionaryDataset):
             new_targets = dataset.targets[selected_indices]
             new_data: Dict[str, List[torch.Tensor]] = {}
