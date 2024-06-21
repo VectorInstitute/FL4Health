@@ -247,13 +247,13 @@ class FendaDittoClient(BasicClient):
             forward.
         """
         if isinstance(input, torch.Tensor):
-            global_preds = self.global_model(input)
+            global_preds, _ = self.global_model(input)
             local_preds = self.model(input)
         elif isinstance(input, dict):
             # If input is a dictionary, then we unpack it before computing the forward pass.
             # Note that this assumes the keys of the input match (exactly) the keyword args
             # of the forward method.
-            global_preds = self.global_model(**input)
+            global_preds, _ = self.global_model(**input)
             local_preds = self.model(**input)
         else:
             raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
