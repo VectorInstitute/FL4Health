@@ -30,9 +30,9 @@ class FendaDittoClient(BasicClient):
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
-        Personalization with a local FENDA model. The idea is that we want to train a local FENDA model along with 
+        Personalization with a local FENDA model. The idea is that we want to train a local FENDA model along with
         the global model for each client. So we simultaneously train a global model that is aggregated on the server-side
-        and use those weights to also constrain the training of a local FENDA model. The constraint for this 
+        and use those weights to also constrain the training of a local FENDA model. The constraint for this
         local FENDA model is identical to the FedProx loss.
 
         Args:
@@ -162,7 +162,7 @@ class FendaDittoClient(BasicClient):
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         The parameters being passed are to be routed to the global model copied to the global feature extractor
-        of the local FENDA model and saved as the initial global model tensors to be used in a penalty term in 
+        of the local FENDA model and saved as the initial global model tensors to be used in a penalty term in
         training the local model. In the first fitting round, we assume the both the global and local models
         are being initialized and use the FullParameterExchanger() to set the model weights for the global model,
         the global model feature extractor weights will be then copied to the global feature extractor of local FENDA model.
@@ -187,9 +187,7 @@ class FendaDittoClient(BasicClient):
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
         # GLOBAL MODEL feature extractor is given to local FENDA model
-        self.model.second_feature_extractor.load_state_dict(
-            self.global_model.base_module.state_dict()
-        ) 
+        self.model.second_feature_extractor.load_state_dict(self.global_model.base_module.state_dict())
 
     def update_before_train(self, current_server_round: int) -> None:
         # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
