@@ -258,7 +258,7 @@ class FendaDittoClient(BasicClient):
         else:
             raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
 
-        global_preds = global_preds['prediction']
+        global_preds = global_preds["prediction"]
         # Here we assume that global and local preds are simply tensors
         # TODO: Perhaps loosen this at a later date.
         assert isinstance(global_preds, torch.Tensor)
