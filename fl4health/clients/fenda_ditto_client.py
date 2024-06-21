@@ -28,6 +28,31 @@ class FendaDittoClient(BasicClient):
         lam: float = 1.0,
         freeze_global_feature_extractor: bool = False,
     ) -> None:
+        """
+        This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
+        Personalization with a local FENDA model. The idea is that we want to train a local FENDA model along with 
+        the global model for each client. So we simultaneously train a global model that is aggregated on the server-side
+        and use those weights to also constrain the training of a local FENDA model. The constraint for this 
+        local FENDA model is identical to the FedProx loss.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
+            freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature extractor during training.
+                FendaDitto default is both the global and the local feature extractor in the local FENDA model will be trained, the Ditto loss
+                will be calculated using the local FENDA feature extractor and the global model, otherwise we calculate using the global FENDA
+                feature extractor and the global model. Defaults to False.
+        """
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -53,7 +78,7 @@ class FendaDittoClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         """
-        Ditto requires an optimizer for the global model and one for the local model. This function simply ensures that
+        FendaDitto requires an optimizer for the global model and one for the local model. This function simply ensures that
         the optimizers setup by the user have the proper keys and that there are two optimizers.
 
         Args:
@@ -65,13 +90,13 @@ class FendaDittoClient(BasicClient):
 
     def get_model(self, config: Config) -> FendaModel:
         """
-        User defined method that returns FENDA-FL model.
+        User defined method that returns FENDA model.
 
         Args:
             config (Config): The config from the server.
 
         Returns:
-            FendaModel: The client FENDA-FL model.
+            FendaModel: The client FENDA model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -80,13 +105,13 @@ class FendaDittoClient(BasicClient):
 
     def get_global_model(self, config: Config) -> SequentiallySplitExchangeBaseModel:
         """
-        User defined method that returns a Global Feature Model that is compatible with FENDA-FL model.
+        User defined method that returns a Global Sequential Model that is compatible wiFENDA model.
 
         Args:
             config (Config): The config from the server.
 
         Returns:
-            FendaModel: The client FENDA-FL model.
+            FendaModel: The client FENDA model.
 
         Raises:
             NotImplementedError: To be defined in child class.
@@ -94,6 +119,13 @@ class FendaDittoClient(BasicClient):
         raise NotImplementedError
 
     def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True.
+
+        Args:
+            config (Config): The config from the server.
+        """
         self.global_model = self.get_global_model(config).to(self.device)
         super().setup_client(config)
 
@@ -114,10 +146,36 @@ class FendaDittoClient(BasicClient):
             ), "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match."
 
     def get_parameters(self, config: Config) -> NDArrays:
+        """
+        For FendaDitto, we transfer the GLOBAL model weights to the server to be aggregated. The local FENDA model weights stay
+        with the client.
+
+        Args:
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+
+        Returns:
+            NDArrays: GLOBAL model weights to be sent to the server for aggregation
+        """
         assert self.global_model is not None and self.parameter_exchanger is not None
         return self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
+        """
+        The parameters being passed are to be routed to the global model copied to the global feature extractor
+        of the local FENDA model and saved as the initial global model tensors to be used in a penalty term in 
+        training the local model. In the first fitting round, we assume the both the global and local models
+        are being initialized and use the FullParameterExchanger() to set the model weights for the global model,
+        the global model feature extractor weights will be then copied to the global feature extractor of local FENDA model.
+        Args:
+            parameters (NDArrays): Parameters have information about model state to be added to the relevant client
+                model
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning
+                round is a fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
+        """
         assert self.global_model is not None and self.model is not None
         assert self.parameter_exchanger is not None and isinstance(self.parameter_exchanger, FullParameterExchanger)
 
@@ -128,11 +186,14 @@ class FendaDittoClient(BasicClient):
         else:
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
+        # GLOBAL MODEL feature extractor is given to local FENDA model
         self.model.second_feature_extractor.load_state_dict(
             self.global_model.base_module.state_dict()
-        )  # feature extracor is given to FENDA model
+        ) 
 
     def update_before_train(self, current_server_round: int) -> None:
+        # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
+        # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.initial_global_tensors = [
             initial_layer_weights.detach().clone()
             for layer_name, initial_layer_weights in self.global_model.state_dict().items()
@@ -141,6 +202,13 @@ class FendaDittoClient(BasicClient):
         return super().update_before_train(current_server_round)
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
+        """
+        If this is the first time we're initializing the model weights, we initialize the global weights.
+
+        Args:
+            parameters (NDArrays): Model parameters to be injected into the client model
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+        """
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
     def train_by_epochs(
@@ -305,8 +373,9 @@ class FendaDittoClient(BasicClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model weights and weights of the local model. This is stored in backward
-        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+        product between the initial global model feature extractor weights and feature extractor weights of the local model.
+        This is stored in "backward". The loss to optimize the global model is stored in the additional losses dictionary
+        under "global_loss".
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
@@ -357,7 +426,7 @@ class FendaDittoClient(BasicClient):
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
-        For Ditto, we use the vanilla loss for the local model in checkpointing. However, during validation we also
+        For FendaDitto, we use the vanilla loss for the local model in checkpointing. However, during validation we also
         compute the global model vanilla loss.
 
         Args:
