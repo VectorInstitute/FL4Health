@@ -46,7 +46,7 @@ def test_dirichlet_sampler_probability_assignment() -> None:
     # Set the random seeds
     set_all_random_seeds(2023)
 
-    # Very mildly heterogeneity with beta 100
+    # Very mild heterogeneity with beta 100
     sampler_1 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=100)
     prob_ratio_1 = min(sampler_1.probabilities) / max(sampler_1.probabilities)
 
@@ -57,14 +57,14 @@ def test_dirichlet_sampler_probability_assignment() -> None:
     # Assert that the probabilities are more evenly distributed with higher beta
     assert prob_ratio_1 > prob_ratio_2
 
-    # Sever heterogeneity with beta 0.1
+    # Severe heterogeneity with beta 0.1
     sampler_3 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.5)
     prob_ratio_3 = min(sampler_3.probabilities) / max(sampler_3.probabilities)
 
     # Assert that the probabilities are more evenly distributed with higher beta
     assert prob_ratio_2 > prob_ratio_3
 
-    # Very sever heterogeneity with beta 0.0001
+    # Very severe heterogeneity with beta 0.0001
     sampler_4 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.001)
     prob_ratio_4 = min(sampler_4.probabilities) / max(sampler_4.probabilities)
 
