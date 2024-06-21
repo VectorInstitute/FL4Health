@@ -37,14 +37,14 @@ class MnistFendaDittoClient(FendaDittoClient):
         return SequentiallySplitExchangeBaseModel(
             base_module=SequentialGlobalFeatureExtractorMnist(),
             head_module=SequentialLocalPredictionHeadMnist(),
-        )
+        ).to(self.device)
 
     def get_model(self, config: Config) -> FendaModel:
         return FendaModel(
             SequentialGlobalFeatureExtractorMnist(),
             SequentialGlobalFeatureExtractorMnist(),
             ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE),
-        )
+        ).to(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters()
