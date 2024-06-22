@@ -30,10 +30,10 @@ class FendaDittoClient(BasicClient):
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
-        Personalization with a local FENDA model. The idea is that we want to train a local FENDA model along with
-        the global model for each client. So we simultaneously train a global model that is aggregated on the server-side
-        and use those weights to also constrain the training of a local FENDA model. The constraint for this
-        local FENDA model is identical to the FedProx loss.
+        Personalization with a local FENDA model. The idea is that we want to train a local FENDA model
+        along with the global model for each client. So we simultaneously train a global model that is
+        aggregated on the server-side and use those weights to also constrain the training of a local 
+        FENDA model. The constraint for this local FENDA model is identical to the FedProx loss.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -48,10 +48,11 @@ class FendaDittoClient(BasicClient):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
-            freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature extractor during training.
-                FendaDitto default is both the global and the local feature extractor in the local FENDA model will be trained, the Ditto loss
-                will be calculated using the local FENDA feature extractor and the global model, otherwise we calculate using the global FENDA
-                feature extractor and the global model. Defaults to False.
+            freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature
+                extractor during training. FendaDitto default is both the global and the local feature extractor in
+                the local FENDA model will be trained, the Ditto loss will be calculated using the local FENDA
+                feature extractor and the global model, otherwise we calculate using the global FENDA feature extractor
+                and the global model. Defaults to False.
         """
         super().__init__(
             data_path=data_path,

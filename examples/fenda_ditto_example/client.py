@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -20,13 +20,43 @@ from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFendaDittoClient(FendaDittoClient):
+    def __init__(
+        self,
+        data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        checkpoint_dir: str,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[ClientCheckpointModule] = None,
+        lam: float = 1.0,
+        freeze_global_feature_extractor: bool = False,
+    ) -> None:
+        super().__init__(
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            checkpointer=checkpointer,
+            lam=lam,
+            freeze_global_feature_extractor=freeze_global_feature_extractor,
+        )
+
+        pre_aggregation_checkpointer = BestLossTorchCheckpointer(checkpoint_dir, f"client_{self.client_name}_pre_agg.pkl")
+        post_aggregation_checkpointer = BestLossTorchCheckpointer(checkpoint_dir, f"client_{self.client_name}_post_agg.pkl")
+        self.checkpointer = ClientCheckpointModule(
+            pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
+        )
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -72,6 +102,13 @@ if __name__ == "__main__":
         type=int,
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
+    )
+    parser.add_argument(
+        "--checkpoint_path",
+        action="store",
+        type=str,
+        help="Path to the directory where the checkpoints are stored",
+        required=True,
     )
     args = parser.parse_args()
 
