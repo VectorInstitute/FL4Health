@@ -32,7 +32,7 @@ class FendaDittoClient(BasicClient):
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
         Personalization with a local FENDA model. The idea is that we want to train a local FENDA model
         along with the global model for each client. So we simultaneously train a global model that is
-        aggregated on the server-side and use those weights to also constrain the training of a local 
+        aggregated on the server-side and use those weights to also constrain the training of a local
         FENDA model. The constraint for this local FENDA model is identical to the FedProx loss.
 
         Args:

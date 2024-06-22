@@ -16,14 +16,14 @@ from examples.models.sequential_split_models import (
     SequentialGlobalFeatureExtractorMnist,
     SequentialLocalPredictionHeadMnist,
 )
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.utils.losses import LossMeterType
 from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -51,8 +51,12 @@ class MnistFendaDittoClient(FendaDittoClient):
             freeze_global_feature_extractor=freeze_global_feature_extractor,
         )
 
-        pre_aggregation_checkpointer = BestLossTorchCheckpointer(checkpoint_dir, f"client_{self.client_name}_pre_agg.pkl")
-        post_aggregation_checkpointer = BestLossTorchCheckpointer(checkpoint_dir, f"client_{self.client_name}_post_agg.pkl")
+        pre_aggregation_checkpointer = BestLossTorchCheckpointer(
+            checkpoint_dir, f"client_{self.client_name}_pre_agg.pkl"
+        )
+        post_aggregation_checkpointer = BestLossTorchCheckpointer(
+            checkpoint_dir, f"client_{self.client_name}_post_agg.pkl"
+        )
         self.checkpointer = ClientCheckpointModule(
             pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
         )
