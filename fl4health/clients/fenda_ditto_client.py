@@ -166,7 +166,8 @@ class FendaDittoClient(BasicClient):
         of the local FENDA model and saved as the initial global model tensors to be used in a penalty term in
         training the local model. In the first fitting round, we assume the both the global and local models
         are being initialized and use the FullParameterExchanger() to set the model weights for the global model,
-        the global model feature extractor weights will be then copied to the global feature extractor of local FENDA model.
+        the global model feature extractor weights will be then copied to the global feature extractor of
+        local FENDA model.
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model
@@ -372,9 +373,9 @@ class FendaDittoClient(BasicClient):
         """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
-        product between the initial global model feature extractor weights and feature extractor weights of the local model.
-        This is stored in "backward". The loss to optimize the global model is stored in the additional losses dictionary
-        under "global_loss".
+        product between the initial global model feature extractor weights and feature extractor weights of the
+        local model. This is stored in "backward". The loss to optimize the global model is stored in the
+        additional losses dictionary under "global_loss".
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
@@ -425,8 +426,8 @@ class FendaDittoClient(BasicClient):
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
-        For FendaDitto, we use the vanilla loss for the local model in checkpointing. However, during validation we also
-        compute the global model vanilla loss.
+        For FendaDitto, we use the vanilla loss for the local model in checkpointing. However, during validation
+        we also compute the global model vanilla loss.
 
         Args:
             preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
