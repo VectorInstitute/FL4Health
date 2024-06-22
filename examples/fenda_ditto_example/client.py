@@ -52,10 +52,10 @@ class MnistFendaDittoClient(FendaDittoClient):
         )
 
         pre_aggregation_checkpointer = BestLossTorchCheckpointer(
-            checkpoint_dir, f"client_{self.client_name}_pre_agg.pkl"
+            checkpoint_dir, f"fenda_ditto_client_{self.client_name}_pre_agg.pkl"
         )
         post_aggregation_checkpointer = BestLossTorchCheckpointer(
-            checkpoint_dir, f"client_{self.client_name}_post_agg.pkl"
+            checkpoint_dir, f"fenda_ditto_client_{self.client_name}_post_agg.pkl"
         )
         self.checkpointer = ClientCheckpointModule(
             pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
@@ -112,7 +112,8 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to the directory where the checkpoints are stored",
-        required=True,
+        required=False,
+        default="examples/fenda_ditto_example/",
     )
     args = parser.parse_args()
 
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFendaDittoClient(data_path, [Accuracy()], DEVICE, lam=0.1)
+    client = MnistFendaDittoClient(data_path, [Accuracy()], DEVICE, args.checkpoint_path, lam=0.1)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
