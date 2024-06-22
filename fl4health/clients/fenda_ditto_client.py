@@ -79,8 +79,8 @@ class FendaDittoClient(BasicClient):
 
     def set_optimizer(self, config: Config) -> None:
         """
-        FendaDitto requires an optimizer for the global model and one for the local model. This function simply ensures that
-        the optimizers setup by the user have the proper keys and that there are two optimizers.
+        FendaDitto requires an optimizer for the global model and one for the local model. This function simply
+        ensures that the optimizers setup by the user have the proper keys and that there are two optimizers.
 
         Args:
             config (Config): The config from the server.
@@ -148,8 +148,8 @@ class FendaDittoClient(BasicClient):
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        For FendaDitto, we transfer the GLOBAL model weights to the server to be aggregated. The local FENDA model weights stay
-        with the client.
+        For FendaDitto, we transfer the GLOBAL model weights to the server to be aggregated. The local FENDA model
+        weights stay with the client.
 
         Args:
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
