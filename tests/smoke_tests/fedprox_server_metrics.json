@@ -6,7 +6,7 @@
         },
         "2": {
             "metrics_aggregated": {"val - prediction - accuracy": 0.4323},
-            "loss_aggregated": 1.7356 
+            "loss_aggregated": 1.7356
         },
         "3": {
             "metrics_aggregated": {"val - prediction - accuracy": 0.5362},

@@ -20,7 +20,8 @@ from fl4health.utils.metrics import Accuracy
 
 
 def get_finetune_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader]:
-    data, targets = get_cifar10_data_and_target_tensors(data_dir, False)
+    # Select test data (ie train=False) because train data was used in the pretraining stage
+    data, targets = get_cifar10_data_and_target_tensors(data_dir, train=False)
     train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets)
 
     input_transform = transforms.Compose(
