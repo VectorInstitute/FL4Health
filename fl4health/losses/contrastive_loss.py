@@ -98,7 +98,7 @@ class NtXentLoss(nn.Module):
         (https://arxiv.org/pdf/2207.09158).
 
         NT-Xent is a contrastive loss in which each feature has a positive pair and the rest of the features
-        are considered negative. It is computed based on the similarity of positive pairs relatice to negative
+        are considered negative. It is computed based on the similarity of positive pairs relative to negative
         pairs.
 
         Args:

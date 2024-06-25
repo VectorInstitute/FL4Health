@@ -33,6 +33,11 @@ class FedSimClrModel(nn.Module):
                 (True) or the prediction_head (False). Defaults to True.
         """
         super().__init__()
+
+        assert not (
+            prediction_head is None and not pretrain
+        ), "Model with pretrain==False must have prediction head (ie not None)"
+
         self.encoder = encoder
         self.projection_head = projection_head
         self.prediction_head = prediction_head
@@ -43,7 +48,9 @@ class FedSimClrModel(nn.Module):
         if self.pretrain:
             return self.projection_head(features)
         else:
-            assert self.prediction_head is not None
+            assert (
+                self.prediction_head is not None
+            ), "Model with pretrain==False must have prediction_head (ie not None)"
             return self.prediction_head(features)
 
     @staticmethod
