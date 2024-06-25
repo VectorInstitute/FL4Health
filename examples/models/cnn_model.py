@@ -92,4 +92,3 @@ class SkinCancerNetWithBnAndFrozen(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)  # Output layer without activation function for logits
         return x
-

@@ -1,9 +1,12 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import Dataset
-from concurrent.futures import ThreadPoolExecutor
+
 from fl4health.utils.dataset import BaseDataset
+
 
 class SkinCancerDataset(BaseDataset):
     def __init__(self, data, transform=None, num_workers=8) -> None:
@@ -43,4 +46,3 @@ class SkinCancerDataset(BaseDataset):
 
     def __len__(self) -> None:
         return len(self.data)
-
