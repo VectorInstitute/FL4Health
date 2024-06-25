@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
 class LinearModel(nn.Module):
@@ -90,12 +90,12 @@ class HeadCnn(nn.Module):
         return x
 
 
-class FendaHeadCnn(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode = FendaJoinMode.CONCATENATE) -> None:
+class FendaHeadCnn(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode = ParallelFeatureJoinMode.CONCATENATE) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(16 * 4 * 4 * 2, 32)
 
-    def local_global_concat(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
         # Assuming tensors are "batch first" so join column-wise
         return torch.concat([local_x, global_x], dim=1)
 

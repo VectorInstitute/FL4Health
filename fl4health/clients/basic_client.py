@@ -56,8 +56,9 @@ class BasicClient(NumPyClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
@@ -893,13 +894,14 @@ class BasicClient(NumPyClient):
         self.optimizers = {"global": optimizer}
 
     def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
-        """Clone and freeze model for use in various loss calculation.
+        """
+        Creates a clone of the model with frozen weights to be used in loss calculations so the original model is
+        preserved in its current state.
 
         Args:
-            model (nn.Module): model to clone and freeze
-
+            model (nn.Module): Model to clone and freeze
         Returns:
-            nn.Module: cloned and frozen model
+            nn.Module: Cloned and frozen model
         """
 
         cloned_model = copy.deepcopy(model)
@@ -990,7 +992,8 @@ class BasicClient(NumPyClient):
     def update_before_train(self, current_server_round: int) -> None:
         """
         Hook method called before training with the number of current server rounds performed.
-        For example, used by Moon and FENDA to save global modules after aggregation.
+        NOTE: This method is called immediately AFTER the aggregated parameters are received from the server.
+        For example, used by MOON and FENDA to save global modules after aggregation.
 
         Args:
             current_server_round (int): The number of current server round.
@@ -1002,7 +1005,7 @@ class BasicClient(NumPyClient):
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
         after a local round of training. Also used by FedProx to update the current loss based on the loss
-        returned during training. Also used by Moon and FENDA to save trained modules weights before
+        returned during training. Also used by MOON and FENDA to save trained modules weights before
         aggregation.
 
         Args:

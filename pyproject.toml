@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.1.15"
+version = "0.1.16"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
 license = "Apache-2.0"
@@ -31,7 +31,7 @@ nltk = "^3.8.1"
 torchvision = "^0.16.0"
 torchinfo = "^1.8.0"
 ipykernel = "^6.25.1"
-scikit-learn = "^1.2.2"
+scikit-learn = "^1.5.0"
 wandb = "^0.16.1"
 
 [tool.poetry.group.dev-local.dependencies]

@@ -31,8 +31,9 @@ class EnsembleClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
         """
         super().__init__(
             data_path=data_path,
