@@ -28,8 +28,8 @@ def split_data_and_targets(
     train_size = int(total_size * (1 - validation_proportion))
     train_indices = random.sample(range(total_size), train_size)
     val_indices = [i for i in range(total_size) if i not in train_indices]
-    train_data, train_targets = data[train_indices, ...], targets[train_indices, ...]
-    val_data, val_targets = data[val_indices, ...], targets[val_indices, ...]
+    train_data, train_targets = data[train_indices], targets[train_indices]
+    val_data, val_targets = data[val_indices], targets[val_indices]
     return train_data, train_targets, val_data, val_targets
 
 

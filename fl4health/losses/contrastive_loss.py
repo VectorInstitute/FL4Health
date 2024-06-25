@@ -157,5 +157,7 @@ class NtXentLoss(nn.Module):
 
         # Final loss negative log likelihood
         losses = -torch.log(numerator / denominator.sum(dim=1))
+
+        # Divide by 2 * batch size because pairs are double counted due to the symmetry of the similarity matrix
         loss = torch.sum(losses) / (2 * batch_size)
         return loss

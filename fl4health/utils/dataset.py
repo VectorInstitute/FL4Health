@@ -42,8 +42,8 @@ class TensorDataset(BaseDataset):
         target_transform: Optional[Callable] = None,
     ) -> None:
         super().__init__()
-        self.data: torch.Tensor = data
-        self.targets: Optional[torch.Tensor] = targets
+        self.data = data
+        self.targets = targets
         self.transform = transform
         self.target_transform = target_transform
 
