@@ -29,7 +29,11 @@ sbatch nnunet_launch_fold_experiment.slrm DATASET_NAME UNET_CONFIG VENV_PATH PLA
 
 ## Transfer Learning with nnUNet
 
-The transfer_train.py script provides an easy way to automate transfer learning with nnUNet models. Run the script with the `--help` flag for a list of arguments that can be passed to the script.
+The transfer_train.py script provides an easy way to automate transfer learning with nnUNet models. Run the script with the `--help` flag for a list of arguments that can be passed to the script. Below is an example invocation with the required flags (and the trainer flag to limit the number of epochs, the default for nnunet is 1000)
+
+```bash
+python transfer_train.py --finetune_id 012 --pretrain_id 011 --configs 2d 3d_fullres --trainer nnUNetTrainer_5epochs --pretrain_checkpoints /path/to/2d/checkpoint.pth /path/to/3d_fullres/checkpoint.pth
+```
 
 Transfer train allows taking an nnUNet model that has already been trained on one dataset, and training it further on an additional dataset with the same input and output dimensions. A few assumptions are currently made to make this possible
 
@@ -41,4 +45,4 @@ Transfer train allows taking an nnUNet model that has already been trained on on
 - The input and output dimensions of the finetuning dataset must match the input and output dimensions of the pretraining dataset. Although the voxel spacing does not technically need to be the same, having different voxel spacings might affect performance
 - The pretrained model must be saved as a pytorch model
 
-For now making these assumptions is not a problem for our use case. Eventually we may want to allow using only certain layers from the pretrained model, allowing datasets with differint input and output dimensions
+For now making these assumptions is not a problem for our use case. Eventually we may want to allow using only certain layers from the pretrained model, allowing datasets with different input and output dimensions
