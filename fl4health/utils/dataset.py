@@ -71,7 +71,7 @@ class SslTensorDataset(TensorDataset):
         assert self.target_transform is not None, "Target transform cannot be None."
 
         if self.transform is not None:
-            data = self.transform(data.numpy())
+            data = self.transform(data)
 
         # Perform transform on input to yield target during dataloading
         # More memory efficient than pre-computing transforms which requires

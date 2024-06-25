@@ -3,6 +3,7 @@ from logging import INFO
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple
 
+import numpy as np
 import torch
 import torchvision.transforms as transforms
 from flwr.common.logger import log
@@ -12,6 +13,11 @@ from torchvision.datasets import CIFAR10, MNIST
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
+
+
+class ToNumpy:
+    def __call__(self, tensor: torch.Tensor) -> np.ndarray:
+        return tensor.numpy()
 
 
 def split_data_and_targets(
@@ -64,6 +70,7 @@ def load_mnist_data(
     if transform is None:
         transform = transforms.Compose(
             [
+                ToNumpy(),
                 transforms.ToTensor(),
                 transforms.Normalize((0.5), (0.5)),
             ]
@@ -121,6 +128,7 @@ def load_cifar10_data(
 
     transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]

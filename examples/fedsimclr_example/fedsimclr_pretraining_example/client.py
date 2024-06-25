@@ -15,12 +15,13 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.contrastive_loss import NtXentLoss
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.utils.dataset import SslTensorDataset
-from fl4health.utils.load_data import get_cifar10_data_and_target_tensors, split_data_and_targets
+from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
 
 
 def get_transforms() -> Tuple[Callable, Callable]:
     input_transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
@@ -31,6 +32,7 @@ def get_transforms() -> Tuple[Callable, Callable]:
 
     target_transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToPILImage(),
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomApply([color_jitter], p=0.8),
@@ -48,6 +50,9 @@ def get_pretrain_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, D
     train_data, _, val_data, _ = split_data_and_targets(data, targets)
 
     input_transform, target_transform = get_transforms()
+
+    # Since we are doing self supervised learning, targets are None
+    # as the target is derived from the input itself
     train_ds = SslTensorDataset(train_data, None, input_transform, target_transform)
     val_ds = SslTensorDataset(val_data, None, input_transform, target_transform)
 
