@@ -12,7 +12,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen
+from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
 from fl4health.clients.basic_client import BasicClient
 from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
@@ -43,12 +43,25 @@ class MnistFedBNClient(BasicClient):
         return LayerExchangerWithExclusions(self.model, {nn.BatchNorm2d})
 
 
-class FedBNClient(BasicClient):
+class SkinCancerFedBNClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
-        train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, batch_size, sampler)
-        # train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
+        sampler = DirichletLabelBasedSampler(list(range(8)), sample_percentage=0.75, beta=1)
+        train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, "Barcelona", batch_size, sampler)
+        # Testing the data loaders
+        for i, (inputs, labels) in enumerate(train_loader):
+            print(f"Batch {i+1}:")
+            print(f"Inputs shape: {inputs.shape}")
+            print(f"Labels: {labels}")
+            if i == 1:  # Just to limit the number of printed batches
+                break
+
+        for i, (inputs, labels) in enumerate(val_loader):
+            print(f"Validation Batch {i+1}:")
+            print(f"Inputs shape: {inputs.shape}")
+            print(f"Labels: {labels}")
+            if i == 1:  # Just to limit the number of printed batches
+                break
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -58,7 +71,7 @@ class FedBNClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_model(self, config: Config) -> nn.Module:
-        return MnistNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
+        return SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
@@ -83,7 +96,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     # client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
-    client = FedBNClient(data_path, [Accuracy()], DEVICE)
+    client = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully

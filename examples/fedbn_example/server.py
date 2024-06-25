@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen
+from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
@@ -42,7 +42,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
+    initial_model = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
