@@ -16,7 +16,7 @@ export nnUNet_results="/Path/to/nnUNet_results/folder"
 
 Raw datasets must be properly formatted and located in the nnUNet_raw folder. For more detailed information see the following [nnUNet documentation](https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/dataset_format.md)
 
-## Running nnUNet Scripts
+## Running nnUNet Slurm Scripts
 A comprehensive overview of [nnUNet](https://github.com/MIC-DKFZ/nnUNet) that outlines standard and finetuning workflows is available in [nnunet_overview.md](nnunet_overview.md). For convenience, two scripts have been made available: `nnunet_launch.slrm` and `nnunet_launch_fold.slrm`:
 `nnunet_launch.slrm` is a slurm script to launch a training job on an already configured experiment (ie planning and preprocessing have occurred). It automatically handles checkpointing and relaunching. Optionally takes a path to a set of pretrained weight to start training from. The script can be invoked as follows:
 ```
@@ -46,3 +46,33 @@ Transfer train allows taking an nnUNet model that has already been trained on on
 - The pretrained model must be saved as a pytorch model
 
 For now making these assumptions is not a problem for our use case. Eventually we may want to allow using only certain layers from the pretrained model, allowing datasets with different input and output dimensions
+
+## Inference
+
+The predict.py script can be used to do inference on new data using nnunet models. The data on which the model is predicting must be formatted as an nnUNet_raw dataset. Below is an example invocation
+
+```bash
+python predict.py --model_path /path/to/model/checkpoint.pth --raw_inputs /path/to/nnUNet_raw/input_dataset --output_path /myresults/
+```
+
+## Evaluation
+
+The PICAI competition from which the picai datasets originates used the following metric to score models
+
+$$PICAI\ Score=\frac{AUROC+AP}{2}
+$$
+
+Where AUROC is the Area Under the Reciever Operating Characteristic curve and AP is the Average Precision.
+
+The eval.py script computes all of these metrics plus a few more under the hood such as:
+- Precision Recall (PR) Curve
+- Reciever Operating Characteristic (ROC) curve
+- Free-Response Reciever Operating Characteristic (FROC) curve
+
+For more information on the evaluation metrics see the [picai_eval](https://github.com/DIAGNijmegen/picai_eval) repo
+
+An example invocation of eval.py is as follows
+
+```bash
+python eval.py --pred_path /path/to/predicted/segmentations --gt_path /path/to/groundtruth/segmentations --output_path /metric_results/metrics.json
+```
