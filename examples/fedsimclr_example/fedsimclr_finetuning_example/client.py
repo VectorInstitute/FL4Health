@@ -11,7 +11,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
+from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, CifarSslProjectionHead
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.utils.dataset import TensorDataset
@@ -54,9 +54,9 @@ class CifarClient(BasicClient):
 
     def get_model(self, config: Config) -> nn.Module:
         model = FedSimClrModel(
-            encoder=SslEncoder(),
-            projection_head=SslProjectionHead(),
-            prediction_head=SslPredictionHead(),
+            encoder=CifarSslEncoder(),
+            projection_head=CifarSslProjectionHead(),
+            prediction_head=CifarSslPredictionHead(),
             pretrain=False,
         )
         return model.to(self.device)

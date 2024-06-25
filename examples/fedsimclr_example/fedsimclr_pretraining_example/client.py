@@ -10,7 +10,7 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
+from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, CifarSslProjectionHead
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.contrastive_loss import NtXentLoss
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
@@ -75,7 +75,9 @@ class SslCifarClient(BasicClient):
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        ssl_model = FedSimClrModel(SslEncoder(), SslProjectionHead(), SslPredictionHead(), pretrain=True)
+        ssl_model = FedSimClrModel(
+            CifarSslEncoder(), CifarSslProjectionHead(), CifarSslPredictionHead(), pretrain=True
+        )
         return ssl_model.to(self.device)
 
     def transform_target(self, target: torch.Tensor) -> torch.Tensor:

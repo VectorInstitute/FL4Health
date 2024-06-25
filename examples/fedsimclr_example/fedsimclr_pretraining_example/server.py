@@ -8,7 +8,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.cnn_model import SslEncoder, SslPredictionHead, SslProjectionHead
+from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, CifarSslProjectionHead
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
@@ -42,7 +42,9 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     # Initializing the model on the server side
-    model: nn.Module = FedSimClrModel(SslEncoder(), SslProjectionHead(), SslPredictionHead(), pretrain=True)
+    model: nn.Module = FedSimClrModel(
+        CifarSslEncoder(), CifarSslProjectionHead(), CifarSslPredictionHead(), pretrain=True
+    )
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl")
