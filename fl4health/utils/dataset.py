@@ -68,11 +68,14 @@ class SslTensorDataset(TensorDataset):
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data = self.data[index]
 
-        assert self.target_transform is not None
+        assert self.target_transform is not None, "Target transform cannot be None."
 
         if self.transform is not None:
             data = self.transform(data.numpy())
 
+        # Perform transform on input to yield target during dataloading
+        # More memory efficient than pre-computing transforms which requires
+        # storing multiple copies of each sample
         transformed_data = self.target_transform(data)
 
         return data, transformed_data
