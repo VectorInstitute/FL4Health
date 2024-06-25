@@ -36,7 +36,7 @@ def load_skin_cancer_data(
 
     if dataset_name not in dataset_paths:
         log(ERROR, f"Dataset {dataset_name} not found in available datasets.")
-        return None, None, {}
+        raise ValueError(f"Dataset {dataset_name} not found in available datasets.")
 
     dataset_path = dataset_paths[dataset_name]
 
@@ -45,7 +45,7 @@ def load_skin_cancer_data(
             ERROR,
             f"Dataset file {dataset_path} does not exist. Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
         )
-        return None, None, {}
+        raise FileNotFoundError(f"Dataset file {dataset_path} does not exist.")
 
     log(INFO, f"Data directory: {str(dataset_path)}")
 
@@ -111,7 +111,7 @@ def load_skin_cancer_test_data(
     dataset_converter: Optional[DatasetConverter] = None,
     seed: int = 0,
 ) -> Tuple[DataLoader, Dict[str, int]]:
-    """Load skin cancer dataset (training and validation set)."""
+    """Load skin cancer test dataset."""
 
     dataset_paths = {
         "Barcelona": data_dir / "ISIC_2019" / "ISIC_19_Barcelona.json",
@@ -123,7 +123,7 @@ def load_skin_cancer_test_data(
 
     if dataset_name not in dataset_paths:
         log(ERROR, f"Dataset {dataset_name} not found in available datasets.")
-        return None, None, {}
+        raise ValueError(f"Dataset {dataset_name} not found in available datasets.")
 
     dataset_path = dataset_paths[dataset_name]
 
@@ -132,7 +132,7 @@ def load_skin_cancer_test_data(
             ERROR,
             f"Dataset file {dataset_path} does not exist. Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
         )
-        return None, None, {}
+        raise FileNotFoundError(f"Dataset file {dataset_path} does not exist.")
 
     log(INFO, f"Data directory: {str(dataset_path)}")
 
