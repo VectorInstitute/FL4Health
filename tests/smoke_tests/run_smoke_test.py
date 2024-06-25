@@ -296,7 +296,7 @@ def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = No
         logger.info("Preloading MNIST dataset...")
 
         if seed is not None:
-            load_mnist_data(Path(dataset_path), int(config["batch_size"]), seed=seed)
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
         else:
             load_mnist_data(Path(dataset_path), int(config["batch_size"]))
 
@@ -306,7 +306,7 @@ def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = No
         logger.info("Preloading CIFAR10 dataset...")
 
         if seed is not None:
-            load_cifar10_data(Path(dataset_path), int(config["batch_size"]), seed=seed)
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
         else:
             load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
 

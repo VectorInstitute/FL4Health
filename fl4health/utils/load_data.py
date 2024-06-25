@@ -11,12 +11,11 @@ from torchvision.datasets import CIFAR10, MNIST
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
-from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import LabelBasedSampler
 
 
 def split_data_and_targets(
-    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.02
+    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
     total_size = data.shape[0]
@@ -58,12 +57,9 @@ def load_mnist_data(
     target_transform: Optional[Callable] = None,
     dataset_converter: Optional[DatasetConverter] = None,
     validation_proportion: float = 0.2,
-    seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load MNIST Dataset (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
-
-    set_all_random_seeds(seed)
 
     if transform is None:
         transform = transforms.Compose(
@@ -119,12 +115,9 @@ def load_cifar10_data(
     batch_size: int,
     sampler: Optional[LabelBasedSampler] = None,
     validation_proportion: float = 0.2,
-    seed: int = 42,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """Load CIFAR-10 (training and validation set)."""
     log(INFO, f"Data directory: {str(data_dir)}")
-
-    set_all_random_seeds(seed)
 
     transform = transforms.Compose(
         [
