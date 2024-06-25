@@ -53,10 +53,10 @@ class TensorDataset(BaseDataset):
         data, target = self.data[index], self.targets[index]
 
         if self.transform is not None:
-            data = self.transform(data.numpy())
+            data = self.transform(data)
 
         if self.target_transform is not None:
-            target = self.target_transform(target.numpy())
+            target = self.target_transform(target)
 
         return data, target
 
