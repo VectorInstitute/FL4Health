@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from pathlib import Path
 from typing import Optional
 
 import torch
@@ -22,7 +25,7 @@ class FedSimClrModel(nn.Module):
                 given an input sample.
             projection_head (nn.Module): Projection Head that maps output
                 of encoder to final representation used in contrastive loss
-                for pretaining stage. Defaults to identity transformation.
+                for pretraining stage. Defaults to identity transformation.
             prediction_head (Optional[nn.Module]): Prediction head that maps
                 output of encoder to prediction in the finetuning stage.
                 Defaults to None.
@@ -42,3 +45,14 @@ class FedSimClrModel(nn.Module):
         else:
             assert self.prediction_head is not None
             return self.prediction_head(features)
+
+    @staticmethod
+    def load_pretrained_model(model_path: Path) -> FedSimClrModel:
+        prev_model = torch.load(model_path)
+        ssl_model = FedSimClrModel(
+            encoder=prev_model.encoder,
+            projection_head=prev_model.projection_head,
+            prediction_head=prev_model.prediction_head,
+            pretrain=False,
+        )
+        return ssl_model

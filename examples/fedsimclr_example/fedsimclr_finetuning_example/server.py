@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import flwr as fl
-import torch
 import torch.nn as nn
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
@@ -36,14 +35,7 @@ def fit_config(
 def load_model(
     model_path: Path = Path("examples/fedsimclr_example/fedsimclr_pretraining_example/best_model.pkl"),
 ) -> nn.Module:
-    prev_model = torch.load(model_path)
-    ssl_model = FedSimClrModel(
-        encoder=prev_model.encoder,
-        projection_head=prev_model.projection_head,
-        prediction_head=prev_model.prediction_head,
-        pretrain=False,
-    )
-    return ssl_model
+    return FedSimClrModel.load_pretrained_model(model_path)
 
 
 def main(config: Dict[str, Any]) -> None:
