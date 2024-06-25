@@ -65,6 +65,17 @@ class TensorDataset(BaseDataset):
 
 
 class SslTensorDataset(TensorDataset):
+    def __init__(
+        self,
+        data: torch.Tensor,
+        targets: Optional[torch.Tensor] = None,
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+    ) -> None:
+        assert targets is not None, "SslTensorDataset targets must be None"
+
+        super().__init__(data, targets, transform, target_transform)
+
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data = self.data[index]
 
