@@ -1,10 +1,10 @@
-# Basic Federated Self Supervised Learning Example with FedSimCLR
+
 This example provides a very simple implementation of federated self supervised learning (SSL) with FedSimCLR on the CIFAR dataset.
 FedSimCLR is a straightforward generalization of SimCLR (https://arxiv.org/pdf/2002.05709) to the federated setting presented in
 the Fed-X paper (https://arxiv.org/pdf/2207.09158). FL server expects two clients to be spun up (i.e. it will wait until two
 clients report in before starting training). Each client has the same "local" dataset. I.e. they each load the complete CIFAR dataset
 and therefore have the same training and validation sets. The underlying dataset that is used (and must be used for any SSL) is an
-SslTensorDataset which loads an image and its corresponded transformed version. Following SimCLR and FedSimCLR, a contrastive loss
+SslTensorDataset which loads an image and its corresponding transformed version. Following SimCLR and FedSimCLR, a contrastive loss
 (NT-Xent https://proceedings.neurips.cc/paper_files/paper/2016/file/6b180037abbebea991d8b1232f8a8ca9-Paper.pdf) is used as the objective.
 In order to ensure both the input and the target are mapped to features by the model, we extend the client with a simple method
 `transform_target` that takes in a target (in this case a transformed version of image) and obtains its features representation.

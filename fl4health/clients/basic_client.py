@@ -946,6 +946,21 @@ class BasicClient(NumPyClient):
         return None
 
     def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+        """
+        Method that users can extend to specify an arbitrary transformation to apply to
+        the target prior to the loss being computed. Defaults to the identity transform.
+
+        Overriding this method can be useful in a variety of scenarios such as Self Supervised
+        Learning where the target is derived from the input sample itself. For example, the FedSimClr
+        reference implementation overrides this method to extract features from the target, which
+        is a transformed version of the input image itself.
+
+        Args:
+            target (torch.Tensor): The target or label used to compute the loss.
+
+        Returns:
+            torch.Tensor: Identical to target.
+        """
         return target
 
     def get_criterion(self, config: Config) -> _Loss:
