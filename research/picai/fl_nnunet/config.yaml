@@ -1,0 +1,8 @@
+# You should set these yourself
+n_clients: 2
+nnunet_config: 2d
+nnunet_plans: ~/Code/nnunet_storage/nnunet_preprocessed/Dataset011_PICAI/nnUNetPlans.json
+fold: 1
+n_server_rounds: 3
+n_local_epochs: 1
+server_address: '0.0.0.0:8080'
