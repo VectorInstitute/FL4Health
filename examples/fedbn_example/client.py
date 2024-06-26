@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Tuple, Sequence
+from typing import Sequence, Tuple
 
 import flwr as fl
 import torch
@@ -18,9 +18,8 @@ from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import DirichletLabelBasedSampler
-from fl4health.utils.metrics import Metric
 
 
 class MnistFedBNClient(BasicClient):
@@ -45,11 +44,7 @@ class MnistFedBNClient(BasicClient):
 
 
 class SkinCancerFedBNClient(BasicClient):
-    def __init__(
-        self, data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        dataset_name: str):
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device, dataset_name: str):
         super().__init__(data_path, metrics, device)
         self.dataset_name = dataset_name
 
