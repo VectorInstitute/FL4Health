@@ -46,22 +46,7 @@ class MnistFedBNClient(BasicClient):
 class SkinCancerFedBNClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        sampler = DirichletLabelBasedSampler(list(range(8)), sample_percentage=0.75, beta=1)
-        train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, "Barcelona", batch_size, sampler)
-        # Testing the data loaders
-        for i, (inputs, labels) in enumerate(train_loader):
-            print(f"Batch {i+1}:")
-            print(f"Inputs shape: {inputs.shape}")
-            print(f"Labels: {labels}")
-            if i == 1:  # Just to limit the number of printed batches
-                break
-
-        for i, (inputs, labels) in enumerate(val_loader):
-            print(f"Validation Batch {i+1}:")
-            print(f"Inputs shape: {inputs.shape}")
-            print(f"Labels: {labels}")
-            if i == 1:  # Just to limit the number of printed batches
-                break
+        train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, self.dataset_name, batch_size)
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -88,6 +73,13 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--dataset_name",
+        action="store",
+        type=str,
+        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; 'mnist' for MNIST dataset)",
+        default="mnist",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -95,8 +87,14 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    # client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
-    client = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE)
+    if args.dataset_name in ['Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada']:
+        client = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE)
+        client.dataset_name = args.dataset_name
+    elif args.dataset_name == "mnist":
+        client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
+    else:
+        raise ValueError("Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'.")
+
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
