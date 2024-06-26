@@ -65,6 +65,8 @@ class ApflClient(BasicClient):
         # Personal predictions are generated as a convex combination of the output
         # of local and global models
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
+
         # Parameters of local model are updated to minimize loss of personalized model
         losses = self.compute_training_loss(preds, features, target)
 

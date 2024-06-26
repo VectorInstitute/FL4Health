@@ -22,8 +22,8 @@ from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.clients.scaffold_client import DPScaffoldClient, ScaffoldClient
 from fl4health.losses.fenda_loss_config import (
     ConstrainedFendaLossContainer,
-    ContrastiveLossContainer,
     CosineSimilarityLossContainer,
+    MoonContrastiveLossContainer,
     PerFclLossContainer,
 )
 from fl4health.model_bases.apfl_base import ApflModule
@@ -137,7 +137,7 @@ def get_constrained_fenda_client(
 ) -> ConstrainedFendaClient:
     device = torch.device("cpu")
     perfcl_loss_config = PerFclLossContainer(device, 1.0, 1.0)
-    contrastive_loss_config = ContrastiveLossContainer(device, 1.0)
+    contrastive_loss_config = MoonContrastiveLossContainer(device, 1.0)
     cos_sim_loss_config = CosineSimilarityLossContainer(device, 1.0)
     fenda_loss_config = ConstrainedFendaLossContainer(perfcl_loss_config, cos_sim_loss_config, contrastive_loss_config)
     client = ConstrainedFendaClient(
