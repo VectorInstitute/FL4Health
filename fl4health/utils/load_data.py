@@ -155,6 +155,7 @@ def load_cifar10_test_data(
     log(INFO, f"Data directory: {str(data_dir)}")
     transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
