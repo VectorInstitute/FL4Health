@@ -3,8 +3,8 @@ from functools import partial
 from logging import INFO
 from typing import Any, Dict, Optional
 
-import torch.nn as nn
 import flwr as fl
+import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager

@@ -1,25 +1,23 @@
 import json
 import random
+from concurrent.futures import ThreadPoolExecutor
 from logging import ERROR, INFO
 from pathlib import Path
-from typing import List, Callable, Dict, Optional, Tuple, Union, Any
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 import torchvision.transforms as transforms
 from flwr.common.logger import log
-from torch.utils.data import DataLoader
 from PIL import Image
+from torch.utils.data import DataLoader
 
-from fl4health.utils.dataset import BaseDataset
-from fl4health.utils.dataset import TensorDataset
+from fl4health.utils.dataset import BaseDataset, TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
-from concurrent.futures import ThreadPoolExecutor
+
 
 def construct_skin_cancer_tensor_dataset(
-    data: List[Dict[str, Any]],
-    transform: Optional[Callable] = None,
-    num_workers: int = 8
+    data: List[Dict[str, Any]], transform: Optional[Callable] = None, num_workers: int = 8
 ) -> TensorDataset:
     def load_image(item: Dict[str, Any]) -> Tuple[torch.Tensor, int]:
         image_path = item["img_path"]
