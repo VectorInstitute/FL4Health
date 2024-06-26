@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Sequence
 
 import flwr as fl
 import torch
@@ -20,6 +20,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
+from fl4health.utils.metrics import Metric
 
 
 class MnistFedBNClient(BasicClient):
@@ -44,6 +45,14 @@ class MnistFedBNClient(BasicClient):
 
 
 class SkinCancerFedBNClient(BasicClient):
+    def __init__(
+        self, data_path: Path,
+        metrics: Sequence[Metric],
+        device: torch.device,
+        dataset_name: str):
+        super().__init__(data_path, metrics, device)
+        self.dataset_name = dataset_name
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, self.dataset_name, batch_size)
@@ -77,7 +86,8 @@ if __name__ == "__main__":
         "--dataset_name",
         action="store",
         type=str,
-        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; 'mnist' for MNIST dataset)",
+        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer;\
+            'mnist' for MNIST dataset)",
         default="mnist",
     )
     args = parser.parse_args()
@@ -94,7 +104,8 @@ if __name__ == "__main__":
         client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
     else:
         raise ValueError(
-            "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'."
+            "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl',\
+            'Vienna', 'UFES', 'Canada', or 'mnist'."
         )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
