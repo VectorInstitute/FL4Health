@@ -3,27 +3,27 @@
     "rounds": {
         "1": {
             "metrics_aggregated": {
-                "val - personal - accuracy": 0.7069,
-                "val - global - accuracy": 0.6961,
-                "val - local - accuracy": 0.6716
+                "val - personal - accuracy": 0.6254,
+                "val - global - accuracy": 0.6757,
+                "val - local - accuracy": 0.5723
             },
-            "loss_aggregated": 1.3477
+            "loss_aggregated": 1.4845
         },
         "2": {
             "metrics_aggregated": {
-                "val - personal - accuracy": {"target_value": 0.8353, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.8378,
-                "val - local - accuracy": {"target_value": 0.7261, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.6778, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.76,
+                "val - local - accuracy": {"target_value": 0.5066, "custom_tolerance": 0.005}
             },
-            "loss_aggregated": {"target_value": 0.5607, "custom_tolerance": 0.005}
+            "loss_aggregated": {"target_value": 0.9618, "custom_tolerance": 0.005}
         },
         "3": {
             "metrics_aggregated": {
-                "val - personal - accuracy": {"target_value": 0.8505, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.8793,
-                "val - local - accuracy": {"target_value": 0.7781, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.739, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.78,
+                "val - local - accuracy": {"target_value": 0.5602, "custom_tolerance": 0.005}
             },
-            "loss_aggregated": {"target_value": 0.4557, "custom_tolerance": 0.005}
+            "loss_aggregated": {"target_value": 0.8043, "custom_tolerance": 0.005}
         }
     },
     "metrics_centralized": {},
