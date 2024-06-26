@@ -3,6 +3,7 @@ from functools import partial
 from logging import INFO
 from typing import Any, Dict, Optional
 
+import torch.nn as nn
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
@@ -10,7 +11,6 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.clients.basic_client import BasicClient
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
@@ -44,7 +44,7 @@ def main(config: Dict[str, Any], server_address: str, dataset_name: str) -> None
     )
 
     if dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
-        initial_model: BasicClient = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
+        initial_model: nn.Module = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
     elif dataset_name == "mnist":
         initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
     else:

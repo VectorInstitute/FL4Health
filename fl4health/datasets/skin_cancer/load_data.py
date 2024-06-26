@@ -2,16 +2,39 @@ import json
 import random
 from logging import ERROR, INFO
 from pathlib import Path
-from typing import Callable, Dict, Optional, Tuple, Union
+from typing import List, Callable, Dict, Optional, Tuple, Union, Any
 
+import torch
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
+from PIL import Image
 
-from fl4health.datasets.skin_cancer.dataset import SkinCancerDataset
 from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
+from concurrent.futures import ThreadPoolExecutor
+
+def construct_skin_cancer_tensor_dataset(
+    data: List[Dict[str, Any]],
+    transform: Optional[Callable] = None,
+    num_workers: int = 8
+) -> TensorDataset:
+    def load_image(item: Dict[str, Any]) -> Tuple[torch.Tensor, int]:
+        image_path = item["img_path"]
+        image = Image.open(image_path).convert("RGB")
+        target = int(torch.tensor(item["extended_labels"]).argmax().item())
+        return image, target
+
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        results = list(executor.map(load_image, data))
+
+    data_list, targets_list = zip(*results)
+    data_tensor = torch.stack(list(data_list))
+    targets_tensor = torch.tensor(list(targets_list))
+
+    return TensorDataset(data_tensor, targets_tensor, transform)
 
 
 def load_skin_cancer_data(
@@ -84,8 +107,8 @@ def load_skin_cancer_data(
             ]
         )
 
-    train_ds: BaseDataset = SkinCancerDataset(train_data, transform=train_transform)
-    valid_ds: BaseDataset = SkinCancerDataset(valid_data, transform=val_transform)
+    train_ds: BaseDataset = construct_skin_cancer_tensor_dataset(train_data, transform=train_transform)
+    valid_ds: BaseDataset = construct_skin_cancer_tensor_dataset(valid_data, transform=val_transform)
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)
@@ -157,7 +180,7 @@ def load_skin_cancer_test_data(
             ]
         )
 
-    test_ds: BaseDataset = SkinCancerDataset(test_data, transform=test_transform)
+    test_ds: BaseDataset = construct_skin_cancer_tensor_dataset(test_data, transform=test_transform)
 
     if sampler is not None:
         test_ds = sampler.subsample(test_ds)
