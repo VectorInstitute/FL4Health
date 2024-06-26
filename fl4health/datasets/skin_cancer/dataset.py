@@ -1,17 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
+
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
+
 from fl4health.utils.dataset import BaseDataset
 
 
 class SkinCancerDataset(BaseDataset):
     def __init__(
-            self, data: List[Dict[str, Any]],
-            transform: Optional[transforms.Compose] = None,
-            num_workers: int = 8
-            ) -> None:
+        self, data: List[Dict[str, Any]], transform: Optional[transforms.Compose] = None, num_workers: int = 8
+    ) -> None:
         super().__init__()
         self.data: List[torch.Tensor] = []
         self.targets: List[int] = []
