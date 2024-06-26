@@ -1,11 +1,14 @@
 import json
 import os
 from typing import Any, Dict
+
 import pandas as pd
+
 
 def save_to_json(data: Dict[str, Any], path: str) -> None:
     with open(path, "w", encoding="utf-8") as file:
         json.dump(data, file, indent="\t")
+
 
 if __name__ == "__main__":
 
@@ -65,9 +68,7 @@ if __name__ == "__main__":
     ISIC_2019_data_path = f"{data_path}/ISIC_2019/ISIC_2019_Training_Input"
     ISIC_csv_path = os.path.join(ISIC_2019_path, "ISIC_2019_core.csv")
     Barcelona_df = pd.read_csv(ISIC_csv_path)
-    Barcelona_new = Barcelona_df[
-        ["image", "MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
-    ]
+    Barcelona_new = Barcelona_df[["image", "MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]]
     preprocessed_data: Dict[str, Any] = {
         "columns": official_columns,
         "original_columns": official_columns,
