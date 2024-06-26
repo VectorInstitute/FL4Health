@@ -1,8 +1,11 @@
 import json
 import os
 from typing import Any, Dict
-
 import pandas as pd
+
+def save_to_json(data: Dict[str, Any], path: str) -> None:
+    with open(path, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent="\t")
 
 if __name__ == "__main__":
 
@@ -52,18 +55,24 @@ if __name__ == "__main__":
     Derm7pt_core = Derm7pt[~Derm7pt["diagnosis"].isin(MISC_list)]
     Derm7pt_core.to_csv(os.path.join(Derm7pt_path, "meta/meta_core.csv"))
 
-    ####################################################################################################################################
-    ## Unify the naming of labels in the below section
+    ###########################################################################
+    # Unify the naming of labels in the below section
 
     official_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC"]
 
-    # Client : Barcelona
-    ############################################################################################################################
+    # Client: Barcelona
+    ###########################################################################
     ISIC_2019_data_path = f"{data_path}/ISIC_2019/ISIC_2019_Training_Input"
     ISIC_csv_path = os.path.join(ISIC_2019_path, "ISIC_2019_core.csv")
     Barcelona_df = pd.read_csv(ISIC_csv_path)
-    Barcelona_new = Barcelona_df[["image", "MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]]
-    preprocessed_data: Dict[str, Any] = {"columns": official_columns, "original_columns": official_columns, "data": []}
+    Barcelona_new = Barcelona_df[
+        ["image", "MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]
+    ]
+    preprocessed_data: Dict[str, Any] = {
+        "columns": official_columns,
+        "original_columns": official_columns,
+        "data": [],
+    }
 
     for i in range(len(Barcelona_new)):
         temp = list(Barcelona_new.loc[i].values[:-1])
@@ -71,26 +80,39 @@ if __name__ == "__main__":
         origin_labels = temp[1:]
         extended_labels = temp[1:]
         preprocessed_data["data"].append(
-            {"img_path": img_path, "origin_labels": origin_labels, "extended_labels": extended_labels}
+            {
+                "img_path": img_path,
+                "origin_labels": origin_labels,
+                "extended_labels": extended_labels,
+            }
         )
 
     file_path = os.path.join(f"{data_path}/ISIC_2019", "ISIC_19_Barcelona.json")
+    save_to_json(preprocessed_data, file_path)
 
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(preprocessed_data, file, indent="\t")
-    ############################################################################################################################
-
-    # Client : Rosendahl
-    ############################################################################################################################
+    # Client: Rosendahl
+    ###########################################################################
     HAM_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
 
     HAM_10000_data_path = f"{data_path}/HAM10000"
     rosendahl_df = pd.read_csv(os.path.join(HAM_10000_path, "HAM_rosendahl.csv"))
     vienna_df = pd.read_csv(os.path.join(HAM_10000_path, "HAM_vienna.csv"))
 
-    ham_labelmap = {"akiec": "AK", "bcc": "BCC", "bkl": "BKL", "df": "DF", "mel": "MEL", "nv": "NV", "vasc": "VASC"}
+    ham_labelmap = {
+        "akiec": "AK",
+        "bcc": "BCC",
+        "bkl": "BKL",
+        "df": "DF",
+        "mel": "MEL",
+        "nv": "NV",
+        "vasc": "VASC",
+    }
 
-    preprocessed_data = {"columns": official_columns, "original_columns": HAM_columns, "data": []}
+    preprocessed_data = {
+        "columns": official_columns,
+        "original_columns": HAM_columns,
+        "data": [],
+    }
 
     rosendahl_new = rosendahl_df[["image_id", "dx"]]
     for i in range(len(rosendahl_new)):
@@ -104,18 +126,23 @@ if __name__ == "__main__":
         extended_labels[official_columns.index(label)] = 1
 
         preprocessed_data["data"].append(
-            {"img_path": img_path, "origin_labels": origin_labels, "extended_labels": extended_labels}
+            {
+                "img_path": img_path,
+                "origin_labels": origin_labels,
+                "extended_labels": extended_labels,
+            }
         )
 
     file_path = os.path.join(f"{data_path}/HAM10000", "HAM_rosendahl.json")
+    save_to_json(preprocessed_data, file_path)
 
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(preprocessed_data, file, indent="\t")
-    ############################################################################################################################
-
-    # Client : Vienna
-    ############################################################################################################################
-    preprocessed_data = {"columns": official_columns, "original_columns": HAM_columns, "data": []}
+    # Client: Vienna
+    ###########################################################################
+    preprocessed_data = {
+        "columns": official_columns,
+        "original_columns": HAM_columns,
+        "data": [],
+    }
     vienna_new = vienna_df[["image_id", "dx"]]
 
     for i in range(len(vienna_new)):
@@ -129,28 +156,40 @@ if __name__ == "__main__":
         extended_labels[official_columns.index(label)] = 1
 
         preprocessed_data["data"].append(
-            {"img_path": img_path, "origin_labels": origin_labels, "extended_labels": extended_labels}
+            {
+                "img_path": img_path,
+                "origin_labels": origin_labels,
+                "extended_labels": extended_labels,
+            }
         )
 
     file_path = os.path.join(f"{data_path}/HAM10000", "HAM_vienna.json")
+    save_to_json(preprocessed_data, file_path)
 
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(preprocessed_data, file, indent="\t")
-    ############################################################################################################################
-
-    # Client : UFES_brazil
-    ############################################################################################################################
+    # Client: UFES_brazil
+    ###########################################################################
     PAD_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
 
     PAD_UFES_20_data_path = f"{data_path}/PAD-UFES-20"
     PAD_UFES_20_df = pd.read_csv(os.path.join(PAD_UFES_20_path, "metadata.csv"))
 
     # Because seborrheic keratosis(SEK) is in Benign keratosis(BKL), SEK -> BKL
-    # Reference : https://challenge.isic-archive.com/landing/2019/
-    PAD_UFES_20 = {"ACK": "AK", "BCC": "BCC", "MEL": "MEL", "NEV": "NV", "SCC": "SCC", "SEK": "BKL"}
+    # Reference: https://challenge.isic-archive.com/landing/2019/
+    PAD_UFES_20 = {
+        "ACK": "AK",
+        "BCC": "BCC",
+        "MEL": "MEL",
+        "NEV": "NV",
+        "SCC": "SCC",
+        "SEK": "BKL",
+    }
 
     PAD_new = PAD_UFES_20_df[["img_id", "diagnostic"]]
-    preprocessed_data = {"columns": official_columns, "original_columns": PAD_columns, "data": []}
+    preprocessed_data = {
+        "columns": official_columns,
+        "original_columns": PAD_columns,
+        "data": [],
+    }
 
     for i in range(len(PAD_new)):
         img_path = os.path.join(PAD_UFES_20_data_path, PAD_new.loc[i]["img_id"])
@@ -163,24 +202,25 @@ if __name__ == "__main__":
         extended_labels[official_columns.index(label)] = 1
 
         preprocessed_data["data"].append(
-            {"img_path": img_path, "origin_labels": origin_labels, "extended_labels": extended_labels}
+            {
+                "img_path": img_path,
+                "origin_labels": origin_labels,
+                "extended_labels": extended_labels,
+            }
         )
 
     file_path = os.path.join(PAD_UFES_20_path, "PAD_UFES_20.json")
+    save_to_json(preprocessed_data, file_path)
 
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(preprocessed_data, file, indent="\t")
-    ############################################################################################################################
-
-    # Client : SF_canada
-    ############################################################################################################################
+    # Client: SF_canada
+    ###########################################################################
     Derm7pt_data_path = f"{data_path}/Derm7pt/images"
     Derm7pt_df = pd.read_csv(os.path.join(Derm7pt_path, "meta/meta_core.csv"))
 
     Derm7pt_columns = ["MEL", "NV", "BCC", "BKL", "DF", "VASC"]
 
-    # reference_1 : https://github.com/jeremykawahara/derm7pt/blob/master/derm7pt/dataset.py
-    # reference_2 : https://challenge.isic-archive.com/landing/2019/
+    # reference_1: https://github.com/jeremykawahara/derm7pt/blob/master/derm7pt/dataset.py
+    # reference_2: https://challenge.isic-archive.com/landing/2019/
     derm7pt_labelmap = {
         "basal cell carcinoma": "BCC",
         "blue nevus": "NV",
@@ -205,7 +245,11 @@ if __name__ == "__main__":
     }
 
     Derm7pt_new = Derm7pt_df[["derm", "diagnosis"]]
-    preprocessed_data = {"columns": official_columns, "original_columns": Derm7pt_columns, "data": []}
+    preprocessed_data = {
+        "columns": official_columns,
+        "original_columns": Derm7pt_columns,
+        "data": [],
+    }
 
     for i in range(len(Derm7pt_new)):
         img_path = os.path.join(Derm7pt_data_path, Derm7pt_new.loc[i]["derm"])
@@ -218,11 +262,13 @@ if __name__ == "__main__":
         extended_labels[official_columns.index(label)] = 1
 
         preprocessed_data["data"].append(
-            {"img_path": img_path, "origin_labels": origin_labels, "extended_labels": extended_labels}
+            {
+                "img_path": img_path,
+                "origin_labels": origin_labels,
+                "extended_labels": extended_labels,
+            }
         )
 
     file_path = os.path.join(Derm7pt_path, "Derm7pt.json")
-
-    with open(file_path, "w", encoding="utf-8") as file:
-        json.dump(preprocessed_data, file, indent="\t")
-    ############################################################################################################################
+    save_to_json(preprocessed_data, file_path)
+    ###########################################################################
