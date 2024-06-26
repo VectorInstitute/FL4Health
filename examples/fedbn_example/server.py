@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen
+from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
@@ -32,7 +32,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, dataset_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -42,7 +42,12 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
+    if dataset_name in ['Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada']:
+        initial_model = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
+    elif dataset_name == "mnist":
+        initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
+    else:
+        raise ValueError("Unsupported location. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'.")
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
@@ -88,8 +93,15 @@ if __name__ == "__main__":
         help="Server Address to be used to communicate with the clients",
         default="0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--dataset_name",
+        action="store",
+        type=str,
+        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; 'mnist' for MNIST dataset)",
+        default="mnist",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address)
+    main(config, args.server_address, args.dataset_name)
