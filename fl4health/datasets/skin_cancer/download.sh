@@ -42,6 +42,7 @@ echo "Derm7pt download."
 unzip ${DIRECTORY}/release_v0.zip -d ${DIRECTORY}/
 mv ${DIRECTORY}/release_v0 ${DIRECTORY}/Derm7pt
 rm -rf ${DIRECTORY}/release_v0
+rm ${DIRECTORY}/release_v0.zip
 
 echo "HAM10000 download."
 
@@ -84,4 +85,8 @@ echo "Cleaning up..."
 # Remove the zip file after extraction
 rm ${DIRECTORY}/ISIC_2019_Training_Input.zip
 
-echo "Process completed."
+echo "Process completed, running preprocess."
+
+python fl4health/datasets/skin_cancer/preprocess_skin.py
+
+echo "Preprocess completed."
