@@ -7,7 +7,7 @@ from flwr.common.logger import log
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -57,7 +57,7 @@ class MoonClient(BasicClient):
         self.contrastive_weight = contrastive_weight
         if self.contrastive_weight == 0:
             log(WARNING, "Contrastive loss weight is set to 0, thus Contrastive loss will not be computed.")
-        self.contrastive_loss_function = ContrastiveLoss(self.device, temperature=temperature)
+        self.contrastive_loss_function = MoonContrastiveLoss(self.device, temperature=temperature)
 
         # Saving previous local models and a global model at each communication round to compute contrastive loss
         self.len_old_models_buffer = len_old_models_buffer
