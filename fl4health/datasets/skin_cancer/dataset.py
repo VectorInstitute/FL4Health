@@ -24,18 +24,21 @@ class SkinCancerDataset(BaseDataset):
         image = Image.open(image_path).convert("RGB")
         if self.transform is not None:
             image = self.transform(image)
-        target = torch.tensor(item["extended_labels"].index(1.0)).item()  # .item() to convert to Python int
+        target = int(torch.tensor(item["extended_labels"]).argmax().item())  # Convert to Python int
         return image, target
 
     def _load_data(self, data: List[Dict[str, Any]]) -> None:
         with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
             results = list(executor.map(self._load_image, data))
 
-        self.data, self.targets = zip(*results)
-        self.data = torch.stack(list(self.data))  # Convert list of images to a tensor
+        data_list, targets_list = zip(*results)
+        self.data = list(data_list)  # Keep as list of tensors initially
+        self.targets = list(targets_list)  # Keep as list of ints initially
+
+        self.data = torch.stack(self.data)  # Convert list of images to a tensor
         self.targets = torch.tensor(self.targets)  # Convert list of targets to a tensor
 
-    def __getitem__(self, item: int) -> Tuple[torch.Tensor, int]:
+    def __getitem__(self, item: int) -> Tuple[torch.Tensor, torch.Tensor]:
         data = self.data[item]
         target = self.targets[item]
         return data, target
