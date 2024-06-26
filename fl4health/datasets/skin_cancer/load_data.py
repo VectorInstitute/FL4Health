@@ -43,7 +43,8 @@ def load_skin_cancer_data(
     if not dataset_path.exists():
         log(
             ERROR,
-            f"Dataset file {dataset_path} does not exist. Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
+            f"Dataset file {dataset_path} does not exist.\
+            Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
         )
         raise FileNotFoundError(f"Dataset file {dataset_path} does not exist.")
 
@@ -130,7 +131,8 @@ def load_skin_cancer_test_data(
     if not dataset_path.exists():
         log(
             ERROR,
-            f"Dataset file {dataset_path} does not exist. Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
+            f"Dataset file {dataset_path} does not exist.\
+            Please follow the instructions in fl4health/datasets/skin_cancer/README.md.",
         )
         raise FileNotFoundError(f"Dataset file {dataset_path} does not exist.")
 
