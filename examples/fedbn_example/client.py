@@ -81,7 +81,7 @@ if __name__ == "__main__":
         "--dataset_name",
         action="store",
         type=str,
-        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer;\
+        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; \
             'mnist' for MNIST dataset)",
         default="mnist",
     )
@@ -93,13 +93,12 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
 
     if args.dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
-        client = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE)
-        client.dataset_name = args.dataset_name
+        client: BasicClient = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE, args.dataset_name)
     elif args.dataset_name == "mnist":
-        client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
+        client: BasicClient = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
     else:
         raise ValueError(
-            "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl',\
+            "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', \
             'Vienna', 'UFES', 'Canada', or 'mnist'."
         )
 
