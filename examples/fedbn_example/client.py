@@ -95,7 +95,7 @@ if __name__ == "__main__":
     if args.dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
         client: BasicClient = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE, args.dataset_name)
     elif args.dataset_name == "mnist":
-        client: BasicClient = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
+        client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
     else:
         raise ValueError(
             "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', \

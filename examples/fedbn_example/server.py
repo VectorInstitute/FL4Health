@@ -10,6 +10,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.clients.basic_client import BasicClient
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
@@ -43,12 +44,13 @@ def main(config: Dict[str, Any], server_address: str, dataset_name: str) -> None
     )
 
     if dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
-        initial_model = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
+        initial_model: BasicClient = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
     elif dataset_name == "mnist":
         initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
     else:
         raise ValueError(
-            "Unsupported location. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'."
+            "Unsupported location. Please choose from 'Barcelona', 'Rosendahl', \
+            'Vienna', 'UFES', 'Canada', or 'mnist'."
         )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
@@ -99,7 +101,8 @@ if __name__ == "__main__":
         "--dataset_name",
         action="store",
         type=str,
-        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; 'mnist' for MNIST dataset)",
+        help="Dataset name (e.g., Barcelona, Rosendahl, Vienna, UFES, Canada for Skin Cancer; \
+            'mnist' for MNIST dataset)",
         default="mnist",
     )
     args = parser.parse_args()
