@@ -87,13 +87,15 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    if args.dataset_name in ['Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada']:
+    if args.dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
         client = SkinCancerFedBNClient(data_path, [Accuracy()], DEVICE)
         client.dataset_name = args.dataset_name
     elif args.dataset_name == "mnist":
         client = MnistFedBNClient(data_path, [Accuracy()], DEVICE)
     else:
-        raise ValueError("Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'.")
+        raise ValueError(
+            "Unsupported dataset name. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'."
+        )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 

@@ -42,12 +42,14 @@ def main(config: Dict[str, Any], server_address: str, dataset_name: str) -> None
         local_steps=config.get("local_steps"),
     )
 
-    if dataset_name in ['Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada']:
+    if dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
         initial_model = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
     elif dataset_name == "mnist":
         initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
     else:
-        raise ValueError("Unsupported location. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'.")
+        raise ValueError(
+            "Unsupported location. Please choose from 'Barcelona', 'Rosendahl', 'Vienna', 'UFES', 'Canada', or 'mnist'."
+        )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = BasicFedAvg(
