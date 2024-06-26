@@ -11,7 +11,7 @@ from flwr.common.logger import log
 from PIL import Image
 from torch.utils.data import DataLoader
 
-from fl4health.utils.dataset import BaseDataset, TensorDataset
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
@@ -22,6 +22,12 @@ def construct_skin_cancer_tensor_dataset(
     def load_image(item: Dict[str, Any]) -> Tuple[torch.Tensor, int]:
         image_path = item["img_path"]
         image = Image.open(image_path).convert("RGB")
+        if transform:
+            image = transform(image)
+        else:
+            # Default transformation if none provided
+            image = transforms.ToTensor()(image)
+        assert isinstance(image, torch.Tensor), f"Image at {image_path} is not a Tensor"
         target = int(torch.tensor(item["extended_labels"]).argmax().item())
         return image, target
 
@@ -32,7 +38,7 @@ def construct_skin_cancer_tensor_dataset(
     data_tensor = torch.stack(list(data_list))
     targets_tensor = torch.tensor(list(targets_list))
 
-    return TensorDataset(data_tensor, targets_tensor, transform)
+    return TensorDataset(data_tensor, targets_tensor)
 
 
 def load_skin_cancer_data(
@@ -105,8 +111,8 @@ def load_skin_cancer_data(
             ]
         )
 
-    train_ds: BaseDataset = construct_skin_cancer_tensor_dataset(train_data, transform=train_transform)
-    valid_ds: BaseDataset = construct_skin_cancer_tensor_dataset(valid_data, transform=val_transform)
+    train_ds: TensorDataset = construct_skin_cancer_tensor_dataset(train_data, transform=train_transform)
+    valid_ds: TensorDataset = construct_skin_cancer_tensor_dataset(valid_data, transform=val_transform)
 
     if sampler is not None:
         train_ds = sampler.subsample(train_ds)
@@ -178,7 +184,7 @@ def load_skin_cancer_test_data(
             ]
         )
 
-    test_ds: BaseDataset = construct_skin_cancer_tensor_dataset(test_data, transform=test_transform)
+    test_ds: TensorDataset = construct_skin_cancer_tensor_dataset(test_data, transform=test_transform)
 
     if sampler is not None:
         test_ds = sampler.subsample(test_ds)
