@@ -1,6 +1,6 @@
 import json
 import os
-
+from typing import Dict, Any
 import pandas as pd
 
 if __name__ == "__main__":
@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     # Load metadata file of HAM10000
     HAM_10000_path = f"{data_path}/HAM10000"
-    HAM_csv_path = os.path.join(HAM_10000_path, "HAM10000_metadata")
+    HAM_csv_path = os.path.join(HAM_10000_path, "HAM10000_metadata.csv")
     HAM_df = pd.read_csv(HAM_csv_path)
 
     # Delete duplicate images in ISIC-19
@@ -25,9 +25,9 @@ if __name__ == "__main__":
     core_2019 = ISIC_df[ISIC_df["image"].isin(barcelona_core["image"])]
     core_2019.to_csv(os.path.join(ISIC_2019_path, "ISIC_2019_core.csv"), mode="w")
 
-    # Split ronsendahl and vienna in HAM10000
+    # Split rosendahl and vienna in HAM10000
     rosendahl_data = HAM_df[HAM_df["dataset"] == "rosendahl"]
-    rosendahl_data.to_csv(os.path.join(HAM_10000_path, "HAM_ronsendahl.csv"), mode="w")
+    rosendahl_data.to_csv(os.path.join(HAM_10000_path, "HAM_rosendahl.csv"), mode="w")
     vienna_data = HAM_df[HAM_df["dataset"] != "rosendahl"]
     vienna_data.to_csv(os.path.join(HAM_10000_path, "HAM_vienna.csv"), mode="w")
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     ISIC_csv_path = os.path.join(ISIC_2019_path, "ISIC_2019_core.csv")
     Barcelona_df = pd.read_csv(ISIC_csv_path)
     Barcelona_new = Barcelona_df[["image", "MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC", "SCC", "UNK"]]
-    preprocessed_data = {"columns": official_columns, "original_columns": official_columns, "data": []}
+    preprocessed_data: Dict[str, Any] = {"columns": official_columns, "original_columns": official_columns, "data": []}
 
     for i in range(len(Barcelona_new)):
         temp = list(Barcelona_new.loc[i].values[:-1])
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     HAM_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
 
     HAM_10000_data_path = f"{data_path}/HAM10000"
-    rosendahl_df = pd.read_csv(os.path.join(HAM_10000_path, "HAM_ronsendahl.csv"))
+    rosendahl_df = pd.read_csv(os.path.join(HAM_10000_path, "HAM_rosendahl.csv"))
     vienna_df = pd.read_csv(os.path.join(HAM_10000_path, "HAM_vienna.csv"))
 
     ham_labelmap = {"akiec": "AK", "bcc": "BCC", "bkl": "BKL", "df": "DF", "mel": "MEL", "nv": "NV", "vasc": "VASC"}
@@ -224,5 +224,4 @@ if __name__ == "__main__":
 
     with open(file_path, "w", encoding="utf-8") as file:
         json.dump(preprocessed_data, file, indent="\t")
-
-    ############################################################################################################################z
+    ############################################################################################################################
