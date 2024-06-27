@@ -14,20 +14,10 @@ from torchvision.transforms import transforms
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.preprocessing.pca_preprocessor import PcaPreprocessor
-from fl4health.utils.dataset import BaseDataset, MnistDataset
+from fl4health.utils.load_data import get_train_and_val_mnist_datasets
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
-
-
-def get_mnist_dataset(data_dir: Path, train: bool) -> MnistDataset:
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5), (0.5)),
-        ]
-    )
-    return MnistDataset(data_dir, train=train, transform=transform)
 
 
 class MnistFedPcaClient(BasicClient):
@@ -39,8 +29,13 @@ class MnistFedPcaClient(BasicClient):
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.6, beta=0.75)
 
         # Get training and validation datasets.
-        train_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=True)
-        validation_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=False)
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
+        train_dataset, validation_dataset = get_train_and_val_mnist_datasets(self.data_path, transform)
         train_dataset = sampler.subsample(dataset=train_dataset)
         validation_dataset = sampler.subsample(dataset=validation_dataset)
 

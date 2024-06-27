@@ -1,17 +1,16 @@
-from abc import ABC
 from functools import partial
 from typing import Callable, Optional, Tuple, Union
 
 import torch
 
-from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 
 
-class DatasetConverter(ABC, BaseDataset):
+class DatasetConverter(TensorDataset):
     def __init__(
         self,
         converter_function: Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]],
-        dataset: Union[None, BaseDataset],
+        dataset: Union[None, TensorDataset],
     ) -> None:
         """
         Dataset converter classes are designed to re-format any dataset for a given training task,
@@ -19,13 +18,15 @@ class DatasetConverter(ABC, BaseDataset):
         Converters can be used in the data loading step. They can also apply a light
         pre-processing step on datasets before the training process.
         """
+
+        assert dataset is None or dataset.targets is not None
         self.converter_function = converter_function
         self.dataset = dataset
 
     def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         # Overriding this function from BaseDataset allows the converter to be compatible with the data transformers.
         # converter_function is applied after the transformers.
-        assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: BaseDataset)"
+        assert self.dataset is not None, "Error: no dataset is set, use convert_dataset(your_dataset: TensorDataset)"
         data, target = self.dataset.__getitem__(index)
         return self.converter_function(data, target)
 
@@ -33,7 +34,7 @@ class DatasetConverter(ABC, BaseDataset):
         assert self.dataset is not None, "Error: dataset is should be either converted or initiated."
         return len(self.dataset)
 
-    def convert_dataset(self, dataset: BaseDataset) -> BaseDataset:
+    def convert_dataset(self, dataset: TensorDataset) -> TensorDataset:
         """Applies the converter function over the dataset when the dataset is used
         (i.e. during the dataloader creation step)."""
         # Dataset can be added/changed at any point in the pipeline.
@@ -84,7 +85,9 @@ class AutoEncoderDatasetConverter(DatasetConverter):
             self.condition_vector_size = condition_vector_size
         super().__init__(self.converter_function, dataset=None)
 
-    def convert_dataset(self, dataset: BaseDataset) -> BaseDataset:
+    def convert_dataset(self, dataset: TensorDataset) -> TensorDataset:
+        assert dataset.targets is not None
+
         self.dataset = dataset
         # Data shape is saved to be used in the pack-unpack process.
         # This is the shape of the data after getting transformed by torch transforms.
@@ -95,6 +98,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
     def get_condition_vector_size(self) -> int:
         if self.condition == "label":
             assert self.dataset is not None, "Error: no dataset is passed to the converter."
+            assert self.dataset.targets is not None
             if self.do_one_hot_encoding:
                 return len(torch.unique(self.dataset.targets))
             else:

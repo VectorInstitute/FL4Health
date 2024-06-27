@@ -218,6 +218,7 @@ class DittoClient(BasicClient):
 
         # Forward pass on both the global and local models
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
         losses = self.compute_training_loss(preds, features, target)

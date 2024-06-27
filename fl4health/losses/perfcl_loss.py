@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 
-from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 
 
 class PerFclLoss(nn.Module):
@@ -14,8 +14,8 @@ class PerFclLoss(nn.Module):
         local_feature_loss_temperature: float = 0.5,
     ) -> None:
         super().__init__()
-        self.global_feature_contrastive_loss = ContrastiveLoss(device, global_feature_loss_temperature)
-        self.local_feature_contrastive_loss = ContrastiveLoss(device, local_feature_loss_temperature)
+        self.global_feature_contrastive_loss = MoonContrastiveLoss(device, global_feature_loss_temperature)
+        self.local_feature_contrastive_loss = MoonContrastiveLoss(device, local_feature_loss_temperature)
 
     def forward(
         self,

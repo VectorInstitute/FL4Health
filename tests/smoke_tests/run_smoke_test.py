@@ -6,15 +6,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import torch
 import yaml
 from flwr.common.typing import Config
 from pytest import approx
 from six.moves import urllib
 
-from examples.fedprox_example.client import MnistFedProxClient
-from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
@@ -136,7 +133,7 @@ async def run_smoke_test(
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config)
+    _preload_dataset(dataset_path, config, seed)
 
     # Start the server and capture its process object
     logger.info("Starting server...")
@@ -284,7 +281,7 @@ async def run_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config) -> None:
+def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -296,15 +293,23 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
 
         # Creating a client and getting the data loaders will trigger
         # the dataset's download
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
-        client.get_data_loaders(config)
+        logger.info("Preloading MNIST dataset...")
+
+        if seed is not None:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
+        else:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
 
         logger.info("Finished preloading MNIST dataset")
 
     elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
-        load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
+        if seed is not None:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+        else:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
         logger.info("Finished preloading CIFAR10 dataset")
 
     else:
@@ -616,6 +621,14 @@ if __name__ == "__main__":
             client_python_path="examples.ensemble_example.client",
             config_path="tests/smoke_tests/ensemble_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.flash_example.server",
+            client_python_path="examples.flash_example.client",
+            config_path="tests/smoke_tests/flash_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
         )
     )
     loop.close()
