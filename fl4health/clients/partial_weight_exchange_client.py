@@ -1,13 +1,16 @@
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
@@ -104,8 +107,19 @@ class PartialWeightExchangeClient(BasicClient):
         Returns:
             NDArrays: The list of weights to be sent to the server from the client
         """
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """

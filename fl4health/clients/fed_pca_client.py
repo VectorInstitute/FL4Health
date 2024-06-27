@@ -38,8 +38,18 @@ class FedPCAClient(NumPyClient):
         return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def get_parameters(self, config: Config) -> NDArrays:
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
