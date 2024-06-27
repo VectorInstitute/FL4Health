@@ -129,6 +129,7 @@ class nnUNetClient(BasicClient):
     def setup_client(self, config: Dict[str, Any]) -> None:
         print("Setting Up Client")
         # Get the nnunet plans specified by the server
+        print(config)
         plans = config["nnunet_plans"]
 
         # Get the dataset json of the local client dataset
@@ -174,7 +175,12 @@ class nnUNetClient(BasicClient):
 
         # Parent function sets up optimizer, criterion, parameter_exchanger, dataloaders and reporters.
         # We have to run this after creating the nnUNetTrainer since it calls functions that depend on that attribute
-        super().setup_client(config)
+        # Need to change config file to only have ints as values
+        super_config = config.copy()
+        for key, value in super_config.items():
+            if type(value) is not int:
+                del super_config[key]
+        super().setup_client(super_config)
 
         # Check if dataset fingerprint has been extracted
         if not exists(join(nnUNet_preprocessed, "dataset_fingerprint.json")):

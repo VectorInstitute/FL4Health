@@ -1,5 +1,4 @@
 import argparse
-import os
 from logging import INFO
 from os.path import join
 from typing import Literal, Optional, Union
@@ -17,7 +16,6 @@ from research.picai.fl_nnunet.nnunet_client import nnUNetClient
 
 # from research.picai.metrics_utils import PICAI_AUROC, PICAI_Score
 
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 
 

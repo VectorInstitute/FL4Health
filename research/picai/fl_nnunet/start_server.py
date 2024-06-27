@@ -1,5 +1,4 @@
 import argparse
-import os
 from functools import partial
 from typing import Optional
 
@@ -7,6 +6,7 @@ import flwr as fl
 import torch
 import yaml
 from batchgenerators.utilities.file_and_folder_operations import load_json
+from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
@@ -14,19 +14,16 @@ from flwr.server.strategy import FedAvg
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.server.base_server import FlServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from fl4health.utils.parameter_extraction import get_all_model_parameters
-
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 
 def get_config(
-    n_clients: int,
+    current_server_round: int,
     nnunet_config: str,
     nnunet_plans: str,
     fold: int,
     n_server_rounds: int,
     batch_size: int,
-    current_server_round: int,
+    n_clients: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
@@ -37,6 +34,7 @@ def get_config(
         "nnunet_plans": nnunet_plans_dict,
         "fold": fold,
         "n_server_rounds": n_server_rounds,
+        "batch_size": batch_size,
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "current_server_round": current_server_round,
     }
@@ -51,6 +49,7 @@ def main(config: dict) -> None:
         nnunet_plans=config["nnunet_plans"],
         fold=config["fold"],
         n_server_rounds=config["n_server_rounds"],
+        batch_size=0,  # Set this to 0 because we're not using it
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -59,9 +58,15 @@ def main(config: dict) -> None:
 
     if config.get("starting_checkpoint"):
         model = torch.load(config["starting_checkpoint"])
-        params = get_all_model_parameters(model)
+        # Of course nnunet stores their pytorch models differently.
+        params = ndarrays_to_parameters([val.cpu().numpy() for _, val in model["network_weights"].items()])
     else:
-        params = None
+        raise Exception(
+            "There is a bug right now where params can not be None. \
+                        Therefore a starting checkpoint must be provided \
+                        because I don't want to mess up my code"
+        )
+        # params = None
 
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
