@@ -1,9 +1,11 @@
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
@@ -106,9 +108,13 @@ class PartialWeightExchangeClient(BasicClient):
             NDArrays: The list of weights to be sent to the server from the client
         """
         if not self.initialized:
-            # If initialized==False, we are doing client side initialization (get_parameters called before fit)
-            # so we must call setup_client first
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
             self.setup_client(config)
+
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
