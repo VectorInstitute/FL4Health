@@ -72,20 +72,6 @@ class MrMtlClient(BasicClient):
         # The rest of the setup is the same
         super().setup_client(config)
 
-    def get_parameters(self, config: Config) -> NDArrays:
-        """
-        For MR-MTL, we transfer the LOCAL model weights to the server to be aggregated and set as INITIAL GLOBAL model
-        weights on client side.
-
-        Args:
-            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
-
-        Returns:
-            NDArrays: LOCAL model weights to be sent to the server for aggregation
-        """
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
-
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         The parameters being pass are to be routed to the initial global model to be used in a penalty term in
