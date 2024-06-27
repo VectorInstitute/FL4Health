@@ -104,15 +104,8 @@ class DittoClient(BasicClient):
         Returns:
             NDArrays: GLOBAL model weights to be sent to the server for aggregation
         """
-        if not self.initialized:
-            # If initialized==False, we are doing client side initialization (get_parameters called before fit)
-            # so we must call setup_client first
-            self.setup_client(config)
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
-            assert self.global_model is not None and self.parameter_exchanger is not None
-            return self.parameter_exchanger.push_parameters(self.global_model, config=config)
+        assert self.global_model is not None and self.parameter_exchanger is not None
+        return self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """

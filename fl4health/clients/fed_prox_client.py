@@ -9,7 +9,6 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
@@ -49,22 +48,15 @@ class FedProxClient(BasicClient):
         """
         Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation
         """
-        if not self.initialized:
-            # If initialized==False, we are doing client side initialization (get_parameters called before fit)
-            # so we must call setup_client first
-            self.setup_client(config)
-            # Need all parameters even if normally exchanging partial
-            return FullParameterExchanger().push_parameters(self.model, config=config)
-        else:
+        assert self.model is not None and self.parameter_exchanger is not None and self.current_loss is not None
 
-            assert self.model is not None and self.parameter_exchanger is not None and self.current_loss is not None
-            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-            # Weights and training loss sent to server for aggregation
-            # Training loss sent because server will decide to increase or decrease the proximal weight
-            # Therefore it can only be computed locally
-            packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
-            return packed_params
+        # Weights and training loss sent to server for aggregation
+        # Training loss sent because server will decide to increase or decrease the proximal weight
+        # Therefore it can only be computed locally
+        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.current_loss)
+        return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
