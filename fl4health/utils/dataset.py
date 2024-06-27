@@ -89,5 +89,12 @@ class SyntheticDataset(BaseDataset):
         data: torch.Tensor,
         targets: torch.Tensor,
     ):
+        """
+        A dataset for synthetically created data strictly in the form of pytorch tensors.
+        Args:
+            data (torch.Tensor): Data tensor with first dimension corresponding to the number of datapoints
+            targets (torch.Tensor): Target tensor with first dimension corresponding to the number of datapoints
+        """
+        assert data.shape[0] == targets.shape[0]
         self.data = data
         self.targets = targets

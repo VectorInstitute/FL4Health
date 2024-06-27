@@ -13,7 +13,7 @@ def construct_synthetic_dataset() -> SyntheticDataset:
     torch.manual_seed(42)
     random_inputs = torch.rand((10000, 3, 3))
     # Note high is exclusive here
-    random_labels = torch.randint(low=0, high=10, size=(1000, 1))
+    random_labels = torch.randint(low=0, high=10, size=(10000, 1))
     # unset seed thereafter
     torch.seed()
     return SyntheticDataset(random_inputs, random_labels)
