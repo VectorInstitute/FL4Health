@@ -1,18 +1,20 @@
 import argparse
 from logging import INFO
 from os.path import join
-from typing import Literal, Optional, Union
+from typing import Literal, Optional
 
 import flwr as fl
 import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
-from torchmetrics.classification import MultilabelAveragePrecision
-from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU
 
-from fl4health.utils.metrics import TorchMetric
+# from fl4health.utils.metrics import TorchMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
+
+# from torchmetrics.classification import MultilabelAveragePrecision
+# from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU
+
 
 # from research.picai.metrics_utils import PICAI_AUROC, PICAI_Score
 
@@ -22,7 +24,7 @@ nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 def main(
     dataset_id: int,
     data_identifier: Optional[str],
-    save_plans: Union[bool, str],
+    plans_identifier: Optional[str],
     always_preprocess: bool,
     server_address: str,
 ) -> None:
@@ -33,14 +35,14 @@ def main(
     log(INFO, f"Using server Address: {server_address}")
 
     # Define metrics
-    metrics = [
-        TorchMetric(name="DICE", metric=GeneralizedDiceScore(num_classes=2).to(DEVICE)),
-        TorchMetric(name="IoU", metric=MeanIoU(num_classes=2).to(DEVICE)),
-        TorchMetric(name="AP", metric=MultilabelAveragePrecision(num_labels=2).to(DEVICE)),
-        # Custom Metrics don't work right now
-        # TorchMetric(name='AUROC', metric=PICAI_AUROC().to(DEVICE)),
-        # TorchMetric(name='picai_score', metric=PICAI_Score().to(DEVICE))
-    ]
+    # metrics = [
+    #     TorchMetric(name="DICE", metric=GeneralizedDiceScore(num_classes=2).to(DEVICE)),
+    #     TorchMetric(name="IoU", metric=MeanIoU(num_classes=2).to(DEVICE)),
+    #     TorchMetric(name="AP", metric=MultilabelAveragePrecision(num_labels=2).to(DEVICE)),
+    #     # Custom Metrics don't work right now
+    #     # TorchMetric(name='AUROC', metric=PICAI_AUROC().to(DEVICE)),
+    #     # TorchMetric(name='picai_score', metric=PICAI_Score().to(DEVICE))
+    # ]
 
     # Create and start client
     dataset_name = convert_id_to_dataset_name(dataset_id)
@@ -48,11 +50,11 @@ def main(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         data_identifier=data_identifier,
-        save_plans=save_plans,
+        plans_identifier=plans_identifier,
         always_preprocess=always_preprocess,
         # BaseClient Args
         device=DEVICE,
-        metrics=metrics,
+        metrics=[],  # Had to turn metrics off for now because for some reason nnunet model predicts 2 channels
         data_path=join(
             nnUNet_preprocessed, dataset_name
         ),  # data_path is not actually used but is required by BaseClient
@@ -82,8 +84,7 @@ if __name__ == "__main__":
             the --save-plans flag)",
     )
     parser.add_argument(
-        "--save-plans",
-        action="store_true",
+        "--plans-identifier",
         required=False,
         help="[OPTIONAL ]Include this flag to have the client save the plans \
             file that it uses for training locally. The user can also pass an \
@@ -111,7 +112,7 @@ if __name__ == "__main__":
     main(
         dataset_id=args.dataset_id,
         data_identifier=args.data_identifier,
-        save_plans=args.save_plans,
+        plans_identifier=args.plans_identifier,
         always_preprocess=args.always_preprocess,
         server_address=args.server_address,
     )

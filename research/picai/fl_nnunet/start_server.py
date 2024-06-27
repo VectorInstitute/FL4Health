@@ -1,4 +1,5 @@
 import argparse
+import pickle
 from functools import partial
 from typing import Optional
 
@@ -27,7 +28,7 @@ def get_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    nnunet_plans_dict = load_json(nnunet_plans)
+    nnunet_plans_dict = pickle.dumps(load_json(nnunet_plans))
     return {
         "n_clients": n_clients,
         "nnunet_config": nnunet_config,
