@@ -101,7 +101,7 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
 
     # Assert that probabilities of sampled indices are close to assigned probabilities
     for i in range(10):
-        assert pytest.approx(new_probabilities[i], abs=0.01) == sampler.probabilities[i]
+        assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
 
     # Extreme heterogeneity
     relative_probabilities = [i for i in range(1, 101, 10)]
@@ -112,7 +112,7 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
 
     # Assert that probabilities of sampled indices are close to assigned probabilities
     for i in range(10):
-        assert pytest.approx(new_probabilities[i], abs=0.005) == sampler.probabilities[i]
+        assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
 
     unset_all_random_seeds()
 
