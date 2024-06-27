@@ -56,4 +56,4 @@ python fl4health/datasets/skin_cancer/preprocess_skin.py
 
 After preprocessing, the datasets are ready to be used in the federated learning examples provided in this repository. For an example, refer to the FedBN example:
 
-[examples/fedbn_example/README.md](examples/fedbn_example/README.md)
+[FedBN Example README](../../examples/fedbn_example/README.md)

@@ -44,6 +44,6 @@ The argument `dataset_name` has the following specifications:
    - **Default Value**: `"mnist"`
    - **Usage**: `--dataset_name <dataset_name>`
 
-For more details on the skin cancer datasets, please refer to the README file located at `fl4health/datasets/skin_cancer/README.md`.
+For more details on the skin cancer datasets, please refer to the README file located at [Skin Cancer Dataset README](../../datasets/skin_cancer/README.md).
 
 After all three clients have been started, federated learning should commence.
