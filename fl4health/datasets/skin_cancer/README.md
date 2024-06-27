@@ -2,6 +2,12 @@
 
 This repository provides a set of scripts to download and preprocess skin cancer datasets for use in federated learning experiments. The datasets included are HAM10000, PAD-UFES-20, ISIC_2019, and Derm7pt.
 
+The code is adapted from the paper by Seongjun Yang*<sup>1</sup>, Hyeonji Hwang*<sup>2</sup>, Daeyoung Kim<sup>2</sup>, Radhika Dua<sup>3</sup>, Jong-Yeup Kim<sup>4</sup>, Eunho Yang<sup>2</sup>, Edward Choi<sup>2</sup> | [Paper](https://arxiv.org/abs/2207.03075)
+
+<sup>1</sup>KRAFTON, <sup>2</sup>KAIST AI, <sup>3</sup>Google Research, India, <sup>4</sup>College of Medicine, Konyang University
+
+and their code available at the [medical_federated GitHub repository](https://github.com/wns823/medical_federated.git).
+
 ## Getting Started
 
 To start using these datasets, follow the steps below.

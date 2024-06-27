@@ -1,3 +1,9 @@
+# The following code is adapted from the preprocess_skin.py script
+# from the medical_federated GitHub repository by Seongjun Yang et al.
+# Paper: https://arxiv.org/abs/2207.03075
+# Code: https://github.com/wns823/medical_federated.git
+# - medical_federated/skin_cancer_federated/preprocess_skin.py
+
 import json
 import os
 from typing import Any, Dict
