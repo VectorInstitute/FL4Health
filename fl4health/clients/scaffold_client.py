@@ -9,6 +9,7 @@ from opacus.optimizers.optimizer import DPOptimizer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -54,16 +55,25 @@ class ScaffoldClient(BasicClient):
         """
         Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
-        assert self.model is not None and self.parameter_exchanger is not None
+        if not self.initialized:
+            # If initialized==False, we are doing client side initialization (get_parameters called before fit)
+            # so we must call setup_client first
+            self.setup_client(config)
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
-        # Weights and control variates updates sent to server for aggregation
-        # Control variates updates sent because only client has access to previous client control variate
-        # Therefore it can only be computed locally
-        assert self.client_control_variates_updates is not None
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
-        return packed_params
+            # Weights and control variates updates sent to server for aggregation
+            # Control variates updates sent because only client has access to previous client control variate
+            # Therefore it can only be computed locally
+            assert self.client_control_variates_updates is not None
+            packed_params = self.parameter_exchanger.pack_parameters(
+                model_weights, self.client_control_variates_updates
+            )
+            return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
