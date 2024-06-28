@@ -1,3 +1,4 @@
+# You should set these yourself
 n_clients: 1
 nnunet_config: 2d
 nnunet_plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset011_PICAI/nnUNetPlans.json

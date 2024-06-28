@@ -10,11 +10,13 @@ from nnunetv2.paths import nnUNet_preprocessed
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
 # from fl4health.utils.metrics import TorchMetric
-from research.picai.fl_nnunet.nnunet_client import nnUNetClient
+from research.picai.fl_nnunet.fl_nnunet_old_version.nnunet_client import nnUNetClient
 
 # from torchmetrics.classification import MultilabelAveragePrecision
 # from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU
 
+
+# from research.picai.metrics_utils import nnUNetMetric
 
 # from research.picai.metrics_utils import PICAI_AUROC, PICAI_Score
 
@@ -35,6 +37,7 @@ def main(
     log(INFO, f"Using server Address: {server_address}")
 
     # Define metrics
+    # Metrics do not work right now
     # metrics = [
     #     TorchMetric(name="DICE", metric=GeneralizedDiceScore(num_classes=2).to(DEVICE)),
     #     TorchMetric(name="IoU", metric=MeanIoU(num_classes=2).to(DEVICE)),
