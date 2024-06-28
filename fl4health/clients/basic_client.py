@@ -138,9 +138,19 @@ class BasicClient(NumPyClient):
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
                 parameters to be aggregated, but can contain more information.
         """
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
 
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
