@@ -25,6 +25,7 @@ aiohttp = "^3.9.3"
 ecos = "2.0.7.post1"
 qpth = "^0.0.16"
 urllib3 = "^2.2.2"
+torchsummary = "^1.5.1"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.13 version because of restrictions with tensorflow-io

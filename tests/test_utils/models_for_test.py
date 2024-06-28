@@ -64,6 +64,66 @@ class SmallCnn(nn.Module):
         return x
 
 
+class HierarchicalCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.h1_layer1 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=2, out_channels=4, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.h1_layer2 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.classifier = nn.ModuleDict(
+            {"fc": nn.Linear(1 * 4 * 4, 10), "relu": nn.ReLU()}  # Assuming input image size is 64x64
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.h1_layer1["h2_layer1"]["conv"](x)
+        x = self.h1_layer1["h2_layer1"]["pool"](x)
+        x = self.h1_layer1["h2_layer2"]["conv"](x)
+        x = self.h1_layer1["h2_layer2"]["pool"](x)
+
+        x = self.h1_layer2["h2_layer1"]["conv"](x)
+        x = self.h1_layer2["h2_layer1"]["pool"](x)
+        x = self.h1_layer2["h2_layer2"]["conv"](x)
+        x = self.h1_layer2["h2_layer2"]["pool"](x)
+
+        x = torch.flatten(x, 1)
+        x = self.classifier["fc"](x)
+        x = self.classifier["relu"](x)
+
+        return x
+
+
 class FeatureCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()

@@ -66,14 +66,25 @@ class FeatureExtractorBuffer:
 
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
         """
-        Traverse the hierarchical attribute of the module to get the most specific named module. This
-        function helps to allow the user to specify the generic name of high level modules in the model
-        instead of the full hierarchical name.
+        Traverse the hierarchical attributes of the module to get the desired attribute, as hooks should be
+        registered to specific layers of the model, not to nn.Sequential or nn.ModuleList.
         """
         if len(layer_hierarchy) == 1:
             return getattr(module, layer_hierarchy[0])
         else:
             return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
+
+    def find_last_common_prefix(self, prefix: str, layers_name: List[str]) -> str:
+        """
+        Check the model's list of named modules to filter any layer that starts with the given prefix and
+        return the last one. Here we assume the list of named modules is sorted in the order of the model's
+        forward pass with depth-first traversal. This will allow the user to specify the generic name of the
+        layer instead of the full hierarchical name.
+        """
+        filtered_layers = [layer for layer in layers_name if layer.startswith(prefix)]
+
+        # Return the last element that matches the criteria
+        return filtered_layers[-1]
 
     def _maybe_register_hooks(self) -> None:
         """
@@ -82,17 +93,18 @@ class FeatureExtractorBuffer:
         """
         if len(self.fhooks) == 0:
             log(INFO, "Starting to register hooks:")
-            named_layers = dict(self.model.named_modules())
-            for layer, _ in named_layers:
-                if layer in self.flatten_feature_extraction_layers.keys():
-                    # Split the layer name by '.' to get the hierarchical attribute
-                    log(INFO, f"Registering hook for layer: {layer}")
-                    layer_hierarchicy = layer.split(".")
-                    self.fhooks.append(
-                        self.get_hierarchical_attr(self.model, layer_hierarchicy).register_forward_hook(
-                            self.forward_hook(layer)
-                        )
+            named_layers = list(dict(self.model.named_modules()).keys())
+            for layer in self.flatten_feature_extraction_layers.keys():
+                log(INFO, f"Registering hook for layer: {layer}")
+                # Find the the last specific layer under a given generic name
+                specific_layer = self.find_last_common_prefix(layer, named_layers)
+                # Split the specific layer name by '.' to get the hierarchical attribute
+                layer_hierarchicy_list = specific_layer.split(".")
+                self.fhooks.append(
+                    self.get_hierarchical_attr(self.model, layer_hierarchicy_list).register_forward_hook(
+                        self.forward_hook(layer)
                     )
+                )
         else:
             log(INFO, "Hooks already registered.")
 
