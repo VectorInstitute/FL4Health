@@ -35,4 +35,15 @@ python -m examples.fedbn_example.client --dataset_path /path/to/data
 the dataset already exists at the path specified, it will be loaded from there. Otherwise, the dataset will be
 automatically downloaded to the path specified and used in the run.
 
+The argument `dataset_name` has the following specifications:
+   - **Purpose**: Specifies the name of the dataset to be used.
+   - **Functionality**: Determines the type of client to be initialized based on the dataset name. For instance, `SkinCancerFedBNClient` is used for skin cancer datasets, while `MnistFedBNClient` is used for the MNIST dataset.
+   - **Supported Values**:
+     - Skin Cancer Datasets: `"Barcelona"`, `"Rosendahl"`, `"Vienna"`, `"UFES"`, `"Canada"`
+     - MNIST Dataset: `"mnist"`
+   - **Default Value**: `"mnist"`
+   - **Usage**: `--dataset_name <dataset_name>`
+
+For more details on the skin cancer datasets, please refer to the README file located at [Skin Cancer Dataset README](../../datasets/skin_cancer/README.md).
+
 After all three clients have been started, federated learning should commence.
