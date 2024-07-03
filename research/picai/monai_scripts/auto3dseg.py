@@ -40,29 +40,40 @@ def gen_dataset_list(data_dir: Path, output_path: Optional[str] = None, ext: str
     channels = np.unique([int(file.split(".")[0][-4:]) for file in os.listdir(train_dir)])
 
     # Initialize datalist
+    # The values to the testing and training keys should be a list of dictionaries
+    # where each dictionary contains information about a single case
     datalist: Dict[str, list] = {"testing": [], "training": []}
 
+    # nnUNet datasets store images as unique-case-identifier_xxxx.ext
+    # xxxx is a 4 digit integer representing the channel/modaility.
+    # ext is the file extenstion
+    # Labels are stored as unique-case-identifier.ext as they do not have multiple channels
+
     if os.path.exists(test_dir):  # nnUNet Datasets do not always have test sets
-        # Populate test cases
+        # Get test case identifiers
         test_cases = np.unique(
             [file.split(".")[0][:-5] for file in os.listdir(test_dir) if ("._" not in file) and (ext in file)]
         )
+        # Create a list of filenames for each channel and store that as the value to the image key
         for case in test_cases:
             case_files = []
             for c in channels:
                 case_files.append("./imagesTs/" + case + f"_{c:04d}" + ext)
             datalist["testing"].append({"image": case_files})
 
-    # Populate training cases
+    # Get train case identifiers
     train_cases = np.unique(
         [file.split(".")[0][:-5] for file in os.listdir(train_dir) if ("._" not in file) and (ext in file)]
     )
+    # Create a list of filenames for each channel and store that as the value to the image key
     for case in train_cases:
         case_files = []
         for c in channels:
             case_files.append("./imagesTr/" + case + f"_{c:04d}" + ext)
+        # We also include the path to the label as the value for the label key
         datalist["training"].append({"image": case_files, "label": "./labelsTr/" + case + ext})
 
+    # Save datalist json and return output path
     if output_path is None:
         output_path = join(data_dir, "datalist.json")
 
