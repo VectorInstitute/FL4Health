@@ -44,8 +44,22 @@ jobs:
           # ignoring security vulnerabilities in cryptography
           # because flwr 1.7 depends on them. Opening an issue
           # with flwr. Likely can remove this in flwr 1.8.
+          #
+          # ignoring security vulnerabilities for mlflow as monai's
+          # autoseg3d pipeline depends on mlflow=^2.12.2
+          # Raised an issue with mlflow
+          # The 1st 4 vulnerabilities are for cryptography, the rest (9) are for mlflow
           ignore-vulns: |
             GHSA-3ww4-gg4f-jr7f
             GHSA-9v9h-cgj8-h64p
             GHSA-6vqw-3v5j-54x4
             GHSA-cqh9-jfqr-h9jj
+            GHSA-x38x-g6gr-jqff
+            GHSA-j8mg-pqc5-x9gj
+            GHSA-ghv6-9r9j-wh4j
+            GHSA-cv6c-7963-wxcg
+            GHSA-76cg-cfhx-373f
+            GHSA-wf7f-8fxf-xfxc
+            GHSA-cwgg-w6mp-w9hg
+            GHSA-43c4-9qgj-x742
+            GHSA-7p8j-qv6x-f4g4
