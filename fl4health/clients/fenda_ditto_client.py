@@ -105,6 +105,8 @@ class FendaDittoClient(DittoClient):
         Args:
             config (Config): The config from the server.
         """
+        super().setup_client(config)
+        
         # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
         check_shape_match(
             self.global_model.base_module.parameters(),
@@ -118,8 +120,6 @@ class FendaDittoClient(DittoClient):
             self.model.first_feature_extractor.parameters(),
             "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
         )
-
-        super().setup_client(config)
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
