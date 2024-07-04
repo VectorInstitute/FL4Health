@@ -1,5 +1,5 @@
 from logging import DEBUG, ERROR, INFO
-from typing import Optional
+from typing import Optional, Tuple
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
@@ -53,7 +53,7 @@ class ScaffoldServer(FlServer):
         )
         self.warm_start = warm_start
 
-    def _get_initial_parameters(self, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
         """
         Overrides the _get_initial_parameters in the flwr server base class to strap on the possibility of a
         warm_start for SCAFFOLD. Initializes parameters (models weights and control variates) of the server.
@@ -62,13 +62,17 @@ class ScaffoldServer(FlServer):
         weights are discarded.
 
         Args:
+            server_round (int): The current server round.
             timeout (Optional[float]): If the server strategy object does not have a server-side initial parameters
                 function defined, then one of the clients is polled and their model parameters are returned in order to
                 initialize the models of all clients. Timeout defines how long to wait for a response.
+
+        Returns:
+            Parameters: Initialed parameters (model weights and control variates).
         """
         assert isinstance(self.strategy, Scaffold)
         # First run basic parameter initialization from the parent server
-        initial_parameters = super()._get_initial_parameters(timeout=timeout)
+        initial_parameters = super()._get_initial_parameters(server_round, timeout=timeout)
 
         # If warm_start, run routine to initialize control variates without updating global model
         # control variates are initialized as average local gradient over training steps
@@ -87,7 +91,7 @@ class ScaffoldServer(FlServer):
                     clients (out of {self._client_manager.num_available()})",
                 )
 
-                results, failures = fit_clients(client_instructions, self.max_workers, timeout)
+                results, failures = fit_clients(client_instructions, self.max_workers, timeout, group_id=server_round)
 
                 log(
                     DEBUG,
@@ -114,7 +118,7 @@ class ScaffoldServer(FlServer):
 
         return initial_parameters
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Run the SCAFFOLD FL algorithm for a fixed number of rounds. This overrides the base server fit class just to
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
@@ -126,8 +130,9 @@ class ScaffoldServer(FlServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            History: The history object contains the full set of FL training results, including things like aggregated
-                loss and metrics.
+            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+                FL training results, including things like aggregated loss and metrics.
+                Tuple also includes elapsed time in seconds for round.
         """
         assert isinstance(self.strategy, Scaffold)
         return super().fit(num_rounds=num_rounds, timeout=timeout)
@@ -205,7 +210,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             num_server_rounds=num_server_rounds,
         )
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Run DP Scaffold algorithm for the specified number of rounds.
 
@@ -216,8 +221,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            History: The history object contains the full set of FL training results, including things like aggregated
-                loss and metrics.
+            Tuple[History, float]: First element of tuple is history object containing the full set of FL
+                training results, including aggregated loss and metrics.
+                Tuple also includes the elapsed time in seconds for round.
         """
         assert isinstance(self.strategy, Scaffold)
         # Now that we initialized the parameters for scaffold, call instance level privacy fit

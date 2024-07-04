@@ -1,7 +1,7 @@
 import timeit
 from logging import INFO
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -63,7 +63,7 @@ class PicaiServer(FlServerWithCheckpointing):
         )
         self.per_round_checkpointer = ServerPerRoundCheckpointer(intermediate_checkpoint_dir, Path("server.ckpt"))
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Overrides method in parent class to call custom fit_with_per_round_checkpointing that is resilient
         against pre-emptions.
@@ -73,15 +73,16 @@ class PicaiServer(FlServerWithCheckpointing):
             timeout (Optional[float]): The timeout for clients to return results in a given FL round.
 
         Returns:
-            History: The losses and metrics computed during training and validation.
+            Tuple[History, float]: The losses and metrics computed during training and validation
+                and the elapsed time in seconds.
         """
-        history = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
+        history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
         if self.wandb_reporter:
             # report history to W and B
             self.wandb_reporter.report_metrics(num_rounds, history)
-        return history
+        return history, elapsed_time
 
-    def fit_with_per_epoch_checkpointing(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit_with_per_epoch_checkpointing(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
         server provided by flower (flwr.server.server.Server) except that it is resilient to pre-emptions.
@@ -93,7 +94,8 @@ class PicaiServer(FlServerWithCheckpointing):
             timeout (Optional[float]): The timeout for clients to return results in a given FL round.
 
         Returns:
-            History: The losses and metrics computed during training and validation.
+            Tuple[History, float]: The losses and metrics computed during training and validation and
+                the elapsed time in seconds.
         """
         # Initialize parameters
         log(INFO, "Initializing global parameters")
@@ -103,7 +105,7 @@ class PicaiServer(FlServerWithCheckpointing):
             model, history, server_round = self.per_round_checkpointer.load_checkpoint()
             self.parameters = get_initial_model_parameters(model)
         else:
-            self.parameters = self._get_initial_parameters(timeout)
+            self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
             history = History()
             server_round = 1
 
@@ -165,6 +167,6 @@ class PicaiServer(FlServerWithCheckpointing):
 
         # Bookkeeping
         end_time = timeit.default_timer()
-        elapsed = end_time - start_time
-        log(INFO, "FL finished in %s", elapsed)
-        return history
+        elapsed_time = end_time - start_time
+        log(INFO, "FL finished in %s", elapsed_time)
+        return history, elapsed_time
