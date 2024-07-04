@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 import torch
 from flwr.common import Config
