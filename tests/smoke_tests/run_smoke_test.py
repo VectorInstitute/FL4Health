@@ -226,20 +226,30 @@ async def run_smoke_test(
     assert "error" not in full_server_output.lower(), (
         f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Error message found for server."
     )
-    assert "[SUMMARY]" in full_server_output, (
-        f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
-    )
-
+    if assert_evaluation_logs:
+        assert f"Federated Evaluation received {config['n_clients']} results and 0 failures" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+        )
+        assert "Federated Evaluation Finished" in full_server_output, (
+            f"Full output:\n{full_server_output}\n"
+            "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
+        )
+    else:
+        assert "[SUMMARY]" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
+        )
+    """
     assert all(
         message in full_server_output
         for message in [
-            "configure_fit: strategy",
-            "aggregate_fit: received",
-            "[ROUND 1]",
-            "[ROUND 2]",
-            "[ROUND 3]",
+            "app_fit: losses_distributed",
+            "app_fit: metrics_distributed_fit",
+            "app_fit: metrics_distributed",
+            "app_fit: losses_centralized",
+            "app_fit: metrics_centralized",
         ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+    """
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -254,7 +264,12 @@ async def run_smoke_test(
             f"Full client output:\n{full_client_outputs[i]}\n"
             f"[ASSERT ERROR] Shutdown message not found for client {i}."
         )
-        if not skip_assert_client_fl_rounds:
+        if assert_evaluation_logs:
+            assert "Client Evaluation Local Model Metrics" in full_client_outputs[i], (
+                f"Full client output:\n{full_client_outputs[i]}\n"
+                f"[ASSERT ERROR] 'Client Evaluation Local Model Metrics' message not found for client {i}."
+            )
+        elif not skip_assert_client_fl_rounds:
             assert f"Current FL Round: {config['n_server_rounds']}" in full_client_outputs[i], (
                 f"Full client output:\n{full_client_outputs[i]}\n"
                 f"[ASSERT ERROR] Last FL round message not found for client {i}."
