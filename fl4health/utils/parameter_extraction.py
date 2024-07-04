@@ -1,3 +1,5 @@
+from typing import Iterable
+import torch
 import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Parameters
@@ -18,13 +20,13 @@ def get_all_model_parameters(model: nn.Module) -> Parameters:
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in model.state_dict().items()])
 
 
-def check_shape_match(params1, params2, error_message):
+def check_shape_match(params1: Iterable[torch.Tensor], params2: Iterable[torch.Tensor], error_message: str) -> None:
     """
     Check if the shapes of parameters from two models match.
 
     Args:
-        params1 (iterable): Parameters from the first model.
-        params2 (iterable): Parameters from the second model.
+        params1 (Iterable[torch.Tensor]): Parameters from the first model.
+        params2 (Iterable[torch.Tensor]): Parameters from the second model.
         error_message (str): Error message to display if the shapes do not match.
     """
     params1_list = list(params1)
