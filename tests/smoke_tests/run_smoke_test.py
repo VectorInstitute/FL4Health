@@ -238,8 +238,8 @@ async def run_smoke_test(
         assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
             f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
         )
-        assert "FL finished" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] FL finished message not found for server."
+        assert "[SUMMARY]" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
         )
     assert all(
         message in full_server_output
