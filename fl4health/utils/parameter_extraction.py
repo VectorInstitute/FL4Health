@@ -1,4 +1,5 @@
 from typing import Iterable
+
 import torch
 import torch.nn as nn
 from flwr.common.parameter import ndarrays_to_parameters
