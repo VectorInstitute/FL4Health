@@ -59,10 +59,10 @@ class FlServer(Server):
         else:
             self.metrics_reporter = MetricsReporter()
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
         self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
 
-        history, elapsed_time = super().fit(num_rounds, timeout)
+        history = super().fit(num_rounds, timeout)
         if self.wandb_reporter:
             # report history to W and B
             self.wandb_reporter.report_metrics(num_rounds, history)
@@ -75,7 +75,7 @@ class FlServer(Server):
             }
         )
 
-        return history, elapsed_time
+        return history
 
     def fit_round(
         self,
@@ -251,7 +251,9 @@ class FlServer(Server):
         )
         # Collect `evaluate` results from all clients participating in this round
         results, failures = evaluate_clients(
-            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=server_round
+            client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
         )
         log(
             DEBUG,
