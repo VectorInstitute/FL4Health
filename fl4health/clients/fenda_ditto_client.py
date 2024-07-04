@@ -106,7 +106,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
         """
         super().setup_client(config)
-        
+
         # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
         check_shape_match(
             self.global_model.base_module.parameters(),
