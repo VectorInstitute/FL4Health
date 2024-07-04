@@ -23,44 +23,12 @@ from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.utils.load_data import load_mnist_data
-from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFendaDittoClient(FendaDittoClient):
-    def __init__(
-        self,
-        data_path: Path,
-        metrics: Sequence[Metric],
-        device: torch.device,
-        checkpoint_dir: str,
-        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
-        lam: float = 1.0,
-        freeze_global_feature_extractor: bool = False,
-    ) -> None:
-        super().__init__(
-            data_path=data_path,
-            metrics=metrics,
-            device=device,
-            loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
-            lam=lam,
-            freeze_global_feature_extractor=freeze_global_feature_extractor,
-        )
-
-        pre_aggregation_checkpointer = BestLossTorchCheckpointer(
-            checkpoint_dir, f"fenda_ditto_client_{self.client_name}_pre_agg.pkl"
-        )
-        post_aggregation_checkpointer = BestLossTorchCheckpointer(
-            checkpoint_dir, f"fenda_ditto_client_{self.client_name}_post_agg.pkl"
-        )
-        self.checkpointer = ClientCheckpointModule(
-            pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
-        )
-
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = self.narrow_config_type(config, "batch_size", int)
@@ -81,7 +49,6 @@ class MnistFendaDittoClient(FendaDittoClient):
         ).to(self.device)
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters()
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=0.01)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=0.01)
         return {"global": global_optimizer, "local": local_optimizer}
@@ -115,6 +82,14 @@ if __name__ == "__main__":
         required=False,
         default="examples/fenda_ditto_example/",
     )
+    parser.add_argument(
+        "--checkpointer_type",
+        action="store",
+        type=str,
+        choices=["pre", "post", "both"],
+        help="Type of checkpointer to use: pre, post, or both",
+        default="both",
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -125,7 +100,30 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFendaDittoClient(data_path, [Accuracy()], DEVICE, args.checkpoint_path, lam=0.1)
+    pre_aggregation_checkpointer = None
+    post_aggregation_checkpointer = None
+
+    if args.checkpointer_type in ["pre", "both"]:
+        pre_aggregation_checkpointer = BestLossTorchCheckpointer(
+            args.checkpoint_path, f"fenda_ditto_client_pre_agg.pkl"
+        )
+    if args.checkpointer_type in ["post", "both"]:
+        post_aggregation_checkpointer = BestLossTorchCheckpointer(
+            args.checkpoint_path, f"fenda_ditto_client_post_agg.pkl"
+        )
+
+    checkpointer = ClientCheckpointModule(
+        pre_aggregation=pre_aggregation_checkpointer,
+        post_aggregation=post_aggregation_checkpointer
+    )
+    client = MnistFendaDittoClient(
+        data_path,
+        [Accuracy()],
+        DEVICE,
+        args.checkpoint_path,
+        checkpointer=checkpointer,
+        lam=0.1
+    )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully

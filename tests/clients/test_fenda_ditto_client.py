@@ -7,7 +7,7 @@ from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from tests.clients.fixtures import get_client  # noqa
-from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn
+from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn
 
 
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn()))])
@@ -24,8 +24,7 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
 
     global_model_params = [
         val.detach().clone()
-        for name, val in fenda_ditto_client.global_model.state_dict().items()
-        if name.startswith("base_module.")
+        for _, val in fenda_ditto_client.global_model.state_dict().items()
     ]
 
     fenda_model_params = [
@@ -36,7 +35,7 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
 
     # First fitting round we should set both the global and local models to params and store the global model values
     assert fenda_ditto_client.initial_global_tensors is not None
-    # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)
+    # Tensors should be conv1 weights, biases, conv2 weights, biases (so 4 total)
     assert len(fenda_ditto_client.initial_global_tensors) == 4
     # Make sure that we saved the right parameters
     for layer_init_global_tensor, layer_params in zip(fenda_ditto_client.initial_global_tensors, params):
@@ -44,19 +43,18 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     # Make sure the global model was set correctly
     for global_model_layer_params, layer_params in zip(global_model_params, params):
         assert pytest.approx(torch.sum(global_model_layer_params - layer_params), abs=0.0001) == 0.0
-    # # Make sure the local model was set correctly
+    # Make sure the local model was set correctly
     for local_model_layer_params, layer_params in zip(fenda_model_params, params):
         assert pytest.approx(torch.sum(local_model_layer_params - layer_params), abs=0.0001) == 0.0
 
-    # # Now we update in a later round
+    # Now we update in a later round
     config = {"current_server_round": 2}
     params = [param + 1.0 for param in params]
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(2)
     global_model_params = [
         val.detach().clone()
-        for name, val in fenda_ditto_client.global_model.state_dict().items()
-        if name.startswith("base_module.")
+        for _, val in fenda_ditto_client.global_model.state_dict().items()
     ]
 
     fenda_model_params = [
@@ -70,7 +68,7 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     # Make sure the global model was set correctly
     for global_model_layer_params, layer_params in zip(global_model_params, params):
         assert pytest.approx(torch.sum(global_model_layer_params - layer_params), abs=0.0001) == 0.0
-    # # Make sure the local model was set correctly
+    # Make sure the local model was set correctly
     for local_model_layer_params, layer_params in zip(fenda_model_params, params):
         assert pytest.approx(torch.sum(local_model_layer_params - layer_params), abs=0.0001) == 0.0
 
@@ -130,7 +128,7 @@ def test_compute_loss(get_client: FendaDittoClient) -> None:  # noqa
     fenda_ditto_client.global_model.eval()
     fenda_ditto_client.model.eval()
     evaluation_loss = fenda_ditto_client.compute_evaluation_loss(preds, {}, target)
-    print(evaluation_loss)
+
     assert isinstance(training_loss.backward, dict)
     assert pytest.approx(13.673, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
@@ -164,8 +162,16 @@ def test_compute_loss_freeze_global_feature_extractor(get_client: FendaDittoClie
     fenda_ditto_client.global_model.eval()
     fenda_ditto_client.model.eval()
     evaluation_loss = fenda_ditto_client.compute_evaluation_loss(preds, {}, target)
-    print(evaluation_loss)
+
     assert isinstance(training_loss.backward, dict)
     assert pytest.approx(13.673, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
+
+@pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(SmallCnn(), FeatureCnn(), FendaHeadCnn()))])
+def test_get_parameter_exchanger_with_incorrect_model(get_client: FendaDittoClient) -> None:  # noqa
+    fenda_ditto_client = get_client
+    fenda_ditto_client.global_model = SequentiallySplitExchangeBaseModel(SmallCnn(), HeadCnn())
+    # Should raise an assertion error because the model type is incorrect.
+    with pytest.raises(AssertionError):
+        fenda_ditto_client.setup_client({})
