@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Dict
 
 import flwr as fl
 import torch
@@ -105,11 +105,11 @@ if __name__ == "__main__":
 
     if args.checkpointer_type in ["pre", "both"]:
         pre_aggregation_checkpointer = BestLossTorchCheckpointer(
-            args.checkpoint_path, f"fenda_ditto_client_pre_agg.pkl"
+            args.checkpoint_path, "fenda_ditto_client_pre_agg.pkl"
         )
     if args.checkpointer_type in ["post", "both"]:
         post_aggregation_checkpointer = BestLossTorchCheckpointer(
-            args.checkpoint_path, f"fenda_ditto_client_post_agg.pkl"
+            args.checkpoint_path, "fenda_ditto_client_post_agg.pkl"
         )
 
     checkpointer = ClientCheckpointModule(
