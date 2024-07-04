@@ -160,6 +160,7 @@ async def run_smoke_test(
         "Polling Clients for sample counts",
         # printed by federated_eval
         "Federated Evaluation Starting",
+        "[ROUND 1]",
     ]
 
     output_found = False

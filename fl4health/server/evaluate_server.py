@@ -152,7 +152,7 @@ class EvaluateServer(Server):
 
         # Collect `evaluate` results from all clients participating in this round
         results, failures = evaluate_clients(
-            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=None
+            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=0
         )
         log(INFO, f"Federated Evaluation received {len(results)} results and {len(failures)} failures")
 
