@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 import torch
 from flwr.common import Config
 
@@ -7,9 +8,9 @@ from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.utils.parameter_extraction import check_shape_match
 from tests.clients.fixtures import get_client  # noqa
 from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn
-from fl4health.utils.parameter_extraction import check_shape_match
 
 
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn()))])
