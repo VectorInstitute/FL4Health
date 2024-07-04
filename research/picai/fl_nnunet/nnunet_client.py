@@ -1,10 +1,12 @@
 import os
 import pickle
 from os.path import exists, join
-from typing import Any, Literal, Optional, Tuple
+from typing import Any, Dict, Literal, Optional, Tuple
 
+import numpy as np
+import torch
 from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Metrics
 from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
 from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
 from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
@@ -12,34 +14,202 @@ from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
 from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 from numpy import ceil
-from torch import Tensor, nn
+from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from torchmetrics import Metric as TMetric
 
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, TorchInputType, TorchTargetType
+from fl4health.utils.metrics import Metric, MetricManager
 
 nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 
-# class nnUNetMetricManager(MetricManager):
-#     def __init__(self, **kwargs):
-#         super().__init__(**kwargs)
 
-#     def update(self, preds: Dict[str, Tensor], target: Tensor) -> None:
-#         # nnUNet models output seperate channels for each class (even in binary segmentation)
-#         # However labels are not onehot encoded to match leading to a dimension error when using torchmetrics
-#         # We only have a single target
-#         pred_key: str = next(iter(preds))
-#         pred: Tensor = preds[pred_key]
-#         if pred.ndim != target.ndim: # Add channel dimension if there isn't one
-#             target = target.view(target.shape[0], 1, *target.shape[1:])
+class nnUNetMetric(Metric):
+    def __init__(self, name: str, metric: Metric, has_regions: bool, ignore_label: Optional[int]) -> None:
+        """
+        Thin wrapper on FL4Health Metric to make it compatible with nnUNet models.
+        Requires information from the nnunet trainer (has_regions and ignore_label)
 
-#         if pred.shape != target.shape:
-#             target_one_hot = torch.zeros(pred.shape, dtype=torch.bool)
-# This does the onehot encoding. Its a weird function that is not intuitive
-#             target_one_hot.scatter(1, target.long(), 1)
+        Args:
+            name (str): Name of the metric
+            metric (Metric): FL4Health Metric class based metric
+            has_regions (bool): Whether or not nnunet region based training
+                is being used
+            ignore_label (Optional[int]): Used by nnunet to ignore certain
+                pixels in images with sparse annotations.
+                see (https://github.com/MIC-DKFZ/nnUNet/blob/master/documentation/ignore_label.md)
+        """
+        super().__init__(name=name)
+        self.metric = metric
+        self.ignore_label = ignore_label
+        self.has_regions = has_regions
 
-#         return super().update(preds, target_one_hot)
+    def maybe_ohe_target(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        """
+        Checks if targets are one hot encoded and if not one hot encodes them
+
+        Args:
+            pred (torch.Tensor): The model predictions
+            targets (torch.Tensor): The targets for the predictions
+
+        Returns:
+            torch.Tensor: the one hot encoded targets
+        """
+        # nnUNet default loss require inputs/preds to be one-hot-encoded (ohe)
+        # and targets to not be ohe
+        # torchmetrics require preds and targets to either both be ohe or both \
+        # not be ohe.
+        # Therefore check if targets are ohe and if not ohe them
+
+        # Add channel dimension if there isn't one
+        if pred.ndim != target.ndim:
+            target = target.view(target.shape[0], 1, *target.shape[1:])
+
+        if pred.shape != target.shape:
+            target_ohe = self.ohe(
+                ohe_shape=pred.shape, input=target, device=pred.device, dtype=torch.bool
+            )  # dtype of ohe targets is boolean
+
+        return target_ohe
+
+    def ohe(
+        self, ohe_shape: torch.Size, input: torch.Tensor, device: torch.device, dtype: torch.dtype
+    ) -> torch.Tensor:
+        """
+        One hot encodes (ohe) a torch.Tensor
+
+        Args:
+            input (torch.Tensor): the tensor to be one hot encoded
+            device (torch.device): the device to put the output ohe tensor on
+            dtype (torch.dtype): the desired dtype for the ohe tensor
+
+        Returns:
+            torch.Tensor: A ohe version of the input tensor on the specified
+                device with the specified dtype
+        """
+        output_ohe = torch.zeros(ohe_shape, device=device, dtype=dtype)
+        # This is how nnunet does ohe in their functions
+        # Its a weird function that is not intuitive
+        # CAREFUL: Notice the underscore at the end of the scatter function.
+        # It makes a difference, was a hard bug to find
+        output_ohe.scatter_(1, input.long(), 1)
+        return output_ohe
+
+    def get_oheseg_from_logits(self, input: torch.Tensor) -> torch.Tensor:
+        """
+        Converts output logits to one hot encoded predicted segmentation maps
+
+        Args:
+            input (torch.Tensor): the nnunet model output logits
+
+        Returns:
+            torch.Tensor: a one hot encoded predicted segmentation map
+        """
+        if self.has_regions:
+            # If nnunet has_regions, that means pixels can have multiple classes
+            pred_ohe = torch.sigmoid(input) > 0.5
+        else:
+            # produce a non ohe segmentation map from the ohe logits
+            pred_seg = input.argmax(1)[:, None]
+            # now ohe the predictions again
+            pred_ohe = self.ohe(
+                ohe_shape=input.shape, input=pred_seg, device=input.device, dtype=torch.float32
+            )  # dtype of ohe preds is float
+
+        return pred_ohe
+
+    def mask_data(self, input_ohe: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Masks the input and target tensors according to nnunet ignore_label
+
+        Args:
+            input_ohe (torch.Tensor): The one hot encoded predicted
+                segmentation maps
+            target (torch.Tensor): The ground truth segmentation map with shape
+                (batch, classes, x, y(, z)) where classes > 2
+
+        Returns:
+            torch.Tensor: The ohe predicted segmentation maps, maybe masked
+            torch.Tensor: The target segmentation maps, maybe masked
+        """
+        # create mask where 1 is where pixels in target are not ignore label
+        # Modify target to remove the last class which is the ignore_label class
+        new_target = target
+        if self.has_regions:  # target is ohe
+            if target.dtype == torch.bool:
+                mask = ~target[:, -1:]  # omit the last class
+            else:
+                mask = 1 - target[:, -1:]
+            new_target = new_target[:, :-1]  # Remove final ignore class from target
+        else:  # target is not one hot encoded
+            mask = (target != self.ignore_label).float()
+            # Set ignore label to background essentially removing it as a class
+            new_target[new_target == self.ignore_label] = 0
+
+        # Tile the mask to be one hot encoded
+        mask_here = torch.tile(mask, (1, input_ohe.shape[1], *[1 for _ in range(2, input_ohe.ndim)]))
+
+        return input_ohe * mask_here, new_target
+
+    def update(self, input: TorchTargetType, target: TorchTargetType) -> None:
+        """
+        Updates the state of the metric after transforming the preds and \
+            targets (from the nnunet default format) to be compatible with \
+            torchmetrics
+
+        Args:
+            input (TorchTargetType): The output of the nnunet model. Either a \
+                torch.Tensor or a list of torch.Tensors
+            target (TorchTargetType): The nnunet targets used for the loss \
+                function
+        """
+        # When deep supervision is on, the nnunet models have multiple \
+        # segmentation heads and return lists of torch.Tensors for \
+        # the model outputs/predictions. The nnunet dataloaders \
+        # correspondingly return lists of torch.Tensors for the targets
+
+        # Since TorchTargetType is a TypeVar, we know pred and target will be
+        # the same type
+        if isinstance(input, (tuple, list)):
+            # If pred is a list or tuple, then assume this is because deep
+            # supervision is on. Actual pred and target are at index 0
+            input: torch.Tensor = input[0]
+            target: torch.Tensor = target[0]
+
+        # By default, nnunet models output logits.
+        # Logits are needed for nnunet loss functions, but not for torch metrics
+        pred_ohe = self.get_oheseg_from_logits(input)
+        # pred_ohe = torch.sigmoid(input)
+
+        # Mask data if nnunet ignore label functionality is in use
+        if self.ignore_label is not None:
+            pred_ohe, target = self.mask_data(pred_ohe, target)
+
+        # one hot encode the target
+        target_ohe = self.maybe_ohe_target(input, target)
+
+        # Update metric with ohe predicted and ground truth segmentation maps
+        self.metric.update(pred_ohe.long(), target_ohe.long())
+
+    def compute(self, name: Optional[str]) -> Metrics:
+        """
+        Compute value of underlying TorchMetric.
+
+        Args:
+            name (Optional[str]): Optional name used in conjunction with \
+                class attribute name to define key in metrics dictionary.
+
+        Returns:
+            Metrics: A dictionary of string and Scalar representing the \
+                computed metric and its associated key.
+        """
+        print(self.metric.compute(name=name))
+        return self.metric.compute(name=name)
+
+    def clear(self) -> None:
+        self.metric.clear()
 
 
 class nnUNetDLWrapper(DataLoader):
@@ -103,7 +273,7 @@ class Module2LossWrapper(_Loss):
         super().__init__(**kwargs)
         self.loss = loss
 
-    def forward(self, pred: Tensor, target: Tensor) -> Tensor:
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return self.loss(pred, target)
 
 
@@ -223,6 +393,20 @@ class nnUNetClient(BasicClient):
             )
         else:
             print("Preprocessed data already exists")
+
+        # Wrap the metrics with nnUNetMetric
+        for i in range(len(self.metrics)):
+            self.metrics[i] = nnUNetMetric(
+                name=self.metrics[i].name,
+                metric=self.metrics[i],
+                has_regions=self.nnunet_trainer.label_manager.has_regions,
+                ignore_label=self.nnunet_trainer.label_manager.ignore_label,
+            )
+
+        # Reinstastiate metric managers with wrapped metrics
+        self.train_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="train")
+        self.val_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="val")
+        self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Parent function sets up optimizer, criterion, parameter_exchanger, dataloaders and reporters.
         # We have to run this at the end since it depends on the previous setup

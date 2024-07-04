@@ -1,8 +1,0 @@
-n_clients: 1
-nnunet_config: 2d
-nnunet_plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset011_PICAI/nnUNetPlans.json
-fold: 1
-n_server_rounds: 3
-local_epochs: 1
-server_address: '0.0.0.0:8080'
-starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset011_PICAI/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth
