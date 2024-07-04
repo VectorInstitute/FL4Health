@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 import torch
 from flwr.common import Config
 
@@ -8,6 +9,7 @@ from fl4health.model_bases.sequential_split_models import SequentiallySplitExcha
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from tests.clients.fixtures import get_client  # noqa
 from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn
+from fl4health.utils.parameter_extraction import check_shape_match
 
 
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn()))])
@@ -169,4 +171,15 @@ def test_get_parameter_exchanger_with_incorrect_model(get_client: FendaDittoClie
     fenda_ditto_client.global_model = SequentiallySplitExchangeBaseModel(SmallCnn(), HeadCnn())
     # Should raise an assertion error because the model type is incorrect.
     with pytest.raises(AssertionError):
-        fenda_ditto_client.setup_client({})
+        check_shape_match(
+            fenda_ditto_client.global_model.base_module.parameters(),
+            fenda_ditto_client.model.second_feature_extractor.parameters(),
+            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match.",
+        )
+
+        # Check if shapes of self.model.second_feature_extractor and self.model.first_feature_extractor match
+        check_shape_match(
+            fenda_ditto_client.model.second_feature_extractor.parameters(),
+            fenda_ditto_client.model.first_feature_extractor.parameters(),
+            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
+        )

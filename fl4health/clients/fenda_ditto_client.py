@@ -84,7 +84,7 @@ class FendaDittoClient(DittoClient):
 
     def get_global_model(self, config: Config) -> SequentiallySplitExchangeBaseModel:
         """
-        User defined method that returns a Global Sequential Model that is compatible wiFENDA model.
+        User defined method that returns a Global Sequential Model that is compatible with the local FENDA model.
 
         Args:
             config (Config): The config from the server.
