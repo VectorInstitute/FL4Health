@@ -113,16 +113,10 @@ if __name__ == "__main__":
         )
 
     checkpointer = ClientCheckpointModule(
-        pre_aggregation=pre_aggregation_checkpointer,
-        post_aggregation=post_aggregation_checkpointer
+        pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
     )
     client = MnistFendaDittoClient(
-        data_path,
-        [Accuracy()],
-        DEVICE,
-        args.checkpoint_path,
-        checkpointer=checkpointer,
-        lam=0.1
+        data_path, [Accuracy()], DEVICE, args.checkpoint_path, checkpointer=checkpointer, lam=0.1
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 

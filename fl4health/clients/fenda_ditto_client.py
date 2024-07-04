@@ -14,6 +14,7 @@ from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
 
+
 class FendaDittoClient(DittoClient):
     def __init__(
         self,
@@ -60,7 +61,7 @@ class FendaDittoClient(DittoClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam
+            lam=lam,
         )
         self.global_model: SequentiallySplitExchangeBaseModel
         self.model: FendaModel
@@ -104,18 +105,18 @@ class FendaDittoClient(DittoClient):
         Args:
             config (Config): The config from the server.
         """
-         # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
+        # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
         check_shape_match(
             self.global_model.base_module.parameters(),
             self.model.second_feature_extractor.parameters(),
-            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match."
+            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match.",
         )
-        
+
         # Check if shapes of self.model.second_feature_extractor and self.model.first_feature_extractor match
         check_shape_match(
             self.model.second_feature_extractor.parameters(),
             self.model.first_feature_extractor.parameters(),
-            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match."
+            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
         )
 
         super().setup_client(config)
@@ -158,8 +159,8 @@ class FendaDittoClient(DittoClient):
         super().set_parameters(parameters, config, fitting_round)
         # GLOBAL MODEL feature extractor is given to local FENDA model
         self.model.second_feature_extractor.load_state_dict(self.global_model.base_module.state_dict())
-    
-    def save_initial_global_tensors(self) ->None:
+
+    def save_initial_global_tensors(self) -> None:
         # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.initial_global_tensors = [
@@ -177,12 +178,12 @@ class FendaDittoClient(DittoClient):
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
         """
-        Initializes the model weights for all clients in the federated learning setting. 
+        Initializes the model weights for all clients in the federated learning setting.
 
-        This function ensures that each client starts with the global model parameters provided by the server. 
-        However, it's important to note that for the FENDA method, each client will still initialize their 
-        local feature extractor and classification head randomly. This diverges from the typical assumption 
-        in most federated learning optimization theories where the initial models are usually synchronized. 
+        This function ensures that each client starts with the global model parameters provided by the server.
+        However, it's important to note that for the FENDA method, each client will still initialize their
+        local feature extractor and classification head randomly. This diverges from the typical assumption
+        in most federated learning optimization theories where the initial models are usually synchronized.
         The divergence is acceptable as the models will differ after the first steps of training.
 
         Args:
@@ -200,12 +201,12 @@ class FendaDittoClient(DittoClient):
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
-        For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty 
-        is the L2 inner product between the initial global model feature extractor weights and the feature extractor 
-        weights of the local model. If the global feature extractor is not frozen, the penalty is computed using the 
+        For the local model, we add to the vanilla loss function by including a Ditto penalty loss. This penalty
+        is the L2 inner product between the initial global model feature extractor weights and the feature extractor
+        weights of the local model. If the global feature extractor is not frozen, the penalty is computed using the
         global feature extractor of the local model. If it is frozen, the penalty is computed using the local feature
-        extractor of the local model. allowing for flexibility in training scenarios where the feature extractors 
-        may differ between the global and local models. The penalty is stored in "backward". The loss to 
+        extractor of the local model. allowing for flexibility in training scenarios where the feature extractors
+        may differ between the global and local models. The penalty is stored in "backward". The loss to
         optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
@@ -237,4 +238,3 @@ class FendaDittoClient(DittoClient):
         additional_losses["ditto_loss"] = ditto_local_loss.clone()
 
         return TrainingLosses(backward=loss + ditto_local_loss, additional_losses=additional_losses)
-

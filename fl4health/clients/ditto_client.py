@@ -150,7 +150,7 @@ class DittoClient(BasicClient):
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-    def save_initial_global_tensors(self) ->None:
+    def save_initial_global_tensors(self) -> None:
         # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.initial_global_tensors = [

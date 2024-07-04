@@ -22,10 +22,7 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(1)
 
-    global_model_params = [
-        val.detach().clone()
-        for _, val in fenda_ditto_client.global_model.state_dict().items()
-    ]
+    global_model_params = [val.detach().clone() for _, val in fenda_ditto_client.global_model.state_dict().items()]
 
     fenda_model_params = [
         val.detach().clone()
@@ -52,10 +49,7 @@ def test_setting_initial_weights(get_client: FendaDittoClient) -> None:  # noqa
     params = [param + 1.0 for param in params]
     fenda_ditto_client.set_parameters(params, config, fitting_round=True)
     fenda_ditto_client.update_before_train(2)
-    global_model_params = [
-        val.detach().clone()
-        for _, val in fenda_ditto_client.global_model.state_dict().items()
-    ]
+    global_model_params = [val.detach().clone() for _, val in fenda_ditto_client.global_model.state_dict().items()]
 
     fenda_model_params = [
         val.detach().clone()
@@ -167,6 +161,7 @@ def test_compute_loss_freeze_global_feature_extractor(get_client: FendaDittoClie
     assert pytest.approx(13.673, abs=0.01) == training_loss.backward["backward"].item()
     assert pytest.approx(0.8132616, abs=0.0001) == evaluation_loss.checkpoint.item()
     assert evaluation_loss.checkpoint.item() != training_loss.backward["backward"].item()
+
 
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(SmallCnn(), FeatureCnn(), FendaHeadCnn()))])
 def test_get_parameter_exchanger_with_incorrect_model(get_client: FendaDittoClient) -> None:  # noqa
