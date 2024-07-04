@@ -78,7 +78,7 @@ class EvaluateServer(Server):
         log(INFO, "Model loaded and state converted to parameters")
         return parameters
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         In order to head off training and only run eval, we have to override the fit function as this is
         essentially the entry point for federated learning from the app.
@@ -89,7 +89,8 @@ class EvaluateServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            History: This object will hold the aggregated metrics returned from the clients.
+            Tuple[History, float]: The first element of the tuple is a History object containing the aggregated
+                metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
 
@@ -117,7 +118,7 @@ class EvaluateServer(Server):
         end_time = timeit.default_timer()
         elapsed = end_time - start_time
         log(INFO, "Federated Evaluation Finished in %s", elapsed)
-        return history
+        return history, elapsed
 
     def federated_evaluate(
         self,
@@ -151,9 +152,7 @@ class EvaluateServer(Server):
 
         # Collect `evaluate` results from all clients participating in this round
         results, failures = evaluate_clients(
-            client_instructions,
-            max_workers=self.max_workers,
-            timeout=timeout,
+            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=None
         )
         log(INFO, f"Federated Evaluation received {len(results)} results and {len(failures)} failures")
 
