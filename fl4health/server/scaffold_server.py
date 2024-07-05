@@ -68,7 +68,7 @@ class ScaffoldServer(FlServer):
                 initialize the models of all clients. Timeout defines how long to wait for a response.
 
         Returns:
-            Parameters: Initialed parameters (model weights and control variates).
+            Parameters: Initial parameters (model weights and control variates).
         """
         assert isinstance(self.strategy, Scaffold)
         # First run basic parameter initialization from the parent server

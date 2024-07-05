@@ -73,8 +73,9 @@ class PicaiServer(FlServerWithCheckpointing):
             timeout (Optional[float]): The timeout for clients to return results in a given FL round.
 
         Returns:
-            Tuple[History, float]: The losses and metrics computed during training and validation
-                and the elapsed time in seconds.
+            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+                metrics computed during training and validation. The second element of the tuple is
+                the elapsed time in seconds.
         """
         history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
         if self.wandb_reporter:
@@ -94,7 +95,8 @@ class PicaiServer(FlServerWithCheckpointing):
             timeout (Optional[float]): The timeout for clients to return results in a given FL round.
 
         Returns:
-            Tuple[History, float]: The losses and metrics computed during training and validation and
+            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+                metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
         # Initialize parameters
