@@ -241,9 +241,9 @@ async def run_smoke_test(
     assert all(
         message in full_server_output
         for message in [
-            "round1:",
-            "round2:",
-            "round3:",
+            "round 1:",
+            "round 2:",
+            "round 3:",
             "History (loss, distributed):",
             "History (metrics, distributed, fit):",
         ]
