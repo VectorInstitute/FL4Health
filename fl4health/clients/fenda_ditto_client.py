@@ -98,16 +98,7 @@ class FendaDittoClient(DittoClient):
         """
         raise NotImplementedError
 
-    def setup_client(self, config: Config) -> None:
-        """
-        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
-        Then set initialized attribute to True.
-
-        Args:
-            config (Config): The config from the server.
-        """
-        super().setup_client(config)
-
+    def _check_shape_match(self) -> None:
         # Check if shapes of self.global_model.feature_extractor and self.model.second_feature_extractor match
         check_shape_match(
             self.global_model.base_module.parameters(),
@@ -121,6 +112,18 @@ class FendaDittoClient(DittoClient):
             self.model.first_feature_extractor.parameters(),
             "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
         )
+
+    def setup_client(self, config: Config) -> None:
+        """
+        Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
+        Then set initialized attribute to True.
+
+        Args:
+            config (Config): The config from the server.
+        """
+        super().setup_client(config)
+
+        self._check_shape_match()
 
     def get_parameters(self, config: Config) -> NDArrays:
         """

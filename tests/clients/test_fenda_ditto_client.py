@@ -6,7 +6,6 @@ from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.parameter_extraction import check_shape_match
 from tests.clients.fixtures import get_client  # noqa
 from tests.test_utils.models_for_test import FeatureCnn, FendaHeadCnn, HeadCnn, SmallCnn
 
@@ -170,15 +169,4 @@ def test_setup_client_with_incorrect_model(get_client: FendaDittoClient) -> None
     fenda_ditto_client.global_model = SequentiallySplitExchangeBaseModel(SmallCnn(), HeadCnn())
     # Should raise an assertion error because the model type is incorrect.
     with pytest.raises(AssertionError):
-        check_shape_match(
-            fenda_ditto_client.global_model.base_module.parameters(),
-            fenda_ditto_client.model.second_feature_extractor.parameters(),
-            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match.",
-        )
-
-        # Check if shapes of self.model.second_feature_extractor and self.model.first_feature_extractor match
-        check_shape_match(
-            fenda_ditto_client.model.second_feature_extractor.parameters(),
-            fenda_ditto_client.model.first_feature_extractor.parameters(),
-            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
-        )
+        fenda_ditto_client._check_shape_match()
