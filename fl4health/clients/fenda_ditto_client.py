@@ -1,12 +1,13 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -192,6 +193,45 @@ class FendaDittoClient(DittoClient):
         """
         # Pull the global model parameters into the client's model
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
+
+    def predict(
+        self,
+        input: TorchInputType,
+    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+        """
+        Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
+
+        Args:
+            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): Inputs to be fed into both models.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            contains predictions indexed by name and the second element contains intermediate activations
+            index by name. For Ditto, we only need the predictions, so the second dictionary is simply empty.
+
+        Raises:
+            ValueError: Occurs when something other than a tensor or dict of tensors is returned by the model
+            forward.
+        """
+        if isinstance(input, torch.Tensor):
+            global_preds, _ = self.global_model(input)
+            local_preds, _ = self.model(input)
+        elif isinstance(input, dict):
+            # If input is a dictionary, then we unpack it before computing the forward pass.
+            # Note that this assumes the keys of the input match (exactly) the keyword args
+            # of the forward method.
+            global_preds, _ = self.global_model(**input)
+            local_preds, _ = self.model(**input)
+        else:
+            raise TypeError(""""input" must be of type torch.Tensor or Dict[str, torch.Tensor].""")
+
+        global_preds = global_preds["prediction"]
+        local_preds = local_preds["prediction"]
+        # Here we assume that global and local preds are simply tensors
+        # TODO: Perhaps loosen this at a later date.
+        assert isinstance(global_preds, torch.Tensor)
+        assert isinstance(local_preds, torch.Tensor)
+        return {"global": global_preds, "local": local_preds}, {}
 
     def compute_training_loss(
         self,
