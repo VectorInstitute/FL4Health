@@ -165,7 +165,7 @@ def test_compute_loss_freeze_global_feature_extractor(get_client: FendaDittoClie
 
 
 @pytest.mark.parametrize("type,model", [(FendaDittoClient, FendaModel(SmallCnn(), FeatureCnn(), FendaHeadCnn()))])
-def test_get_parameter_exchanger_with_incorrect_model(get_client: FendaDittoClient) -> None:  # noqa
+def test_setup_client_with_incorrect_model(get_client: FendaDittoClient) -> None:  # noqa
     fenda_ditto_client = get_client
     fenda_ditto_client.global_model = SequentiallySplitExchangeBaseModel(SmallCnn(), HeadCnn())
     # Should raise an assertion error because the model type is incorrect.
