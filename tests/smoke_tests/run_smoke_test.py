@@ -239,7 +239,14 @@ async def run_smoke_test(
             f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
         )
     assert all(
-        message in full_server_output for message in ["[ROUND 1]", "[ROUND 2]", "[ROUND 3]"]
+        message in full_server_output
+        for message in [
+            "round1:",
+            "round2:",
+            "round3:",
+            "History (loss, distributed):",
+            "History (metrics, distributed, fit):",
+        ]
     ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
