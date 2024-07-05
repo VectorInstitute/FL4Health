@@ -41,5 +41,3 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           virtual-environment: .venv/
-          ignore-vulns: |
-            GHSA-cqh9-jfqr-h9jj
