@@ -8,12 +8,12 @@ import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
-from torchmetrics.classification import MultilabelAveragePrecision
-from torchmetrics.segmentation import GeneralizedDiceScore, MeanIoU
 
-from fl4health.utils.metrics import BinarySoftDiceCoefficient, TorchMetric
+# from torchmetrics.classification import MultilabelAveragePrecision
+from torchmetrics.segmentation import GeneralizedDiceScore
+
+from fl4health.utils.metrics import TorchMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
-from research.picai.metrics_utils import PICAI_AUROC, PICAI_Score
 
 nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 
@@ -33,28 +33,11 @@ def main(
 
     # Define metrics
     metrics = [
-        TorchMetric(name="DICE", metric=GeneralizedDiceScore(num_classes=2).to(DEVICE)),
-        TorchMetric(name="DICE2", metric=GeneralizedDiceScore(num_classes=2).to(DEVICE)),
-        # TorchMetric(name="IoU", metric=MeanIoU(num_classes=2).to(DEVICE)),
-        BinarySoftDiceCoefficient(spatial_dimensions=(2, 3)),
-        # TorchMetric(name="AP", metric=MultilabelAveragePrecision(num_labels=2).to(DEVICE)),
-        # Custom Metrics don't work right now
-        # TorchMetric(name='AUROC', metric=PICAI_AUROC().to(DEVICE)),
-        # TorchMetric(name='picai_score', metric=PICAI_Score().to(DEVICE))
+        TorchMetric(
+            name="DICE",
+            metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
+        ),
     ]
-    # m1 = TorchMetric(name="DICE", metric=GeneralizedDiceScore(num_classes=2))
-    # m2 = BinarySoftDiceCoefficient(spatial_dimensions=(2, 3))
-    # m3 = TorchMetric(name="IoU", metric=MeanIoU(num_classes=2))
-    # for i in range(2):
-    #     preds = torch.randint(0, 2, (100, 2, 128, 128))
-    #     target = torch.randint(0, 2, (100, 2, 128, 128))
-    #     m1.update(preds, target)
-    #     m2.update(preds, target)
-    #     m3.update(preds, target)
-    # print(m1.compute(name='test'))
-    # print(m2.compute())
-    # print(m3.compute(name='test2'))
-    # exit()
 
     # Create and start client
     dataset_name = convert_id_to_dataset_name(dataset_id)
