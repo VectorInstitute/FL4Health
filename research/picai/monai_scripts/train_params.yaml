@@ -1,0 +1,4 @@
+num_epochs: 2
+num_epochs_per_validation: 1
+num_images_per_batch: 4
+num_warmup_epochs: 1
