@@ -45,7 +45,4 @@ jobs:
           # because flwr 1.7 depends on them. Opening an issue
           # with flwr. Likely can remove this in flwr 1.8.
           ignore-vulns: |
-            GHSA-3ww4-gg4f-jr7f
-            GHSA-9v9h-cgj8-h64p
-            GHSA-6vqw-3v5j-54x4
             GHSA-cqh9-jfqr-h9jj
