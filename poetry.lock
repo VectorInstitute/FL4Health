@@ -2967,6 +2967,29 @@ sqlserver = ["mlflow-dbstore"]
 xethub = ["mlflow-xethub"]
 
 [[package]]
+name = "mlxtend"
+version = "0.23.1"
+description = "Machine Learning Library Extensions"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mlxtend-0.23.1-py3-none-any.whl", hash = "sha256:38cb84f864dfdaa85c1d7e46d374be94d3d0fd0e2662ad278f42ccc4abcc785a"},
+    {file = "mlxtend-0.23.1.tar.gz", hash = "sha256:9f3075e3deac57f4452fee2c1f0befda58a24c1f9c26bed649a2303ca04baa29"},
+]
+
+[package.dependencies]
+joblib = ">=0.13.2"
+matplotlib = ">=3.0.0"
+numpy = ">=1.16.2"
+pandas = ">=0.24.2"
+scikit-learn = ">=1.0.2"
+scipy = ">=1.2.1"
+
+[package.extras]
+docs = ["mkdocs", "mkdocs-bootswatch", "nbconvert", "python-markdown-math"]
+testing = ["pytest"]
+
+[[package]]
 name = "mock"
 version = "5.1.0"
 description = "Rolling backport of unittest.mock for all Pythons"
@@ -3949,6 +3972,29 @@ files = [
 
 [package.dependencies]
 ptyprocess = ">=0.5"
+
+[[package]]
+name = "picai-eval"
+version = "1.4.6"
+description = "PICAI Evaluation"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "picai_eval-1.4.6-py3-none-any.whl", hash = "sha256:98f42c8808d070e99a420fe020371f2a70223bde7f418194da4068ee451d63e0"},
+    {file = "picai_eval-1.4.6.tar.gz", hash = "sha256:150526af06a58b71e0e196dafc2e92f5913846e8494d0aa76d53e53e8f872587"},
+]
+
+[package.dependencies]
+mlxtend = "*"
+numpy = "*"
+report-guided-annotation = ">=0.2.4"
+scikit-learn = ">=0.20.3"
+scipy = "*"
+SimpleITK = "*"
+tqdm = "*"
+
+[package.extras]
+testing = ["flake8 (>=3.9)", "mypy (>=0.910)", "pytest (>=6.0)", "pytest-cov (>=2.0)", "tox (>=3.24)"]
 
 [[package]]
 name = "pillow"
@@ -5047,6 +5093,26 @@ files = [
     {file = "regex-2024.5.15-cp39-cp39-win_amd64.whl", hash = "sha256:cab12877a9bdafde5500206d1020a584355a97884dfd388af3699e9137bf7388"},
     {file = "regex-2024.5.15.tar.gz", hash = "sha256:d3ee02d9e5f482cc8309134a91eeaacbdd2261ba111b0fef3748eeb4913e6a2c"},
 ]
+
+[[package]]
+name = "report-guided-annotation"
+version = "0.2.7"
+description = "Report Guided Annotation"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "report_guided_annotation-0.2.7-py3-none-any.whl", hash = "sha256:2a0b84a6b30b84815be85fbafcf4624011d03025d3168965a73de518ccf3e5bc"},
+    {file = "report_guided_annotation-0.2.7.tar.gz", hash = "sha256:23aba1692e7d39c36bba38ac54caf83d746a52fbc2a2b3e31b753abe26723215"},
+]
+
+[package.dependencies]
+numpy = "*"
+scipy = "*"
+SimpleITK = "*"
+tqdm = "*"
+
+[package.extras]
+testing = ["flake8 (>=3.9)", "mypy (>=0.910)", "pytest (>=6.0)", "pytest-cov (>=2.0)", "tox (>=3.24)"]
 
 [[package]]
 name = "requests"
@@ -7198,4 +7264,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.11"
-content-hash = "10d0c7ba8beca2851ecac7bc6366f168331795b49f31ab50eb8d038b5d26aa24"
+content-hash = "20ed5d77594ea45908e997bc400cc6055f1b6ce07b6cea1a2a637f21af05fb24"

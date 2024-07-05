@@ -6,26 +6,25 @@
 import argparse
 import os
 from os.path import join
-from pathlib import Path
 from typing import Dict, Optional
 
 import numpy as np
 import yaml
-from batchgenerators.utilities.file_and_folder_operations import save_json
+from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
 from monai.apps.auto3dseg.auto_runner import AutoRunner
 
 
-def gen_dataset_list(data_dir: Path, output_path: Optional[str] = None, ext: str = ".nii.gz") -> str:
+def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str = ".nii.gz") -> str:
     """
     Generates a MONAI dataset list for an nnUNet structured dataset
 
-    Note: Rather than having a single image and label, this checks for multiple \
-    channels following the nnunet dataset formatting guidelines, and passes a list \
-    of filepaths for each channel as the value for the image key
+    Note: Rather than having a single image and label, this checks for multiple
+        channels following the nnunet dataset formatting guidelines, and passes
+        a list of filepaths for each channel as the value for the image key
 
     Args:
-        data_dir: Path to the nnUNet_raw dataset.
-        output_path: Where and what to save the file as. Must be a json.
+        data_dir (str): Path to the nnUNet_raw dataset.
+        output_path (Optional[str]): Where and what to save the file as. Must be a json.
             Default is to save as datalist.json in the data_dir
 
     Returns:
@@ -35,9 +34,9 @@ def gen_dataset_list(data_dir: Path, output_path: Optional[str] = None, ext: str
     train_dir = join(data_dir, "imagesTr")
     test_dir = join(data_dir, "testTr")
 
-    # Not sure if it is more efficient to figure num channels this way or to just load the dataset.json
-    # and get it from there
-    channels = np.unique([int(file.split(".")[0][-4:]) for file in os.listdir(train_dir)])
+    # Get the list of unique channel identifiers
+    dataset_json = load_json(join(data_dir, "dataset.json"))
+    channels = [int(dataset_json["labels"][ch]) for ch in dataset_json["labels"].keys()]
 
     # Initialize datalist
     # The values to the testing and training keys should be a list of dictionaries
@@ -130,7 +129,7 @@ def main() -> None:
     if args.ds_list is None or not os.path.isfile(args.ds_list):
         args.ds_list = gen_dataset_list(data_dir=args.data_dir, output_path=args.ds_list, ext=args.file_ending)
 
-    # Initialize Autoseg3d autoruner
+    # Initialize Autoseg3d autorunner
     runner = AutoRunner(
         work_dir=args.output_dir, input={"modality": "MRI", "datalist": args.ds_list, "dataroot": args.data_dir}
     )
