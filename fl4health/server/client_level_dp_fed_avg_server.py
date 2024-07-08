@@ -71,8 +71,8 @@ class ClientLevelDPFedAvgServer(FlServer):
 
         Returns:
             Tuple[History, float]: The first element of the tuple is a history object containing the full set of
-            FL training results, including things like aggregated loss and metrics.
-            Tuple also contains the elapsed time in seconds for the round.
+                FL training results, including things like aggregated loss and metrics.
+                Tuple also contains the elapsed time in seconds for the round.
         """
 
         assert isinstance(self.strategy, ClientLevelDPFedAvgM)
