@@ -28,6 +28,7 @@ class CustomClientProxy(ClientProxy):
         self,
         ins: GetPropertiesIns,
         timeout: Optional[float],
+        group_id: Optional[int],
     ) -> GetPropertiesRes:
         status: Status = Status(code=Code["OK"], message="Test")
         res = GetPropertiesRes(status=status, properties=self.properties)
@@ -37,6 +38,7 @@ class CustomClientProxy(ClientProxy):
         self,
         ins: GetParametersIns,
         timeout: Optional[float],
+        group_id: Optional[int],
     ) -> GetParametersRes:
         raise NotImplementedError
 
@@ -44,6 +46,7 @@ class CustomClientProxy(ClientProxy):
         self,
         ins: FitIns,
         timeout: Optional[float],
+        group_id: Optional[int],
     ) -> FitRes:
         raise NotImplementedError
 
@@ -51,6 +54,7 @@ class CustomClientProxy(ClientProxy):
         self,
         ins: EvaluateIns,
         timeout: Optional[float],
+        group_id: Optional[int],
     ) -> EvaluateRes:
         raise NotImplementedError
 
@@ -58,5 +62,6 @@ class CustomClientProxy(ClientProxy):
         self,
         ins: ReconnectIns,
         timeout: Optional[float],
+        group_id: Optional[int],
     ) -> DisconnectRes:
         raise NotImplementedError

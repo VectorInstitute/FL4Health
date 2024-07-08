@@ -59,10 +59,23 @@ class FlServer(Server):
         else:
             self.metrics_reporter = MetricsReporter()
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+        """
+        Run federated learning for a number of rounds.
+
+        Args:
+            num_rounds (int): Number of server rounds to run.
+            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+                clients selected to participate in federated training.
+
+        Returns:
+            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+                FL training results, including things like aggregated loss and metrics.
+                Tuple also contains the elapsed time in seconds for the round.
+        """
         self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
 
-        history = super().fit(num_rounds, timeout)
+        history, elapsed_time = super().fit(num_rounds, timeout)
         if self.wandb_reporter:
             # report history to W and B
             self.wandb_reporter.report_metrics(num_rounds, history)
@@ -75,7 +88,7 @@ class FlServer(Server):
             }
         )
 
-        return history
+        return history, elapsed_time
 
     def fit_round(
         self,
@@ -250,10 +263,9 @@ class FlServer(Server):
             self._client_manager.num_available(),
         )
         # Collect `evaluate` results from all clients participating in this round
+        # flwr sets group_id to server_round by default, so we follow that convention
         results, failures = evaluate_clients(
-            client_instructions,
-            max_workers=self.max_workers,
-            timeout=timeout,
+            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=server_round
         )
         log(
             DEBUG,

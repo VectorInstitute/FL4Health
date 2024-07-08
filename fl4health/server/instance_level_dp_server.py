@@ -1,6 +1,6 @@
 from logging import INFO
 from math import ceil
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
@@ -78,7 +78,7 @@ class InstanceLevelDpServer(FlServer):
         self.num_server_rounds = num_server_rounds
         self.delta = delta
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Run federated averaging for a number of rounds.
 
@@ -88,8 +88,9 @@ class InstanceLevelDpServer(FlServer):
                 clients selected to participate in federated training.
 
         Returns:
-            History: The history object contains the full set of FL training results, including things like aggregated
-                loss and metrics.
+            Tuple[History, float]: The first element of the tuple is a history object containing the full
+                set of FL training results, including things like aggregated loss and metrics.
+                Tuple also includes elapsed time in seconds for round.
         """
 
         assert isinstance(self.strategy, StrategyWithPolling)
