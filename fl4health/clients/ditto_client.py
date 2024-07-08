@@ -104,8 +104,19 @@ class DittoClient(BasicClient):
         Returns:
             NDArrays: GLOBAL model weights to be sent to the server for aggregation
         """
-        assert self.global_model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.global_model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.global_model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -218,10 +229,12 @@ class DittoClient(BasicClient):
 
         # Forward pass on both the global and local models
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
         # NOTE: features here should be a blank dictionary, as we're not using them
         assert len(features) == 0
+
         losses = self.compute_training_loss(preds, features, target)
 
         # Take a step with the global model vanilla loss

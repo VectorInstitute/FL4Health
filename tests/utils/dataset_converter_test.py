@@ -3,24 +3,18 @@ from typing import Tuple
 import torch
 from torch.utils.data import DataLoader
 
-from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter, DatasetConverter
 
 
-class DummyDataset(BaseDataset):
-    def __init__(self) -> None:
-        self.data = torch.randn(100, 10, 8)
-        self.targets = torch.randint(5, (100,))
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
-        return self.data[index], self.targets[index]
+def get_dummy_dataset() -> TensorDataset:
+    data = torch.randn(100, 10, 8)
+    targets = torch.randint(5, (100,))
+    return TensorDataset(data=data, targets=targets)
 
 
 def test_dataset_converter() -> None:
-    dummy_dataset = DummyDataset()
+    dummy_dataset = get_dummy_dataset()
 
     # Create a dummy converter function for testing
     def dummy_converter(data: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -41,7 +35,7 @@ def test_dataset_converter() -> None:
 
 def test_autoencoder_converter_tensor_conditioned() -> None:
     # Create a dummy dataset for testing
-    dummy_dataset = DummyDataset()
+    dummy_dataset = get_dummy_dataset()
     # Test AutoEncoderDatasetConverter with a vector condition.
     condition_tensor = torch.Tensor([4, 0, 5, 3])
     autoencoder_converter = AutoEncoderDatasetConverter(condition=condition_tensor)
@@ -69,7 +63,10 @@ def test_autoencoder_converter_tensor_conditioned() -> None:
 
 def test_autoencoder_converter_label_conditioned() -> None:
     # Create a dummy dataset for testing
-    dummy_dataset = DummyDataset()
+    dummy_dataset = get_dummy_dataset()
+
+    assert dummy_dataset.targets is not None
+
     # Initialize the converter and convert the dataset.
     autoencoder_converter_label = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     autoencoder_converter_label.convert_dataset(dummy_dataset)
@@ -87,7 +84,10 @@ def test_autoencoder_converter_label_conditioned() -> None:
 def test_pack_unpack() -> None:
     batch_size = 10
     # Create a dummy dataset for testing
-    dummy_dataset = DummyDataset()
+    dummy_dataset = get_dummy_dataset()
+
+    assert dummy_dataset.targets is not None
+
     # Initiate the data converter
     autoencoder_converter = AutoEncoderDatasetConverter(condition="label", do_one_hot_encoding=True)
     # Convert the dataset

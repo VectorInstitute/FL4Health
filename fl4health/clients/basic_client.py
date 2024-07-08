@@ -139,9 +139,19 @@ class BasicClient(NumPyClient):
             NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
                 parameters to be aggregated, but can contain more information.
         """
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
 
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -547,6 +557,7 @@ class BasicClient(NumPyClient):
 
         # Call user defined methods to get predictions and compute loss
         preds, features = self.predict(input)
+        target = self.transform_target(target)
         losses = self.compute_training_loss(preds, features, target)
 
         # Compute backward pass and update parameters with optimizer
@@ -574,6 +585,7 @@ class BasicClient(NumPyClient):
         # Get preds and compute loss
         with torch.no_grad():
             preds, features = self.predict(input)
+            target = self.transform_target(target)
             losses = self.compute_evaluation_loss(preds, features, target)
 
         return losses, preds
@@ -965,6 +977,24 @@ class BasicClient(NumPyClient):
 
         """
         return None
+
+    def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+        """
+        Method that users can extend to specify an arbitrary transformation to apply to
+        the target prior to the loss being computed. Defaults to the identity transform.
+
+        Overriding this method can be useful in a variety of scenarios such as Self Supervised
+        Learning where the target is derived from the input sample itself. For example, the FedSimClr
+        reference implementation overrides this method to extract features from the target, which
+        is a transformed version of the input image itself.
+
+        Args:
+            target (torch.Tensor): The target or label used to compute the loss.
+
+        Returns:
+            torch.Tensor: Identical to target.
+        """
+        return target
 
     def get_criterion(self, config: Config) -> _Loss:
         """
