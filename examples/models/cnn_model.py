@@ -67,7 +67,7 @@ class MnistNetWithBnAndFrozen(nn.Module):
 
 
 class SkinCancerNetWithBnAndFrozen(nn.Module):
-    def __init__(self, freeze_cnn_layer: bool = True) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(3, 8, 5)
         self.pool = nn.MaxPool2d(2, 2)
@@ -78,11 +78,6 @@ class SkinCancerNetWithBnAndFrozen(nn.Module):
         # 256 -> (256-5+1)/2 = 126 -> (126-5+1)/2 = 61
         self.fc1 = nn.Linear(16 * 61 * 61, 120)
         self.fc2 = nn.Linear(120, 8)
-
-        if freeze_cnn_layer:
-            layer_to_freeze = self._modules["conv1"]
-            assert layer_to_freeze is not None
-            layer_to_freeze.requires_grad_(False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.pool(F.relu(self.conv1(x)))

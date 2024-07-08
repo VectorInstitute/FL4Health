@@ -21,39 +21,39 @@ else
   fi
 fi
 
-unzip ${DIRECTORY}/PAD-UFES-20.zip -d ${DIRECTORY}/
-mkdir ${DIRECTORY}/PAD-UFES-20
-mv ${DIRECTORY}/images ${DIRECTORY}/PAD-UFES-20/
-mv ${DIRECTORY}/metadata.csv ${DIRECTORY}/PAD-UFES-20/
-unzip ${DIRECTORY}/PAD-UFES-20/images/imgs_part_1.zip -d ${DIRECTORY}//PAD-UFES-20/
-unzip ${DIRECTORY}/PAD-UFES-20/images/imgs_part_2.zip -d ${DIRECTORY}//PAD-UFES-20/
-unzip ${DIRECTORY}/PAD-UFES-20/images/imgs_part_3.zip -d ${DIRECTORY}//PAD-UFES-20/
+mkdir -p ${DIRECTORY}/PAD-UFES-20
+unzip ${DIRECTORY}/PAD-UFES-20.zip -d ${DIRECTORY}/PAD-UFES-20/
+unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_1.zip -d ${DIRECTORY}/PAD-UFES-20/
+unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_2.zip -d ${DIRECTORY}/PAD-UFES-20/
+unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_3.zip -d ${DIRECTORY}/PAD-UFES-20/
 rm -rf ${DIRECTORY}/PAD-UFES-20/images
-mv ${DIRECTORY}/PAD-UFES-20/imgs_part_1/* ${DIRECTORY}/PAD-UFES-20/
-mv ${DIRECTORY}/PAD-UFES-20/imgs_part_2/* ${DIRECTORY}/PAD-UFES-20/
-mv ${DIRECTORY}/PAD-UFES-20/imgs_part_3/* ${DIRECTORY}/PAD-UFES-20/
-rm -rf ${DIRECTORY}/PAD-UFES-20/imgs_part_1
-rm -rf ${DIRECTORY}/PAD-UFES-20/imgs_part_2
-rm -rf ${DIRECTORY}/PAD-UFES-20/imgs_part_3
-rm -rf ${TARGET}
 
-echo "Derm7pt download."
+if [ -n "${TARGET}" ]; then
+    rm -r ${TARGET}
+else
+    echo "TARGET is empty. Skipping rm -r to avoid accidental deletion."
+fi
 
-unzip ${DIRECTORY}/release_v0.zip -d ${DIRECTORY}/
-mv ${DIRECTORY}/release_v0 ${DIRECTORY}/Derm7pt
-rm -rf ${DIRECTORY}/release_v0
+
+echo "Derm7pt unzipping. Reminder: Download release_v0.zip from SFU: https://derm.cs.sfu.ca/Welcome.html\
+  and place it under ${DIRECTORY}."
+
+mkdir -p ${DIRECTORY}/Derm7pt
+unzip ${DIRECTORY}/release_v0.zip -d ${DIRECTORY}/Derm7pt
 rm ${DIRECTORY}/release_v0.zip
 
-echo "HAM10000 download."
+echo "HAM10000 unzipping. Reminder: Download HAM10000_images_part_1.zip, HAM10000_images_part_2.zip,\
+ and HAM10000_metadata.tab from Harvard Dataverse:\
+  https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T \
+  and place them under ${DIRECTORY}."
 
-mkdir ${DIRECTORY}/HAM10000
-mv ${DIRECTORY}/HAM10000_images_part_1.zip ${DIRECTORY}/HAM10000/
-mv ${DIRECTORY}/HAM10000_images_part_2.zip ${DIRECTORY}/HAM10000/
-unzip ${DIRECTORY}/HAM10000/HAM10000_images_part_1.zip -d ${DIRECTORY}/HAM10000/
-unzip ${DIRECTORY}/HAM10000/HAM10000_images_part_2.zip -d ${DIRECTORY}/HAM10000/
-rm ${DIRECTORY}/HAM10000/HAM10000_images_part_1.zip
-rm ${DIRECTORY}/HAM10000/HAM10000_images_part_2.zip
+mkdir -p ${DIRECTORY}/HAM10000
+unzip ${DIRECTORY}/HAM10000_images_part_1.zip -d ${DIRECTORY}/HAM10000/
+unzip ${DIRECTORY}/HAM10000_images_part_2.zip -d ${DIRECTORY}/HAM10000/
+rm ${DIRECTORY}/HAM10000_images_part_1.zip
+rm ${DIRECTORY}/HAM10000_images_part_2.zip
 mv ${DIRECTORY}/HAM10000_metadata ${DIRECTORY}/HAM10000/
+
 
 # Define the URLs and the target directory
 URL_INPUT="https://isic-challenge-data.s3.amazonaws.com/2019/ISIC_2019_Training_Input.zip"
@@ -70,16 +70,10 @@ curl -L --progress-bar -o "$DIRECTORY/ISIC_2019_Training_GroundTruth.csv" "$URL_
 echo "Downloading ISIC_2019_Training_Metadata.csv..."
 curl -L --progress-bar -o "$DIRECTORY/ISIC_2019_Training_Metadata.csv" "$URL_METADATA"
 
-# Unzip the ISIC_2019_Training_Input.zip file
-echo "Unzipping ISIC_2019_Training_Input.zip..."
-unzip ${DIRECTORY}/ISIC_2019_Training_Input.zip -d ${DIRECTORY}/
-
-# Move the extracted directory and CSV files to ISIC_2019 directory
-echo "Organizing files..."
+echo "Creating ISIC_2019 directory..."
 mkdir -p ${DIRECTORY}/ISIC_2019
-mv ${DIRECTORY}/ISIC_2019_Training_Input ${DIRECTORY}/ISIC_2019
-mv ${DIRECTORY}/ISIC_2019_Training_GroundTruth.csv ${DIRECTORY}/ISIC_2019/
-mv ${DIRECTORY}/ISIC_2019_Training_Metadata.csv ${DIRECTORY}/ISIC_2019/
+echo "Unzipping ISIC_2019_Training_Input.zip into ISIC_2019 directory..."
+unzip ${DIRECTORY}/ISIC_2019_Training_Input.zip -d ${DIRECTORY}/ISIC_2019
 
 echo "Cleaning up..."
 # Remove the zip file after extraction
@@ -87,6 +81,6 @@ rm ${DIRECTORY}/ISIC_2019_Training_Input.zip
 
 echo "Process completed, running preprocess."
 
-python fl4health/datasets/skin_cancer/preprocess_skin.py
+python -m fl4health.datasets.skin_cancer.preprocess_skin
 
 echo "Preprocess completed."

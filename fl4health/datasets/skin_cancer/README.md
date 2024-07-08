@@ -13,21 +13,28 @@ and their code available at the [medical_federated GitHub repository](https://gi
 To start using these datasets, follow the steps below.
 
 ### Prerequisites
-
-Ensure you have the following prerequisites installed:
-- Python 3.x
-- Necessary Python packages (install using `requirements.txt` if provided)
+In order to run the scripts, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
 
 ### Downloading the Datasets
+To use the datasets for this project, follow the instructions below to download and unzip the required files.
 
-First, manually download the HAM10000 and Derm7pt datasets and place them in the `fl4health/datasets/skin_cancer` directory:
+## 1. Derm7pt
 
-1. **HAM10000**: Download from [Harvard Dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T)
-2. **Derm7pt**: Download from [SFU](https://derm.cs.sfu.ca/Welcome.html)
+- **Download Link**: [SFU Derm7pt](https://derm.cs.sfu.ca/Welcome.html)
+- **Instructions**:
+  1. Download the `release_v0.zip` file from the link above.
+  2. Place the downloaded files under `fl4health/datasets/skin_cancer`.
+
+## 2. HAM10000
+
+- **Download Link**: [Harvard Dataverse HAM10000](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DBW86T)
+- **Instructions**:
+  1. Download the `HAM10000_images_part_1.zip`, `HAM10000_images_part_2.zip`, and `HAM10000_metadata.tab` files from the link above.
+  2. Place the downloaded files under `fl4health/datasets/skin_cancer`.
 
 ### Running the Download Script
 
-After placing the HAM10000 and Derm7pt datasets in the `fl4health/datasets/skin_cancer` directory, run the provided shell script to organize the datasets and automatically download the ISIC_2019 and PAD-UFES-20 datasets.
+After placing the HAM10000 and Derm7pt dataset files in the `fl4health/datasets/skin_cancer` directory, run the provided shell script to organize the datasets and automatically download the ISIC_2019 and PAD-UFES-20 datasets and unzip the HAM10000 and Derm7pt datasets.
 
 ```sh
 sh fl4health/datasets/skin_cancer/download.sh
@@ -49,7 +56,7 @@ After running the script, the following directory structure will be created unde
 The download script will automatically call the preprocessing script to prepare the datasets for use.
 
 ```sh
-python fl4health/datasets/skin_cancer/preprocess_skin.py
+python -m fl4health.datasets.skin_cancer.preprocess_skin
 ```
 
 ### Using the Datasets
