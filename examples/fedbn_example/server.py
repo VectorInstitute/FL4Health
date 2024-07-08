@@ -44,7 +44,7 @@ def main(config: Dict[str, Any], server_address: str, dataset_name: str) -> None
     )
 
     if dataset_name in ["Barcelona", "Rosendahl", "Vienna", "UFES", "Canada"]:
-        initial_model: nn.Module = SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False)
+        initial_model: nn.Module = SkinCancerNetWithBnAndFrozen()
     elif dataset_name == "mnist":
         initial_model = MnistNetWithBnAndFrozen(freeze_cnn_layer=False)
     else:

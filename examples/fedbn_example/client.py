@@ -50,7 +50,7 @@ class SkinCancerFedBNClient(BasicClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
-        train_loader, val_loader, _ = load_skin_cancer_data(self.data_path, self.dataset_name, batch_size)
+        train_loader, val_loader, _, _ = load_skin_cancer_data(self.data_path, self.dataset_name, batch_size)
         return train_loader, val_loader
 
     def get_optimizer(self, config: Config) -> Optimizer:
@@ -60,7 +60,7 @@ class SkinCancerFedBNClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_model(self, config: Config) -> nn.Module:
-        return SkinCancerNetWithBnAndFrozen(freeze_cnn_layer=False).to(self.device)
+        return SkinCancerNetWithBnAndFrozen().to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None

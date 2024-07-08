@@ -7,13 +7,11 @@
 import json
 import random
 from concurrent.futures import ThreadPoolExecutor
-from logging import ERROR, INFO
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 import torchvision.transforms as transforms
-from flwr.common.logger import log
 from PIL import Image
 from torch.utils.data import DataLoader
 
@@ -169,14 +167,14 @@ def load_skin_cancer_data(
     test_ds: TensorDataset = construct_skin_cancer_tensor_dataset(test_data, transform=test_transform)
 
     if sampler is not None:
-        train_ds = sampler(train_ds)
-        valid_ds = sampler(valid_ds)
-        test_ds = sampler(test_ds)
+        train_ds = sampler.subsample(train_ds)
+        valid_ds = sampler.subsample(valid_ds)
+        test_ds = sampler.subsample(test_ds)
 
     if dataset_converter is not None:
-        train_ds = dataset_converter(train_ds)
-        valid_ds = dataset_converter(valid_ds)
-        test_ds = dataset_converter(test_ds)
+        train_ds = dataset_converter.convert_dataset(train_ds)
+        valid_ds = dataset_converter.convert_dataset(valid_ds)
+        test_ds = dataset_converter.convert_dataset(test_ds)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     validation_loader = DataLoader(valid_ds, batch_size=batch_size)

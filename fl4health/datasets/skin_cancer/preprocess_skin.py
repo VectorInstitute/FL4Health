@@ -104,6 +104,39 @@ def preprocess_isic_2019(data_path: str, official_columns: List[str]) -> None:
     save_to_json(preprocessed_data, os.path.join(data_path, "ISIC_2019", "ISIC_19_Barcelona.json"))
 
 
+def ham_image_path_func(row: pd.Series) -> str:
+    """Constructs the image path for the HAM10000 dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The constructed image path.
+    """
+    return os.path.join("HAM10000", row["image_id"] + ".jpg")
+
+
+def ham_label_map_func(row: pd.Series) -> str:
+    """Maps the original label to the new label for the HAM10000 dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The mapped label.
+    """
+    Ham_labelmap = {
+        "akiec": "AK",
+        "bcc": "BCC",
+        "bkl": "BKL",
+        "df": "DF",
+        "mel": "MEL",
+        "nv": "NV",
+        "vasc": "VASC",
+    }
+    return Ham_labelmap[row["dx"]]
+
+
 def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
     """Preprocesses the HAM10000 dataset.
 
@@ -121,37 +154,43 @@ def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
     Vienna_data.to_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv"), mode="w")
 
     Ham_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
-    Ham_labelmap = {
-        "akiec": "AK",
-        "bcc": "BCC",
-        "bkl": "BKL",
-        "df": "DF",
-        "mel": "MEL",
-        "nv": "NV",
-        "vasc": "VASC",
+
+    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")), "HAM_rosendahl",\
+                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
+    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")), "HAM_vienna",\
+                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
+
+
+def pad_image_path_func(row: pd.Series) -> str:
+    """Constructs the image path for the PAD-UFES-20 dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The constructed image path.
+    """
+    return os.path.join("PAD-UFES-20", row["img_id"])
+
+
+def pad_label_map_func(row: pd.Series) -> str:
+    """Maps the original label to the new label for the PAD-UFES-20 dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The mapped label.
+    """
+    Pad_ufes_20_labelmap = {
+        "ACK": "AK",
+        "BCC": "BCC",
+        "MEL": "MEL",
+        "NEV": "NV",
+        "SCC": "SCC",
+        "SEK": "BKL",
     }
-
-    image_path_func_ham = lambda row: os.path.join(Ham_10000_path, row["image_id"] + ".jpg")
-    label_map_func_ham = lambda row: Ham_labelmap[row["dx"]]
-
-    process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")),
-        "HAM_rosendahl",
-        Ham_10000_path,
-        image_path_func_ham,
-        label_map_func_ham,
-        Ham_columns,
-        official_columns,
-    )
-    process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")),
-        "HAM_vienna",
-        Ham_10000_path,
-        image_path_func_ham,
-        label_map_func_ham,
-        Ham_columns,
-        official_columns,
-    )
+    return Pad_ufes_20_labelmap[row["diagnostic"]]
 
 
 def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
@@ -166,27 +205,55 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
     Pad_ufes_20_df = pd.read_csv(Pad_ufes_20_csv_path)
 
     Pad_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
-    Pad_ufes_20_labelmap = {
-        "ACK": "AK",
-        "BCC": "BCC",
-        "MEL": "MEL",
-        "NEV": "NV",
-        "SCC": "SCC",
-        "SEK": "BKL",
+
+    process_client_data(Pad_ufes_20_df, "PAD_UFES_20", Pad_ufes_20_path,\
+                        pad_image_path_func, pad_label_map_func, Pad_columns, official_columns)
+
+
+def derm7pt_image_path_func(row: pd.Series) -> str:
+    """Constructs the image path for the Derm7pt dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The constructed image path.
+    """
+    return os.path.join("Derm7pt", "images", row["derm"])
+
+
+def derm7pt_label_map_func(row: pd.Series) -> str:
+    """Maps the original label to the new label for the Derm7pt dataset.
+
+    Args:
+        row: A row from the dataframe.
+
+    Returns:
+        The mapped label.
+    """
+    Derm7pt_labelmap = {
+        "basal cell carcinoma": "BCC",
+        "blue nevus": "NV",
+        "clark nevus": "NV",
+        "combined nevus": "NV",
+        "congenital nevus": "NV",
+        "dermal nevus": "NV",
+        "dermatofibroma": "DF",  # MISC
+        "lentigo": "MISC",
+        "melanoma": "MEL",
+        "melanoma (0.76 to 1.5 mm)": "MEL",
+        "melanoma (in situ)": "MEL",
+        "melanoma (less than 0.76 mm)": "MEL",
+        "melanoma (more than 1.5 mm)": "MEL",
+        "melanoma metastasis": "MEL",
+        "melanosis": "MISC",
+        "miscellaneous": "MISC",
+        "recurrent nevus": "NV",
+        "reed or spitz nevus": "NV",
+        "seborrheic keratosis": "BKL",
+        "vascular lesion": "VASC",  # MISC
     }
-
-    image_path_func_pad = lambda row: os.path.join(Pad_ufes_20_path, row["img_id"])
-    label_map_func_pad = lambda row: Pad_ufes_20_labelmap[row["diagnostic"]]
-
-    process_client_data(
-        Pad_ufes_20_df,
-        "PAD_UFES_20",
-        Pad_ufes_20_path,
-        image_path_func_pad,
-        label_map_func_pad,
-        Pad_columns,
-        official_columns,
-    )
+    return Derm7pt_labelmap[row["diagnosis"]]
 
 
 def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
@@ -224,18 +291,8 @@ def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
         "vascular lesion": "VASC",  # MISC
     }
 
-    image_path_func_derm = lambda row: os.path.join(Derm7pt_data_path, row["derm"])
-    label_map_func_derm = lambda row: Derm7pt_labelmap[row["diagnosis"]]
+    process_client_data(Derm7pt_df, "Derm7pt", Derm7pt_path, derm7pt_image_path_func, derm7pt_label_map_func, Derm7pt_columns, official_columns)
 
-    process_client_data(
-        Derm7pt_df,
-        "Derm7pt",
-        Derm7pt_path,
-        image_path_func_derm,
-        label_map_func_derm,
-        Derm7pt_columns,
-        official_columns,
-    )
 
 
 if __name__ == "__main__":
