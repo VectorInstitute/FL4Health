@@ -41,3 +41,17 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           virtual-environment: .venv/
+          # ignoring security vulnerabilities for mlflow as monai's autoseg3d
+          # pipeline depends on mlflow=^2.12.2. Raised an issue with mlflow
+          # Vulnerabilities from GHSA-x38x-g6gr-jqff to GHSA-7p8j-qv6x-f4g4
+          # originate from mlflow
+          ignore-vulns: |
+            GHSA-x38x-g6gr-jqff
+            GHSA-j8mg-pqc5-x9gj
+            GHSA-ghv6-9r9j-wh4j
+            GHSA-cv6c-7963-wxcg
+            GHSA-76cg-cfhx-373f
+            GHSA-wf7f-8fxf-xfxc
+            GHSA-cwgg-w6mp-w9hg
+            GHSA-43c4-9qgj-x742
+            GHSA-7p8j-qv6x-f4g4
