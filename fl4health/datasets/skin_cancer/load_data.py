@@ -21,6 +21,7 @@ from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
+
 def load_image(item: Dict[str, Any], transform: Optional[Callable]) -> Tuple[torch.Tensor, int]:
     """
     Load and transform an image from a given item dictionary.
@@ -116,8 +117,10 @@ def load_skin_cancer_data(
     dataset_path = dataset_paths[dataset_name]
 
     if not dataset_path.exists():
-        raise FileNotFoundError(f"Dataset file {dataset_path} does not exist.\
-            Please follow the instructions in fl4health/datasets/skin_cancer/README.md.")
+        raise FileNotFoundError(
+            f"Dataset file {dataset_path} does not exist.\
+            Please follow the instructions in fl4health/datasets/skin_cancer/README.md."
+        )
 
     print(f"Data directory: {str(dataset_path)}")
 
@@ -136,26 +139,30 @@ def load_skin_cancer_data(
     valid_data = data[train_size : train_size + valid_size]
     test_data = data[train_size + valid_size :]
 
-    val_test_transform = transforms.Compose([
-        transforms.Resize([256, 256]),
-        transforms.ToTensor(),
-        transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-    ])
-
-    if train_transform is None:
-        train_transform = transforms.Compose([
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomRotation(20),
-            transforms.ColorJitter(brightness=32.0 / 255.0, saturation=0.5),
+    val_test_transform = transforms.Compose(
+        [
             transforms.Resize([256, 256]),
             transforms.ToTensor(),
             transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
-        ])
+        ]
+    )
+
+    if train_transform is None:
+        train_transform = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomRotation(20),
+                transforms.ColorJitter(brightness=32.0 / 255.0, saturation=0.5),
+                transforms.Resize([256, 256]),
+                transforms.ToTensor(),
+                transforms.Normalize((0.0, 0.0, 0.0), (1.0, 1.0, 1.0)),
+            ]
+        )
     if val_transform is None:
         val_transform = val_test_transform
     if test_transform is None:
-        test_transform = val_test_transform 
+        test_transform = val_test_transform
 
     train_ds: TensorDataset = construct_skin_cancer_tensor_dataset(train_data, transform=train_transform)
     valid_ds: TensorDataset = construct_skin_cancer_tensor_dataset(valid_data, transform=val_transform)
@@ -175,11 +182,6 @@ def load_skin_cancer_data(
     validation_loader = DataLoader(valid_ds, batch_size=batch_size)
     test_loader = DataLoader(test_ds, batch_size=batch_size)
 
-    num_examples = {
-        "train_set": len(train_ds),
-        "validation_set": len(valid_ds),
-        "test_set": len(test_ds)
-    }
+    num_examples = {"train_set": len(train_ds), "validation_set": len(valid_ds), "test_set": len(test_ds)}
 
     return train_loader, validation_loader, test_loader, num_examples
-

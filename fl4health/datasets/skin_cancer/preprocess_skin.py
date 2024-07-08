@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
+
 import pandas as pd
 
 
@@ -133,10 +134,24 @@ def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
     image_path_func_ham = lambda row: os.path.join(Ham_10000_path, row["image_id"] + ".jpg")
     label_map_func_ham = lambda row: Ham_labelmap[row["dx"]]
 
-    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")), "HAM_rosendahl",
-                        Ham_10000_path, image_path_func_ham, label_map_func_ham, Ham_columns, official_columns)
-    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")), "HAM_vienna",
-                        Ham_10000_path, image_path_func_ham, label_map_func_ham, Ham_columns, official_columns)
+    process_client_data(
+        pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")),
+        "HAM_rosendahl",
+        Ham_10000_path,
+        image_path_func_ham,
+        label_map_func_ham,
+        Ham_columns,
+        official_columns,
+    )
+    process_client_data(
+        pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")),
+        "HAM_vienna",
+        Ham_10000_path,
+        image_path_func_ham,
+        label_map_func_ham,
+        Ham_columns,
+        official_columns,
+    )
 
 
 def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
@@ -163,8 +178,15 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
     image_path_func_pad = lambda row: os.path.join(Pad_ufes_20_path, row["img_id"])
     label_map_func_pad = lambda row: Pad_ufes_20_labelmap[row["diagnostic"]]
 
-    process_client_data(Pad_ufes_20_df, "PAD_UFES_20", Pad_ufes_20_path,
-                        image_path_func_pad, label_map_func_pad, Pad_columns, official_columns)
+    process_client_data(
+        Pad_ufes_20_df,
+        "PAD_UFES_20",
+        Pad_ufes_20_path,
+        image_path_func_pad,
+        label_map_func_pad,
+        Pad_columns,
+        official_columns,
+    )
 
 
 def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
@@ -205,8 +227,15 @@ def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
     image_path_func_derm = lambda row: os.path.join(Derm7pt_data_path, row["derm"])
     label_map_func_derm = lambda row: Derm7pt_labelmap[row["diagnosis"]]
 
-    process_client_data(Derm7pt_df, "Derm7pt", Derm7pt_path,
-                        image_path_func_derm, label_map_func_derm, Derm7pt_columns, official_columns)
+    process_client_data(
+        Derm7pt_df,
+        "Derm7pt",
+        Derm7pt_path,
+        image_path_func_derm,
+        label_map_func_derm,
+        Derm7pt_columns,
+        official_columns,
+    )
 
 
 if __name__ == "__main__":
