@@ -1,7 +1,14 @@
+"""
+The following code is adapted from the preprocess_skin.py script
+from the medical_federated GitHub repository by Seongjun Yang et al.
+
+Paper: https://arxiv.org/abs/2207.03075
+Code: https://github.com/wns823/medical_federated.git
+- medical_federated/skin_cancer_federated/preprocess_skin.py
+"""
 import json
 import os
-from typing import Any, Callable, Dict, List
-
+from typing import Any, Dict, List, Callable
 import pandas as pd
 
 
@@ -113,7 +120,7 @@ def ham_image_path_func(row: pd.Series) -> str:
     Returns:
         The constructed image path.
     """
-    return os.path.join("HAM10000", row["image_id"] + ".jpg")
+    return os.path.join("fl4health", "datasets", "skin_cancer", "HAM10000", row["image_id"] + ".jpg")
 
 
 def ham_label_map_func(row: pd.Series) -> str:
@@ -155,24 +162,10 @@ def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
 
     Ham_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
 
-    process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")),
-        "HAM_rosendahl",
-        Ham_10000_path,
-        ham_image_path_func,
-        ham_label_map_func,
-        Ham_columns,
-        official_columns,
-    )
-    process_client_data(
-        pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")),
-        "HAM_vienna",
-        Ham_10000_path,
-        ham_image_path_func,
-        ham_label_map_func,
-        Ham_columns,
-        official_columns,
-    )
+    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")), "HAM_rosendahl",
+                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
+    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")), "HAM_vienna",
+                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
 
 
 def pad_image_path_func(row: pd.Series) -> str:
@@ -184,7 +177,7 @@ def pad_image_path_func(row: pd.Series) -> str:
     Returns:
         The constructed image path.
     """
-    return os.path.join("PAD-UFES-20", row["img_id"])
+    return os.path.join("fl4health", "datasets", "skin_cancer", "PAD-UFES-20", row["img_id"])
 
 
 def pad_label_map_func(row: pd.Series) -> str:
@@ -220,15 +213,8 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
 
     Pad_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
 
-    process_client_data(
-        Pad_ufes_20_df,
-        "PAD_UFES_20",
-        Pad_ufes_20_path,
-        pad_image_path_func,
-        pad_label_map_func,
-        Pad_columns,
-        official_columns,
-    )
+    process_client_data(Pad_ufes_20_df, "PAD_UFES_20", Pad_ufes_20_path,
+                        pad_image_path_func, pad_label_map_func, Pad_columns, official_columns)
 
 
 def derm7pt_image_path_func(row: pd.Series) -> str:
@@ -240,7 +226,7 @@ def derm7pt_image_path_func(row: pd.Series) -> str:
     Returns:
         The constructed image path.
     """
-    return os.path.join("Derm7pt", "images", row["derm"])
+    return os.path.join("fl4health", "datasets", "skin_cancer", "Derm7pt", "images", row["derm"])
 
 
 def derm7pt_label_map_func(row: pd.Series) -> str:
@@ -286,41 +272,12 @@ def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
     """
     Derm7pt_path = os.path.join(data_path, "Derm7pt")
     Derm7pt_df = pd.read_csv(os.path.join(Derm7pt_path, "meta", "meta_core.csv"))
-    Derm7pt_data_path = os.path.join(Derm7pt_path, "images")
 
     Derm7pt_columns = ["MEL", "NV", "BCC", "BKL", "DF", "VASC"]
-    Derm7pt_labelmap = {
-        "basal cell carcinoma": "BCC",
-        "blue nevus": "NV",
-        "clark nevus": "NV",
-        "combined nevus": "NV",
-        "congenital nevus": "NV",
-        "dermal nevus": "NV",
-        "dermatofibroma": "DF",  # MISC
-        "lentigo": "MISC",
-        "melanoma": "MEL",
-        "melanoma (0.76 to 1.5 mm)": "MEL",
-        "melanoma (in situ)": "MEL",
-        "melanoma (less than 0.76 mm)": "MEL",
-        "melanoma (more than 1.5 mm)": "MEL",
-        "melanoma metastasis": "MEL",
-        "melanosis": "MISC",
-        "miscellaneous": "MISC",
-        "recurrent nevus": "NV",
-        "reed or spitz nevus": "NV",
-        "seborrheic keratosis": "BKL",
-        "vascular lesion": "VASC",  # MISC
-    }
 
-    process_client_data(
-        Derm7pt_df,
-        "Derm7pt",
-        Derm7pt_path,
-        derm7pt_image_path_func,
-        derm7pt_label_map_func,
-        Derm7pt_columns,
-        official_columns,
-    )
+    process_client_data(Derm7pt_df, "Derm7pt", Derm7pt_path,
+                        derm7pt_image_path_func, derm7pt_label_map_func, Derm7pt_columns, official_columns)
+
 
 
 if __name__ == "__main__":
