@@ -45,7 +45,7 @@ def process_client_data(
         original_columns: The list of original columns for the dataset.
         official_columns: The list of official columns for the dataset.
     """
-    preprocessed_data = {
+    preprocessed_data: Dict[str, Any] = {
         "columns": official_columns,
         "original_columns": original_columns,
         "data": [],
