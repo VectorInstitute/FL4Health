@@ -6,9 +6,11 @@ Paper: https://arxiv.org/abs/2207.03075
 Code: https://github.com/wns823/medical_federated.git
 - medical_federated/skin_cancer_federated/preprocess_skin.py
 """
+
 import json
 import os
-from typing import Any, Dict, List, Callable
+from typing import Any, Callable, Dict, List
+
 import pandas as pd
 
 
@@ -162,10 +164,24 @@ def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
 
     Ham_columns = ["MEL", "NV", "BCC", "AK", "BKL", "DF", "VASC"]
 
-    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")), "HAM_rosendahl",
-                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
-    process_client_data(pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")), "HAM_vienna",
-                        Ham_10000_path, ham_image_path_func, ham_label_map_func, Ham_columns, official_columns)
+    process_client_data(
+        pd.read_csv(os.path.join(Ham_10000_path, "HAM_rosendahl.csv")),
+        "HAM_rosendahl",
+        Ham_10000_path,
+        ham_image_path_func,
+        ham_label_map_func,
+        Ham_columns,
+        official_columns,
+    )
+    process_client_data(
+        pd.read_csv(os.path.join(Ham_10000_path, "HAM_vienna.csv")),
+        "HAM_vienna",
+        Ham_10000_path,
+        ham_image_path_func,
+        ham_label_map_func,
+        Ham_columns,
+        official_columns,
+    )
 
 
 def pad_image_path_func(row: pd.Series) -> str:
@@ -213,8 +229,15 @@ def preprocess_pad_ufes_20(data_path: str, official_columns: List[str]) -> None:
 
     Pad_columns = ["MEL", "NV", "BCC", "AK", "BKL", "SCC"]
 
-    process_client_data(Pad_ufes_20_df, "PAD_UFES_20", Pad_ufes_20_path,
-                        pad_image_path_func, pad_label_map_func, Pad_columns, official_columns)
+    process_client_data(
+        Pad_ufes_20_df,
+        "PAD_UFES_20",
+        Pad_ufes_20_path,
+        pad_image_path_func,
+        pad_label_map_func,
+        Pad_columns,
+        official_columns,
+    )
 
 
 def derm7pt_image_path_func(row: pd.Series) -> str:
@@ -275,9 +298,15 @@ def preprocess_derm7pt(data_path: str, official_columns: List[str]) -> None:
 
     Derm7pt_columns = ["MEL", "NV", "BCC", "BKL", "DF", "VASC"]
 
-    process_client_data(Derm7pt_df, "Derm7pt", Derm7pt_path,
-                        derm7pt_image_path_func, derm7pt_label_map_func, Derm7pt_columns, official_columns)
-
+    process_client_data(
+        Derm7pt_df,
+        "Derm7pt",
+        Derm7pt_path,
+        derm7pt_image_path_func,
+        derm7pt_label_map_func,
+        Derm7pt_columns,
+        official_columns,
+    )
 
 
 if __name__ == "__main__":
