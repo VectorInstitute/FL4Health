@@ -5,7 +5,7 @@ import string
 from enum import Enum
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -23,11 +23,9 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 T = TypeVar("T")
-TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
-TorchTargetType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
-TorchPredType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
 
 
 class LoggingMode(Enum):

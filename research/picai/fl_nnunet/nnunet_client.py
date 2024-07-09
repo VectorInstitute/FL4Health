@@ -21,8 +21,9 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.clients.basic_client import BasicClient, TorchTargetType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.typing import TorchPredType, TorchTargetType
 
 
 class nnUNetMetric(Metric):
@@ -159,14 +160,14 @@ class nnUNetMetric(Metric):
 
         return input * mask_here, new_target  # Mask the input tensor and return the modified target
 
-    def update(self, preds: TorchTargetType, targets: TorchTargetType) -> None:
+    def update(self, preds: TorchPredType, targets: TorchTargetType) -> None:
         """
         Updates the state of the metric after transforming the preds and
             targets (from the nnunet default format) to be compatible with
             torchmetrics
 
         Args:
-            predss (TorchTargetType): The output of the nnunet model. Either a
+            predss (TorchPredType): The output of the nnunet model. Either a
                 torch.Tensor or a list of torch.Tensors
             targets (TorchTargetType): The nnunet targets used for the loss
                 function
