@@ -55,6 +55,8 @@ The predict.py script can be used to do inference on new data using nnunet model
 python predict.py --model_path /path/to/model/checkpoint.pth --raw_inputs /path/to/nnUNet_raw/input_dataset --output_path /myresults/
 ```
 
+NOTE: This script currently outputs the thresholded segmentation maps, not the softmax outputs of the model.
+
 ## Evaluation
 
 The PICAI competition from which the picai datasets originates used the following metric to score models
@@ -76,3 +78,5 @@ An example invocation of eval.py is as follows
 ```bash
 python eval.py --pred_path /path/to/predicted/segmentations --gt_path /path/to/groundtruth/segmentations --output_path /metric_results/metrics.json
 ```
+
+**WARNING**: If this script is provided predicted segmentation maps that have been thresholded (ie they are binary/boolean and one hot encoded OR contain only class labels but NOT softmax model outputs) then the output metrics will be different than what was officially calculated for the PICAI competition. The PICAI evaluation metrics are designed to take into account a model's uncertainty by using 'detection maps' as their inputs for the predictions. These detection maps are derived from the model softmax outputs, a common approach for doing this is available in the [Report-Guided-Annotation API](https://github.com/DIAGNijmegen/Report-Guided-Annotation). The extract_lesion_candidates method from this package can be included as an argument to PICAI eval's evaluate function to allow metrics to be computed directly from softmax model outputs.

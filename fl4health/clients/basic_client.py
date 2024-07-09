@@ -26,7 +26,8 @@ from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
 
 T = TypeVar("T")
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
-TorchTargetType = TypeVar("TorchTargetType", torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor])
+TorchTargetType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
+TorchPredType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
 
 
 class LoggingMode(Enum):
@@ -538,7 +539,7 @@ class BasicClient(NumPyClient):
 
     def train_step(
         self, input: TorchInputType, target: TorchTargetType
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    ) -> Tuple[TrainingLosses, Dict[str, TorchPredType]]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
@@ -549,7 +550,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            Tuple[TrainingLosses, Dict[str, TorchPredType]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
@@ -568,7 +569,7 @@ class BasicClient(NumPyClient):
 
     def val_step(
         self, input: TorchInputType, target: TorchTargetType
-    ) -> Tuple[EvaluationLosses, Dict[str, torch.Tensor]]:
+    ) -> Tuple[EvaluationLosses, Dict[str, TorchPredType]]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
@@ -578,7 +579,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[EvaluationLosses, Dict[str, torch.Tensor]]: The losses object from the val step along with
+            Tuple[EvaluationLosses, Dict[str, TorchPredType]]: The losses object from the val step along with
             a dictionary of the predictions produced by the model.
         """
 
@@ -712,7 +713,8 @@ class BasicClient(NumPyClient):
         loss_meter.clear()
         with torch.no_grad():
             for input, target in loader:
-                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                input = self._move_input_data_to_device(input)
+                target = self._move_target_data_to_device(target)
                 losses, preds = self.val_step(input, target)
                 loss_meter.update(losses)
                 metric_manager.update(preds, target)
@@ -770,6 +772,8 @@ class BasicClient(NumPyClient):
         Args:
             config (Config): The config from the server.
         """
+        # Empty device cache
+        self.empty_cache()
 
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
@@ -809,7 +813,7 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: TorchInputType) -> Tuple[Dict[str, TorchTargetType], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[Dict[str, TorchPredType], Dict[str, torch.Tensor]]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
@@ -819,7 +823,7 @@ class BasicClient(NumPyClient):
             match the names of the keyword arguments of self.model.forward().
 
         Returns:
-            Tuple[Dict[str, TorchTargetType], Dict[str, torch.Tensor]]: A tuple in which the first element
+            Tuple[Dict[str, TorchPredType], Dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. By passing features, we can compute losses such as the model contrasting loss in MOON.
             All predictions included in dictionary will be used to compute metrics.
@@ -849,19 +853,37 @@ class BasicClient(NumPyClient):
                 raise ValueError(f"Output tuple should have length 2 but has length {len(output)}")
             preds, features = output
             return preds, features
+        elif isinstance(output, (tuple, list)):
+            # This is more of a temporary workaround so that I don't need to
+            # change a bunch of clients I didn't write. Right now we have the
+            # flexibility to pass features, and we're using dicts to avoid
+            # uncertainty and needing to now the order. However there are
+            # instances, such as with deep supervision, where a list makes sense
+            # since the number of features varies depending on the depth of the
+            # network. Therefore we can't have consistent names for each feature
+            # unless we go through the trouble of naming the feature after it's
+            # spatial resolution which maybe is the play idk.
+            # If we do stick with dicts and not allow lists or tuples we still
+            # need TorchTargetType for the targets since we have multiple
+            # targets. That is of course unless we convert those to dicts too
+            assert any(
+                isinstance(val, torch.Tensor) for val in output
+            ), "Was expecting model output to be a sequence of tensors"
+            preds = output
+            return {"prediction": preds}, {}
         else:
             raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
-        self, preds: Dict[str, TorchTargetType], features: Dict[str, torch.Tensor], target: TorchTargetType
+        self, preds: Dict[str, TorchPredType], features: Dict[str, torch.Tensor], target: TorchTargetType
     ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
         Args:
-            preds (Dict[str, TorchTargetType]): Prediction(s) of the model(s) indexed by name.
+            preds (Dict[str, TorchPredType]): Prediction(s) of the model(s) indexed by name.
             features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
@@ -873,7 +895,7 @@ class BasicClient(NumPyClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, TorchTargetType],
+        preds: Dict[str, TorchPredType],
         features: Dict[str, torch.Tensor],
         target: TorchTargetType,
     ) -> TrainingLosses:
@@ -881,10 +903,10 @@ class BasicClient(NumPyClient):
         Computes training loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
-            preds (Dict[str, TorchTargetType]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (Dict[str, TorchPredType]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            target: (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
@@ -895,7 +917,7 @@ class BasicClient(NumPyClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, TorchTargetType],
+        preds: Dict[str, TorchPredType],
         features: Dict[str, torch.Tensor],
         target: TorchTargetType,
     ) -> EvaluationLosses:
@@ -903,10 +925,10 @@ class BasicClient(NumPyClient):
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
 
         Args:
-            preds (Dict[str, TorchTargetType]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (Dict[str, TorchPredType]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
             features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target: (torch.Tensor): Ground truth data to evaluate predictions against.
+            target: (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
@@ -978,7 +1000,7 @@ class BasicClient(NumPyClient):
         """
         return None
 
-    def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
         """
         Method that users can extend to specify an arbitrary transformation to apply to
         the target prior to the loss being computed. Defaults to the identity transform.
@@ -989,10 +1011,10 @@ class BasicClient(NumPyClient):
         is a transformed version of the input image itself.
 
         Args:
-            target (torch.Tensor): The target or label used to compute the loss.
+            target (TorchTargetType): The target or label used to compute the loss.
 
         Returns:
-            torch.Tensor: Identical to target.
+            TorchTargetType: Identical to target.
         """
         return target
 
@@ -1077,3 +1099,14 @@ class BasicClient(NumPyClient):
             step (int): The step number in local training that was most recently completed.
         """
         pass
+
+    def empty_cache(self) -> None:
+        """
+        Checks torch device and empties cache before training to optimize VRAM usage
+        """
+        if self.device.type == "cuda":
+            torch.cuda.empty_cache()
+        elif self.device.type == "mps":
+            torch.mps.empty_cache()
+        else:
+            pass

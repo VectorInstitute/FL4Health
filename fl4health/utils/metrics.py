@@ -9,6 +9,8 @@ from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
+from fl4health.clients.basic_client import TorchPredType, TorchTargetType
+
 
 class TestMetricPrefix(Enum):
     TEST_PREFIX = "test -"
@@ -325,13 +327,13 @@ class MetricManager:
         self.metric_manager_name = metric_manager_name
         self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
 
-    def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
+    def update(self, preds: Dict[str, TorchTargetType], target: TorchTargetType) -> None:
         """
         Updates (or creates then updates) a list of metrics for each prediction type.
 
         Args:
-            preds (Dict[str, torch.Tensor]): A dictionary of preds from the model
-            target (torch.Tensor): The ground truth labels for the data
+            preds (Dict[str, TorchTargetType]): A dictionary of preds from the model
+            target (TorchTargetType): The ground truth labels for the data
         """
         if not self.metrics_per_prediction_type:
             self.metrics_per_prediction_type = {key: copy.deepcopy(self.original_metrics) for key in preds.keys()}

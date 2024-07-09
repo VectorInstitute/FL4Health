@@ -12,6 +12,7 @@ from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerp
 from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
 from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
 from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
+from nnunetv2.training.dataloading.utils import unpack_dataset
 from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 from numpy import ceil
@@ -142,12 +143,12 @@ class nnUNetMetric(Metric):
         # create mask where 1 is where pixels in target are not ignore label
         # Modify target to remove the last class which is the ignore_label class
         new_target = target
-        if self.has_regions:  # target is ohe
+        if self.has_regions:  # nnunet returns a ohe target is has_regions is true
             if target.dtype == torch.bool:
-                mask = ~target[:, -1:]  # omit the last class
+                mask = ~target[:, -1:]  # omit the last class, ie the ignore_label
             else:
                 mask = 1 - target[:, -1:]
-            new_target = new_target[:, :-1]  # Remove final ignore class from target
+            new_target = new_target[:, :-1]  # Remove final ignore_label class from target
         else:  # target is not one hot encoded
             mask = (target != self.ignore_label).float()
             # Set ignore label to background essentially removing it as a class
@@ -156,16 +157,16 @@ class nnUNetMetric(Metric):
         # Tile the mask to be one hot encoded
         mask_here = torch.tile(mask, (1, input.shape[1], *[1 for _ in range(2, input.ndim)]))
 
-        return input * mask_here, new_target
+        return input * mask_here, new_target  # Mask the input tensor and return the modified target
 
-    def update(self, inputs: TorchTargetType, targets: TorchTargetType) -> None:
+    def update(self, preds: TorchTargetType, targets: TorchTargetType) -> None:
         """
         Updates the state of the metric after transforming the preds and
             targets (from the nnunet default format) to be compatible with
             torchmetrics
 
         Args:
-            inputs (TorchTargetType): The output of the nnunet model. Either a
+            predss (TorchTargetType): The output of the nnunet model. Either a
                 torch.Tensor or a list of torch.Tensors
             targets (TorchTargetType): The nnunet targets used for the loss
                 function
@@ -174,29 +175,33 @@ class nnUNetMetric(Metric):
         # segmentation heads and return lists of torch.Tensors.
         # The nnunet dataloaders correspondingly return lists of torch.Tensors # for the targets
 
-        # Since TorchTargetType is a TypeVar, we know pred and target will be
-        # the same type
-        if isinstance(inputs, (tuple, list)):
-            # If pred is a list or tuple, then assume this is because deep
-            # supervision is on. Actual pred and target are at index 0
-            input = inputs[0]
-            target = targets[0]
-        else:
-            input = inputs
-            target = targets
+        # If preds/targets are a list or tuple, then assume this is because deep
+        # supervision is on. Actual pred and target are at index 0
+        pred = preds[0] if isinstance(preds, (list, tuple)) else preds
+        target = targets[0] if isinstance(targets, (list, tuple)) else targets
 
-        # By default, nnunet models output logits. Convert to ohe segmentation maps
-        pred_ohe = self.get_oheseg_from_logits(input)
+        # By default, nnunet models output logits. Convert to ohe thresholded segmentation maps
+        # A good future update might be to return the pre-thresholded
+        # post-activations instead of the post-thresholded values for preds.
+        # Or at least make it an argument/option. Only difficulty is that were
+        # calling this class in nnUNetClient, so argument would have to be an
+        # attribute of the metric somehow.
+        # Torchmetrics segmentation metrics require ohe boolean/binary tensors
+        # Official PICAI eval metrics require detection maps which are derived
+        # from softmax outputs
+        # for now using seg to denote that preds are thresholded but this should
+        # be further clarified
+        pred_oheseg = self.get_oheseg_from_logits(pred)
 
         # Mask data if nnunet ignore label functionality is in use
         if self.ignore_label is not None:
-            pred_ohe, target = self.mask_data(pred_ohe, target)
+            pred_oheseg, target = self.mask_data(pred_oheseg, target)
 
         # one hot encode the target
-        target_ohe = self.maybe_ohe_target(input, target)
+        target_ohe = self.maybe_ohe_target(pred_oheseg, target)
 
         # Update metric with ohe predicted and ground truth segmentation maps
-        self.metric.update(pred_ohe.long(), target_ohe.long())
+        self.metric.update(pred_oheseg.long(), target_ohe.long())
 
     def compute(self, name: Optional[str]) -> Metrics:
         """
@@ -245,18 +250,15 @@ class nnUNetDLWrapper(DataLoader):
         else:
             self.current_step += 1
             batch = next(self.nnunet_dataloader)  # This returns a dictionary
-            # Note that this only works right now because I have turned deep supervision off
-            # When deep supervision is on, target is a list of segmentations at various scales
-            # nnUNet has a wrapper for loss functions to enable deep supervision but it expects
-            # target to be a list of tensors instead of a tensor itself
-            # This causes an error in basic client which expects target to always be a tensor
+            # Note: When deep supervision is on, target is a list of segmentations at various scales
+            # nnUNet has a wrapper for loss functions to enable deep supervision
             return batch["data"], batch["target"]
 
     def __len__(self) -> int:
         # Should return num_samples // batch_size
-        # nnUNetDataloaders are 'infinite' meaning they randomly sample batches \
-        # from the dataset. This makes the distinction between \
-        # num_samples // batch_size and ceil(num_samples/batch_size) \
+        # nnUNetDataloaders are 'infinite' meaning they randomly sample batches
+        # from the dataset. This makes the distinction between
+        # num_samples // batch_size and ceil(num_samples/batch_size)
         # meaningless. We will abritrarily use the later
         num_samples = len(self.dataset)
         batch_size = self.nnunet_dataloader.generator.batch_size
@@ -298,6 +300,8 @@ class nnUNetClient(BasicClient):
         self.device = kwargs["device"]
         self.always_preprocess: bool = always_preprocess
         self.plans_name = plans_identifier
+
+        self.nnunet_trainer: nnUNetTrainer
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         # Get the nnunet dataloader iterators
@@ -383,14 +387,11 @@ class nnUNetClient(BasicClient):
                 the 'nnunet_config' key with a string value of either 2d,
                 3d_fullres, 3d_lowres, 3d_cascade_fullres
         """
-        assert self.data_identifier is not None, 'Was expecting data identifier to be initialized in self.create_plans'
-        assert isinstance(config['nnunet_config'], str), 'Was expecting nnunet_config to be a string'
-        preprocess_folder = join(
-            nnUNet_preprocessed, self.dataset_name, self.data_identifier + "_" + str(config["nnunet_config"])
-        )
+        assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
+        assert isinstance(config["nnunet_config"], str), "Was expecting nnunet_config to be a string"
 
         # Preprocess data if it's not already there
-        if self.always_preprocess or not exists(preprocess_folder):
+        if self.always_preprocess or not exists(self.nnunet_trainer.preprocessed_dataset_folder):
             default_num_processes = {"2d": 8, "3d_fullres": 4, "3d_lowres": 8}
             if config["nnunet_config"] in default_num_processes:
                 num_processes = default_num_processes[config["nnunet_config"]]
@@ -415,12 +416,14 @@ class nnUNetClient(BasicClient):
         # Wrap metrics
         new_metrics = []
         for metric in self.metrics:  # self.metrics from parent class
-            new_metrics.append(nnUNetMetric(
-                name=metric.name,
-                metric=metric,
-                has_regions=self.nnunet_trainer.label_manager.has_regions,
-                ignore_label=self.nnunet_trainer.label_manager.ignore_label,
-            ))
+            new_metrics.append(
+                nnUNetMetric(
+                    name=metric.name,
+                    metric=metric,
+                    has_regions=self.nnunet_trainer.label_manager.has_regions,
+                    ignore_label=self.nnunet_trainer.label_manager.ignore_label,
+                )
+            )
         self.metrics = new_metrics
 
         # Reinstastiate metric managers with wrapped metrics
@@ -432,7 +435,7 @@ class nnUNetClient(BasicClient):
         """
         Ensures the necessary files for training are on disk and initializes
         several class attributes that depend on values in the config from the
-        server
+        server. This is called at the beginning of each fit round and each evaluate round
 
         Args:
             config (Config): The config file from the server. The nnUNetClient
@@ -440,6 +443,10 @@ class nnUNetClient(BasicClient):
                 addition to those required by BasicClient
         """
         log(INFO, "Setting up the nnUNetClient")
+
+        # Check if dataset fingerprint has been extracted
+        if not exists(join(nnUNet_preprocessed, "dataset_fingerprint.json")):
+            extract_fingerprints(dataset_ids=[self.dataset_id])
 
         # Get the dataset json and dataset name of the local client dataset
         self.plans = self.create_plans(config=config)
@@ -453,16 +460,20 @@ class nnUNetClient(BasicClient):
             device=self.device,
         )
 
-        # I will try and add support for deep supervision later
-        self.nnunet_trainer.enable_deep_supervision = False
+        # nnunet_trainer initialization
         self.nnunet_trainer.initialize()
-
-        # Check if dataset fingerprint has been extracted
-        if not exists(join(nnUNet_preprocessed, "dataset_fingerprint.json")):
-            extract_fingerprints(dataset_ids=[self.dataset_id])
+        # This is done by nnunet_trainer in self.on_train_start, we
+        # do it manually since nnunet_trainer not being used for training
+        self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(config=config)
+        unpack_dataset(  # Reduces load on CPU and RAM during training
+            folder=self.nnunet_trainer.preprocessed_dataset_folder,
+            unpack_segmentation=self.nnunet_trainer.unpack_dataset,
+            overwrite_existing=self.always_preprocess,
+            verify_npy=True,
+        )
 
         # Wrap the metrics with nnUNetMetric.
         self.wrap_metrics()
