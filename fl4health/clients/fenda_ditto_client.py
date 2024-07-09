@@ -11,6 +11,7 @@ from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
@@ -34,7 +35,7 @@ class FendaDittoClient(DittoClient):
         aggregated on the server-side and use those weights to also constrain the training of a local
         FENDA model. The feature extractor from globally aggregated model is, at each server round,
         injected into the global feature extractor of the FENDA model. The constraint for this local
-        FENDA model uses a weight drift loss on its feature extraction models.
+        FENDA model uses a weight drift loss on its feature extraction modules.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -103,14 +104,16 @@ class FendaDittoClient(DittoClient):
         check_shape_match(
             self.global_model.base_module.parameters(),
             self.model.second_feature_extractor.parameters(),
-            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match.",
+            "Shapes of self.global_model.feature_extractor and self.model.second_feature_extractor do not match.\
+                For FENDA+Ditto, these components much match exactly.",
         )
 
         # Check if shapes of self.model.second_feature_extractor and self.model.first_feature_extractor match
         check_shape_match(
             self.model.second_feature_extractor.parameters(),
             self.model.first_feature_extractor.parameters(),
-            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.",
+            "Shapes of self.model.second_feature_extractor and self.model.first_feature_extractor do not match.\
+                For FENDA+Ditto, these components much match exactly.",
         )
 
     def setup_client(self, config: Config) -> None:
@@ -146,10 +149,9 @@ class FendaDittoClient(DittoClient):
         """
         The parameters being passed are to be routed to the global model and copied to the global feature extractor
         of the local FENDA model and saved as the initial global model tensors to be used in a penalty term in
-        training the local model. In the first fitting round, we assume the both the global and local models
-        are being initialized and use the FullParameterExchanger() to set the model weights for the global model,
-        the global model feature extractor weights will be then copied to the global feature extractor of
-        local FENDA model.
+        training the local model. We assume the both the global and local models are being initialized and use
+        the FullParameterExchanger() to set the model weights for the global model, the global model feature
+        extractor weights will be then copied to the global feature extractor of local FENDA model.
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model
@@ -160,7 +162,11 @@ class FendaDittoClient(DittoClient):
                 A full parameter exchanger is only used if the current federated learning round is the very
                 first fitting round.
         """
-        super().set_parameters(parameters, config, fitting_round)
+        # Make sure that the proper components exist.
+        assert self.global_model is not None and self.model is not None
+        assert self.parameter_exchanger is not None and isinstance(self.parameter_exchanger, FullParameterExchanger)
+
+        self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
         # GLOBAL MODEL feature extractor is given to local FENDA model
         self.model.second_feature_extractor.load_state_dict(self.global_model.base_module.state_dict())
 
@@ -174,28 +180,11 @@ class FendaDittoClient(DittoClient):
         ]
 
     def update_before_train(self, current_server_round: int) -> None:
-        # freeze the global freature extractor during training updates if true.
+        # freeze the global feature extractor during training updates if true.
         if self.freeze_global_feature_extractor:
             for param in self.model.second_feature_extractor.parameters():
                 param.requires_grad = False
         return super().update_before_train(current_server_round)
-
-    def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
-        """
-        Initializes the model weights for all clients in the federated learning setting.
-
-        This function ensures that each client starts with the global model parameters provided by the server.
-        However, it's important to note that for the FENDA method, each client will still initialize their
-        local feature extractor and classification head randomly. This diverges from the typical assumption
-        in most federated learning optimization theories where the initial models are usually synchronized.
-        The divergence is acceptable as the models will differ after the first steps of training.
-
-        Args:
-            parameters (NDArrays): Model parameters to be injected into the client model.
-            config (Config): Configuration sent by the FL server to allow for customization in the function if desired.
-        """
-        # Pull the global model parameters into the client's model
-        self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
     def predict(
         self,
@@ -248,7 +237,7 @@ class FendaDittoClient(DittoClient):
         is the L2 inner product between the initial global model feature extractor weights and the feature extractor
         weights of the local model. If the global feature extractor is not frozen, the penalty is computed using the
         global feature extractor of the local model. If it is frozen, the penalty is computed using the local feature
-        extractor of the local model. allowing for flexibility in training scenarios where the feature extractors
+        extractor of the local model. This allows for flexibility in training scenarios where the feature extractors
         may differ between the global and local models. The penalty is stored in "backward". The loss to
         optimize the global model is stored in the additional losses dictionary under "global_loss".
 

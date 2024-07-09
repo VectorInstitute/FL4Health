@@ -80,6 +80,8 @@ class DittoClient(BasicClient):
         self.optimizers = optimizers
 
     def get_global_model(self, config: Config) -> nn.Module:
+        # The global model should be the same architecture as the local model so
+        # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
         return self.get_model(config).to(self.device)
 
     def setup_client(self, config: Config) -> None:
