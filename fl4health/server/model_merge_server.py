@@ -68,6 +68,12 @@ class ModelMergeServer(Server):
             if evaluate_metrics_fed is not None:
                 history.add_metrics_distributed(server_round=1, metrics=evaluate_metrics_fed)
 
+        # Evaluate model using strategy implementation
+        res_cen = self.strategy.evaluate(1, parameters=self.parameters)
+        if res_cen is not None:
+            _, metrics_cen = res_cen
+            history.add_metrics_centralized(server_round=1, metrics=metrics_cen)
+
         self.metrics_reporter.add_to_metrics(
             data={
                 "fit_end": datetime.datetime.now(),

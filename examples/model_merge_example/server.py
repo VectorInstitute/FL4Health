@@ -1,16 +1,55 @@
 import argparse
-from typing import Any, Dict
+from collections import OrderedDict
+from functools import partial
+from pathlib import Path
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import flwr as fl
+import torch
+import torch.nn as nn
+from flwr.common import Config, NDArrays, Scalar
 from flwr.server.client_manager import SimpleClientManager
+from torch.utils.data import DataLoader
 
+from examples.models.cnn_model import MnistNet
 from fl4health.server.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 from fl4health.utils.config import load_config
+from fl4health.utils.load_data import load_mnist_test_data
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.metrics import Accuracy, Metric, MetricManager
 
 
-def main(config: Dict[str, Any]) -> None:
+def evaluate_fn(
+    model: nn.Module,
+    loader: DataLoader,
+    metrics: Sequence[Metric],
+    device: torch.device,
+    round: int,
+    parameters: NDArrays,
+    config: Config,
+) -> Optional[Tuple[float, Dict[str, Scalar]]]:
+    model.to(device)
+    model.eval()
+    evaluate_metric_manager = MetricManager(metrics, "evaluate")
+
+    params_dict = zip(model.state_dict().keys(), parameters)
+    state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+    model.load_state_dict(state_dict, strict=True)
+
+    with torch.no_grad():
+        for input, target in loader:
+            input, target = input.to(device), target.to(device)
+            preds = {"predictions": model(input)}
+            evaluate_metric_manager.update(preds, target)
+
+    return 0.0, evaluate_metric_manager.compute()
+
+
+def main(config: Dict[str, Any], data_path: Path) -> None:
+    loader, _ = load_mnist_test_data(data_path, 32)
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    evaluate_fn_partial = partial(evaluate_fn, MnistNet(), loader, [Accuracy("")], device)
 
     strategy = ModelMergeStrategy(
         min_fit_clients=config["n_clients"],
@@ -20,6 +59,7 @@ def main(config: Dict[str, Any]) -> None:
         # We use the same fit config function, as nothing changes for eval
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+        evaluate_fn=evaluate_fn_partial,
     )
 
     server = ModelMergeServer(client_manager=SimpleClientManager(), strategy=strategy)
@@ -39,8 +79,16 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/basic_example/config.yaml",
     )
+
+    parser.add_argument(
+        "--data_path",
+        action="store",
+        type=str,
+        help="Path to server side evaluation dataset.",
+        default="examples/datasets/MNIST",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config)
+    main(config, args.data_path)

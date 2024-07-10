@@ -1,4 +1,3 @@
-
 from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -50,7 +49,7 @@ class ModelMergeStrategy(Strategy, StrategyWithPolling):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
     ) -> None:
         """
-        Model Merging with Flexible Sampling. 
+        Model Merging with Flexible Sampling.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
@@ -139,9 +138,7 @@ class ModelMergeStrategy(Strategy, StrategyWithPolling):
             sample_size = max(int(num_available_clients * self.fraction_fit), self.min_fit_clients)
             min_num_clients = self.min_available_clients
 
-            clients = client_manager.sample(
-                num_clients=sample_size, min_num_clients=min_num_clients
-            )
+            clients = client_manager.sample(num_clients=sample_size, min_num_clients=min_num_clients)
 
             # Return client/config pairs
             return [(client, fit_ins) for client in clients]
@@ -196,9 +193,7 @@ class ModelMergeStrategy(Strategy, StrategyWithPolling):
             # Sample clients
             num_available_clients = client_manager.num_available()
             sample_size = max(int(num_available_clients * self.fraction_evaluate), self.min_evaluate_clients)
-            clients = client_manager.sample(
-                num_clients=sample_size, min_num_clients=self.min_available_clients
-            )
+            clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
 
             # Return client/config pairs
             return [(client, evaluate_ins) for client in clients]
@@ -317,12 +312,16 @@ class ModelMergeStrategy(Strategy, StrategyWithPolling):
         return None, metrics_aggregated
 
     def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
-        return None
+        if self.evaluate_fn is None:
+            return None
 
-    def initialize_parameters(
-        self, client_manager: ClientManager
-    ) -> Optional[Parameters]:
+        eval_res = self.evaluate_fn(server_round, parameters_to_ndarrays(parameters), {})
+
+        if eval_res is None:
+            return None
+        loss, metrics = eval_res
+        return loss, metrics
+
+    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
         """Initialize global model parameters."""
-        initial_parameters = self.initial_parameters
-        self.initial_parameters = None  # Don't keep initial parameters in memory
-        return initial_parameters
+        return None
