@@ -2,7 +2,6 @@ import datetime
 import random
 import string
 from abc import abstractmethod
-from collections import OrderedDict
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple, Type, TypeVar
 
@@ -13,6 +12,8 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
 from fl4health.clients.basic_client import TorchInputType
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.metrics import Metric, MetricManager
 
@@ -35,9 +36,7 @@ class ModelMergeClient(NumPyClient):
         self.metrics_reporter = metrics_reporter
 
         self.initialized = False
-
         self.client_name = self.generate_hash()
-
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         if metrics_reporter is not None:
@@ -47,14 +46,6 @@ class ModelMergeClient(NumPyClient):
 
         self.model: nn.Module
         self.test_loader: DataLoader
-
-    @abstractmethod
-    def get_model(self, config: Config) -> nn.Module:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_test_dataloader(self, config: Config) -> DataLoader:
-        raise NotImplementedError
 
     def generate_hash(self, length: int = 8) -> str:
         """
@@ -71,22 +62,20 @@ class ModelMergeClient(NumPyClient):
     def setup_client(self, config: Config) -> None:
         self.model = self.get_model(config)
         self.test_loader = self.get_test_dataloader(config)
+        self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.initialized = True
 
     def get_parameters(self, config: Config) -> NDArrays:
         assert self.model is not None
-        return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
+        return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
-        if not self.initialized:
-            self.setup_client(config)
-
-        params_dict = zip(self.model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
-        self.model.load_state_dict(state_dict, strict=True)
+        assert self.initialized
+        self.parameter_exchanger.pull_parameters(parameters, self.model)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        assert not self.initialized
         self.setup_client(config)
         assert self.metrics_reporter is not None
         self.metrics_reporter.add_to_metrics_at_round(
@@ -164,3 +153,18 @@ class ModelMergeClient(NumPyClient):
         self.set_parameters(parameters, config)
         metrics = self.validate()
         return 0.0, len(self.test_loader), metrics
+
+    @abstractmethod
+    def get_model(self, config: Config) -> nn.Module:
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_test_dataloader(self, config: Config) -> DataLoader:
+        raise NotImplementedError
+
+    def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
+        """
+        Parameter exchange is assumed to always be full for model merging clients. However, this functionality
+        may be overridden if a different exchanger is needed
+        """
+        return FullParameterExchanger()
