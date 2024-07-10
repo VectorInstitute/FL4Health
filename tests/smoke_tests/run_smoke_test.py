@@ -593,6 +593,15 @@ if __name__ == "__main__":
     )
     loop.run_until_complete(
         run_smoke_test(
+            server_python_path="examples.fenda_ditto_example.server",
+            client_python_path="examples.fenda_ditto_example.client",
+            config_path="tests/smoke_tests/fenda_ditto_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            checkpoint_path="examples/assets/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
             server_python_path="examples.perfcl_example.server",
             client_python_path="examples.perfcl_example.client",
             config_path="tests/smoke_tests/perfcl_config.yaml",
