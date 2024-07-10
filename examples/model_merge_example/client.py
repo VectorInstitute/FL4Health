@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.model_merge_client import ModelMergeClient
 from fl4health.utils.load_data import load_mnist_test_data
+from fl4health.utils.metrics import Accuracy
 
 
 class MnistModelMergeClient(ModelMergeClient):
@@ -27,11 +28,11 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to the local dataset",
-        default="examples/datasets/models/MNIST",
+        default="examples/datasets/MNIST",
     )
     parser.add_argument("--model_path", action="store", type=str, help="Path to the clients checkpointed model")
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    client = MnistModelMergeClient(Path(args.dataset_path), Path(args.model_path), [], device)
+    client = MnistModelMergeClient(Path(args.dataset_path), Path(args.model_path), [Accuracy("acc")], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

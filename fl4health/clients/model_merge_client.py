@@ -1,3 +1,6 @@
+import datetime
+import random
+import string
 from abc import abstractmethod
 from collections import OrderedDict
 from pathlib import Path
@@ -33,7 +36,14 @@ class ModelMergeClient(NumPyClient):
 
         self.initialized = False
 
+        self.client_name = self.generate_hash()
+
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
+
+        if metrics_reporter is not None:
+            self.metrics_reporter = metrics_reporter
+        else:
+            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
 
         self.model: nn.Module
         self.test_loader: DataLoader
@@ -45,6 +55,18 @@ class ModelMergeClient(NumPyClient):
     @abstractmethod
     def get_test_dataloader(self, config: Config) -> DataLoader:
         raise NotImplementedError
+
+    def generate_hash(self, length: int = 8) -> str:
+        """
+        Generates unique hash used as id for client.
+
+        Args:
+           length (int): The length of the hash.
+
+        Returns:
+            str: client id
+        """
+        return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def setup_client(self, config: Config) -> None:
         self.model = self.get_model(config)
@@ -66,7 +88,22 @@ class ModelMergeClient(NumPyClient):
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         self.setup_client(config)
-        return self.get_parameters(config), 0, {}
+        assert self.metrics_reporter is not None
+        self.metrics_reporter.add_to_metrics_at_round(
+            1,
+            data={"fit_start": datetime.datetime.now()},
+        )
+
+        val_metrics = self.validate()
+
+        self.metrics_reporter.add_to_metrics_at_round(
+            1,
+            data={
+                "fit_metrics": val_metrics,
+            },
+        )
+
+        return self.get_parameters(config), len(self.test_loader), val_metrics
 
     def _move_input_data_to_device(self, data: TorchInputType) -> TorchInputType:
         """
@@ -117,8 +154,8 @@ class ModelMergeClient(NumPyClient):
         self.test_metric_manager.clear()
         with torch.no_grad():
             for input, target in self.test_loader:
-                input, target = self._move_input_data_to_device(input).target.to(self.device)
-                preds = self.model(target)
+                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                preds = {"predictions": self.model(input)}
                 self.test_metric_manager.update(preds, target)
 
         return self.test_metric_manager.compute()
@@ -126,4 +163,4 @@ class ModelMergeClient(NumPyClient):
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         self.set_parameters(parameters, config)
         metrics = self.validate()
-        return 0, len(self.test_loader), metrics
+        return 0.0, len(self.test_loader), metrics
