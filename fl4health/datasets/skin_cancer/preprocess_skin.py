@@ -154,7 +154,7 @@ def preprocess_ham10000(data_path: str, official_columns: List[str]) -> None:
         official_columns: The list of official columns for the dataset.
     """
     Ham_10000_path = os.path.join(data_path, "HAM10000")
-    Ham_csv_path = os.path.join(Ham_10000_path, "HAM10000_metadata.csv")
+    Ham_csv_path = os.path.join(Ham_10000_path, "HAM10000_metadata")
     HAM_df = pd.read_csv(Ham_csv_path)
 
     Rosendahl_data = HAM_df[HAM_df["dataset"] == "rosendahl"]

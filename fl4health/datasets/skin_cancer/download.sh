@@ -39,7 +39,7 @@ echo "Derm7pt unzipping. Reminder: Download release_v0.zip from SFU: https://der
   and place it under ${DIRECTORY}."
 
 mkdir -p ${DIRECTORY}/Derm7pt
-unzip ${DIRECTORY}/release_v0.zip -d ${DIRECTORY}/Derm7pt
+unzip -j ${DIRECTORY}/release_v0.zip -d ${DIRECTORY}/Derm7pt
 rm ${DIRECTORY}/release_v0.zip
 
 echo "HAM10000 unzipping. Reminder: Download HAM10000_images_part_1.zip, HAM10000_images_part_2.zip,\
