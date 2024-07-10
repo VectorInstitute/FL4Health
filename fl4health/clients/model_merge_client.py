@@ -1,17 +1,19 @@
 from abc import abstractmethod
 from collections import OrderedDict
 from pathlib import Path
-from typing import Optional, Sequence, Tuple, Dict
+from typing import Dict, Optional, Sequence, Tuple, Type, TypeVar
 
-from flwr.common.typing import Config, NDArrays, Scalar
-from flwr.client import NumPyClient
 import torch
 import torch.nn as nn
+from flwr.client import NumPyClient
+from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
-from fl4health.utils.metrics import Metric, MetricManager
-from fl4health.reporting.metrics import MetricsReporter
 from fl4health.clients.basic_client import TorchInputType
+from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.metrics import Metric, MetricManager
+
+T = TypeVar("T")
 
 
 class ModelMergeClient(NumPyClient):
@@ -86,11 +88,36 @@ class ModelMergeClient(NumPyClient):
         else:
             raise TypeError("data must be of type torch.Tensor or Dict[str, torch.Tensor].")
 
+    def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
+        """
+        Checks if a config_key exists in config and if so, verify it is of type narrow_type_to.
+
+        Args:
+            config (Config): The config object from the server.
+            config_key (str): The key to check config for.
+            narrow_type_to (Type[T]): The expected type of config[config_key]
+
+        Returns:
+            T: The type-checked value at config[config_key]
+
+        Raises:
+            ValueError: If config[config_key] is not of type narrow_type_to or
+                if the config_key is not present in config.
+        """
+        if config_key not in config:
+            raise ValueError(f"{config_key} is not present in the Config.")
+
+        config_value = config[config_key]
+        if isinstance(config_value, narrow_type_to):
+            return config_value
+        else:
+            raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
+
     def validate(self) -> Dict[str, Scalar]:
         self.test_metric_manager.clear()
         with torch.no_grad():
             for input, target in self.test_loader:
-                input, target = self._move_input_data_to_device(input). target.to(self.device)
+                input, target = self._move_input_data_to_device(input).target.to(self.device)
                 preds = self.model(target)
                 self.test_metric_manager.update(preds, target)
 

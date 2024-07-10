@@ -1,11 +1,10 @@
 import timeit
+from logging import DEBUG, INFO
 from typing import Optional, Tuple
-from logging import INFO, DEBUG
 
-from flwr.server.server import Server
 from flwr.common.logger import log
 from flwr.server.history import History
-from flwr.server.strategy import Strategy
+from flwr.server.server import Server
 
 
 class ModelMergeServer(Server):

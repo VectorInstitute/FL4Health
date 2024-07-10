@@ -1,44 +1,43 @@
 import argparse
-from functools import partial
 from pathlib import Path
-from typing import Sequence, Any, Dict
+from typing import Any, Dict, Sequence
 
 import torch
 import torch.nn as nn
-
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
-from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.config import load_config
+from fl4health.utils.load_data import load_mnist_data
 
 
 def train_clients(
-        models: Sequence[nn.Module], 
-        train_loaders: Sequence[DataLoader], 
-        criterions: Sequence[nn.Module], 
-        optimizers: Sequence[Optimizer],
-        ckpt_base_path: Path,
-        num_epochs: int,
-        device: torch.device
-    ) -> None:
+    models: Sequence[nn.Module],
+    train_loaders: Sequence[DataLoader],
+    criterions: Sequence[nn.Module],
+    optimizers: Sequence[Optimizer],
+    ckpt_base_path: Path,
+    num_epochs: int,
+    device: torch.device,
+) -> None:
 
     assert all(len(models) == len(others) for others in [train_loaders, criterions, optimizers])
 
-    train_client_partial = partial(train_client, ckpt_base_path=ckpt_base_path, num_epochs=num_epochs, device=device)
-    map(train_client_partial, models, train_loaders, criterions, optimizers, range(len(models)))
-    
+    for i, (model, loader, criterion, optimizer) in enumerate(zip(models, train_loaders, criterions, optimizers)):
+        train_client(model, loader, criterion, optimizer, ckpt_base_path, num_epochs, device, i)
+
+
 def train_client(
-        model: nn.Module,
-        train_loader: DataLoader,
-        criterion: nn.Module,
-        optimizer: Optimizer,
-        ckpt_base_path: Path,
-        num_epochs: int,
-        device: torch.device,
-        client_number: int
-    ) -> None:
+    model: nn.Module,
+    train_loader: DataLoader,
+    criterion: nn.Module,
+    optimizer: Optimizer,
+    ckpt_base_path: Path,
+    num_epochs: int,
+    device: torch.device,
+    client_number: int,
+) -> None:
     model.to(device)
     model.train()
 
@@ -55,8 +54,11 @@ def train_client(
     ckpt_path = f"{ckpt_base_path}/{str(client_number)}.pt"
     torch.save({"model_state_dict": model.state_dict()}, ckpt_path)
 
+    print(f"Client {str(client_number)} finished training. Checkpoint saved to: {ckpt_path}")
+
+
 def main(config: Dict[str, Any], ckpt_base_path: Path, n_epochs: int, data_path: Path) -> None:
-    n_clients = config["n_clients"] 
+    n_clients = config["n_clients"]
     models = [MnistNet() for _ in range(n_clients)]
     loaders = [load_mnist_data(data_path, config["batch_size"])[0] for _ in range(n_clients)]
     optimizers = [torch.optim.SGD(model.parameters(), lr=0.05) for model in models]
@@ -64,6 +66,7 @@ def main(config: Dict[str, Any], ckpt_base_path: Path, n_epochs: int, data_path:
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     train_clients(models, loaders, criterions, optimizers, ckpt_base_path, n_epochs, device)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Clients Solo")

@@ -94,6 +94,35 @@ def load_mnist_data(
     return train_loader, validation_loader, num_examples
 
 
+def load_mnist_test_data(
+    data_dir: Path,
+    batch_size: int,
+    sampler: Optional[LabelBasedSampler] = None,
+    transform: Optional[Callable] = None,
+) -> Tuple[DataLoader, Dict[str, int]]:
+    """Load MNIST test set only."""
+    log(INFO, f"Data directory: {str(data_dir)}")
+
+    if transform is None:
+        transform = transforms.Compose(
+            [
+                ToNumpy(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
+
+    data, targets = get_mnist_data_and_target_tensors(data_dir, False)
+    evaluation_set = TensorDataset(data, targets, transform)
+
+    if sampler is not None:
+        evaluation_set = sampler.subsample(evaluation_set)
+
+    evaluation_loader = DataLoader(evaluation_set, batch_size=batch_size, shuffle=False)
+    num_examples = {"eval_set": len(evaluation_set)}
+    return evaluation_loader, num_examples
+
+
 def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
     mnist_dataset = CIFAR10(data_dir, train=train, download=True)
     data = torch.Tensor(mnist_dataset.data)
