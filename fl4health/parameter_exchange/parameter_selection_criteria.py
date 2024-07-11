@@ -2,13 +2,15 @@ import math
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple
 
+from scipy.stats import bernoulli
 import torch
 import torch.nn as nn
 from flwr.common.typing import NDArrays
 from torch import Tensor
+from fl4health.model_bases.masked_model import is_masked_module
+
 
 LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
-
 
 class LayerSelectionFunctionConstructor:
     def __init__(
@@ -173,3 +175,34 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
         initial_tensor_values = initial_model_states[tensor_name]
         names_to_scores[tensor_name] = (-1) * (torch.abs(current_tensor_values) - torch.abs(initial_tensor_values))
     return names_to_scores
+
+
+# Selection function that selects the "weight_scores" and "bias_scores" parameters for the 
+# masked layers. This function is meant to be used for the FedPM algorithm.
+def select_mask_scores(model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
+    parameters_to_exchange_names = []
+    parameters_to_exchange = []
+    model_states = model.state_dict()
+    if is_masked_module(model):
+        parameters_to_exchange_names.append("weight_scores")
+        weight_scores = model_states["weight_scores"].cpu().numpy()
+        weight_mask_sample = bernoulli.rvs(weight_scores)
+        parameters_to_exchange.append(weight_mask_sample)
+        if "bias_scores" in model_states.keys():
+            parameters_to_exchange_names.append("bias_scores")
+            bias_scores = model_states["bias_scores"].cpu().numpy()
+            bias_mask_sample = bernoulli.rvs(bias_scores)
+            parameters_to_exchange.append(bias_mask_sample)
+    else:
+        for name, module in model.named_modules():
+            if is_masked_module(model):
+                parameters_to_exchange_names.append(f"{name}.weight_scores")
+                weight_scores = model_states[f"{name}.weight_scores"].cpu().numpy()
+                weight_mask_sample = bernoulli.rvs(weight_scores)
+                parameters_to_exchange.append(weight_mask_sample)
+                if "bias_scores" in module.state_dict().keys():
+                    parameters_to_exchange_names.append(f"{name}.bias_scores")
+                    bias_scores = model_states[f"{name}.bias_scores"].cpu().numpy()
+                    bias_mask_sample = bernoulli.rvs(bias_scores)
+                    parameters_to_exchange.append(bias_mask_sample)
+    return parameters_to_exchange, parameters_to_exchange_names
