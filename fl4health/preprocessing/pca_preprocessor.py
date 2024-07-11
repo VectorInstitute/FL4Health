@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 
 from fl4health.model_bases.pca import PcaModule
-from fl4health.utils.dataset import BaseDataset
+from fl4health.utils.dataset import TensorDataset
 
 
 class PcaPreprocessor:
@@ -27,8 +27,8 @@ class PcaPreprocessor:
     def reduce_dimension(
         self,
         new_dimension: int,
-        dataset: BaseDataset,
-    ) -> BaseDataset:
+        dataset: TensorDataset,
+    ) -> TensorDataset:
         """
         Perform dimensionality reduction on a dataset by projecting the data
         onto a set of pre-computed principal components.

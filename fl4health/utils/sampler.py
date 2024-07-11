@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Set, TypeVar
 import numpy as np
 import torch
 
-from fl4health.utils.dataset import BaseDataset, DictionaryDataset
+from fl4health.utils.dataset import DictionaryDataset, TensorDataset
 
 T = TypeVar("T")
-D = TypeVar("D", BaseDataset, DictionaryDataset)
+D = TypeVar("D", TensorDataset, DictionaryDataset)
 
 
 class LabelBasedSampler(ABC):
@@ -22,7 +22,8 @@ class LabelBasedSampler(ABC):
         self.num_classes = len(self.unique_labels)
 
     def select_by_indices(self, dataset: D, selected_indices: torch.Tensor) -> D:
-        if isinstance(dataset, BaseDataset):
+        if isinstance(dataset, TensorDataset):
+            assert dataset.targets is not None
             dataset.targets = dataset.targets[selected_indices]
             dataset.data = dataset.data[selected_indices]
             return dataset

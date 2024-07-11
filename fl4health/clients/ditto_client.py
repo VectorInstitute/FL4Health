@@ -79,6 +79,11 @@ class DittoClient(BasicClient):
         assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
         self.optimizers = optimizers
 
+    def get_global_model(self, config: Config) -> nn.Module:
+        # The global model should be the same architecture as the local model so
+        # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
+        return self.get_model(config).to(self.device)
+
     def setup_client(self, config: Config) -> None:
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
@@ -89,7 +94,7 @@ class DittoClient(BasicClient):
         """
         # Need to setup the global model here as well. It should be the same architecture as the local model so
         # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
-        self.global_model = self.get_model(config).to(self.device)
+        self.global_model = self.get_global_model(config)
         # The rest of the setup is the same
         super().setup_client(config)
 
@@ -104,8 +109,19 @@ class DittoClient(BasicClient):
         Returns:
             NDArrays: GLOBAL model weights to be sent to the server for aggregation
         """
-        assert self.global_model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.global_model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.global_model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.global_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -136,13 +152,15 @@ class DittoClient(BasicClient):
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-    def update_before_train(self, current_server_round: int) -> None:
+    def save_initial_global_tensors(self) -> None:
         # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.initial_global_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.global_model.parameters()
         ]
 
+    def update_before_train(self, current_server_round: int) -> None:
+        self.save_initial_global_tensors()
         return super().update_before_train(current_server_round)
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
@@ -218,10 +236,12 @@ class DittoClient(BasicClient):
 
         # Forward pass on both the global and local models
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
         # NOTE: features here should be a blank dictionary, as we're not using them
         assert len(features) == 0
+
         losses = self.compute_training_loss(preds, features, target)
 
         # Take a step with the global model vanilla loss
