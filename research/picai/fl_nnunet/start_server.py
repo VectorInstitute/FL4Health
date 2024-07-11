@@ -64,8 +64,8 @@ def main(config: dict) -> None:
     else:
         raise Exception(
             "There is a bug right now where params can not be None. \
-                        Therefore a starting checkpoint must be provided \
-                        because I don't want to mess up my code"
+            Therefore a starting checkpoint must be provided because I don't \
+            want to mess up my code. I hav raised an issue with flwr"
         )
         # params = None
 

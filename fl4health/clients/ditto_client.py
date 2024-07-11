@@ -9,11 +9,12 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 
 class DittoClient(BasicClient):
@@ -203,9 +204,7 @@ class DittoClient(BasicClient):
         self.global_model.train()
         return super().train_by_steps(steps, current_round)
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         """
         Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
         As in the implementation there, steps of the global and local models are done in tandem and for the same
@@ -251,7 +250,7 @@ class DittoClient(BasicClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -287,9 +286,9 @@ class DittoClient(BasicClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Dict[str, torch.Tensor],
+        preds: TorchPredType,
         features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the local model loss and any additional losses given predictions of the model and ground truth data.
@@ -317,9 +316,9 @@ class DittoClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
+        preds: TorchPredType,
         features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
@@ -362,9 +361,9 @@ class DittoClient(BasicClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
+        preds: TorchPredType,
         features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.

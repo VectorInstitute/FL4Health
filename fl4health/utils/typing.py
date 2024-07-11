@@ -1,7 +1,7 @@
-from typing import Dict, List, Tuple, TypeVar, Union
+from typing import Dict, TypeVar
 
 import torch
 
 TorchInputType = TypeVar("TorchInputType", torch.Tensor, Dict[str, torch.Tensor])
-TorchTargetType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
-TorchPredType = Union[torch.Tensor, List[torch.Tensor], Tuple[torch.Tensor, ...]]
+TorchTargetType = TypeVar("TorchTargetType", torch.Tensor, Dict[str, torch.Tensor])
+TorchPredType = Dict[str, torch.Tensor]

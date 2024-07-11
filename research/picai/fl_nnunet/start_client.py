@@ -8,12 +8,14 @@ import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
+from torchmetrics.classification import Dice
 
 # from torchmetrics.classification import MultilabelAveragePrecision
 from torchmetrics.segmentation import GeneralizedDiceScore
 
-from fl4health.utils.metrics import TorchMetric
+from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
+from research.picai.fl_nnunet.transforms import collapse_ohe_target, get_ann_from_probs, get_prob_from_logits
 
 nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 
@@ -32,12 +34,20 @@ def main(
     log(INFO, f"Using server Address: {server_address}")
 
     # Define metrics
-    metrics = [
-        TorchMetric(
-            name="DICE",
+    dice1 = TransformsMetric(
+        metric=TorchMetric(
+            name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-    ]
+        transforms=[get_prob_from_logits, get_ann_from_probs],
+    )
+    # The Dice class requires preds to be ohe, but targets to not be ohe
+    dice2 = TransformsMetric(
+        metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
+        transforms=[get_prob_from_logits, collapse_ohe_target],
+    )
+
+    metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
 
     # Create and start client
     dataset_name = convert_id_to_dataset_name(dataset_id)
