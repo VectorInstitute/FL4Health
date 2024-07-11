@@ -2,7 +2,7 @@ import argparse
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple, Union
 
 import flwr as fl
 import torch
@@ -18,6 +18,29 @@ from fl4health.utils.config import load_config
 from fl4health.utils.load_data import load_mnist_test_data
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.metrics import Accuracy, Metric, MetricManager
+
+
+def move_input_data_to_device(
+    data: Union[torch.Tensor, Dict[str, torch.Tensor]], device: torch.device
+) -> Union[torch.Tensor, Dict[str, torch.Tensor]]:
+    """
+    Moving data to device, where data is intended to be the input to
+    model's forward method.
+
+    Args:
+        data (TorchInputType): input data to the forward method of model.
+        data can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
+        latter case, all tensors in the dictionary are moved to self.device.
+
+    Raises:
+        TypeError: raised if data is not of type torch.Tensor or Dict[str, torch.Tensor]
+    """
+    if isinstance(data, torch.Tensor):
+        return data.to(device)
+    elif isinstance(data, dict):
+        return {key: value.to(device) for key, value in data.items()}
+    else:
+        raise TypeError("data must be of type torch.Tensor or Dict[str, torch.Tensor].")
 
 
 def evaluate_fn(
@@ -39,7 +62,7 @@ def evaluate_fn(
 
     with torch.no_grad():
         for input, target in loader:
-            input, target = input.to(device), target.to(device)
+            input, target = move_input_data_to_device(input, device), target.to(device)
             preds = {"predictions": model(input)}
             evaluate_metric_manager.update(preds, target)
 
