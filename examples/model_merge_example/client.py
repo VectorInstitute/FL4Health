@@ -17,7 +17,7 @@ class MnistModelMergeClient(ModelMergeClient):
     def get_model(self, config: Config) -> nn.Module:
         return MnistNet().to(self.device)
 
-    def get_test_dataloader(self, config: Config) -> DataLoader:
+    def get_test_data_loader(self, config: Config) -> DataLoader:
         return load_mnist_test_data(self.data_path, 32)[0]
 
 

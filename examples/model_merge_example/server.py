@@ -15,7 +15,7 @@ from examples.models.cnn_model import MnistNet
 from fl4health.server.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 from fl4health.utils.config import load_config
-from fl4health.utils.load_data import load_mnist_test_data
+from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.metrics import Accuracy, Metric, MetricManager
 
@@ -69,10 +69,10 @@ def evaluate_fn(
     return 0.0, evaluate_metric_manager.compute()
 
 
-def main(config: Dict[str, Any], data_path: Path) -> None:
-    loader, _ = load_mnist_test_data(data_path, 32)
+def main(config: Dict[str, Any], data_path: Path, batch_size: int) -> None:
+    _, val_loader, _ = load_mnist_data(data_path, batch_size)
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    evaluate_fn_partial = partial(evaluate_fn, MnistNet(), loader, [Accuracy("")], device)
+    evaluate_fn_partial = partial(evaluate_fn, MnistNet(), val_loader, [Accuracy("")], device)
 
     strategy = ModelMergeStrategy(
         min_fit_clients=config["n_clients"],
@@ -110,8 +110,12 @@ if __name__ == "__main__":
         help="Path to server side evaluation dataset.",
         default="examples/datasets/MNIST",
     )
+
+    parser.add_argument(
+        "--batch_size", action="store", type=int, help="Batch size for server size evaluation set.", default=32
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config, args.data_path)
+    main(config, args.data_path, args.batch_size)

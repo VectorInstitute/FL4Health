@@ -60,21 +60,77 @@ class ModelMergeClient(NumPyClient):
         return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def setup_client(self, config: Config) -> None:
+        """
+        Sets up Merge Client by initializing model, dataloader and parameter exchanger
+            with user defined methods. Subsquently, sets initialized attribute to True.
+
+        Args:
+            config (Config): The configuration from the server.
+        """
         self.model = self.get_model(config)
-        self.test_loader = self.get_test_dataloader(config)
+        self.test_loader = self.get_test_data_loader(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.initialized = True
 
     def get_parameters(self, config: Config) -> NDArrays:
+        """
+        Determines which parameters are sent back to the server for aggregation.
+            This uses a parameter exchanger to determine parameters sent.
+
+        For the ModelMergeClient, we assume that self.setup_client has already been called
+            as it does not support client polling so get_parameters is called from fit and
+            thus should be initialized by this point.
+
+        Args:
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+
+        Returns:
+            NDArrays: These are the parameters to be sent to the server. At minimum they represent the relevant model
+                parameters to be aggregated, but can contain more information.
+        """
         assert self.model is not None
         return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
+        """
+        Sets the local model parameters transferred from the server using a parameter exchanger
+            to coordinate how parameters are set.
+
+        For the ModelMergeClient, we assume that initially parameters are being set to the parameters
+            in the nn.Module returned by the user defined get_model method. Thus, set_parameters is
+            only called once after model merging has occured and before federated evaluation.
+
+        Args:
+            parameters (NDArrays): Parameters have information about model state to be added to the relevant client
+                model but may contain more information than that.
+            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
+            fitting_round (bool): Boolean that indicates whether the current federated learning round is a
+                fitting round or an evaluation round.
+                This is used to help determine which parameter exchange should be used for pulling parameters.
+                A full parameter exchanger is only used if the current federated learning round is the very
+                first fitting round.
+        """
         assert self.initialized
         self.parameter_exchanger.pull_parameters(parameters, self.model)
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+        """
+        Initializes client, validates local client model on local test data and returns parameters,
+            test dataset length and test metrics. Importantly, parameters from Server, which is empty,
+            is not used to initialized the client model.
+
+        Args:
+            parameters (NDArrays): The parameters of the model to be used in fit.
+            config (NDArrays): The config from the server.
+
+        Returns:
+            Tuple[NDArrays, int, Dict[str, Scalar]]: The parameters following the local training along with the
+            number of samples in the local training dataset and the computed metrics throughout the fit.
+
+        Raises:
+            ValueError: If local_steps or local_epochs is not specified in config.
+        """
         assert not self.initialized
         self.setup_client(config)
         assert self.metrics_reporter is not None
@@ -92,7 +148,7 @@ class ModelMergeClient(NumPyClient):
             },
         )
 
-        return self.get_parameters(config), len(self.test_loader), val_metrics
+        return self.get_parameters(config), len(self.test_loader.dataset), val_metrics  # type: ignore
 
     def _move_input_data_to_device(self, data: TorchInputType) -> TorchInputType:
         """
@@ -140,6 +196,14 @@ class ModelMergeClient(NumPyClient):
             raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
     def validate(self) -> Dict[str, Scalar]:
+        """
+        Validate the current model on the entire validation
+            and potentially an entire test dataset if it has been defined.
+
+        Returns:
+            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
+                from validation (and test if present).
+        """
         self.test_metric_manager.clear()
         with torch.no_grad():
             for input, target in self.test_loader:
@@ -150,21 +214,66 @@ class ModelMergeClient(NumPyClient):
         return self.test_metric_manager.compute()
 
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+        """
+        Evaluate the provided parameters using the locally held dataset.
+
+        Args:
+            parameters (NDArrays): The current model parameters.
+            config (Config): Configuration object from the server.
+
+        Returns:
+            Tuple[float, int, Dict[str, Scalar]: The float represents the
+                loss which is assumed to be 0 for the ModelMergeClient.
+                The int represents the number of examples in the local test dataset and the
+                dictionary is the computed metrics on the test set.
+        """
         self.set_parameters(parameters, config)
         metrics = self.validate()
         return 0.0, len(self.test_loader), metrics
 
-    @abstractmethod
-    def get_model(self, config: Config) -> nn.Module:
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_test_dataloader(self, config: Config) -> DataLoader:
-        raise NotImplementedError
-
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """
         Parameter exchange is assumed to always be full for model merging clients. However, this functionality
-        may be overridden if a different exchanger is needed
+        may be overridden if a different exchanger is needed.
+
+        Used in non-standard way for ModelMergClient as set_parameters is only called for evaluate as
+            parameters should initially be set to the parameters in the nn.Module returned by get_model.
+
+        Args:
+            config (Config): Configuration object from the server.
+
+        Returns:
+            FullParameterExchanger: The parameter exchanger used to set and get parameters.
         """
         return FullParameterExchanger()
+
+    @abstractmethod
+    def get_model(self, config: Config) -> nn.Module:
+        """
+        User defined method that returns PyTorch model.
+        This is the local model that will be communicated
+        to the server for merging.
+
+        Args:
+            config (Config): The config from the server.
+
+        Returns:
+            nn.Module: The client model.
+
+        Raises:
+            NotImplementedError: To be defined in child class.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_test_data_loader(self, config: Config) -> DataLoader:
+        """
+        User defined method that returns a PyTorch Test DataLoader.
+
+        Args:
+            config (Config): The config from the server.
+
+        Returns:
+            DataLoader. Client test data loader.
+        """
+        raise NotImplementedError

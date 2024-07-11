@@ -6,7 +6,6 @@ from flwr.common import (
     EvaluateRes,
     FitIns,
     FitRes,
-    GetPropertiesIns,
     MetricsAggregationFn,
     NDArrays,
     Parameters,
@@ -21,10 +20,9 @@ from flwr.server.strategy import Strategy
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_results
-from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 
 
-class ModelMergeStrategy(Strategy, StrategyWithPolling):
+class ModelMergeStrategy(Strategy):
     """Configurable FedAvg strategy implementation."""
 
     # pylint: disable=too-many-arguments,too-many-instance-attributes
@@ -197,38 +195,6 @@ class ModelMergeStrategy(Strategy, StrategyWithPolling):
 
             # Return client/config pairs
             return [(client, evaluate_ins) for client in clients]
-
-    def configure_poll(
-        self, server_round: int, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
-        """
-        This function configures everything required to request properties from ALL of the clients. The client
-        manger, regardless of type, is instructed to grab all available clients to perform the polling process.
-
-        Args:
-            server_round (int): Indicates the server round we're currently on.
-            client_manager (ClientManager): The manager used to sample all available clients.
-
-        Returns:
-            List[Tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
-                to be sent to each client (packaged as GetPropertiesIns).
-        """
-        config = {}
-        if self.on_fit_config_fn is not None:
-            # Custom fit config function provided
-            config = self.on_fit_config_fn(server_round)
-
-        property_ins = GetPropertiesIns(config)
-
-        if isinstance(client_manager, BaseFractionSamplingManager):
-            clients = client_manager.sample_all(min_num_clients=self.min_available_clients)
-        else:
-            # Grab all available clients using the basic Flower client manager
-            num_available_clients = client_manager.num_available()
-            clients = client_manager.sample(num_available_clients, min_num_clients=self.min_available_clients)
-
-        # Return client/config pairs
-        return [(client, property_ins) for client in clients]
 
     def aggregate_fit(
         self,
