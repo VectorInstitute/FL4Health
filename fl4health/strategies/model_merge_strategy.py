@@ -1,4 +1,4 @@
-from logging import INFO, WARNING
+from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import (
@@ -18,7 +18,6 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import Strategy
 
-from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_results
 
 
@@ -47,7 +46,8 @@ class ModelMergeStrategy(Strategy):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
     ) -> None:
         """
-        Model Merging with Flexible Sampling.
+        Model Merging strategy in which weights are loaded from clients, averaged and redistributed to the clients for
+            evaluation.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
@@ -70,7 +70,6 @@ class ModelMergeStrategy(Strategy):
                 Function used to configure server-side central validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Optional[Parameters], optional): Initial global model parameters. Defaults to None.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
@@ -88,113 +87,71 @@ class ModelMergeStrategy(Strategy):
         self.accept_failures = accept_failures
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
-        self.initial_parameters = None
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, FitIns]]:
         """
-        This function configures a sample of clients for a training round. It handles the case where the client
-        manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_fit_config_fn function is used to produce
-        configurations to be sent to all clients. These are packaged with the provided parameters and set over to the
-        clients.
+        Sample and configure clients for a fit round.
+
+        In ModelMergeStrategy, it is assumed that server side parameters are empty and clients will
+            be initialized with their weights locally.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
-            parameters (Parameters): The parameters to be used to initialize the clients for the fit round.
+            parameters (Parameters): Not used.
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
             List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as FitIns).
         """
+        config = {}
+        if self.on_fit_config_fn is not None:
+            # Custom fit config function provided
+            config = self.on_fit_config_fn(server_round)
+        fit_ins = FitIns(Parameters([], ""), config)
 
-        if isinstance(client_manager, BaseFractionSamplingManager):
-            # Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_fit
-            config = {}
-            if self.on_fit_config_fn is not None:
-                # Custom fit config function provided
-                config = self.on_fit_config_fn(server_round)
-            fit_ins = FitIns(parameters, config)
+        # Sample clients
+        sample_size = max(int(client_manager.num_available() * self.fraction_fit), self.min_fit_clients)
+        clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
 
-            # Sample clients
-            clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
-
-            # Return client/config pairs
-            return [(client, fit_ins) for client in clients]
-        else:
-            log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
-            config = {}
-            if self.on_fit_config_fn is not None:
-                # Custom fit config function provided
-                config = self.on_fit_config_fn(server_round)
-            fit_ins = FitIns(parameters, config)
-
-            # Sample clients
-            num_available_clients = client_manager.num_available()
-            sample_size = max(int(num_available_clients * self.fraction_fit), self.min_fit_clients)
-            min_num_clients = self.min_available_clients
-
-            clients = client_manager.sample(num_clients=sample_size, min_num_clients=min_num_clients)
-
-            # Return client/config pairs
-            return [(client, fit_ins) for client in clients]
+        # Return client/config pairs
+        return [(client, fit_ins) for client in clients]
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
     ) -> List[Tuple[ClientProxy, EvaluateIns]]:
         """
-        This function configures a sample of clients for a evaluation round. It handles the case where the client
-        manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
-        The function follows the standard configuration flow where the on_evaluate_config_fn function is used to
-        produce configurations to be sent to all clients. These are packaged with the provided parameters and set over
-        to the clients.
+        Sample and configure clients for a evaluation round.
 
         Args:
-            server_round (int): Indicates the server round we're currently on.
+            server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy
             parameters (Parameters): The parameters to be used to initialize the clients for the eval round.
+                This will only occur following model merging.
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
             List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
                 to be sent to each client (packaged as EvaluateIns).
         """
-
         # Do not configure federated evaluation if fraction eval is 0.
         if self.fraction_evaluate == 0.0:
             return []
 
-        if isinstance(client_manager, BaseFractionSamplingManager):
-            # Using one of the custom FractionSamplingManager classes, sampling fraction is based on fraction_evaluate
-            # Parameters and config
-            config = {}
-            if self.on_evaluate_config_fn is not None:
-                # Custom evaluation config function provided
-                config = self.on_evaluate_config_fn(server_round)
-            evaluate_ins = EvaluateIns(parameters, config)
+        # Parameters and config
+        config = {}
+        if self.on_evaluate_config_fn is not None:
+            # Custom evaluation config function provided
+            config = self.on_evaluate_config_fn(server_round)
+        evaluate_ins = EvaluateIns(parameters, config)
 
-            # Sample clients
-            clients = client_manager.sample_fraction(self.fraction_evaluate, self.min_available_clients)
+        # Sample clients
+        sample_size = max(int(client_manager.num_available() * self.fraction_evaluate), self.min_evaluate_clients)
+        clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
 
-            # Return client/config pairs
-            return [(client, evaluate_ins) for client in clients]
-        else:
-            log(INFO, f"Using the standard Flower ClientManager: {type(client_manager)}")
-            # Parameters and config
-            config = {}
-            if self.on_evaluate_config_fn is not None:
-                # Custom evaluation config function provided
-                config = self.on_evaluate_config_fn(server_round)
-            evaluate_ins = EvaluateIns(parameters, config)
-
-            # Sample clients
-            num_available_clients = client_manager.num_available()
-            sample_size = max(int(num_available_clients * self.fraction_evaluate), self.min_evaluate_clients)
-            clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
-
-            # Return client/config pairs
-            return [(client, evaluate_ins) for client in clients]
+        # Return client/config pairs
+        return [(client, evaluate_ins) for client in clients]
 
     def aggregate_fit(
         self,
@@ -203,15 +160,14 @@ class ModelMergeStrategy(Strategy):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """
-        Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
-        depending on the settings used for the strategy.
+        Performs model merging by taking an unweighted average of client weights and metrics.
 
         Args:
-            server_round (int): Indicates the server round we're currently on.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy.
+            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local fit
                 that need to be aggregated on the server-side.
             failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
-                from clients that experienced an issue during training, such as timeouts or exceptions.
+                from clients that experienced an issue during fit, such as timeouts or exceptions.
 
         Returns:
             Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
@@ -226,7 +182,7 @@ class ModelMergeStrategy(Strategy):
         weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
         ]
-        # Aggregate them in a weighted or unweighted fashion based on settings.
+        # Aggregate them in an unweighted fashion based on settings.
         aggregated_arrays = aggregate_results(weights_results, False)
         # Convert back to parameters
         parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
@@ -248,12 +204,13 @@ class ModelMergeStrategy(Strategy):
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
     ) -> Tuple[Optional[float], Dict[str, Scalar]]:
         """
-        Aggregate the metrics and losses returned from the clients as a result of the evaluation round.
+        Aggregate the metrics returned from the clients as a result of the evaluation round.
+            ModelMergeStrategy assumes only metrics will be computed on client and loss is set to None.
 
         Args:
             results (List[Tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
-                evaluation that need to be aggregated on the server-side. These results are loss values and the
-                metrics dictionary.
+                evaluation that need to be aggregated on the server-side. These results are loss values
+                (None in this case) and the metrics dictionary.
             failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
@@ -278,6 +235,18 @@ class ModelMergeStrategy(Strategy):
         return None, metrics_aggregated
 
     def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
+        """
+        Evaluate the model parameters after the merging has occured. This function can be used to perform centralized
+            (i.e., server-side) evaluation of model parameters.
+
+        Args:
+            server_round (int): Server round. Only one round in ModelMergeStrategy.
+            parameters: Parameters The current model parameters after merging has occured.
+
+        Returns:
+            Optional[Tuple[float, Dict[str, Scalar]]]: A Tuple containing loss and a
+                dictionary containing task-specific metrics (e.g., accuracy).
+        """
         if self.evaluate_fn is None:
             return None
 
@@ -289,5 +258,14 @@ class ModelMergeStrategy(Strategy):
         return loss, metrics
 
     def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
-        """Initialize global model parameters."""
+        """
+        Required definition of parent class. ModelMergeStrategy does not support server side initialization.
+            Parameters are always set to None
+
+        Args:
+            client_manager (ClientManager): Unused.
+
+        Returns:
+            None
+        """
         return None
