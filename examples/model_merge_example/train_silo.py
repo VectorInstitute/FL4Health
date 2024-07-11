@@ -61,7 +61,7 @@ def main(config: Dict[str, Any], ckpt_base_path: Path, n_epochs: int, data_path:
     n_clients = config["n_clients"]
     models = [MnistNet() for _ in range(n_clients)]
     loaders = [load_mnist_data(data_path, config["batch_size"])[0] for _ in range(n_clients)]
-    optimizers = [torch.optim.SGD(model.parameters(), lr=0.05) for model in models]
+    optimizers = [torch.optim.Adam(model.parameters(), lr=0.001) for model in models]
     criterions = [torch.nn.CrossEntropyLoss() for _ in range(n_clients)]
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         action="store",
         type=int,
         help="Number of epochs to train each client.",
-        default=5,
+        default=20,
     )
     args = parser.parse_args()
     config = load_config(args.config_path)

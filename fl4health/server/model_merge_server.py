@@ -21,6 +21,18 @@ class ModelMergeServer(Server):
         strategy: Optional[Strategy] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
+        """
+        ModelMergeServer provides functionality to fetch client weights, perform a simple average,
+            redistirbute to clients for evaluation. Optionally can perform server side evaluation as well.
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+        """
         assert isinstance(strategy, ModelMergeStrategy)
         super().__init__(client_manager=client_manager, strategy=strategy)
 
@@ -31,6 +43,9 @@ class ModelMergeServer(Server):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
+        Performs a fit round in which the local client weights are evaluated on their test set,
+            uploaded to the server and averaged, then redistributed to clients for evaluation.
+            Optionally, can perform evaluation of the merged model on the server side as well.
 
         Args:
             num_rounds (int): Not used.

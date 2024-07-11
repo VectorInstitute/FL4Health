@@ -29,6 +29,19 @@ class ModelMergeClient(NumPyClient):
         device: torch.device,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
+        """
+        ModelMergeClient to support functionality to simple perform model merging across client
+            models and subsequently evaluate.
+
+        Args:
+            data_path (Path): path to the data to be used to load the data for client-side training
+            model_path (Path): path to the checkpoint of the client model to be used in model merging.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+        """
         self.data_path = data_path
         self.model_path = model_path
         self.metrics = metrics
