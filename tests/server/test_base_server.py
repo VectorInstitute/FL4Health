@@ -98,7 +98,7 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     test_history = History()
     test_history.metrics_centralized = {"test metrics centralized": [(123, "loss")]}
     test_history.losses_centralized = [(123, 123.123)]
-    mock_fit.return_value = test_history
+    mock_fit.return_value = (test_history, 1)
 
     fl_server = FlServer(SimpleClientManager())
     fl_server.fit(3, None)
