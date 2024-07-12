@@ -1,16 +1,22 @@
+import warnings
+
+with warnings.catch_warnings():
+    # Need to import lightning utilities now in order to avoid warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import lightning_utilities
+
 import argparse
 from logging import INFO
 from os.path import join
 from typing import Literal, Optional
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 import flwr as fl
 import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed
 from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 from torchmetrics.classification import Dice
-
-# from torchmetrics.classification import MultilabelAveragePrecision
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.utils.metrics import TorchMetric, TransformsMetric

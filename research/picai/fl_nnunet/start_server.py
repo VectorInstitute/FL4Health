@@ -1,3 +1,10 @@
+import warnings
+
+with warnings.catch_warnings():
+    # Need to import lightning utilities now in order to avoid deprecation warnings
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import lightning_utilities
+
 import argparse
 import pickle
 from functools import partial
@@ -55,8 +62,6 @@ def main(config: dict) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    client_manager = SimpleClientManager()
-
     if config.get("starting_checkpoint"):
         model = torch.load(config["starting_checkpoint"])
         # Of course nnunet stores their pytorch models differently.
@@ -80,7 +85,7 @@ def main(config: dict) -> None:
         initial_parameters=params,
     )
 
-    server = FlServer(client_manager=client_manager, strategy=strategy)
+    server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
 
     fl.server.start_server(
         server=server,
@@ -89,7 +94,7 @@ def main(config: dict) -> None:
     )
 
     # Shutdown server
-    server.shutdown()
+    # server.shutdown()
 
 
 if __name__ == "__main__":

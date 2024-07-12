@@ -1,21 +1,17 @@
+import contextlib
 import logging
 import os
 import pickle
+import signal
+import sys
+import warnings
 from logging import INFO
 from os.path import exists, join
 from typing import Any, Dict, List, Literal, Optional, Tuple, TypeGuard, get_args
 
 import torch
-from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
 from flwr.common.logger import log
 from flwr.common.typing import Config
-from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
-from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
-from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
-from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
-from nnunetv2.training.dataloading.utils import unpack_dataset
-from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
-from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
@@ -26,7 +22,41 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.metrics import MetricManager
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
+with warnings.catch_warnings():
+    # silences a bunch of deprecation warnings related to scipy.ndimage
+    # Raised an issue with nnunet
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
+    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
+    from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
+    from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
+    from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
+    from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
+    from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
+    from nnunetv2.training.dataloading.utils import unpack_dataset
+    from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
+    from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
+
 nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
+og_sigint_handler = signal.getsignal(signal.SIGINT)
+og_sigterm_handler = signal.getsignal(signal.SIGTERM)
+
+
+def exit_gracefully(signum, frame) -> None:
+    pass
+
+
+class DummyFile(object):
+    def write(self, x: Any) -> None:
+        pass
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = DummyFile()
+    yield
+    sys.stdout = save_stdout
 
 
 def get_num_spatial_dims(nnunet_config: nnUNetConfig) -> int:
@@ -181,6 +211,12 @@ class nnUNetDLWrapper(DataLoader):
         # mypy gets angry that the return type
         return self
 
+    # def shutdown(self) -> None:
+    #     with nostdout():
+    #         if self.nnunet_dataloader is not None:
+    #             if isinstance(self.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+    #                 self.nnunet_dataloader._finish()
+
 
 class Module2LossWrapper(_Loss):
     """Converts a nn.Module subclass to a _Loss subclass"""
@@ -235,7 +271,8 @@ class nnUNetClient(BasicClient):
                 train and validation dataloaders as pytorch dataloaders
         """
         # Get the nnunet dataloader iterators
-        train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
+        with nostdout():
+            train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
         # The batchgenerators package used under the hood by the dataloaders
         # creates an additional stream handler for the root logger
@@ -356,44 +393,62 @@ class nnUNetClient(BasicClient):
                 addition to those required by BasicClient
         """
         log(INFO, "Setting up the nnUNetClient")
+
         self.nnunet_config = config["nnunet_config"]  # Need this for predict
         assert isinstance(self.nnunet_config, str)
         assert is_valid_config(self.nnunet_config)
 
+        # flwr 1.9.0 now raises an error any time a process ends.
+        # To prevent errors due to this since dataloaders use multiprocessing
+        # lets try and ovverride that behaviour before the processes are created
+        # This prevents error, but also prevents script from ending. we need a sys.exit()
+        fl_sigint_handler = signal.getsignal(signal.SIGINT)
+        fl_sigterm_handler = signal.getsignal(signal.SIGTERM)
+        signal.signal(signal.SIGINT, og_sigint_handler)
+        signal.signal(signal.SIGTERM, og_sigterm_handler)
+
         # Check if dataset fingerprint has been extracted
-        if not exists(join(nnUNet_preprocessed, "dataset_fingerprint.json")):
-            extract_fingerprints(dataset_ids=[self.dataset_id])
+        if not exists(join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")):
+            log(INFO, "Extracting nnunet dataset fingerprint")
+            with nostdout():
+                extract_fingerprints(dataset_ids=[self.dataset_id])
+        else:
+            log(INFO, "nnunet dataset fingerprint already exists")
 
         # Get the dataset json and dataset name of the local client dataset
         self.plans = self.create_plans(config=config)
+        with nostdout():
+            # Create the nnunet trainer
+            self.nnunet_trainer = nnUNetTrainer(
+                plans=self.plans,
+                configuration=self.nnunet_config,
+                fold=config["fold"],
+                dataset_json=self.dataset_json,
+                device=self.device,
+            )
 
-        # Create the nnunet trainer
-        self.nnunet_trainer = nnUNetTrainer(
-            plans=self.plans,
-            configuration=self.nnunet_config,
-            fold=config["fold"],
-            dataset_json=self.dataset_json,
-            device=self.device,
-        )
-
-        # nnunet_trainer initialization
-        self.nnunet_trainer.initialize()
-        # This is done by nnunet_trainer in self.on_train_start, we
-        # do it manually since nnunet_trainer not being used for training
-        self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
+            # nnunet_trainer initialization
+            self.nnunet_trainer.initialize()
+            # This is done by nnunet_trainer in self.on_train_start, we
+            # do it manually since nnunet_trainer not being used for training
+            self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(self.nnunet_config)
-        unpack_dataset(  # Reduces load on CPU and RAM during training
-            folder=self.nnunet_trainer.preprocessed_dataset_folder,
-            unpack_segmentation=self.nnunet_trainer.unpack_dataset,
-            overwrite_existing=self.always_preprocess,
-            verify_npy=True,
-        )
+        # unpack_dataset(  # Reduces load on CPU and RAM during training
+        #     folder=self.nnunet_trainer.preprocessed_dataset_folder,
+        #     unpack_segmentation=self.nnunet_trainer.unpack_dataset,
+        #     overwrite_existing=self.always_preprocess,
+        #     verify_npy=True,
+        # )
 
         # Parent function sets up optimizer, criterion, parameter_exchanger, dataloaders and reporters.
         # We have to run this at the end since it depends on the previous setup
         super().setup_client(config)
+
+        # Set the signal handlers back to what they were for flwr
+        signal.signal(signal.SIGINT, fl_sigint_handler)
+        signal.signal(signal.SIGTERM, fl_sigterm_handler)
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
