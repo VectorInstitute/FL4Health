@@ -160,6 +160,7 @@ async def run_smoke_test(
         "Polling Clients for sample counts",
         # printed by federated_eval
         "Federated Evaluation Starting",
+        "[ROUND 1]",
     ]
 
     output_found = False
@@ -234,22 +235,21 @@ async def run_smoke_test(
             "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
         )
     else:
-        assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+        assert "[SUMMARY]" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
         )
-        assert "FL finished" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] FL finished message not found for server."
-        )
-    assert all(
-        message in full_server_output
-        for message in [
-            "app_fit: losses_distributed",
-            "app_fit: metrics_distributed_fit",
-            "app_fit: metrics_distributed",
-            "app_fit: losses_centralized",
-            "app_fit: metrics_centralized",
-        ]
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+    if not assert_evaluation_logs:
+        assert all(
+            message in full_server_output
+            for message in [
+                "History (loss, distributed):",
+                "History (metrics, distributed, fit):",
+            ]
+        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+    else:
+        assert all(
+            message in full_server_output for message in ["History (metrics, distributed, evaluate):"]
+        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -589,6 +589,15 @@ if __name__ == "__main__":
             client_python_path="examples.fenda_example.client",
             config_path="tests/smoke_tests/fenda_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fenda_ditto_example.server",
+            client_python_path="examples.fenda_ditto_example.client",
+            config_path="tests/smoke_tests/fenda_ditto_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            checkpoint_path="examples/assets/",
         )
     )
     loop.run_until_complete(

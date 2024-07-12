@@ -57,7 +57,7 @@ def poll_client(client: ClientProxy, ins: GetPropertiesIns) -> Tuple[ClientProxy
     Returns:
         Tuple[ClientProxy, GetPropertiesRes]: Returns the resulting properties from the client response.
     """
-    property_res: GetPropertiesRes = client.get_properties(ins=ins, timeout=None)
+    property_res: GetPropertiesRes = client.get_properties(ins=ins, timeout=None, group_id=None)
     return client, property_res
 
 
