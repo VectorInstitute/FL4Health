@@ -7,7 +7,6 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
@@ -15,6 +14,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 
 class FendaDittoClient(DittoClient):
@@ -189,7 +189,7 @@ class FendaDittoClient(DittoClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -227,9 +227,9 @@ class FendaDittoClient(DittoClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
+        preds: TorchPredType,
         features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
