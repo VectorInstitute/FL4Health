@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 from logging import INFO
@@ -235,6 +236,14 @@ class nnUNetClient(BasicClient):
         """
         # Get the nnunet dataloader iterators
         train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
+
+        # The batchgenerators package used under the hood by the dataloaders
+        # creates an additional stream handler for the root logger
+        # Therefore all logs get printed twice, We can fix this by clearing the
+        # root logger handlers.
+        root_logger = logging.getLogger()
+        root_logger.handlers.clear()
+
         # By default nnunet dataloaders are infinite, so if we are training by
         # num epochs we need to make them not infinite anymore
         if config["local_epochs"] is not None:
