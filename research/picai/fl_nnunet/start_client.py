@@ -1,16 +1,16 @@
 import warnings
 
 with warnings.catch_warnings():
-    # Need to import lightning utilities now in order to avoid warnings
+    # Need to import lightning utilities now in order to avoid deprecation
+    # warnings. Ignore flake8 warning saying that it is unused
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import lightning_utilities
+    import lightning_utilities  # noqa: F401
 
 import argparse
 from logging import INFO
 from os.path import join
 from typing import Literal, Optional
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 import flwr as fl
 import torch
 from flwr.common.logger import log
