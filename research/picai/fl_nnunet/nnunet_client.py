@@ -7,7 +7,7 @@ import sys
 import warnings
 from logging import INFO
 from os.path import exists, join
-from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, TypeGuard, get_args
+from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union, get_args
 
 import torch
 from flwr.common.logger import log
@@ -59,7 +59,7 @@ def nostdout() -> Generator[Any, Any, Any]:
     sys.stdout = save_stdout
 
 
-def get_num_spatial_dims(nnunet_config: nnUNetConfig) -> int:
+def get_num_spatial_dims(nnunet_config: str) -> int:
     """
     Returns the number of spatial dimensions given the nnunet configuration
 
@@ -78,7 +78,7 @@ def get_num_spatial_dims(nnunet_config: nnUNetConfig) -> int:
 
 
 def convert_ds_list_to_dict(
-    tensor_list: List[torch.Tensor] | Tuple[torch.Tensor], num_spatial_dims: int
+    tensor_list: Union[List[torch.Tensor], Tuple[torch.Tensor]], num_spatial_dims: int
 ) -> Dict[str, torch.Tensor]:
     """
     Converts a list of torch.Tensors to a dictionary. Names the keys for
@@ -141,21 +141,20 @@ def convert_ds_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.
     return tensor_list
 
 
-def is_valid_config(val: str) -> TypeGuard[nnUNetConfig]:
+def is_valid_config(val: str) -> bool:
     return val in list(get_args(nnUNetConfig))
 
 
 class nnUNetDLWrapper(DataLoader):
     """Wraps the nnUNetDataLoader class using the pytorch dataloader to avoid typing errors"""
 
-    def __init__(
-        self, nnunet_dataloader: nnUNetDataLoaderBase, nnunet_config: nnUNetConfig, infinite: bool = True
-    ) -> None:
+    def __init__(self, nnunet_dataloader: nnUNetDataLoaderBase, nnunet_config: str, infinite: bool = True) -> None:
         """
         Wraps nnunet dataloader classes to make them pytorch compatible
 
         Args:
             nnunet_dataloader (nnUNetDataLoaderBase): The nnunet dataloader
+            nnunet_config (str): The nnunet config
             infinite (bool, optional): Whether or not to treat the dataset
                 as infinite. Defaults to True.
         """
@@ -173,7 +172,7 @@ class nnUNetDLWrapper(DataLoader):
         self.infinite = infinite
         self.len = len(self.dataset)
 
-    def __next__(self) -> Tuple[torch.Tensor, torch.Tensor | Dict[str, torch.Tensor]]:
+    def __next__(self) -> Tuple[torch.Tensor, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         if not self.infinite and self.current_step == self.len:
             self.reset()
             raise StopIteration
@@ -210,12 +209,6 @@ class nnUNetDLWrapper(DataLoader):
     def __iter__(self) -> DataLoader:  # type: ignore
         # mypy gets angry that the return type
         return self
-
-    # def shutdown(self) -> None:
-    #     with nostdout():
-    #         if self.nnunet_dataloader is not None:
-    #             if isinstance(self.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
-    #                 self.nnunet_dataloader._finish()
 
 
 class Module2LossWrapper(_Loss):
@@ -366,12 +359,12 @@ class nnUNetClient(BasicClient):
 
         return plans
 
-    def maybe_preprocess(self, nnunet_config: nnUNetConfig) -> None:
+    def maybe_preprocess(self, nnunet_config: str) -> None:
         """
         Checks if preprocessed data for current plans exists and if not preprocesses the nnunet_raw dataset
 
         Args:
-            nnunet_config (nnUNetConfig): string specifying the nnunet config
+            nnunet_config (str): string specifying the nnunet config
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 
@@ -500,8 +493,8 @@ class nnUNetClient(BasicClient):
                 optional additional loss
         """
         # Check if deep supervision is on by checking the number of items in the pred and target dictionaries
-        loss_preds: torch.Tensor | List[torch.Tensor]
-        loss_targets: torch.Tensor | List[torch.Tensor]
+        loss_preds: Union[torch.Tensor, List[torch.Tensor]]
+        loss_targets: Union[torch.Tensor, List[torch.Tensor]]
         if len(preds) > 1:
             loss_preds = convert_ds_dict_to_list(preds)
         else:

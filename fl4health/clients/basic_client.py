@@ -461,7 +461,9 @@ class BasicClient(NumPyClient):
         reporting_dict.update(metric_dict)
         self.wandb_reporter.report_metrics(reporting_dict)
 
-    def _move_data_to_device(self, data: TorchInputType | TorchTargetType) -> TorchTargetType | TorchInputType:
+    def _move_data_to_device(
+        self, data: Union[TorchInputType, TorchTargetType]
+    ) -> Union[TorchTargetType, TorchInputType]:
         """
         Moving data to self.device where data is intended to be either input to
         the model or the targets that the model is trying to acheive
