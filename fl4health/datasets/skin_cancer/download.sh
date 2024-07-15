@@ -26,7 +26,7 @@ unzip ${DIRECTORY}/PAD-UFES-20.zip -d ${DIRECTORY}/PAD-UFES-20/
 unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_1.zip -d ${DIRECTORY}/PAD-UFES-20/
 unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_2.zip -d ${DIRECTORY}/PAD-UFES-20/
 unzip -j ${DIRECTORY}/PAD-UFES-20/images/imgs_part_3.zip -d ${DIRECTORY}/PAD-UFES-20/
-rm -rf ${DIRECTORY}/PAD-UFES-20/images
+rm -r ${DIRECTORY}/PAD-UFES-20/images
 
 if [ -n "${TARGET}" ]; then
     rm -r ${TARGET}

@@ -66,7 +66,7 @@ class MnistNetWithBnAndFrozen(nn.Module):
         return x
 
 
-class SkinCancerNetWithBnAndFrozen(nn.Module):
+class SkinCancerNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(3, 8, 5)

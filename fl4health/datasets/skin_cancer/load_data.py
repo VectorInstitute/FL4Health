@@ -9,12 +9,14 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from logging import INFO
 
 import torch
 import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import DataLoader
 
+from flwr.common.logger import log
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
@@ -120,7 +122,7 @@ def load_skin_cancer_data(
             Please follow the instructions in fl4health/datasets/skin_cancer/README.md."
         )
 
-    print(f"Data directory: {str(dataset_path)}")
+    log(INFO, f"Data directory: {str(dataset_path)}")
 
     with open(dataset_path, "r") as f:
         data = json.load(f)["data"]
@@ -137,6 +139,7 @@ def load_skin_cancer_data(
     valid_data = data[train_size : train_size + valid_size]
     test_data = data[train_size + valid_size :]
 
+    # this is the default transform if more specific ones aren't defined.
     val_test_transform = transforms.Compose(
         [
             transforms.Resize([256, 256]),
@@ -146,6 +149,7 @@ def load_skin_cancer_data(
     )
 
     if train_transform is None:
+        # this is the default transform if more specific ones aren't defined.
         train_transform = transforms.Compose(
             [
                 transforms.RandomHorizontalFlip(),
