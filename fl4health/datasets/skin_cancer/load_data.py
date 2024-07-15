@@ -7,16 +7,16 @@
 import json
 import random
 from concurrent.futures import ThreadPoolExecutor
+from logging import INFO
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from logging import INFO
 
 import torch
 import torchvision.transforms as transforms
+from flwr.common.logger import log
 from PIL import Image
 from torch.utils.data import DataLoader
 
-from flwr.common.logger import log
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
