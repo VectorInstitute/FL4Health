@@ -3,6 +3,7 @@ import warnings
 with warnings.catch_warnings():
     # Need to import lightning utilities now in order to avoid deprecation
     # warnings. Ignore flake8 warning saying that it is unused
+    # https://github.com/Lightning-AI/utilities/issues/119
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import lightning_utilities  # noqa: F401
 
