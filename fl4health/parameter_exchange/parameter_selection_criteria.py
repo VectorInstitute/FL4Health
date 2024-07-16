@@ -184,26 +184,31 @@ def select_mask_scores(model: nn.Module, initial_model: nn.Module) -> Tuple[NDAr
     parameters_to_exchange_names = []
     parameters_to_exchange = []
     model_states = model.state_dict()
-    if is_masked_module(model):
-        parameters_to_exchange_names.append("weight_scores")
-        weight_scores = model_states["weight_scores"].cpu().numpy()
-        weight_mask_sample = bernoulli.rvs(weight_scores)
-        parameters_to_exchange.append(weight_mask_sample)
-        if "bias_scores" in model_states.keys():
-            parameters_to_exchange_names.append("bias_scores")
-            bias_scores = model_states["bias_scores"].cpu().numpy()
-            bias_mask_sample = bernoulli.rvs(bias_scores)
-            parameters_to_exchange.append(bias_mask_sample)
-    else:
-        for name, module in model.named_modules():
-            if is_masked_module(model):
-                parameters_to_exchange_names.append(f"{name}.weight_scores")
-                weight_scores = model_states[f"{name}.weight_scores"].cpu().numpy()
-                weight_mask_sample = bernoulli.rvs(weight_scores)
-                parameters_to_exchange.append(weight_mask_sample)
-                if "bias_scores" in module.state_dict().keys():
-                    parameters_to_exchange_names.append(f"{name}.bias_scores")
-                    bias_scores = model_states[f"{name}.bias_scores"].cpu().numpy()
-                    bias_mask_sample = bernoulli.rvs(bias_scores)
-                    parameters_to_exchange.append(bias_mask_sample)
+    with torch.no_grad():
+        if is_masked_module(model):
+            parameters_to_exchange_names.append("weight_scores")
+            weight_scores = model_states["weight_scores"]
+            weight_probs = torch.sigmoid(weight_scores).cpu().numpy()
+            weight_mask_sample = bernoulli.rvs(weight_probs)
+            parameters_to_exchange.append(weight_mask_sample)
+            if "bias_scores" in model_states.keys():
+                parameters_to_exchange_names.append("bias_scores")
+                bias_scores = model_states["bias_scores"]
+                bias_probs = torch.sigmoid(bias_scores).cpu().numpy()
+                bias_mask_sample = bernoulli.rvs(bias_probs)
+                parameters_to_exchange.append(bias_mask_sample)
+        else:
+            for name, module in model.named_modules():
+                if is_masked_module(module):
+                    parameters_to_exchange_names.append(f"{name}.weight_scores")
+                    weight_scores = model_states[f"{name}.weight_scores"]
+                    weight_probs = torch.sigmoid(weight_scores).cpu().numpy()
+                    weight_mask_sample = bernoulli.rvs(weight_probs)
+                    parameters_to_exchange.append(weight_mask_sample)
+                    if "bias_scores" in module.state_dict().keys():
+                        parameters_to_exchange_names.append(f"{name}.bias_scores")
+                        bias_scores = model_states[f"{name}.bias_scores"]
+                        bias_probs = torch.sigmoid(bias_scores).cpu().numpy()
+                        bias_mask_sample = bernoulli.rvs(bias_probs)
+                        parameters_to_exchange.append(bias_mask_sample)
     return parameters_to_exchange, parameters_to_exchange_names

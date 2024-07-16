@@ -750,3 +750,12 @@ class CompositeConvNet(nn.Module):
         output = self.linear(combined)
 
         return output
+
+
+class ModelWrapper(nn.Module):
+    def __init__(self, module: nn.Module) -> None:
+        super().__init__()
+        self.model = module
+
+    def forward(self, *args: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(*args)
