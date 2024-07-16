@@ -94,9 +94,10 @@ def test_fedpm_exchange() -> None:
     masked_model_states = masked_model.state_dict()
     wrapped_model_states = masked_wrapped_model.state_dict()
 
-    mask_scores, mask_scores_names = select_mask_scores(masked_model, masked_model)
-    assert len(mask_scores) == len(mask_scores_names)
-    assert mask_scores_names == [
+    # Test that selection function works when the direct child modules are masked modules.
+    masks, mask_names = select_mask_scores(masked_model, masked_model)
+    assert len(masks) == len(mask_names)
+    assert mask_names == [
         "conv1d.weight_scores",
         "conv1d.bias_scores",
         "conv2d.weight_scores",
@@ -106,11 +107,12 @@ def test_fedpm_exchange() -> None:
         "linear.weight_scores",
         "linear.bias_scores",
     ]
-    for i in range(len(mask_scores_names)):
-        score_tensor = mask_scores[i]
-        score_tensor_name = mask_scores_names[i]
+    for i in range(len(mask_names)):
+        score_tensor = masks[i]
+        score_tensor_name = mask_names[i]
         assert score_tensor.shape == masked_model_states[score_tensor_name].cpu().numpy().shape
 
+    # Test that the selection function works when there are masked modules which are not direct child modules.
     wrapped_model_states = masked_wrapped_model.state_dict()
     mask_scores_wrapped, mask_scores_names_wrapped = select_mask_scores(masked_wrapped_model, masked_wrapped_model)
     assert len(mask_scores_wrapped) == len(mask_scores_names_wrapped)
@@ -129,13 +131,12 @@ def test_fedpm_exchange() -> None:
         score_tensor_name = mask_scores_names_wrapped[j]
         assert score_tensor.shape == wrapped_model_states[score_tensor_name].cpu().numpy().shape
 
+    # Test that pull_parameter works as expected.
     parameter_exchanger = DynamicLayerExchanger(layer_selection_function=select_mask_scores)
-    packed_parameters = parameter_exchanger.pack_parameters(
-        model_weights=mask_scores, additional_parameters=mask_scores_names
-    )
+    packed_parameters = parameter_exchanger.pack_parameters(model_weights=masks, additional_parameters=mask_names)
     masked_model_new = convert_to_masked_model(CompositeConvNet())
     parameter_exchanger.pull_parameters(packed_parameters, masked_model_new)
-    for i in range(len(mask_scores_names)):
-        score_tensor = mask_scores[i]
-        score_tensor_name = mask_scores_names[i]
+    for i in range(len(mask_names)):
+        score_tensor = masks[i]
+        score_tensor_name = mask_names[i]
         assert (score_tensor == masked_model_new.state_dict()[score_tensor_name].cpu().numpy()).all()

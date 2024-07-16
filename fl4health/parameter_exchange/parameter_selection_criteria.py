@@ -188,6 +188,7 @@ def select_mask_scores(model: nn.Module, initial_model: nn.Module) -> Tuple[NDAr
         if is_masked_module(model):
             parameters_to_exchange_names.append("weight_scores")
             weight_scores = model_states["weight_scores"]
+            # Sample a mask from the (unbounded) probability scores.
             weight_probs = torch.sigmoid(weight_scores).cpu().numpy()
             weight_mask_sample = bernoulli.rvs(weight_probs)
             parameters_to_exchange.append(weight_mask_sample)
