@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Tuple
-from flwr.common.typing import Scalar
 
 from flwr.common import Parameters
+from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.server import FitResultsAndFailures
 
@@ -10,6 +10,7 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedpm import FedPm
 
+
 class FedPmServer(FlServer):
     def __init__(
         self,
@@ -17,11 +18,11 @@ class FedPmServer(FlServer):
         strategy: FedPm,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
-        reset_frequency: int = 1
+        reset_frequency: int = 1,
     ) -> None:
         """
-        Custom FL Server for the FedPM algorithm to allow for resetting the beta priors in Bayesian aggregation, 
-        as specified in http://arxiv.org/pdf/2209.15328. 
+        Custom FL Server for the FedPM algorithm to allow for resetting the beta priors in Bayesian aggregation,
+        as specified in http://arxiv.org/pdf/2209.15328.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -45,14 +46,13 @@ class FedPmServer(FlServer):
             checkpointer=checkpointer,
         )
         self.reset_frequency = reset_frequency
-    
+
     def fit_round(
-            self,
-            server_round: int,
-            timeout: Optional[float],
-        ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+        self,
+        server_round: int,
+        timeout: Optional[float],
+    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
         assert isinstance(self.strategy, FedPm)
         if server_round > 1 and server_round % self.reset_frequency == 0:
             self.strategy.reset_beta_priors()
         return super().fit_round(server_round, timeout)
-

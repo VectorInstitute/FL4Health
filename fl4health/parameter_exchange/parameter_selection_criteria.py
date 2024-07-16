@@ -2,15 +2,16 @@ import math
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple
 
-from scipy.stats import bernoulli
 import torch
 import torch.nn as nn
 from flwr.common.typing import NDArrays
+from scipy.stats import bernoulli
 from torch import Tensor
+
 from fl4health.model_bases.masked_model import is_masked_module
 
-
 LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
+
 
 class LayerSelectionFunctionConstructor:
     def __init__(
@@ -177,7 +178,7 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
     return names_to_scores
 
 
-# Selection function that selects the "weight_scores" and "bias_scores" parameters for the 
+# Selection function that selects the "weight_scores" and "bias_scores" parameters for the
 # masked layers. This function is meant to be used for the FedPM algorithm.
 def select_mask_scores(model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
     parameters_to_exchange_names = []

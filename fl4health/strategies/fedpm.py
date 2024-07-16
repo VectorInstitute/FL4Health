@@ -2,13 +2,9 @@ from collections import defaultdict
 from typing import Callable, DefaultDict, Dict, List, Optional, Tuple
 
 import numpy as np
-from flwr.common import (
-    MetricsAggregationFn,
-    NDArray,
-    NDArrays,
-    Parameters,
-)
+from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters
 from flwr.common.typing import Scalar
+
 from fl4health.strategies.fedavg_dynamic_layer import FedAvgDynamicLayer
 
 
@@ -90,13 +86,13 @@ class FedPm(FedAvgDynamicLayer):
         # Parameters for Bayesian aggregation
         self.beta_parameters: Dict[str, Tuple[NDArray, NDArray]] = {}
         self.bayesian_aggregation = bayesian_aggregation
-    
+
     def aggregate(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         if not self.bayesian_aggregation:
             return super().aggregate(results)
         else:
             return self.aggregate_bayesian(results)
-    
+
     def aggregate_bayesian(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_clients: DefaultDict[str, int] = defaultdict(int)
@@ -111,9 +107,9 @@ class FedPm(FedAvgDynamicLayer):
                     alpha = np.ones(shape=layer.shape)
                     beta = np.ones(shape=layer.shape)
                     self.beta_parameters[name] = (alpha, beta)
-                    
+
         aggregation_result: Dict[str, NDArray] = {}
-        
+
         # posterior update of the beta parameters and using them
         # to compute the final result.
         for parameter_name in self.beta_parameters.keys():
@@ -124,9 +120,9 @@ class FedPm(FedAvgDynamicLayer):
             beta_new = beta + np.ones(beta.shape) * n_clients - m_agg
             self.beta_parameters[parameter_name] = (alpha_new, beta_new)
             aggregation_result[parameter_name] = (alpha_new - 1) / (alpha_new + beta_new - 2)
-        
+
         return aggregation_result
-    
+
     def reset_beta_priors(self) -> None:
         assert self.beta_parameters != {}
         for parameter_name in self.beta_parameters.keys():

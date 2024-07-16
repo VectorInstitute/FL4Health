@@ -1,26 +1,29 @@
-import torch.nn as nn
-from torch import Tensor
-from fl4health.utils.functions import bernoulli_sample
-from torch.nn.parameter import Parameter
-import torch
-import torch.nn.functional as F
-from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
-from torch.nn.modules.utils import _single, _pair, _triple
-from typing import Optional, Union
 import copy
+from typing import Optional, Union
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
+from torch.nn.common_types import _size_1_t, _size_2_t, _size_3_t
+from torch.nn.modules.utils import _pair, _single, _triple
+from torch.nn.parameter import Parameter
+
+from fl4health.utils.functions import bernoulli_sample
+
 
 class MaskedLinear(nn.Linear):
     """
-    Implementation of masked linear layers. 
-    
-    Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias. 
-    However, the weight and the bias do not receive gradient in back propagation. 
+    Implementation of masked linear layers.
+
+    Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias.
+    However, the weight and the bias do not receive gradient in back propagation.
     Instead, two score tensors - one for the weight and another for the bias - are maintained.
-    In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores, 
-    which are then used to produce binary masks via bernoulli sampling. 
+    In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+    which are then used to produce binary masks via bernoulli sampling.
     Finally, the binary masks are  applied to the weight and the bias. During training,
     gradients with respect to the score tensors are computed and used to update the score tensors.
-    
+
     Args:
         in_features: size of each input sample
         out_features: size of each output sample
@@ -34,24 +37,32 @@ class MaskedLinear(nn.Linear):
         bias_score: learnable scores for the bias. Has the same shape as bias.
     """
 
-    __constants__ = ['in_features', 'out_features']
+    __constants__ = ["in_features", "out_features"]
     in_features: int
     out_features: int
     weight: Tensor
 
-    def __init__(self, in_features: int, out_features: int, bias: bool = True,
-                 device: Optional[torch.device] = None, dtype: Optional[torch.dtype] = None) -> None:
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        bias: bool = True,
+        device: Optional[torch.device] = None,
+        dtype: Optional[torch.dtype] = None,
+    ) -> None:
         super().__init__(in_features, out_features, bias, device, dtype)
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = Parameter(torch.empty((out_features, in_features), device=device, dtype=dtype), requires_grad=False)
+        self.weight = Parameter(
+            torch.empty((out_features, in_features), device=device, dtype=dtype), requires_grad=False
+        )
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
             self.bias = Parameter(torch.empty(out_features, device=device, dtype=dtype), requires_grad=False)
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
-            self.register_parameter('bias', None)
-            self.register_parameter('bias_scores', None)
+            self.register_parameter("bias", None)
+            self.register_parameter("bias_scores", None)
         self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
@@ -59,17 +70,17 @@ class MaskedLinear(nn.Linear):
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
         masked_weight = weight_mask * self.weight
-        
+
         if self.bias is not None:
             bias_prob_scores = torch.sigmoid(self.bias_scores)
             bias_mask = bernoulli_sample(bias_prob_scores)
             masked_bias = bias_mask * self.bias
         else:
             masked_bias = None
-        
+
         # Apply the masks to weight and bias
         return F.linear(input, masked_weight, masked_bias)
-    
+
     @classmethod
     def from_pretrained(cls, linear_module: nn.Linear) -> "MaskedLinear":
         has_bias = linear_module.bias is not None
@@ -90,6 +101,7 @@ class MaskedConv1d(nn.Conv1d):
     """
     Implementation of masked Conv1d layers in a manner that is analogous to MaskedLinear.
     """
+
     def __init__(
         self,
         in_channels: int,
@@ -100,9 +112,9 @@ class MaskedConv1d(nn.Conv1d):
         dilation: _size_1_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = 'zeros',
+        padding_mode: str = "zeros",
         device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        dtype: Optional[torch.dtype] = None,
     ) -> None:
         super().__init__(
             in_channels,
@@ -115,7 +127,7 @@ class MaskedConv1d(nn.Conv1d):
             bias,
             padding_mode,
             device,
-            dtype
+            dtype,
         )
         self.weight.requires_grad = False
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
@@ -124,9 +136,9 @@ class MaskedConv1d(nn.Conv1d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
         else:
-            self.register_parameter('bias_scores', None)
+            self.register_parameter("bias_scores", None)
         self.reset_parameters()
-    
+
     def forward(self, input: Tensor) -> Tensor:
         weight_prob_scores = torch.sigmoid(self.weight_scores)
         weight_mask = bernoulli_sample(weight_prob_scores)
@@ -138,12 +150,12 @@ class MaskedConv1d(nn.Conv1d):
         else:
             masked_bias = None
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
-    
+
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv1d) -> "MaskedConv1d":
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]   
+        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _single(conv_module.padding)
@@ -157,7 +169,7 @@ class MaskedConv1d(nn.Conv1d):
             dilation=dilation_,
             groups=conv_module.groups,
             bias=has_bias,
-            padding_mode=conv_module.padding_mode
+            padding_mode=conv_module.padding_mode,
         )
         masked_conv_module.weight = Parameter(conv_module.weight.clone().detach(), requires_grad=False)
         masked_conv_module.weight_scores = Parameter(torch.randn_like(masked_conv_module.weight), requires_grad=True)
@@ -166,7 +178,7 @@ class MaskedConv1d(nn.Conv1d):
             masked_conv_module.bias = Parameter(conv_module.bias.clone().detach(), requires_grad=False)
             masked_conv_module.bias_scores = Parameter(torch.randn_like(masked_conv_module.bias), requires_grad=True)
         return masked_conv_module
-        
+
 
 class MaskedConv2d(nn.Conv2d):
     def __init__(
@@ -179,22 +191,22 @@ class MaskedConv2d(nn.Conv2d):
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = 'zeros',
+        padding_mode: str = "zeros",
         device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        dtype: Optional[torch.dtype] = None,
     ) -> None:
         super().__init__(
-            in_channels, 
-            out_channels, 
-            kernel_size, 
-            stride, 
-            padding, 
-            dilation, 
-            groups, 
-            bias, 
-            padding_mode, 
-            device, 
-            dtype
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding,
+            dilation,
+            groups,
+            bias,
+            padding_mode,
+            device,
+            dtype,
         )
         self.weight.requires_grad = False
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
@@ -203,7 +215,7 @@ class MaskedConv2d(nn.Conv2d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
         else:
-            self.register_parameter('bias_scores', None)
+            self.register_parameter("bias_scores", None)
         self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
@@ -217,10 +229,10 @@ class MaskedConv2d(nn.Conv2d):
         else:
             masked_bias = None
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
-    
+
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv2d) -> "MaskedConv2d":
-        has_bias = conv_module.bias is not None 
+        has_bias = conv_module.bias is not None
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
         padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _pair(conv_module.padding)
@@ -234,7 +246,7 @@ class MaskedConv2d(nn.Conv2d):
             dilation=dilation_,
             groups=conv_module.groups,
             bias=has_bias,
-            padding_mode=conv_module.padding_mode
+            padding_mode=conv_module.padding_mode,
         )
         masked_conv_module.weight = Parameter(conv_module.weight.clone().detach(), requires_grad=False)
         masked_conv_module.weight_scores = Parameter(torch.randn_like(masked_conv_module.weight), requires_grad=True)
@@ -256,22 +268,22 @@ class MaskedConv3d(nn.Conv3d):
         dilation: _size_3_t = 1,
         groups: int = 1,
         bias: bool = True,
-        padding_mode: str = 'zeros',
+        padding_mode: str = "zeros",
         device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None
+        dtype: Optional[torch.dtype] = None,
     ) -> None:
         super().__init__(
-            in_channels, 
-            out_channels, 
-            kernel_size, 
-            stride, 
-            padding, 
-            dilation, 
-            groups, 
-            bias, 
-            padding_mode, 
-            device, 
-            dtype
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding,
+            dilation,
+            groups,
+            bias,
+            padding_mode,
+            device,
+            dtype,
         )
         self.weight.requires_grad = False
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
@@ -280,7 +292,7 @@ class MaskedConv3d(nn.Conv3d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
         else:
-            self.register_parameter('bias_scores', None)
+            self.register_parameter("bias_scores", None)
         self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
@@ -294,7 +306,7 @@ class MaskedConv3d(nn.Conv3d):
         else:
             masked_bias = None
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
-    
+
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv3d) -> "MaskedConv3d":
         has_bias = conv_module.bias is not None
@@ -311,7 +323,7 @@ class MaskedConv3d(nn.Conv3d):
             dilation=dilation_,
             groups=conv_module.groups,
             bias=has_bias,
-            padding_mode=conv_module.padding_mode
+            padding_mode=conv_module.padding_mode,
         )
         masked_conv_module.weight = Parameter(conv_module.weight.clone().detach(), requires_grad=False)
         masked_conv_module.weight_scores = Parameter(torch.randn_like(masked_conv_module.weight), requires_grad=True)
@@ -336,7 +348,8 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
     return masked_model
 
 
-
 def is_masked_module(module: nn.Module) -> bool:
     return isinstance(module, (MaskedLinear, MaskedConv1d, MaskedConv2d, MaskedConv3d))
+
+
 MaskedModule = Union[MaskedLinear, MaskedConv1d, MaskedConv2d, MaskedConv3d]
