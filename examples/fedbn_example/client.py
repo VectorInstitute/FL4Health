@@ -12,7 +12,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNetWithBnAndFrozen
+from examples.models.cnn_model import MnistNetWithBnAndFrozen, SkinCancerNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.datasets.skin_cancer.load_data import load_skin_cancer_data
 from fl4health.parameter_exchange.layer_exchanger import LayerExchangerWithExclusions
@@ -60,7 +60,7 @@ class SkinCancerFedBNClient(BasicClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_model(self, config: Config) -> nn.Module:
-        return SkinCancerNetWithBnAndFrozen().to(self.device)
+        return SkinCancerNet().to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
