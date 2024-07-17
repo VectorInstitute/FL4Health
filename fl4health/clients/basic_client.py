@@ -466,7 +466,7 @@ class BasicClient(NumPyClient):
     ) -> Union[TorchTargetType, TorchInputType]:
         """
         Moving data to self.device where data is intended to be either input to
-        the model or the targets that the model is trying to acheive
+        the model or the targets that the model is trying to achieve
 
         Args:
             data (TorchInputType | TorchTargetType): The data to move to
@@ -477,9 +477,10 @@ class BasicClient(NumPyClient):
                 TorchInputType or TorchTargetType
 
         Returns:
-            TorchTargetType: The data argument except now it's been moved to self.device
+            Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
         """
-        # In the future we may expand this to include Dict[torch.Tensor]
+        # Currently we expect bot inputs and targets to be either tensors
+        # or dictionaries of tensors
         if isinstance(data, torch.Tensor):
             return data.to(self.device)
         elif isinstance(data, dict):
@@ -487,7 +488,7 @@ class BasicClient(NumPyClient):
         else:
             raise TypeError(
                 "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
-                    If defenition of TorchInputType or TorchTargetType has \
+                    If definition of TorchInputType or TorchTargetType has \
                     changed this method might need to be updated or split into \
                     two"
             )
@@ -528,7 +529,7 @@ class BasicClient(NumPyClient):
     ) -> None:
         """
         Updates a metric manager with the provided model predictions and
-        targets. Can be overrided to modify pred and target inputs to the
+        targets. Can be overriden to modify pred and target inputs to the
         metric manager. This is useful in cases where the preds and targets
         needed to compute the loss are different than what is needed to compute
         metrics.
@@ -818,7 +819,7 @@ class BasicClient(NumPyClient):
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
-            input (TorchInputType): Inputs to be fed into the model.If input is
+            input (TorchInputType): Inputs to be fed into the model. If input is
                 of type Dict[str, torch.Tensor], it is assumed that the keys of
                 input match the names of the keyword arguments of self.model.
                 forward().

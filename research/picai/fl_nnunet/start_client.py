@@ -3,15 +3,21 @@ import warnings
 with warnings.catch_warnings():
     # Need to import lightning utilities now in order to avoid deprecation
     # warnings. Ignore flake8 warning saying that it is unused
+    # lightning utilities is imported by some of the dependencies
+    # so by importing it now and filtering the warnings
+    # https://github.com/Lightning-AI/utilities/issues/119
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import lightning_utilities  # noqa: F401
 
 import argparse
 from logging import INFO
 from os.path import join
-from typing import Literal, Optional
+from typing import Optional, Union
 
 import flwr as fl
+
+# WARNING: For some reason, importing tensorflow before pytorch cuases
+# a segfault when using cuda 12.1
 import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed
@@ -21,9 +27,11 @@ from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
-from research.picai.fl_nnunet.transforms import collapse_ohe_target, get_ann_from_probs, get_prob_from_logits
-
-nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
+from research.picai.fl_nnunet.transforms import (
+    collapse_one_hot_target,
+    get_annotations_from_probs,
+    get_probabilities_from_logits,
+)
 
 
 def main(
@@ -32,12 +40,13 @@ def main(
     plans_identifier: Optional[str],
     always_preprocess: bool,
     server_address: str,
+    fold: Union[str, int],
 ) -> None:
 
     # Log device and server address
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {DEVICE}")
-    log(INFO, f"Using server Address: {server_address}")
+    log(INFO, f"Using server address: {server_address}")
 
     # Define metrics
     dice1 = TransformsMetric(
@@ -45,12 +54,12 @@ def main(
             name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-        transforms=[get_prob_from_logits, get_ann_from_probs],
+        transforms=[get_probabilities_from_logits, get_annotations_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
         metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
-        transforms=[get_prob_from_logits, collapse_ohe_target],
+        transforms=[get_probabilities_from_logits, collapse_one_hot_target],
     )
 
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
@@ -60,12 +69,13 @@ def main(
     client = nnUNetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
+        fold=fold,
         data_identifier=data_identifier,
         plans_identifier=plans_identifier,
         always_preprocess=always_preprocess,
         # BaseClient Args
         device=DEVICE,
-        metrics=metrics,  # Had to turn metrics off for now because for some reason nnunet model predicts 2 channels
+        metrics=metrics,
         data_path=join(
             nnUNet_preprocessed, dataset_name
         ),  # data_path is not actually used but is required by BaseClient
@@ -84,6 +94,14 @@ if __name__ == "__main__":
         "--dataset-id", type=int, required=True, help="The nnunet dataset id for the local client training dataset"
     )
     parser.add_argument(
+        "--fold",
+        type=str,
+        required=True,
+        help="""Which fold of the local client dataset to use for validation.
+            nnunet defaults to 5 folds (0 to 4). Can also be set to 'all' to
+            use all the data for both training and validation.""",
+    )
+    parser.add_argument(
         "--data-identifier",
         type=str,
         required=False,
@@ -97,11 +115,10 @@ if __name__ == "__main__":
     parser.add_argument(
         "--plans-identifier",
         required=False,
-        help="[OPTIONAL ]Include this flag to have the client save the plans \
-            file that it uses for training locally. The user can also pass an \
-            argument to this flag to specify what the plans file should be \
-            names. Defaults to 'FL_Dataset123_plansname' where plansname \
-            is the name of the plans file sent to the client by the server",
+        help="[OPTIONAL ] Specify what the plans file should be \
+            named. Defaults to 'FL_Dataset000_plansname' where plansname \
+            is the name of the plans file sent to the client by the server \
+            and 000 is the nnunet dataset id of the local client",
     )
     parser.add_argument(
         "--always-preprocess",
@@ -120,10 +137,24 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    # Convert fold to an integer if it is not 'all'
+    if args.fold != "all":
+        try:
+            fold = int(args.fold)
+        except ValueError as e:
+            print(
+                f"Unable to convert given value for fold to int: {args.fold}. Fold must be either 'all' or an integer"
+            )
+            raise e
+    else:
+        fold = args.fold
+
     main(
         dataset_id=args.dataset_id,
         data_identifier=args.data_identifier,
         plans_identifier=args.plans_identifier,
         always_preprocess=args.always_preprocess,
         server_address=args.server_address,
+        fold=fold,
     )

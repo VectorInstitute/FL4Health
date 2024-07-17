@@ -1,28 +1,29 @@
+import argparse
+import json
+import pickle
 import warnings
+from functools import partial
+from typing import Optional
 
 with warnings.catch_warnings():
     # Need to import lightning utilities now in order to avoid deprecation
     # warnings. Ignore flake8 warning saying that it is unused
+    # lightning utilities is imported by some of the dependencies
+    # so by importing it now and filtering the warnings
     # https://github.com/Lightning-AI/utilities/issues/119
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import lightning_utilities  # noqa: F401
 
-import argparse
-import pickle
-from functools import partial
-from typing import Optional
-
 import flwr as fl
 import torch
 import yaml
-from batchgenerators.utilities.file_and_folder_operations import load_json
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.server.base_server import FlServer
+from fl4health.server.base_server import FlServer  # This is the lightning utils deprecation warning culprit
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
@@ -30,19 +31,17 @@ def get_config(
     current_server_round: int,
     nnunet_config: str,
     nnunet_plans: str,
-    fold: int,
     n_server_rounds: int,
     batch_size: int,
     n_clients: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    nnunet_plans_dict = pickle.dumps(load_json(nnunet_plans))
+    nnunet_plans_dict = pickle.dumps(json.load(open(nnunet_plans, "r")))
     return {
         "n_clients": n_clients,
         "nnunet_config": nnunet_config,
         "nnunet_plans": nnunet_plans_dict,
-        "fold": fold,
         "n_server_rounds": n_server_rounds,
         "batch_size": batch_size,
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -57,7 +56,6 @@ def main(config: dict) -> None:
         n_clients=config["n_clients"],
         nnunet_config=config["nnunet_config"],
         nnunet_plans=config["nnunet_plans"],
-        fold=config["fold"],
         n_server_rounds=config["n_server_rounds"],
         batch_size=0,  # Set this to 0 because we're not using it
         local_epochs=config.get("local_epochs"),

@@ -377,14 +377,8 @@ class MetricManager:
         multiple_targets = False
         if isinstance(target, dict):
             if len(target.keys()) > 1:
-                assert (
-                    target.keys() == preds.keys()
-                ), "Received a dict with multiple targets, but the keys of the \
-                    targets do not match the keys of the predictions. Please \
-                    pass a single target or ensure the keys between preds and \
-                    target are the same"
+                self.check_target_prediction_keys_equal(preds, target)
                 multiple_targets = True
-                target_dict: Dict[str, torch.Tensor] = target
             else:  # There is only one target, get tensor from dict
                 target_tensor = list(target.values())[0]
         else:
@@ -394,8 +388,8 @@ class MetricManager:
             metrics_for_prediction_type = self.metrics_per_prediction_type[prediction_key]
             assert len(preds) == len(self.metrics_per_prediction_type)
             for metric_for_prediction_type in metrics_for_prediction_type:
-                if multiple_targets:
-                    metric_for_prediction_type.update(pred, target_dict[prediction_key])
+                if isinstance(target, dict) and multiple_targets:
+                    metric_for_prediction_type.update(pred, target[prediction_key])
                 else:
                     metric_for_prediction_type.update(pred, target_tensor)
 
@@ -420,3 +414,12 @@ class MetricManager:
         Clears metrics for each of the prediction type.
         """
         self.metrics_per_prediction_type = {}
+
+    def check_target_prediction_keys_equal(
+        self, preds: Dict[str, torch.Tensor], target: Dict[str, torch.Tensor]
+    ) -> None:
+        assert target.keys() == preds.keys(), (
+            "Received a dict with multiple targets, but the keys of the"
+            "targets do not match the keys of the predictions. Please pass a "
+            "single target or ensure the keys between preds and target are the same"
+        )

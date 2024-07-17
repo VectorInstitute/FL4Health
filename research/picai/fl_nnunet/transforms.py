@@ -5,7 +5,7 @@ import torch
 # Some transform functions to use with the TransformsMetric Class
 
 
-def get_prob_from_logits(preds: torch.Tensor, targets: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+def get_probabilities_from_logits(preds: torch.Tensor, targets: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Converts the model output logits to probabilities
 
@@ -23,7 +23,7 @@ def get_prob_from_logits(preds: torch.Tensor, targets: torch.Tensor) -> Tuple[to
     return torch.sigmoid(preds), targets
 
 
-def get_ann_from_probs(
+def get_annotations_from_probs(
     preds: torch.Tensor, targets: torch.Tensor, has_regions: bool = False, threshold: float = 0.5
 ) -> Tuple[torch.Tensor, torch.Tensor]:
     """
@@ -50,21 +50,24 @@ def get_ann_from_probs(
             annotations as a one hot encoded binary tensor of 64-bit integers
     """
     if has_regions:
-        pred_ann = preds > threshold
+        pred_annotations = preds > threshold
         # Mask is the inverse of the background class. Ensures that values
         # classified as background are not part of another class
-        mask = ~pred_ann[:, 0]
-        return pred_ann * mask, targets
+        mask = ~pred_annotations[:, 0]
+        return pred_annotations * mask, targets
     else:
-        pred_ann = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
-        # one hot encode predicted annotations again
-        pred_ann_ohe = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
-        pred_ann_ohe.scatter_(1, pred_ann, 1)
+        pred_annotations = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
+        # one hot encode (OHE) predicted annotations again
+        # WARNING: Note the '_' after scatter. scatter_ and scatter are both
+        # functions with different functionality. It is easy to introduce a bug
+        # here by using the wrong one
+        pred_annotations_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
+        pred_annotations_one_hot.scatter_(1, pred_annotations, 1)  # ohe -> One Hot Encoded
         # convert output preds to long since it is binary
-        return pred_ann_ohe.long(), targets
+        return pred_annotations_one_hot.long(), targets
 
 
-def collapse_ohe_target(preds: torch.Tensor, targets: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+def collapse_one_hot_target(preds: torch.Tensor, targets: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Collapses the targets so that they are no longer one hot encoded
 
