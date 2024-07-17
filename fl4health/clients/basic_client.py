@@ -606,6 +606,9 @@ class BasicClient(NumPyClient):
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
+            # update after epoch hook
+            self.update_after_epoch(epoch=local_epoch)
+
         # Return final training metrics
         return loss_dict, metrics
 
@@ -1052,5 +1055,15 @@ class BasicClient(NumPyClient):
 
         Args:
             step (int): The step number in local training that was most recently completed.
+        """
+        pass
+
+    def update_after_epoch(self, epoch: int) -> None:
+        """
+        Hook method called after local epoch on client. Only called if client is
+        being trained by epochs (ie. using local_epochs key instead of local steps in the server config file)
+
+        Args:
+            epoch (int): Integer representing the most recently completed epoch
         """
         pass
