@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import reduce
 from typing import Callable, DefaultDict, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -34,8 +35,9 @@ class FedPm(FedAvgDynamicLayer):
         bayesian_aggregation: bool = True,
     ) -> None:
         """
-        A generalization of the FedAvg strategy where the server can receive any arbitrary subset of the layers from
-        any arbitrary subset of the clients, and weighted average for each received layer is performed independently.
+        A strategy that is used for aggregating probability masks in the "Federated Probabilistic Mask Training"
+        paradigm, as detailed in http://arxiv.org/pdf/2209.15328. The implementation here allows for simply averaging
+        the probability masks, as well as the more sophisticated Bayesian aggregation approach.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
@@ -113,7 +115,7 @@ class FedPm(FedAvgDynamicLayer):
         # posterior update of the beta parameters and using them
         # to compute the final result.
         for parameter_name in self.beta_parameters.keys():
-            m_agg = np.sum(names_to_layers[parameter_name])
+            m_agg = reduce(np.add, names_to_layers[parameter_name])
             n_clients = total_num_clients[parameter_name]
             alpha, beta = self.beta_parameters[parameter_name]
             alpha_new = alpha + m_agg
