@@ -25,3 +25,7 @@ class BernoulliSample(torch.autograd.Function):
 
 
 bernoulli_sample = BernoulliSample.apply
+
+
+def sigmoid_inverse(x: torch.Tensor) -> torch.Tensor:
+    return -torch.log(1 / x - 1)

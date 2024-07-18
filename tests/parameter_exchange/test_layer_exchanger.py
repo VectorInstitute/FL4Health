@@ -3,11 +3,13 @@ import torch
 import torch.nn as nn
 
 from fl4health.model_bases.masked_model import convert_to_masked_model
+from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger, FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import (
     LayerSelectionFunctionConstructor,
     select_mask_scores,
 )
+from fl4health.utils.functions import sigmoid_inverse
 from tests.test_utils.models_for_test import CompositeConvNet, LinearModel, ModelWrapper, ToyConvNet
 
 
@@ -95,9 +97,9 @@ def test_fedpm_exchange() -> None:
     wrapped_model_states = masked_wrapped_model.state_dict()
 
     # Test that selection function works when the direct child modules are masked modules.
-    masks, mask_names = select_mask_scores(masked_model, masked_model)
-    assert len(masks) == len(mask_names)
-    assert mask_names == [
+    masks, score_names = select_mask_scores(masked_model, masked_model)
+    assert len(masks) == len(score_names)
+    assert score_names == [
         "conv1d.weight_scores",
         "conv1d.bias_scores",
         "conv2d.weight_scores",
@@ -107,16 +109,16 @@ def test_fedpm_exchange() -> None:
         "linear.weight_scores",
         "linear.bias_scores",
     ]
-    for i in range(len(mask_names)):
-        score_tensor = masks[i]
-        score_tensor_name = mask_names[i]
-        assert score_tensor.shape == masked_model_states[score_tensor_name].cpu().numpy().shape
+    for i in range(len(score_names)):
+        mask = masks[i]
+        score_name = score_names[i]
+        assert mask.shape == masked_model_states[score_name].cpu().numpy().shape
 
     # Test that the selection function works when there are masked modules which are not direct child modules.
     wrapped_model_states = masked_wrapped_model.state_dict()
-    mask_scores_wrapped, mask_scores_names_wrapped = select_mask_scores(masked_wrapped_model, masked_wrapped_model)
-    assert len(mask_scores_wrapped) == len(mask_scores_names_wrapped)
-    assert mask_scores_names_wrapped == [
+    masks_wrapped, score_names_wrapped = select_mask_scores(masked_wrapped_model, masked_wrapped_model)
+    assert len(masks_wrapped) == len(score_names_wrapped)
+    assert score_names_wrapped == [
         "model.conv1d.weight_scores",
         "model.conv1d.bias_scores",
         "model.conv2d.weight_scores",
@@ -126,17 +128,18 @@ def test_fedpm_exchange() -> None:
         "model.linear.weight_scores",
         "model.linear.bias_scores",
     ]
-    for j in range(len(mask_scores_names_wrapped)):
-        score_tensor = mask_scores_wrapped[j]
-        score_tensor_name = mask_scores_names_wrapped[j]
-        assert score_tensor.shape == wrapped_model_states[score_tensor_name].cpu().numpy().shape
+    for j in range(len(score_names_wrapped)):
+        mask = masks_wrapped[j]
+        score_name = score_names_wrapped[j]
+        assert mask.shape == wrapped_model_states[score_name].cpu().numpy().shape
 
     # Test that pull_parameter works as expected.
-    parameter_exchanger = DynamicLayerExchanger(layer_selection_function=select_mask_scores)
-    packed_parameters = parameter_exchanger.pack_parameters(model_weights=masks, additional_parameters=mask_names)
+    parameter_exchanger = FedPmExchanger(layer_selection_function=select_mask_scores)
+    packed_parameters = parameter_exchanger.pack_parameters(model_weights=masks, additional_parameters=score_names)
     masked_model_new = convert_to_masked_model(CompositeConvNet())
     parameter_exchanger.pull_parameters(packed_parameters, masked_model_new)
-    for i in range(len(mask_names)):
-        score_tensor = masks[i]
-        score_tensor_name = mask_names[i]
-        assert (score_tensor == masked_model_new.state_dict()[score_tensor_name].cpu().numpy()).all()
+    for i in range(len(score_names)):
+        mask = masks[i]
+        score_name = score_names[i]
+        prob_scores = sigmoid_inverse(torch.tensor(mask))
+        assert (prob_scores == masked_model_new.state_dict()[score_name]).all()

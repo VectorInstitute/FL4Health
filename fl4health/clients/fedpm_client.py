@@ -7,7 +7,7 @@ from flwr.common.typing import Config
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.masked_model import convert_to_masked_model
-from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
+from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import select_mask_scores
 from fl4health.reporting.metrics import MetricsReporter
@@ -39,4 +39,4 @@ class FedPmClient(BasicClient):
         self.model = convert_to_masked_model(self.model).to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        return DynamicLayerExchanger(layer_selection_function=select_mask_scores)
+        return FedPmExchanger(layer_selection_function=select_mask_scores)
