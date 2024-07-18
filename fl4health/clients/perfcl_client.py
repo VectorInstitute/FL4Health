@@ -12,7 +12,7 @@ from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class PerFclClient(BasicClient):
@@ -117,7 +117,7 @@ class PerFclClient(BasicClient):
             and self.initial_global_module is not None
         )
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -184,7 +184,7 @@ class PerFclClient(BasicClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
@@ -237,7 +237,7 @@ class PerFclClient(BasicClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """

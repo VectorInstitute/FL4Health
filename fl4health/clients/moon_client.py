@@ -11,7 +11,7 @@ from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class MoonClient(BasicClient):
@@ -65,7 +65,7 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input. This function also produces the
         necessary features from the global_model (aggregated model from server) and old_models (previous client-side
@@ -137,7 +137,7 @@ class MoonClient(BasicClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
@@ -176,7 +176,7 @@ class MoonClient(BasicClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
@@ -208,7 +208,7 @@ class MoonClient(BasicClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """

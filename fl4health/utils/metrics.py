@@ -5,11 +5,11 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 import torch
-from flwr.common.typing import Callable, Metrics, Optional, Scalar
+from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
-from fl4health.utils.typing import TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformType
 
 
 class TestMetricPrefix(Enum):
@@ -184,7 +184,7 @@ class SimpleMetric(Metric, ABC):
 
 
 class TransformsMetric(Metric):
-    def __init__(self, metric: Metric, transforms: List[Callable]) -> None:
+    def __init__(self, metric: Metric, transforms: List[TorchTransformType]) -> None:
         """
         A thin wrapper class to allow transforms to be applied to preds and
         targets prior to calculating metrics
@@ -374,24 +374,19 @@ class MetricManager:
             self.metrics_per_prediction_type = {key: copy.deepcopy(self.original_metrics) for key in preds.keys()}
 
         # Check if there are multiple targets
-        multiple_targets = False
         if isinstance(target, dict):
             if len(target.keys()) > 1:
                 self.check_target_prediction_keys_equal(preds, target)
-                multiple_targets = True
             else:  # There is only one target, get tensor from dict
-                target_tensor = list(target.values())[0]
-        else:
-            target_tensor = target
-
+                target = list(target.values())[0]
         for prediction_key, pred in preds.items():
             metrics_for_prediction_type = self.metrics_per_prediction_type[prediction_key]
             assert len(preds) == len(self.metrics_per_prediction_type)
             for metric_for_prediction_type in metrics_for_prediction_type:
-                if isinstance(target, dict) and multiple_targets:
-                    metric_for_prediction_type.update(pred, target[prediction_key])
+                if isinstance(target, torch.Tensor):
+                    metric_for_prediction_type.update(pred, target)
                 else:
-                    metric_for_prediction_type.update(pred, target_tensor)
+                    metric_for_prediction_type.update(pred, target[prediction_key])
 
     def compute(self) -> Metrics:
         """

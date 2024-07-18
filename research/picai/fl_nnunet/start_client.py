@@ -1,4 +1,8 @@
+import argparse
 import warnings
+from logging import INFO
+from os.path import join
+from typing import Optional, Union
 
 with warnings.catch_warnings():
     # Need to import lightning utilities now in order to avoid deprecation
@@ -9,15 +13,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import lightning_utilities  # noqa: F401
 
-import argparse
-from logging import INFO
-from os.path import join
-from typing import Optional, Union
-
 import flwr as fl
-
-# WARNING: For some reason, importing tensorflow before pytorch cuases
-# a segfault when using cuda 12.1
 import torch
 from flwr.common.logger import log
 from nnunetv2.paths import nnUNet_preprocessed

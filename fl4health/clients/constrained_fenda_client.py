@@ -14,7 +14,7 @@ from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class ConstrainedFendaClient(FendaClient):
@@ -93,7 +93,7 @@ class ConstrainedFendaClient(FendaClient):
         }
         return target_keys.issubset(features.keys())
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -166,7 +166,7 @@ class ConstrainedFendaClient(FendaClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
@@ -226,7 +226,7 @@ class ConstrainedFendaClient(FendaClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """

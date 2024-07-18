@@ -23,7 +23,7 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 T = TypeVar("T")
 
@@ -774,9 +774,6 @@ class BasicClient(NumPyClient):
         Args:
             config (Config): The config from the server.
         """
-        # Empty device cache
-        self.empty_cache()
-
         # Explicitly send the model to the desired device. This is idempotent.
         self.model = self.get_model(config).to(self.device)
         train_loader, val_loader = self.get_data_loaders(config)
@@ -814,7 +811,7 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
@@ -825,7 +822,7 @@ class BasicClient(NumPyClient):
                 forward().
 
         Returns:
-            Tuple[TorchPredType, Dict[str, torch.Tensor]]: A tuple in which the
+            Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                 first element contains a dictionary of predictions indexed by
                 name and the second element contains intermediate activations
                 indexed by name. By passing features, we can compute losses
@@ -862,14 +859,14 @@ class BasicClient(NumPyClient):
             raise ValueError("Model forward did not return a tensor, dictionary of tensors, or tuple of tensors")
 
     def compute_loss_and_additional_losses(
-        self, preds: TorchPredType, features: Dict[str, torch.Tensor], target: TorchTargetType
+        self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
     ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -883,7 +880,7 @@ class BasicClient(NumPyClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
@@ -892,7 +889,7 @@ class BasicClient(NumPyClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target: (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -905,7 +902,7 @@ class BasicClient(NumPyClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """
@@ -914,7 +911,7 @@ class BasicClient(NumPyClient):
         Args:
             preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target: (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -1086,14 +1083,3 @@ class BasicClient(NumPyClient):
             step (int): The step number in local training that was most recently completed.
         """
         pass
-
-    def empty_cache(self) -> None:
-        """
-        Checks torch device and empties cache before training to optimize VRAM usage
-        """
-        if self.device.type == "cuda":
-            torch.cuda.empty_cache()
-        elif self.device.type == "mps":
-            torch.mps.empty_cache()
-        else:
-            pass

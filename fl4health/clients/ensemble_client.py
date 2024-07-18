@@ -10,7 +10,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class EnsembleClient(BasicClient):
@@ -113,7 +113,7 @@ class EnsembleClient(BasicClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
@@ -140,7 +140,7 @@ class EnsembleClient(BasicClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """

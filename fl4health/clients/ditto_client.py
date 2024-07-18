@@ -14,7 +14,7 @@ from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class DittoClient(BasicClient):
@@ -257,7 +257,7 @@ class DittoClient(BasicClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -294,7 +294,7 @@ class DittoClient(BasicClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
@@ -324,7 +324,7 @@ class DittoClient(BasicClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
@@ -369,7 +369,7 @@ class DittoClient(BasicClient):
     def compute_evaluation_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> EvaluationLosses:
         """

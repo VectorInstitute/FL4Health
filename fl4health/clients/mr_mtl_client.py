@@ -13,7 +13,7 @@ from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
 
 
 class MrMtlClient(BasicClient):
@@ -116,7 +116,7 @@ class MrMtlClient(BasicClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """

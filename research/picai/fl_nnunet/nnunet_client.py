@@ -6,7 +6,7 @@ from logging import INFO
 from os import makedirs
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 from flwr.common.logger import log
@@ -24,10 +24,10 @@ from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
     Module2LossWrapper,
+    NnUNetConfig,
     convert_deepsupervision_dict_to_list,
     convert_deepsupervision_list_to_dict,
-    get_num_spatial_dims,
-    is_valid_config,
+    get_valid_nnunet_config,
     nnUNetDataLoaderWrapper,
     nostdout,
 )
@@ -43,7 +43,6 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
-nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
 # Get the default signal handlers used by python before flwr overrides them
 # We need these because the nnunet dataloaders spawn child processes
 # and flwr throws errors when those processes end. So we set the signal handlers
@@ -139,7 +138,7 @@ class nnUNetClient(BasicClient):
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
-        self.nnunet_config: str
+        self.nnunet_config: NnUNetConfig
         self.plans: dict
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -179,21 +178,8 @@ class nnUNetClient(BasicClient):
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
 
-        # By default nnunet dataloaders are infinite, so if we are training by
-        # num epochs we need to make them not infinite anymore
-        if config["local_epochs"] is not None:
-            infinite = False
-        else:
-            infinite = True
-
-        assert isinstance(self.nnunet_config, str)
-        assert is_valid_config(self.nnunet_config)
-        train_loader = nnUNetDataLoaderWrapper(
-            nnunet_dataloader=train_loader, nnunet_config=self.nnunet_config, infinite=infinite
-        )
-        val_loader = nnUNetDataLoaderWrapper(
-            nnunet_dataloader=val_loader, nnunet_config=self.nnunet_config, infinite=infinite
-        )
+        train_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=train_loader, nnunet_config=self.nnunet_config)
+        val_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=val_loader, nnunet_config=self.nnunet_config)
 
         return train_loader, val_loader
 
@@ -256,7 +242,7 @@ class nnUNetClient(BasicClient):
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
 
-    def maybe_preprocess(self, nnunet_config: str) -> None:
+    def maybe_preprocess(self, nnunet_config: NnUNetConfig) -> None:
         """
         Checks if preprocessed data for current plans exists and if not
         preprocesses the nnunet_raw dataset. The preprocessed data is saved in
@@ -267,21 +253,18 @@ class nnUNetClient(BasicClient):
         is {self.data_identifier}_{self.nnunet_config}
 
         Args:
-            nnunet_config (str): string specifying the nnunet config
+            nnunet_config (NnUNetConfig): The nnnunet config as a NnUNetConfig
+                Enum. Enum type ensures nnunet config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
 
         # Preprocess data if it's not already there
         if self.always_preprocess or not exists(self.nnunet_trainer.preprocessed_dataset_folder):
-            default_num_processes = {"2d": 8, "3d_fullres": 4, "3d_lowres": 8}
-            # Technically we can preprocess for multiple configs at once, so
-            # preprocess dataset expects a list
-            num_processes = [default_num_processes.get(nnunet_config, 4)]
             preprocess_dataset(
                 dataset_id=self.dataset_id,
                 plans_identifier=self.plans_name,
-                num_processes=num_processes,
-                configurations=[nnunet_config],
+                num_processes=[nnunet_config.default_num_processes],
+                configurations=[nnunet_config.value],
             )
         else:
             log(INFO, "nnunet preprocessed data seems to already exist. Skipping preprocessing")
@@ -300,24 +283,29 @@ class nnUNetClient(BasicClient):
         """
         log(INFO, "Setting up the nnUNetClient")
 
-        self.nnunet_config = self.narrow_config_type(config, "nnunet_config", str)
-        assert is_valid_config(self.nnunet_config)
+        # Empty gpu cache because nnunet does it
+        self.empty_cache()
+
+        # Get nnunet config
+        self.nnunet_config = get_valid_nnunet_config(self.narrow_config_type(config, "nnunet_config", str))
 
         # Check if dataset fingerprint has been extracted
-        if not exists(join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")):
+        if self.always_preprocess or not exists(
+            join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
+        ):
             log(INFO, "Extracting nnunet dataset fingerprint")
             with nostdout():  # prevent print statements from nnunet method
                 extract_fingerprints(dataset_ids=[self.dataset_id])
         else:
-            log(INFO, "nnunet dataset fingerprint already exists")
+            log(INFO, "nnunet dataset fingerprint already exists. Skipping fingerprint extraction")
 
-        # Get the dataset json and dataset name of the local client dataset
+        # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
         with nostdout():  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
-                configuration=self.nnunet_config,
+                configuration=self.nnunet_config.value,
                 fold=self.fold,
                 dataset_json=self.dataset_json,
                 device=self.device,
@@ -339,8 +327,9 @@ class nnUNetClient(BasicClient):
         )  # Takes about 3 seconds for a small dataset of 24 samples
 
         # Parent function sets up optimizer, criterion, parameter_exchanger, dataloaders and reporters.
-        # We have to run this at the end since it depends on the previous setup
+        # We have to run this at the end since it depends on the nnunet_trainer
         super().setup_client(config)
+        log(INFO, "nnUNetClient Setup Complete")
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
@@ -363,9 +352,7 @@ class nnUNetClient(BasicClient):
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
         elif isinstance(output, (list, tuple)):
-            assert isinstance(self.nnunet_config, str)
-            assert is_valid_config(self.nnunet_config)
-            num_spatial_dims = get_num_spatial_dims(self.nnunet_config)
+            num_spatial_dims = self.nnunet_config.num_spatial_dims
             preds = convert_deepsupervision_list_to_dict(output, num_spatial_dims)
             return preds, {}
         else:
@@ -514,3 +501,14 @@ class nnUNetClient(BasicClient):
         # m_pred is one hot encoded output logits. Maybe masked by ignore label
         # m_target_one_hot is one hot encoded boolean label. Maybe masked by ignore label
         metric_manager.update({"prediction": m_pred}, m_target_one_hot)
+
+    def empty_cache(self) -> None:
+        """
+        Checks torch device and empties cache before training to optimize VRAM usage
+        """
+        if self.device.type == "cuda":
+            torch.cuda.empty_cache()
+        elif self.device.type == "mps":
+            torch.mps.empty_cache()
+        else:
+            pass

@@ -1,13 +1,17 @@
 import contextlib
 import sys
 import warnings
-from typing import Any, Dict, Generator, List, Literal, Tuple, Union, get_args
+from logging import ERROR
+from typing import Any, Dict, Generator, List, Tuple, Union
 
 import torch
+from flwr.common.logger import log
 from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
+
+from fl4health.utils.typing import MultiAttributeEnum
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
@@ -16,7 +20,31 @@ with warnings.catch_warnings():
     from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
 
-nnUNetConfig = Literal["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]
+
+# A MultiAttributeEnum Class to store nnunet config information
+class NnUNetConfig(MultiAttributeEnum):
+    # Define Member Attributes
+    config_string: str
+    default_num_processes: int
+    num_spatial_dims: int
+
+    # Override method so that we can define members with lists instead of dicts
+    def get_attribute_keys(self, attributes: List) -> List[str]:
+        return ["config_string", "default_num_processes", "num_spatial_dims"]
+
+    # Define nnunet configs. Default for .value will be first item in list
+    _2D = ["2d", 8, 2]
+    _3D_FULLRES = ["3d_fullres", 4, 3]
+    _3D_CASCADE = ["3d_cascade_fullres", 4, 3]
+    _3D_LOWRES = ["3d_lowres", 8, 3]
+
+
+def get_valid_nnunet_config(val: str) -> NnUNetConfig:
+    try:
+        return NnUNetConfig(val)
+    except Exception as e:
+        log(ERROR, f"Checking the nnunet configuration threw an exception {e}")
+        raise e
 
 
 class DummyFile(object):
@@ -39,24 +67,6 @@ def nostdout() -> Generator[Any, Any, Any]:
     sys.stdout = DummyFile()  # type: ignore
     yield
     sys.stdout = save_stdout
-
-
-def get_num_spatial_dims(nnunet_config: str) -> int:
-    """
-    Returns the number of spatial dimensions given the nnunet configuration
-
-    Args:
-        nnunet_config (nnUNetConfig): string specifying the nnunet config
-
-    Returns:
-        int: The number of spatial dimensions
-    """
-    if nnunet_config == "2d":
-        return 2
-    elif nnunet_config in ["3d_fullres", "3d_lowres", "3d_cascade_fullres"]:
-        return 3
-    else:
-        raise TypeError(f"Got unexpected nnunet config: {nnunet_config}")
 
 
 def convert_deepsupervision_list_to_dict(
@@ -108,12 +118,10 @@ def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -
     return [tensor for key, tensor in sorted_list]
 
 
-def is_valid_config(val: str) -> bool:
-    return val in list(get_args(nnUNetConfig))
-
-
 class nnUNetDataLoaderWrapper(DataLoader):
-    def __init__(self, nnunet_dataloader: nnUNetDataLoaderBase, nnunet_config: str, infinite: bool = True) -> None:
+    def __init__(
+        self, nnunet_dataloader: nnUNetDataLoaderBase, nnunet_config: NnUNetConfig, infinite: bool = False
+    ) -> None:
         """
         Wraps nnunet dataloader classes using the pytorch dataloader to make
         them pytorch compatible. Also handles some unique stuff specific to
@@ -121,14 +129,18 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
         Args:
             nnunet_dataloader (nnUNetDataLoaderBase): The nnunet dataloader
-            nnunet_config (str): The nnunet config
+            nnunet_config (NnUNetConfig): The nnunet config. Enum type helps
+                ensure that nnunet config is valid
             infinite (bool, optional): Whether or not to treat the dataset
-                as infinite. Defaults to True.
+                as infinite. The dataloaders sample data with replacement
+                either way. The only difference is that if set to False, a
+                StopIteration is generated after num_samples/batch_size steps.
+                Defaults to False.
         """
         self.nnunet_dataloader = nnunet_dataloader
 
         # Figure out if dataloader is 2d or 3d
-        self.num_spatial_dims = get_num_spatial_dims(nnunet_config)
+        self.num_spatial_dims = nnunet_config.num_spatial_dims
 
         # nnUNetDataloaders store their datasets under the self.data attribute
         self.dataset: nnUNetDataset = self.nnunet_dataloader.generator._data

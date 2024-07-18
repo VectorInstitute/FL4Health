@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log
@@ -14,7 +14,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class FendaDittoClient(DittoClient):
@@ -189,7 +189,7 @@ class FendaDittoClient(DittoClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -228,7 +228,7 @@ class FendaDittoClient(DittoClient):
     def compute_training_loss(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: TorchFeatureType,
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
