@@ -11,7 +11,7 @@ from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.utils.typing import MultiAttributeEnum
+from research.picai.utils import MultiAttributeEnum
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
