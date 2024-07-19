@@ -12,6 +12,7 @@ from fl4health.clients.ditto_client import DittoClient
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.clients.fedper_client import FedPerClient
+from fl4health.clients.fedpm_client import FedPmClient
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
@@ -28,13 +29,17 @@ from fl4health.losses.fenda_loss_config import (
 )
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel, FendaModelWithFeatureState
+from fl4health.model_bases.masked_model import convert_to_masked_model
 from fl4health.model_bases.parallel_split_models import ParallelSplitHeadModule
 from fl4health.model_bases.perfcl_base import PerFclModel
+from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
+from fl4health.parameter_exchange.parameter_selection_criteria import select_mask_scores
 from fl4health.utils.metrics import Accuracy
+from tests.test_utils.models_for_test import CompositeConvNet
 
 
 @pytest.fixture
@@ -167,5 +172,18 @@ def get_perfcl_client(
     perfcl_model = PerFclModel(local_module, global_module, head_module)
     client.model = perfcl_model
     client.parameter_exchanger = FixedLayerExchanger(perfcl_model.layers_to_exchange())
+    client.initialized = True
+    return client
+
+
+@pytest.fixture
+def get_fedpm_client(model: CompositeConvNet) -> FedPmClient:
+    client = FedPmClient(
+        data_path=Path(""),
+        metrics=[Accuracy()],
+        device=torch.device("cpu"),
+    )
+    client.model = convert_to_masked_model(model)
+    client.parameter_exchanger = FedPmExchanger(select_mask_scores)
     client.initialized = True
     return client

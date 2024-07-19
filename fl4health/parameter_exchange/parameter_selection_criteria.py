@@ -10,7 +10,7 @@ from torch import Tensor
 
 from fl4health.model_bases.masked_model import is_masked_module
 
-LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
+LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
 
 
 class LayerSelectionFunctionConstructor:
@@ -180,7 +180,7 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
 
 # Selection function that selects the "weight_scores" and "bias_scores" parameters for the
 # masked layers. This function is meant to be used for the FedPM algorithm.
-def select_mask_scores(model: nn.Module, initial_model: nn.Module) -> Tuple[NDArrays, List[str]]:
+def select_mask_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
     parameters_to_exchange_names = []
     parameters_to_exchange = []
     model_states = model.state_dict()

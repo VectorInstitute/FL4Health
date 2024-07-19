@@ -113,6 +113,7 @@ def test_fedpm_exchange() -> None:
         mask = masks[i]
         score_name = score_names[i]
         assert mask.shape == masked_model_states[score_name].cpu().numpy().shape
+        assert ((mask == 0) | (mask == 1)).all()
 
     # Test that the selection function works when there are masked modules which are not direct child modules.
     wrapped_model_states = masked_wrapped_model.state_dict()

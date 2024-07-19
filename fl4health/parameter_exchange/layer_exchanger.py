@@ -9,7 +9,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLay
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
-LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
+LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
 
 
 class FixedLayerExchanger(ParameterExchanger):
@@ -115,13 +115,11 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
     ) -> Tuple[NDArrays, List[str]]:
-        assert initial_model is not None
         return self.layer_selection_function(model, initial_model)
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
-        assert initial_model is not None
         layers_to_transfer, layer_names = self.select_parameters(model, initial_model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
