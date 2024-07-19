@@ -25,7 +25,7 @@ class MultiAttributeEnum(Enum):
         Animals.Dog
 
         The main attribute can be changed by overriding
-        self.get_main_attribute. If the value of the main attribute is not
+        self.get_main_value(). If the value of the main attribute is not
         unique to a specific member, then the member that was defined first is
         returned.
 
@@ -70,7 +70,7 @@ class MultiAttributeEnum(Enum):
 
     def __new__(cls, attributes: Any) -> Enum:  # type: ignore
         """
-        Creates a new member. There is some Enum Weirness here which is why we
+        Creates a new member. There is some Enum Weirdness here which is why we
         have to tell mypy to ignore the typing. cls ends up being type
         type[MultiAttributeEnum] but class methods expect type
         MultiAttributeEnum for self. Additionally the return type is expected
@@ -84,18 +84,17 @@ class MultiAttributeEnum(Enum):
 
         # Set the attribute keys, values and main value for the member
         if isinstance(attributes, dict):
-            obj._value_ = cls.get_main_attribute(cls, attributes)  # type: ignore
+            obj._value_ = cls.get_main_value(cls, attributes)  # type: ignore
             obj.attribute_values = list(attributes.values())
             obj.attribute_keys = list(attributes.keys())
         if isinstance(attributes, list):
-            obj._value_ = cls.get_main_attribute(cls, attributes)  # type: ignore
+            obj._value_ = cls.get_main_value(cls, attributes)  # type: ignore
             obj.attribute_values = attributes
             obj.attribute_keys = cls.get_attribute_keys(cls, attributes)[: len(attributes)]  # type: ignore
         else:  # Assume we only have a single attribute
             obj.attribute_values = [attributes]
             obj._value_ = attributes  # reset the main value
 
-        # Set the attribute values for the member
         return obj  # Return member
 
     def keys(self) -> List[str]:
@@ -112,11 +111,11 @@ class MultiAttributeEnum(Enum):
         """
         return self.attribute_values
 
-    def get_main_attribute(self, attributes: Any) -> Any:
+    def get_main_value(self, attributes: Any) -> Any:
         """
-        Returns the main attribute value given a members attributes. Whatever
+        Returns the main attribute value given a member's attributes. Whatever
         is returned is what will be used to identify the member when calling
-        the class.
+        the class. The main value can be accessed using member.value
         Example:
             Animals(MultiAttributeEnum):
                 # Define Attributes
@@ -135,6 +134,8 @@ class MultiAttributeEnum(Enum):
             Animals.Giraffe
             >>> Animals(0.5)
             Animals.Dog
+            >>> Animals.Dog.value
+            0.5
 
         Args:
             attributes (Any): The attributes used to define the members
