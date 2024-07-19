@@ -1,7 +1,7 @@
 dataset_json: /home/shawn/Code/nnunet_storage/nnUNet_raw/Dataset012_PICAI-debug/dataset.json
 plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset012_PICAI-debug/nnUNetPlans.json
 2d:
-  - /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_final.pth
+#   - /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d
   - /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_1/checkpoint_final.pth
-3d_fullres:
-  - /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth
+# 3d_fullres:
+#   - /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth
