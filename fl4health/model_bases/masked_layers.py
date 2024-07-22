@@ -341,13 +341,13 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
     """
     masked_model = copy.deepcopy(original_model)
     for name, module in original_model.named_modules():
-        if isinstance(module, nn.Linear):
+        if isinstance(module, nn.Linear) and not isinstance(module, MaskedLinear):
             setattr(masked_model, name, MaskedLinear.from_pretrained(module))
-        elif isinstance(module, nn.Conv1d):
+        elif isinstance(module, nn.Conv1d) and not isinstance(module, MaskedConv1d):
             setattr(masked_model, name, MaskedConv1d.from_pretrained(module))
-        elif isinstance(module, nn.Conv2d):
+        elif isinstance(module, nn.Conv2d) and not isinstance(module, MaskedConv2d):
             setattr(masked_model, name, MaskedConv2d.from_pretrained(module))
-        elif isinstance(module, nn.Conv3d):
+        elif isinstance(module, nn.Conv3d) and not isinstance(module, MaskedConv3d):
             setattr(masked_model, name, MaskedConv3d.from_pretrained(module))
     return masked_model
 
