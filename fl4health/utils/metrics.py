@@ -414,7 +414,7 @@ class MetricManager:
         self, preds: Dict[str, torch.Tensor], target: Dict[str, torch.Tensor]
     ) -> None:
         assert target.keys() == preds.keys(), (
-            "Received a dict with multiple targets, but the keys of the"
+            "Received a dict with multiple targets, but the keys of the "
             "targets do not match the keys of the predictions. Please pass a "
             "single target or ensure the keys between preds and target are the same"
         )

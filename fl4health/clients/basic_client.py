@@ -479,7 +479,7 @@ class BasicClient(NumPyClient):
         Returns:
             Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
         """
-        # Currently we expect bot inputs and targets to be either tensors
+        # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors
         if isinstance(data, torch.Tensor):
             return data.to(self.device)
