@@ -15,6 +15,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
 
 
 class FedProxClient(BasicClient):
@@ -103,9 +104,9 @@ class FedProxClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training loss given predictions of the model and ground truth data. Adds to objective by including

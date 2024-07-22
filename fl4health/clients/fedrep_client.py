@@ -10,7 +10,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -18,6 +18,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 EpochsAndStepsTuple = Tuple[Optional[int], Optional[int], Optional[int], Optional[int]]
 
@@ -329,9 +330,7 @@ class FedRepClient(BasicClient):
         metrics_dict_head.update(metrics_dict_rep)
         return loss_dict_head, metrics_dict_head
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         """
         Mechanics of training loop follow the FedRep paper: https://arxiv.org/pdf/2102.07078.pdf
         In order to reuse the train_step functionality, we switch between the appropriate optimizers depending on the
