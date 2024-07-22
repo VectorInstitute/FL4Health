@@ -3,6 +3,10 @@ import argparse
 from picai_eval import evaluate_folder
 
 
+def evaluate() -> None:
+    pass
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(

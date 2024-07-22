@@ -1,30 +1,127 @@
 import argparse
 import contextlib
 import json
+import multiprocessing
 import os
 import time
 import warnings
 from logging import INFO
-from os.path import isdir, join
-from typing import List, Tuple
+from os.path import basename, isdir, join
+from typing import Any, Dict, Generator, List, Optional, Tuple
 
-import nnunetv2
 import numpy as np
 import torch
 import yaml
 from flwr.common.logger import log
+from numpy.typing import NDArray
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
     # Curiosly this only happens if flwr is imported first
     # Raised issue https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import nnunetv2
+    from nnunetv2.configuration import default_num_processes
+    from nnunetv2.inference.export_prediction import convert_predicted_logits_to_segmentation_with_correct_shape
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+    from nnunetv2.utilities.file_path_utilities import check_workers_alive_and_busy
     from nnunetv2.utilities.find_class_by_name import recursive_find_python_class
     from nnunetv2.utilities.label_handling.label_handling import determine_num_input_channels
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
     from nnunetv2.utilities.utils import create_lists_from_splitted_dataset_folder
-    from numpy.typing import NDArray
+
+
+class MyNnUNetPredictor(nnUNetPredictor):
+    def predict_from_data_iterator(
+        self, data_iterator: Generator, return_probabilities: bool = False, num_processes: int = default_num_processes
+    ) -> Dict[str, Any]:
+        """
+        Override of the predict from data iterator class so that we can have
+        it return the model outputs along with their output filenames and data
+        properties. The parent class method either saves the data and returns
+        nothing, or does not save the data and only returns the model outputs.
+        We are going to change as little as possible. This function is based
+        off of nnunetv2 version 2.4.2
+
+        Args:
+            data_iterator (Generator): The data iterator
+            return_probabilities (bool, optional): Whether or not to return the
+                predicted probability maps. Defaults to False.
+            num_processes (int, optional): The number of processes to use when
+                exporting predictions. Defaults to nnunet's default number of
+                processes (at time of writing this is 8)
+
+        Returns:
+            List: A dictionary containing the predicted annotations and the data
+                properties for each file. The dictionary may also contain the
+                predicted probabilities and the output file names associated
+                with each sample
+        """
+        with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
+            # Have to ignore errors when defining worker list because mypy
+            # doesn't understand multiprocessing.get_context
+            worker_list = [i for i in pool._pool]  # type: ignore
+            model_outputs: Any = []
+            ofiles = []
+            properties_list = []
+
+            for preprocessed in data_iterator:
+                data = preprocessed["data"]
+                if isinstance(data, str):
+                    delfile = data
+                    data = torch.from_numpy(np.load(data))
+                    os.remove(delfile)
+
+                if preprocessed["ofile"] is not None:
+                    ofiles.append(preprocessed["ofile"])
+
+                properties = preprocessed["data_properties"]
+                properties_list.append(properties)
+
+                # let's not get into a runaway situation where the GPU predicts
+                # so fast that the disk has to b swamped with npy files
+                proceed = not check_workers_alive_and_busy(pool, worker_list, model_outputs, allowed_num_queued=2)
+                while not proceed:
+                    time.sleep(0.1)
+                    proceed = not check_workers_alive_and_busy(pool, worker_list, model_outputs, allowed_num_queued=2)
+
+                logits = self.predict_logits_from_preprocessed_data(data).cpu()
+
+                # Send prediction off to background worker for resampling
+                model_outputs.append(
+                    pool.starmap_async(
+                        convert_predicted_logits_to_segmentation_with_correct_shape,
+                        (
+                            (
+                                logits,
+                                self.plans_manager,
+                                self.configuration_manager,
+                                self.label_manager,
+                                properties,
+                                return_probabilities,
+                            ),
+                        ),
+                    ),
+                )
+
+            # Package outputs as dictionary
+            return_dict = {"annotation_preds": [], "data_properties": properties_list}
+
+            if len(ofiles) == len(model_outputs):
+                return_dict["ofiles"] = ofiles
+
+            if return_probabilities:
+                return_dict["probability_preds"] = []
+
+            for output in model_outputs:
+                data = output.get()[0]
+                if return_probabilities:
+                    return_dict["annotation_preds"].append(data[0])
+                    return_dict["probability_preds"].append(data[1])
+                else:
+                    return_dict["annotation_preds"].append(data)
+
+        return return_dict
 
 
 def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
@@ -67,7 +164,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
         return trainer_name, inference_allowed_mirror_axes
 
     # Create unintialized predictor instance
-    predictor = nnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
+    predictor = MyNnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
 
     # Get parameters for each model and maybe some predictor init parameters
     trainer_name: str = "nnUNetTrainer"  # Default trainer class
@@ -122,7 +219,44 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     return predictor
 
 
-def predict(config_path: str, input_data: str, output_folder: str) -> NDArray:
+def predict_probabilities(
+    config_path: str, input_data: str, output_folder: Optional[str]
+) -> Tuple[NDArray, List[str]]:
+    """
+    Uses multiprocessing to quickly do model inference for a single model, a
+    group of models with the same nnunet config or an ensemble of different
+    nnunet configs each with one or more models.
+
+    Args:
+        config_path (str): Path to a yaml config file. The three required keys
+            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            3d_fullres etc.). The nnunet config keys should contain a list of
+            paths. If the path points to a file it should be a model
+            checkpoint. The model checkpoints can be dicts with the
+            'network_weights' key or nn.Modules. If the path points to a
+            directory it should be an nnunet results folder for a particular
+            dataset-config-trainer combo. The plans key should be the path to
+            the nnunet model plans json file. The dataset_json key should be
+            the path to the dataset json of one of the training datasets. Or
+            create a new json yourself with the 'label' and 'file_ending' keys
+            and their corresponding values as specified by nnunet
+        input_data (str): Path to the folder containing the raw input data that
+            has notbeen processed by nnunet yet. File names must follow the
+            nnunet convention where each channel modality is stored as a
+            seperate file.File names should be case-identifier_0000 where 0000
+            is a 4 digit integer representing the channel/modality of the
+            image. All cases must have the same number of channels N numbered
+            from 0 to N.
+        output_folder (Optional[str]): [OPTIONAL] Path to the output folder to
+            save the model predicted probabilities. If not provided the
+            probabilities are not saved
+    Returns:
+        Tuple[NDArray, List[str]]: A tuple where the first element is a numpy
+            array a single predicted probability map for each input image. The
+            second element is a list containing the unique case identifier for
+            each prediction
+    """
+
     # Load config and nnunet required dicts
     config = yaml.safe_load(open(config_path, "r"))
     dataset_json = json.load(open(config["dataset_json"], "r"))
@@ -131,11 +265,12 @@ def predict(config_path: str, input_data: str, output_folder: str) -> NDArray:
     # Convert input folder into a list of filenames so that we know which
     # output preds correspond to which input files
     input_data = create_lists_from_splitted_dataset_folder(folder=input_data, file_ending=dataset_json["file_ending"])
-    case_identifiers = [case[0].split(".")[0][:-5] for case in input_data]
+    case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_data]
+    output_filelist = [join(output_folder, case + "_probs") for case in case_identifiers] if output_folder else None
 
     model_count = 0
     config_probs_list = []
-    for key in config.keys():
+    for i, key in enumerate(config.keys()):
         if key in ["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]:
             # Get predictor for config
             predictor = get_predictor(
@@ -151,29 +286,25 @@ def predict(config_path: str, input_data: str, output_folder: str) -> NDArray:
                 # Get predicted annotations and probabilities
                 # Setting output folder to None changes the behaviour of
                 # function to return the outputs instead of saving them
-                preds = predictor.predict_from_files(
+                # UPDATE: I overrode a method so that outputs are always returned
+                output = predictor.predict_from_files(
                     list_of_lists_or_source_folder=input_data,
-                    output_folder_or_list_of_truncated_output_files=None,
+                    output_folder_or_list_of_truncated_output_files=output_filelist,
                     save_probabilities=True,
                 )
+
             secs = time.time() - t
             log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(len(case_identifiers)*n_models):.1f}s/case")
             log(INFO, "")
-            # preds is shape [num_samples, 2] where the second dimension's
-            # first element is the predicted annotation and the second element
-            # is the predicted probabilities. Outputs are numpy arrays
-
-            # Get just the probabilities
-            probs = []
-            for pred in preds:
-                probs.append(pred[1])
 
             # Each element of config_probs_list will have
             # shape (num_samples, num_classes, spatial_dims...)
             # If only one element stack adds an empty dim
-            config_probs_list.append(np.stack(probs))
-            del probs
-            del preds
+            config_probs_list.append(np.stack(output["probability_preds"]))
+
+            # Delete variables we don't need from memory
+            del output
+            del predictor
 
     # If only one element stack adds an empty dim
     final_preds = np.mean(np.stack(config_probs_list), axis=0)
@@ -192,16 +323,24 @@ def predict(config_path: str, input_data: str, output_folder: str) -> NDArray:
         f"Final Predictions Array Shape: {shape}",
     )
 
+    # Save predicted probabilites if output_folder was provided
+    if output_folder is not None:
+        for (
+            pred,
+            case,
+        ) in zip(final_preds, case_identifiers):
+            ofile = join(output_folder, case + "_probs.npz")
+            np.savez_compressed(file=ofile, probabilities=pred)
+
     # final preds shape: (num_samples, num_classes, spatial_dims...)
-    return final_preds
+    return final_preds, case_identifiers
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="nnunet predictor",
         description="""Runs inference on raw input data given a number of
-            compatible nnunet models. Then evaluates the predictions using
-            picai_eval""",
+            compatible nnunet models.""",
         epilog="""The predictions from models of the same nnunet config are
             averaged first, then the averaged predictions from each different
             nnunet config are averaged to provide a final prediction.
@@ -249,7 +388,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    predict(args.config_path, args.input_data, args.output_folder)
+    predict_probabilities(args.config_path, args.input_data, args.output_folder)
 
 
 if __name__ == "__main__":
