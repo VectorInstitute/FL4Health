@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from fl4health.model_bases.masked_model import (
+from fl4health.model_bases.masked_layers import (
     MaskedConv1d,
     MaskedConv2d,
     MaskedConv3d,

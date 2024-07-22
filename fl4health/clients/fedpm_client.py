@@ -6,7 +6,7 @@ from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.model_bases.masked_model import convert_to_masked_model
+from fl4health.model_bases.masked_layers import convert_to_masked_model
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import select_mask_scores
@@ -36,7 +36,14 @@ class FedPmClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
-        self.model = convert_to_masked_model(self.model).to(self.device)
+        # Convert self.model to a masked model unless it is specified in the config
+        # file that the model is already a masked model.
+        if "is_masked_model" in config:
+            is_masked_model = self.narrow_config_type(config, "is_masked_model", bool)
+            if not is_masked_model:
+                self.model = convert_to_masked_model(self.model).to(self.device)
+        else:
+            self.model = convert_to_masked_model(self.model).to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return FedPmExchanger(layer_selection_function=select_mask_scores)
