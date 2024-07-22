@@ -61,7 +61,7 @@ class nnUNetClient(BasicClient):
         data_identifier: Optional[str] = None,
         plans_identifier: Optional[str] = None,
         always_preprocess: bool = False,
-        metrics: Sequence[Metric] = [],
+        metrics: Optional[Sequence[Metric]] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -117,6 +117,7 @@ class nnUNetClient(BasicClient):
                 reporter instance to record the metrics during the execution.
                 Defaults to an instance of MetricsReporter with default init parameters.
         """
+        metrics = metrics if metrics else []
         # Parent method sets up several class attributes
         super().__init__(
             data_path=data_path,  # self.data_path, not used by nnUNetClient
@@ -155,7 +156,7 @@ class nnUNetClient(BasicClient):
         """
         # flwr 1.9.0 now raises an error any time a process ends.
         # To prevent errors due to this since dataloaders use multiprocessing
-        # lets ovveride that behaviour before the child processes are created
+        # lets overide that behaviour before the child processes are created
         fl_sigint_handler = signal.getsignal(signal.SIGINT)
         fl_sigterm_handler = signal.getsignal(signal.SIGTERM)
         signal.signal(signal.SIGINT, ORIGINAL_SIGINT_HANDLER)
