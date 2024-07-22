@@ -19,9 +19,9 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     downsampling_ratio: float,
-    current_round: int,
     is_masked_model: bool,
     priors_reset_frequency: int,
+    current_round: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
@@ -30,9 +30,9 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "downsampling_ratio": downsampling_ratio,
-        "current_server_round": current_round,
         "is_masked_model": is_masked_model,
         "priors_reset_frequency": priors_reset_frequency,
+        "current_server_round": current_round,
     }
 
 

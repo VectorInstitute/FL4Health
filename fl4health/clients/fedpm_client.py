@@ -38,7 +38,7 @@ class FedPmClient(BasicClient):
         super().setup_client(config)
         # Convert self.model to a masked model unless it is specified in the config
         # file that the model is already a masked model.
-        if "is_masked_model" in config:
+        if "is_masked_model" in config.keys():
             is_masked_model = self.narrow_config_type(config, "is_masked_model", bool)
             if not is_masked_model:
                 self.model = convert_to_masked_model(self.model).to(self.device)
