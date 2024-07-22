@@ -85,7 +85,7 @@ class FedPm(FedAvgDynamicLayer):
             weighted_eval_losses=weighted_eval_losses,
         )
         self.weighted_aggregation = False
-        # Parameters for Bayesian aggregation
+        # Parameters for Beta distribution.
         self.beta_parameters: Dict[str, Tuple[NDArray, NDArray]] = {}
         self.bayesian_aggregation = bayesian_aggregation
 
@@ -96,10 +96,38 @@ class FedPm(FedAvgDynamicLayer):
             return self.aggregate_bayesian(results)
 
     def aggregate_bayesian(self, results: List[Tuple[NDArrays, int]]) -> Dict[str, NDArray]:
+        """
+        Perform posterior update to the Beta distribution parameters based on the binary masks
+        sent by the clients.
+
+        More precisely, each client maintains for each one of its parameter tensors
+        a "probability score tensor". These scores (after applying the Sigmoid function to them)
+        are Bernoulli probabilities which indicate how likely their corresponding parameters are
+        to be pruned or kept. Each client samples a binary mask for every one of its parameter tensors
+        based on the corresponding Bernoulli probabilities. These masks are sent to the server
+        for aggregation.
+
+        Here, we assume that the bernoulli probabilities of each client themselves follow a Beta
+        distribution with parameters alpha and beta. Then the binary masks may be viewed as data that
+        can be used to update alpha and beta, and this corresponds to a posterior update.
+        Due to the conjugate relation between the Beta and Bernoulli distributions, the posterior distribution
+        is still a Beta distribution, so we can perform the aggregation in this manner every round.
+
+        In this case, the updates performed are:
+            alpha_new = alpha + M
+            beta_new = beta + K * 1 - M
+            theta = (alpha_new - 1) / (alpha_new + beta_new - 2)
+        where M is the sum of all binary masks corresponding to a particular parameter tensor,
+        K is the number of clients, and "1" in the second equation refers to an array of all
+        ones of the same shape as M.
+
+        In the beginning, alpha and beta are initialized to arrays of all ones.
+        """
         names_to_layers: DefaultDict[str, List[NDArray]] = defaultdict(list)
         total_num_clients: DefaultDict[str, int] = defaultdict(int)
 
-        # unpack the parameters and initialize the beta parameters to be all ones if necessary.
+        # unpack the parameters and initialize the beta parameters to be all ones if they have not already
+        # been initialized.
         for packed_layers, _ in results:
             layers, names = self.parameter_packer.unpack_parameters(packed_layers)
             for layer, name in zip(layers, names):
@@ -126,6 +154,9 @@ class FedPm(FedAvgDynamicLayer):
         return aggregation_result
 
     def reset_beta_priors(self) -> None:
+        """
+        Reset the alpha and beta parameters for the Beta distribution to be arrays of all ones.
+        """
         assert self.beta_parameters != {}
         for parameter_name in self.beta_parameters.keys():
             alpha, beta = self.beta_parameters[parameter_name]

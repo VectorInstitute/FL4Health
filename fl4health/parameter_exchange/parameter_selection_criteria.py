@@ -178,9 +178,12 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
     return names_to_scores
 
 
-# Selection function that selects the "weight_scores" and "bias_scores" parameters for the
-# masked layers. This function is meant to be used for the FedPM algorithm.
 def select_mask_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
+    """
+    Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
+    masked layers, and then samples binary masks based on those scores to send to the server.
+    This function is meant to be used for the FedPM algorithm.
+    """
     parameters_to_exchange_names = []
     parameters_to_exchange = []
     model_states = model.state_dict()

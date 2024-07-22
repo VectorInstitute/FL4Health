@@ -335,6 +335,10 @@ class MaskedConv3d(nn.Conv3d):
 
 
 def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
+    """
+    Given a model, convert every one of its linear or convolutional layer to a masked layer
+    of the same kind, as defined in the classes above.
+    """
     masked_model = copy.deepcopy(original_model)
     for name, module in original_model.named_modules():
         if isinstance(module, nn.Linear):
