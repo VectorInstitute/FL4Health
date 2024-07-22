@@ -14,7 +14,7 @@ class FedPmExchanger(DynamicLayerExchanger):
         layer_params, layer_names = self.unpack_parameters(parameters)
         for layer_name, layer_param in zip(layer_names, layer_params):
             # Apply the inverse of the Sigmoid function
-            # since the probability scores for masked layers are supposed to be unbounded.
+            # since the scores for masked layers are supposed to be unbounded.
             with torch.no_grad():
                 current_state[layer_name] = sigmoid_inverse(torch.tensor(layer_param))
         model.load_state_dict(current_state, strict=True)

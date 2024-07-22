@@ -7,7 +7,7 @@ from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger, FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import (
     LayerSelectionFunctionConstructor,
-    select_mask_scores,
+    select_scores_and_sample_masks,
 )
 from fl4health.utils.functions import sigmoid_inverse
 from tests.test_utils.models_for_test import CompositeConvNet, LinearModel, ModelWrapper, ToyConvNet
@@ -97,7 +97,7 @@ def test_fedpm_exchange() -> None:
     wrapped_model_states = masked_wrapped_model.state_dict()
 
     # Test that selection function works when the direct child modules are masked modules.
-    masks, score_names = select_mask_scores(masked_model, masked_model)
+    masks, score_names = select_scores_and_sample_masks(masked_model, masked_model)
     assert len(masks) == len(score_names)
     assert score_names == [
         "conv1d.weight_scores",
@@ -117,7 +117,7 @@ def test_fedpm_exchange() -> None:
 
     # Test that the selection function works when there are masked modules which are not direct child modules.
     wrapped_model_states = masked_wrapped_model.state_dict()
-    masks_wrapped, score_names_wrapped = select_mask_scores(masked_wrapped_model, masked_wrapped_model)
+    masks_wrapped, score_names_wrapped = select_scores_and_sample_masks(masked_wrapped_model, masked_wrapped_model)
     assert len(masks_wrapped) == len(score_names_wrapped)
     assert score_names_wrapped == [
         "model.conv1d.weight_scores",
@@ -135,7 +135,7 @@ def test_fedpm_exchange() -> None:
         assert mask.shape == wrapped_model_states[score_name].cpu().numpy().shape
 
     # Test that pull_parameter works as expected.
-    parameter_exchanger = FedPmExchanger(layer_selection_function=select_mask_scores)
+    parameter_exchanger = FedPmExchanger(layer_selection_function=select_scores_and_sample_masks)
     packed_parameters = parameter_exchanger.pack_parameters(model_weights=masks, additional_parameters=score_names)
     masked_model_new = convert_to_masked_model(CompositeConvNet())
     parameter_exchanger.pull_parameters(packed_parameters, masked_model_new)

@@ -178,7 +178,7 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
     return names_to_scores
 
 
-def select_mask_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
+def select_scores_and_sample_masks(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
     """
     Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
     masked layers, and then samples binary masks based on those scores to send to the server.

@@ -9,7 +9,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.masked_layers import convert_to_masked_model
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.parameter_exchange.parameter_selection_criteria import select_mask_scores
+from fl4health.parameter_exchange.parameter_selection_criteria import select_scores_and_sample_masks
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -46,4 +46,4 @@ class FedPmClient(BasicClient):
             self.model = convert_to_masked_model(self.model).to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        return FedPmExchanger(layer_selection_function=select_mask_scores)
+        return FedPmExchanger(layer_selection_function=select_scores_and_sample_masks)
