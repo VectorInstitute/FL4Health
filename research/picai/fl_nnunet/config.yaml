@@ -4,6 +4,6 @@ nnunet_config: 2d
 nnunet_plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset012_PICAI-debug/nnUNetPlans.json
 fold: 0
 n_server_rounds: 1
-local_epochs: 1
+local_epochs: 10
 server_address: '0.0.0.0:8080'
 starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth

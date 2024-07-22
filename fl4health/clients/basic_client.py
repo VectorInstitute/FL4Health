@@ -77,6 +77,10 @@ class BasicClient(NumPyClient):
 
         self.initialized = False  # Whether or not the client has been setup
 
+        # Variable to store additional information to be added to initial log
+        # string. This variable is reset every time _handle_logging is called
+        self.add_to_initial_log_str = ""
+
         # Loss and Metric management
         self.train_loss_meter = LossMeter[TrainingLosses](loss_meter_type, TrainingLosses)
         self.val_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
@@ -420,19 +424,24 @@ class BasicClient(NumPyClient):
             current_epoch (Optional[int]): The current epoch of local training.
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
         """
+        log(INFO, "")  # An empty log line for aesthetics
+
         initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
         initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
+        initial_log_str += self.add_to_initial_log_str  # Add user defined info
         if initial_log_str != "":
             log(INFO, initial_log_str)
+            self.add_to_initial_log_str = ""  # Reset variable
 
-        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
-        loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-
+        # Log loss/losses
         metric_prefix = logging_mode.value
-        log(
-            INFO,
-            f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
-        )
+        log(INFO, f"Client {metric_prefix} Losses:")
+        [log(INFO, f"\t {key}: {str(val)}") for key, val in loss_dict.items()]
+
+        # Log metrics if any
+        if len(metrics_dict.keys()) > 0:
+            log(INFO, f"Client {metric_prefix} Metrics:")
+            [log(INFO, f"\t {key}: {str(val)}") for key, val in metrics_dict.items()]
 
     def _handle_reporting(
         self,
@@ -612,6 +621,8 @@ class BasicClient(NumPyClient):
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
+            # update before epoch hook
+            self.update_before_epoch(epoch=local_epoch)
             for input, target in self.train_loader:
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
@@ -633,9 +644,6 @@ class BasicClient(NumPyClient):
             # Log results and maybe report via WANDB
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
-
-            # update after epoch hook
-            self.update_after_epoch(epoch=local_epoch)
 
         # Return final training metrics
         return loss_dict, metrics
@@ -1087,12 +1095,13 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def update_after_epoch(self, epoch: int) -> None:
+    def update_before_epoch(self, epoch: int) -> None:
         """
-        Hook method called after local epoch on client. Only called if client is
-        being trained by epochs (ie. using local_epochs key instead of local steps in the server config file)
+        Hook method called before local epoch on client. Only called if client
+        is being trained by epochs (ie. using local_epochs key instead of local
+        steps in the server config file)
 
         Args:
-            epoch (int): Integer representing the most recently completed epoch
+            epoch (int): Integer representing the epoch about to begin
         """
         pass

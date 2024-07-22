@@ -513,3 +513,8 @@ class nnUNetClient(BasicClient):
             torch.mps.empty_cache()
         else:
             pass
+
+    def update_before_epoch(self, epoch: int) -> None:
+        self.nnunet_trainer.lr_scheduler.step(epoch)
+        lr = self.optimizers["global"].param_groups[0]["lr"]
+        self.add_to_initial_log_str += f" Current LR: {lr}"
