@@ -266,7 +266,7 @@ def predict_probabilities(
     # output preds correspond to which input files
     input_data = create_lists_from_splitted_dataset_folder(folder=input_data, file_ending=dataset_json["file_ending"])
     case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_data]
-    output_filelist = [join(output_folder, case + "_probs") for case in case_identifiers] if output_folder else None
+    output_filelist = [join(output_folder, case) for case in case_identifiers] if output_folder else None
 
     model_count = 0
     config_probs_list = []
@@ -329,7 +329,9 @@ def predict_probabilities(
             pred,
             case,
         ) in zip(final_preds, case_identifiers):
-            ofile = join(output_folder, case + "_probs.npz")
+            ofile = join(output_folder, case + ".npz")
+            print(type(pred))
+            print(pred.shape[0])
             np.savez_compressed(file=ofile, probabilities=pred)
 
     # final preds shape: (num_samples, num_classes, spatial_dims...)
