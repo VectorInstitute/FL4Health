@@ -330,8 +330,6 @@ def predict_probabilities(
             case,
         ) in zip(final_preds, case_identifiers):
             ofile = join(output_folder, case + ".npz")
-            print(type(pred))
-            print(pred.shape[0])
             np.savez_compressed(file=ofile, probabilities=pred)
 
     # final preds shape: (num_samples, num_classes, spatial_dims...)
@@ -339,6 +337,18 @@ def predict_probabilities(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="nnunet predictor",
+        description="""Runs inference on raw input data given a number of
+            compatible nnunet models.""",
+        epilog="""The predictions from models of the same nnunet config are
+            averaged first, then the averaged predictions from each different
+            nnunet config are averaged to provide a final prediction.
+            Regardless of the number of models and or nnunet configs, this
+            script always produces only a single final prediction for each
+            input image. This script can be used with only a single config and
+            even a single model""",
+    )
     parser = argparse.ArgumentParser(
         prog="nnunet predictor",
         description="""Runs inference on raw input data given a number of

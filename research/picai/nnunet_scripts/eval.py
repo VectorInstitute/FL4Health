@@ -8,6 +8,10 @@ from report_guided_annotation import extract_lesion_candidates
 warnings.simplefilter("ignore", category=FutureWarning)
 
 
+def evaluate() -> None:
+    pass
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
