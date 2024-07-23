@@ -43,6 +43,9 @@ jobs:
           virtual-environment: .venv/
           # ignoring security vulnerabilities for mlflow as monai's autoseg3d
           # pipeline depends on mlflow=^2.12.2. Raised an issue with mlflow
+          # https://github.com/mlflow/mlflow/issues/12565
+          # Seems mlflow has no intentions to fix this, they are pushing
+          # pip-audit to ignore these warnings
           # Vulnerabilities from GHSA-x38x-g6gr-jqff to GHSA-7p8j-qv6x-f4g4
           # originate from mlflow
           ignore-vulns: |

@@ -16,6 +16,7 @@ from fl4health.losses.contrastive_loss import NtXentLoss
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
 from fl4health.utils.dataset import SslTensorDataset
 from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
+from fl4health.utils.typing import TorchTargetType
 
 
 def get_transforms() -> Tuple[Callable, Callable]:
@@ -80,7 +81,7 @@ class SslCifarClient(BasicClient):
         )
         return ssl_model.to(self.device)
 
-    def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
         return self.model(target)
 
 
