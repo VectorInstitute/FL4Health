@@ -220,7 +220,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 
 
 def predict_probabilities(
-    config_path: str, input_data: str, output_folder: Optional[str]
+    config_path: str, input_folder: str, output_folder: Optional[str] = None, verbose: bool = True
 ) -> Tuple[NDArray, List[str]]:
     """
     Uses multiprocessing to quickly do model inference for a single model, a
@@ -240,8 +240,8 @@ def predict_probabilities(
             the path to the dataset json of one of the training datasets. Or
             create a new json yourself with the 'label' and 'file_ending' keys
             and their corresponding values as specified by nnunet
-        input_data (str): Path to the folder containing the raw input data that
-            has notbeen processed by nnunet yet. File names must follow the
+        input_folder (str): Path to the folder containing the raw input data
+            that has notbeen processed by nnunet yet. File names must follow the
             nnunet convention where each channel modality is stored as a
             seperate file.File names should be case-identifier_0000 where 0000
             is a 4 digit integer representing the channel/modality of the
@@ -251,9 +251,9 @@ def predict_probabilities(
             save the model predicted probabilities. If not provided the
             probabilities are not saved
     Returns:
-        Tuple[NDArray, List[str]]: A tuple where the first element is a numpy
-            array a single predicted probability map for each input image. The
-            second element is a list containing the unique case identifier for
+        NDArray: a numpy array with a single predicted probability map for each
+            input image. Shape: (num_samples, num_classes, spatial_dims...).
+        List[str]: A list containing the unique case identifier for
             each prediction
     """
 
@@ -264,7 +264,9 @@ def predict_probabilities(
 
     # Convert input folder into a list of filenames so that we know which
     # output preds correspond to which input files
-    input_data = create_lists_from_splitted_dataset_folder(folder=input_data, file_ending=dataset_json["file_ending"])
+    input_data = create_lists_from_splitted_dataset_folder(
+        folder=input_folder, file_ending=dataset_json["file_ending"]
+    )
     case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_data]
     output_filelist = [join(output_folder, case) for case in case_identifiers] if output_folder else None
 
@@ -277,7 +279,8 @@ def predict_probabilities(
                 ckpt_list=config[key], nnunet_config=str(key), dataset_json=dataset_json, plans=plans
             )
             n_models = len(predictor.list_of_parameters)
-            log(INFO, f"Found {n_models} models for nnunet config {key}. Starting Inference")
+            if verbose:
+                log(INFO, f"Found {n_models} models for nnunet config {key}. Starting Inference")
             model_count += n_models
             t = time.time()
 
@@ -294,8 +297,9 @@ def predict_probabilities(
                 )
 
             secs = time.time() - t
-            log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(len(case_identifiers)*n_models):.1f}s/case")
-            log(INFO, "")
+            if verbose:
+                log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(len(case_identifiers)*n_models):.1f}s/case")
+                log(INFO, "")
 
             # Each element of config_probs_list will have
             # shape (num_samples, num_classes, spatial_dims...)
@@ -311,26 +315,28 @@ def predict_probabilities(
 
     # Logs
     shape = np.shape(final_preds)
-    log(
-        INFO,
-        (
-            f"Finished running inference with {model_count} models on "
-            f"{shape[0]} samples. Number of output classes: {shape[1]}"
-        ),
-    )
-    log(
-        INFO,
-        f"Final Predictions Array Shape: {shape}",
-    )
+    if verbose:
+        log(
+            INFO,
+            (f"Finished running inference with {model_count} models on " f"{shape[0]} samples."),
+        )
+        log(INFO, f"\tNum Samples: {shape[0]}")
+        log(INFO, f"\tNum Classes: {shape[1]}")
+        log(INFO, f"\tSpatial Dimensions {shape[2:]}")
 
     # Save predicted probabilites if output_folder was provided
     if output_folder is not None:
-        for (
-            pred,
-            case,
-        ) in zip(final_preds, case_identifiers):
+        t = time.time()
+        for pred, case in zip(final_preds, case_identifiers):
             ofile = join(output_folder, case + ".npz")
             np.savez_compressed(file=ofile, probabilities=pred)
+        secs = time.time() - t
+        if verbose:
+            log(INFO, "")
+            log(
+                INFO,
+                f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs/len(case_identifiers):.1f}s/case",
+            )
 
     # final preds shape: (num_samples, num_classes, spatial_dims...)
     return final_preds, case_identifiers
@@ -347,19 +353,7 @@ def main() -> None:
             Regardless of the number of models and or nnunet configs, this
             script always produces only a single final prediction for each
             input image. This script can be used with only a single config and
-            even a single model""",
-    )
-    parser = argparse.ArgumentParser(
-        prog="nnunet predictor",
-        description="""Runs inference on raw input data given a number of
-            compatible nnunet models.""",
-        epilog="""The predictions from models of the same nnunet config are
-            averaged first, then the averaged predictions from each different
-            nnunet config are averaged to provide a final prediction.
-            Regardless of the number of models and or nnunet configs, this
-            script always produces only a single final prediction for each
-            input image. This script can be used with only a single config and
-            even a single model""",
+            even a single model.""",
     )
     parser.add_argument(
         "--config-path",
@@ -368,26 +362,26 @@ def main() -> None:
         help="""Path to a yaml config file. The three required keys are plans,
             dataset_json and one or more nnunet_configs (eg. 2d, 3d_fullres
             etc.). The nnunet config keys should contain a list of paths. If
-            the path points to a file it should be a model checkpoint. The model
-            checkpoints can be dicts with the 'network_weights' key or
+            the path points to a file it should be a model checkpoint. The
+            model checkpoints can be dicts with the 'network_weights' key or
             nn.Modules. If the path points to a directory it should be an
             nnunet results folder for a particular dataset-config-trainer
             combo. The plans key should be the path to the nnunet model
             plans json file. The dataset_json key should be the path to the
             dataset json of one of the training datasets. Or create a new json
             yourself with the 'label' and 'file_ending' keys and their
-            corresponding values as specified by nnunet""",
+            corresponding values as specified by nnunet.""",
     )
     parser.add_argument(
-        "--input-data",
+        "--input-folder",
         required=True,
         type=str,
         help="""Path to the folder containing the raw input data that has not
-        been processed by nnunet yet. File names must follow the nnunet
-        convention where each channel modality is stored as a seperate file.
-        File names should be case-identifier_0000 where 0000 is a 4 digit
-        integer representing the channel/modality of the image. All cases must
-        have the same number of channels N numbered from 0 to N""",
+            been processed by nnunet yet. File names must follow the nnunet
+            convention where each channel modality is stored as a seperate
+            file. File names should be case-identifier_0000 where 0000 is a 4
+            digit integer representing the channel/modality of the image. All
+            cases must have the same N channels numbered from 0 to N.""",
     )
     parser.add_argument(
         "--output-folder",
@@ -395,12 +389,13 @@ def main() -> None:
         type=str,
         help="""[OPTIONAL] Path to the output folder to save the model
             predicted probabilities. If not provided the probabilities are not
-            saved""",
+            saved. Will recursively create directories as necessary if the
+            output folder does not exist""",
     )
 
     args = parser.parse_args()
 
-    predict_probabilities(args.config_path, args.input_data, args.output_folder)
+    predict_probabilities(args.config_path, args.input_folder, args.output_folder)
 
 
 if __name__ == "__main__":
