@@ -21,7 +21,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
     Module2LossWrapper,
     NnUNetConfig,
@@ -513,3 +513,11 @@ class nnUNetClient(BasicClient):
             torch.mps.empty_cache()
         else:
             pass
+
+    def update_before_epoch(self, epoch: int) -> None:
+        # Update the learning rate
+        self.nnunet_trainer.lr_scheduler.step(epoch)
+
+    def get_client_specific_logs(self) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        lr = self.optimizers["global"].param_groups[0]["lr"]
+        return f" Current LR: {lr}", []
