@@ -132,7 +132,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     Args:
         ckpt_list (List[str]): A list containing the paths to the checkpoint
             files for the nnunet models
-        nnunet_config (str): The nnunet config of the the models specifiec in
+        nnunet_config (str): The nnunet config of the the models specific in
             ckpt_list.
         dataset_json (dict): The dataset json dict that specifies the label
             structure for all the models. The dataset json for the training set
@@ -141,7 +141,10 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
             Contains important information about data preprocessing.
 
     Returns:
-        nnUNetPredictor: _description_
+        MyNnUNetPredictor: A subclass of the nnUNetPredictor class for the set
+            of models specified by the ckpt_list. The subclasses only
+            difference is that it returns a dictionary with more information
+            as opposed to just a list of numpy arrays.
     """
 
     # Helper function to make code cleaner
@@ -219,9 +222,13 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     return predictor
 
 
-def predict_probabilities(
-    config_path: str, input_folder: str, output_folder: Optional[str] = None, verbose: bool = True
-) -> Tuple[NDArray, List[str]]:
+def predict(
+    config_path: str,
+    input_folder: str,
+    probs_folder: Optional[str] = None,
+    annotations_folder: Optional[str] = None,
+    verbose: bool = True,
+) -> Tuple[NDArray, NDArray, List[str]]:
     """
     Uses multiprocessing to quickly do model inference for a single model, a
     group of models with the same nnunet config or an ensemble of different
@@ -247,12 +254,18 @@ def predict_probabilities(
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
-        output_folder (Optional[str]): [OPTIONAL] Path to the output folder to
+        preds_folder (Optional[str]): [OPTIONAL] Path to the output folder to
             save the model predicted probabilities. If not provided the
             probabilities are not saved
+        annotations_folder (Optional[str]): [OPTIONAL] Path to the output
+            folder to save the model predicted annotations. If not provided the
+            annotations are not saved
     Returns:
-        NDArray: a numpy array with a single predicted probability map for each
-            input image. Shape: (num_samples, num_classes, spatial_dims...).
+        NDArray[float]: a numpy array with a single predicted probability map
+            for each input image. Shape: (num_samples, num_classes, ...).
+        NDArray[int]: a numpy array with a single predicted annotation map for
+            each input image. Unlike the predicted probabilities these are NOT
+            one hot encoded. Shape: (num_samples, spatial_dims...)
         List[str]: A list containing the unique case identifier for
             each prediction
     """
@@ -268,8 +281,16 @@ def predict_probabilities(
         folder=input_folder, file_ending=dataset_json["file_ending"]
     )
     case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_data]
-    output_filelist = [join(output_folder, case) for case in case_identifiers] if output_folder else None
 
+    # Get output filelist
+    if probs_folder:
+        output_filelist = [join(probs_folder, case) for case in case_identifiers]
+    elif annotations_folder:
+        output_filelist = [join(annotations_folder, case) for case in case_identifiers]
+    else:
+        output_filelist = None
+
+    # Model inference
     model_count = 0
     config_probs_list = []
     for i, key in enumerate(config.keys()):
@@ -306,15 +327,25 @@ def predict_probabilities(
             # If only one element stack adds an empty dim
             config_probs_list.append(np.stack(output["probability_preds"]))
 
+            # Save stuff for annotations
+            label_manager = predictor.label_manager
+            annot_writer = predictor.plans_manager.image_reader_writer_class()
+            data_properties = output["data_properties"]
+
             # Delete variables we don't need from memory
             del output
             del predictor
 
     # If only one element stack adds an empty dim
-    final_preds = np.mean(np.stack(config_probs_list), axis=0)
+    final_probs = np.mean(np.stack(config_probs_list), axis=0, dtype=float)
+
+    annotations = []
+    for prob in final_probs:
+        annotations.append(label_manager.convert_probabilities_to_segmentation(prob))
+    final_annotations = np.stack(annotations).astype(int)
 
     # Logs
-    shape = np.shape(final_preds)
+    shape = np.shape(final_probs)
     if verbose:
         log(
             INFO,
@@ -325,10 +356,10 @@ def predict_probabilities(
         log(INFO, f"\tSpatial Dimensions {shape[2:]}")
 
     # Save predicted probabilites if output_folder was provided
-    if output_folder is not None:
+    if probs_folder is not None:
         t = time.time()
-        for pred, case in zip(final_preds, case_identifiers):
-            ofile = join(output_folder, case + ".npz")
+        for pred, case in zip(final_probs, case_identifiers):
+            ofile = join(probs_folder, case + ".npz")
             np.savez_compressed(file=ofile, probabilities=pred)
         secs = time.time() - t
         if verbose:
@@ -338,8 +369,22 @@ def predict_probabilities(
                 f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs/len(case_identifiers):.1f}s/case",
             )
 
-    # final preds shape: (num_samples, num_classes, spatial_dims...)
-    return final_preds, case_identifiers
+    # Maybe save predicted annotations
+    if annotations_folder is not None:
+        if not os.path.exists(annotations_folder):
+            os.makedirs(annotations_folder)
+        for pred, case, props in zip(final_annotations, case_identifiers, data_properties):
+            ofile = join(annotations_folder, case + dataset_json["file_ending"])
+            annot_writer.write_seg(pred, ofile, props)
+        if verbose:
+            log(
+                INFO,
+                "Saved predicted annotations to disk",
+            )
+
+    # final probs shape: (num_samples, num_classes, spatial_dims...)
+    # final annot shape: (num_samples, spatial_dims...)
+    return final_probs, final_annotations, case_identifiers
 
 
 def main() -> None:
@@ -384,18 +429,27 @@ def main() -> None:
             cases must have the same N channels numbered from 0 to N.""",
     )
     parser.add_argument(
-        "--output-folder",
+        "--probs-folder",
         required=False,
         type=str,
         help="""[OPTIONAL] Path to the output folder to save the model
             predicted probabilities. If not provided the probabilities are not
             saved. Will recursively create directories as necessary if the
-            output folder does not exist""",
+            probabilities folder does not exist""",
+    )
+    parser.add_argument(
+        "--annotations-folder",
+        required=False,
+        type=str,
+        help="""[OPTIONAL] Path to the output folder to save the model
+            predicted annotations. If not provided the annotations are not
+            saved. Will recursively create directories as necessary if the
+            annotations folder does not exist""",
     )
 
     args = parser.parse_args()
 
-    predict_probabilities(args.config_path, args.input_folder, args.output_folder)
+    predict(args.config_path, args.input_folder, args.probs_folder, args.annotations_folder)
 
 
 if __name__ == "__main__":

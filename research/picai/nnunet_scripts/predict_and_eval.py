@@ -3,14 +3,14 @@ import os
 import time
 import warnings
 from logging import INFO
-from os.path import join
+from os.path import exists, join
 from typing import Optional
 
 import numpy as np
 from flwr.common.logger import log
 
 from research.picai.nnunet_scripts.eval import get_detection_maps, get_picai_metrics, load_images_from_folder
-from research.picai.nnunet_scripts.predict import predict_probabilities
+from research.picai.nnunet_scripts.predict import predict
 
 
 def pred_and_eval(
@@ -20,6 +20,7 @@ def pred_and_eval(
     output_folder: Optional[str] = None,
     save_probability_maps: bool = False,
     save_detection_maps: bool = False,
+    save_annotations: bool = False,
     verbose: bool = True,
 ) -> None:
     """
@@ -62,21 +63,32 @@ def pred_and_eval(
     """
 
     # Ensure an output folder is specified
-    if save_probability_maps or save_detection_maps:
+    if save_probability_maps or save_detection_maps or save_annotations:
         assert (
             output_folder is not None
-        ), "Can not save the probability maps \
+        ), "Can not save the probability maps, annotations \
             or the detection maps if no output folder is specified"
 
     # Run inference and maybe save probability maps.
-    # prob_out_folder will be created if it doesn't exist
+    # output folders will be created if they dont exist
     if save_probability_maps and output_folder is not None:
         prob_out_folder = join(output_folder, "predicted_probability_maps")
     else:
         prob_out_folder = None
-    probability_preds, case_identifiers = predict_probabilities(
-        config_path=config_path, input_folder=inputs_folder, output_folder=prob_out_folder, verbose=verbose
+
+    if save_annotations and output_folder is not None:
+        annotations_folder = join(output_folder, "predicted_annotations")
+    else:
+        annotations_folder = None
+
+    probability_preds, annotation_preds, case_identifiers = predict(
+        config_path=config_path,
+        input_folder=inputs_folder,
+        probs_folder=prob_out_folder,
+        annotations_folder=annotations_folder,
+        verbose=verbose,
     )
+    del annotation_preds
 
     # Extract lesion detection maps
     if verbose:
@@ -93,7 +105,8 @@ def pred_and_eval(
     # Save detection maps
     if save_detection_maps and output_folder is not None:
         det_output_folder = join(output_folder, "detection_maps")
-        os.makedirs(det_output_folder)
+        if not exists(det_output_folder):
+            os.makedirs(det_output_folder)
         t = time.time()
         for det, case in zip(detection_maps, case_identifiers):
             ofile = join(det_output_folder, case + ".npz")
@@ -105,8 +118,8 @@ def pred_and_eval(
     # Load the input data
     labels = load_images_from_folder(labels_folder, case_identifiers).astype(int)
 
+    # Check if labels need to be one hot encoded
     if detection_maps.ndim != labels.ndim:
-        # Labels need to be one hot encoded
         num_classes = probability_preds.shape[1]
         labels_one_hot = (np.arange(num_classes) == labels[..., None]).astype(int)
         labels_one_hot = np.moveaxis(labels_one_hot, -1, 1)
@@ -214,6 +227,13 @@ def main() -> None:
             detection maps. Will be saved in their own folder in the output
             folder and named according to the case identifier""",
     )
+    parser.add_argument(
+        "--save-annotations",
+        required=False,
+        action="store_true",
+        help="""[OPTIONAL] Include this flag to save the final predicted
+            annotations/segmentations""",
+    )
 
     args = parser.parse_args()
 
@@ -224,6 +244,7 @@ def main() -> None:
         output_folder=args.output_folder,
         save_probability_maps=args.save_probability_maps,
         save_detection_maps=args.save_detection_maps,
+        save_annotations=args.save_annotations,
     )
 
 
