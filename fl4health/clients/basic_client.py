@@ -5,7 +5,7 @@ import string
 from enum import Enum
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -23,7 +23,7 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
-from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 T = TypeVar("T")
 
@@ -411,7 +411,8 @@ class BasicClient(NumPyClient):
         logging_mode: LoggingMode = LoggingMode.TRAIN,
     ) -> None:
         """
-        Handles the logging of losses, metrics, and other information to the output file.
+        Handles the logging of losses, metrics, and other information to the
+        output file. Called only at the end of an epoch or server round
 
         Args:
             loss_dict (Dict[str, float]): A dictionary of losses to log.
@@ -420,19 +421,50 @@ class BasicClient(NumPyClient):
             current_epoch (Optional[int]): The current epoch of local training.
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
         """
+        log(INFO, "")  # An empty log line for aesthetics
+
         initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
         initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
+
+        # Maybe add client specific info to initial log string
+        client_str, client_logs = self.get_client_specific_logs()
+        initial_log_str += client_str
+
         if initial_log_str != "":
             log(INFO, initial_log_str)
+            self.add_to_initial_log_str = ""  # Reset variable
 
-        metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
-        loss_string = "\t".join([f"{key}: {str(val)}" for key, val in loss_dict.items()])
-
+        # Log loss/losses
         metric_prefix = logging_mode.value
-        log(
-            INFO,
-            f"Client {metric_prefix} Losses: {loss_string} \n" f"Client {metric_prefix} Metrics: {metric_string}",
-        )
+        log(INFO, f"Client {metric_prefix} Losses:")
+        [log(INFO, f"\t {key}: {str(val)}") for key, val in loss_dict.items()]
+
+        # Log metrics if any
+        if len(metrics_dict.keys()) > 0:
+            log(INFO, f"Client {metric_prefix} Metrics:")
+            [log(INFO, f"\t {key}: {str(val)}") for key, val in metrics_dict.items()]
+
+        # Add additional logs specific to client
+        if len(client_logs) > 0:
+            [log(level.value, msg) for level, msg in client_logs]
+
+    def get_client_specific_logs(self) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        """
+        This function can be overriden to provide any client specific
+        information to the basic client logging. For example, perhaps a client
+        uses an LR scheduler and wants the LR to be logged each epoch. The
+        logging is called at the end of either every epoch for
+        train_by_epochs, or the end of the server round for train_by_steps
+
+        Returns:
+            Optional[str]: A string to append to the initial log string that
+                typically announces the current server round and current epoch
+            Optional[List[Tuple[LogLevel, str]]]]: A list of tuples where the
+                first element is a LogLevel as defined in fl4health.utils.
+                typing and the second element is a string message. Each item
+                in the list will be logged when self._handle_logging is called
+        """
+        return "", []
 
     def _handle_reporting(
         self,
@@ -459,7 +491,18 @@ class BasicClient(NumPyClient):
         reporting_dict.update({"step": self.total_steps})
         reporting_dict.update(loss_dict)
         reporting_dict.update(metric_dict)
+        reporting_dict.update(self.get_client_specific_reports())
         self.wandb_reporter.report_metrics(reporting_dict)
+
+    def get_client_specific_reports(self) -> Dict[str, Any]:
+        """
+        This function can be overriden by an inheriting client to report
+        additional client specific information to the wandb_reporter
+
+        Returns:
+            Dict[str, Any]: A dictionary of things to report
+        """
+        return {}
 
     def _move_data_to_device(
         self, data: Union[TorchInputType, TorchTargetType]
@@ -612,6 +655,8 @@ class BasicClient(NumPyClient):
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
+            # update before epoch hook
+            self.update_before_epoch(epoch=local_epoch)
             for input, target in self.train_loader:
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
@@ -633,9 +678,6 @@ class BasicClient(NumPyClient):
             # Log results and maybe report via WANDB
             self._handle_logging(loss_dict, metrics, current_round=current_round, current_epoch=local_epoch)
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
-
-            # update after epoch hook
-            self.update_after_epoch(epoch=local_epoch)
 
         # Return final training metrics
         return loss_dict, metrics
@@ -1087,12 +1129,13 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def update_after_epoch(self, epoch: int) -> None:
+    def update_before_epoch(self, epoch: int) -> None:
         """
-        Hook method called after local epoch on client. Only called if client is
-        being trained by epochs (ie. using local_epochs key instead of local steps in the server config file)
+        Hook method called before local epoch on client. Only called if client
+        is being trained by epochs (ie. using local_epochs key instead of local
+        steps in the server config file)
 
         Args:
-            epoch (int): Integer representing the most recently completed epoch
+            epoch (int): Integer representing the epoch about to begin
         """
         pass
