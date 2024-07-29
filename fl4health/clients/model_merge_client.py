@@ -1,9 +1,7 @@
 import datetime
-import random
-import string
 from abc import abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Type, TypeVar
+from typing import Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
 import torch
 import torch.nn as nn
@@ -11,11 +9,12 @@ from flwr.client import NumPyClient
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.utils.data import DataLoader
 
-from fl4health.clients.basic_client import TorchInputType
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.random import generate_hash
+from fl4health.utils.typing import TorchInputType, TorchTargetType
 
 T = TypeVar("T")
 
@@ -49,7 +48,7 @@ class ModelMergeClient(NumPyClient):
         self.metrics_reporter = metrics_reporter
 
         self.initialized = False
-        self.client_name = self.generate_hash()
+        self.client_name = generate_hash()
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         if metrics_reporter is not None:
@@ -60,18 +59,6 @@ class ModelMergeClient(NumPyClient):
         self.model: nn.Module
         self.test_loader: DataLoader
         self.num_test_samples: int
-
-    def generate_hash(self, length: int = 8) -> str:
-        """
-        Generates unique hash used as id for client.
-
-        Args:
-           length (int): The length of the hash.
-
-        Returns:
-            str: client id
-        """
-        return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def setup_client(self, config: Config) -> None:
         """
@@ -162,25 +149,37 @@ class ModelMergeClient(NumPyClient):
 
         return self.get_parameters(config), self.num_test_samples, val_metrics
 
-    def _move_input_data_to_device(self, data: TorchInputType) -> TorchInputType:
+    def _move_data_to_device(
+        self, data: Union[TorchInputType, TorchTargetType]
+    ) -> Union[TorchTargetType, TorchInputType]:
         """
-        Moving data to self.device, where data is intended to be the input to
-        self.model's forward method.
+        Moving data to self.device where data is intended to be either input to
+        the model or the targets that the model is trying to achieve
 
         Args:
-            data (TorchInputType): input data to the forward method of self.model.
-            data can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
-            latter case, all tensors in the dictionary are moved to self.device.
+            data (TorchInputType | TorchTargetType): The data to move to
+                self.device. Can be a TorchInputType or a TorchTargetType
 
         Raises:
-            TypeError: raised if data is not of type torch.Tensor or Dict[str, torch.Tensor]
+            TypeError: Raised if data is not one of the types specified by
+                TorchInputType or TorchTargetType
+
+        Returns:
+            Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
         """
+        # Currently we expect both inputs and targets to be either tensors
+        # or dictionaries of tensors
         if isinstance(data, torch.Tensor):
             return data.to(self.device)
         elif isinstance(data, dict):
             return {key: value.to(self.device) for key, value in data.items()}
         else:
-            raise TypeError("data must be of type torch.Tensor or Dict[str, torch.Tensor].")
+            raise TypeError(
+                "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
+                    If definition of TorchInputType or TorchTargetType has \
+                    changed this method might need to be updated or split into \
+                    two"
+            )
 
     def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
         """
@@ -209,17 +208,18 @@ class ModelMergeClient(NumPyClient):
 
     def validate(self) -> Dict[str, Scalar]:
         """
-        Validate the current model on the entire validation
-            and potentially an entire test dataset if it has been defined.
+        Validate the model on the test dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
-                from validation (and test if present).
+            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics
+                from test set.
         """
+        self.model.eval()
         self.test_metric_manager.clear()
         with torch.no_grad():
             for input, target in self.test_loader:
-                input, target = self._move_input_data_to_device(input), target.to(self.device)
+                input = self._move_data_to_device(input)
+                target = self._move_data_to_device(target)
                 preds = {"predictions": self.model(input)}
                 self.test_metric_manager.update(preds, target)
 
@@ -286,6 +286,6 @@ class ModelMergeClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            DataLoader. Client test data loader.
+            DataLoader: Client test data loader.
         """
         raise NotImplementedError

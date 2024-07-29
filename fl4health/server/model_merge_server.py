@@ -1,6 +1,6 @@
 import datetime
 import timeit
-from logging import DEBUG, INFO
+from logging import INFO, WARNING
 from typing import Optional, Tuple
 
 from flwr.common.logger import log
@@ -27,9 +27,8 @@ class ModelMergeServer(Server):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
-                client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
+                client updates sent by the participating clients. Must be ModelMergeStrategy.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
@@ -49,7 +48,7 @@ class ModelMergeServer(Server):
 
         Args:
             num_rounds (int): Not used.
-            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
+            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to respond.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
@@ -75,10 +74,11 @@ class ModelMergeServer(Server):
                 self.parameters = parameters_prime
             history.add_metrics_distributed_fit(server_round=1, metrics=fit_metrics)
         else:
-            log(DEBUG, "Federated Model Merging Failed")
+            log(WARNING, "Federated Model Merging Failed")
 
         res_fed = self.evaluate_round(server_round=1, timeout=timeout)
         if res_fed is not None:
+            # ignore loss as one is not defined in model merging
             _, evaluate_metrics_fed, _ = res_fed
             if evaluate_metrics_fed is not None:
                 history.add_metrics_distributed(server_round=1, metrics=evaluate_metrics_fed)
@@ -86,6 +86,7 @@ class ModelMergeServer(Server):
         # Evaluate model using strategy implementation
         res_cen = self.strategy.evaluate(1, parameters=self.parameters)
         if res_cen is not None:
+            # ignore loss as one is not defined in model merging
             _, metrics_cen = res_cen
             history.add_metrics_centralized(server_round=1, metrics=metrics_cen)
 

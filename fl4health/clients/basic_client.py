@@ -1,7 +1,5 @@
 import copy
 import datetime
-import random
-import string
 from enum import Enum
 from logging import INFO
 from pathlib import Path
@@ -23,6 +21,7 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
+from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 T = TypeVar("T")
@@ -68,7 +67,7 @@ class BasicClient(NumPyClient):
         self.metrics = metrics
         self.checkpointer = checkpointer
 
-        self.client_name = self.generate_hash()
+        self.client_name = generate_hash()
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
@@ -113,18 +112,6 @@ class BasicClient(NumPyClient):
         """
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
-
-    def generate_hash(self, length: int = 8) -> str:
-        """
-        Generates unique hash used as id for client.
-
-        Args:
-           length (int): The length of the hash.
-
-        Returns:
-            str: client id
-        """
-        return "".join(random.choice(string.ascii_lowercase) for i in range(length))
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
