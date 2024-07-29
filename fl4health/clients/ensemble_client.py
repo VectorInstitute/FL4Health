@@ -6,10 +6,11 @@ from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class EnsembleClient(BasicClient):
@@ -74,9 +75,7 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -113,9 +112,9 @@ class EnsembleClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training loss given predictions (and potentially features) of the model and ground truth data.
@@ -140,9 +139,9 @@ class EnsembleClient(BasicClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.

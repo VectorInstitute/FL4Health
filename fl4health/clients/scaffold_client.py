@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays
 from opacus.optimizers.optimizer import DPOptimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
@@ -17,6 +17,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -196,9 +197,7 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         # TorchInputType is simply an alias for the union of
         # torch.Tensor and Dict[str, torch.Tensor].
 
