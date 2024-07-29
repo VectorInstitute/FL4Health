@@ -30,7 +30,7 @@ class ModelMergeClient(NumPyClient):
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
-        ModelMergeClient to support functionality to simple perform model merging across client
+        ModelMergeClient to support functionality to simply perform model merging across client
             models and subsequently evaluate.
 
         Args:
@@ -59,6 +59,7 @@ class ModelMergeClient(NumPyClient):
 
         self.model: nn.Module
         self.test_loader: DataLoader
+        self.num_test_samples: int
 
     def generate_hash(self, length: int = 8) -> str:
         """
@@ -82,6 +83,7 @@ class ModelMergeClient(NumPyClient):
         """
         self.model = self.get_model(config)
         self.test_loader = self.get_test_data_loader(config)
+        self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
         self.initialized = True
@@ -118,11 +120,6 @@ class ModelMergeClient(NumPyClient):
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client
                 model but may contain more information than that.
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
-            fitting_round (bool): Boolean that indicates whether the current federated learning round is a
-                fitting round or an evaluation round.
-                This is used to help determine which parameter exchange should be used for pulling parameters.
-                A full parameter exchanger is only used if the current federated learning round is the very
-                first fitting round.
         """
         assert self.initialized
         self.parameter_exchanger.pull_parameters(parameters, self.model)
@@ -134,15 +131,17 @@ class ModelMergeClient(NumPyClient):
             is not used to initialized the client model.
 
         Args:
-            parameters (NDArrays): The parameters of the model to be used in fit.
+            parameters (NDArrays): Not used.
             config (NDArrays): The config from the server.
 
         Returns:
-            Tuple[NDArrays, int, Dict[str, Scalar]]: The parameters following the local training along with the
-            number of samples in the local training dataset and the computed metrics throughout the fit.
+            Tuple[NDArrays, int, Dict[str, Scalar]]: The local model parameters along with the
+                number of samples in the local test dataset and the computed metrics of the local model
+                on the local test dataset.
 
         Raises:
-            ValueError: If local_steps or local_epochs is not specified in config.
+            AssertionError: If model is initialized prior to fit method being called which
+                should not happen in the case of the ModelMergeClient.
         """
         assert not self.initialized
         self.setup_client(config)
@@ -161,7 +160,7 @@ class ModelMergeClient(NumPyClient):
             },
         )
 
-        return self.get_parameters(config), len(self.test_loader.dataset), val_metrics  # type: ignore
+        return self.get_parameters(config), self.num_test_samples, val_metrics
 
     def _move_input_data_to_device(self, data: TorchInputType) -> TorchInputType:
         """

@@ -15,10 +15,14 @@ from fl4health.utils.metrics import Accuracy
 
 class MnistModelMergeClient(ModelMergeClient):
     def get_model(self, config: Config) -> nn.Module:
-        return MnistNet().to(self.device)
+        model = MnistNet()
+        checkpoint = torch.load(self.model_path)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        return model.to(self.device)
 
     def get_test_data_loader(self, config: Config) -> DataLoader:
-        return load_mnist_test_data(self.data_path, 32)[0]
+        batch_size = self.narrow_config_type(config, "batch_size", int)
+        return load_mnist_test_data(self.data_path, batch_size)[0]
 
 
 if __name__ == "__main__":

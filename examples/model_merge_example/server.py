@@ -20,12 +20,18 @@ from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, 
 from fl4health.utils.metrics import Accuracy, Metric, MetricManager
 
 
-def evaluate_fn(
+def fit_config(batch_size: int, _: int) -> Config:
+    return {
+        "batch_size": batch_size,
+    }
+
+
+def server_side_evaluate_fn(
     model: nn.Module,
     loader: DataLoader,
     metrics: Sequence[Metric],
     device: torch.device,
-    round: int,
+    _: int,
     parameters: NDArrays,
     config: Config,
 ) -> Optional[Tuple[float, Dict[str, Scalar]]]:
@@ -46,20 +52,27 @@ def evaluate_fn(
     return 0.0, evaluate_metric_manager.compute()
 
 
-def main(config: Dict[str, Any], data_path: Path, batch_size: int) -> None:
-    _, val_loader, _ = load_mnist_data(data_path, batch_size)
+def main(config: Dict[str, Any], data_path: Path) -> None:
+    _, val_loader, _ = load_mnist_data(data_path, config["batch_size"])
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    evaluate_fn_partial = partial(evaluate_fn, MnistNet(), val_loader, [Accuracy("")], device)
+    server_side_evaluate_fn_partial = partial(server_side_evaluate_fn, MnistNet(), val_loader, [Accuracy("")], device)
+
+    # This function will be used to produce a config that is sent to each client to initialize their own environment
+    # Current server round is ignored because it is not applicable for model merging example
+    fit_config_fn = partial(
+        fit_config,
+        config["batch_size"],
+    )
 
     strategy = ModelMergeStrategy(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
-        # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
-        # We use the same fit config function, as nothing changes for eval
+        on_fit_config_fn=fit_config_fn,
+        on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        evaluate_fn=evaluate_fn_partial,
+        evaluate_fn=server_side_evaluate_fn_partial,
     )
 
     server = ModelMergeServer(client_manager=SimpleClientManager(), strategy=strategy)
@@ -88,11 +101,8 @@ if __name__ == "__main__":
         default="examples/datasets/MNIST",
     )
 
-    parser.add_argument(
-        "--batch_size", action="store", type=int, help="Batch size for server size evaluation set.", default=32
-    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config, args.data_path, args.batch_size)
+    main(config, args.data_path)
