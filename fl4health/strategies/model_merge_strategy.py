@@ -18,6 +18,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import Strategy
 
+from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_results
 
 
@@ -118,8 +119,11 @@ class ModelMergeStrategy(Strategy):
         fit_ins = FitIns(Parameters([], ""), config)
 
         # Sample clients
-        sample_size = max(int(client_manager.num_available() * self.fraction_fit), self.min_fit_clients)
-        clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
+        if isinstance(client_manager, BaseFractionSamplingManager):
+            clients = client_manager.sample_fraction(self.fraction_fit, self.min_available_clients)
+        else:
+            sample_size = max(int(client_manager.num_available() * self.fraction_fit), self.min_fit_clients)
+            clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
 
         # Return client/config pairs
         return [(client, fit_ins) for client in clients]
@@ -152,8 +156,11 @@ class ModelMergeStrategy(Strategy):
         evaluate_ins = EvaluateIns(parameters, config)
 
         # Sample clients
-        sample_size = max(int(client_manager.num_available() * self.fraction_evaluate), self.min_evaluate_clients)
-        clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
+        if isinstance(client_manager, BaseFractionSamplingManager):
+            clients = client_manager.sample_fraction(self.fraction_evaluate, self.min_available_clients)
+        else:
+            sample_size = max(int(client_manager.num_available() * self.fraction_evaluate), self.min_evaluate_clients)
+            clients = client_manager.sample(num_clients=sample_size, min_num_clients=self.min_available_clients)
 
         # Return client/config pairs
         return [(client, evaluate_ins) for client in clients]
