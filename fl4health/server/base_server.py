@@ -1,12 +1,12 @@
 import datetime
-from logging import DEBUG, INFO, WARNING
+from logging import DEBUG, INFO, WARN, WARNING
 from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
-from flwr.common.typing import Scalar
+from flwr.common.typing import Code, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
@@ -350,3 +350,69 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model
+
+
+class FlServerWithInitializer(FlServer):
+    initialized = False  # Add attribute
+
+    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
+        """
+        Get initial parameters from one of the available clients. Same as
+        parent function except we provide a config to the client when
+        requesting initial parameters
+        https://github.com/adap/flower/issues/3770
+
+        Note:
+            I have to use configure_fit to bypass mypy errors since
+            on_fit_config is not defined in the Strategy base class. The
+            downside is that configure fit will wait until enough clients for
+            training are present instead of just sampling one client. I
+            thought about defining a new init_config attribute but this
+        """
+        # Server-side parameter initialization
+        parameters: Optional[Parameters] = self.strategy.initialize_parameters(client_manager=self._client_manager)
+        if parameters is not None:
+            log(INFO, "Using initial global parameters provided by strategy")
+            return parameters
+
+        # Get initial parameters from one of the clients
+        log(INFO, "Requesting initial parameters from one random client")
+        random_client = self._client_manager.sample(1)[0]
+        dummy_params = Parameters([], "None")
+        config = self.strategy.configure_fit(server_round, dummy_params, self._client_manager)[0][1].config
+        ins = GetParametersIns(config=config)
+        get_parameters_res = random_client.get_parameters(ins=ins, timeout=timeout, group_id=server_round)
+        if get_parameters_res.status.code == Code.OK:
+            log(INFO, "Received initial parameters from one random client")
+        else:
+            log(
+                WARN,
+                "Failed to receive initial parameters from the client." " Empty initial parameters will be used.",
+            )
+        return get_parameters_res.parameters
+
+    def initialize(self, server_round: int, timeout: Optional[float] = None) -> None:
+        """
+        Hook method to allow the server to do some additional initialization
+        prior to training. For example, NnUNetServer uses this method to ask a
+        client to initialize the global nnunet plans if one is not provided in
+        in the config
+
+        Args:
+            server_round (int): The current server round. This hook method is
+                only called with a server_round=0 at the beginning of self.fit
+            timeout (Optional[float], optional): The server's timeout
+                parameter. Useful if one is requesting information from a
+                client Defaults to None.
+        """
+        self.initialized = True
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+        """
+        Same as parent method except initialize hook method is called first
+        """
+        # Initialize the server
+        if not self.initialized:
+            self.initialize(server_round=0, timeout=timeout)
+
+        return super().fit(num_rounds, timeout)

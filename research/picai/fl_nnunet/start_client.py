@@ -1,7 +1,7 @@
 import argparse
 import warnings
 from logging import INFO
-from os.path import join
+from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
@@ -16,8 +16,6 @@ with warnings.catch_warnings():
 import flwr as fl
 import torch
 from flwr.common.logger import log
-from nnunetv2.paths import nnUNet_preprocessed
-from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 from torchmetrics.classification import Dice
 from torchmetrics.segmentation import GeneralizedDiceScore
 
@@ -61,7 +59,6 @@ def main(
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
 
     # Create and start client
-    dataset_name = convert_id_to_dataset_name(dataset_id)
     client = nnUNetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
@@ -72,9 +69,7 @@ def main(
         # BaseClient Args
         device=DEVICE,
         metrics=metrics,
-        data_path=join(
-            nnUNet_preprocessed, dataset_name
-        ),  # data_path is not actually used but is required by BaseClient
+        data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
@@ -135,16 +130,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Convert fold to an integer if it is not 'all'
-    if args.fold != "all":
-        try:
-            fold = int(args.fold)
-        except ValueError as e:
-            print(
-                f"Unable to convert given value for fold to int: {args.fold}. Fold must be either 'all' or an integer"
-            )
-            raise e
-    else:
-        fold = args.fold
+    fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
 
     main(
         dataset_id=args.dataset_id,

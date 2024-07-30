@@ -73,11 +73,6 @@ def main(config: dict, server_address: str) -> None:
         # Of course nnunet stores their pytorch models differently.
         params = ndarrays_to_parameters([val.cpu().numpy() for _, val in model["network_weights"].items()])
     else:
-        # raise Exception(
-        #     "There is a bug right now where params can not be None. \
-        #     Therefore a starting checkpoint must be provided because I don't \
-        #     want to mess up my code. I hav raised an issue with flwr"
-        # )
         params = None
 
     strategy = FedAvg(
@@ -91,8 +86,10 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    # server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
-    server = NnUNetServer(client_manager=SimpleClientManager(), strategy=strategy)
+    server = NnUNetServer(
+        client_manager=SimpleClientManager(),
+        strategy=strategy,
+    )
 
     fl.server.start_server(
         server=server,
@@ -106,8 +103,7 @@ def main(config: dict, server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config-path", action="store", type=str, help="Path to the configuration file")
-
+    parser.add_argument("--config_path", action="store", type=str, help="Path to the configuration file")
     parser.add_argument(
         "--server-address",
         type=str,
@@ -122,4 +118,4 @@ if __name__ == "__main__":
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    main(config, args.server_address)
+    main(config, server_address=args.server_address)
