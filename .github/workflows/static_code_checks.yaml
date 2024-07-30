@@ -48,6 +48,7 @@ jobs:
           # pip-audit to ignore these warnings
           # Vulnerabilities from GHSA-x38x-g6gr-jqff to GHSA-7p8j-qv6x-f4g4
           # originate from mlflow
+          # Ignore pytorch vulnerability GHSA-pg7h-5qx3-wjr3
           ignore-vulns: |
             GHSA-x38x-g6gr-jqff
             GHSA-j8mg-pqc5-x9gj
@@ -58,3 +59,4 @@ jobs:
             GHSA-cwgg-w6mp-w9hg
             GHSA-43c4-9qgj-x742
             GHSA-7p8j-qv6x-f4g4
+            GHSA-pg7h-5qx3-wjr3
