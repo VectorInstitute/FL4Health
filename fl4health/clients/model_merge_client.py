@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -15,8 +15,6 @@ from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import TorchInputType, TorchTargetType
-
-T = TypeVar("T")
 
 
 class ModelMergeClient(NumPyClient):
@@ -117,6 +115,9 @@ class ModelMergeClient(NumPyClient):
             test dataset length and test metrics. Importantly, parameters from Server, which is empty,
             is not used to initialized the client model.
 
+        Note: Since we only assume the client provides a test_loader, client evaluation and sample
+            counts are always based off the client test_loader.
+
         Args:
             parameters (NDArrays): Not used.
             config (NDArrays): The config from the server.
@@ -180,31 +181,6 @@ class ModelMergeClient(NumPyClient):
                     changed this method might need to be updated or split into \
                     two"
             )
-
-    def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
-        """
-        Checks if a config_key exists in config and if so, verify it is of type narrow_type_to.
-
-        Args:
-            config (Config): The config object from the server.
-            config_key (str): The key to check config for.
-            narrow_type_to (Type[T]): The expected type of config[config_key]
-
-        Returns:
-            T: The type-checked value at config[config_key]
-
-        Raises:
-            ValueError: If config[config_key] is not of type narrow_type_to or
-                if the config_key is not present in config.
-        """
-        if config_key not in config:
-            raise ValueError(f"{config_key} is not present in the Config.")
-
-        config_value = config[config_key]
-        if isinstance(config_value, narrow_type_to):
-            return config_value
-        else:
-            raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
     def validate(self) -> Dict[str, Scalar]:
         """

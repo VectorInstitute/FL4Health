@@ -3,7 +3,7 @@ import datetime
 from enum import Enum
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -19,12 +19,11 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
-
-T = TypeVar("T")
 
 
 class LoggingMode(Enum):
@@ -158,7 +157,7 @@ class BasicClient(NumPyClient):
                 first fitting round.
         """
         assert self.model is not None
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
             self.initialize_all_model_weights(parameters, config)
         else:
@@ -176,31 +175,6 @@ class BasicClient(NumPyClient):
             config (Config): The config is sent by the FL server to allow for customization in the function if desired.
         """
         FullParameterExchanger().pull_parameters(parameters, self.model, config)
-
-    def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
-        """
-        Checks if a config_key exists in config and if so, verify it is of type narrow_type_to.
-
-        Args:
-            config (Config): The config object from the server.
-            config_key (str): The key to check config for.
-            narrow_type_to (Type[T]): The expected type of config[config_key]
-
-        Returns:
-            T: The type-checked value at config[config_key]
-
-        Raises:
-            ValueError: If config[config_key] is not of type narrow_type_to or
-                if the config_key is not present in config.
-        """
-        if config_key not in config:
-            raise ValueError(f"{config_key} is not present in the Config.")
-
-        config_value = config[config_key]
-        if isinstance(config_value, narrow_type_to):
-            return config_value
-        else:
-            raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
     def shutdown(self) -> None:
         """
@@ -227,21 +201,21 @@ class BasicClient(NumPyClient):
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
                 current_server_round is of the wrong type (int).
         """
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
         elif "local_epochs" in config:
-            local_epochs = self.narrow_config_type(config, "local_epochs", int)
+            local_epochs = narrow_config_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
-            local_steps = self.narrow_config_type(config, "local_steps", int)
+            local_steps = narrow_config_type(config, "local_steps", int)
             local_epochs = None
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         try:
-            evaluate_after_fit = self.narrow_config_type(config, "evaluate_after_fit", bool)
+            evaluate_after_fit = narrow_config_type(config, "evaluate_after_fit", bool)
         except ValueError:
             evaluate_after_fit = False
 
@@ -342,7 +316,7 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={"evaluate_start": datetime.datetime.now()},

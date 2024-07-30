@@ -166,5 +166,4 @@ settings.json
 **/*.pkl
 **/*.png
 **/*.pt
-!assets/checkpoints_for_examples/model_merge_example/*.pt
 /metrics/
