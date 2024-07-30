@@ -44,10 +44,11 @@ class ModelMergeStrategy(Strategy):
         accept_failures: bool = True,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        weighted_aggregation: bool = True
     ) -> None:
         """
-        Model Merging strategy in which weights are loaded from clients, averaged and redistributed to the clients for
-            evaluation.
+        Model Merging strategy in which weights are loaded from clients, averaged (weighted or unweighted)
+            and redistributed to the clients for evaluation.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. In case `min_fit_clients` is
@@ -75,6 +76,9 @@ class ModelMergeStrategy(Strategy):
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
                 counts. Defaults to True.
+            weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
+                average or a uniform average. Important to note that weighting is based on number of samples in the
+                test dataset for the ModelMergeStrategy. Defaults to True.
         """
         self.fraction_fit = fraction_fit
         self.fraction_evaluate = fraction_evaluate
@@ -87,6 +91,7 @@ class ModelMergeStrategy(Strategy):
         self.accept_failures = accept_failures
         self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
         self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
+        self.weighted_aggregation = weighted_aggregation
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
@@ -182,8 +187,8 @@ class ModelMergeStrategy(Strategy):
         weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
         ]
-        # Aggregate them in an unweighted fashion based on settings.
-        aggregated_arrays = aggregate_results(weights_results, False)
+        # Aggregate them in an weighted or unweighted fashion based on self.weighted_aggregation.
+        aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
         # Convert back to parameters
         parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
 
