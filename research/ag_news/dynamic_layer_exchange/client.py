@@ -22,6 +22,7 @@ from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from research.ag_news.client_data import construct_dataloaders
@@ -56,14 +57,14 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         self.learning_rate: float = learning_rate
 
     def get_model(self, config: Config) -> nn.Module:
-        num_classes = self.narrow_config_type(config, "num_classes", int)
+        num_classes = narrow_config_type(config, "num_classes", int)
         model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=num_classes)
         return model.to(self.device)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
-        beta = self.narrow_config_type(config, "beta", float)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        sample_percentage = narrow_config_type(config, "sample_percentage", float)
+        beta = narrow_config_type(config, "beta", float)
         train_loader, val_loader = construct_dataloaders(batch_size, sample_percentage, beta)
         return train_loader, val_loader
 
@@ -84,9 +85,9 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             ParameterExchanger: This exchanger handles the exchange orchestration between clients and server during
                 federated training
         """
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        filter_by_percentage = self.narrow_config_type(config, "filter_by_percentage", bool)
-        select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
+        normalize = narrow_config_type(config, "normalize", bool)
+        filter_by_percentage = narrow_config_type(config, "filter_by_percentage", bool)
+        select_drift_more = narrow_config_type(config, "select_drift_more", bool)
         selection_function_constructor = LayerSelectionFunctionConstructor(
             norm_threshold=self.norm_threshold,
             exchange_percentage=self.exchange_percentage,

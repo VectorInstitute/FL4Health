@@ -1,0 +1,9 @@
+# Parameters that describe server
+n_server_rounds: 1 # Model merging only includes one round (merge + evaluation)
+
+# Parameters that describe clients
+n_clients: 2 # The number of clients in the FL experiment
+batch_size: 32 # The batch size for client training
+
+# Checkpointing parameters
+ckpt_path: examples/model_merge_example

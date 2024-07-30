@@ -15,6 +15,7 @@ from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDeco
 from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -22,7 +23,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class VaeFedProxClient(FedProxClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # Flattening the input images to use an MLP-based variational autoencoder.
         transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
@@ -41,14 +42,14 @@ class VaeFedProxClient(FedProxClient):
         # The base_loss is the loss function used for comparing the original and generated image pixels.
         # We are using MSE loss to calculate the difference between the reconstructed and original images.
         base_loss = torch.nn.MSELoss(reduction="sum")
-        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        latent_dim = narrow_config_type(config, "latent_dim", int)
         return VaeLoss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        latent_dim = self.narrow_config_type(config, "latent_dim", int)
+        latent_dim = narrow_config_type(config, "latent_dim", int)
         encoder = MnistVariationalEncoder(input_size=784, latent_dim=latent_dim)
         decoder = MnistVariationalDecoder(latent_dim=latent_dim, output_size=784)
         return VariationalAe(encoder=encoder, decoder=decoder)
