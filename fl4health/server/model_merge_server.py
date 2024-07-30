@@ -1,14 +1,19 @@
 import datetime
 import timeit
 from logging import INFO, WARNING
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
+import torch.nn as nn
 from flwr.common.logger import log
+from flwr.common.parameter import parameters_to_ndarrays
+from flwr.common.typing import Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import Server
 from flwr.server.strategy import Strategy
 
+from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 
@@ -19,6 +24,9 @@ class ModelMergeServer(Server):
         *,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
+        checkpointer: Optional[LatestTorchCheckpointer] = None,
+        server_model: Optional[nn.Module] = None,
+        parameter_exchanger: Optional[ParameterExchanger] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
@@ -29,11 +37,25 @@ class ModelMergeServer(Server):
                 they are to be sampled at all.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates sent by the participating clients. Must be ModelMergeStrategy.
+            checkpointer (Optional[LatestTorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing on the merged model. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            server_model (Optional[nn.Module]): Optional model to be hydrated with parameters from model merge if doing
+                server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
+            parameter_exchanger (Optional[ExchangerType]): Optional parameter exchanger to be used to hydrate the
+                model. Only used if checkpointer and model are also not None. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
         assert isinstance(strategy, ModelMergeStrategy)
+        assert (server_model is None and checkpointer is None) or (
+            server_model is not None and checkpointer is not None
+        )
         super().__init__(client_manager=client_manager, strategy=strategy)
+
+        self.checkpointer = checkpointer
+        self.server_model = server_model
+        self.parameter_exchanger = parameter_exchanger
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
@@ -90,6 +112,11 @@ class ModelMergeServer(Server):
             _, metrics_cen = res_cen
             history.add_metrics_centralized(server_round=1, metrics=metrics_cen)
 
+        # Checkpoint based on dummy loss aggregated and metrics aggregated since
+        # we are using LatestTorchCheckpointer and will always checkpoint if
+        # server_model, parameter_exchanger and checkpointer are not None
+        self._maybe_checkpoint(loss_aggregated=0.0, metrics_aggregated={}, server_round=1)
+
         self.metrics_reporter.add_to_metrics(
             data={
                 "fit_end": datetime.datetime.now(),
@@ -103,3 +130,35 @@ class ModelMergeServer(Server):
         elapsed = end_time - start_time
         log(INFO, "Federated Model Merging Finished in %s", elapsed)
         return history, elapsed
+
+    def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        """
+        This function is used for converting server parameters into a torch model that can be checkpointed.
+
+        Returns:
+            nn.Module: Torch model to be checkpointed by a torch checkpointer.
+        """
+        assert self.server_model is not None and self.parameter_exchanger is not None
+        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
+        return self.server_model
+
+    def _maybe_checkpoint(
+        self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
+    ) -> None:
+        if self.checkpointer and self.server_model and self.parameter_exchanger:
+            model = self._hydrate_model_for_checkpointing()
+            self.checkpointer.maybe_checkpoint(model, loss_aggregated, metrics_aggregated)
+        else:
+            attribute_dict = {
+                "checkpointer": self.checkpointer,
+                "server_model": self.server_model,
+                "parameter_exchanger": self.parameter_exchanger,
+            }
+
+            error_str = " and ".join([key for key, val in attribute_dict.items() if val is None])
+            log(
+                WARNING,
+                f"""All of checkpointer, server_model and parameter_exchanger must be None to
+                perform server-side checkpointing. {error_str} is None""",
+            )

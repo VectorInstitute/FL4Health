@@ -12,6 +12,8 @@ from flwr.server.client_manager import SimpleClientManager
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
+from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 from fl4health.utils.config import load_config
@@ -75,7 +77,15 @@ def main(config: Dict[str, Any], data_path: Path) -> None:
         evaluate_fn=server_side_evaluate_fn_partial,
     )
 
-    server = ModelMergeServer(client_manager=SimpleClientManager(), strategy=strategy)
+    checkpointer = LatestTorchCheckpointer(checkpoint_dir=config["ckpt_path"], checkpoint_name="model_merge.pt")
+
+    server = ModelMergeServer(
+        client_manager=SimpleClientManager(),
+        strategy=strategy,
+        checkpointer=checkpointer,
+        server_model=MnistNet(),
+        parameter_exchanger=FullParameterExchanger(),
+    )
     fl.server.start_server(
         server=server,
         server_address="0.0.0.0:8080",
@@ -90,7 +100,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/basic_example/config.yaml",
+        default="examples/model_merge_example/config.yaml",
     )
 
     parser.add_argument(
