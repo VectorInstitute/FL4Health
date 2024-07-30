@@ -3,7 +3,7 @@ from typing import Callable, Tuple, Union
 
 import torch
 from torch.utils.data import Dataset
-from torchvision.datasets import MNIST
+from torchvision.datasets import CIFAR10, MNIST
 
 
 class BaseDataset(Dataset):
@@ -49,6 +49,21 @@ class MnistDataset(BaseDataset):
         target_transform: Union[None, Callable] = None,
     ):
         mnist_dataset = MNIST(data_path, train=train, download=True)
+        self.data = mnist_dataset.data
+        self.targets = mnist_dataset.targets
+        self.transform = transform
+        self.target_transform = target_transform
+
+
+class Cifar10Dataset(BaseDataset):
+    def __init__(
+        self,
+        data_path: Path,
+        train: bool,
+        transform: Union[None, Callable] = None,
+        target_transform: Union[None, Callable] = None,
+    ):
+        mnist_dataset = CIFAR10(data_path, train=train, download=True)
         self.data = mnist_dataset.data
         self.targets = mnist_dataset.targets
         self.transform = transform
