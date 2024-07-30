@@ -133,7 +133,7 @@ class ModelMergeServer(Server):
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         """
-        This function is used for converting server parameters into a torch model that can be checkpointed.
+        Method used for converting server parameters into a torch model that can be checkpointed.
 
         Returns:
             nn.Module: Torch model to be checkpointed by a torch checkpointer.
@@ -146,6 +146,15 @@ class ModelMergeServer(Server):
     def _maybe_checkpoint(
         self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
     ) -> None:
+        """
+        Method to checkpoint merged model on server side if the checkpointer, server_model and
+            parameter_exchanger provided at initialization are all not None.
+
+        Args:
+            loss_aggregated (float): Not used.
+            metrics_aggregated (Dict[str, Scalar]): Not used.
+            server_round (int): Not used.
+        """
         if self.checkpointer and self.server_model and self.parameter_exchanger:
             model = self._hydrate_model_for_checkpointing()
             self.checkpointer.maybe_checkpoint(model, loss_aggregated, metrics_aggregated)
