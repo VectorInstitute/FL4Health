@@ -48,8 +48,8 @@ class ModelMergeServer(Server):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
         assert isinstance(strategy, ModelMergeStrategy)
-        assert (server_model is None and checkpointer is None) or (
-            server_model is not None and checkpointer is not None
+        assert (server_model is None and checkpointer is None and parameter_exchanger is None) or (
+            server_model is not None and checkpointer is not None and parameter_exchanger is not None
         )
         super().__init__(client_manager=client_manager, strategy=strategy)
 
