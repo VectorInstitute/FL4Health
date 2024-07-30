@@ -36,6 +36,8 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
+    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
     from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
@@ -579,3 +581,28 @@ class nnUNetClient(BasicClient):
         properties = super().get_properties(config)
         properties["nnunet_plans"] = pickle.dumps(plans_bytes)
         return properties
+
+    def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
+        """
+        Checks the dataloaders type and if it is a MultiThreadedAugmenter or
+        NonDetMultiThreadedAugmenter calls the _finish method to ensure they
+        are properly shutdown
+
+        Args:
+            dataloader (DataLoader): The dataloader to shutdown
+            dl_name (Optional[str]): A string that identifies the dataloader
+                to shutdown. Used for logging purposes. Defaults to None
+        """
+        if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
+            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+                if dl_name is not None:
+                    log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
+                dataloader.nnunet_dataloader._finish()
+
+    def shutdown(self) -> None:
+        # Not entirely sure if processes potentially opened by nnunet
+        # dataloaders were being ended so ensure that they are ended here
+        self.shutdown_dataloader(self.train_loader, "train_loader")
+        self.shutdown_dataloader(self.val_loader, "val_loader")
+        self.shutdown_dataloader(self.test_loader, "test_loader")
+        return super().shutdown()
