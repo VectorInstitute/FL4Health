@@ -99,7 +99,7 @@ class ModelMergeClient(NumPyClient):
 
         For the ModelMergeClient, we assume that initially parameters are being set to the parameters
             in the nn.Module returned by the user defined get_model method. Thus, set_parameters is
-            only called once after model merging has occured and before federated evaluation.
+            only called once after model merging has occurred and before federated evaluation.
 
         Args:
             parameters (NDArrays): Parameters have information about model state to be added to the relevant client

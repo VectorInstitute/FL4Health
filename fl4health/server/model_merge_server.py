@@ -31,7 +31,7 @@ class ModelMergeServer(Server):
     ) -> None:
         """
         ModelMergeServer provides functionality to fetch client weights, perform a simple average,
-            redistirbute to clients for evaluation. Optionally can perform server side evaluation as well.
+            redistribute to clients for evaluation. Optionally can perform server side evaluation as well.
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.

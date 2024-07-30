@@ -23,8 +23,6 @@ from fl4health.strategies.aggregate_utils import aggregate_results
 
 
 class ModelMergeStrategy(Strategy):
-    """Configurable FedAvg strategy implementation."""
-
     # pylint: disable=too-many-arguments,too-many-instance-attributes
     def __init__(
         self,
@@ -253,7 +251,7 @@ class ModelMergeStrategy(Strategy):
 
         Args:
             server_round (int): Server round. Only one round in ModelMergeStrategy.
-            parameters: Parameters The current model parameters after merging has occured.
+            parameters: Parameters The current model parameters after merging has occurred.
 
         Returns:
             Optional[Tuple[float, Dict[str, Scalar]]]: A Tuple containing loss and a
