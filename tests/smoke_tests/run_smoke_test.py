@@ -463,6 +463,14 @@ if __name__ == "__main__":
         run_smoke_test(  # By default will use Task04_Hippocampus Dataset
             server_python_path="examples.nnunet_example.server",
             client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+            dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
             config_path="tests/smoke_tests/nnunet_config_3d.yaml",
             dataset_path="examples/datasets/nnunet",
         )
@@ -651,14 +659,6 @@ if __name__ == "__main__":
             client_python_path="examples.flash_example.client",
             config_path="tests/smoke_tests/flash_config.yaml",
             dataset_path="examples/datasets/cifar_data/",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
-            server_python_path="examples.nnunet_example.server",
-            client_python_path="examples.nnunet_example.client",
-            config_path="tests/smoke_tests/nnunet_config_2d.yaml",
-            dataset_path="examples/datasets/nnunet",
         )
     )
     loop.close()
