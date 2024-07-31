@@ -324,7 +324,7 @@ def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = No
 async def _wait_for_process_to_finish_and_retrieve_logs(
     process: asyncio.subprocess.Process,
     process_name: str,
-    timeout: int = 600,  # timeout for the whole process to complete
+    timeout: int = 1200,  # timeout for the whole process to complete
 ) -> str:
     logger.info(f"Collecting output for {process_name}...")
     full_output = ""
