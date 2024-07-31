@@ -460,6 +460,14 @@ def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_3d.yaml",
+            dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.fedprox_example.server",
             client_python_path="examples.fedprox_example.client",
@@ -650,14 +658,6 @@ if __name__ == "__main__":
             server_python_path="examples.nnunet_example.server",
             client_python_path="examples.nnunet_example.client",
             config_path="tests/smoke_tests/nnunet_config_2d.yaml",
-            dataset_path="examples/datasets/nnunet",
-        )
-    )
-    loop.run_until_complete(
-        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
-            server_python_path="examples.nnunet_example.server",
-            client_python_path="examples.nnunet_example.client",
-            config_path="tests/smoke_tests/nnunet_config_3d.yaml",
             dataset_path="examples/datasets/nnunet",
         )
     )
