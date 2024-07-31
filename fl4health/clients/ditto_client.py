@@ -12,6 +12,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -143,7 +144,7 @@ class DittoClient(BasicClient):
         assert self.global_model is not None and self.model is not None
         assert self.parameter_exchanger is not None and isinstance(self.parameter_exchanger, FullParameterExchanger)
 
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
             log(INFO, "Initializing the global and local models weights for the first time")
             self.initialize_all_model_weights(parameters, config)
