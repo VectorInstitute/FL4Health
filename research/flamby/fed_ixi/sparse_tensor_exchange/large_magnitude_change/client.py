@@ -14,11 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.parameter_selection_criteria import largest_magnitude_change_scores
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
@@ -38,7 +35,7 @@ class FedIxiSparseTensorClient(PartialWeightExchangeClient):
         learning_rate: float,
         sparsity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -156,11 +153,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiSparseTensorClient(
         data_path=Path(args.dataset_dir),
@@ -172,7 +170,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

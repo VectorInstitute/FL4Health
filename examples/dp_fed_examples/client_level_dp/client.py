@@ -12,13 +12,14 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.clipping_client import NumpyClippingClient
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(NumpyClippingClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
@@ -41,5 +42,5 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

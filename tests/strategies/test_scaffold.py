@@ -11,10 +11,10 @@ def test_aggregate() -> None:
     ndarrays: NDArrays = [np.ones((layer_size)) for _ in range(num_layers)]
     params: Parameters = ndarrays_to_parameters(ndarrays)
     variates: Parameters = ndarrays_to_parameters([np.zeros_like(variate) for variate in ndarrays])
-    strat = Scaffold(initial_parameters=params, initial_control_variates=variates)
+    strategy = Scaffold(initial_parameters=params, initial_control_variates=variates)
 
     client_ndarrays = [[ndarray * (client_num + 1) for ndarray in ndarrays] for client_num in range(num_clients)]
-    new_ndarrays = strat.aggregate(client_ndarrays)
+    new_ndarrays = strategy.aggregate(client_ndarrays)
 
     correct_ndarrays = [[ndarray * 2 for ndarray in ndarrays] for _ in range(num_clients)]
 
@@ -29,12 +29,12 @@ def test_compute_updated_parameters() -> None:
     ndarrays: NDArrays = [np.ones((layer_size)) for _ in range(num_layers)]
     params: Parameters = ndarrays_to_parameters(ndarrays)
     variates: Parameters = ndarrays_to_parameters([np.zeros_like(variate) for variate in ndarrays])
-    strat = Scaffold(initial_parameters=params, initial_control_variates=variates)
+    strategy = Scaffold(initial_parameters=params, initial_control_variates=variates)
 
     original_params: NDArrays = [np.ones((layer_size)) * 3 for _ in range(num_layers)]
     param_updates: NDArrays = [np.ones((layer_size)) * 10 for _ in range(num_layers)]
 
-    updated_params = strat.compute_updated_parameters(learning_rate, original_params, param_updates)
+    updated_params = strategy.compute_updated_parameters(learning_rate, original_params, param_updates)
     correct_updated_params = [np.ones_like(original_param) * 4.0 for original_param in original_params]
 
     for updated_param, correct_updated_param in zip(updated_params, correct_updated_params):
@@ -50,11 +50,11 @@ def test_compute_updated_weights() -> None:
     init_params = ndarrays_to_parameters(init_server_weights)
 
     init_variates: Parameters = ndarrays_to_parameters([np.zeros_like(weights) for weights in init_server_weights])
-    strat = Scaffold(
+    strategy = Scaffold(
         initial_parameters=init_params, initial_control_variates=init_variates, learning_rate=learning_rate
     )
     new_server_weights: NDArrays = [np.ones_like(weights) * 46.0 for weights in init_server_weights]
-    updated_weights = strat.compute_updated_weights(new_server_weights)
+    updated_weights = strategy.compute_updated_weights(new_server_weights)
 
     correct_updated_weights = [np.ones_like(weights) * 16.0 for weights in init_server_weights]
 
@@ -70,9 +70,9 @@ def test_compute_updated_control_variates() -> None:
     init_params = ndarrays_to_parameters(init_server_weights)
 
     init_variates: Parameters = ndarrays_to_parameters([np.zeros_like(weights) for weights in init_server_weights])
-    strat = Scaffold(initial_parameters=init_params, initial_control_variates=init_variates, fraction_fit=0.5)
+    strategy = Scaffold(initial_parameters=init_params, initial_control_variates=init_variates, fraction_fit=0.5)
     control_variate_updates: NDArrays = [np.ones_like(weights) * 20.0 for weights in init_server_weights]
-    server_control_variates = strat.compute_updated_control_variates(control_variate_updates)
+    server_control_variates = strategy.compute_updated_control_variates(control_variate_updates)
     correct_server_control_variates = [np.ones_like(weights) * 10.0 for weights in init_server_weights]
 
     for control_variates, correct_control_variates in zip(server_control_variates, correct_server_control_variates):

@@ -6,7 +6,7 @@ from efficientnet_pytorch import EfficientNet
 from efficientnet_pytorch.utils import url_map
 from torch.utils import model_zoo
 
-from fl4health.model_bases.fedper_base import FedPerModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from research.flamby.utils import shutoff_batch_norm_tracking
 
 
@@ -76,7 +76,7 @@ class BaseEfficientNet(nn.Module):
         return x
 
 
-class FedIsic2019FedPerModel(FedPerModel):
+class FedIsic2019FedPerModel(SequentiallySplitExchangeBaseModel):
     def __init__(self, frozen_blocks: Optional[int] = None, turn_off_bn_tracking: bool = False) -> None:
         base_module = BaseEfficientNet(frozen_blocks, turn_off_bn_tracking=turn_off_bn_tracking)
         head_module = HeadClassifier(1280)

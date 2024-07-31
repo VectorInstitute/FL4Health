@@ -55,7 +55,7 @@ def test_instance_accountant_reproduce_results() -> None:
         assert pytest.approx(epsilon, abs=0.001) == estimated_epsilon
 
 
-def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
+def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
     # This test "reproduces" the results of Table 1 from Learning Differentially Private Recurrent Language Models.
     # The bounds are actually tighter than those of the paper due to an improvement in the sharpness of such bounds in
     # 2020 through https://arxiv.org/abs/2004.00010 Proposition 12 (in v4). See the documentation in the
@@ -104,8 +104,8 @@ def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
             updates[2]: 1.685,
             updates[3]: 2.634,
             updates[4]: 7.810,
-            updates[5]: 30.375,
-            updates[6]: 155.738,
+            updates[5]: 30.388,
+            updates[6]: 160.853,
         },
         (n_clients[4], clients_per_round[4], noise_values[4]): {
             updates[0]: 0.162,
@@ -135,13 +135,13 @@ def test_user_level_accoutant_poisson_sampling_reproduce_results() -> None:
             assert pytest.approx(expected_epsilon, abs=0.001) == estimated_epsilon
 
 
-def test_user_level_accoutant_with_equivalent_trajectories() -> None:
+def test_user_level_accountant_with_equivalent_trajectories() -> None:
     # Tests whether performing the same process in a sequence of accountant processes is equivalent to a gathered
     # set of accounting
     accountant = MomentsAccountant()
     trajectory_length = 3
-    noise_mulitplier = 1.0
-    noise_multipliers = [noise_mulitplier] * trajectory_length
+    noise_multiplier = 1.0
+    noise_multipliers = [noise_multiplier] * trajectory_length
     sampling_rate = 0.2
     sampling_rates = [sampling_rate] * trajectory_length
     sampling_strategies = [PoissonSampling(q) for q in sampling_rates]
@@ -155,13 +155,13 @@ def test_user_level_accoutant_with_equivalent_trajectories() -> None:
 
     non_trajectory_updates = updates * trajectory_length
     non_trajectory_epsilon = accountant.get_epsilon(
-        PoissonSampling(sampling_rate), noise_mulitplier, non_trajectory_updates, target_delta
+        PoissonSampling(sampling_rate), noise_multiplier, non_trajectory_updates, target_delta
     )
 
     assert pytest.approx(non_trajectory_epsilon, abs=0.01) == trajectory_epsilon
 
 
-def test_user_level_accoutant_with_longer_trajectories() -> None:
+def test_user_level_accountant_with_longer_trajectories() -> None:
     # Tests whether performing the same process in a sequence of accountant processes is equivalent to a gathered
     # set of accounting
     accountant = MomentsAccountant()

@@ -14,7 +14,7 @@ from fl4health.utils.metrics import Accuracy
 from tests.test_utils.models_for_test import LinearModel
 
 
-class TestingClient(BasicClient):
+class ClientForTest(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         train_loader = DataLoader(TensorDataset(torch.ones((4, 4)), torch.ones((4))))
         val_loader = DataLoader(TensorDataset(torch.ones((4, 4)), torch.ones((4))))
@@ -31,7 +31,7 @@ class TestingClient(BasicClient):
 
 
 def test_setup_client() -> None:
-    client = TestingClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
+    client = ClientForTest(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     client.setup_client({})
     assert client.parameter_exchanger is not None
     assert client.model is not None

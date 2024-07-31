@@ -14,7 +14,9 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -37,11 +39,12 @@ class MnistFedAvgClient(BasicClient):
 
         # Checkpointing is crucial for the warm up process
         checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
-        self.checkpointer = LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        post_aggregation_checkpointer = LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        self.checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
@@ -91,7 +94,7 @@ if __name__ == "__main__":
 
     # Start the client
     client = MnistFedAvgClient(data_path, [Accuracy()], DEVICE, checkpoint_dir=args.checkpoint_dir)
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

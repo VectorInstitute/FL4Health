@@ -5,11 +5,12 @@ import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class EnsembleClient(BasicClient):
@@ -19,7 +20,7 @@ class EnsembleClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         """
         This client enables the training of ensemble models in a federated manner.
@@ -31,8 +32,9 @@ class EnsembleClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
         """
         super().__init__(
             data_path=data_path,
@@ -73,7 +75,7 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -82,17 +84,22 @@ class EnsembleClient(BasicClient):
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 
         Args:
-            input (torch.Tensor): The input to be fed into the model.
+            input (TorchInputType): The input to be fed into the model.
+            TorchInputType is simply an alias for the union of torch.Tensor and
+            Dict[str, torch.Tensor].
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
             Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
+        assert isinstance(input, torch.Tensor)
         for optimizer in self.optimizers.values():
             optimizer.zero_grad()
 
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
+
         losses = self.compute_training_loss(preds, features, target)
 
         for loss in losses.backward.values():
@@ -105,9 +112,9 @@ class EnsembleClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training loss given predictions (and potentially features) of the model and ground truth data.
@@ -132,9 +139,9 @@ class EnsembleClient(BasicClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.

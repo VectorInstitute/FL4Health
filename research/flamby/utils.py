@@ -8,11 +8,10 @@ import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters
-from flwr.common.typing import Config, Metrics, Parameters
+from flwr.common.typing import Config, Parameters
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
-from examples.simple_metric_aggregation import metric_aggregation, normalize_metrics
 from fl4health.utils.metrics import Metric, MetricManager
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -38,20 +37,6 @@ def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tup
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
 
-def fit_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients fit function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
-def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    # This function is run by the server to aggregate metrics returned by each clients evaluate function
-    # NOTE: The first value of the tuple is number of examples for FedAvg
-    total_examples, aggregated_metrics = metric_aggregation(all_client_metrics)
-    return normalize_metrics(total_examples, aggregated_metrics)
-
-
 def get_all_run_folders(artifact_dir: str) -> List[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(artifact_dir) if "Run" in folder_name]
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
@@ -59,8 +44,8 @@ def get_all_run_folders(artifact_dir: str) -> List[str]:
 
 def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -> None:
     with open(eval_write_path, "w") as f:
-        for key, metric_vaue in results.items():
-            f.write(f"{key}: {metric_vaue}\n")
+        for key, metric_value in results.items():
+            f.write(f"{key}: {metric_value}\n")
 
 
 def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:

@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import Net
 from fl4health.clients.evaluate_client import EvaluateClient
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -40,7 +41,7 @@ class CifarClient(EvaluateClient):
         return Net().to(self.device)
 
     def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         evaluation_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return (evaluation_loader,)
 
@@ -70,5 +71,5 @@ if __name__ == "__main__":
         device=DEVICE,
         model_checkpoint_path=client_checkpoint_path,
     )
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

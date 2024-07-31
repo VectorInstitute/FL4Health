@@ -2,6 +2,8 @@
 
 # FL4Health
 
+![FL4Health Logo](./assets/fl4health_rect_logo_no_background.png)
+
 Principally, this repository contains the federated learning (FL) engine aimed at facilitating FL research, experimentation, and exploration, with a specific focus on health applications.
 
 - [Summary of Approaches](#summary-of-approaches)
@@ -14,7 +16,9 @@ Principally, this repository contains the federated learning (FL) engine aimed a
 
 The library source code is housed in the `fl4health` folder. This library is built on the foundational components of [Flower](https://flower.dev/), an open-source FL library in its own right. The documentation is [here](https://flower.dev/docs/framework/index.html). This library contains a number of unique components that extend the functionality of Flower in a number of directions.
 
-## Summary of Approaches
+If you have questions about the library or suggestions for new additions feel free to reach out to david.emerson@vectorinstitute.ai
+
+## Summary of Currently Implemented Approaches
 
 The present set of FL approaches implemented in the library are:
 <table>
@@ -68,6 +72,15 @@ MOON adds a contrastive loss function that attempts to ensure that the feature r
 </td>
 </tr>
 <tr>
+<td>
+
+[FedDG-GA](https://arxiv.org/abs/2103.06030)
+</td>
+<td>
+FedDG-GA is a domain generalization approach that aims to ensure that the models trained during FL generalize well to unseen domains, potentially outside of the training distribution. The method applies an adjustment algorithm which modifies the client coefficients used during weighted averaging on the server-side.
+</td>
+</tr>
+<tr>
 <th style="text-align: left; width: 250px"> Personalized Methods </th>
 <th style="text-align: center; width: 350px"> Notes </th>
 </tr>
@@ -100,6 +113,33 @@ Trains a global feature extractor shared by all clients through FedAvg and a pri
 <tr>
 <td>
 
+[FedRep](https://arxiv.org/abs/2303.05206)
+</td>
+<td>
+Similar to FedPer, FedRep trains a global feature extractor shared by all clients through FedAvg and a private classifier that is unique to each client. However, FedRep breaks up the client-side training of these components into two phases. First the local classifier is trained with the feature extractor frozen. Next, the classifier is frozen and the feature extractor is trained.
+</td>
+</tr>
+<tr>
+<td>
+
+[Ditto](https://arxiv.org/abs/2012.04221)
+</td>
+<td>
+Trains a global model with FedAvg and a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous global model.
+</td>
+</tr>
+<tr>
+<td>
+
+[MR-MTL](https://arxiv.org/abs/2206.07902)
+</td>
+<td>
+Trains a personal model that is constrained by the l2-norm of the difference between the personal model weights and the previous aggregation of all client's models. Aggregation of the personal models is done through FedAvg. Unlike Ditto, no global model is optimized during client-side training.
+</td>
+</tr>
+<tr>
+<td>
+
 [APFL](https://arxiv.org/abs/2003.13461)
 </td>
 <td>
@@ -121,12 +161,12 @@ PerFCL extends MOON to consider separate globally and locally trained feature ex
 [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf)
 </td>
 <td>
-FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The constrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
+FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The contrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
 </td>
 </tr>
 </table>
 
-More approaches are being implemented as they are prioritized. However, the library also provides significant flexibiltiy to implement strategies of your own.
+More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
 
 ## Privacy Capabilities
 
@@ -136,13 +176,13 @@ In addition to the FL strategies, we also support several differentially private
 - [Client-level FL privacy with Adaptive Clipping](https://arxiv.org/abs/1905.03871)
     - Weighted and Unweighted FedAvg
 
-The addition of Distributed Differential Privacy (DDP) with Secure Aggregation is also anticipated very soon.
+The addition of Distributed Differential Privacy (DDP) with Secure Aggregation is also anticipated soon.
 
 ## Components
 
 ### Checkpointing
 
-Contains modules associated with basic checkpointing. Currently only supports checkpointing of pytorch models. There are two basic forms of checkpointing available. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing.
+Contains modules associated with basic checkpointing. Currently only supports checkpointing of pytorch models. Generic scoring functions for determining whether to checkpoint a model are supported. There are two basic forms of checkpointing implemented out of the box for convenience. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing. The library currently supports server-side checkpointing of global models after weight aggregation. On the client-side, we support checkpointing local models on each client during local training and/or after weight aggregation from the server.
 
 ### Client Managers
 
@@ -150,7 +190,7 @@ Houses modules associated with custom functionality on top of Flower's client ma
 
 ### Clients
 
-Here, implementations for specific FL strategies that affect client-side training or enforce certrain properties during training are housed. There is also a basic client that implements standard client-side optimization flows for convenience. For example, the FedProxClient adds the requisite proximal loss term to a provided standard loss prior to performing optimization.
+Here, implementations for specific FL strategies that affect client-side training or enforce certain properties during training are housed. There is also a basic client that implements standard client-side optimization flows for convenience. For example, the FedProxClient adds the requisite proximal loss term to a provided standard loss prior to performing optimization.
 
 ### Feature Alignment
 
@@ -168,7 +208,7 @@ An interesting model base is the `ensemble_base` which facilitates federally tra
 
 ### Parameter Exchange
 
-In vanilla FL, all model weights are exchanged between the server and clients. However, in many cases, either more or less information needs to be exchanged. SCAFFOLD requires that both weights and associated "control variates" be exchanged between the two entities. On the other hand, APFL only exchanges a subset of the parameters. The classes in this folder facilitate the proper handling of both of these situtations. More complicated [adaptive parameter exchange](https://arxiv.org/abs/2205.01557) techniques are also considered here. There is an example of this type of approach in the Examples folder under the [partial_weight_exchange_example](examples/partial_weight_exchange_example).
+In vanilla FL, all model weights are exchanged between the server and clients. However, in many cases, either more or less information needs to be exchanged. SCAFFOLD requires that both weights and associated "control variates" be exchanged between the two entities. On the other hand, APFL only exchanges a subset of the parameters. The classes in this folder facilitate the proper handling of both of these situations. More complicated [adaptive parameter exchange](https://arxiv.org/abs/2205.01557) techniques are also considered here. There is an example of this type of approach in the Examples folder under the [partial_weight_exchange_example](examples/partial_weight_exchange_example).
 
 ### Preprocessing
 
@@ -200,7 +240,7 @@ Note that these strategies are also responsible for unpacking and repacking info
 
 ## Examples
 
-The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessbile way to learn what is required to experiment with different FL capabilties. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
+The examples folder contains an extensive set of ways to use the various components of the library, setup the different strategies implemented in the library, and how to run federated learning in general. These examples are an accessible way to learn what is required to experiment with different FL capabilities. Each example has some documentation describing what is being implemented and how to run the code to see it in action. The examples span basic FedAvg implementations to differentially private SCAFFOLD and beyond.
 
 __NOTE__: The contents of the examples folder is not packed with the FL4Health library on release to PyPi
 
@@ -218,7 +258,7 @@ If you are interested in contributing to the library, please see [CONTRIBUTION.M
 
 ## Citation
 
-We hope that the libary will be useful to both FL practioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
+We hope that the library will be useful to both FL practitioners and researchers working on cutting edge FL applications, with a specific interest in FL for healthcare. If you use FL4Health in a project or in your research, the citation below should be used.
 ```
 D. B. Emerson, J. Jewell, F. Tavakoli, Y. Zhang, S. Ayromlou, M. Lotif, and A. Krishnan (2023). FL4Health. https://github.com/vectorInstitute/FL4Health/. Computer Software, Vector Institute for Artificial Intelligence.
 ```

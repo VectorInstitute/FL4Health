@@ -9,7 +9,7 @@ from flwr.common.typing import Scalar
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -25,7 +25,7 @@ class SingleNodeTrainer:
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         # This is called the "server model" so that it can be found by the evaluate_on_holdout.py script
         checkpoint_name = "server_best_model.pkl"
-        self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+        self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         self.dataset_dir = dataset_dir
         self.model: nn.Module
         self.criterion: _Loss
@@ -33,9 +33,9 @@ class SingleNodeTrainer:
         self.train_loader: DataLoader
         self.val_loader: DataLoader
 
-    def _maybe_checkpoint(self, comparison_metric: float) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
         if self.checkpointer:
-            self.checkpointer.maybe_checkpoint(self.model, comparison_metric)
+            self.checkpointer.maybe_checkpoint(self.model, loss, metrics)
 
     def _handle_reporting(
         self,
@@ -103,4 +103,4 @@ class SingleNodeTrainer:
         running_loss = running_loss / len(self.val_loader)
         metrics = val_metric_mngr.compute()
         self._handle_reporting(running_loss, metrics, is_validation=True)
-        self._maybe_checkpoint(running_loss)
+        self._maybe_checkpoint(running_loss, metrics)

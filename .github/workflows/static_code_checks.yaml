@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Set up Python 3.9
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Install and configure Poetry
@@ -25,7 +25,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
       - name: Set up cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         id: cached-poetry-dependencies
         with:
           path: .venv
@@ -41,13 +41,21 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.0.8
         with:
           virtual-environment: .venv/
-          # Ignoring security vulnerabilities in Pillow because pycyclops cannot update it to the
-          # version that fixes them (>10.0.1).
-          # Remove those when the issue below is fixed and pycyclops changes its requirements:
-          # https://github.com/SeldonIO/alibi/issues/991
+          # ignoring security vulnerabilities for mlflow as monai's autoseg3d
+          # pipeline depends on mlflow=^2.12.2. Raised an issue with mlflow
+          # https://github.com/mlflow/mlflow/issues/12565
+          # Seems mlflow has no intentions to fix this, they are pushing
+          # pip-audit to ignore these warnings
+          # Vulnerabilities from GHSA-x38x-g6gr-jqff to GHSA-7p8j-qv6x-f4g4
+          # originate from mlflow
           ignore-vulns: |
-            PYSEC-2023-175
-            PYSEC-2023-227
-            GHSA-j7hp-h8jx-5ppr
-            GHSA-56pw-mpj4-fxww
-            GHSA-3f63-hfp8-52jq
+            GHSA-x38x-g6gr-jqff
+            GHSA-j8mg-pqc5-x9gj
+            GHSA-ghv6-9r9j-wh4j
+            GHSA-cv6c-7963-wxcg
+            GHSA-76cg-cfhx-373f
+            GHSA-wf7f-8fxf-xfxc
+            GHSA-cwgg-w6mp-w9hg
+            GHSA-43c4-9qgj-x742
+            GHSA-7p8j-qv6x-f4g4
+            GHSA-pg7h-5qx3-wjr3

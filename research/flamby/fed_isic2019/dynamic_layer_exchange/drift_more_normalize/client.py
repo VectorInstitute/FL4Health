@@ -14,10 +14,12 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.partial_weight_exchange_client import PartialWeightExchangeClient
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -34,7 +36,7 @@ class FedIsic2019DynamicLayerClient(PartialWeightExchangeClient):
         learning_rate: float,
         exchange_percentage: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -71,9 +73,9 @@ class FedIsic2019DynamicLayerClient(PartialWeightExchangeClient):
         return BaselineLoss()
 
     def get_parameter_exchanger(self, config: Config) -> DynamicLayerExchanger:
-        normalize = self.narrow_config_type(config, "normalize", bool)
-        norm_threshold = self.narrow_config_type(config, "norm_threshold", float)
-        select_drift_more = self.narrow_config_type(config, "select_drift_more", bool)
+        normalize = narrow_config_type(config, "normalize", bool)
+        norm_threshold = narrow_config_type(config, "norm_threshold", float)
+        select_drift_more = narrow_config_type(config, "select_drift_more", bool)
         selection_function_constructor = LayerSelectionFunctionConstructor(
             norm_threshold=norm_threshold,
             exchange_percentage=self.exchange_percentage,
@@ -151,7 +153,8 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIsic2019DynamicLayerClient(
         data_path=Path(args.dataset_dir),
@@ -163,7 +166,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

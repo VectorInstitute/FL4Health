@@ -16,6 +16,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.random import generate_hash
 
 
 class EvaluateClient(BasicClient):
@@ -37,7 +38,7 @@ class EvaluateClient(BasicClient):
     ) -> None:
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
-        self.client_name = self.generate_hash()
+        self.client_name = generate_hash()
         self.data_path = data_path
         self.device = device
         self.model_checkpoint_path = model_checkpoint_path
@@ -65,7 +66,7 @@ class EvaluateClient(BasicClient):
         self.wandb_reporter = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
-        raise ValueError("Get Parameters is not impelmented for an Evaluation-Only Client")
+        raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         raise ValueError("Fit is not implemented for an Evaluation-Only Client")
@@ -151,6 +152,7 @@ class EvaluateClient(BasicClient):
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
+        model.to(self.device)
 
         with torch.no_grad():
             for inputs, targets in self.data_loader:
@@ -208,7 +210,7 @@ class EvaluateClient(BasicClient):
                         log(
                             WARNING,
                             f"metric_name: {metric_name} already exists in dictionary. "
-                            "Please ensure that this is intended behavor",
+                            "Please ensure that this is intended behavior",
                         )
                     metrics[metric_name] = metric_value
         elif local_metrics:
@@ -242,7 +244,7 @@ class EvaluateClient(BasicClient):
 
     def get_local_model(self, config: Config) -> Optional[nn.Module]:
         """
-        Functionality for initializing a model from a local checkpoint. This can be overriden for custom behavior
+        Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior
         """
         # If a model checkpoint is provided, we load the checkpoint into the local model to be evaluated.
         if self.model_checkpoint_path:

@@ -18,7 +18,7 @@ from fl4health.feature_alignment.constants import (
     SOURCE_SPECIFIED,
 )
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.basic_fedavg import BasicFedAvg
@@ -79,13 +79,13 @@ class TabularFeatureAlignmentServer(FlServer):
         self.dimension_info[INPUT_DIMENSION] = input_dimension
         self.dimension_info[OUTPUT_DIMENSION] = output_dimension
 
-    def _get_initial_parameters(self, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
         assert INPUT_DIMENSION in self.dimension_info and OUTPUT_DIMENSION in self.dimension_info
         input_dimension = self.dimension_info[INPUT_DIMENSION]
         output_dimension = self.dimension_info[OUTPUT_DIMENSION]
         return self.initialize_parameters(input_dimension, output_dimension)
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """Run federated averaging for a number of rounds."""
         assert isinstance(self.strategy, BasicFedAvg)
 

@@ -1,16 +1,19 @@
 # FENDA Federated Learning Example
 This example provides an example of training a FENDA type model on a non-IID subset of the MNIST data. The FL server
-expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client
-has a modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original
-training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties
-of the clients training/validation data. In theory, the models should be able to perform well on their local data
-while learning from other clients data that has different statistical properties. The subsampling is specified by
-sending a list of integers between 0-9 to the clients when they are run with the argument `--minority_numbers`.
+expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each
+client has a modified version of the MNIST dataset. This modification essentially subsamples a certain number from the
+original training and validation sets of MNIST in order to synthetically induce local variations in the statistical
+properties of the clients training/validation data. In theory, the models should be able to perform well on their
+local data while learning from other clients data that has different statistical properties. The subsampling is
+specified by sending a list of integers between 0-9 to the clients when they are run with the argument
+`--minority_numbers`.
 
-The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The implementation uses a special type of weight exchange based on named-layer identification.
+The server has some custom metrics aggregation and uses Federated Averaging as its server-side optimization. The
+implementation uses a special type of weight exchange based on named-layer identification.
 
 ## Running the Example
-In order to run the example, first ensure you have [installed the dependencies in your virtual environment according to the main README](/README.md#development-requirements) and it has been activated.
+In order to run the example, first ensure you have installed the dependencies in your virtual environment
+[according to the main README](/README.md#development-requirements) and it has been activated.
 
 ## Starting Server
 
@@ -40,4 +43,4 @@ The argument `minority_numbers` specifies which digits (0-9) in the MNIST datase
 simulate non-IID data between clients. For example `--minority_numbers 1 2 3 4 5` will ensure that the client
 downsamples these digits (using the `downsampling_ratio` specified to the config).
 
-After both clients have been started federated learning should commence.
+After the clients have been started federated learning should commence.

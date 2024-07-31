@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from examples.models.ensemble_cnn import ConfigurableMnistNet
 from fl4health.clients.ensemble_client import EnsembleClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -20,7 +21,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class MnistEnsembleClient(EnsembleClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=float(config["sample_percentage"]))
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler=sampler)
         return train_loader, val_loader
@@ -55,4 +56,4 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
 
     client = MnistEnsembleClient(data_path, [Accuracy()], DEVICE)
-    fl.client.start_numpy_client(server_address="0.0.0.0:8080", client=client)
+    fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

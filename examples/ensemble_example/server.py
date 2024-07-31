@@ -8,14 +8,18 @@ from flwr.common.typing import Config
 from flwr.server.strategy import FedAvg
 
 from examples.models.ensemble_cnn import ConfigurableMnistNet
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def fit_config(
-    sample_percentage: float, local_epochs: int, batch_size: int, n_server_rounds: int, current_round: int
+    sample_percentage: float,
+    local_epochs: int,
+    batch_size: int,
+    n_server_rounds: int,
+    current_round: int,
 ) -> Config:
     return {
         "current_server_round": current_round,

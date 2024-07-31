@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.moon_base import MoonModel
@@ -18,8 +18,8 @@ def test_initializing_warm_up_module(tmp_path: Path) -> None:
 
     # Save a temporary model using checkpointer
     saved_model = SmallCnn()
-    checkpointer = BestMetricTorchCheckpointer(str(checkpoint_dir), "best_model.pkl", True)
-    checkpointer.maybe_checkpoint(saved_model, 0.7)
+    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer.maybe_checkpoint(saved_model, 0.7, {})
 
     # Save a temporary weights mapping dict
     weights_mapping_path = tmp_path.joinpath("data.json")
@@ -118,17 +118,20 @@ def test_global_loading_fenda_model_with_mapping() -> None:
     model = FendaModel(FeatureCnn(), FeatureCnn(), FendaHeadCnn())
     old_model = copy.deepcopy(model)
     warmup_module = WarmedUpModule(pretrained_model=pretrained_model)
-    warmup_module.weights_mapping_dict = {"global_module.conv1": "conv1", "global_module.conv2": "conv2"}
+    warmup_module.weights_mapping_dict = {
+        "second_feature_extractor.conv1": "conv1",
+        "second_feature_extractor.conv2": "conv2",
+    }
     warmup_module.load_from_pretrained(model)
 
     # Check if only the weights in mapping are loaded from pretrained model and if the weights not in mapping
     # are same with previous model as loading should not have any effect
     for key in model.state_dict().keys():
         if key in [
-            "global_module.conv1.weight",
-            "global_module.conv1.bias",
-            "global_module.conv2.weight",
-            "global_module.conv2.bias",
+            "second_feature_extractor.conv1.weight",
+            "second_feature_extractor.conv1.bias",
+            "second_feature_extractor.conv2.weight",
+            "second_feature_extractor.conv2.bias",
         ]:
             matching_key = warmup_module.get_matching_component(key)
             assert matching_key is not None
@@ -143,10 +146,10 @@ def test_global_and_local_loading_fenda_model_with_mapping() -> None:
     old_model = copy.deepcopy(model)
     warmup_module = WarmedUpModule(pretrained_model=pretrained_model)
     warmup_module.weights_mapping_dict = {
-        "global_module.conv1": "conv1",
-        "global_module.conv2": "conv2",
-        "local_module.conv1": "conv1",
-        "local_module.conv2": "conv2",
+        "second_feature_extractor.conv1": "conv1",
+        "second_feature_extractor.conv2": "conv2",
+        "first_feature_extractor.conv1": "conv1",
+        "first_feature_extractor.conv2": "conv2",
     }
     warmup_module.load_from_pretrained(model)
 

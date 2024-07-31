@@ -6,13 +6,13 @@ import flwr as fl
 from flwr.common.typing import Config
 
 from examples.models.cnn_model import Net
-from examples.simple_metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
 def construct_config(
@@ -74,7 +74,7 @@ def main(config: Dict[str, Any]) -> None:
         clipping_quantile=config["clipping_quantile"],
         initial_clipping_bound=config["clipping_bound"],
         weight_noise_multiplier=config["server_noise_multiplier"],
-        clipping_noise_mutliplier=config["clipping_bit_noise_multiplier"],
+        clipping_noise_multiplier=config["clipping_bit_noise_multiplier"],
         beta=config["server_momentum"],
         weighted_aggregation=config["weighted_averaging"],
     )

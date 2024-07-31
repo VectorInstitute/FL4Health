@@ -11,16 +11,16 @@ jobs:
       - name: Install apt dependencies
         run: |
           sudo apt-get update
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install poetry
         run: pipx install poetry
-      - uses: actions/setup-python@v4.3.0
+      - uses: actions/setup-python@v5
         with:
           python-version: 3.9
       - name: Build package
         run: poetry build
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@27b31702a0e7fc50959f5ad993c78deac1bdfc29
+        uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}

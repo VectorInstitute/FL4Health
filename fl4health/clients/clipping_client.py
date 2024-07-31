@@ -8,11 +8,13 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from numpy import linalg
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -20,7 +22,7 @@ from fl4health.utils.metrics import Metric
 class NumpyClippingClient(BasicClient):
     """
     Client that clips updates being sent to the server where noise is added.
-    Used to obtain Client Level Differenital Privacy in FL setting.
+    Used to obtain Client Level Differential Privacy in FL setting.
     """
 
     def __init__(
@@ -29,7 +31,7 @@ class NumpyClippingClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -44,7 +46,7 @@ class NumpyClippingClient(BasicClient):
 
     def calculate_parameters_norm(self, parameters: NDArrays) -> float:
         layer_inner_products = [pow(linalg.norm(layer_weights), 2) for layer_weights in parameters]
-        # network froebenius norm
+        # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
     def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
@@ -77,10 +79,20 @@ class NumpyClippingClient(BasicClient):
         This function performs clipping through compute_weight_update_and_clip and stores the clipping bit
         as the last entry in the NDArrays
         """
-        assert self.model is not None and self.parameter_exchanger is not None
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
-        clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
-        return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+            clipped_weight_update, clipping_bit = self.compute_weight_update_and_clip(model_weights)
+            return self.parameter_exchanger.pack_parameters(clipped_weight_update, clipping_bit)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -104,7 +116,7 @@ class NumpyClippingClient(BasicClient):
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
         self.clipping_bound = clipping_bound
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
 
         if current_server_round == 1 and fitting_round:
             # Initialize all model weights as this is the first time things have been set
@@ -122,5 +134,5 @@ class NumpyClippingClient(BasicClient):
         return parameter_exchanger
 
     def setup_client(self, config: Config) -> None:
-        self.adaptive_clipping = self.narrow_config_type(config, "adaptive_clipping", bool)
+        self.adaptive_clipping = narrow_config_type(config, "adaptive_clipping", bool)
         super().setup_client(config)

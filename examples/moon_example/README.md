@@ -1,5 +1,5 @@
-# Moon Federated Learning Example
-This example provides an example of training a Moon type model on a non-IID subset of the MNIST data. The FL server
+# MOON Federated Learning Example
+This example provides an example of training a MOON type model on a non-IID subset of the MNIST data. The FL server
 expects three clients to be spun up (i.e. it will wait until three clients report in before starting training). Each client
 has a modified version of the MNIST dataset. This modification essentially subsamples a certain number from the original
 training and validation sets of MNIST in order to synthetically induce local variations in the statistical properties
@@ -40,4 +40,4 @@ The argument `minority_numbers` specifies which digits (0-9) in the MNIST datase
 simulate non-IID data between clients. For example `--minority_numbers 1 2 3 4 5` will ensure that the client
 downsamples these digits (using the `downsampling_ratio` specified to the config).
 
-After both clients have been started federated learning should commence.
+After the clients have been started federated learning should commence.

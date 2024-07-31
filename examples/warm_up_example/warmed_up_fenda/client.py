@@ -13,10 +13,12 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from examples.models.fenda_cnn import FendaClassifier, GlobalCnn, LocalCnn
+from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSplitHeadClassifier
 from fl4health.clients.fenda_client import FendaClient
-from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.model_bases.fenda_base import FendaModel
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -36,7 +38,6 @@ class MnistFendaClient(FendaClient):
             data_path=data_path,
             metrics=metrics,
             device=device,
-            perfcl_loss_weights=(1.0, 1.0),
         )
 
         # Load the warmed up module
@@ -48,12 +49,14 @@ class MnistFendaClient(FendaClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
     def get_model(self, config: Config) -> nn.Module:
-        return FendaModel(LocalCnn(), GlobalCnn(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(self.device)
+        return FendaModel(
+            LocalCnn(), GlobalCnn(), ParallelSplitHeadClassifier(ParallelFeatureJoinMode.CONCATENATE)
+        ).to(self.device)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
@@ -118,7 +121,7 @@ if __name__ == "__main__":
         pretrained_model_dir,
         weights_mapping_path,
     )
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

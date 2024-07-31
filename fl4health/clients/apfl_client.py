@@ -1,16 +1,17 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class ApflClient(BasicClient):
@@ -20,7 +21,7 @@ class ApflClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer)
 
@@ -39,20 +40,21 @@ class ApflClient(BasicClient):
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
         # https://github.com/MLOPTPSU/FedTorch/blob/main/fedtorch/comms/trainings/federated/apfl.py
 
         # Forward pass on global model and update global parameters
+        assert isinstance(input, torch.Tensor)
         self.optimizers["global"].zero_grad()
         global_pred = self.model.global_forward(input)
         global_loss = self.criterion(global_pred, target)
         global_loss.backward()
         self.optimizers["global"].step()
 
-        # Make sure gradients are zero prior to foward passes of global and local model
+        # Make sure gradients are zero prior to forward passes of global and local model
         # to generate personalized predictions
         # NOTE: We zero the global optimizer grads because they are used (after the backward calculation below)
         # to update the scalar alpha (see update_alpha() where .grad is called.)
@@ -62,6 +64,8 @@ class ApflClient(BasicClient):
         # Personal predictions are generated as a convex combination of the output
         # of local and global models
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
+
         # Parameters of local model are updated to minimize loss of personalized model
         losses = self.compute_training_loss(preds, features, target)
 
@@ -76,9 +80,9 @@ class ApflClient(BasicClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Union[torch.Tensor, Dict[str, torch.Tensor]],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.

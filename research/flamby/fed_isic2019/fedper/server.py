@@ -9,16 +9,12 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
 from research.flamby.fed_isic2019.fedper.fedper_model import FedIsic2019FedPerModel
 from research.flamby.flamby_servers.personal_server import PersonalServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    summarize_model_info,
-)
+from research.flamby.utils import fit_config, summarize_model_info
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:

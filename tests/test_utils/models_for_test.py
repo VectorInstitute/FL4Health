@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.fenda_base import FendaHeadModule, FendaJoinMode
+from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode, ParallelSplitHeadModule
 
 
 class LinearModel(nn.Module):
@@ -90,12 +90,12 @@ class HeadCnn(nn.Module):
         return x
 
 
-class FendaHeadCnn(FendaHeadModule):
-    def __init__(self, join_mode: FendaJoinMode = FendaJoinMode.CONCATENATE) -> None:
+class FendaHeadCnn(ParallelSplitHeadModule):
+    def __init__(self, join_mode: ParallelFeatureJoinMode = ParallelFeatureJoinMode.CONCATENATE) -> None:
         super().__init__(join_mode)
         self.fc1 = nn.Linear(16 * 4 * 4 * 2, 32)
 
-    def local_global_concat(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
+    def parallel_output_join(self, local_x: torch.Tensor, global_x: torch.Tensor) -> torch.Tensor:
         # Assuming tensors are "batch first" so join column-wise
         return torch.concat([local_x, global_x], dim=1)
 
@@ -538,8 +538,8 @@ class Encoder(nn.Module):
     def forward(self, x: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
         skip_connections: List[torch.Tensor] = []
         for encoding_block in self.encoding_blocks:
-            x, skip_connnection = encoding_block(x)
-            skip_connections.append(skip_connnection)
+            x, skip_connection = encoding_block(x)
+            skip_connections.append(skip_connection)
         return skip_connections, x
 
     @property
@@ -648,6 +648,37 @@ def get_downsampling_layer(dimensions: int, pooling_type: str, kernel_size: int 
     return class_(kernel_size)
 
 
+# Autoencoder: encoder and decoder units
+class VariationalEncoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.fc_mu = nn.Linear(100 + condition_vector_size, embedding_size)
+            self.fc_logvar = nn.Linear(100 + condition_vector_size, embedding_size)
+        else:
+            self.fc_mu = nn.Linear(100, embedding_size)
+            self.fc_logvar = nn.Linear(100, embedding_size)
+
+    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+        if condition is not None:
+            return self.fc_mu(torch.cat((x, condition), dim=-1)), self.fc_logvar(torch.cat((x, condition), dim=-1))
+        return self.fc_mu(x), self.fc_logvar(x)
+
+
+class VariationalDecoder(nn.Module):
+    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+        super().__init__()
+        if condition_vector_size is not None:
+            self.linear = nn.Linear(embedding_size + condition_vector_size, 100)
+        else:
+            self.linear = nn.Linear(embedding_size, 100)
+
+    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> torch.Tensor:
+        if condition is not None:
+            return self.linear(torch.cat((x, condition), dim=-1))
+        return self.linear(x)
+
+
 class ConstantConvNet(nn.Module):
     def __init__(self, constants: List[float]) -> None:
         assert len(constants) == 4
@@ -663,3 +694,26 @@ class ConstantConvNet(nn.Module):
 
         nn.init.constant_(self.fc1.weight, val=constants[2])
         nn.init.constant_(self.fc2.weight, val=constants[3])
+
+
+class MnistNetWithBnAndFrozen(nn.Module):
+    def __init__(self, freeze_cnn_layer: bool = True) -> None:
+        super().__init__()
+        self.conv1 = nn.Conv2d(1, 8, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(8, 16, 5)
+        self.bn = nn.BatchNorm2d(num_features=16)
+        self.fc1 = nn.Linear(16 * 4 * 4, 10)
+
+        if freeze_cnn_layer:
+            layer_to_freeze = self._modules["conv1"]
+            assert layer_to_freeze is not None
+            layer_to_freeze.requires_grad_(False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.bn(x)
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        return x

@@ -28,6 +28,8 @@ poetry install --with "dev, dev-local, test, codestyle"
 
 Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.
 
+If you need to update the environment libraries, you should change the requirements in the `pyproject.toml` and then update the `poetry.lock` using the command `poetry update`
+
 ## Coding Guidelines, Formatters, and Checks
 
 For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html).
@@ -36,7 +38,7 @@ Pre-commit hooks apply [black](https://black.readthedocs.io/en/stable/the_black_
 
 We also use [flake8](https://flake8.pycqa.org/en/latest/) and [pylint](https://pylint.pycqa.org/en/stable/) for further static code analysis. The pre-commit hooks show errors which you need to fix before submitting a PR.
 
-Last but not least, we use type hints in our code which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be mergeable.
+Last but not least, we use type hints in our code which are checked using [mypy](https://mypy.readthedocs.io/en/stable/). The mypy checks are strictly enforced. That is, all mypy checks must pass or the associated PR will not be merge-able.
 
 The settings for `mypy` are in the `mypy.ini`, settings for `flake8` are contained in the `.flake8` file. Settings for `black` and `isort` come from the `pyproject.toml` and some standard checks are defined directly in the `.pre-commit-config.yaml` settings.
 
@@ -56,11 +58,11 @@ If you're using VS Code for development, pre-commit should setup git hooks that 
 
 ## Code Documentation
 
-For code documentation, we try to adhere to the Google docstring style (See [here](https://google.github.io/styleguide/pyguide.html), Section: Comments and Docstrings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, __any non-trivial or non-obvious methods added to the library should have a doc string__. For our library this applies only to code added to the main library in `fl4health`. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in that code is also __strongly encouraged__.
+For code documentation, we try to adhere to the Google docstring style (See [here](https://google.github.io/styleguide/pyguide.html), Section: Comments and Doc-strings). The implementation of an extensive set of comments for the code in this repository is a work-in-progress. However, we are continuing to work towards a better commented state for the code. For development, as stated in the style guide, __any non-trivial or non-obvious methods added to the library should have a doc string__. For our library this applies only to code added to the main library in `fl4health`. Examples, research code, and tests need not incorporate the strict rules of documentation, though clarifying and helpful comments in that code is also __strongly encouraged__.
 
 __NOTE__: As a matter of convention choice, classes are documented through their `__init__` functions rather than at the "class" level.
 
-If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted docstrings called autoDocstring [VS Code Page](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) and [Documentation](https://github.com/NilsJPWerner/autoDocstring). This tool will automatically generate a docstring template when starting a docstring with triple quotation marks (`"""`). To get the correct format, the following settings should be prescribed in your VS Code settings JSON:
+If you are using VS Code a very helpful integration is available to facilitate the creation of properly formatted doc-strings called autoDocstring [VS Code Page](https://marketplace.visualstudio.com/items?itemName=njpwerner.autodocstring) and [Documentation](https://github.com/NilsJPWerner/autoDocstring). This tool will automatically generate a docstring template when starting a docstring with triple quotation marks (`"""`). To get the correct format, the following settings should be prescribed in your VS Code settings JSON:
 
 ```json
 {

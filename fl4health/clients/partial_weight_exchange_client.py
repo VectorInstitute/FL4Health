@@ -1,13 +1,16 @@
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
@@ -22,7 +25,7 @@ class PartialWeightExchangeClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         store_initial_model: bool = False,
     ) -> None:
@@ -39,8 +42,9 @@ class PartialWeightExchangeClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[TorchCheckpointer], optional): Checkpointer to be used for client-side
-                checkpointing. Defaults to None.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
+                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
+                None.
             store_initial_model (bool): Indicates whether the client should store a copy of the model weights
                 at the beginning of each training round. The model copy might be required to select the subset
                 of model parameters to be exchanged with the server, depending on the selection criterion used.
@@ -62,7 +66,7 @@ class PartialWeightExchangeClient(BasicClient):
 
     def setup_client(self, config: Config) -> None:
         """
-        Setup the components of the client neccessary for client side training and parameter exchange. Mostly handled
+        Setup the components of the client necessary for client side training and parameter exchange. Mostly handled
         by a call to the basic client flow, but also sets up the initial model to facilitate storage of initial
         parameters during training
 
@@ -103,8 +107,19 @@ class PartialWeightExchangeClient(BasicClient):
         Returns:
             NDArrays: The list of weights to be sent to the server from the client
         """
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, self.initial_model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """

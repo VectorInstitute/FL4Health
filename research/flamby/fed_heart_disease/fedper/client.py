@@ -14,11 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.moon_client import MoonClient
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -38,7 +35,7 @@ class FedHeartDiseaseFedPerClient(MoonClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -47,7 +44,7 @@ class FedHeartDiseaseFedPerClient(MoonClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        # Moon contrastive loss weight is set to None by default since we are not using it
+        # MOON contrastive loss weight is set to None by default since we are not using it
         self.client_number = client_number
         self.learning_rate: float = learning_rate
 
@@ -142,11 +139,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedHeartDiseaseFedPerClient(
         data_path=Path(args.dataset_dir),
@@ -157,7 +155,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

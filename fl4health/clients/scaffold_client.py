@@ -1,18 +1,23 @@
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
+from opacus.optimizers.optimizer import DPOptimizer
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.clients.instance_level_privacy_client import InstanceLevelPrivacyClient
+from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -30,7 +35,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -43,25 +48,39 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
         self.client_control_variates_updates: Optional[NDArrays] = None  # delta_c_i in paper
         self.server_control_variates: Optional[NDArrays] = None  # c in paper
-        # Scaffold require vanilla SGD as optimizer
-        self.optimizers: Dict[str, torch.optim.SGD]  # type: ignore
+        # Scaffold require vanilla SGD as optimizer, will assert during setup_client
+        self.optimizers: Dict[str, torch.optim.Optimizer]
+
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
         self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
-        Packs the parameters and control variartes into a single NDArrays to be sent to the server for aggregation
+        Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
-        assert self.model is not None and self.parameter_exchanger is not None
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
 
-        # Weights and control variates updates sent to server for aggregation
-        # Control variates updates sent because only client has access to previous client control variate
-        # Therefore it can only be computed locally
-        assert self.client_control_variates_updates is not None
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
-        return packed_params
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+
+            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+
+            # Weights and control variates updates sent to server for aggregation
+            # Control variates updates sent because only client has access to previous client control variate
+            # Therefore it can only be computed locally
+            assert self.client_control_variates_updates is not None
+            packed_params = self.parameter_exchanger.pack_parameters(
+                model_weights, self.client_control_variates_updates
+            )
+            return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -154,7 +173,7 @@ class ScaffoldClient(BasicClient):
 
     def compute_parameters_delta(self, params_1: NDArrays, params_2: NDArrays) -> NDArrays:
         """
-        Computes elementwise difference of two lists of NDarray
+        Computes element-wise difference of two lists of NDarray
         where elements in params_2 are subtracted from elements in params_1
         """
         parameter_delta: NDArrays = [param_1 - param_2 for param_1, param_2 in zip(params_1, params_2)]
@@ -169,21 +188,25 @@ class ScaffoldClient(BasicClient):
         """
 
         # coef = 1 / (K * eta_l)
-        scaling_coeffient = 1 / (local_steps * self.learning_rate)
+        scaling_coefficient = 1 / (local_steps * self.learning_rate)
 
         # c_i^plus = c_i - c + 1/(K*lr) * (x - y_i)
         updated_client_control_variates = [
-            delta_control_variate + scaling_coeffient * delta_model_weight
+            delta_control_variate + scaling_coefficient * delta_model_weight
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
         return updated_client_control_variates
 
-    def train_step(self, input: torch.Tensor, target: torch.Tensor) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+        # TorchInputType is simply an alias for the union of
+        # torch.Tensor and Dict[str, torch.Tensor].
+
         # Clear gradients from optimizer if they exist
         self.optimizers["global"].zero_grad()
 
         # Get predictions and compute loss
         preds, features = self.predict(input)
+        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
         losses = self.compute_training_loss(preds, features, target)
 
         # Calculate backward pass, modify grad to account for client drift, update params
@@ -216,10 +239,14 @@ class ScaffoldClient(BasicClient):
             config (Config): The config from the server.
         """
         super().setup_client(config)
+        if isinstance(self, DPScaffoldClient):
+            assert isinstance(self.optimizers["global"], DPOptimizer)
+        else:
+            assert isinstance(self.optimizers["global"], torch.optim.SGD)
         self.learning_rate = self.optimizers["global"].defaults["lr"]
 
 
-class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ignore
+class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
     """
     Federated Learning client for Instance Level Differentially Private Scaffold strategy
 
@@ -232,7 +259,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -243,7 +270,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelPrivacyClient):  # type: ign
             checkpointer=checkpointer,
         )
 
-        InstanceLevelPrivacyClient.__init__(
+        InstanceLevelDpClient.__init__(
             self,
             data_path=data_path,
             metrics=metrics,

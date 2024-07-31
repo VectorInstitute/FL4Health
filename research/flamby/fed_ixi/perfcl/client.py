@@ -14,12 +14,9 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import (
-    BestMetricTorchCheckpointer,
-    LatestTorchCheckpointer,
-    TorchCheckpointer,
-)
-from fl4health.clients.fenda_client import FendaClient
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.clients.perfcl_client import PerFclClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BinarySoftDiceCoefficient, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -27,7 +24,7 @@ from research.flamby.fed_ixi.perfcl.perfcl_model import FedIxiPerFclModel
 from research.flamby.flamby_data_utils import construct_fed_ixi_train_val_datasets
 
 
-class FedIxiPerFclClient(FendaClient):
+class FedIxiPerFclClient(PerFclClient):
     def __init__(
         self,
         data_path: Path,
@@ -36,8 +33,9 @@ class FedIxiPerFclClient(FendaClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchCheckpointer] = None,
-        extra_loss_weights: Tuple[float, float] = (10, 10),
+        checkpointer: Optional[ClientCheckpointModule] = None,
+        mu: float = 10.0,
+        gamma: float = 10.0,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -45,11 +43,11 @@ class FedIxiPerFclClient(FendaClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            global_feature_contrastive_loss_weight=mu,
+            local_feature_contrastive_loss_weight=gamma,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
-
-        self.perfcl_loss_weights = extra_loss_weights
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
@@ -123,14 +121,14 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weights for the Perfcl loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (global feature constraint)",
         required=False,
     )
     parser.add_argument(
         "--gamma",
         action="store",
         type=float,
-        help="Weights for the Perfcl loss mentioned in paper",
+        help="Weights for the PerFCL loss mentioned in paper (local feature constraint)",
         required=False,
     )
     parser.add_argument(
@@ -152,11 +150,12 @@ if __name__ == "__main__":
     federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
+    post_aggregation_checkpointer = (
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIxiPerFclClient(
         data_path=Path(args.dataset_dir),
@@ -165,10 +164,11 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,
-        extra_loss_weights=(args.mu, args.gamma),
+        mu=args.mu,
+        gamma=args.gamma,
     )
 
-    fl.client.start_numpy_client(server_address=args.server_address, client=client)
+    fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()

@@ -95,11 +95,11 @@ def test_evaluation_loss_accumulation_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_accum_meter = LossMeter[EvaluationLosses](LossMeterType.ACCUMULATION, EvaluationLosses)
+    loss_accumulation_meter = LossMeter[EvaluationLosses](LossMeterType.ACCUMULATION, EvaluationLosses)
     for loss in losses:
-        loss_accum_meter.update(loss)
+        loss_accumulation_meter.update(loss)
 
-    computed_losses = loss_accum_meter.compute()
+    computed_losses = loss_accumulation_meter.compute()
     loss_dict = computed_losses.as_dict()
 
     assert loss_dict["checkpoint"] == pytest.approx(15.4639, rel=0.01)
@@ -129,11 +129,11 @@ def test_training_loss_accumulation_meter() -> None:
             additional_losses={"extra_loss": torch.tensor(7.5267, dtype=torch.float)},
         ),
     ]
-    loss_accum_meter = LossMeter[TrainingLosses](LossMeterType.ACCUMULATION, TrainingLosses)
+    loss_accumulation_meter = LossMeter[TrainingLosses](LossMeterType.ACCUMULATION, TrainingLosses)
     for loss in losses:
-        loss_accum_meter.update(loss)
+        loss_accumulation_meter.update(loss)
 
-    computed_losses = loss_accum_meter.compute()
+    computed_losses = loss_accumulation_meter.compute()
     loss_dict = computed_losses.as_dict()
 
     assert loss_dict["backward"] == pytest.approx(19.1791, rel=0.01)

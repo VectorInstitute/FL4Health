@@ -9,17 +9,13 @@ from flamby.datasets.fed_ixi import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
-from fl4health.utils.functions import get_all_model_parameters
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from research.flamby.flamby_servers.fedprox_server import FedProxServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    summarize_model_info,
-)
+from research.flamby.utils import fit_config, summarize_model_info
 
 
 def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub: str, run_name: str) -> None:
@@ -35,7 +31,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     federated_checkpointing: bool = config.get("federated_checkpointing", True)
     log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
     checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
@@ -72,8 +68,8 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     if federated_checkpointing:
-        assert isinstance(checkpointer, BestMetricTorchCheckpointer)
-        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+        assert isinstance(checkpointer, BestLossTorchCheckpointer)
+        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()

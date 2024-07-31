@@ -8,18 +8,13 @@ import flwr as fl
 from flamby.datasets.fed_ixi import Baseline
 from flwr.common.logger import log
 
-from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
+from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from research.flamby.flamby_servers.scaffold_server import ScaffoldServer
-from research.flamby.utils import (
-    evaluate_metrics_aggregation_fn,
-    fit_config,
-    fit_metrics_aggregation_fn,
-    get_initial_model_info_with_control_variates,
-    summarize_model_info,
-)
+from research.flamby.utils import fit_config, get_initial_model_info_with_control_variates, summarize_model_info
 
 
 def main(
@@ -37,7 +32,7 @@ def main(
     federated_checkpointing: bool = config.get("federated_checkpointing", True)
     log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
     checkpointer = (
-        BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
         else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
     )
@@ -76,8 +71,8 @@ def main(
     )
 
     if federated_checkpointing:
-        assert isinstance(checkpointer, BestMetricTorchCheckpointer)
-        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_metric}")
+        assert isinstance(checkpointer, BestLossTorchCheckpointer)
+        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()
