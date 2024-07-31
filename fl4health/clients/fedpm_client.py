@@ -11,6 +11,7 @@ from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import select_scores_and_sample_masks
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -39,7 +40,7 @@ class FedPmClient(BasicClient):
         # Convert self.model to a masked model unless it is specified in the config
         # file that the model is already a masked model.
         if "is_masked_model" in config.keys():
-            is_masked_model = self.narrow_config_type(config, "is_masked_model", bool)
+            is_masked_model = narrow_config_type(config, "is_masked_model", bool)
             if not is_masked_model:
                 self.model = convert_to_masked_model(self.model).to(self.device)
         else:
