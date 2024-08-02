@@ -51,7 +51,7 @@ def main(config: Dict[str, Any]) -> None:
 
     initial_model = Masked4Cnn()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
+    # Server performs simple FedPM as its server-side optimization strategy
     strategy = FedPm(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],

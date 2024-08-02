@@ -30,7 +30,6 @@ class FedPm(FedAvgDynamicLayer):
         initial_parameters: Optional[Parameters] = None,
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        weighted_aggregation: bool = False,
         weighted_eval_losses: bool = True,
         bayesian_aggregation: bool = True,
     ) -> None:
@@ -38,6 +37,9 @@ class FedPm(FedAvgDynamicLayer):
         A strategy that is used for aggregating probability masks in the "Federated Probabilistic Mask Training"
         paradigm, as detailed in http://arxiv.org/pdf/2209.15328. The implementation here allows for simply averaging
         the probability masks, as well as the more sophisticated Bayesian aggregation approach.
+
+        Note: since the parameters aggregated by this strategy are supposed to be binary masks, by default
+        FedPM performs uniformed averaging. The effect of weighted averaging is also not covered in the original work.
 
         Args:
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0. Defaults to 1.0.
@@ -81,10 +83,9 @@ class FedPm(FedAvgDynamicLayer):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-            weighted_aggregation=weighted_aggregation,
+            weighted_aggregation=False,
             weighted_eval_losses=weighted_eval_losses,
         )
-        self.weighted_aggregation = False
         # Parameters for Beta distribution.
         self.beta_parameters: Dict[str, Tuple[NDArray, NDArray]] = {}
         self.bayesian_aggregation = bayesian_aggregation
@@ -134,8 +135,8 @@ class FedPm(FedAvgDynamicLayer):
                 names_to_layers[name].append(layer)
                 total_num_clients[name] += 1
                 if name not in self.beta_parameters:
-                    alpha = np.ones(shape=layer.shape)
-                    beta = np.ones(shape=layer.shape)
+                    alpha = np.ones_like(layer)
+                    beta = np.ones_like(layer)
                     self.beta_parameters[name] = (alpha, beta)
 
         aggregation_result: Dict[str, NDArray] = {}
@@ -147,7 +148,7 @@ class FedPm(FedAvgDynamicLayer):
             n_clients = total_num_clients[parameter_name]
             alpha, beta = self.beta_parameters[parameter_name]
             alpha_new = alpha + m_agg
-            beta_new = beta + np.ones(beta.shape) * n_clients - m_agg
+            beta_new = beta + np.ones_like(beta) * n_clients - m_agg
             self.beta_parameters[parameter_name] = (alpha_new, beta_new)
             aggregation_result[parameter_name] = (alpha_new - 1) / (alpha_new + beta_new - 2)
 
@@ -157,7 +158,6 @@ class FedPm(FedAvgDynamicLayer):
         """
         Reset the alpha and beta parameters for the Beta distribution to be arrays of all ones.
         """
-        assert self.beta_parameters != {}
         for parameter_name in self.beta_parameters.keys():
             alpha, beta = self.beta_parameters[parameter_name]
-            self.beta_parameters[parameter_name] = (alpha * 0 + 1, beta * 0 + 1)
+            self.beta_parameters[parameter_name] = (np.ones_like(alpha), np.ones_like(beta))

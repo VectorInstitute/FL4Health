@@ -135,7 +135,7 @@ def test_fedpm_exchange() -> None:
         assert mask.shape == wrapped_model_states[score_name].cpu().numpy().shape
 
     # Test that pull_parameter works as expected.
-    parameter_exchanger = FedPmExchanger(layer_selection_function=select_scores_and_sample_masks)
+    parameter_exchanger = FedPmExchanger()
     packed_parameters = parameter_exchanger.pack_parameters(model_weights=masks, additional_parameters=score_names)
     masked_model_new = convert_to_masked_model(CompositeConvNet())
     parameter_exchanger.pull_parameters(packed_parameters, masked_model_new)

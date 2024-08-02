@@ -37,7 +37,6 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
-from fl4health.parameter_exchange.parameter_selection_criteria import select_scores_and_sample_masks
 from fl4health.utils.metrics import Accuracy
 from tests.test_utils.models_for_test import CompositeConvNet
 
@@ -184,6 +183,6 @@ def get_fedpm_client(model: CompositeConvNet) -> FedPmClient:
         device=torch.device("cpu"),
     )
     client.model = convert_to_masked_model(model)
-    client.parameter_exchanger = FedPmExchanger(select_scores_and_sample_masks)
+    client.parameter_exchanger = FedPmExchanger()
     client.initialized = True
     return client

@@ -5,10 +5,14 @@ import torch.nn as nn
 from flwr.common.typing import Config, NDArrays
 
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
+from fl4health.parameter_exchange.parameter_selection_criteria import select_scores_and_sample_masks
 from fl4health.utils.functions import sigmoid_inverse
 
 
 class FedPmExchanger(DynamicLayerExchanger):
+    def __init__(self) -> None:
+        super().__init__(select_scores_and_sample_masks)
+
     def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
         current_state = model.state_dict()
         layer_params, layer_names = self.unpack_parameters(parameters)
