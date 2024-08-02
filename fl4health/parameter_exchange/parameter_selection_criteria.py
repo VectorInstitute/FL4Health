@@ -208,6 +208,11 @@ def _process_masked_module(
     weight_scores_tensor_name = f"{module_name}.weight_scores" if module_name else "weight_scores"
     score_tensor_names.append(weight_scores_tensor_name)
     weight_scores = model_state_dict[weight_scores_tensor_name]
+
+    # Note: due to the Bernoulli sampling performed here, the parameters selected are in fact binary masks
+    # even though their corresponding names are something like "weight_scores" or "bias_scores".
+    # After the tensors have been aggregated by the strategy, they will become score tensors again.
+    # This misalignment was allowed because these parameter names will later be used to load the model anyway.
     masks_to_exchange.append(_sample_masks(weight_scores))
     # Do the same thing with bias_scores if it exists
     if "bias_scores" in module.state_dict().keys():
