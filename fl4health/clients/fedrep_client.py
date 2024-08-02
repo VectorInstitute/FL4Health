@@ -16,6 +16,7 @@ from fl4health.model_bases.sequential_split_models import SequentiallySplitExcha
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
@@ -110,8 +111,8 @@ class FedRepClient(BasicClient):
         if epochs_specified and not steps_specified:
             log(INFO, "Epochs for head and representation module specified. Proceeding with epoch-based training")
             return (
-                self.narrow_config_type(config, "local_head_epochs", int),
-                self.narrow_config_type(config, "local_rep_epochs", int),
+                narrow_config_type(config, "local_head_epochs", int),
+                narrow_config_type(config, "local_rep_epochs", int),
                 None,
                 None,
             )
@@ -120,8 +121,8 @@ class FedRepClient(BasicClient):
             return (
                 None,
                 None,
-                self.narrow_config_type(config, "local_head_steps", int),
-                self.narrow_config_type(config, "local_rep_steps", int),
+                narrow_config_type(config, "local_head_steps", int),
+                narrow_config_type(config, "local_rep_steps", int),
             )
         elif epochs_specified and steps_specified:
             raise ValueError("Cannot specify both epochs and steps based training values in the config")
@@ -150,11 +151,11 @@ class FedRepClient(BasicClient):
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
                 current_server_round is of the wrong type (int).
         """
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
         steps_or_epochs_tuple = self._extract_epochs_or_steps_specified(config)
 
         try:
-            evaluate_after_fit = self.narrow_config_type(config, "evaluate_after_fit", bool)
+            evaluate_after_fit = narrow_config_type(config, "evaluate_after_fit", bool)
         except ValueError:
             evaluate_after_fit = False
 

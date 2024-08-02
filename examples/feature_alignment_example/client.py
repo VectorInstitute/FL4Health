@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from examples.models.mlp_classifier import MLP
 from fl4health.clients.tabular_data_client import TabularDataClient
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.metrics import Accuracy, Metric
 
 
@@ -32,7 +33,7 @@ class Mimic3TabularDataClient(TabularDataClient):
         super().__init__(data_path, metrics, device, id_column, targets)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         # random train-valid split.
         indices = np.random.permutation(self.aligned_features.shape[0])
         shuffled_data = self.aligned_features[indices]
