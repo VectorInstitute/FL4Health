@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
-from flwr.common.typing import NDArrays
+from flwr.common.typing import NDArray, NDArrays
 from scipy.stats import bernoulli
 from torch import Tensor
 
@@ -178,41 +178,64 @@ def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optio
     return names_to_scores
 
 
+# Helper functions for select_scores_and_sample_masks
+def _sample_masks(score_tensor: Tensor) -> NDArray:
+    bernoulli_probabilities = torch.sigmoid(score_tensor).cpu().numpy()
+    # Perform Bernoulli sampling.
+    binary_mask = bernoulli.rvs(bernoulli_probabilities)
+    return binary_mask
+
+
+def _process_masked_module(
+    module: nn.Module, model_state_dict: Dict[str, Tensor], module_name: Optional[str] = None
+) -> Tuple[NDArrays, List[str]]:
+    """
+    Perform Bernoulli sampling using the weight and bias scores of a masked module.
+
+    Args:
+        module (nn.Module): the module upon which operations described above are performed.
+            "module" can either be a submodule of the model trained in FedPM, or it can be the model itself.
+            In the latter case, the argument "model_state_dict" should be the same as "module.state_dict()".
+            In either case, it is assumed that module is a masked module.
+        model_state_dict (Dict[str, Tensor]): the state dictionary of the model trained in FedPM.
+        module_name (Optional[str]): the name of module if module is a submodule of the model trained in FedPM.
+            This is used to access the weight and bias score tensors in model_state_dict. Defaults to None.
+    """
+    masks_to_exchange = []
+    score_tensor_names = []
+    # If module_name is passed in, then we prepend it to "weight_scores" to get the correct
+    # key in the state dictionary.
+    weight_scores_tensor_name = f"{module_name}.weight_scores" if module_name else "weight_scores"
+    score_tensor_names.append(weight_scores_tensor_name)
+    weight_scores = model_state_dict[weight_scores_tensor_name]
+    masks_to_exchange.append(_sample_masks(weight_scores))
+    # Do the same thing with bias_scores if it exists
+    if "bias_scores" in module.state_dict().keys():
+        bias_scores_tensor_name = f"{module_name}.bias_scores" if module_name else "bias_scores"
+        score_tensor_names.append(bias_scores_tensor_name)
+        bias_scores = model_state_dict[bias_scores_tensor_name]
+        masks_to_exchange.append(_sample_masks(bias_scores))
+    return masks_to_exchange, score_tensor_names
+
+
 def select_scores_and_sample_masks(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
     """
     Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
     masked layers, and then samples binary masks based on those scores to send to the server.
     This function is meant to be used for the FedPM algorithm.
     """
-    parameters_to_exchange_names = []
-    parameters_to_exchange = []
     model_states = model.state_dict()
     with torch.no_grad():
         if is_masked_module(model):
-            parameters_to_exchange_names.append("weight_scores")
-            weight_scores = model_states["weight_scores"]
-            # Sample a mask from the (unbounded) probability scores.
-            weight_probs = torch.sigmoid(weight_scores).cpu().numpy()
-            weight_mask_sample = bernoulli.rvs(weight_probs)
-            parameters_to_exchange.append(weight_mask_sample)
-            if "bias_scores" in model_states.keys():
-                parameters_to_exchange_names.append("bias_scores")
-                bias_scores = model_states["bias_scores"]
-                bias_probs = torch.sigmoid(bias_scores).cpu().numpy()
-                bias_mask_sample = bernoulli.rvs(bias_probs)
-                parameters_to_exchange.append(bias_mask_sample)
+            return _process_masked_module(module=model, model_state_dict=model_states)
         else:
+            masks_to_exchange = []
+            score_tensor_names = []
             for name, module in model.named_modules():
                 if is_masked_module(module):
-                    parameters_to_exchange_names.append(f"{name}.weight_scores")
-                    weight_scores = model_states[f"{name}.weight_scores"]
-                    weight_probs = torch.sigmoid(weight_scores).cpu().numpy()
-                    weight_mask_sample = bernoulli.rvs(weight_probs)
-                    parameters_to_exchange.append(weight_mask_sample)
-                    if "bias_scores" in module.state_dict().keys():
-                        parameters_to_exchange_names.append(f"{name}.bias_scores")
-                        bias_scores = model_states[f"{name}.bias_scores"]
-                        bias_probs = torch.sigmoid(bias_scores).cpu().numpy()
-                        bias_mask_sample = bernoulli.rvs(bias_probs)
-                        parameters_to_exchange.append(bias_mask_sample)
-    return parameters_to_exchange, parameters_to_exchange_names
+                    module_masks, module_score_tensor_names = _process_masked_module(
+                        module=module, model_state_dict=model_states, module_name=name
+                    )
+                    masks_to_exchange.extend(module_masks)
+                    score_tensor_names.extend(module_score_tensor_names)
+            return masks_to_exchange, score_tensor_names
