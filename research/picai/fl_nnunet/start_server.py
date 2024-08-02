@@ -94,7 +94,7 @@ def main(config: dict) -> None:
     )
 
     # Shutdown server
-    # server.shutdown()
+    server.shutdown()
 
 
 if __name__ == "__main__":

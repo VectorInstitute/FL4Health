@@ -1,93 +1,312 @@
 import argparse
+import concurrent.futures
 import contextlib
 import os
+import time
 import warnings
-from collections import defaultdict
-from os.path import join
-from typing import Any, Dict, Iterable, List, Optional
+from logging import INFO
+from os.path import exists, join
+from pathlib import Path
+from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
 
 import numpy as np
+import SimpleITK as sitk
+from flwr.common.logger import log
 from numpy.typing import NDArray
 
 with contextlib.redirect_stdout(open(os.devnull, "w")):
-    from picai_eval import evaluate, evaluate_folder
-    from picai_eval.image_utils import read_image
+    from picai_eval.eval import evaluate_case
     from picai_eval.metrics import Metrics as PicaiEvalMetrics
     from report_guided_annotation import extract_lesion_candidates
 
 warnings.simplefilter("ignore", category=FutureWarning)
 
+# logger = multiprocessing.log_to_stderr()
+# logger.setLevel(multiprocessing.SUBDEBUG)
 
-def load_images_from_folder(
-    folder: str,
-    case_identifiers: List[str],
-    postfixes: Optional[List[str]] = None,
-    extensions: List[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
-) -> NDArray:
-    """
-    Loads images from a folder given a list of case identifiers
+
+def read_image(path: Union[Path, str], npz_key: Optional[str] = None) -> NDArray:
+    """Taken from picai eval. Had to change one line so that they wouldn't
+    throw away additional channels. They were assuming binary segmentation.
+    Also made it work for any npz file
 
     Args:
-        folder (str): The folder containing the images
-        case_identifiers (List[str]): A list of case identifiers for each
-            file. Typically just the filenames without the extension
-        postfixes (Optional[List[str]], optional): A list of strings to append
-            to the case identifiers when looking for files. For example
-            '_labels'. Defaults to None.
-        extensions (List[str], optional): A list of possible image extensions.
-            Defaults to [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"].
-
-    Returns:
-        NDArray: A numpy array containing the images for each case identifier.
-            The first dimension will be the number of images and thos images
-            will be in the same order as was given by the case_identifiers
-            argument
+        path (Union[Path, str]): Path to the image file
+        npz_key (Optional[str]): If the file type is .npz, then a key must be
+            provided to access the numpy array from the NpzFile object
     """
+    if isinstance(path, Path):
+        path = path.as_posix()
+
+    if ".npy" in path:
+        return np.load(path)
+    elif ".nii" in path or ".mha" in path or "mhd" in path:
+        return sitk.GetArrayFromImage(sitk.ReadImage(path))
+    elif ".npz" in path:
+        # read the nnU-Net format
+        data = np.load(path)
+        assert npz_key is not None, "Path leads to a .npz file but a key was not provided"
+        data = data[npz_key]
+        assert isinstance(data, np.ndarray), f"Was expecting a numpy array and got {type(data)}"
+        return data.astype("float32")
+    else:
+        raise ValueError(f"Unexpected file path. Supported file formats: .nii(.gz), .mha, .npy and .npz. Got: {path}.")
+
+
+def scan_folder_for_cases(
+    folder: Union[str, Path], postfixes: Optional[List[str]] = None, extensions: Optional[List[str]] = None
+) -> List[str]:
     if postfixes is None:
         postfixes = [""]
+    if extensions is None:
+        extensions = [".npz", ".npy", ".nii.gz", ".nii", ".mha", ".mhd"]
 
-    images = []
+    file_endings = [f"{pf}{ext}" for pf in postfixes for ext in extensions]
+
+    file_list = os.listdir(folder)
+    case_list = []
+    for file in file_list:
+        for end in file_endings:
+            if end in file:
+                case_id = file.replace(end, "")
+                if case_id in case_list:
+                    log(INFO, f"Found multiple files for {case_id}")
+                    continue
+                case_list.append(case_id)
+                break
+
+    return case_list
+
+
+def get_case_files(
+    folder: Union[str, Path],
+    case_identifiers: List[str],
+    postfixes: Optional[List[str]] = None,
+    extensions: Optional[List[str]] = None,
+    basename: bool = False,
+) -> List[str]:
+    if postfixes is None:
+        postfixes = [""]
+    if extensions is None:
+        extensions = [".npz", ".npy", ".nii.gz", ".nii", ".mha", ".mhd"]
+
+    file_endings = [f"{pf}{ext}" for pf in postfixes for ext in extensions]
+
+    selected_files = []
     for case in case_identifiers:
-        for postfix in postfixes:
-            for ext in extensions:
-                path = join(folder, case + postfix + ext)
-                if os.path.exists(path):
-                    images.append(read_image(path))
+        found_file = False
+        for end in file_endings:
+            if exists(join(folder, f"{case}{end}")):
+                if basename:
+                    selected_files.append(f"{case}{end}")
+                else:
+                    selected_files.append(join(folder, f"{case}{end}"))
+                found_file = True
+        assert found_file, f"Could not find file for case: {case}"
 
-    return np.stack(images)
+    return selected_files
 
 
-def get_detection_maps(probability_maps: NDArray) -> NDArray:
+def generate_detection_map(
+    probability_map: Union[NDArray, str, Path],
+    save_path: Union[str, Path],
+    npz_key: Optional[str] = "probabilities",
+    transforms: Optional[List[Callable[[NDArray], NDArray]]] = None,
+) -> None:
     """
-    Generates detection maps from probability maps by doing lesion extraction
+    Generates a detection map from a probability map by doing lesion
+    extraction. Supports multiclass probability maps by extracting a seperate
+    lesion detection map for each class/channel.
 
     Args:
-        probability_maps (NDArray): A numpy array containing the predicted
-            probability maps. Should be shape (num_samples, num_classes, ...)
+        probability_map (Union[NDArray, str, Path]): One hot encoded
+            probability map for a single image. Should be shape
+            (num_classes, ...). num_classes includes the background class. If
+            the probability maps are .npz files then a npz_key should be
+            provided
+        save_path (Union[str, Path]): Path to save the detection map. Will be
+            saved as a numpy compressed .npz file under key 'detection_map'.
+            Detection map will have shape (num_classes - 1, ...) since a
+            detection map is not computed for the background class.
+        npz_key (Optional[str]): If probability_map is a path to a .npz
+            file then a key must be provided to access the numpy array from
+            the NpzFile object. Defaults to 'probabilities'
+        transforms (Optional[List[Callable[[NDArray], NDArray]]]): A list of
+            transform functions to apply to the probability map before passing
+            it to the lesion extraction method. The functions will be applied
+            in the order they are given. Can be used, for example, to one hot
+            encode binary probability maps if they are not already one hot
+            encoded.
+    """
+    if transforms is None:
+        transforms = []
+
+    if isinstance(probability_map, (str, Path)):
+        probability_map = read_image(probability_map, npz_key=npz_key)
+
+    for transform in transforms:
+        probability_map = transform(probability_map)
+
+    num_classes = probability_map.shape[0]
+    cls_probs = []
+    for cls in range(1, num_classes):
+        cls_probs.append(extract_lesion_candidates(probability_map[cls], num_lesions_to_extract=5)[0])
+
+    np.savez_compressed(save_path, detection_map=np.stack(cls_probs))
+
+
+def generate_detection_maps(
+    input_folder: Union[str, Path],
+    output_folder: Union[str, Path],
+    transforms: Optional[List[Callable[[NDArray], NDArray]]] = None,
+    npz_key: Optional[str] = "probabilities",
+    num_threads: Optional[int] = None,
+    postfixes: Optional[List[str]] = None,
+    extensions: Optional[List[str]] = None,
+    verbose: bool = True,
+) -> List[str]:
+    """
+    Extracts lesions from predicted probability maps and saves the predicted
+    lesions as detection maps in the output folder.
+
+    Note that this method supports multiclass segmentation but the input
+    predicted probability maps must be one hot encoded.
+
+    Args:
+        input_folder (_type_): Path to the folder containing the predicted
+            probability maps. Each probability map must be saved as a seperate
+            file where the files basename will be used ato derive the case
+            identifier. The probability maps must be one hot encoded and have
+            shape (num_classes, ...) where num_classes includes the background
+            class. Ie. binary segmentation would have num_classes=2
+        output_folder (_type_): Path to the folder in which to save the
+            detection maps. The detection maps will be save as numpy NpzFiles
+            (.npz) under the key 'detection_map'. The detection maps will also
+            be one hot encoded and have shape (num_classes - 1, ...). The
+            number of classes decreases by one since a detection map is not
+            generated for the background class.
+            Ie. (num_lesion_classes == num_classes - 1). Note that this method
+            will overwrite existing files if they already exist
+        transforms (Optional[List[Callable[[NDArray], NDArray]]]): A list of
+            transform functions to apply to the probability map before passing
+            it to the lesion extraction method. The functions will be applied
+            in the order they are given. Can be used, for example, to one hot
+            encode binary probability maps if they are not already one hot
+            encoded. Note that since this method uses multiprocessing, the
+            transform functions must be defined in a top-level module.
+            Basically they can't be defined in 'if __name__ == '__main__' but
+            everything else seems to work.
+            See: https://stackoverflow.com/questions/72766345
+        npz_key: If the predicted probability maps in the input folder are
+            saved as .npz files, then this is the key used to access the numpy
+            array from the NpzFile object. Defaults to 'probabilities'
+        num_threads (int, optional): The maximum number of threads to allow
+            when extracting the detection maps. If left as None, the number of
+            threads is automatically determined.
+        postfixes (Optional[List[str]]): File postfixes (endings after the
+            unique identifier but before the extension). Detection maps will
+            only be generated for files with one or more of the specified
+            postfixes. Postfixes are omitted from the returned case
+            identifiers. Defaults to [""].
+        extensions (List[str], optional): File extensions to allow. Detection
+            maps will only be generated for files with on of the specified
+            file extensions. File extensions are omitted from the returned
+            case identifiers. Defaults to [".npz", ".npy", ".nii.gz", ".nii",
+            ".mha", ".mhd"].
+        verbose (bool): Whether or not to print a log statement with
+            extraction results. Defaults to True.
 
     Returns:
-        NDArray: A numpy array of the detection maps for each class. Note that
-            a detection map is not created for the background class which is
-            assumed to be at index 0. Therefore the output shape is
-            (num_samples, num_classes-1)
+        List[str]: A list of unique case identifiers. The case identifiers are
+            the file basenames of the chosen input probability map files
+            stripped of the the specified postfixes and their extension.
     """
-    num_classes = probability_maps.shape[1]
+    t_start = time.time()
+    # Get list of input and output files
+    case_ids = scan_folder_for_cases(input_folder, postfixes, extensions)
+    input_files = get_case_files(input_folder, case_ids, postfixes, extensions)
+    output_files = [join(output_folder, case + ".npz") for case in case_ids]
 
-    detection_maps = []
-    for prob_map in probability_maps:
-        cls_probs = []
-        for cls in range(1, num_classes):  # Ignore background class at idx 0
-            cls_probs.append(extract_lesion_candidates(prob_map[cls], num_lesions_to_extract=5)[0])
-        detection_maps.append(np.stack(cls_probs))
+    if not exists(output_folder):
+        os.makedirs(output_folder)
 
-    return np.stack(detection_maps)
+    # Using threading over multiprocessing since task is I/O bound
+    with concurrent.futures.ThreadPoolExecutor(num_threads) as pool:
+        [
+            pool.submit(
+                generate_detection_map,
+                probability_map=input_file,
+                save_path=output_file,
+                npz_key=npz_key,
+                transforms=transforms,
+            )
+            for input_file, output_file in zip(input_files, output_files)
+        ]
+
+    if verbose:
+        elapsed = time.time() - t_start
+        log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed/len(case_ids):.3f}s/case)")
+
+    return case_ids
+
+
+def one_hot_ndarray(input: NDArray, num_classes: int) -> NDArray:
+    one_hot = (np.arange(num_classes) == input[..., None]).astype(int)
+    one_hot = np.moveaxis(one_hot, -1, 0)  # Moves num_classes dim to the front
+    return one_hot
+
+
+def evaluate_case_multichannel(
+    detection_map: Union[NDArray, str, Path], ground_truth: Union[NDArray, str, Path], **kwargs: Any
+) -> Tuple[List[Tuple[int, float, float]], float, float, str]:
+    if isinstance(detection_map, (str, Path)):
+        detection_map = read_image(detection_map, npz_key="detection_map")
+    if isinstance(ground_truth, (str, Path)):
+        ground_truth = read_image(ground_truth)
+
+    # We assume detection map is one hot encoded because otherwise there is no
+    # way to determine proper rank
+
+    if detection_map.ndim != ground_truth.ndim:
+        # One hot encode ground truth and remove background class
+        num_classes = detection_map.shape[0] + 1  # Add one for background class
+        ground_truth = one_hot_ndarray(ground_truth, num_classes)[1:]
+
+    assert (
+        detection_map.shape[0] == ground_truth.shape[0]
+    ), "Was expecting detection map and ground truth to be the same shape"
+
+    num_lesion_classes = detection_map.shape[0]  # One less than num_classes since it does not include background
+
+    # The return type signature of evaluate_case is just wrong
+    results = [
+        evaluate_case(y_det=detection_map[channel], y_true=ground_truth[channel], **kwargs)
+        for channel in range(num_lesion_classes)
+    ]
+
+    lesion_result = []
+    case_conf: float = 0
+    case_weight: float = kwargs["sample_weight"] if kwargs.get("sample_weight") is not None else 1
+    case_id: str
+
+    # The return signature for evaluate_case is just wrong.
+    # So we have to ignore a mypy error here
+    for lesions, conf, weight, id in results:  # type: ignore
+        lesion_result.extend(lesions)
+        case_conf = max(case_conf, conf)
+        case_id = id
+
+    return lesion_result, case_conf, case_weight, case_id
 
 
 def get_picai_metrics(
-    detection_maps: NDArray,
-    ground_truth_annotations: NDArray,
-    case_identifiers: Optional[Iterable[str]] = None,
-    **kwargs: Any
+    detection_map_folder: Union[str, Path],
+    ground_truth_annotations_folder: Union[str, Path],
+    num_threads: Optional[int] = None,
+    sample_weights: Optional[List[float]] = None,
+    case_identifiers: Optional[List[str]] = None,
+    verbose: bool = True,
+    **kwargs: Any,
 ) -> PicaiEvalMetrics:
     """
     Computes the picai evaluation metrics provided the predicted lesion
@@ -95,17 +314,19 @@ def get_picai_metrics(
     allow multiclass evaluation
 
     Args:
-        detection_maps (NDArray): The predicted lesion detection maps. Must
-            have shape (num_samples, num_lesion_classes, ...). The background
-            class should not be included in the detection maps
-        ground_truth_annotations (NDArray): The ground truth annotations. Must
-            have shape (num_samples, num_classes or num_lesion_classes, ...).
-            If num_classes is provided, the function will attempt to remove
-            the background class from index 0 for you
+        detection_maps_folder (Union[str, Path]): Path to the folder
+            containing the detection maps
+        ground_truth_annotations_folder (NDArray): The ground truth
+            annotations. Must have shape (num_samples, num_classes or
+            num_lesion_classes, ...). If num_classes is provided, the function
+            will attempt to remove the background class from index 0 for you
         case_identifiers (Optional[Iterable[str]], optional): A list of case
             identifiers. If not provided the subjects will be identified by
             their index Defaults to None.
-        **kwargs: Keyword arguments for the picai_eval.evaluate function
+        verbose (bool): Whether or not to print a log statement summarizing
+            results. Defaults to True
+        **kwargs: Keyword arguments for the picai_eval.eval.evaluate_case
+            function
 
     Raises:
         KeyError: If you try to use the y_det, y_true, or subject_list keyword
@@ -115,60 +336,72 @@ def get_picai_metrics(
         picai_eval.metrics.Metrics: A picai eval metrics object that has
             combined the results from all classes into a single object
     """
-    if "y_det" in kwargs or "y_true" in kwargs or "subject_list" in kwargs:
+    t_start = time.time()
+    if "y_det" in kwargs or "y_true" in kwargs or "idx" in kwargs or "sample_weight" in kwargs:
         raise KeyError(
-            """Got one of 'y_det', 'y_true' or 'subject_list' in keyword
-            arguments. The arguments to get_picai_metrics are being passed to
-            these keys"""
+            """Got one of 'y_det', 'y_true', 'idx' or 'sample_weight' in
+            keyword arguments. Arguments to the get_picai_metrics method are
+            being passed to these keys."""
         )
 
-    if detection_maps.shape[1] != ground_truth_annotations.shape[1]:
-        # Assume background class has not been removed
-        ground_truth_annotations = ground_truth_annotations[:, 1:]
-        assert (
-            detection_maps.shape == ground_truth_annotations.shape
-        ), "Got unexpected shapes for detection maps and ground truth annotations"
+    # Get list of files,
+    case_ids = scan_folder_for_cases(detection_map_folder) if case_identifiers is None else case_identifiers
+    det_files = get_case_files(detection_map_folder, case_ids)
+    gt_files = get_case_files(ground_truth_annotations_folder, case_ids)
+
+    # Set default sample weights
+    if sample_weights is None:
+        sample_weights = [1] * len(case_ids)
+
+    # Initialize variables to hold results
+    case_targets: Dict[Hashable, int] = {}
+    case_weights: Dict[Hashable, float] = {}
+    case_preds: Dict[Hashable, float] = {}
+    lesion_results: Dict[Hashable, List[Tuple[int, float, float]]] = {}
+    lesion_weights: Dict[Hashable, List[float]] = {}
 
     # Evaluation must be calculated seperately for each class
-    num_classes = detection_maps.shape[1]
-    metrics: List[PicaiEvalMetrics] = []
-    for cls in range(num_classes):
-        metrics.append(
-            evaluate(
-                y_det=detection_maps[:, cls],
-                y_true=ground_truth_annotations[:, cls],
-                subject_list=case_identifiers,
-                **kwargs
-            )
+    with concurrent.futures.ThreadPoolExecutor(num_threads) as pool:
+        futures = {
+            pool.submit(evaluate_case_multichannel, detection_map=det_map, ground_truth=gt, idx=case, **kwargs): case
+            for det_map, gt, case in zip(det_files, gt_files, case_ids)
+        }
+
+        for future in concurrent.futures.as_completed(futures):
+            case = futures[future]
+            lesion_results[case], case_preds[case], case_weights[case], _ = future.result()
+
+            # Each lesion_results[case] is a list of tuples where each tuple
+            # represents a predicted lesion. The tuple values are
+            # (ground_truth_label, confidence, overlap)
+            if len(lesion_results[case]):
+                case_targets[case] = np.max([lr[0] for lr in lesion_results[case]])
+            else:
+                case_targets[case] = 0
+
+            lesion_weights[case] = [case_weights[case]] * len(lesion_results[case])
+
+        metrics = PicaiEvalMetrics(
+            lesion_results=lesion_results,
+            lesion_weight=lesion_weights,
+            case_pred=case_preds,
+            case_target=case_targets,
+            case_weight=case_weights,
         )
 
-    subject_list = metrics[0].subject_list
-    assert isinstance(subject_list, list), "Got unexpected subject list from picai eval metrics object"
-    lesion_results: Dict[Any, list] = defaultdict(list)
-    lesion_weights: Dict[Any, list] = defaultdict(list)
-    case_targets: Dict[Any, int] = defaultdict(int)
-    case_preds: Dict[Any, float] = defaultdict(float)
-    for s in subject_list:
-        # Ignoring mypy errors here for now because i don't know how to get around them
-        [lesion_results[s].extend(m.lesion_results[s]) for m in metrics]  # type: ignore
-        [lesion_weights[s].extend(m.lesion_weight[s]) for m in metrics]  # type: ignore
-        case_targets[s] = int(any(m.case_target[s] for m in metrics))  # type: ignore
-        case_preds[s] = max([m.case_pred[s] for m in metrics])  # type: ignore
+        if verbose:
+            elapsed = time.time() - t_start
+            log(INFO, f"Computed metrics for {len(case_ids)} cases in {elapsed:.1f}s")
+            log(INFO, f"\t{metrics}")
+            log(INFO, f"\tPICAI Score: {metrics.score:.4f}")
 
-    return PicaiEvalMetrics(
-        lesion_results=lesion_results,
-        case_target=case_targets,
-        case_pred=case_preds,
-        lesion_weight=lesion_weights,
-        case_weight=metrics[0].case_weight,
-        subject_list=metrics[0].subject_list,
-    )
+        return metrics
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pred-path",
+        "--probs-path",
         type=str,
         required=True,
         help="Path to the folder containing the predicted probability maps"
@@ -186,26 +419,23 @@ def main() -> None:
         type=str,
         required=False,
         default="metrics.json",
-        help="Where to save the metrics as a json. Eg. 'path/to/metrics.json'",
+        help="Folder in which to store the detection maps and the metrics json",
     )
 
     args = parser.parse_args()
 
-    # Compute picai metrics
-    # Warning, this method assumes binary segmentation (ie. only two classes)
-    # It also assumes the background class is at index 0
-    metrics: PicaiEvalMetrics = evaluate_folder(
-        y_det_dir=args.pred_path,
-        y_true_dir=args.gt_path,
-        y_det_postprocess_func=lambda pred: extract_lesion_candidates(pred)[0],
-    )
+    det_maps_path = join(args.output_path, "detection_maps")
 
-    # Print metrics
+    # Generate the detection maps
+    t = time.time()
+    case_ids = generate_detection_maps(args.probs_path, det_maps_path)
+    elapsed = time.time() - t
+    log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed/len(case_ids):.3f}s/case)")
+
+    metrics = get_picai_metrics(det_maps_path, args.gt_path)
+    metrics.save_minimal(join(args.output_path, "metrics.json"))
     print(metrics)
-    print("PICAI Score: ", metrics.score)
-
-    # Save metrics
-    metrics.save_minimal(args.output_path)
+    print(metrics.score)
 
 
 if __name__ == "__main__":

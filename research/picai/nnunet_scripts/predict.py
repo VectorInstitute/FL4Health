@@ -1,19 +1,20 @@
 import argparse
 import contextlib
 import json
-import multiprocessing
 import os
+import shutil
 import time
 import warnings
 from logging import INFO
-from os.path import basename, isdir, join
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from os.path import basename, exists, isdir, join
+from typing import List, Tuple
 
 import numpy as np
 import torch
 import yaml
 from flwr.common.logger import log
-from numpy.typing import NDArray
+
+from research.picai.fl_nnunet.nnunet_utils import NnUNetConfig
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
@@ -21,107 +22,17 @@ with warnings.catch_warnings():
     # Raised issue https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import nnunetv2
-    from nnunetv2.configuration import default_num_processes
-    from nnunetv2.inference.export_prediction import convert_predicted_logits_to_segmentation_with_correct_shape
+    from nnunetv2.ensembling.ensemble import ensemble_folders
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
-    from nnunetv2.utilities.file_path_utilities import check_workers_alive_and_busy
     from nnunetv2.utilities.find_class_by_name import recursive_find_python_class
     from nnunetv2.utilities.label_handling.label_handling import determine_num_input_channels
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
     from nnunetv2.utilities.utils import create_lists_from_splitted_dataset_folder
 
 
-class MyNnUNetPredictor(nnUNetPredictor):
-    def predict_from_data_iterator(
-        self, data_iterator: Generator, return_probabilities: bool = False, num_processes: int = default_num_processes
-    ) -> Dict[str, Any]:
-        """
-        Override of the predict from data iterator class so that we can have
-        it return the model outputs along with their output filenames and data
-        properties. The parent class method either saves the data and returns
-        nothing, or does not save the data and only returns the model outputs.
-        We are going to change as little as possible. This function is based
-        off of nnunetv2 version 2.4.2
-
-        Args:
-            data_iterator (Generator): The data iterator
-            return_probabilities (bool, optional): Whether or not to return the
-                predicted probability maps. Defaults to False.
-            num_processes (int, optional): The number of processes to use when
-                exporting predictions. Defaults to nnunet's default number of
-                processes (at time of writing this is 8)
-
-        Returns:
-            List: A dictionary containing the predicted annotations and the data
-                properties for each file. The dictionary may also contain the
-                predicted probabilities and the output file names associated
-                with each sample
-        """
-        with multiprocessing.get_context("spawn").Pool(num_processes) as pool:
-            # Have to ignore errors when defining worker list because mypy
-            # doesn't understand multiprocessing.get_context
-            worker_list = [i for i in pool._pool]  # type: ignore
-            model_outputs: Any = []
-            ofiles = []
-            properties_list = []
-
-            for preprocessed in data_iterator:
-                data = preprocessed["data"]
-                if isinstance(data, str):
-                    delfile = data
-                    data = torch.from_numpy(np.load(data))
-                    os.remove(delfile)
-
-                if preprocessed["ofile"] is not None:
-                    ofiles.append(preprocessed["ofile"])
-
-                properties = preprocessed["data_properties"]
-                properties_list.append(properties)
-
-                # let's not get into a runaway situation where the GPU predicts
-                # so fast that the disk has to b swamped with npy files
-                proceed = not check_workers_alive_and_busy(pool, worker_list, model_outputs, allowed_num_queued=2)
-                while not proceed:
-                    time.sleep(0.1)
-                    proceed = not check_workers_alive_and_busy(pool, worker_list, model_outputs, allowed_num_queued=2)
-
-                logits = self.predict_logits_from_preprocessed_data(data).cpu()
-
-                # Send prediction off to background worker for resampling
-                model_outputs.append(
-                    pool.starmap_async(
-                        convert_predicted_logits_to_segmentation_with_correct_shape,
-                        (
-                            (
-                                logits,
-                                self.plans_manager,
-                                self.configuration_manager,
-                                self.label_manager,
-                                properties,
-                                return_probabilities,
-                            ),
-                        ),
-                    ),
-                )
-
-            # Package outputs as dictionary
-            return_dict = {"annotation_preds": [], "data_properties": properties_list}
-
-            if len(ofiles) == len(model_outputs):
-                return_dict["ofiles"] = ofiles
-
-            if return_probabilities:
-                return_dict["probability_preds"] = []
-
-            for output in model_outputs:
-                data = output.get()[0]
-                if return_probabilities:
-                    return_dict["annotation_preds"].append(data[0])
-                    return_dict["probability_preds"].append(data[1])
-                else:
-                    return_dict["annotation_preds"].append(data)
-
-        return return_dict
+def yaml_join(loader: yaml.Loader, node: yaml.SequenceNode) -> str:
+    seq = loader.construct_sequence(node)
+    return os.path.join(*seq)
 
 
 def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
@@ -141,10 +52,8 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
             Contains important information about data preprocessing.
 
     Returns:
-        MyNnUNetPredictor: A subclass of the nnUNetPredictor class for the set
-            of models specified by the ckpt_list. The subclasses only
-            difference is that it returns a dictionary with more information
-            as opposed to just a list of numpy arrays.
+        nUNetPredictor: An nnUNetPredictor class for the set
+            of models specified by the ckpt_list.
     """
 
     # Helper function to make code cleaner
@@ -167,7 +76,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
         return trainer_name, inference_allowed_mirror_axes
 
     # Create unintialized predictor instance
-    predictor = MyNnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
+    predictor = nnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
 
     # Get parameters for each model and maybe some predictor init parameters
     trainer_name: str = "nnUNetTrainer"  # Default trainer class
@@ -225,10 +134,11 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 def predict(
     config_path: str,
     input_folder: str,
-    probs_folder: Optional[str] = None,
-    annotations_folder: Optional[str] = None,
+    output_folder: str,
+    probs_folder_name: str = "predicted_probability_maps",
+    annotations_folder_name: str = "predicted_annotations",
     verbose: bool = True,
-) -> Tuple[NDArray, NDArray, List[str]]:
+) -> None:
     """
     Uses multiprocessing to quickly do model inference for a single model, a
     group of models with the same nnunet config or an ensemble of different
@@ -246,7 +156,12 @@ def predict(
             the nnunet model plans json file. The dataset_json key should be
             the path to the dataset json of one of the training datasets. Or
             create a new json yourself with the 'label' and 'file_ending' keys
-            and their corresponding values as specified by nnunet
+            and their corresponding values as specified by nnunet. A !join
+            constructor that maps to os.path.join has been defined when
+            loading the config to allow the user to make their configs more
+            readable. Eg.
+                    base_path: &base_path /home/user/data
+                    dataset_json: !join [*base_path, 'PICAI', 'dataset.json']
         input_folder (str): Path to the folder containing the raw input data
             that has notbeen processed by nnunet yet. File names must follow the
             nnunet convention where each channel modality is stored as a
@@ -254,47 +169,41 @@ def predict(
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
-        preds_folder (Optional[str]): [OPTIONAL] Path to the output folder to
-            save the model predicted probabilities. If not provided the
-            probabilities are not saved
-        annotations_folder (Optional[str]): [OPTIONAL] Path to the output
-            folder to save the model predicted annotations. If not provided the
-            annotations are not saved
-    Returns:
-        NDArray[float]: a numpy array with a single predicted probability map
-            for each input image. Shape: (num_samples, num_classes, ...).
-        NDArray[int]: a numpy array with a single predicted annotation map for
-            each input image. Unlike the predicted probabilities these are NOT
-            one hot encoded. Shape: (num_samples, spatial_dims...)
-        List[str]: A list containing the unique case identifier for
-            each prediction
+        output_folder (str): Path to save the predicted probabilities and
+            predicted annotations. Each will be stored in a seperate
+            subdirectory. Probabilities will be stored as .npz files.
+            The NPZ file object will have the key 'probabilities'. The
+            predicted annotations will be saved as the original input image
+            file format
+        probs_folder_name (str): What to name the folder within the
+            output folder that the probabilities will be stored in
+        annotations_folder_name (str): What to name the folder within the
+            output folder that the predicted annotations will be stored in
     """
+    # Note: I should split output folder into two seperate paths for model outputs
+    t_start = time.time()
+
+    # Add !join constructor to yaml so that config files can be more readable
+    yml_loader = yaml.SafeLoader
+    yml_loader.add_constructor("!join", yaml_join)
 
     # Load config and nnunet required dicts
-    config = yaml.safe_load(open(config_path, "r"))
+    config = yaml.load(open(config_path, "r"), Loader=yml_loader)
     dataset_json = json.load(open(config["dataset_json"], "r"))
     plans = json.load(open(config["plans"], "r"))
 
-    # Convert input folder into a list of filenames so that we know which
-    # output preds correspond to which input files
-    input_data = create_lists_from_splitted_dataset_folder(
+    # Get case identifiers
+    input_files = create_lists_from_splitted_dataset_folder(
         folder=input_folder, file_ending=dataset_json["file_ending"]
     )
-    case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_data]
-
-    # Get output filelist
-    if probs_folder:
-        output_filelist = [join(probs_folder, case) for case in case_identifiers]
-    elif annotations_folder:
-        output_filelist = [join(annotations_folder, case) for case in case_identifiers]
-    else:
-        output_filelist = None
+    case_identifiers = [basename(case[0]).split(".")[0][:-5] for case in input_files]
+    num_samples = len(case_identifiers)
 
     # Model inference
     model_count = 0
-    config_probs_list = []
+    cfg_folders = []
     for i, key in enumerate(config.keys()):
-        if key in ["2d", "3d_fullres", "3d_lowres", "3d_cascade_fullres"]:
+        if key in [cfg.value for cfg in NnUNetConfig]:
             # Get predictor for config
             predictor = get_predictor(
                 ckpt_list=config[key], nnunet_config=str(key), dataset_json=dataset_json, plans=plans
@@ -305,86 +214,91 @@ def predict(
             model_count += n_models
             t = time.time()
 
+            # Create temporary output folder and add it to list
+            cfg_output_folder = join(output_folder, key)
+            cfg_folders.append(cfg_output_folder)
+
             # Silence stdout because predictor still prints stuff
             with contextlib.redirect_stdout(open(os.devnull, "w")):
-                # Get predicted annotations and probabilities
-                # Setting output folder to None changes the behaviour of
-                # function to return the outputs instead of saving them
-                # UPDATE: I overrode a method so that outputs are always returned
-                output = predictor.predict_from_files(
-                    list_of_lists_or_source_folder=input_data,
-                    output_folder_or_list_of_truncated_output_files=output_filelist,
+                predictor.predict_from_files(
+                    list_of_lists_or_source_folder=input_folder,
+                    output_folder_or_list_of_truncated_output_files=cfg_output_folder,
                     save_probabilities=True,
                 )
 
+            # Logging
             secs = time.time() - t
             if verbose:
-                log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(len(case_identifiers)*n_models):.1f}s/case")
+                log(INFO, f"Inference complete: {secs:.1f}s total, {secs/(num_samples*n_models):.1f}s/case")
                 log(INFO, "")
 
-            # Each element of config_probs_list will have
-            # shape (num_samples, num_classes, spatial_dims...)
-            # If only one element stack adds an empty dim
-            config_probs_list.append(np.stack(output["probability_preds"]))
+    # Now we need to ensemble the predictions from each config
+    if verbose:
+        log(INFO, "Ensembling predictions...")
+    t = time.time()
+    ensemble_folders(
+        list_of_input_folders=cfg_folders,
+        output_folder=join(output_folder, annotations_folder_name),
+        save_merged_probabilities=True,
+        dataset_json_file_or_dict=dataset_json,
+        plans_json_file_or_dict=plans,
+    )
+    secs = time.time() - t
+    if verbose:
+        log(INFO, f"Ensembling complete in {secs:.1f}s, {secs/num_samples:.1f}s/case")
+        log(INFO, "")
 
-            # Save stuff for annotations
-            label_manager = predictor.label_manager
-            annot_writer = predictor.plans_manager.image_reader_writer_class()
-            data_properties = output["data_properties"]
+    if verbose:
+        log(INFO, "Rearranging files...")
+    t = time.time()
 
-            # Delete variables we don't need from memory
-            del output
-            del predictor
+    # Copy some metadata files into the output directory
+    config_name = basename(config_path)
+    yaml.dump(config, open(join(output_folder, config_name), "w"), sort_keys=False, indent=4)
 
-    # If only one element stack adds an empty dim
-    final_probs = np.mean(np.stack(config_probs_list), axis=0, dtype=float)
+    shutil.copy(  # Data properties should be the same for all input images
+        src=join(cfg_folders[0], case_identifiers[0] + ".pkl"), dst=join(output_folder, "data_properties.pkl")
+    )
 
-    annotations = []
-    for prob in final_probs:
-        annotations.append(label_manager.convert_probabilities_to_segmentation(prob))
-    final_annotations = np.stack(annotations).astype(int)
+    plans_name = basename(config["plans"])
+    json.dump(plans, open(join(output_folder, plans_name), "w"), indent=4, sort_keys=False)
+
+    os.replace(join(output_folder, annotations_folder_name, "dataset.json"), join(output_folder, "dataset.json"))
+
+    # Remove the individual predictions for each model
+    for folder in cfg_folders:
+        shutil.rmtree(folder)
+
+    # Move predicted probabilities
+    if not exists(join(output_folder, probs_folder_name)):
+        os.makedirs(join(output_folder, probs_folder_name))
+    for case in case_identifiers:
+        # Ensemble method saves two copies of probabilities for some reason
+        # We'll keep the numpy compressed one and delete the serialized one
+        os.replace(
+            join(output_folder, annotations_folder_name, f"{case}.npz"),
+            join(output_folder, probs_folder_name, f"{case}.npz"),
+        )
+        os.remove(join(output_folder, annotations_folder_name, f"{case}.pkl"))
+
+    secs = time.time() - t
+    if verbose:
+        log(INFO, f"File management complete in {secs:.1f}s")
+        log(INFO, "")
 
     # Logs
-    shape = np.shape(final_probs)
+    sample = np.load(join(output_folder, probs_folder_name, f"{case_identifiers[0]}.npz"))
+    shape = sample["probabilities"].shape
     if verbose:
         log(
             INFO,
-            (f"Finished running inference with {model_count} models on " f"{shape[0]} samples."),
+            (f"Finished running inference with {model_count} models on " f"{num_samples} cases."),
         )
-        log(INFO, f"\tNum Samples: {shape[0]}")
-        log(INFO, f"\tNum Classes: {shape[1]}")
-        log(INFO, f"\tSpatial Dimensions {shape[2:]}")
-
-    # Save predicted probabilites if output_folder was provided
-    if probs_folder is not None:
-        t = time.time()
-        for pred, case in zip(final_probs, case_identifiers):
-            ofile = join(probs_folder, case + ".npz")
-            np.savez_compressed(file=ofile, probabilities=pred)
-        secs = time.time() - t
-        if verbose:
-            log(INFO, "")
-            log(
-                INFO,
-                f"Saved predicted probability maps to disk: {secs:.1f}s total, {secs/len(case_identifiers):.1f}s/case",
-            )
-
-    # Maybe save predicted annotations
-    if annotations_folder is not None:
-        if not os.path.exists(annotations_folder):
-            os.makedirs(annotations_folder)
-        for pred, case, props in zip(final_annotations, case_identifiers, data_properties):
-            ofile = join(annotations_folder, case + dataset_json["file_ending"])
-            annot_writer.write_seg(pred, ofile, props)
-        if verbose:
-            log(
-                INFO,
-                "Saved predicted annotations to disk",
-            )
-
-    # final probs shape: (num_samples, num_classes, spatial_dims...)
-    # final annot shape: (num_samples, spatial_dims...)
-    return final_probs, final_annotations, case_identifiers
+        log(INFO, f"\tNum Cases: {num_samples}")
+        log(INFO, f"\tNum Classes: {shape[0]}")
+        log(INFO, f"\tSpatial Dimensions {shape[1:]}")
+        secs = time.time() - t_start
+        log(INFO, f"Total Time: {secs:.1f}s ({secs/num_samples:.1f}s/case)")
 
 
 def main() -> None:
@@ -404,18 +318,23 @@ def main() -> None:
         "--config-path",
         required=True,
         type=str,
-        help="""Path to a yaml config file. The three required keys are plans,
-            dataset_json and one or more nnunet_configs (eg. 2d, 3d_fullres
-            etc.). The nnunet config keys should contain a list of paths. If
-            the path points to a file it should be a model checkpoint. The
-            model checkpoints can be dicts with the 'network_weights' key or
-            nn.Modules. If the path points to a directory it should be an
-            nnunet results folder for a particular dataset-config-trainer
-            combo. The plans key should be the path to the nnunet model
-            plans json file. The dataset_json key should be the path to the
-            dataset json of one of the training datasets. Or create a new json
-            yourself with the 'label' and 'file_ending' keys and their
-            corresponding values as specified by nnunet.""",
+        help="""Path to a yaml config file. The three required keys
+            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
+            3d_fullres etc.). The nnunet config keys should contain a list of
+            paths. If the path points to a file it should be a model
+            checkpoint. The model checkpoints can be dicts with the
+            'network_weights' key or nn.Modules. If the path points to a
+            directory it should be an nnunet results folder for a particular
+            dataset-config-trainer combo. The plans key should be the path to
+            the nnunet model plans json file. The dataset_json key should be
+            the path to the dataset json of one of the training datasets. Or
+            create a new json yourself with the 'label' and 'file_ending' keys
+            and their corresponding values as specified by nnunet. A !join
+            constructor that maps to os.path.join has been defined when
+            loading the config to allow the user to make their configs more
+            readable. Eg.
+                    base_path: &base_path /home/user/data
+                    dataset_json: !join [*base_path, 'PICAI', 'dataset.json']""",
     )
     parser.add_argument(
         "--input-folder",
@@ -429,27 +348,20 @@ def main() -> None:
             cases must have the same N channels numbered from 0 to N.""",
     )
     parser.add_argument(
-        "--probs-folder",
-        required=False,
+        "--output-folder",
+        required=True,
         type=str,
-        help="""[OPTIONAL] Path to the output folder to save the model
-            predicted probabilities. If not provided the probabilities are not
-            saved. Will recursively create directories as necessary if the
-            probabilities folder does not exist""",
-    )
-    parser.add_argument(
-        "--annotations-folder",
-        required=False,
-        type=str,
-        help="""[OPTIONAL] Path to the output folder to save the model
-            predicted annotations. If not provided the annotations are not
-            saved. Will recursively create directories as necessary if the
-            annotations folder does not exist""",
+        help="""[OPTIONAL] Path to save the predicted probabilities and
+            predicted annotations. Each will be stored in a seperate
+            subdirectory. Probabilities will be stored as .npz files.
+            The NPZ file object will have the key 'probabilities'. The
+            predicted annotations will be saved as the original input image
+            file format""",
     )
 
     args = parser.parse_args()
 
-    predict(args.config_path, args.input_folder, args.probs_folder, args.annotations_folder)
+    predict(args.config_path, args.input_folder, args.output_folder)
 
 
 if __name__ == "__main__":

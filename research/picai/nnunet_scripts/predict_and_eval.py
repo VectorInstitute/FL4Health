@@ -1,147 +1,49 @@
 import argparse
-import os
-import time
-import warnings
 from logging import INFO
 from os.path import exists, join
-from typing import Optional
 
-import numpy as np
 from flwr.common.logger import log
 
-from research.picai.nnunet_scripts.eval import get_detection_maps, get_picai_metrics, load_images_from_folder
+from research.picai.nnunet_scripts.eval import generate_detection_maps, get_picai_metrics
 from research.picai.nnunet_scripts.predict import predict
 
 
 def pred_and_eval(
     config_path: str,
-    inputs_folder: str,
-    labels_folder: str,
-    output_folder: Optional[str] = None,
-    save_probability_maps: bool = False,
-    save_detection_maps: bool = False,
-    save_annotations: bool = False,
-    verbose: bool = True,
+    input_folder: str,
+    label_folder: str,
+    output_folder: str,
 ) -> None:
-    """
-    Runs inference on raw input data given a number of compatible nnunet
-    models. Then extracts detection maps from those predictions and evaluates
-    the model using the standardPICAI evaluation metrics.
-
-    Args:
-        config_path (str): Path to a yaml config file. The three required keys
-            are plans, dataset_json and one or more nnunet_configs (eg. 2d,
-            3d_fullres etc.). The nnunet config keys should contain a list of
-            paths. If the path points to a file it should be a model
-            checkpoint. The model checkpoints can be dicts with thE
-            'network_weights' key or nn.Modules. If the path points to a
-            directory it should be an nnunet results folder for a particular
-            dataset-config-trainer combo. The plans key should be the path to
-            the nnunet model plans json file. The dataset_json key should be
-            the path to the dataset json of one of the training datasets. Or
-            create a new json yourself with the 'label' and 'file_ending' keys
-            and their corresponding values as specified by nnunet.
-        inputs_folder (str): Path to the folder containing the raw input data
-            that has not been processed by nnunet yet. File names must follow
-            the nnunet convention where each channel modality is stored as a
-            seperate file. File names should be case-identifier_0000 where
-            0000 is a 4 digit integer representing the channel/modality of the
-            image. All cases must have the same N channels numbered from 0 to
-            N.
-        labels_folder (str): Path to the folder containing the ground truth
-            annotation maps. File names must match the case identifiers of the input images
-        output_folder (Optional[str], optional): Path to the output folder. By
-            default the only output is a 'metrics.json' file containing the
-            evaluation results. If left as none then nothing is saved.
-            Defaults to None.
-        save_probability_maps (bool, optional): Whether or not to save the
-            predicted probability maps. Defaults to False.
-        save_detection_maps (bool, optional): Whether or not to save the
-            predicted lesion detection maps. Defaults to False.
-        verbose (bool, optional): Whether or not to print logs to stdout.
-            Defaults to True.
-    """
-
-    # Ensure an output folder is specified
-    if save_probability_maps or save_detection_maps or save_annotations:
-        assert (
-            output_folder is not None
-        ), "Can not save the probability maps, annotations \
-            or the detection maps if no output folder is specified"
-
-    # Run inference and maybe save probability maps.
-    # output folders will be created if they dont exist
-    if save_probability_maps and output_folder is not None:
-        prob_out_folder = join(output_folder, "predicted_probability_maps")
-    else:
-        prob_out_folder = None
-
-    if save_annotations and output_folder is not None:
-        annotations_folder = join(output_folder, "predicted_annotations")
-    else:
-        annotations_folder = None
-
-    probability_preds, annotation_preds, case_identifiers = predict(
+    det_map_folder_name = "detection_maps"
+    probs_folder_name = "predicted_probability_maps"
+    annotation_folder_name = "predicted_annotations"
+    predict(
         config_path=config_path,
-        input_folder=inputs_folder,
-        probs_folder=prob_out_folder,
-        annotations_folder=annotations_folder,
-        verbose=verbose,
+        input_folder=input_folder,
+        output_folder=output_folder,
+        probs_folder_name=probs_folder_name,
+        annotations_folder_name=annotation_folder_name,
+        verbose=True,
     )
-    del annotation_preds
-
-    # Extract lesion detection maps
-    if verbose:
-        log(INFO, "")
-        log(INFO, "Starting lesion detection")
-
-    t = time.time()
-    detection_maps = get_detection_maps(probability_preds)
-    secs = time.time() - t
-
-    if verbose:
-        log(INFO, f"Lesion detection complete: {secs:.2f}s total, {secs/len(case_identifiers):.2f}s/case")
-
-    # Save detection maps
-    if save_detection_maps and output_folder is not None:
-        det_output_folder = join(output_folder, "detection_maps")
-        if not exists(det_output_folder):
-            os.makedirs(det_output_folder)
-        t = time.time()
-        for det, case in zip(detection_maps, case_identifiers):
-            ofile = join(det_output_folder, case + ".npz")
-            np.savez_compressed(ofile, detection_map=det)
-        secs = time.time() - t
-        if verbose:
-            log(INFO, f"Saved detection maps to disk: {secs:.2f}s total, {secs/len(detection_maps):.1f}s/case")
-
-    # Load the input data
-    labels = load_images_from_folder(labels_folder, case_identifiers).astype(int)
-
-    # Check if labels need to be one hot encoded
-    if detection_maps.ndim != labels.ndim:
-        num_classes = probability_preds.shape[1]
-        labels_one_hot = (np.arange(num_classes) == labels[..., None]).astype(int)
-        labels_one_hot = np.moveaxis(labels_one_hot, -1, 1)
-
-    # Calculate Metrics
-    t = time.time()
-    metrics = get_picai_metrics(detection_maps, labels_one_hot)
-    secs = time.time() - t
-
-    # Print metrics
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=FutureWarning)
-        if verbose:
-            log(INFO, "")
-            log(INFO, "Evaluation Results")
-            log(INFO, f"\teval took {secs:.1f}s total")
-            log(INFO, f"\t{metrics}")
-            log(INFO, f"\tPicai Score: {metrics.score}")
-
-    # Save metrics
-    if output_folder is not None:
-        metrics.save_full(join(output_folder, "picai_eval_metrics.json"))
+    log(INFO, "")
+    generate_detection_maps(
+        input_folder=join(output_folder, probs_folder_name),
+        output_folder=join(output_folder, det_map_folder_name),
+        transforms=None,
+        npz_key="probabilities",
+        num_threads=None,  # Let threadpool determine optimal num threads
+        postfixes=[""],
+        extensions=[".npz"],  # Probablity maps saved as npz files
+        verbose=True,
+    )
+    log(INFO, "")
+    metrics = get_picai_metrics(
+        detection_map_folder=join(output_folder, det_map_folder_name),
+        ground_truth_annotations_folder=label_folder,
+        num_threads=None,  # Let threadpool autodetermine num threads
+        verbose=True,
+    )
+    metrics.save_minimal(join(output_folder, "metrics.json"))
 
 
 def main() -> None:
@@ -185,7 +87,7 @@ def main() -> None:
             corresponding values as specified by nnunet.""",
     )
     parser.add_argument(
-        "--inputs-folder",
+        "--input-folder",
         required=True,
         type=str,
         help="""Path to the folder containing the raw input data that has not
@@ -196,7 +98,7 @@ def main() -> None:
             cases must have the same N channels numbered from 0 to N.""",
     )
     parser.add_argument(
-        "--labels-folder",
+        "--label-folder",
         required=True,
         type=str,
         help="""Path to the folder containing the ground truth annotation
@@ -205,46 +107,32 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-folder",
-        required=False,
+        required=True,
         type=str,
-        help="""[OPTIONAL] Path to the output folder. By default the only
-            output is a 'metrics.json' file containing the evaluation results.
-            If this flag is not included then nothing is saved.""",
-    )
-    parser.add_argument(
-        "--save-probability-maps",
-        required=False,
-        action="store_true",
-        help="""[OPTIONAL] Include this flag to save the predicted probability
-            maps. Will be saved in their own folder in the output folder and
-            named according to the case identifier""",
-    )
-    parser.add_argument(
-        "--save-detection-maps",
-        required=False,
-        action="store_true",
-        help="""[OPTIONAL] Include this flag to save the predicted lesion
-            detection maps. Will be saved in their own folder in the output
-            folder and named according to the case identifier""",
-    )
-    parser.add_argument(
-        "--save-annotations",
-        required=False,
-        action="store_true",
-        help="""[OPTIONAL] Include this flag to save the final predicted
-            annotations/segmentations""",
+        help="""Path to the output folder. By default this script will save
+        the predicted probabilities, detection maps and annotations.""",
     )
 
     args = parser.parse_args()
 
+    output_folder = args.output_folder
+    if exists(output_folder):
+        print(f"Found existing folder for output folder : {output_folder}")
+        print("If you choose to proceed existing files may be overwritten")
+        while True:
+            proceed = input("Do you wish to proceed (y/n)?: ")
+            if proceed == "y" or proceed == "Y":
+                break
+            elif proceed == "n" or proceed == "N":
+                exit()
+            else:
+                print("Did not get valid input. Please enter 'y' or 'n'")
+
     pred_and_eval(
         config_path=args.config_path,
-        inputs_folder=args.inputs_folder,
-        labels_folder=args.labels_folder,
+        input_folder=args.input_folder,
+        label_folder=args.label_folder,
         output_folder=args.output_folder,
-        save_probability_maps=args.save_probability_maps,
-        save_detection_maps=args.save_detection_maps,
-        save_annotations=args.save_annotations,
     )
 
 
