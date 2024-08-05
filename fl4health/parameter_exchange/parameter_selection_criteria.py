@@ -193,7 +193,7 @@ def _process_masked_module(
 
     Args:
         module (nn.Module): the module upon which operations described above are performed.
-            "module" can either be a submodule of the model trained in FedPM, or it can be the model itself.
+            "module" can either be a submodule of the model trained in FedPM, or it can a standalone module itself.
             In the latter case, the argument "model_state_dict" should be the same as "module.state_dict()".
             In either case, it is assumed that module is a masked module.
         model_state_dict (Dict[str, Tensor]): the state dictionary of the model trained in FedPM.
