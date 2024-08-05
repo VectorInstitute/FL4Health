@@ -13,35 +13,6 @@ from fl4health.utils.functions import bernoulli_sample
 
 
 class MaskedLinear(nn.Linear):
-    """
-    Implementation of masked linear layers.
-
-    Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias.
-    However, the weight and the bias do not receive gradient in back propagation.
-    Instead, two score tensors - one for the weight and another for the bias - are maintained.
-    In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-    which are then used to produce binary masks via bernoulli sampling.
-    Finally, the binary masks are  applied to the weight and the bias. During training,
-    gradients with respect to the score tensors are computed and used to update the score tensors.
-
-    Args:
-        in_features: size of each input sample
-        out_features: size of each output sample
-        bias: If set to ``False``, the layer will not learn an additive bias.
-            Default: ``True``
-
-    Attributes:
-        weight: weights of the module.
-        bias:  bias of the module.
-        weight_score: learnable scores for the weights. Has the same shape as weight.
-        bias_score: learnable scores for the bias. Has the same shape as bias.
-    """
-
-    __constants__ = ["in_features", "out_features"]
-    in_features: int
-    out_features: int
-    weight: Tensor
-
     def __init__(
         self,
         in_features: int,
@@ -50,12 +21,35 @@ class MaskedLinear(nn.Linear):
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
     ) -> None:
+        """
+        Implementation of masked linear layers.
+
+        Like regular linear layers (i.e., nn.Linear module), a masked linear layer has a weight and a bias.
+        However, the weight and the bias do not receive gradient in back propagation.
+        Instead, two score tensors - one for the weight and another for the bias - are maintained.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+        which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training,
+        gradients with respect to the score tensors are computed and used to update the score tensors.
+
+        Note: the scores are not assumed to be bounded between 0 and 1.
+
+        Args:
+            in_features: size of each input sample
+            out_features: size of each output sample
+            bias: If set to ``False``, the layer will not learn an additive bias.
+                Default: ``True``
+
+        Attributes:
+            weight: weights of the module.
+            bias:  bias of the module.
+            weight_score: learnable scores for the weights. Has the same shape as weight.
+            bias_score: learnable scores for the bias. Has the same shape as bias.
+        """
         super().__init__(in_features, out_features, bias, device, dtype)
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = Parameter(
-            torch.empty((out_features, in_features), device=device, dtype=dtype), requires_grad=False
-        )
+        self.weight.requires_grad = False
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
             self.bias = Parameter(torch.empty(out_features, device=device, dtype=dtype), requires_grad=False)
@@ -83,6 +77,9 @@ class MaskedLinear(nn.Linear):
 
     @classmethod
     def from_pretrained(cls, linear_module: nn.Linear) -> "MaskedLinear":
+        """
+        Return an instance of MaskedLinear whose weight and bias have the same values as those of linear_module.
+        """
         has_bias = linear_module.bias is not None
         masked_linear_module = cls(
             in_features=linear_module.in_features,
@@ -99,7 +96,40 @@ class MaskedLinear(nn.Linear):
 
 class MaskedConv1d(nn.Conv1d):
     """
-    Implementation of masked Conv1d layers in a manner that is analogous to MaskedLinear.
+    Implementation of masked Conv1d layers.
+
+    Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight
+    (i.e., convolutional filter) and a (optional) bias.
+    However, the weight and the bias do not receive gradient in back propagation.
+    Instead, two score tensors - one for the weight and another for the bias - are maintained.
+    In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+    which are then used to produce binary masks via bernoulli sampling.
+    Finally, the binary masks are applied to the weight and the bias. During training,
+    gradients with respect to the score tensors are computed and used to update the score tensors.
+
+    Note: the scores are not assumed to be bounded between 0 and 1.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        kernel_size (int or tuple): Size of the convolving kernel
+        stride (int or tuple, optional): Stride of the convolution. Default: 1
+        padding (int, tuple or str, optional): Padding added to both sides of
+            the input. Default: 0
+        padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
+            ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
+        dilation (int or tuple, optional): Spacing between kernel
+            elements. Default: 1
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Default: 1
+        bias (bool, optional): If ``True``, adds a learnable bias to the
+            output. Default: ``True``
+
+    Attributes:
+        weight: weights of the module.
+        bias:  bias of the module.
+        weight_score: learnable scores for the weights. Has the same shape as weight.
+        bias_score: learnable scores for the bias. Has the same shape as bias.
     """
 
     def __init__(
@@ -153,6 +183,9 @@ class MaskedConv1d(nn.Conv1d):
 
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv1d) -> "MaskedConv1d":
+        """
+        Return an instance of MaskedConv1d whose weight and bias have the same values as those of conv_module.
+        """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
         # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
@@ -195,6 +228,41 @@ class MaskedConv2d(nn.Conv2d):
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
     ) -> None:
+        """
+        Implementation of masked Conv2d layers.
+
+        Like regular Conv2d layers (i.e., nn.Conv2d module), a masked convolutional layer has a weight
+        (i.e., convolutional filter) and a (optional) bias.
+        However, the weight and the bias do not receive gradient in back propagation.
+        Instead, two score tensors - one for the weight and another for the bias - are maintained.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+        which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training,
+        gradients with respect to the score tensors are computed and used to update the score tensors.
+
+        Note: the scores are not assumed to be bounded between 0 and 1.
+
+        Args:
+            in_channels (int): Number of channels in the input image
+            out_channels (int): Number of channels produced by the convolution
+            kernel_size (int or tuple): Size of the convolving kernel
+            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            padding (int, tuple or str, optional): Padding added to all four sides of
+                the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
+                ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            groups (int, optional): Number of blocked connections from input
+                channels to output channels. Default: 1
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+                output. Default: ``True``
+
+        Attributes:
+            weight: weights of the module.
+            bias:  bias of the module.
+            weight_score: learnable scores for the weights. Has the same shape as weight.
+            bias_score: learnable scores for the bias. Has the same shape as bias.
+        """
         super().__init__(
             in_channels,
             out_channels,
@@ -232,6 +300,9 @@ class MaskedConv2d(nn.Conv2d):
 
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv2d) -> "MaskedConv2d":
+        """
+        Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.
+        """
         has_bias = conv_module.bias is not None
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
@@ -272,6 +343,39 @@ class MaskedConv3d(nn.Conv3d):
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
     ) -> None:
+        """
+        Implementation of masked Conv2d layers.
+
+        Like regular Conv3d layers (i.e., nn.Conv3d module), a masked convolutional layer has a weight
+        (i.e., convolutional filter) and a (optional) bias.
+        However, the weight and the bias do not receive gradient in back propagation.
+        Instead, two score tensors - one for the weight and another for the bias - are maintained.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+        which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training,
+        gradients with respect to the score tensors are computed and used to update the score tensors.
+
+        Note: the scores are not assumed to be bounded between 0 and 1.
+
+        Args:
+            in_channels (int): Number of channels in the input image
+            out_channels (int): Number of channels produced by the convolution
+            kernel_size (int or tuple): Size of the convolving kernel
+            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            padding (int, tuple or str, optional): Padding added to all six sides of
+                the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``, ``'replicate'``
+            or ``'circular'``. Default: ``'zeros'``
+            dilation (int or tuple, optional): Spacing between kernel elements. Default: 1
+            groups (int, optional): Number of blocked connections from input channels to output channels. Default: 1
+            bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True``
+
+        Attributes:
+            weight: weights of the module.
+            bias:  bias of the module.
+            weight_score: learnable scores for the weights. Has the same shape as weight.
+            bias_score: learnable scores for the bias. Has the same shape as bias.
+        """
         super().__init__(
             in_channels,
             out_channels,
@@ -309,6 +413,9 @@ class MaskedConv3d(nn.Conv3d):
 
     @classmethod
     def from_pretrained(cls, conv_module: nn.Conv3d) -> "MaskedConv3d":
+        """
+        Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.
+        """
         has_bias = conv_module.bias is not None
         kernel_size_ = _triple(conv_module.kernel_size)
         stride_ = _triple(conv_module.stride)
@@ -354,6 +461,3 @@ def convert_to_masked_model(original_model: nn.Module) -> nn.Module:
 
 def is_masked_module(module: nn.Module) -> bool:
     return isinstance(module, (MaskedLinear, MaskedConv1d, MaskedConv2d, MaskedConv3d))
-
-
-MaskedModule = Union[MaskedLinear, MaskedConv1d, MaskedConv2d, MaskedConv3d]

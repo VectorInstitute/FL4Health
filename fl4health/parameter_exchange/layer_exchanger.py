@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Set, Tuple, Type, TypeVar
+from typing import List, Optional, Set, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn
@@ -7,9 +7,9 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
+from fl4health.utils.typing import LayerSelectionFunction
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
-LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
 
 
 class FixedLayerExchanger(ParameterExchanger):

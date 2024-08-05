@@ -1,6 +1,6 @@
 import math
 from functools import partial
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -9,8 +9,7 @@ from scipy.stats import bernoulli
 from torch import Tensor
 
 from fl4health.model_bases.masked_layers import is_masked_module
-
-LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
+from fl4health.utils.typing import LayerSelectionFunction
 
 
 class LayerSelectionFunctionConstructor:
@@ -228,6 +227,9 @@ def select_scores_and_sample_masks(model: nn.Module, initial_model: Optional[nn.
     Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
     masked layers, and then samples binary masks based on those scores to send to the server.
     This function is meant to be used for the FedPM algorithm.
+
+    Note: in the current implementation, we always exchange the score tensors for all layers. In the future, we might
+        support exchanging a subset of the layers (for example, filtering out the masks that are all zeros).
     """
     model_states = model.state_dict()
     with torch.no_grad():
