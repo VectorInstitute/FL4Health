@@ -52,7 +52,8 @@ class MaskedLinear(nn.Linear):
         self.weight.requires_grad = False
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
-            self.bias = Parameter(torch.empty(out_features, device=device, dtype=dtype), requires_grad=False)
+            assert self.bias is not None
+            self.bias.requires_grad = False
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias", None)
@@ -95,43 +96,6 @@ class MaskedLinear(nn.Linear):
 
 
 class MaskedConv1d(nn.Conv1d):
-    """
-    Implementation of masked Conv1d layers.
-
-    Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight
-    (i.e., convolutional filter) and a (optional) bias.
-    However, the weight and the bias do not receive gradient in back propagation.
-    Instead, two score tensors - one for the weight and another for the bias - are maintained.
-    In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
-    which are then used to produce binary masks via bernoulli sampling.
-    Finally, the binary masks are applied to the weight and the bias. During training,
-    gradients with respect to the score tensors are computed and used to update the score tensors.
-
-    Note: the scores are not assumed to be bounded between 0 and 1.
-
-    Args:
-        in_channels (int): Number of channels in the input image
-        out_channels (int): Number of channels produced by the convolution
-        kernel_size (int or tuple): Size of the convolving kernel
-        stride (int or tuple, optional): Stride of the convolution. Default: 1
-        padding (int, tuple or str, optional): Padding added to both sides of
-            the input. Default: 0
-        padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
-            ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
-        dilation (int or tuple, optional): Spacing between kernel
-            elements. Default: 1
-        groups (int, optional): Number of blocked connections from input
-            channels to output channels. Default: 1
-        bias (bool, optional): If ``True``, adds a learnable bias to the
-            output. Default: ``True``
-
-    Attributes:
-        weight: weights of the module.
-        bias:  bias of the module.
-        weight_score: learnable scores for the weights. Has the same shape as weight.
-        bias_score: learnable scores for the bias. Has the same shape as bias.
-    """
-
     def __init__(
         self,
         in_channels: int,
@@ -146,6 +110,42 @@ class MaskedConv1d(nn.Conv1d):
         device: Optional[torch.device] = None,
         dtype: Optional[torch.dtype] = None,
     ) -> None:
+        """
+        Implementation of masked Conv1d layers.
+
+        Like regular Conv1d layers (i.e., nn.Conv1d module), a masked convolutional layer has a weight
+        (i.e., convolutional filter) and a (optional) bias.
+        However, the weight and the bias do not receive gradient in back propagation.
+        Instead, two score tensors - one for the weight and another for the bias - are maintained.
+        In the forward pass, the score tensors are transformed by the Sigmoid function into probability scores,
+        which are then used to produce binary masks via bernoulli sampling.
+        Finally, the binary masks are applied to the weight and the bias. During training,
+        gradients with respect to the score tensors are computed and used to update the score tensors.
+
+        Note: the scores are not assumed to be bounded between 0 and 1.
+
+        Args:
+            in_channels (int): Number of channels in the input image
+            out_channels (int): Number of channels produced by the convolution
+            kernel_size (int or tuple): Size of the convolving kernel
+            stride (int or tuple, optional): Stride of the convolution. Default: 1
+            padding (int, tuple or str, optional): Padding added to both sides of
+                the input. Default: 0
+            padding_mode (str, optional): ``'zeros'``, ``'reflect'``,
+                ``'replicate'`` or ``'circular'``. Default: ``'zeros'``
+            dilation (int or tuple, optional): Spacing between kernel
+                elements. Default: 1
+            groups (int, optional): Number of blocked connections from input
+                channels to output channels. Default: 1
+            bias (bool, optional): If ``True``, adds a learnable bias to the
+                output. Default: ``True``
+
+        Attributes:
+            weight: weights of the module.
+            bias:  bias of the module.
+            weight_score: learnable scores for the weights. Has the same shape as weight.
+            bias_score: learnable scores for the bias. Has the same shape as bias.
+        """
         super().__init__(
             in_channels,
             out_channels,
@@ -163,8 +163,8 @@ class MaskedConv1d(nn.Conv1d):
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
             assert self.bias is not None
-            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
+            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
         self.reset_parameters()
@@ -280,8 +280,8 @@ class MaskedConv2d(nn.Conv2d):
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
             assert self.bias is not None
-            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
+            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
         self.reset_parameters()
@@ -393,8 +393,8 @@ class MaskedConv3d(nn.Conv3d):
         self.weight_scores = Parameter(torch.randn_like(self.weight), requires_grad=True)
         if bias:
             assert self.bias is not None
-            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
             self.bias.requires_grad = False
+            self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
         self.reset_parameters()
