@@ -5,6 +5,8 @@ import warnings
 from functools import partial
 from typing import Optional
 
+import yaml
+
 with warnings.catch_warnings():
     # Need to import lightning utilities now in order to avoid deprecation
     # warnings. Ignore flake8 warning saying that it is unused
@@ -16,7 +18,6 @@ with warnings.catch_warnings():
 
 import flwr as fl
 import torch
-import yaml
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager

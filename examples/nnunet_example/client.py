@@ -15,13 +15,8 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import lightning_utilities  # noqa: F401
 
-    # Some finicky import stuff, if i don't silence deprecation warnings when
-    # importing flower then i get unsilenceable deprecation warning from a
-    # different api (batch generators)
-    # Issue: https://github.com/MIC-DKFZ/nnUNet/issues/2370
-    from flwr.client import start_client
-
 import torch
+from flwr.client import start_client
 from flwr.common.logger import log
 from torchmetrics.segmentation import GeneralizedDiceScore
 

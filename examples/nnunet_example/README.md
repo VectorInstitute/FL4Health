@@ -2,7 +2,7 @@
 
 This example demonstrates how to use the NnUNetClient to train nnunet segmentation models in a federated setting.
 
-By default this example trains an nnunet model on the Task04_Hippocampus dataset from the Medical Segmentation Decathelon (MSD). However, any of the MSD datasets can be used by specifying them with the msd_dataset_name flag for the client. To run this example first create a config file for the server. An example config has been provided in this directory. The required keys for the config are:
+By default this example trains an nnunet model on the Task04_Hippocampus dataset from the Medical Segmentation Decathlon (MSD). However, any of the MSD datasets can be used by specifying them with the msd_dataset_name flag for the client. To run this example first create a config file for the server. An example config has been provided in this directory. The required keys for the config are:
 
 ```yaml
 # Parameters that describe the server
@@ -21,7 +21,7 @@ One may also add the following optional keys to the config yaml file
 
 ```yaml
 # Optional config parameters
-nnunet_plans: /Path/to/nnunet/plans/json
+nnunet_plans: /Path/to/nnunet/plans.json
 starting_checkpoint: /Path/to/starting/checkpoint.pth
 ```
 
@@ -37,4 +37,4 @@ Once the server has started, start the necessary number of clients specified by 
 python -m examples.nnunet_example.client --dataset_path examples/datasets/nnunet
 ```
 
-The MSD dataset will be downloaded and prepared automatically by the nnunet client if it does not already exist. The dataset_path flag is used as more of a data working directory by the client. The client will create nnunet_raw, nnunet_preprocessed and nnunet_results sub directories. The dataset itself will be stored in a folder within nnunet_raw. Therefore when checking if the data already exists, the client will look for the following folder '{dataset_path}/nnunet_raw/{dataset_name}'
+The MSD dataset will be downloaded and prepared automatically by the nnunet example script if it does not already exist. The dataset_path flag is used as more of a data working directory by the client. The client will create nnunet_raw, nnunet_preprocessed and nnunet_results sub directories if they do not already exist in the dataset_path folder. The dataset itself will be stored in a folder within nnunet_raw. Therefore when checking if the data already exists, the client will look for the following folder '{dataset_path}/nnunet_raw/{dataset_name}'

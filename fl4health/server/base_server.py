@@ -353,7 +353,39 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
 
 class FlServerWithInitializer(FlServer):
-    initialized = False  # Add attribute
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        strategy: Optional[Strategy] = None,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        checkpointer: Optional[TorchCheckpointer] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
+    ) -> None:
+        """
+        Server with an initialize hook method that is called prior to fit.
+        Override the self.initialize method to do server initialization prior
+        to training but after the clients have been created. Can be useful if
+        the state of the server depends on the properties of the clients. Eg.
+        The nnunet server requests an nnunet plans dict to be generated bu a
+        client if one was not provided.
+
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+        """
+        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
+        self.initialized = False
 
     def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
         """
