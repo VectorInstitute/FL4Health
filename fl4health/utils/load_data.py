@@ -71,7 +71,25 @@ def load_mnist_data(
     dataset_converter: Optional[DatasetConverter] = None,
     validation_proportion: float = 0.2,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load MNIST Dataset (training and validation set)."""
+    """
+    Load MNIST Dataset (training and validation set).
+
+    Args:
+        data_dir (Path): The path to the MNIST dataset locally.
+            Dataset is downloaded to this location if it does not already exist.
+        batch_size (int): The batch size to use for the train and validation dataloader.
+        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+        transform (Optional[Callable]): Optional transform to be applied to input samples.
+        target_transform (Optional[Callable]): Optional transform to be applied to targets.
+        dataset_converter (Optional[DatasetConverter]): Optional dataset converter used to convert
+            the input and/or target of train and validation dataset.
+        validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
+            to allocate to the validation dataset. Defaults to 0.2.
+
+    Returns:
+        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+            and a dictionary with the sample counts of datasets underpinning the respective data loaders.
+    """
     log(INFO, f"Data directory: {str(data_dir)}")
 
     if transform is None:
@@ -101,10 +119,52 @@ def load_mnist_data(
     return train_loader, validation_loader, num_examples
 
 
+def load_mnist_test_data(
+    data_dir: Path,
+    batch_size: int,
+    sampler: Optional[LabelBasedSampler] = None,
+    transform: Optional[Callable] = None,
+) -> Tuple[DataLoader, Dict[str, int]]:
+    """
+    Load MNIST Test Dataset.
+
+    Args:
+        data_dir (Path): The path to the MNIST dataset locally.
+            Dataset is downloaded to this location if it does not already exist.
+        batch_size (int): The batch size to use for the test dataloader.
+        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+        transform (Optional[Callable]): Optional transform to be applied to input samples.
+
+    Returns:
+        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+            of the test dataset.
+    """
+    log(INFO, f"Data directory: {str(data_dir)}")
+
+    if transform is None:
+        transform = transforms.Compose(
+            [
+                ToNumpy(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
+
+    data, targets = get_mnist_data_and_target_tensors(data_dir, False)
+    evaluation_set = TensorDataset(data, targets, transform)
+
+    if sampler is not None:
+        evaluation_set = sampler.subsample(evaluation_set)
+
+    evaluation_loader = DataLoader(evaluation_set, batch_size=batch_size, shuffle=False)
+    num_examples = {"eval_set": len(evaluation_set)}
+    return evaluation_loader, num_examples
+
+
 def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
-    mnist_dataset = CIFAR10(data_dir, train=train, download=True)
-    data = torch.Tensor(mnist_dataset.data)
-    targets = torch.Tensor(mnist_dataset.targets).long()
+    cifar_dataset = CIFAR10(data_dir, train=train, download=True)
+    data = torch.Tensor(cifar_dataset.data)
+    targets = torch.Tensor(cifar_dataset.targets).long()
     return data, targets
 
 
@@ -130,7 +190,21 @@ def load_cifar10_data(
     sampler: Optional[LabelBasedSampler] = None,
     validation_proportion: float = 0.2,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 (training and validation set)."""
+    """
+    Load CIFAR10 Dataset (training and validation set).
+
+    Args:
+        data_dir (Path): The path to the CIFAR10 dataset locally.
+            Dataset is downloaded to this location if it does not already exist.
+        batch_size (int): The batch size to use for the train and validation dataloader.
+        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+        validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
+            to allocate to the validation dataset. Defaults to 0.2.
+
+    Returns:
+        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+            and a dictionary with the sample counts of datasets underpinning the respective data loaders.
+    """
     log(INFO, f"Data directory: {str(data_dir)}")
 
     transform = transforms.Compose(
@@ -158,7 +232,19 @@ def load_cifar10_data(
 def load_cifar10_test_data(
     data_dir: Path, batch_size: int, sampler: Optional[LabelBasedSampler] = None
 ) -> Tuple[DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 test set only."""
+    """
+    Load CIFAR10 Test Dataset.
+
+    Args:
+        data_dir (Path): The path to the CIFAR10 dataset locally.
+            Dataset is downloaded to this location if it does not already exist.
+        batch_size (int): The batch size to use for the test dataloader.
+        sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
+
+    Returns:
+        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+            of the test dataset.
+    """
     log(INFO, f"Data directory: {str(data_dir)}")
     transform = transforms.Compose(
         [

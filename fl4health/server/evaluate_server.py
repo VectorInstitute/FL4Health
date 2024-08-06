@@ -85,7 +85,7 @@ class EvaluateServer(Server):
 
         Args:
             num_rounds (int): Not used.
-            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
+            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to respond.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:

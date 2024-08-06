@@ -16,6 +16,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
+from fl4health.utils.random import generate_hash
 
 
 class EvaluateClient(BasicClient):
@@ -37,7 +38,7 @@ class EvaluateClient(BasicClient):
     ) -> None:
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
-        self.client_name = self.generate_hash()
+        self.client_name = generate_hash()
         self.data_path = data_path
         self.device = device
         self.model_checkpoint_path = model_checkpoint_path

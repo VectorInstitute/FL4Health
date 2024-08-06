@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Set, Tuple, Type, TypeVar
+from typing import List, Optional, Set, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn
@@ -7,9 +7,9 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
+from fl4health.utils.typing import LayerSelectionFunction
 
 TorchModule = TypeVar("TorchModule", bound=nn.Module)
-LayerSelectionFunction = Callable[[nn.Module, nn.Module], Tuple[NDArrays, List[str]]]
 
 
 class FixedLayerExchanger(ParameterExchanger):
@@ -115,13 +115,11 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
     def select_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None
     ) -> Tuple[NDArrays, List[str]]:
-        assert initial_model is not None
         return self.layer_selection_function(model, initial_model)
 
     def push_parameters(
         self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
     ) -> NDArrays:
-        assert initial_model is not None
         layers_to_transfer, layer_names = self.select_parameters(model, initial_model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
