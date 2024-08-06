@@ -577,7 +577,7 @@ class nnUNetClient(BasicClient):
             self.maybe_extract_fingerprint()
 
         # Create experiment planner and plans
-        planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id)
+        planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
         with nostdout():  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
         plans_bytes = pickle.dumps(plans)
