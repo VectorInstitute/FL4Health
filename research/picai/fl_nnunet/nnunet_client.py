@@ -11,13 +11,14 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config
+from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, LoggingMode
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
@@ -66,6 +67,7 @@ class nnUNetClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        progress_bar: bool = False,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -127,6 +129,7 @@ class nnUNetClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,  # self.checkpointer
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
+            progress_bar=progress_bar,
         )
 
         # Some nnunet specific attributes
@@ -303,6 +306,7 @@ class nnUNetClient(BasicClient):
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
+        local_epochs, local_steps, _, _ = self.process_config(config)
         with nostdout():  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
@@ -313,6 +317,15 @@ class nnUNetClient(BasicClient):
                 device=self.device,
             )
 
+            # Need to modify num_epochs before initializing so that LRScheduler
+            # recieves the right number of epochs
+            local_epochs, local_steps, _, _ = self.process_config(config)
+            if local_steps is not None:
+                num_samples = self.dataset_json["numTraining"]
+                batch_size = self.plans["configuration"][self.nnunet_config.value]["batch_size"]
+                steps_per_epoch = ceil(num_samples / batch_size)
+                local_epochs = int(local_steps / steps_per_epoch)
+            self.nnunet_trainer.num_epochs = local_epochs
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
             # This is done by nnunet_trainer in self.on_train_start, we
@@ -515,10 +528,16 @@ class nnUNetClient(BasicClient):
         else:
             pass
 
-    def update_before_epoch(self, epoch: int) -> None:
-        # Update the learning rate
-        self.nnunet_trainer.lr_scheduler.step(epoch)
+    def update_after_step(self, step: int) -> None:
+        # Update the learning rate, by default nnunet lr schedulers use epochs
+        next_epoch = int((step + 1) / len(self.train_loader))
+        self.nnunet_trainer.lr_scheduler.step(next_epoch)
 
-    def get_client_specific_logs(self) -> Tuple[str, List[Tuple[LogLevel, str]]]:
-        lr = self.optimizers["global"].param_groups[0]["lr"]
-        return f" Current LR: {lr}", []
+    def get_client_specific_logs(
+        self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
+    ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        if logging_mode == LoggingMode.TRAIN:
+            lr = self.optimizers["global"].param_groups[0]["lr"]
+            return f" Current LR: {lr}", []
+        else:
+            return "", []

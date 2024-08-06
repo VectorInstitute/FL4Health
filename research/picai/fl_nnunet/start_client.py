@@ -48,13 +48,13 @@ def main(
     dice1 = TransformsMetric(
         metric=TorchMetric(
             name="dice1",
-            metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
+            metric=GeneralizedDiceScore(num_classes=3, weight_type="square", include_background=False).to(DEVICE),
         ),
         transforms=[get_probabilities_from_logits, get_annotations_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
-        metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
+        metric=TorchMetric(name="dice2", metric=Dice(num_classes=3, ignore_index=0).to(DEVICE)),
         transforms=[get_probabilities_from_logits, collapse_one_hot_target],
     )
 
@@ -75,6 +75,7 @@ def main(
         data_path=join(
             nnUNet_preprocessed, dataset_name
         ),  # data_path is not actually used but is required by BaseClient
+        progress_bar=True,
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
