@@ -37,7 +37,7 @@ def pred_and_eval(
             are plans, dataset_json and one or more nnunet_configs (eg. 2d,
             3d_fullres etc.). The nnunet config keys should contain a list of
             paths. If the path points to a file it should be a model
-            checkpoint. The model checkpoints can be dicts with thE
+            checkpoint. The model checkpoints can be dicts with the
             'network_weights' key or nn.Modules. If the path points to a
             directory it should be an nnunet results folder for a particular
             dataset-config-trainer combo. The plans key should be the path to

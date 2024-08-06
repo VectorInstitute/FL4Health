@@ -112,6 +112,7 @@ def generate_detection_map(
     save_path: Union[str, Path],
     npz_key: Optional[str] = "probabilities",
     transforms: Optional[List[Callable[[NDArray], NDArray]]] = None,
+    **kwargs: Any,
 ) -> None:
     """
     Generates a detection map from a probability map by doing lesion
@@ -137,6 +138,8 @@ def generate_detection_map(
             in the order they are given. Can be used, for example, to one hot
             encode binary probability maps if they are not already one hot
             encoded.
+        **kwargs (Any): Keyword arguments to the extract_lesion_candidates
+            function from the report_guided_annotation API.
     """
     if transforms is None:
         transforms = []
@@ -150,7 +153,7 @@ def generate_detection_map(
     num_classes = probability_map.shape[0]
     cls_probs = []
     for cls in range(1, num_classes):
-        cls_probs.append(extract_lesion_candidates(probability_map[cls], num_lesions_to_extract=5)[0])
+        cls_probs.append(extract_lesion_candidates(probability_map[cls], **kwargs)[0])
 
     np.savez_compressed(save_path, detection_map=np.stack(cls_probs))
 
@@ -164,6 +167,7 @@ def generate_detection_maps(
     postfixes: Optional[List[str]] = None,
     extensions: Optional[List[str]] = None,
     verbose: bool = True,
+    **kwargs: Any,
 ) -> List[str]:
     """
     Extracts lesions from predicted probability maps and saves the predicted
@@ -215,6 +219,8 @@ def generate_detection_maps(
             ".mha", ".mhd"].
         verbose (bool): Whether or not to print a log statement with
             extraction results. Defaults to True.
+        **kwargs (Any): Keyword arguments to the extract_lesion_candidates
+            function from the report_guided_annotation API.
 
     Returns:
         List[str]: A list of unique case identifiers. The case identifiers are
@@ -239,6 +245,7 @@ def generate_detection_maps(
                 save_path=output_file,
                 npz_key=npz_key,
                 transforms=transforms,
+                **kwargs,
             )
             for input_file, output_file in zip(input_files, output_files)
         ]
@@ -268,13 +275,14 @@ def evaluate_case_multichannel(
     # way to determine proper rank
 
     if detection_map.ndim != ground_truth.ndim:
-        # One hot encode ground truth and remove background class
+        # One hot encode and remove background class from ground truth
         num_classes = detection_map.shape[0] + 1  # Add one for background class
         ground_truth = one_hot_ndarray(ground_truth, num_classes)[1:]
 
     assert (
         detection_map.shape[0] == ground_truth.shape[0]
-    ), "Was expecting detection map and ground truth to be the same shape"
+    ), f"Was expecting detection map and ground truth to be the same shape\
+         detection_map: {detection_map.shape} ground_truth: {ground_truth.shape}"
 
     num_lesion_classes = detection_map.shape[0]  # One less than num_classes since it does not include background
 
@@ -339,9 +347,12 @@ def get_picai_metrics(
     t_start = time.time()
     if "y_det" in kwargs or "y_true" in kwargs or "idx" in kwargs or "sample_weight" in kwargs:
         raise KeyError(
-            """Got one of 'y_det', 'y_true', 'idx' or 'sample_weight' in
-            keyword arguments. Arguments to the get_picai_metrics method are
-            being passed to these keys."""
+            f"""Got one or more of 'y_det', 'y_true', 'idx' or 'sample_weight'
+            in keyword arguments {kwargs.keys()}.
+            These keys are being used by get_picai_metrics. 'y_det' and
+            'y_true' are derived from the detection maps and ground truth
+            folders respectively. 'idx' is being used by the case_identifiers.
+            If you have a list of case_id's use case_identifiers instead."""
         )
 
     # Get list of files,
