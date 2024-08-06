@@ -1,9 +1,9 @@
 import logging
+import os
 import pickle
 import signal
 import warnings
 from logging import INFO
-from os import makedirs, remove
 from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
@@ -244,7 +244,7 @@ class nnUNetClient(BasicClient):
 
         # Can't run nnunet preprocessing without saving plans file
         if not exists(join(nnUNet_preprocessed, self.dataset_name)):
-            makedirs(join(nnUNet_preprocessed, self.dataset_name))
+            os.makedirs(join(nnUNet_preprocessed, self.dataset_name))
         plans_save_path = join(nnUNet_preprocessed, self.dataset_name, self.plans_name + ".json")
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
@@ -334,6 +334,17 @@ class nnUNetClient(BasicClient):
             # This is done by nnunet_trainer in self.on_train_start, we
             # do it manually since nnunet_trainer not being used for training
             self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
+
+        # Prevent nnunet from generating log files. And delete empty output directories
+        os.remove(self.nnunet_trainer.log_file)
+        self.nnunet_trainer.log_file = os.devnull
+        output_folder = Path(self.nnunet_trainer.output_folder)
+        while True:
+            if len(os.listdir(output_folder)) == 0:
+                os.rmdir(output_folder)
+                output_folder = output_folder.parent
+            else:
+                break
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(self.nnunet_config)
@@ -574,7 +585,7 @@ class nnUNetClient(BasicClient):
         # Remove plans file that was created by planner
         plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
         if exists(plans_path):
-            remove(plans_path)
+            os.remove(plans_path)
 
         # return properties with initialized nnunet plans. Need to provide
         # plans since client needs to be initialized to get properties
