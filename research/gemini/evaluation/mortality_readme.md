@@ -79,7 +79,7 @@ sbatch evaluation/run_eval.sh
 
 
 
-# FedProx
+## FedProx
 
 7 clients.
 ### Hyper-parameters
@@ -99,7 +99,7 @@ python -m evaluation.evaluate_on_holdout --artifact_dir "FedProx/7_client_result
 
 
 
-# FedAvg
+## FedAvg
 7 client.
 ### Hyper-parameters
 ```

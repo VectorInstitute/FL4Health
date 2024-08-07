@@ -85,23 +85,6 @@ sbatch evaluation/run_eval.sh
 ```
 
 
-
-## Scaffold
-### hyper-parameters
-```
-python -m evaluation.find_best_hp --hp_sweep_dir "Scaffold/delirium_runs/hp_sweep_results"
-
-
-Best Loss: 0.6931793395645863
-Best Folder: Scaffold/delirium_runs/hp_sweep_results/ser_0.001_lr_0.001
-```
-### Evaluation
-```
-python -m evaluation.evaluate_on_holdout --artifact_dir "Scaffold/delirium_runs/hp_sweep_results/ser_0.001_lr_0.001" --task "delirium" --eval_write_path "Scaffold/delirium_eval" --n_clients 6  --eval_global_model
-
-```
-
-
 ## APFL
 ### hyper-parameters
 ```
