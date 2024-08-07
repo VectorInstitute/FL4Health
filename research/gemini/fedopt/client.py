@@ -20,7 +20,7 @@ from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
 from research.gemini.mortality_models.NN import NN as mortality_model
 
 
-class GeminiFedAvgClient(NumpyFlClient):
+class GeminiFedOptClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
@@ -64,6 +64,7 @@ class GeminiFedAvgClient(NumpyFlClient):
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
 
         self.parameter_exchanger = FullParameterExchanger()
 
@@ -121,7 +122,9 @@ class GeminiFedAvgClient(NumpyFlClient):
                 self.optimizer.zero_grad()
                 train_loss.backward()
                 self.optimizer.step()
+
                 meter.update(preds, target)
+
             log(INFO, f"Local Epoch: {local_epoch}")
 
         metrics = meter.compute()
@@ -134,9 +137,12 @@ class GeminiFedAvgClient(NumpyFlClient):
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
+
                 preds = self.model(input)
                 val_loss = self.criterion(preds, target)
+
                 val_loss_sum += val_loss.item()
+
                 meter.update(preds, target)
 
         metrics = meter.compute()
@@ -151,7 +157,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--hospital_id", nargs="+", default=["THPC", "SMH"], help="ID of hospitals")
     parser.add_argument(
-        "--task", action="store", type=str, default="mortality", help="GEMINI usecase: mortality, delirium"
+        "--task", action="store", type=str, default="mortality", help="GEMINI usecase: mortality or delirium"
     )
 
     parser.add_argument(
@@ -190,7 +196,7 @@ if __name__ == "__main__":
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = GeminiFedAvgClient(
+    client = GeminiFedOptClient(
         data_path,
         [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
         args.hospital_id,

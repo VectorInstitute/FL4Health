@@ -5,40 +5,47 @@ from logging import INFO
 from typing import Any, Dict, List, Optional, Tuple
 
 import flwr as fl
+import numpy as np
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
-from flwr.common.typing import Config, Metrics, Parameters, Scalar
-from flwr.server.client_manager import ClientManager, SimpleClientManager
+from flwr.common.typing import Config, Metrics, NDArrays, Parameters, Scalar
+from flwr.server.client_manager import ClientManager
 from flwr.server.server import EvaluateResultsAndFailures
-from flwr.server.strategy import FedAvg, Strategy
+from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
+from fl4health.parameter_exchange.packing_exchanger import (
+    ParameterExchangerWithControlVariates,
+    ParameterExchangerWithPacking,
+)
 from fl4health.server.server import FlServer
+from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.mortality_models.NN import NN as mortality_model
 from research.gemini.simple_metric_aggregation import metric_aggregation, normalize_metrics
 
 
-class GeminiFedAvgServer(FlServer):
+class GeminiSCAFFOLDServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
         client_model: nn.Module,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[BestMetricTorchCheckpointer] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
-        self.parameter_exchanger = FullParameterExchanger()
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        self.parameter_exchanger = ParameterExchangerWithControlVariates()
+        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
+        super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
-        model_ndarrays = parameters_to_ndarrays(self.parameters)
+        packed_parameters = parameters_to_ndarrays(self.parameters)
+        # Don't need the control variates for checkpointing.
+        model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.client_model)
 
     def _maybe_checkpoint(self, checkpoint_metric: float) -> None:
@@ -79,60 +86,52 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
+    model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
+    # Initializing the control variates to zero, as suggested in scaffold paper
+    control_variates = [np.zeros_like(weight) for weight in model_weights]
+    parameters = ndarrays_to_parameters(model_weights + control_variates)
+    return parameters
 
 
 def fit_config(
-    local_epochs: int,
-    batch_size: int,
+    local_steps: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
 ) -> Config:
     return {
-        "local_epochs": local_epochs,
-        "batch_size": batch_size,
+        "local_steps": local_steps,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(
+    config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
+) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
+
+    # mappings = get_mappings(Path(ENCOUNTERS_FILE))
 
     fit_config_fn = partial(
         fit_config,
-        config["local_epochs"],
-        config["batch_size"],
+        config["local_steps"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
     )
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
     checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name)
 
-    client_manager = SimpleClientManager()
+    client_manager = FixedSamplingWithoutReplacementClientManager()
     if int(config["n_clients"]) == 6:
         client_model = mortality_model(input_dim=8093, output_dim=1)
     else:
         client_model = delirium_model(input_dim=35, output_dim=1)
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
-        min_fit_clients=config["n_clients"],
-        min_evaluate_clients=config["n_clients"],
+    # Server performs Scaffold as its server-side optimization strategy
+    strategy = Scaffold(
+        fraction_fit=1.0,
+        fraction_evaluate=1.0,
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
         on_fit_config_fn=fit_config_fn,
@@ -141,9 +140,10 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        learning_rate=server_learning_rate,
     )
 
-    server = GeminiFedAvgServer(client_manager, client_model, strategy, checkpointer=checkpointer, wandb_reporter=None)
+    server = GeminiSCAFFOLDServer(client_manager, client_model, strategy, checkpointer=checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -159,6 +159,13 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
+    parser.add_argument(
+        "--server_learning_rate",
+        action="store",
+        type=float,
+        help="Learning rate for server side",
+        required=True,
+    )
     parser.add_argument(
         "--artifact_dir",
         action="store",
@@ -177,7 +184,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="fedavg/config.yaml",
+        default="scaffold/config.yaml",
     )
     parser.add_argument(
         "--server_address",
@@ -190,4 +197,4 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    main(config, args.server_address, args.artifact_dir, args.run_name, args.server_learning_rate)

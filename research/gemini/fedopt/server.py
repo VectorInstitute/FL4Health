@@ -11,11 +11,12 @@ from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Config, Metrics, Parameters, Scalar
 from flwr.server.client_manager import ClientManager, SimpleClientManager
 from flwr.server.server import EvaluateResultsAndFailures
-from flwr.server.strategy import FedAvg, Strategy
+
+# Specific to fedopt
+from flwr.server.strategy import FedAdagrad, FedAdam, FedAvg, FedAvgM, FedYogi, Strategy
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.reporting.fl_wanb import ServerWandBReporter
 from fl4health.server.server import FlServer
 from fl4health.utils.config import load_config
 from research.gemini.delirium_models.NN import NN as delirium_model
@@ -23,19 +24,18 @@ from research.gemini.mortality_models.NN import NN as mortality_model
 from research.gemini.simple_metric_aggregation import metric_aggregation, normalize_metrics
 
 
-class GeminiFedAvgServer(FlServer):
+class GeminiFedOptServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
         client_model: nn.Module,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[BestMetricTorchCheckpointer] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
         self.parameter_exchanger = FullParameterExchanger()
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:
         model_ndarrays = parameters_to_ndarrays(self.parameters)
@@ -79,6 +79,7 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
+
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
@@ -86,10 +87,6 @@ def fit_config(
     local_epochs: int,
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
 ) -> Config:
     return {
@@ -97,26 +94,26 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
-def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
+def main(
+    config: Dict[str, Any],
+    server_address: str,
+    checkpoint_stub: str,
+    run_name: str,
+    algorithm: str,
+    server_learning_rate: float,
+) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
+    # mappings = get_mappings(Path(ENCOUNTERS_FILE))
+    # log(INFO, "Central feature mapping done")
 
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
     )
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
@@ -129,8 +126,17 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     else:
         client_model = delirium_model(input_dim=35, output_dim=1)
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    # Server performs the algorithm specified by user as its server-side optimization strategy
+    # Options: FedAvg, FedAdam, FedAdagrad, FedAvgM, FedYogi -> client side optimization is always SGD
+    strategy_call = {
+        "FedAvg": FedAvg,
+        "FedAdam": FedAdam,
+        "FedAdagrad": FedAdagrad,
+        "FedAvgM": FedAvgM,
+        "FedYogi": FedYogi,
+    }
+    # print("Using..",strategy_call[algorithm])
+    strategy = strategy_call[algorithm](
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -141,9 +147,10 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_initial_model_parameters(client_model),
+        eta=server_learning_rate,
     )
 
-    server = GeminiFedAvgServer(client_manager, client_model, strategy, checkpointer=checkpointer, wandb_reporter=None)
+    server = GeminiFedOptServer(client_manager, client_model, strategy, checkpointer=checkpointer)
 
     fl.server.start_server(
         server=server,
@@ -169,6 +176,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--run_name",
         action="store",
+        type=str,
         help="Name of the run, model checkpoints will be saved under a subfolder with this name",
         required=True,
     )
@@ -177,7 +185,21 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="fedavg/config.yaml",
+        default="fedopt/config.yaml",
+    )
+    parser.add_argument(
+        "--algorithm",
+        action="store",
+        type=str,
+        help="Server optimizer algorithm",
+        default="FedAdam",
+    )
+    parser.add_argument(
+        "--server_learning_rate",
+        action="store",
+        type=float,
+        help="Learning rate for server side",
+        required=True,
     )
     parser.add_argument(
         "--server_address",
@@ -190,4 +212,4 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.artifact_dir, args.run_name)
+    main(config, args.server_address, args.artifact_dir, args.run_name, args.algorithm, args.server_learning_rate)

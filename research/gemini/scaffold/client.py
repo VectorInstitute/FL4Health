@@ -12,15 +12,15 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.clients.scaffold_client import ScaffoldClient
+from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithControlVariates
 from fl4health.utils.metrics import AccumulationMeter, Meter, Metric
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
 from research.gemini.mortality_models.NN import NN as mortality_model
 
 
-class GeminiFedAvgClient(NumpyFlClient):
+class GeminiScaffoldclient(ScaffoldClient):
     def __init__(
         self,
         data_path: Path,
@@ -32,10 +32,10 @@ class GeminiFedAvgClient(NumpyFlClient):
         checkpoint_stub: str,
         run_name: str = "",
     ) -> None:
-        super().__init__(data_path=data_path, device=device)
+        super().__init__(data_path=data_path, metrics=metrics, device=device)
         self.hospitals = hospitals_id
         self.learning_task = learning_task
-        self.learning_rate = learning_rate
+        self.learning_rate_local = learning_rate
         # Metrics initialization
         self.metrics = metrics
 
@@ -47,25 +47,30 @@ class GeminiFedAvgClient(NumpyFlClient):
         checkpoint_name = f"client_{self.hospital_names}_best_model.pkl"
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
+        # only in Scaffold
+        self.batch_size = 64
+
     def setup_client(self, config: Config) -> None:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
 
         if self.learning_task == "mortality":
             self.model: nn.Module = mortality_model(input_dim=35, output_dim=1).to(self.device)
             # Load training and validation data from the given hospitals.
             self.train_loader, self.val_loader, self.num_examples = load_train_mortality(
-                self.data_path, batch_size, self.hospitals
+                self.data_path, self.batch_size, self.hospitals
             )
         else:
             self.model: nn.Module = delirium_model(input_dim=8093, output_dim=1).to(self.device)
             self.train_loader, self.val_loader, self.num_examples = load_train_delirium(
-                self.data_path, batch_size, self.hospitals
+                self.data_path, self.batch_size, self.hospitals
             )
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
-        self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        # Note that, unlike the other approaches, SCAFFOLD requires a vanilla SGD optimizer for the corrections to
+        # make sense mathematically.
+        self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate_local)
+        # self.optimizer = torch.optim.SGD(self.model.parameters(), lr=self.self.learning_rate_local, momentum=0.9)
 
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = ParameterExchangerWithControlVariates()
 
         super().setup_client(config)
 
@@ -76,10 +81,9 @@ class GeminiFedAvgClient(NumpyFlClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
 
         self.set_parameters(parameters, config)
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        local_steps = self.narrow_config_type(config, "local_steps", int)
 
-        metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
+        metric_values = self.train_by_rounds(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -93,9 +97,9 @@ class GeminiFedAvgClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        # current_server_round = self.narrow_config_type(config, "current_server_round", int)
         meter = AccumulationMeter(self.metrics, "val_meter")
-        loss, metric_values = self.validate(current_server_round, meter)
+        loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
         return (
@@ -104,47 +108,117 @@ class GeminiFedAvgClient(NumpyFlClient):
             metric_values,
         )
 
-    def train_by_epochs(
+    def update_control_variates(self, local_steps: int) -> None:
+        """
+        Updates local control variates along with the corresponding updates
+        according to the option 2 in Equation 4 in https://arxiv.org/pdf/1910.06378.pdf
+        To be called after weights of local model have been updated.
+        """
+        assert self.client_control_variates is not None
+        assert self.server_control_variates is not None
+        assert self.server_model_weights is not None
+        assert self.learning_rate_local is not None
+        assert self.train_loader.batch_size is not None
+
+        # y_i
+        client_model_weights = [val.cpu().numpy() for val in self.model.state_dict().values()]
+
+        # (x - y_i)
+        delta_model_weights = self.compute_parameters_delta(self.server_model_weights, client_model_weights)
+
+        # (c_i - c)
+        delta_control_variates = self.compute_parameters_delta(
+            self.client_control_variates, self.server_control_variates
+        )
+
+        updated_client_control_variates = self.compute_updated_control_variates(
+            local_steps, delta_model_weights, delta_control_variates
+        )
+        self.client_control_variates_updates = self.compute_parameters_delta(
+            updated_client_control_variates, self.client_control_variates
+        )
+
+        # c_i = c_i^plus
+        self.client_control_variates = updated_client_control_variates
+
+    def modify_grad(self) -> None:
+        """
+        Modifies the gradient of the local model to correct for client drift.
+        To be called after the gradients have been computed on a batch of data.
+        Updates not applied to params until step is called on optimizer.
+        """
+        assert self.client_control_variates is not None
+        assert self.server_control_variates is not None
+
+        for param, client_cv, server_cv in zip(
+            self.model.parameters(), self.client_control_variates, self.server_control_variates
+        ):
+            assert param.grad is not None
+            tensor_type = param.grad.dtype
+            update = torch.from_numpy(server_cv).type(tensor_type) - torch.from_numpy(client_cv).type(tensor_type)
+            #         Changed
+            param.grad += update.to(self.device)
+
+    def train_by_rounds(
         self,
-        current_server_round: int,
-        epochs: int,
+        local_steps: int,
         meter: Meter,
     ) -> Dict[str, Scalar]:
         self.model.train()
-        for local_epoch in range(epochs):
-            meter.clear()
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                # forward pass on the model
-                preds = self.model(input)
-                train_loss = self.criterion(preds, target)
-                self.optimizer.zero_grad()
-                train_loss.backward()
-                self.optimizer.step()
-                meter.update(preds, target)
-            log(INFO, f"Local Epoch: {local_epoch}")
+        running_loss = 0.0
+        meter.clear()
+
+        # Pass loader to iterator so we can step through train loader
+        train_iterator = iter(self.train_loader)
+        for _ in range(local_steps):
+            try:
+                input, target = next(train_iterator)
+            except StopIteration:
+                # StopIteration is thrown if dataset ends
+                # reinitialize data loader
+                train_iterator = iter(self.train_loader)
+                input, target = next(train_iterator)
+
+            input, target = input.to(self.device), target.to(self.device)
+
+            # Forward pass on global model and update global parameters
+            self.optimizer.zero_grad()
+            pred = self.model(input)
+            loss = self.criterion(pred, target)
+            loss.backward()
+
+            # modify grad to correct for client drift
+            self.modify_grad()
+            self.optimizer.step()
+
+            running_loss += loss.item()
+            meter.update(pred, target)
+
+        running_loss = running_loss / local_steps
 
         metrics = meter.compute()
-        # Return final training metrics
+        self.update_control_variates(local_steps)
+
         return metrics
 
-    def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
         self.model.eval()
-        val_loss_sum = 0
+        running_loss = 0.0
+        meter.clear()
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
-                preds = self.model(input)
-                val_loss = self.criterion(preds, target)
-                val_loss_sum += val_loss.item()
-                meter.update(preds, target)
+                pred = self.model(input)
+                loss = self.criterion(pred, target)
 
+                running_loss += loss.item()
+                meter.update(pred, target)
+
+        running_loss = running_loss / len(self.val_loader)
         metrics = meter.compute()
 
-        val_loss_per_step = val_loss_sum / len(self.val_loader)
-        self._maybe_checkpoint(val_loss_per_step)
-
-        return val_loss_per_step, metrics
+        self._maybe_checkpoint(running_loss)
+        return running_loss, metrics
 
 
 if __name__ == "__main__":
@@ -190,7 +264,7 @@ if __name__ == "__main__":
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = GeminiFedAvgClient(
+    client = GeminiScaffoldclient(
         data_path,
         [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
         args.hospital_id,

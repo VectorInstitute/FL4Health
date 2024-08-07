@@ -3,14 +3,14 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=2
-#SBATCH --mem=35000MB
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=25000MB
 #SBATCH --partition=gpu
 #SBATCH --qos=lopri
-#SBATCH --job-name=fedavg
+#SBATCH --job-name=g10_perfcl
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
-#SBATCH --mail-user=your_email@vectorinstitute.ai
+#SBATCH --mail-user=fatemeh.tavakoli@vectorinstitute.ai
 
 
 
@@ -19,9 +19,11 @@
 SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 TASK_TYPE=$3
-CLIENT_LR=$4
-N_CLIENTS=$5
-SERVER_ADDRESS=$6
+CLIENT_MU=$4
+CLIENT_LR=$5
+N_CLIENTS=$6
+SERVER_ADDRESS=$7
+CLIENT_GAMMA=$8
 
 if [ -z "$N_CLIENTS" ]; then
     echo "No number provided."
@@ -36,11 +38,12 @@ else
 fi
 
 
-
 # Create the artficat directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
+# RUN_NAMES=( "Run1" )
+SEED=2021
 
 
 echo "World size: ${SLURM_NTASKS}"
@@ -51,7 +54,7 @@ echo "GPUs per node: ${NUM_GPUs}"
 echo "Task type: ${TASK_TYPE}"
 
 # Source the environment
-. ~/gemini_fl/gemini-env/bin/activate
+. ~/flenv/bin/activate
 echo "Active Environment:"
 which python
 
@@ -59,6 +62,7 @@ for RUN_NAME in "${RUN_NAMES[@]}";
 do
     # create the run directory
     RUN_DIR="${ARTIFACT_DIR}${RUN_NAME}/"
+    ((SEED++))
     echo "Starting Run and logging artifcats at ${RUN_DIR}"
     if [ -d "${RUN_DIR}" ]
     then
@@ -88,11 +92,12 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server at ip: ${SERVER_ADDRESS}"
 
-    nohup python -m fedavg.server \
+    nohup python -m perfcl.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
         --server_address ${SERVER_ADDRESS} \
+        --seed ${SEED} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -108,13 +113,16 @@ do
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NUMBER}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
         echo "Hospitals: ${HOSPITALS[$c]}"
-        nohup python -m fedavg.client \
+        nohup python -m perfcl.client \
             --hospital_id ${HOSPITALS[$c]} \
             --task ${TASK_TYPE} \
             --artifact_dir ${ARTIFACT_DIR} \
             --run_name ${RUN_NAME} \
+            --mu ${CLIENT_MU} \
+            --gamma ${CLIENT_GAMMA} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
+            --seed ${SEED} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

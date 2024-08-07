@@ -3,11 +3,11 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=2
-#SBATCH --mem=35000MB
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=25000MB
 #SBATCH --partition=gpu
 #SBATCH --qos=lopri
-#SBATCH --job-name=fedavg
+#SBATCH --job-name=fedprox
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
 #SBATCH --mail-user=your_email@vectorinstitute.ai
@@ -19,9 +19,10 @@
 SERVER_CONFIG_PATH=$1
 ARTIFACT_DIR=$2
 TASK_TYPE=$3
-CLIENT_LR=$4
-N_CLIENTS=$5
-SERVER_ADDRESS=$6
+CLIENT_MU=$4
+CLIENT_LR=$5
+N_CLIENTS=$6
+SERVER_ADDRESS=$7
 
 if [ -z "$N_CLIENTS" ]; then
     echo "No number provided."
@@ -36,12 +37,12 @@ else
 fi
 
 
-
 # Create the artficat directory
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
 
+echo "Python Venv Path: ${VENV_PATH}"
 
 echo "World size: ${SLURM_NTASKS}"
 echo "Number of nodes: ${SLURM_NNODES}"
@@ -51,7 +52,7 @@ echo "GPUs per node: ${NUM_GPUs}"
 echo "Task type: ${TASK_TYPE}"
 
 # Source the environment
-. ~/gemini_fl/gemini-env/bin/activate
+. ~/py39/bin/activate
 echo "Active Environment:"
 which python
 
@@ -88,7 +89,7 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server at ip: ${SERVER_ADDRESS}"
 
-    nohup python -m fedavg.server \
+    nohup python -m fedprox.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --artifact_dir ${ARTIFACT_DIR} \
         --run_name ${RUN_NAME} \
@@ -108,11 +109,12 @@ do
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NUMBER}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
         echo "Hospitals: ${HOSPITALS[$c]}"
-        nohup python -m fedavg.client \
+        nohup python -m fedprox.client \
             --hospital_id ${HOSPITALS[$c]} \
             --task ${TASK_TYPE} \
             --artifact_dir ${ARTIFACT_DIR} \
             --run_name ${RUN_NAME} \
+            --mu ${CLIENT_MU} \
             --learning_rate ${CLIENT_LR} \
             --server_address ${SERVER_ADDRESS} \
             > ${CLIENT_LOG_PATH} 2>&1 &

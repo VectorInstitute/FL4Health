@@ -23,7 +23,7 @@ from research.gemini.mortality_models.NN import NN as mortality_model
 from research.gemini.simple_metric_aggregation import metric_aggregation, normalize_metrics
 
 
-class GeminiFedAvgServer(FlServer):
+class GeminiFedProxServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -79,6 +79,7 @@ def evaluate_metrics_aggregation_fn(all_client_metrics: List[Tuple[int, Metrics]
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
     # Initializing the model parameters on the server side.
     # Currently uses the Pytorch default initialization for the model parameters.
+
     return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
@@ -106,7 +107,6 @@ def fit_config(
 
 def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
-
     fit_config_fn = partial(
         fit_config,
         config["local_epochs"],
@@ -143,7 +143,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         initial_parameters=get_initial_model_parameters(client_model),
     )
 
-    server = GeminiFedAvgServer(client_manager, client_model, strategy, checkpointer=checkpointer, wandb_reporter=None)
+    server = GeminiFedProxServer(
+        client_manager, client_model, strategy, checkpointer=checkpointer, wandb_reporter=None
+    )
 
     fl.server.start_server(
         server=server,
@@ -177,7 +179,7 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="fedavg/config.yaml",
+        default="fedprox/config.yaml",
     )
     parser.add_argument(
         "--server_address",

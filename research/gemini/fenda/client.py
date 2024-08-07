@@ -6,21 +6,27 @@ from typing import Dict, List, Tuple
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from data.data import load_train_delirium, load_train_mortality
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.clients.numpy_fl_client import NumpyFlClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+
+# FENDA imports
+from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
+from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.metrics import AccumulationMeter, Meter, Metric
-from research.gemini.delirium_models.NN import NN as delirium_model
+
+# delirium model
+from research.gemini.delirium_models.fenda_mlp import FendaClassifier_d, GlobalMLP_d, LocalMLP_d
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
-from research.gemini.mortality_models.NN import NN as mortality_model
+
+# mortality model
+from research.gemini.mortality_models.fenda_mlp import FendaClassifier, GlobalMLP, LocalMLP
 
 
-class GeminiFedAvgClient(NumpyFlClient):
+class GeminiFendaClient(NumpyFlClient):
     def __init__(
         self,
         data_path: Path,
@@ -51,13 +57,17 @@ class GeminiFedAvgClient(NumpyFlClient):
         batch_size = self.narrow_config_type(config, "batch_size", int)
 
         if self.learning_task == "mortality":
-            self.model: nn.Module = mortality_model(input_dim=35, output_dim=1).to(self.device)
+            self.model = FendaModel(LocalMLP(), GlobalMLP(), FendaClassifier(FendaJoinMode.CONCATENATE)).to(
+                self.device
+            )
             # Load training and validation data from the given hospitals.
             self.train_loader, self.val_loader, self.num_examples = load_train_mortality(
                 self.data_path, batch_size, self.hospitals
             )
         else:
-            self.model: nn.Module = delirium_model(input_dim=8093, output_dim=1).to(self.device)
+            self.model = FendaModel(
+                LocalMLP_d(), GlobalMLP_d(), FendaClassifier_d(FendaJoinMode.CONCATENATE, size=256)
+            ).to(self.device)
             self.train_loader, self.val_loader, self.num_examples = load_train_delirium(
                 self.data_path, batch_size, self.hospitals
             )
@@ -65,7 +75,7 @@ class GeminiFedAvgClient(NumpyFlClient):
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
-        self.parameter_exchanger = FullParameterExchanger()
+        self.parameter_exchanger = FixedLayerExchanger(self.model.layers_to_exchange())
 
         super().setup_client(config)
 
@@ -121,7 +131,9 @@ class GeminiFedAvgClient(NumpyFlClient):
                 self.optimizer.zero_grad()
                 train_loss.backward()
                 self.optimizer.step()
+
                 meter.update(preds, target)
+
             log(INFO, f"Local Epoch: {local_epoch}")
 
         metrics = meter.compute()
@@ -134,9 +146,12 @@ class GeminiFedAvgClient(NumpyFlClient):
         with torch.no_grad():
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
+
                 preds = self.model(input)
                 val_loss = self.criterion(preds, target)
+
                 val_loss_sum += val_loss.item()
+
                 meter.update(preds, target)
 
         metrics = meter.compute()
@@ -150,9 +165,7 @@ class GeminiFedAvgClient(NumpyFlClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--hospital_id", nargs="+", default=["THPC", "SMH"], help="ID of hospitals")
-    parser.add_argument(
-        "--task", action="store", type=str, default="mortality", help="GEMINI usecase: mortality, delirium"
-    )
+    parser.add_argument("--task", action="store", type=str, default="mortality", help="GEMINI usecase: mortality")
 
     parser.add_argument(
         "--artifact_dir",
@@ -178,6 +191,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.001
     )
+
     args = parser.parse_args()
 
     if args.task == "mortality":
@@ -190,7 +204,7 @@ if __name__ == "__main__":
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
 
-    client = GeminiFedAvgClient(
+    client = GeminiFendaClient(
         data_path,
         [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
         args.hospital_id,

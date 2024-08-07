@@ -12,15 +12,15 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
-from fl4health.clients.numpy_fl_client import NumpyFlClient
+from fl4health.clients.fed_prox_client import FedProxClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.metrics import AccumulationMeter, Meter, Metric
+from fl4health.utils.metrics import AccumulationMeter, Metric
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.metrics.metrics import Accuracy, Binary_F1, Binary_ROC_AUC
 from research.gemini.mortality_models.NN import NN as mortality_model
 
 
-class GeminiFedAvgClient(NumpyFlClient):
+class GeminiFedProxClient(FedProxClient):
     def __init__(
         self,
         data_path: Path,
@@ -29,22 +29,21 @@ class GeminiFedAvgClient(NumpyFlClient):
         device: torch.device,
         learning_task: str,
         learning_rate: float,
+        mu: float,
         checkpoint_stub: str,
         run_name: str = "",
     ) -> None:
-        super().__init__(data_path=data_path, device=device)
+        super().__init__(data_path=data_path, metrics=metrics, device=device)
         self.hospitals = hospitals_id
         self.learning_task = learning_task
-        self.learning_rate = learning_rate
-        # Metrics initialization
-        self.metrics = metrics
-
         log(INFO, f"Client Name: {self.client_name} Client hospitals {self.hospitals}")
 
         # Checkpointing: create a string of the names of the hospitals
         self.hospital_names = ",".join(self.hospitals)
         checkpoint_dir = os.path.join(checkpoint_stub, run_name)
         checkpoint_name = f"client_{self.hospital_names}_best_model.pkl"
+        self.learning_rate = learning_rate
+        self.mu = mu
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     def setup_client(self, config: Config) -> None:
@@ -65,6 +64,9 @@ class GeminiFedAvgClient(NumpyFlClient):
         self.criterion = torch.nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
+        # Set the Proximal Loss weight mu
+        self.proximal_weight = self.mu
+
         self.parameter_exchanger = FullParameterExchanger()
 
         super().setup_client(config)
@@ -74,11 +76,9 @@ class GeminiFedAvgClient(NumpyFlClient):
             self.setup_client(config)
 
         meter = AccumulationMeter(self.metrics, "train_meter")
-
         self.set_parameters(parameters, config)
         local_epochs = self.narrow_config_type(config, "local_epochs", int)
         current_server_round = self.narrow_config_type(config, "current_server_round", int)
-
         metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -103,48 +103,6 @@ class GeminiFedAvgClient(NumpyFlClient):
             self.num_examples["validation_set"],
             metric_values,
         )
-
-    def train_by_epochs(
-        self,
-        current_server_round: int,
-        epochs: int,
-        meter: Meter,
-    ) -> Dict[str, Scalar]:
-        self.model.train()
-        for local_epoch in range(epochs):
-            meter.clear()
-            for input, target in self.train_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                # forward pass on the model
-                preds = self.model(input)
-                train_loss = self.criterion(preds, target)
-                self.optimizer.zero_grad()
-                train_loss.backward()
-                self.optimizer.step()
-                meter.update(preds, target)
-            log(INFO, f"Local Epoch: {local_epoch}")
-
-        metrics = meter.compute()
-        # Return final training metrics
-        return metrics
-
-    def validate(self, current_server_round: int, meter: Meter) -> Tuple[float, Dict[str, Scalar]]:
-        self.model.eval()
-        val_loss_sum = 0
-        with torch.no_grad():
-            for input, target in self.val_loader:
-                input, target = input.to(self.device), target.to(self.device)
-                preds = self.model(input)
-                val_loss = self.criterion(preds, target)
-                val_loss_sum += val_loss.item()
-                meter.update(preds, target)
-
-        metrics = meter.compute()
-
-        val_loss_per_step = val_loss_sum / len(self.val_loader)
-        self._maybe_checkpoint(val_loss_per_step)
-
-        return val_loss_per_step, metrics
 
 
 if __name__ == "__main__":
@@ -175,8 +133,9 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
+    parser.add_argument("--mu", action="store", type=float, help="Mu value for the FedProx training", default=0.1)
     parser.add_argument(
-        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.001
+        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.01
     )
     args = parser.parse_args()
 
@@ -189,14 +148,14 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
-
-    client = GeminiFedAvgClient(
+    client = GeminiFedProxClient(
         data_path,
         [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
         args.hospital_id,
         DEVICE,
         args.task,
         args.learning_rate,
+        args.mu,
         args.artifact_dir,
         args.run_name,
     )
