@@ -1,6 +1,6 @@
 import datetime
 from logging import DEBUG, INFO, WARNING
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
@@ -28,7 +28,7 @@ class FlServer(Server):
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
@@ -43,16 +43,20 @@ class FlServer(Server):
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence
+                [TorchCheckpointer]]], optional): To be provided if the server
+                should perform server side checkpointing based on some
+                criteria. If none, then no server-side checkpointing is
+                performed. Multiple checkpointers can also be passed in a
+                sequence to checkpoint based on multiple criteria. Defaults to
+                None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
-        self.checkpointer = checkpointer
+        self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
@@ -135,7 +139,8 @@ class FlServer(Server):
         if self.checkpointer:
             try:
                 model = self._hydrate_model_for_checkpointing()
-                self.checkpointer.maybe_checkpoint(model, loss_aggregated, metrics_aggregated)
+                for checkpointer in self.checkpointer:
+                    checkpointer.maybe_checkpoint(model, loss_aggregated, metrics_aggregated)
             except NotImplementedError:
                 # Checkpointer is defined but there is no server-side model hydration to produce a model from the
                 # server state. This is not a deal breaker, but may be unintended behavior and the user will be warned
@@ -318,7 +323,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         parameter_exchanger: ExchangerType,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
@@ -337,9 +342,13 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence
+                [TorchCheckpointer]]], optional): To be provided if the server
+                should perform server side checkpointing based on some
+                criteria. If none, then no server-side checkpointing is
+                performed. Multiple checkpointers can also be passed in a
+                sequence to checkpoint based on multiple criteria. Defaults to
+                None.
         """
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
         self.server_model = model
