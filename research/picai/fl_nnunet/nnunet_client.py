@@ -8,15 +8,14 @@ from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
-
 import torch
+from flwr.common.logger import log
+from flwr.common.typing import Config, Scalar
+from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-from numpy import ceil
-from flwr.common.logger import log
-from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
