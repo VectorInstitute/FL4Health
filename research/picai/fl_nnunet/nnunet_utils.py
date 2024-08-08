@@ -1,8 +1,6 @@
-import contextlib
-import sys
 import warnings
 from logging import ERROR
-from typing import Any, Dict, Generator, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import torch
 from flwr.common.logger import log
@@ -45,28 +43,6 @@ def get_valid_nnunet_config(val: str) -> NnUNetConfig:
     except Exception as e:
         log(ERROR, f"Checking the nnunet configuration threw an exception {e}")
         raise e
-
-
-class DummyFile(object):
-    def write(self, x: Any) -> None:
-        pass
-
-
-# Define a stdout silencer so that nnunet doesn't print a bunch of stuff and
-# clutter the console
-@contextlib.contextmanager
-def nostdout() -> Generator[Any, Any, Any]:
-    """
-    Silences the stdout for any code ran within its context.
-
-    Example usage:
-        with nostdout():
-            # code in here runs quietly
-    """
-    save_stdout = sys.stdout
-    sys.stdout = DummyFile()  # type: ignore
-    yield
-    sys.stdout = save_stdout
 
 
 def convert_deepsupervision_list_to_dict(
