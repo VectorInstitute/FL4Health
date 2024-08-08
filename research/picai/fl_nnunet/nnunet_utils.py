@@ -152,7 +152,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
         self.len = len(self.dataset)
 
     def __next__(self) -> Tuple[torch.Tensor, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
-        if not self.infinite and self.current_step == self.len:
+        if not self.infinite and self.current_step == self.__len__():
             self.reset()
             raise StopIteration
         else:
