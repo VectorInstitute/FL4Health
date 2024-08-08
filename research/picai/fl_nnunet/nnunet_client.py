@@ -14,9 +14,6 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 from numpy import ceil
-from flwr.common.logger import log
-from flwr.common.typing import Config
-from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
