@@ -630,8 +630,8 @@ class BasicClient(NumPyClient):
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
-        local_step = 0
         for local_epoch in range(epochs):
+            local_step = 0  # Reset local step
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
             # update before epoch hook
@@ -639,6 +639,7 @@ class BasicClient(NumPyClient):
             # Print initial log string on epoch start, not epoch end
             self._handle_logging({}, {}, current_round, local_epoch)
             for input, target in self.maybe_progress_bar(self.train_loader):
+                self.update_before_step(local_step)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
                 if self.is_empty_batch(input):
@@ -685,6 +686,9 @@ class BasicClient(NumPyClient):
         self.train_metric_manager.clear()
         self._handle_logging({}, {}, current_round)  # Initial log str
         for step in self.maybe_progress_bar(range(steps)):
+
+            self.update_before_step(step)
+
             try:
                 input, target = next(train_iterator)
             except StopIteration:
@@ -1097,6 +1101,16 @@ class BasicClient(NumPyClient):
         Args:
             local_steps (int): The number of steps in the local training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
+        """
+        pass
+
+    def update_before_step(self, step: int) -> None:
+        """
+        Hook method called before local train step.
+
+        Args:
+            step (int): The local training step that was most recently
+                completed
         """
         pass
 
