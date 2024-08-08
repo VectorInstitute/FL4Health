@@ -5,13 +5,3 @@ n_server_rounds: 50 # The number of rounds to run FL
 n_clients: 6 # The number of clients in the FL experiment
 local_epochs: 8 # The number of epochs to complete for client
 batch_size: 64 # The batch size for client training
-
-
-reporting_config:
-  enabled: False
-  project_name: FL4Health # Name of the project under which everything should be logged
-  run_name: "FedProx Server" # Name of the run on the server-side, each client will also have it's own run name
-  group_name: "FedProx Experiment" # Group under which each of the FL run logging will be stored
-  entity: "your_entity_here" # WandB user name
-  notes: "Testing WB reporting"
-  tags: ["Test", "FedProx"]

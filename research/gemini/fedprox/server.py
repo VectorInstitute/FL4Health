@@ -98,10 +98,6 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
 
 
@@ -112,11 +108,6 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["local_epochs"],
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
     )
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)

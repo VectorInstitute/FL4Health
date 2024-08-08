@@ -3,16 +3,16 @@
 ###############################################
 # Usage:
 #
-#  ./gemini_fl/FedProx/run_hp_sweep.sh \
+#  ./gemini_fl/FedOpt/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   task ("mortality")/ \
 #   number_clients/ \
 #
 # Example:
-# ./gemini_fl/FedProx/run_hp_sweep.sh \
-#   FedProx/config.yaml \
-#   FedProx/results/ \
+# ./gemini_fl/FedOpt/run_hp_sweep.sh \
+#   FedOpt/config.yaml \
+#   FedOpt/results/ \
 #   "mortality" \
 #   2 \
 #
