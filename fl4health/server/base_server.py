@@ -1,6 +1,6 @@
 import datetime
-from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 from logging import DEBUG, INFO, WARN, WARNING
+from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
