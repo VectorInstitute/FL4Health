@@ -23,41 +23,47 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.server.base_server import FlServer  # This is the lightning utils deprecation warning culprit
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from research.picai.fl_nnunet.nnunet_server import NnUNetServer
 
 
 def get_config(
     current_server_round: int,
     nnunet_config: str,
-    nnunet_plans: str,
     n_server_rounds: int,
     batch_size: int,
     n_clients: int,
+    nnunet_plans: Optional[str] = None,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    nnunet_plans_dict = pickle.dumps(json.load(open(nnunet_plans, "r")))
-    return {
+    # Create config
+    config: Config = {
         "n_clients": n_clients,
         "nnunet_config": nnunet_config,
-        "nnunet_plans": nnunet_plans_dict,
         "n_server_rounds": n_server_rounds,
         "batch_size": batch_size,
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "current_server_round": current_server_round,
     }
 
+    # Check if plans were provided
+    if nnunet_plans is not None:
+        plans_bytes = pickle.dumps(json.load(open(nnunet_plans, "r")))
+        config["nnunet_plans"] = plans_bytes
 
-def main(config: dict) -> None:
+    return config
+
+
+def main(config: dict, server_address: str) -> None:
     # Partial function with everything set except current server round
     fit_config_fn = partial(
         get_config,
         n_clients=config["n_clients"],
         nnunet_config=config["nnunet_config"],
-        nnunet_plans=config["nnunet_plans"],
         n_server_rounds=config["n_server_rounds"],
         batch_size=0,  # Set this to 0 because we're not using it
+        nnunet_plans=config.get("nnunet_plans"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -67,12 +73,12 @@ def main(config: dict) -> None:
         # Of course nnunet stores their pytorch models differently.
         params = ndarrays_to_parameters([val.cpu().numpy() for _, val in model["network_weights"].items()])
     else:
-        raise Exception(
-            "There is a bug right now where params can not be None. \
-            Therefore a starting checkpoint must be provided because I don't \
-            want to mess up my code. I hav raised an issue with flwr"
-        )
-        # params = None
+        # raise Exception(
+        #     "There is a bug right now where params can not be None. \
+        #     Therefore a starting checkpoint must be provided because I don't \
+        #     want to mess up my code. I hav raised an issue with flwr"
+        # )
+        params = None
 
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],
@@ -85,25 +91,35 @@ def main(config: dict) -> None:
         initial_parameters=params,
     )
 
-    server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
+    # server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
+    server = NnUNetServer(client_manager=SimpleClientManager(), strategy=strategy)
 
     fl.server.start_server(
         server=server,
-        server_address=config["server_address"],
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
     # Shutdown server
-    # server.shutdown()
+    server.shutdown()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--config-path", action="store", type=str, help="Path to the configuration file")
 
+    parser.add_argument(
+        "--server-address",
+        type=str,
+        required=False,
+        default="0.0.0.0:8080",
+        help="""[OPTIONAL] The address to use for the server. Defaults to
+        0.0.0.0:8080""",
+    )
+
     args = parser.parse_args()
 
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    main(config)
+    main(config, args.server_address)

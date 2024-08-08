@@ -153,6 +153,7 @@ async def run_smoke_test(
     full_server_output = ""
     startup_messages = [
         # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft and moon
+        # Update, this is no longer in output, examples are actually being triggered by the [ROUND 1] startup message
         "FL starting",
         # printed by scaffold
         "Using Warm Start Strategy. Waiting for clients to be available for polling",
@@ -161,6 +162,10 @@ async def run_smoke_test(
         # printed by federated_eval
         "Federated Evaluation Starting",
         "[ROUND 1]",
+        # As far as I can tell this is printed by most servers that inherit from FlServer
+        "Flower ECE: gRPC server running ",
+        "gRPC server running",
+        "server running",
     ]
 
     output_found = False
@@ -638,6 +643,22 @@ if __name__ == "__main__":
             client_python_path="examples.flash_example.client",
             config_path="tests/smoke_tests/flash_config.yaml",
             dataset_path="examples/datasets/cifar_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+            dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_3d.yaml",
+            dataset_path="examples/datasets/nnunet",
         )
     )
     loop.close()
