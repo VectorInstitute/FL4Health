@@ -132,7 +132,7 @@ threadpoolctl==3.2.0
 toml==0.10.2
 toolz==0.12.0
 torch==1.13.1
-tqdm==4.66.1
+tqdm==4.66.3
 typing_extensions==4.9.0
 uritemplate==4.1.1
 urllib3==2.1.0
