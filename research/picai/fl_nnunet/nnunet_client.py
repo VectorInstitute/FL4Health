@@ -344,7 +344,7 @@ class nnUNetClient(BasicClient):
                 num_samples = self.dataset_json["numTraining"]
                 batch_size = self.plans["configurations"][self.nnunet_config.value]["batch_size"]
                 steps_per_epoch = ceil(num_samples / batch_size)
-                local_epochs = int(local_steps / steps_per_epoch)
+                local_epochs = max(1, int(local_steps / steps_per_epoch))
             self.nnunet_trainer.num_epochs = local_epochs
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
