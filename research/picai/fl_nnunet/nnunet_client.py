@@ -1,21 +1,22 @@
 import logging
+import os
 import pickle
 import signal
 import warnings
 from logging import INFO
-from os import makedirs
 from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+
 import torch
-from flwr.common.logger import log
-from flwr.common.typing import Config
-from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
+from numpy import ceil
+from flwr.common.logger import log
+from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
@@ -38,12 +39,16 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
+    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
+    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
+
 
 # Get the default signal handlers used by python before flwr overrides them
 # We need these because the nnunet dataloaders spawn child processes
@@ -140,6 +145,7 @@ class nnUNetClient(BasicClient):
         self.data_identifier = data_identifier
         self.always_preprocess: bool = always_preprocess
         self.plans_name = plans_identifier
+        self.fingerprint_extracted = False
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
@@ -242,7 +248,7 @@ class nnUNetClient(BasicClient):
 
         # Can't run nnunet preprocessing without saving plans file
         if not exists(join(nnUNet_preprocessed, self.dataset_name)):
-            makedirs(join(nnUNet_preprocessed, self.dataset_name))
+            os.makedirs(join(nnUNet_preprocessed, self.dataset_name))
         plans_save_path = join(nnUNet_preprocessed, self.dataset_name, self.plans_name + ".json")
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
@@ -272,7 +278,22 @@ class nnUNetClient(BasicClient):
                 configurations=[nnunet_config.value],
             )
         else:
-            log(INFO, "nnunet preprocessed data seems to already exist. Skipping preprocessing")
+            log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
+
+    def maybe_extract_fingerprint(self) -> None:
+        """
+        Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset
+        """
+        fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
+        if self.always_preprocess or not exists(fp_path):
+            log(INFO, "\tExtracting nnunet dataset fingerprint")
+            with nostdout():  # prevent print statements from nnunet method
+                extract_fingerprints(dataset_ids=[self.dataset_id])
+        else:
+            log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
+
+        # Avoid extracting fingerprint multiple times when always_preprocess is true
+        self.fingerprint_extracted = True
 
     def setup_client(self, config: Config) -> None:
         """
@@ -294,15 +315,11 @@ class nnUNetClient(BasicClient):
         # Get nnunet config
         self.nnunet_config = get_valid_nnunet_config(narrow_config_type(config, "nnunet_config", str))
 
-        # Check if dataset fingerprint has been extracted
-        if self.always_preprocess or not exists(
-            join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
-        ):
-            log(INFO, "Extracting nnunet dataset fingerprint")
-            with nostdout():  # prevent print statements from nnunet method
-                extract_fingerprints(dataset_ids=[self.dataset_id])
+        # Check if dataset fingerprint has already been extracted
+        if not self.fingerprint_extracted:
+            self.maybe_extract_fingerprint()
         else:
-            log(INFO, "nnunet dataset fingerprint already exists. Skipping fingerprint extraction")
+            log(INFO, "\tDataset fingerprint has already been extracted. Skipping.")
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
@@ -331,6 +348,17 @@ class nnUNetClient(BasicClient):
             # This is done by nnunet_trainer in self.on_train_start, we
             # do it manually since nnunet_trainer not being used for training
             self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
+
+        # Prevent nnunet from generating log files. And delete empty output directories
+        os.remove(self.nnunet_trainer.log_file)
+        self.nnunet_trainer.log_file = os.devnull
+        output_folder = Path(self.nnunet_trainer.output_folder)
+        while True:
+            if len(os.listdir(output_folder)) == 0:
+                os.rmdir(output_folder)
+                output_folder = output_folder.parent
+            else:
+                break
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(self.nnunet_config)
@@ -541,3 +569,80 @@ class nnUNetClient(BasicClient):
             return f" Current LR: {lr}", []
         else:
             return "", []
+
+    def update_before_epoch(self, epoch: int) -> None:
+        # Update the learning rate
+        self.nnunet_trainer.lr_scheduler.step(epoch)
+
+    def get_client_specific_logs(self) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        lr = self.optimizers["global"].param_groups[0]["lr"]
+        return f" Current LR: {lr}", []
+
+    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        """
+        Return properties (sample counts and nnunet plans) of client.
+
+        If nnunet plans are not provided by the server, creates a new set of
+        nnunet plans from the local client dataset. These plans are intended
+        to be used for initializing global nnunet plans when they are not
+        provided.
+
+        Args:
+            config (Config): The config from the server
+
+        Returns:
+            Dict[str, Scalar]: A dictionary containing the train and
+                validation sample counts as well as the serialized nnunet plans
+        """
+        # Check if nnunet plans have already been initialized
+        if "nnunet_plans" in config.keys():
+            properties = super().get_properties(config)
+            properties["nnunet_plans"] = config["nnunet_plans"]
+            return properties
+
+        # Check if local nnunet dataset fingerprint needs to be extracted
+        if not self.fingerprint_extracted:
+            self.maybe_extract_fingerprint()
+
+        # Create experiment planner and plans
+        planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
+        with nostdout():  # Prevent print statements from experiment planner
+            plans = planner.plan_experiment()
+        plans_bytes = pickle.dumps(plans)
+
+        # Remove plans file that was created by planner
+        plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
+        if exists(plans_path):
+            os.remove(plans_path)
+
+        # return properties with initialized nnunet plans. Need to provide
+        # plans since client needs to be initialized to get properties
+        config["nnunet_plans"] = plans_bytes
+        properties = super().get_properties(config)
+        properties["nnunet_plans"] = pickle.dumps(plans_bytes)
+        return properties
+
+    def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
+        """
+        Checks the dataloaders type and if it is a MultiThreadedAugmenter or
+        NonDetMultiThreadedAugmenter calls the _finish method to ensure they
+        are properly shutdown
+
+        Args:
+            dataloader (DataLoader): The dataloader to shutdown
+            dl_name (Optional[str]): A string that identifies the dataloader
+                to shutdown. Used for logging purposes. Defaults to None
+        """
+        if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
+            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+                if dl_name is not None:
+                    log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
+                dataloader.nnunet_dataloader._finish()
+
+    def shutdown(self) -> None:
+        # Not entirely sure if processes potentially opened by nnunet
+        # dataloaders were being ended so ensure that they are ended here
+        self.shutdown_dataloader(self.train_loader, "train_loader")
+        self.shutdown_dataloader(self.val_loader, "val_loader")
+        self.shutdown_dataloader(self.test_loader, "test_loader")
+        return super().shutdown()
