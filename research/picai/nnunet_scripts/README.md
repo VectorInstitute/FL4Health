@@ -47,17 +47,41 @@ Transfer train allows taking an nnUNet model that has already been trained on on
 
 For now making these assumptions is not a problem for our use case. Eventually we may want to allow using only certain layers from the pretrained model, allowing datasets with different input and output dimensions
 
-## Inference
+## Full Inference and Evaluation Pipeline
 
-The predict.py script can be used to do inference on new data using nnunet models. The data on which the model is predicting must be formatted as an nnUNet_raw dataset. Below is an example invocation
+The predict_and_eval.py script provides an all in one pipeline to run inference,
+lesion detection and model evaluation. For a more detailed description run
+```python predict_and_eval.py -h```. The required arguments are a config file, the input data and the ground truth labels. An example invocation is shown below
 
 ```bash
-python predict.py --model_path /path/to/model/checkpoint.pth --raw_inputs /path/to/nnUNet_raw/input_dataset --output_path /myresults/
+python predict_and_eval.py --config-path cktp.yaml --input-folder path/to/input/data/folder --labels-folder path/to/label/folder
 ```
 
-NOTE: This script currently outputs the thresholded segmentation maps, not the softmax outputs of the model.
+One must first however create a yaml config file that provides the necessary information. The config must contain paths to a dataset json, the plans file and nnunet model checkpoints. An example config file is shown below
 
-## Evaluation
+```yaml
+dataset_json: /Path/to/a/dataset.json
+plans: /Path/to/plans.json
+2d:
+  - /Path/to/a/2d/model/checkpoint.pth
+  - /Path/to/a/2d/nnunet/results/folder
+3d_fullres:
+  - /Path/to/a/3d_fullres/model/checkpoint.pth
+```
+
+## Only Inference
+
+The predict.py script can be used to do inference on new data using nnunet models. The data on which the model is predicting must be formatted as an nnUNet_raw
+dataset. Several model checkpoints from different folds or entirely different
+configs can be ensembled using this script. Run ```python predict.py -h``` for more information
+
+An example invocation of predict.py is shown below
+
+```bash
+python predict.py --config-path path/to/config.yaml --input-folder path/to/input/data/folder
+```
+
+## Only Evaluation
 
 The PICAI competition from which the picai datasets originates used the following metric to score models
 
@@ -76,7 +100,5 @@ For more information on the evaluation metrics see the [picai_eval](https://gith
 An example invocation of eval.py is as follows
 
 ```bash
-python eval.py --pred_path /path/to/predicted/segmentations --gt_path /path/to/groundtruth/segmentations --output_path /metric_results/metrics.json
+python eval.py --pred_path /path/to/predicted/probabilities --gt_path /path/to/groundtruth/annotations --output_path /metric_results/metrics.json
 ```
-
-**WARNING**: If this script is provided predicted segmentation maps that have been thresholded (ie they are binary/boolean and one hot encoded OR contain only class labels but NOT softmax model outputs) then the output metrics will be different than what was officially calculated for the PICAI competition. The PICAI evaluation metrics are designed to take into account a model's uncertainty by using 'detection maps' as their inputs for the predictions. These detection maps are derived from the model softmax outputs, a common approach for doing this is available in the [Report-Guided-Annotation API](https://github.com/DIAGNijmegen/Report-Guided-Annotation). The extract_lesion_candidates method from this package can be included as an argument to PICAI eval's evaluate function to allow metrics to be computed directly from softmax model outputs.

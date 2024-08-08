@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import pickle
@@ -30,7 +31,6 @@ from research.picai.fl_nnunet.nnunet_utils import (
     convert_deepsupervision_list_to_dict,
     get_valid_nnunet_config,
     nnUNetDataLoaderWrapper,
-    nostdout,
 )
 
 with warnings.catch_warnings():
@@ -169,7 +169,7 @@ class nnUNetClient(BasicClient):
         signal.signal(signal.SIGTERM, ORIGINAL_SIGTERM_HANDLER)
 
         # Get the nnunet dataloader iterators
-        with nostdout():
+        with contextlib.redirect_stdout(None):
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
         # Set the signal handlers back to what they were for flwr
@@ -283,7 +283,7 @@ class nnUNetClient(BasicClient):
         fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
         if self.always_preprocess or not exists(fp_path):
             log(INFO, "\tExtracting nnunet dataset fingerprint")
-            with nostdout():  # prevent print statements from nnunet method
+            with contextlib.redirect_stdout(None):  # prevent print statements from nnunet method
                 extract_fingerprints(dataset_ids=[self.dataset_id])
         else:
             log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
@@ -319,7 +319,7 @@ class nnUNetClient(BasicClient):
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
-        with nostdout():  # prevent print statements from nnunet methods
+        with contextlib.redirect_stdout(None):  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
@@ -578,7 +578,7 @@ class nnUNetClient(BasicClient):
 
         # Create experiment planner and plans
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
-        with nostdout():  # Prevent print statements from experiment planner
+        with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
         plans_bytes = pickle.dumps(plans)
 
