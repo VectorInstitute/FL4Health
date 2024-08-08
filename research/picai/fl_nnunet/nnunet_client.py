@@ -1,4 +1,5 @@
 import contextlib
+import contextlib
 import logging
 import os
 import pickle
@@ -10,6 +11,9 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
+from flwr.common.logger import log
+from flwr.common.typing import Config, Scalar
+from numpy import ceil
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from numpy import ceil
@@ -263,7 +267,7 @@ class nnUNetClient(BasicClient):
         is {self.data_identifier}_{self.nnunet_config}
 
         Args:
-            nnunet_config (NnUNetConfig): The nnnunet config as a NnUNetConfig
+            nnunet_config (NnUNetConfig): The nnunet config as a NnUNetConfig
                 Enum. Enum type ensures nnunet config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
@@ -277,7 +281,7 @@ class nnUNetClient(BasicClient):
                 configurations=[nnunet_config.value],
             )
         else:
-            log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
+            log(INFO, "nnunet preprocessed data seems to already exist. Skipping preprocessing")
 
     def maybe_extract_fingerprint(self) -> None:
         """
@@ -314,6 +318,7 @@ class nnUNetClient(BasicClient):
         # Get nnunet config
         self.nnunet_config = get_valid_nnunet_config(narrow_config_type(config, "nnunet_config", str))
 
+        # Check if dataset fingerprint has been extracted
         # Check if dataset fingerprint has already been extracted
         if not self.fingerprint_extracted:
             self.maybe_extract_fingerprint()
@@ -323,7 +328,7 @@ class nnUNetClient(BasicClient):
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
         local_epochs, local_steps, _, _ = self.process_config(config)
-        with nostdout():  # prevent print statements from nnunet methods
+        with contextlib.redirect_stdout(None):  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
@@ -335,10 +340,13 @@ class nnUNetClient(BasicClient):
 
             # Need to modify num_epochs before initializing so that LRScheduler
             # recieves the right number of epochs
+            # This will anneal LR to near zero each round
+            # Default nnunet behaviour is do decrease LR every 250 steps
+            # Maybe LRScheduler should just be an argument
             local_epochs, local_steps, _, _ = self.process_config(config)
             if local_steps is not None:
                 num_samples = self.dataset_json["numTraining"]
-                batch_size = self.plans["configuration"][self.nnunet_config.value]["batch_size"]
+                batch_size = self.plans["configurations"][self.nnunet_config.value]["batch_size"]
                 steps_per_epoch = ceil(num_samples / batch_size)
                 local_epochs = int(local_steps / steps_per_epoch)
             self.nnunet_trainer.num_epochs = local_epochs
@@ -375,7 +383,7 @@ class nnUNetClient(BasicClient):
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
-        Generate model outputs. Overridden because nnunets output lists when
+        Generate model outputs. Overridden because nnunet's output lists when
         deep supervision is on so we have to reformat output into dicts
 
         Args:
@@ -493,7 +501,7 @@ class nnUNetClient(BasicClient):
         self, preds: TorchPredType, target: TorchTargetType, metric_manager: MetricManager
     ) -> None:
         """
-        Update the metrics with preds and target. Overriden because we might
+        Update the metrics with preds and target. Overridden because we might
         need to manipulate inputs due to deep supervision
 
         Args:
@@ -555,16 +563,109 @@ class nnUNetClient(BasicClient):
         else:
             pass
 
-    def update_after_step(self, step: int) -> None:
-        # Update the learning rate, by default nnunet lr schedulers use epochs
-        next_epoch = int((step + 1) / len(self.train_loader))
-        self.nnunet_trainer.lr_scheduler.step(next_epoch)
+    def update_before_train(self, current_server_round: int) -> None:
+        """
+        Reset LR at beginning of training so that initial log str has correct LR and not the LR from the previous round
+        """
+        #
+        self.nnunet_trainer.lr_scheduler.step(0)
+
+    def update_before_step(self, step: int) -> None:
+        """
+        Update the learning rate. Need to define this in case train by steps is being used
+        """
+        # By default nnunet lr schedulers use epochs
+        current_epoch = int((step) / len(self.train_loader))
+        self.nnunet_trainer.lr_scheduler.step(current_epoch)
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
     ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
             lr = self.optimizers["global"].param_groups[0]["lr"]
-            return f" Current LR: {lr}", []
+            if current_epoch is None:
+                # Assume training by steps
+                return f"Initial LR {lr}", []
+            else:
+                return f" Current LR: {lr}", []
         else:
             return "", []
+
+    def update_before_epoch(self, epoch: int) -> None:
+        """
+        Updates the learning rate at the beginning of the epoch. Technically
+        LR is already being updated in self.update_before_step, but if
+        training by epochs, we need to do it here too or the initial log
+        string will have the incorrect LR.
+        """
+
+        self.nnunet_trainer.lr_scheduler.step(epoch)
+
+    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+        """
+        Return properties (sample counts and nnunet plans) of client.
+
+        If nnunet plans are not provided by the server, creates a new set of
+        nnunet plans from the local client dataset. These plans are intended
+        to be used for initializing global nnunet plans when they are not
+        provided.
+
+        Args:
+            config (Config): The config from the server
+
+        Returns:
+            Dict[str, Scalar]: A dictionary containing the train and
+                validation sample counts as well as the serialized nnunet plans
+        """
+        # Check if nnunet plans have already been initialized
+        if "nnunet_plans" in config.keys():
+            properties = super().get_properties(config)
+            properties["nnunet_plans"] = config["nnunet_plans"]
+            return properties
+
+        # Check if local nnunet dataset fingerprint needs to be extracted
+        if not self.fingerprint_extracted:
+            self.maybe_extract_fingerprint()
+
+        # Create experiment planner and plans
+        planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
+        with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
+            plans = planner.plan_experiment()
+        plans_bytes = pickle.dumps(plans)
+
+        # Remove plans file that was created by planner
+        plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
+        if exists(plans_path):
+            os.remove(plans_path)
+
+        # return properties with initialized nnunet plans. Need to provide
+        # plans since client needs to be initialized to get properties
+        config["nnunet_plans"] = plans_bytes
+        properties = super().get_properties(config)
+        properties["nnunet_plans"] = pickle.dumps(plans_bytes)
+        return properties
+
+    def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
+        """
+        Checks the dataloaders type and if it is a MultiThreadedAugmenter or
+        NonDetMultiThreadedAugmenter calls the _finish method to ensure they
+        are properly shutdown
+
+        Args:
+            dataloader (DataLoader): The dataloader to shutdown
+            dl_name (Optional[str]): A string that identifies the dataloader
+                to shutdown. Used for logging purposes. Defaults to None
+        """
+        if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
+            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+                if dl_name is not None:
+                    log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
+                dataloader.nnunet_dataloader._finish()
+
+    def shutdown(self) -> None:
+        # Not entirely sure if processes potentially opened by nnunet
+        # dataloaders were being ended so ensure that they are ended here
+        self.shutdown_dataloader(self.train_loader, "train_loader")
+        self.shutdown_dataloader(self.val_loader, "val_loader")
+        self.shutdown_dataloader(self.test_loader, "test_loader")
+        return super().shutdown()

@@ -1,10 +1,12 @@
-# You should set these yourself
+# FL4Health Settings:
 n_clients: 1
-nnunet_config: 2d
-nnunet_plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset004_Hippocampus/nnUNetPlans.json
-fold: 0
 n_server_rounds: 1
+server_address: '0.0.0.0:8080'
 local_epochs: 3
 # local_steps: 50
-server_address: '0.0.0.0:8080'
-starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset004_Hippocampus/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth
+#starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset004_Hippocampus/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth
+
+# nnunet Settings:
+nnunet_config: 2d
+fold: 0
+#nnunet_plans: /home/shawn/Code/nnunet_storage/nnUNet_preprocessed/Dataset004_Hippocampus/nnUNetPlans.json
