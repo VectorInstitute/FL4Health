@@ -30,7 +30,7 @@ post-processing. They are ordered sequentially from least to most processed
 
   ![alt text](images/probs.png)
 - **Detection Maps:** Model predictions that contain an arbitrary number of distinct detected segmentation volumes derived from the output probabilities. Values are constrained to range [0, 1]. Example for a 2d image is shown below Detected segmentation volumes are defined as:
-  - Each detected volume is a connected component that must be non-connected and non-overlapping (mutually exclusive) with other volumes of the same class. (Therefore detection maps for multiclass segementation must be one hot encoded)
+  - Each detected volume is a connected component that must be non-connected and non-overlapping (mutually exclusive) with other volumes of the same class. (Therefore detection maps for multiclass segmentation must be one hot encoded)
   - Each pixel/voxel within a volume must have the same predicted probability. Therefore there is a single confidence/likelihood score for each volume.
   - Detected segmentation volumes typically have a minimum size.
   - The [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) is a common api used for deriving detection maps from model output probabilities
@@ -42,8 +42,8 @@ post-processing. They are ordered sequentially from least to most processed
 
 Below are some terms we will use to differentiate how models are combined
 
-- **Merging:** Merging models refers to combining the weights of several different models in some way to obtain a single model that can make predictions on the same data as the original models. This is distinct from federated learning in the sense that no training is traditionally done in this regime.
-- **Ensembling:** Ensembling refers to combining the outputs of several different models in some way to acheive a single agreed upon prediction
+- **Merging:** Merging models refers to combining the weights of several different models in some way to obtain a single model that can make predictions on data with the same format as the original models. This is distinct from federated learning in the sense that no training is traditionally done in this regime.
+- **Ensembling:** Ensembling refers to combining the outputs of several different models in some way to achieve a single agreed upon prediction
 
 ### Raw Dataset
 
