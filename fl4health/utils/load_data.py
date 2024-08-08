@@ -1,4 +1,5 @@
 import random
+import warnings
 from logging import INFO
 from pathlib import Path
 from typing import Callable, Dict, Optional, Tuple
@@ -12,7 +13,13 @@ from torchvision.datasets import CIFAR10, MNIST
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.dataset_converter import DatasetConverter
+from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_md5_hashes, msd_urls
 from fl4health.utils.sampler import LabelBasedSampler
+
+with warnings.catch_warnings():
+    # ignoring some annoying scipy deprecation warnings
+    warnings.simplefilter("ignore", category=DeprecationWarning)
+    from monai.apps.utils import download_and_extract
 
 
 class ToNumpy:
@@ -255,3 +262,22 @@ def load_cifar10_test_data(
     evaluation_loader = DataLoader(evaluation_set, batch_size=batch_size, shuffle=False)
     num_examples = {"eval_set": len(evaluation_set)}
     return evaluation_loader, num_examples
+
+
+def load_msd_dataset(data_path: str, msd_dataset_name: str) -> None:
+    """
+    Downloads and extracts one of the 10 Medical Segmentation Decathelon (MSD)
+    datasets.
+
+    Args:
+        data_path (str): Path to the folder in which to extract the
+            dataset. The data itself will be in a subfolder named after the
+            dataset, not in the data_path directory itself. The name of the
+            folder will be the name of the dataset as defined by the values of
+            the MsdDataset enum returned by get_msd_dataset_enum
+        msd_dataset_name (str): One of the 10 msd datasets
+    """
+    msd_enum = get_msd_dataset_enum(msd_dataset_name)
+    msd_hash = msd_md5_hashes[msd_enum]
+    url = msd_urls[msd_enum]
+    download_and_extract(url=url, output_dir=data_path, hash_val=msd_hash, hash_type="md5", progress=True)
