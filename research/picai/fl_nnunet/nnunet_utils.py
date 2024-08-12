@@ -15,7 +15,8 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from nnunetv2.training.dataloading.base_data_loader import nnUNetDataLoaderBase
+    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
+    from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
 
 
@@ -96,7 +97,10 @@ def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -
 
 class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
-        self, nnunet_dataloader: nnUNetDataLoaderBase, nnunet_config: NnUNetConfig, infinite: bool = False
+        self,
+        nnunet_augmenter: Union[SingleThreadedAugmenter, NonDetMultiThreadedAugmenter],
+        nnunet_config: NnUNetConfig,
+        infinite: bool = False,
     ) -> None:
         """
         Wraps nnunet dataloader classes using the pytorch dataloader to make
@@ -104,7 +108,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
         nnunet such as deep supervision and infinite dataloaders
 
         Args:
-            nnunet_dataloader (nnUNetDataLoaderBase): The nnunet dataloader
+            nnunet_dataloader (Union[SingleThreadedAugmenter,
+                NonDetMultiThreadedAugmenter]): The dataloader used by nnunet
             nnunet_config (NnUNetConfig): The nnunet config. Enum type helps
                 ensure that nnunet config is valid
             infinite (bool, optional): Whether or not to treat the dataset
@@ -113,14 +118,19 @@ class nnUNetDataLoaderWrapper(DataLoader):
                 StopIteration is generated after num_samples/batch_size steps.
                 Defaults to False.
         """
-        self.nnunet_dataloader = nnunet_dataloader
+        self.nnunet_augmenter = nnunet_augmenter
+
+        if isinstance(self.nnunet_augmenter, SingleThreadedAugmenter):
+            self.nnunet_dataloader = self.nnunet_augmenter.data_loader
+        else:
+            self.nnunet_dataloader = self.nnunet_augmenter.generator
 
         # Figure out if dataloader is 2d or 3d
         self.num_spatial_dims = nnunet_config.num_spatial_dims
 
         # nnUNetDataloaders store their datasets under the self.data attribute
-        self.dataset: nnUNetDataset = self.nnunet_dataloader.generator._data
-        super().__init__(dataset=self.dataset, batch_size=self.nnunet_dataloader.generator.batch_size)
+        self.dataset: nnUNetDataset = self.nnunet_dataloader._data
+        super().__init__(dataset=self.dataset, batch_size=self.nnunet_dataloader.batch_size)
 
         # nnunet dataloaders are infinite by default so we have to track steps to stop iteration
         self.current_step = 0
@@ -133,7 +143,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             raise StopIteration
         else:
             self.current_step += 1
-            batch = next(self.nnunet_dataloader)  # This returns a dictionary
+            batch = next(self.nnunet_augmenter)  # This returns a dictionary
             # Note: When deep supervision is on, target is a list of segmentations at various scales
             # nnUNet has a wrapper for loss functions to enable deep supervision
             inputs: torch.Tensor = batch["data"]
@@ -159,7 +169,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             int: integer equal to num_samples // batch_size
         """
         num_samples = len(self.dataset)
-        batch_size = self.nnunet_dataloader.generator.batch_size
+        batch_size = self.nnunet_dataloader.batch_size
         return int(ceil(num_samples / batch_size))
 
     def reset(self) -> None:

@@ -185,8 +185,8 @@ class nnUNetClient(BasicClient):
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
 
-        train_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
+        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
 
         return train_loader, val_loader
 
@@ -580,6 +580,8 @@ class nnUNetClient(BasicClient):
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
         with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
+
+        plans["plans_name"] = "nnUNetPlans"  # Set plans name to default
         plans_bytes = pickle.dumps(plans)
 
         # Remove plans file that was created by planner
@@ -591,7 +593,7 @@ class nnUNetClient(BasicClient):
         # plans since client needs to be initialized to get properties
         config["nnunet_plans"] = plans_bytes
         properties = super().get_properties(config)
-        properties["nnunet_plans"] = pickle.dumps(plans_bytes)
+        properties["nnunet_plans"] = plans_bytes
         return properties
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
@@ -606,10 +608,10 @@ class nnUNetClient(BasicClient):
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
-            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+            if isinstance(dataloader.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
                 if dl_name is not None:
                     log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
-                dataloader.nnunet_dataloader._finish()
+                dataloader.nnunet_augmenter._finish()
 
     def shutdown(self) -> None:
         # Not entirely sure if processes potentially opened by nnunet
