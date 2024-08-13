@@ -76,6 +76,7 @@ def main(
         device=DEVICE,
         metrics=[dice],
         data_path=dataset_path,  # Argument not actually used by nnUNetClient
+        progress_bar=True,
     )
 
     start_client(server_address=server_address, client=client.to_client())

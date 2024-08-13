@@ -277,7 +277,7 @@ class nnUNetClient(BasicClient):
                 configurations=[nnunet_config.value],
             )
         else:
-            log(INFO, "nnunet preprocessed data seems to already exist. Skipping preprocessing")
+            log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
 
     def maybe_extract_fingerprint(self) -> None:
         """
