@@ -48,8 +48,9 @@ class FlServer(Server):
                 should perform server side checkpointing based on some
                 criteria. If none, then no server-side checkpointing is
                 performed. Multiple checkpointers can also be passed in a
-                sequence to checkpoint based on multiple criteria. Defaults to
-                None.
+                sequence to checkpointer based on multiple criteria. Ensure
+                checkpoint names are different for each checkpoint or they
+                will overwrite on another. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
@@ -367,7 +368,7 @@ class FlServerWithInitializer(FlServer):
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
@@ -387,8 +388,10 @@ class FlServerWithInitializer(FlServer):
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence
+                [TorchCheckpointer]]], optional): To be provided if the server
+                should perform server side checkpointing based on some
+                criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
