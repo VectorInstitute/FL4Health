@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import pickle
@@ -30,7 +31,6 @@ from research.picai.fl_nnunet.nnunet_utils import (
     convert_deepsupervision_list_to_dict,
     get_valid_nnunet_config,
     nnUNetDataLoaderWrapper,
-    nostdout,
 )
 
 with warnings.catch_warnings():
@@ -169,7 +169,7 @@ class nnUNetClient(BasicClient):
         signal.signal(signal.SIGTERM, ORIGINAL_SIGTERM_HANDLER)
 
         # Get the nnunet dataloader iterators
-        with nostdout():
+        with contextlib.redirect_stdout(None):
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
         # Set the signal handlers back to what they were for flwr
@@ -185,8 +185,8 @@ class nnUNetClient(BasicClient):
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
 
-        train_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=train_loader, nnunet_config=self.nnunet_config)
-        val_loader = nnUNetDataLoaderWrapper(nnunet_dataloader=val_loader, nnunet_config=self.nnunet_config)
+        train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
+        val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
 
         return train_loader, val_loader
 
@@ -283,7 +283,7 @@ class nnUNetClient(BasicClient):
         fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
         if self.always_preprocess or not exists(fp_path):
             log(INFO, "\tExtracting nnunet dataset fingerprint")
-            with nostdout():  # prevent print statements from nnunet method
+            with contextlib.redirect_stdout(None):  # prevent print statements from nnunet method
                 extract_fingerprints(dataset_ids=[self.dataset_id])
         else:
             log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
@@ -319,7 +319,7 @@ class nnUNetClient(BasicClient):
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
-        with nostdout():  # prevent print statements from nnunet methods
+        with contextlib.redirect_stdout(None):  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
@@ -578,8 +578,10 @@ class nnUNetClient(BasicClient):
 
         # Create experiment planner and plans
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
-        with nostdout():  # Prevent print statements from experiment planner
+        with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
+
+        plans["plans_name"] = "nnUNetPlans"  # Set plans name to default
         plans_bytes = pickle.dumps(plans)
 
         # Remove plans file that was created by planner
@@ -591,7 +593,7 @@ class nnUNetClient(BasicClient):
         # plans since client needs to be initialized to get properties
         config["nnunet_plans"] = plans_bytes
         properties = super().get_properties(config)
-        properties["nnunet_plans"] = pickle.dumps(plans_bytes)
+        properties["nnunet_plans"] = plans_bytes
         return properties
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
@@ -606,10 +608,10 @@ class nnUNetClient(BasicClient):
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
-            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+            if isinstance(dataloader.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
                 if dl_name is not None:
                     log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
-                dataloader.nnunet_dataloader._finish()
+                dataloader.nnunet_augmenter._finish()
 
     def shutdown(self) -> None:
         # Not entirely sure if processes potentially opened by nnunet
