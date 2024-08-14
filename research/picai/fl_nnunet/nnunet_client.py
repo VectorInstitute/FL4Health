@@ -561,14 +561,15 @@ class nnUNetClient(BasicClient):
 
     def update_before_train(self, current_server_round: int) -> None:
         """
-        Reset LR at beginning of training so that initial log str has correct LR and not the LR from the previous round
+        Reset LR at beginning of training so that initial log str has correct LR and
+        not the LR from the previous round
         """
-        #
         self.nnunet_trainer.lr_scheduler.step(0)
 
     def update_before_step(self, step: int) -> None:
         """
-        Update the learning rate. Need to define this in case train by steps is being used
+        Update the learning rate. Need to define this in case train by steps is being
+        used. This is the current step for the entire round, not the current epoch.
         """
         # By default nnunet lr schedulers use epochs
         current_epoch = int((step) / len(self.train_loader))

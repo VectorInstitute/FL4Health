@@ -41,7 +41,7 @@ nltk = "^3.8.1"
 torchvision = "^0.16.0"
 torchinfo = "^1.8.0"
 ipykernel = "^6.25.1"
-scikit-learn = "^1.5.0"
+scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 wandb = "^0.16.1"
 
 [tool.poetry.group.dev-local.dependencies]
@@ -86,7 +86,6 @@ picai_eval = "^1.4.6"
 mlflow = "^2.12.2"
 fire = "^0.6.0"
 einops = "0.8.0"
-scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 
 
 [build-system]

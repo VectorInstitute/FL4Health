@@ -630,8 +630,8 @@ class BasicClient(NumPyClient):
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
+        steps_this_round = 0  # Reset number of steps this round
         for local_epoch in range(epochs):
-            local_step = 0  # Reset local step
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
             # update before epoch hook
@@ -639,7 +639,7 @@ class BasicClient(NumPyClient):
             # Print initial log string on epoch start, not epoch end
             self._handle_logging({}, {}, current_round, local_epoch)
             for input, target in self.maybe_progress_bar(self.train_loader):
-                self.update_before_step(local_step)
+                self.update_before_step(steps_this_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
                 if self.is_empty_batch(input):
@@ -651,9 +651,9 @@ class BasicClient(NumPyClient):
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
-                self.update_after_step(local_step)
+                self.update_after_step(steps_this_round)
                 self.total_steps += 1
-                local_step += 1
+                steps_this_round += 1
             metrics = self.train_metric_manager.compute()
             loss_dict = self.train_loss_meter.compute().as_dict()
 
@@ -1099,7 +1099,8 @@ class BasicClient(NumPyClient):
         aggregation.
 
         Args:
-            local_steps (int): The number of steps in the local training.
+            local_steps (int): The number of steps so far in the round in the local
+                training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
         """
         pass
@@ -1110,7 +1111,7 @@ class BasicClient(NumPyClient):
 
         Args:
             step (int): The local training step that was most recently
-                completed
+                completed. Resets only at the end of the round.
         """
         pass
 
@@ -1121,7 +1122,8 @@ class BasicClient(NumPyClient):
         method to update the alpha value after a training a step.
 
         Args:
-            step (int): The step number in local training that was most recently completed.
+            step (int): The step number in local training that was most recently
+                completed. Resets only at the end of the round.
         """
         pass
 
