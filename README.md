@@ -81,6 +81,25 @@ FedDG-GA is a domain generalization approach that aims to ensure that the models
 </td>
 </tr>
 <tr>
+<td>
+
+[FLASH](https://proceedings.mlr.press/v202/panchal23a/panchal23a.pdf)
+</td>
+<td>
+FLASH incorporates a modification to the server-side aggregation algorithm, adding an additional term that is meant to modify the server side learning rate if a data distribution shift occurs during training. In the absence of distribution shifts, the modified aggregation approach is nearly equivalent to the existing FedAvg or FedOpt approaches.
+</td>
+</tr>
+<tr>
+<td>
+
+[FedPM](https://arxiv.org/pdf/2209.15328)
+</td>
+<td>
+FedPM is a recent sparse, communication efficient approach to federated learning. The method has been shown to have exceptional information compression while maintaining good performance. Interestingly, it is also connected to the Lottery Ticket Hypothesis.
+</td>
+</tr>
+
+<tr>
 <th style="text-align: left; width: 250px"> Personalized Methods </th>
 <th style="text-align: center; width: 350px"> Notes </th>
 </tr>
@@ -164,6 +183,15 @@ PerFCL extends MOON to consider separate globally and locally trained feature ex
 FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The contrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
 </td>
 </tr>
+<tr>
+<td>
+
+FENDA+Ditto
+</td>
+<td>
+This is a combination of two state-of-the-art approaches above: FENDA-FL and Ditto. The idea is to merge the two approaches to yield a "best of both" set of modeling with the flexibility of FENDA-FL for local adaptation and the global-model constrained optimization of Ditto.
+</td>
+</tr>
 </table>
 
 More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
@@ -182,7 +210,7 @@ The addition of Distributed Differential Privacy (DDP) with Secure Aggregation i
 
 ### Checkpointing
 
-Contains modules associated with basic checkpointing. Currently only supports checkpointing of pytorch models. Generic scoring functions for determining whether to checkpoint a model are supported. There are two basic forms of checkpointing implemented out of the box for convenience. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing. The library currently supports server-side checkpointing of global models after weight aggregation. On the client-side, we support checkpointing local models on each client during local training and/or after weight aggregation from the server.
+Contains modules to support checkpointing strategies in federated learning. Currently only supports checkpointing of pytorch models. Generic scoring functions for determining whether to checkpoint a model are supported. There are two basic forms of checkpointing implemented out of the box for convenience. The first is simply "latest" checkpointing. The second is "best" checkpointing based on a metric value compared with past metrics seen during training. The current implementations support both server-side and client-side checkpointing based on these modules. This allows for what we refer to as "Federated Checkpointing" where, given a validation set on each client, models can be checkpointed at any point during the federated training run, rather than just at the end of the server rounds. This can often significantly improve federally trained model performance. See the experiments implemented in `research/flamby` for an example of using federated checkpointing. The library currently supports server-side checkpointing of global models after weight aggregation. On the client-side, we support checkpointing local models on each client during local training and/or after weight aggregation from the server. These are referred to as pre- and post-aggregation checkpointing modules.
 
 ### Client Managers
 
@@ -248,7 +276,7 @@ __NOTE__: The contents of the examples folder is not packed with the FL4Health l
 
 The research folder houses code associated with various research being conducted by the team at Vector. It may be used to perform experiments on the Cluster or to reproduce experiments from our research. The current research is:
 
-- [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby Experiments. There is a README in that folder that provides details on how to run the hyper-parameter sweeps, evaluations, and other experiments.
+- [FENDA-FL](https://arxiv.org/pdf/2309.16825.pdf) FLamby and GEMINI Experiments (training scripts and model code only). There is a README in these folders that provide details on how to run the hyper-parameter sweeps, evaluations, and other experiments. The GEMINI experiments are not runnable in a general environment, as they require access to GEMINI data, which is securely held, due to patient privacy.
 
 __NOTE__: The contents of the research folder is not packed with the FL4Health library on release to PyPi
 
