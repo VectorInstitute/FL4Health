@@ -183,6 +183,15 @@ PerFCL extends MOON to consider separate globally and locally trained feature ex
 FENDA is an ablation of PerFCL that strictly considers globally and locally trained feature extractors and a locally trained classifier. The contrastive loss functions are removed from the training procedure to allow for less constrained feature learning and more flexible model architecture design.
 </td>
 </tr>
+<tr>
+<td>
+
+FENDA+Ditto
+</td>
+<td>
+This is a combination of two state-of-the-art approaches above: FENDA-FL and Ditto. The idea is to merge the two approaches to yield a "best of both" set of modeling with the flexibility of FENDA-FL for local adaptation and the global-model constrained optimization of Ditto.
+</td>
+</tr>
 </table>
 
 More approaches are being implemented as they are prioritized. However, the library also provides significant flexibility to implement strategies of your own.
