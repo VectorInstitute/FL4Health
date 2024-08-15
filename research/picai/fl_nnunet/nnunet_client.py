@@ -314,7 +314,6 @@ class nnUNetClient(BasicClient):
         # Get nnunet config
         self.nnunet_config = get_valid_nnunet_config(narrow_config_type(config, "nnunet_config", str))
 
-        # Check if dataset fingerprint has been extracted
         # Check if dataset fingerprint has already been extracted
         if not self.fingerprint_extracted:
             self.maybe_extract_fingerprint()
@@ -323,7 +322,6 @@ class nnUNetClient(BasicClient):
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
-        local_epochs, local_steps, _, _ = self.process_config(config)
         with contextlib.redirect_stdout(None):  # prevent print statements from nnunet methods
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
@@ -335,10 +333,13 @@ class nnUNetClient(BasicClient):
             )
 
             # Need to modify num_epochs before initializing so that LRScheduler
-            # recieves the right number of epochs
+            # receives the right number of epochs
             # This will anneal LR to near zero each round
-            # Default nnunet behaviour is do decrease LR every 250 steps
-            # Maybe LRScheduler should just be an argument
+            # TODO: Change default lr schedule behaviour to remember lr across rounds
+            # TODO: Default nnunet behaviour is to define an epoch as 250 steps and
+            # TODO: decrease lr every "epoch"
+            # TODO: Maybe LRScheduler should just be an argument so that users can
+            # TODO: decide how to update LR themselves
             local_epochs, local_steps, _, _ = self.process_config(config)
             if local_steps is not None:
                 num_samples = self.dataset_json["numTraining"]
@@ -379,8 +380,8 @@ class nnUNetClient(BasicClient):
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
-        Generate model outputs. Overridden because nnunet's output lists when
-        deep supervision is on so we have to reformat output into dicts
+        Generate model outputs. Overridden because nnunets output lists when
+        deep supervision is on so we have to reformat the output into dicts
 
         Args:
             input (TorchInputType): The model inputs
@@ -566,13 +567,12 @@ class nnUNetClient(BasicClient):
         """
         self.nnunet_trainer.lr_scheduler.step(0)
 
-    def update_before_step(self, step: int) -> None:
+    def update_after_step(self, step: int) -> None:
         """
-        Update the learning rate. Need to define this in case train by steps is being
-        used. This is the current step for the entire round, not the current epoch.
+        Update the learning rate. This is the current step for the entire round, not the current epoch.
         """
         # By default nnunet lr schedulers use epochs
-        current_epoch = int((step) / len(self.train_loader))
+        current_epoch = int((step + 1) / len(self.train_loader))
         self.nnunet_trainer.lr_scheduler.step(current_epoch)
 
     def get_client_specific_logs(
@@ -587,16 +587,6 @@ class nnUNetClient(BasicClient):
                 return f" Current LR: {lr}", []
         else:
             return "", []
-
-    def update_before_epoch(self, epoch: int) -> None:
-        """
-        Updates the learning rate at the beginning of the epoch. Technically
-        LR is already being updated in self.update_before_step, but if
-        training by epochs, we need to do it here too or the initial log
-        string will have the incorrect LR.
-        """
-
-        self.nnunet_trainer.lr_scheduler.step(epoch)
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
@@ -624,13 +614,18 @@ class nnUNetClient(BasicClient):
         if not self.fingerprint_extracted:
             self.maybe_extract_fingerprint()
 
-        # Create experiment planner and plans
+        # Create experiment planner and plans. Plans name must be temp_plans so that we
+        # can safely delete the plans file generate by the experiment planner
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
         with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
+
+        # Set plans name to default nnunet plans name. FL related stuff will be
+        # appended in setup_client so that it doesn't overwrite existing default
+        plans["plans_name"] = "nnUNetPlans"
         plans_bytes = pickle.dumps(plans)
 
-        # Remove plans file that was created by planner
+        # Remove plans file . A new one will be generated in self.setup_client
         plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
         if exists(plans_path):
             os.remove(plans_path)
@@ -639,7 +634,7 @@ class nnUNetClient(BasicClient):
         # plans since client needs to be initialized to get properties
         config["nnunet_plans"] = plans_bytes
         properties = super().get_properties(config)
-        properties["nnunet_plans"] = pickle.dumps(plans_bytes)
+        properties["nnunet_plans"] = plans_bytes
         return properties
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:

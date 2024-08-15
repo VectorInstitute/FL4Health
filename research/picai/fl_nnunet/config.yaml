@@ -4,7 +4,7 @@ n_server_rounds: 1
 server_address: '0.0.0.0:8080'
 local_epochs: 3
 # local_steps: 50
-#starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset004_Hippocampus/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth
+# starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset004_Hippocampus/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth
 
 # nnunet Settings:
 nnunet_config: 2d

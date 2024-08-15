@@ -369,7 +369,35 @@ class BasicClient(NumPyClient):
         )
         return evaluate_after_fit or pre_aggregation_checkpointing_enabled
 
-    def _handle_logging(
+    def _log_header_str(
+        self,
+        current_round: Optional[int] = None,
+        current_epoch: Optional[int] = None,
+        logging_mode: LoggingMode = LoggingMode.TRAIN,
+    ) -> None:
+        """
+        Logs a header string. By default this is logged at the beginning of each local
+        epoch or at the beginning of training if
+
+        Args:
+            current_round (Optional[int], optional): The current FL round. (Ie current
+                server round). Defaults to None.
+            current_epoch (Optional[int], optional): The current epoch of local
+                training. Defaults to None.
+        """
+
+        log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
+        log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
+
+        # Maybe add client specific info to initial log string
+        client_str, _ = self.get_client_specific_logs(current_round, current_epoch, logging_mode)
+
+        log_str += client_str
+
+        log(INFO, "")  # For aesthetics
+        log(INFO, log_str)
+
+    def _log_results(
         self,
         loss_dict: Dict[str, float],
         metrics_dict: Dict[str, Scalar],
@@ -388,18 +416,7 @@ class BasicClient(NumPyClient):
             current_epoch (Optional[int]): The current epoch of local training.
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
         """
-
-        initial_log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
-        initial_log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
-
-        # Maybe add client specific info to initial log string
-        client_str, client_logs = self.get_client_specific_logs(current_round, current_epoch, logging_mode)
-
-        if initial_log_str != "":
-            initial_log_str += client_str
-            log(INFO, "")  # An empty log line for aesthetics
-            log(INFO, initial_log_str)
-            self.add_to_initial_log_str = ""  # Reset variable
+        _, client_logs = self.get_client_specific_logs(current_round, current_epoch, logging_mode)
 
         # Get Metric Prefix
         metric_prefix = logging_mode.value
@@ -422,11 +439,10 @@ class BasicClient(NumPyClient):
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
     ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
         """
-        This function can be overriden to provide any client specific
+        This function can be overridden to provide any client specific
         information to the basic client logging. For example, perhaps a client
-        uses an LR scheduler and wants the LR to be logged each epoch. The
-        logging is called at the end of either every epoch for
-        train_by_epochs, or the end of the server round for train_by_steps
+        uses an LR scheduler and wants the LR to be logged each epoch. Called at the
+        beginning or each round/epoch and at the end of each step.
 
         Args:
             current_round (Optional[int]): The current FL round (i.e., current
@@ -436,12 +452,14 @@ class BasicClient(NumPyClient):
                 Validation, or Testing).
 
         Returns:
-            Optional[str]: A string to append to the initial log string that
-                typically announces the current server round and current epoch
+            Optional[str]: A string to append to the header log string that
+                typically announces the current server round and current epoch at the
+                beginning of each round/epoch.
             Optional[List[Tuple[LogLevel, str]]]]: A list of tuples where the
                 first element is a LogLevel as defined in fl4health.utils.
                 typing and the second element is a string message. Each item
-                in the list will be logged when self._handle_logging is called
+                in the list will be logged at the end of each step when
+                self._log_results is called
         """
         return "", []
 
@@ -634,10 +652,10 @@ class BasicClient(NumPyClient):
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
+            # Print initial log string on epoch start
+            self._log_header_str(current_round, local_epoch)
             # update before epoch hook
             self.update_before_epoch(epoch=local_epoch)
-            # Print initial log string on epoch start, not epoch end
-            self._handle_logging({}, {}, current_round, local_epoch)
             for input, target in self.maybe_progress_bar(self.train_loader):
                 self.update_before_step(steps_this_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
@@ -658,7 +676,7 @@ class BasicClient(NumPyClient):
             loss_dict = self.train_loss_meter.compute().as_dict()
 
             # Log results and maybe report via WANDB
-            self._handle_logging(loss_dict, metrics)
+            self._log_results(loss_dict, metrics, current_round, local_epoch)
             self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         # Return final training metrics
@@ -684,7 +702,7 @@ class BasicClient(NumPyClient):
 
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
-        self._handle_logging({}, {}, current_round)  # Initial log str
+        self._log_header_str(current_round)
         for step in self.maybe_progress_bar(range(steps)):
 
             self.update_before_step(step)
@@ -715,7 +733,7 @@ class BasicClient(NumPyClient):
         metrics = self.train_metric_manager.compute()
 
         # Log results and maybe report via WANDB
-        self._handle_logging(loss_dict, metrics)
+        self._log_results(loss_dict, metrics, current_round)
         self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
@@ -755,7 +773,7 @@ class BasicClient(NumPyClient):
         # Compute losses and metrics over validation set
         loss_dict = loss_meter.compute().as_dict()
         metrics = metric_manager.compute()
-        self._handle_logging(loss_dict, metrics, logging_mode=logging_mode)
+        self._log_results(loss_dict, metrics, logging_mode=logging_mode)
 
         return loss_dict["checkpoint"], metrics
 
