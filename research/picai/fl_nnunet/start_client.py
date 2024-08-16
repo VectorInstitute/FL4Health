@@ -69,6 +69,7 @@ def main(
         # BaseClient Args
         device=DEVICE,
         metrics=metrics,
+        progress_bar=True,
         data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 

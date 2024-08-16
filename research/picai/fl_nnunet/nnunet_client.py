@@ -12,13 +12,14 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
+from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient
+from fl4health.clients.basic_client import BasicClient, LoggingMode
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
@@ -70,6 +71,7 @@ class nnUNetClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        progress_bar: bool = False,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -131,6 +133,7 @@ class nnUNetClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,  # self.checkpointer
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
+            progress_bar=progress_bar,
         )
 
         # Some nnunet specific attributes
@@ -260,7 +263,7 @@ class nnUNetClient(BasicClient):
         is {self.data_identifier}_{self.nnunet_config}
 
         Args:
-            nnunet_config (NnUNetConfig): The nnnunet config as a NnUNetConfig
+            nnunet_config (NnUNetConfig): The nnunet config as a NnUNetConfig
                 Enum. Enum type ensures nnunet config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
@@ -329,6 +332,21 @@ class nnUNetClient(BasicClient):
                 device=self.device,
             )
 
+            # Need to modify num_epochs before initializing so that LRScheduler
+            # receives the right number of epochs
+            # This will anneal LR to near zero each round
+            # TODO: Change default lr schedule behaviour to remember lr across rounds
+            # TODO: Default nnunet behaviour is to define an epoch as 250 steps and
+            # TODO: decrease lr every "epoch"
+            # TODO: Maybe LRScheduler should just be an argument so that users can
+            # TODO: decide how to update LR themselves
+            local_epochs, local_steps, _, _ = self.process_config(config)
+            if local_steps is not None:
+                num_samples = self.dataset_json["numTraining"]
+                batch_size = self.plans["configurations"][self.nnunet_config.value]["batch_size"]
+                steps_per_epoch = ceil(num_samples / batch_size)
+                local_epochs = max(1, int(local_steps / steps_per_epoch))
+            self.nnunet_trainer.num_epochs = local_epochs
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
             # This is done by nnunet_trainer in self.on_train_start, we
@@ -363,7 +381,7 @@ class nnUNetClient(BasicClient):
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
         Generate model outputs. Overridden because nnunets output lists when
-        deep supervision is on so we have to reformat output into dicts
+        deep supervision is on so we have to reformat the output into dicts
 
         Args:
             input (TorchInputType): The model inputs
@@ -480,7 +498,7 @@ class nnUNetClient(BasicClient):
         self, preds: TorchPredType, target: TorchTargetType, metric_manager: MetricManager
     ) -> None:
         """
-        Update the metrics with preds and target. Overriden because we might
+        Update the metrics with preds and target. Overridden because we might
         need to manipulate inputs due to deep supervision
 
         Args:
@@ -542,13 +560,33 @@ class nnUNetClient(BasicClient):
         else:
             pass
 
-    def update_before_epoch(self, epoch: int) -> None:
-        # Update the learning rate
-        self.nnunet_trainer.lr_scheduler.step(epoch)
+    def update_before_train(self, current_server_round: int) -> None:
+        """
+        Reset LR at beginning of training so that initial log str has correct LR and
+        not the LR from the previous round
+        """
+        self.nnunet_trainer.lr_scheduler.step(0)
 
-    def get_client_specific_logs(self) -> Tuple[str, List[Tuple[LogLevel, str]]]:
-        lr = self.optimizers["global"].param_groups[0]["lr"]
-        return f" Current LR: {lr}", []
+    def update_after_step(self, step: int) -> None:
+        """
+        Update the learning rate. This is the current step for the entire round, not the current epoch.
+        """
+        # By default nnunet lr schedulers use epochs
+        current_epoch = int((step + 1) / len(self.train_loader))
+        self.nnunet_trainer.lr_scheduler.step(current_epoch)
+
+    def get_client_specific_logs(
+        self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
+    ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        if logging_mode == LoggingMode.TRAIN:
+            lr = self.optimizers["global"].param_groups[0]["lr"]
+            if current_epoch is None:
+                # Assume training by steps
+                return f"Initial LR {lr}", []
+            else:
+                return f" Current LR: {lr}", []
+        else:
+            return "", []
 
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
@@ -576,15 +614,18 @@ class nnUNetClient(BasicClient):
         if not self.fingerprint_extracted:
             self.maybe_extract_fingerprint()
 
-        # Create experiment planner and plans
+        # Create experiment planner and plans. Plans name must be temp_plans so that we
+        # can safely delete the plans file generated by the experiment planner
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
         with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
 
-        plans["plans_name"] = "nnUNetPlans"  # Set plans name to default
+        # Set plans name to default nnunet plans name. FL related stuff will be
+        # appended in setup_client so that it doesn't overwrite existing default
+        plans["plans_name"] = "nnUNetPlans"
         plans_bytes = pickle.dumps(plans)
 
-        # Remove plans file that was created by planner
+        # Remove plans file . A new one will be generated in self.setup_client
         plans_path = join(nnUNet_preprocessed, self.dataset_name, planner.plans_identifier + ".json")
         if exists(plans_path):
             os.remove(plans_path)
@@ -608,10 +649,10 @@ class nnUNetClient(BasicClient):
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
-            if isinstance(dataloader.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
                 if dl_name is not None:
                     log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
-                dataloader.nnunet_augmenter._finish()
+                dataloader.nnunet_dataloader._finish()
 
     def shutdown(self) -> None:
         # Not entirely sure if processes potentially opened by nnunet

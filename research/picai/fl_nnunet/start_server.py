@@ -73,11 +73,8 @@ def main(config: dict, server_address: str) -> None:
         # Of course nnunet stores their pytorch models differently.
         params = ndarrays_to_parameters([val.cpu().numpy() for _, val in model["network_weights"].items()])
     else:
-        # raise Exception(
-        #     "There is a bug right now where params can not be None. \
-        #     Therefore a starting checkpoint must be provided because I don't \
-        #     want to mess up my code. I hav raised an issue with flwr"
-        # )
+        # Our nnunet server subclass fixes an issue when params was None
+        # https://github.com/adap/flower/issues/3770
         params = None
 
     strategy = FedAvg(
