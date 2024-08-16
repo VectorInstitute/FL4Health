@@ -37,7 +37,7 @@ grpcio = "^1.60.0,!=1.64.2,!=1.65.1,!=1.65.2,!=1.65.4"
 # locked the 2.13 version because of restrictions with tensorflow-io
 # (see https://pypi.org/project/tensorflow-io/ section "TensorFlow Version Compatibility")
 tensorflow = "2.13"
-nltk = "^3.8.1"
+nltk = "^3.8.0"
 torchvision = "^0.16.0"
 torchinfo = "^1.8.0"
 ipykernel = "^6.25.1"
