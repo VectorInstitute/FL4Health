@@ -377,7 +377,7 @@ class BasicClient(NumPyClient):
     ) -> None:
         """
         Logs a header string. By default this is logged at the beginning of each local
-        epoch or at the beginning of training if
+        epoch or at the beginning of the round if training by steps
 
         Args:
             current_round (Optional[int], optional): The current FL round. (Ie current
@@ -442,7 +442,8 @@ class BasicClient(NumPyClient):
         This function can be overridden to provide any client specific
         information to the basic client logging. For example, perhaps a client
         uses an LR scheduler and wants the LR to be logged each epoch. Called at the
-        beginning or each round/epoch and at the end of each step.
+        beginning and end of each server round or local epoch. Also called at the end
+        of validation/testing.
 
         Args:
             current_round (Optional[int]): The current FL round (i.e., current
@@ -454,12 +455,12 @@ class BasicClient(NumPyClient):
         Returns:
             Optional[str]: A string to append to the header log string that
                 typically announces the current server round and current epoch at the
-                beginning of each round/epoch.
+                beginning of each round or local epoch.
             Optional[List[Tuple[LogLevel, str]]]]: A list of tuples where the
                 first element is a LogLevel as defined in fl4health.utils.
                 typing and the second element is a string message. Each item
-                in the list will be logged at the end of each step when
-                self._log_results is called
+                in the list will be logged at the end of each server round or epoch.
+                Elements will also be logged at the end of validation/testing.
         """
         return "", []
 
