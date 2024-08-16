@@ -31,13 +31,13 @@ torch = "*"
 
 [[package]]
 name = "aiohappyeyeballs"
-version = "2.3.5"
+version = "2.3.6"
 description = "Happy Eyeballs for asyncio"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "aiohappyeyeballs-2.3.5-py3-none-any.whl", hash = "sha256:4d6dea59215537dbc746e93e779caea8178c866856a721c9c660d7a5a7b8be03"},
-    {file = "aiohappyeyeballs-2.3.5.tar.gz", hash = "sha256:6fa48b9f1317254f122a07a131a86b71ca6946ca989ce6326fff54a99a920105"},
+    {file = "aiohappyeyeballs-2.3.6-py3-none-any.whl", hash = "sha256:15dca2611fa78442f1cb54cf07ffb998573f2b4fbeab45ca8554c045665c896b"},
+    {file = "aiohappyeyeballs-2.3.6.tar.gz", hash = "sha256:88211068d2a40e0436033956d7de3926ff36d54776f8b1022d6b21320cadae79"},
 ]
 
 [[package]]
@@ -2296,21 +2296,21 @@ test = ["flufl.flake8", "importlib-resources (>=1.3)", "jaraco.test (>=5.4)", "p
 
 [[package]]
 name = "importlib-resources"
-version = "6.4.0"
+version = "6.4.2"
 description = "Read resources from Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "importlib_resources-6.4.0-py3-none-any.whl", hash = "sha256:50d10f043df931902d4194ea07ec57960f66a80449ff867bfe782b4c486ba78c"},
-    {file = "importlib_resources-6.4.0.tar.gz", hash = "sha256:cdb2b453b8046ca4e3798eb1d84f3cce1446a0e8e7b5ef4efb600f19fc398145"},
+    {file = "importlib_resources-6.4.2-py3-none-any.whl", hash = "sha256:8bba8c54a8a3afaa1419910845fa26ebd706dc716dd208d9b158b4b6966f5c5c"},
+    {file = "importlib_resources-6.4.2.tar.gz", hash = "sha256:6cbfbefc449cc6e2095dd184691b7a12a04f40bc75dd4c55d31c34f174cdf57a"},
 ]
 
 [package.dependencies]
 zipp = {version = ">=3.1.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (<7.2.5)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["jaraco.test (>=5.4)", "pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)", "zipp (>=3.17)"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
+test = ["jaraco.test (>=5.4)", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-mypy", "pytest-ruff (>=0.2.1)", "zipp (>=3.17)"]
 
 [[package]]
 name = "iniconfig"
@@ -2712,6 +2712,7 @@ description = "Clang Python Bindings, mirrored from the official LLVM repo: http
 optional = false
 python-versions = "*"
 files = [
+    {file = "libclang-18.1.1-1-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:0b2e143f0fac830156feb56f9231ff8338c20aecfe72b4ffe96f19e5a1dbb69a"},
     {file = "libclang-18.1.1-py2.py3-none-macosx_10_9_x86_64.whl", hash = "sha256:6f14c3f194704e5d09769108f03185fce7acaf1d1ae4bbb2f30a72c2400cb7c5"},
     {file = "libclang-18.1.1-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:83ce5045d101b669ac38e6da8e58765f12da2d3aafb3b9b98d88b286a60964d8"},
     {file = "libclang-18.1.1-py2.py3-none-manylinux2010_x86_64.whl", hash = "sha256:c533091d8a3bbf7460a00cb6c1a71da93bffe148f172c7d03b1c31fbf8aa2a0b"},
@@ -3532,13 +3533,13 @@ zstd = ["pyzstd (>=0.14.3)"]
 
 [[package]]
 name = "nltk"
-version = "3.8.2"
+version = "3.8.1"
 description = "Natural Language Toolkit"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.7"
 files = [
-    {file = "nltk-3.8.2-py3-none-any.whl", hash = "sha256:bae044ae22ebe0b694a87c0012233373209f27d5c76d3572599c842740a62fe0"},
-    {file = "nltk-3.8.2.tar.gz", hash = "sha256:9c051aa981c6745894906d5c3aad27417f3d1c10d91eefca50382fc922966f31"},
+    {file = "nltk-3.8.1-py3-none-any.whl", hash = "sha256:fd5c9109f976fa86bcadba8f91e47f5e9293bd034474752e92a520f81c93dda5"},
+    {file = "nltk-3.8.1.zip", hash = "sha256:1834da3d0682cba4f2cede2f9aad6b0fafb6461ba451db0efb6f9c39798d64d3"},
 ]
 
 [package.dependencies]
@@ -4925,6 +4926,13 @@ files = [
     {file = "python_gdcm-3.0.24.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4e537b9c3c582e0a19cd89791634da5ff48f1d61eeee633bf6e806c7bed10aba"},
     {file = "python_gdcm-3.0.24.1-cp312-cp312-win32.whl", hash = "sha256:0fe3684df3be2abcf4ec6931e45f4caa8bd2aa60a84e65ddd612428f0fa39bcc"},
     {file = "python_gdcm-3.0.24.1-cp312-cp312-win_amd64.whl", hash = "sha256:530e6b3f3904fd87c7e69ad0aee383f7a87213a8bf339314741ca64e3b6a3e94"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:45c5927af717f06f7ff8e0d6124746ef15e314954ae105d3a98410b6e327fb15"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:ee88f9cdcd4f5e98da0e608d9692e96173ec8832d5aba1f0234db8af0835d9bd"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2a89a8b1b666f2c3ebe6afbac3fcc3e256566ac8e55080ef03dd1ef7c98cd6b1"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:e5bc32309aeba3d3675ae0e5641aae03a8b9dc66ace058979debd2fea849dda7"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a8ba54c9908ce117734b32340b2e5bbf96d5544109b1af468e2b99f2c6341a15"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-win32.whl", hash = "sha256:5920e63ac12b9a430108cd804ee2709fcefb9781bda6b6cb2f7d311a8dc61a04"},
+    {file = "python_gdcm-3.0.24.1-cp313-cp313-win_amd64.whl", hash = "sha256:c586099268f0baf3cfda5851fa6115dc93394930da148fe3c350081b59e7551a"},
     {file = "python_gdcm-3.0.24.1-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:de850cedc1dc58b8b5ee16c72cf67c5ee1021963a0bcbc0de58e162824afd6ff"},
     {file = "python_gdcm-3.0.24.1-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8eddf3dc5d7793f3af407972f5185ec5d7edc4989ccaeafbf0d3e5e74f5ba88e"},
     {file = "python_gdcm-3.0.24.1-cp37-cp37m-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8b9f5075cbd39fd4448ef83a298e5dbf0886dea8805d1de90df7de56d7930839"},
@@ -5875,36 +5883,31 @@ files = [
 
 [[package]]
 name = "simpleitk"
-version = "2.3.1"
+version = "2.4.0"
 description = "SimpleITK is a simplified interface to the Insight Toolkit (ITK) for image registration and segmentation"
 optional = false
 python-versions = "*"
 files = [
-    {file = "SimpleITK-2.3.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e9075c266d2be99a67708c9b4c34143a85f65c5367b09c37549aeaf47e66210f"},
-    {file = "SimpleITK-2.3.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:977c47b4a7a7737b4413bcce12125794a342455d4a0647cea40f8473bc395330"},
-    {file = "SimpleITK-2.3.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d30c730f8ec3035d3675bd754d13d034c101b7823e10e0ab8bf68ee9bbbc1581"},
-    {file = "SimpleITK-2.3.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1d1c81beb667fc82cd25ecaca35337e97bb85b805a3b763488132e395b698824"},
-    {file = "SimpleITK-2.3.1-cp310-cp310-win_amd64.whl", hash = "sha256:752dde0a518cad3bc1a0f06efa9a071734a5bfafdb0cc784369968128f7ec198"},
-    {file = "SimpleITK-2.3.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:df43581c6984af5353730834a95116cdd8dcaef1dc13e4e9a326f608f8fba74a"},
-    {file = "SimpleITK-2.3.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:bd1c3d7f65bf5855013121bd9f2a683f4c429b746f5cc41f84af08dd28c92573"},
-    {file = "SimpleITK-2.3.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5d088fbfbbd639aebe99aed0d9cf69364e2e8e7f4771fa2acc1017f1126a497c"},
-    {file = "SimpleITK-2.3.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39cd45cf257e1a4469576e90fd0c476685b3b66d1f471d34677dd7f3876601b6"},
-    {file = "SimpleITK-2.3.1-cp311-cp311-win_amd64.whl", hash = "sha256:2aec554a4656dc84195711a8ebfe89477aa66dce2d8c2fd81890ea96ecb725fb"},
-    {file = "SimpleITK-2.3.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:2275568360bb4d99fba5cddfe815d9b1d1f673e1333922a78093cea0531eb6f8"},
-    {file = "SimpleITK-2.3.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:dbbab1f3fe63147b482682cbfdaf5ae39032a9b2bf7428c0e96c46d1d4f2d6cf"},
-    {file = "SimpleITK-2.3.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:92aacf919164e4b3a8e3554e64868c3ef0e6a39d50acdf9f4ef04ccee2fbc036"},
-    {file = "SimpleITK-2.3.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7b4b9e7d64e53539216666a6b5b477e033e8738b1725f938e3c331b07539bd82"},
-    {file = "SimpleITK-2.3.1-cp312-cp312-win_amd64.whl", hash = "sha256:72dd0bd010ee5d0482c1db37bc82d3a6e79807641760abd94ebe16592db62da1"},
-    {file = "SimpleITK-2.3.1-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:76e6fffd7c4953a1e313aa48606e157cc781275955d80a03fe5be2d3b5d9709c"},
-    {file = "SimpleITK-2.3.1-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:332947cdfa91a5ecb0a36cc486e7eafd4212e772901b78948d6b530ac935356a"},
-    {file = "SimpleITK-2.3.1-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9164d3c4183eeb9639d830c5803d05825380ef604f42897007492df969760542"},
-    {file = "SimpleITK-2.3.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d1225ea122dc75bcdaec0ddcfffa4771c27c53acc36968cf1256e861a265abf8"},
-    {file = "SimpleITK-2.3.1-cp38-cp38-win_amd64.whl", hash = "sha256:7629299636010b25bc64100428af1cd8beed72e07d44352c05ceb0576e962f67"},
-    {file = "SimpleITK-2.3.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:8a1470a1c83f4765ff869240d1a57fc2f16e73007858d4055e171eefb5e753c0"},
-    {file = "SimpleITK-2.3.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:decf5296fd112334e8450a7ac9c360781ac7b250368cf26b9d90a4b04fdd36a2"},
-    {file = "SimpleITK-2.3.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:61847b4c2edbeb88a5943f7a6ea51ffbba32df33df2c05d36640832dae4b075f"},
-    {file = "SimpleITK-2.3.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0a81f950b76f34db65feb6c38629ecac5dcfd31a3d89a53789eefbeb6bfa4e19"},
-    {file = "SimpleITK-2.3.1-cp39-cp39-win_amd64.whl", hash = "sha256:aec45af0ec031ed2a18f4dc8e2a12188817c789ea1db0a2c863506dce9ae2b87"},
+    {file = "SimpleITK-2.4.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:8a0493cf49291c6fee067463f2c353690878666500d4799c1bd0facf83302b9a"},
+    {file = "SimpleITK-2.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:aedea771980e558940f0c5ef1ee180a822ebcdbf3b65faf609bfaf45c8b96fc1"},
+    {file = "SimpleITK-2.4.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8bac63ed45ac8b7c9b6983e0e4216a217af3b86dd5fb2ba9343b30e33e6d6a3e"},
+    {file = "SimpleITK-2.4.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b6797a540f50d80b128232a940438dff4c994b8a55eac8e96075ccc80e59f1db"},
+    {file = "SimpleITK-2.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:8b6ce8e6b8d81e9340cc895ec604d6ede5ce38141fa84173287e0be5e76b0319"},
+    {file = "SimpleITK-2.4.0-cp311-abi3-macosx_10_9_x86_64.whl", hash = "sha256:bcdcdb14cc4da7bcf3b00dbbe5b8d478e6b0e59962406c2c480b6bb0441fa1dc"},
+    {file = "SimpleITK-2.4.0-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:09eb7982638b049ca36cea9f8612071af2c3f0c74776aad35c7a5aebb4a3f90e"},
+    {file = "SimpleITK-2.4.0-cp311-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:db42b4a7e934df21ad051706612da2cdcc4fdd3d8d360948878d27d0d92129b4"},
+    {file = "SimpleITK-2.4.0-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:91a8eaec0383d39f5a39b4307d0310611dad08182e709dd0fe1e788f80f24b35"},
+    {file = "SimpleITK-2.4.0-cp311-abi3-win_amd64.whl", hash = "sha256:f9681520793a36b229f1f177790264ab7503180a6ea9c38b2c1d219d40f87994"},
+    {file = "SimpleITK-2.4.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:009f337515566accb28971378c85dc96797584ea411a3470fa038958249fa47d"},
+    {file = "SimpleITK-2.4.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:ddeb39e41f441c0fc41d07fb5cf89da5d259f05a58d30a62833de15c17f9b69d"},
+    {file = "SimpleITK-2.4.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1ab00edbb7a7b961deec4b4ad7ee105721997b56622f3df2d70732e20720ef4b"},
+    {file = "SimpleITK-2.4.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e4bc7ad223253df50436123861925210c9139191e50d9caec80446370052866e"},
+    {file = "SimpleITK-2.4.0-cp38-cp38-win_amd64.whl", hash = "sha256:e5c78984eb9390a0e3963235ac80d1d8e097ad154cade0a84b895e2d34e094b0"},
+    {file = "SimpleITK-2.4.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:752022971d18604fbf6fe7737d1231cf8de866b6a98532aece8d389c3a6e613d"},
+    {file = "SimpleITK-2.4.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:989143803527b2ab983cf53274b1a7ec05586a55801f73fbe9d6767486c55831"},
+    {file = "SimpleITK-2.4.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4fc64ef6ba63832ff5dee4112bcc45367d6f2124cdad187f5daf3552bdf2a2d7"},
+    {file = "SimpleITK-2.4.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:888ee5e04c9e4e02e7d31f0555fdd88240b7a7a9e883cf40780c51d45aaf3950"},
+    {file = "SimpleITK-2.4.0-cp39-cp39-win_amd64.whl", hash = "sha256:f3ff657a58ce515c5742eedcd711ddeddb1673b8bac71be725b3182a936e29ff"},
 ]
 
 [[package]]
@@ -7513,4 +7516,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9.0,<3.11"
-content-hash = "ca533591a46c272beef6aa8ca644dd0ce78d06b269f2625d898b57b996f4d578"
+content-hash = "bada25b83cabe0049035b45225a131c7a1fee0e1e1a31ec2dd64b48463dcde48"
