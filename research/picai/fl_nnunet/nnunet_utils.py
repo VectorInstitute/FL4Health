@@ -15,6 +15,7 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
     from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
@@ -178,6 +179,12 @@ class nnUNetDataLoaderWrapper(DataLoader):
     def __iter__(self) -> DataLoader:  # type: ignore
         # mypy gets angry that the return type is different
         return self
+
+    def shutdown(self) -> None:
+        if isinstance(self.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
+            self.nnunet_augmenter._finish()
+        else:
+            del self.nnunet_augmenter
 
 
 class Module2LossWrapper(_Loss):

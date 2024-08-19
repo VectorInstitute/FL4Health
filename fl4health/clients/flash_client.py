@@ -76,7 +76,7 @@ class FlashClient(BasicClient):
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.train_metric_manager.update(preds, target)
-                self.update_after_step(local_step)
+                self.update_after_step(local_step, current_round)
                 self.total_steps += 1
                 local_step += 1
 
