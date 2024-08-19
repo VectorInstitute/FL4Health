@@ -692,6 +692,15 @@ class nnUNetClient(BasicClient):
         return super().shutdown()
 
     def update_before_train(self, current_server_round: int) -> None:
-        # Not sure why, but RAM usage would build up/increase after every round and cause OOM
-        # Need to call the following method to prevent OOM errors.
-        gc.collect()
+        # Was getting OOM errors that could only be fixed by manually cleaning up RAM
+        # https://github.com/pytorch/pytorch/issues/95462
+        # The above issue seems to be the situation I was in.
+        gc.collect()  # Cleans up unused variables
+        # As the linked issue above points out, calling gc.freeze() greatly reduces the
+        # overhead of garbage collection. (from 1.5s to 0.005s)
+        if current_server_round == 2:
+            # Collect runs even faster if we freeze after the end of the first iteration
+            # Likely because a lot of variables are created in the first pass
+            # If we freeze before the first pass, gc.collect has to check all those
+            # variables
+            gc.freeze()
