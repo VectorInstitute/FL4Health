@@ -10,6 +10,7 @@ from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
@@ -228,6 +229,30 @@ class nnUNetClient(BasicClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return self.nnunet_trainer.optimizer
 
+    def get_max_batch_voxels(self, source_plans: Dict, max_factor: float = 0.05) -> float:
+        """
+        Determines the maximum number of voxels that should be in a batch
+
+        Args:
+            source_plans (Dict): The nnunet plans dict that is being modified
+            max_factor (float): The fraction of the approx total number of voxels to
+                use as the maximum. Defaults to 0.05 corresponding to 5% as this is the nnunet default in 2.5.1
+
+        Returns:
+            float: Maximum number of voxels that can be in a batch
+        """
+        # Need to determine input dimensionality
+        if NnUNetConfig._3D_FULLRES.value in source_plans["configurations"]:
+            cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
+        else:
+            cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
+
+        # Get total number of voxels in dataset and multiply by max_factor
+        image_shape = cfg["median_image_size_in_voxels"]
+        num_samples = self.dataset_json["numTraining"]
+        approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * num_samples)
+        return approx_n_voxels * max_factor
+
     def create_plans(self, config: Config) -> Dict[str, Any]:
         """
         Modifies the provided plans file to work with the local client dataset
@@ -255,9 +280,8 @@ class nnUNetClient(BasicClient):
         if self.data_identifier is None:
             self.data_identifier = self.plans_name
 
-        # Max batch size for nnunet is 5 percent of dataset
-        num_samples = self.dataset_json["numTraining"]
-        bs_5percent = round(num_samples * 0.05)
+        # Get maximum number of voxels for a batch based on dataset size
+        max_voxels = self.get_max_batch_voxels(plans)
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():
@@ -265,9 +289,14 @@ class nnUNetClient(BasicClient):
             if "data_identifier" in plans["configurations"][c].keys():
                 plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
             # Ensure batch size is at least 2, then at most 5 percent of dataset
-            # Possible extension could be to increase batch size if possible
+            # TODO: Possible extension could be to increase batch size if possible
             if "batch_size" in plans["configurations"][c].keys():
                 old_bs = plans["configurations"][c]["batch_size"]
+                bs_5percent = round(
+                    (  # Patch size is the input shape to the model
+                        max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64)
+                    )
+                )
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
 
