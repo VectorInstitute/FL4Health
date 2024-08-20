@@ -267,9 +267,11 @@ class nnUNetClient(BasicClient):
         # Get the nnunet plans specified by the server
         plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
 
-        # Change plans name
+        # Change plans name.
         if self.plans_name is None:
-            self.plans_name = f"FL_Dataset{self.dataset_id:03d}" + "-" + plans["plans_name"]
+            self.plans_name = "FL_source-" + plans["plans_name"]
+
+        plans["source_plans_name"] = plans["plans_name"]
         plans["plans_name"] = self.plans_name
 
         # Change dataset name
@@ -678,9 +680,9 @@ class nnUNetClient(BasicClient):
         with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
 
-        # Set plans name to default nnunet plans name. FL related stuff will be
-        # appended in setup_client so that it doesn't overwrite existing default
-        plans["plans_name"] = "nnUNetPlans"
+        # Set plans name to local dataset so we know the source
+        # Dataset name normally begins with Dataset123_, we remove it and keep suffix
+        plans["plans_name"] = self.dataset_name[11:] + "_plans"
         plans_bytes = pickle.dumps(plans)
 
         # Remove plans file . A new one will be generated in self.setup_client
