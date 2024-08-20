@@ -23,7 +23,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
-from fl4health.utils.losses import LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
@@ -704,3 +704,10 @@ class nnUNetClient(BasicClient):
             # If we freeze before the first pass, gc.collect has to check all those
             # variables
             gc.freeze()
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Apply the gradient clipping performed by the default nnunet trainer. This is
+        the default behaviour for nnunet 2.5.1
+        """
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 12)

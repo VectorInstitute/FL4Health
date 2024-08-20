@@ -608,6 +608,7 @@ class BasicClient(NumPyClient):
 
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
+        self.transform_gradients(losses)
         self.optimizers["global"].step()
 
         return losses, preds
@@ -1192,3 +1193,14 @@ class BasicClient(NumPyClient):
                 "bar_format": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']}" + " :        {l_bar}{bar}{r_bar}",
             }
             return tqdm(iterable, **kwargs)
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Useful for transforming the gradients (such as with gradient
+        clipping) before they are applied to the model weights.
+
+        Args:
+            losses (TrainingLosses): The losses object from the train step
+        """
+        pass
