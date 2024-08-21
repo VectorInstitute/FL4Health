@@ -99,7 +99,7 @@ def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -
 class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
-        nnunet_augmenter: Union[SingleThreadedAugmenter, NonDetMultiThreadedAugmenter],
+        nnunet_augmenter: Union[SingleThreadedAugmenter, NonDetMultiThreadedAugmenter, MultiThreadedAugmenter],
         nnunet_config: NnUNetConfig,
         infinite: bool = False,
     ) -> None:
@@ -119,6 +119,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
                 StopIteration is generated after num_samples/batch_size steps.
                 Defaults to False.
         """
+        # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
 
         if isinstance(self.nnunet_augmenter, SingleThreadedAugmenter):

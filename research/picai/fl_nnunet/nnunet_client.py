@@ -73,6 +73,8 @@ class nnUNetClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
+        max_grad_norm: float = 12,
+        n_dataload_proc: Optional[int] = None,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -124,6 +126,11 @@ class nnUNetClient(BasicClient):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics
                 reporter instance to record the metrics during the execution.
                 Defaults to an instance of MetricsReporter with default init parameters.
+            max_grad_norm (float, optional): The maximum gradient norm to use for
+                gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
+            n_dataload_proc (Optional[int], optional): The number of processes to spawn
+                for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
+                defaults for each config
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -146,6 +153,8 @@ class nnUNetClient(BasicClient):
         self.always_preprocess: bool = always_preprocess
         self.plans_name = plans_identifier
         self.fingerprint_extracted = False
+        self.max_grad_norm = max_grad_norm
+        self.n_dataload_proc = n_dataload_proc
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
@@ -164,6 +173,12 @@ class nnUNetClient(BasicClient):
             Tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
+        # Set the number of processes for each dataloader. Processes are used instead
+        # of threads since the dataloaders fo complex preprocessing and augmentation
+        if self.n_dataload_proc is None:
+            self.n_dataload_proc = self.nnunet_config.default_num_processes
+        os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
+
         # Get the nnunet dataloader iterators
         with contextlib.redirect_stdout(None):
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
@@ -245,7 +260,7 @@ class nnUNetClient(BasicClient):
         if NnUNetConfig._3D_FULLRES.value in source_plans["configurations"]:
             cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
         else:
-            cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
+            cfg = source_plans["configurations"][NnUNetConfig._2D.value]
 
         # Get total number of voxels in dataset and multiply by max_factor
         image_shape = cfg["median_image_size_in_voxels"]
@@ -699,24 +714,25 @@ class nnUNetClient(BasicClient):
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
         """
-        Checks the dataloaders type and if it is a MultiThreadedAugmenter or
-        NonDetMultiThreadedAugmenter calls the _finish method to ensure they
-        are properly shutdown
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
+        shutdown method terminates the child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
             dl_name (Optional[str]): A string that identifies the dataloader
                 to shutdown. Used for logging purposes. Defaults to None
         """
-        log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
+            log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
             dataloader.shutdown()
 
         del dataloader
 
     def shutdown(self) -> None:
-        # Not entirely sure if processes potentially opened by nnunet
-        # dataloaders were being ended so ensure that they are ended here
+        """
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
+        shutdown method terminates the child processes gracefully
+        """
         self.shutdown_dataloader(self.train_loader, "train_loader")
         self.shutdown_dataloader(self.val_loader, "val_loader")
         self.shutdown_dataloader(self.test_loader, "test_loader")
@@ -741,4 +757,4 @@ class nnUNetClient(BasicClient):
         Apply the gradient clipping performed by the default nnunet trainer. This is
         the default behaviour for nnunet 2.5.1
         """
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), 12)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
