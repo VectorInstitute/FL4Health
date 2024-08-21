@@ -758,3 +758,10 @@ class nnUNetClient(BasicClient):
         the default behaviour for nnunet 2.5.1
         """
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+        current_server_round = narrow_config_type(config, "current_server_round", int)
+        n_server_rounds = narrow_config_type(config, "n_server_rounds", int)
+        if current_server_round == n_server_rounds:
+            gc.unfreeze()
+            gc.collect()

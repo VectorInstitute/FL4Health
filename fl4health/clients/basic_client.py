@@ -266,7 +266,7 @@ class BasicClient(NumPyClient):
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps, loss_dict)
+        self.update_after_train(local_steps, loss_dict, config)
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
@@ -1115,7 +1115,7 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
@@ -1127,6 +1127,7 @@ class BasicClient(NumPyClient):
             local_steps (int): The number of steps so far in the round in the local
                 training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
+            config (Config): The config from the server
         """
         pass
 
