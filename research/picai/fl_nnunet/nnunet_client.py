@@ -729,14 +729,18 @@ class nnUNetClient(BasicClient):
         del dataloader
 
     def shutdown(self) -> None:
-        """
-        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
-        shutdown method terminates the child processes gracefully
-        """
+        # Shutdown dataloader subprocesses gracefully
         self.shutdown_dataloader(self.train_loader, "train_loader")
         self.shutdown_dataloader(self.val_loader, "val_loader")
         self.shutdown_dataloader(self.test_loader, "test_loader")
-        return super().shutdown()
+
+        # Parent shutdown
+        super().shutdown()
+
+        # Unfreeze and collect memory that was frozen during training
+        # See self.update_before_train()
+        gc.unfreeze()
+        gc.collect()
 
     def update_before_train(self, current_server_round: int) -> None:
         # Was getting OOM errors that could only be fixed by manually cleaning up RAM
@@ -747,9 +751,8 @@ class nnUNetClient(BasicClient):
         # overhead of garbage collection. (from 1.5s to 0.005s)
         if current_server_round == 2:
             # Collect runs even faster if we freeze after the end of the first iteration
-            # Likely because a lot of variables are created in the first pass
-            # If we freeze before the first pass, gc.collect has to check all those
-            # variables
+            # Likely because a lot of variables are created in the first pass. If we
+            # freeze before the first pass, gc.collect has to check all those variables
             gc.freeze()
 
     def transform_gradients(self, losses: TrainingLosses) -> None:
@@ -758,10 +761,3 @@ class nnUNetClient(BasicClient):
         the default behaviour for nnunet 2.5.1
         """
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
-
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
-        current_server_round = narrow_config_type(config, "current_server_round", int)
-        n_server_rounds = narrow_config_type(config, "n_server_rounds", int)
-        if current_server_round == n_server_rounds:
-            gc.unfreeze()
-            gc.collect()
