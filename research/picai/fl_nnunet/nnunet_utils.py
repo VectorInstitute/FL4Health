@@ -1,15 +1,12 @@
 import warnings
-from logging import ERROR
+from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
 import torch
-from flwr.common.logger import log
 from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
-
-from research.picai.utils import MultiAttributeEnum
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
@@ -21,32 +18,35 @@ with warnings.catch_warnings():
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
 
 
-# A MultiAttributeEnum Class to store nnunet config information
-class NnUNetConfig(MultiAttributeEnum):
-    # Define Member Attributes
-    config_string: str
-    default_num_processes: int
-    num_spatial_dims: int
+class NnunetConfig(Enum):
+    """
+    The possible nnunet model configs as of nnunetv2 version 2.5.1.
+    See https://github.com/MIC-DKFZ/nnUNet/tree/v2.5.1
+    """
 
-    # Override method so that we can define members with lists instead of dicts
-    def get_attribute_keys(self, attributes: List) -> List[str]:
-        return ["config_string", "default_num_processes", "num_spatial_dims"]
-
-    # Define nnunet configs. Default for .value will be first item in list
-    _2D = ["2d", 8, 2]
-    _3D_FULLRES = ["3d_fullres", 4, 3]
-    _3D_CASCADE = ["3d_cascade_fullres", 4, 3]
-    _3D_LOWRES = ["3d_lowres", 8, 3]
+    _2D = "2d"
+    _3D_FULLRES = "3d_fullres"
+    _3D_CASCADE = "3d_cascade_fullres"
+    _3D_LOWRES = "3d_lowres"
 
 
-def get_valid_nnunet_config(val: str) -> NnUNetConfig:
-    try:
-        return NnUNetConfig(val)
-    except Exception as e:
-        log(ERROR, f"Checking the nnunet configuration threw an exception {e}")
-        raise e
+NNUNET_DEFAULT_NP = {  # Nnunet's default number of processes for each config
+    NnunetConfig._2D: 8,
+    NnunetConfig._3D_FULLRES: 4,
+    NnunetConfig._3D_CASCADE: 4,
+    NnunetConfig._3D_LOWRES: 8,
+}
+
+NNUNET_N_SPATIAL_DIMS = {  # The number of spatial dims for each config
+    NnunetConfig._2D: 2,
+    NnunetConfig._3D_FULLRES: 3,
+    NnunetConfig._3D_CASCADE: 3,
+    NnunetConfig._3D_LOWRES: 3,
+}
 
 
+# The two convert deepsupervision methods are necessary because fl4health requires
+# predictions, targets and inputs to be single torch.Tensors or Dicts of torch.Tensors
 def convert_deepsupervision_list_to_dict(
     tensor_list: Union[List[torch.Tensor], Tuple[torch.Tensor]], num_spatial_dims: int
 ) -> Dict[str, torch.Tensor]:
@@ -100,7 +100,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
         nnunet_augmenter: Union[SingleThreadedAugmenter, NonDetMultiThreadedAugmenter, MultiThreadedAugmenter],
-        nnunet_config: NnUNetConfig,
+        nnunet_config: Union[NnunetConfig, str],
         infinite: bool = False,
     ) -> None:
         """
@@ -128,7 +128,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             self.nnunet_dataloader = self.nnunet_augmenter.generator
 
         # Figure out if dataloader is 2d or 3d
-        self.num_spatial_dims = nnunet_config.num_spatial_dims
+        self.num_spatial_dims = NNUNET_N_SPATIAL_DIMS[NnunetConfig(nnunet_config)]
 
         # nnUNetDataloaders store their datasets under the self.data attribute
         self.dataset: nnUNetDataset = self.nnunet_dataloader._data
@@ -142,7 +142,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
     def __next__(self) -> Tuple[torch.Tensor, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
-            raise StopIteration
+            raise StopIteration  # Raise stop iteration after epoch has completed
         else:
             self.current_step += 1
             batch = next(self.nnunet_augmenter)  # This returns a dictionary
@@ -182,6 +182,10 @@ class nnUNetDataLoaderWrapper(DataLoader):
         return self
 
     def shutdown(self) -> None:
+        """
+        The multithreaded augmenters used by nnunet need to be shutdown gracefully to
+        avoid errors
+        """
         if isinstance(self.nnunet_augmenter, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
             self.nnunet_augmenter._finish()
         else:

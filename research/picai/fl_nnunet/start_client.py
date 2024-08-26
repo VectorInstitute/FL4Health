@@ -5,13 +5,10 @@ from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
-    # Need to import lightning utilities now in order to avoid deprecation
-    # warnings. Ignore flake8 warning saying that it is unused
-    # lightning utilities is imported by some of the dependencies
-    # so by importing it now and filtering the warnings
-    # https://github.com/Lightning-AI/utilities/issues/119
+    # Silence deprecation warnings from sentry sdk due to flwr and wandb
+    # https://github.com/adap/flower/issues/4086
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import lightning_utilities  # noqa: F401
+    import wandb  # noqa: F401
 
 import flwr as fl
 import torch

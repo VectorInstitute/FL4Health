@@ -1,6 +1,6 @@
 # FL4Health Settings:
 n_clients: 1
-n_server_rounds: 20
+n_server_rounds: 2
 server_address: '0.0.0.0:8080'
 # local_epochs: 1
 local_steps: 20

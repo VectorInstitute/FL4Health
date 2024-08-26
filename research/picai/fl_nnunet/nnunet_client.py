@@ -4,6 +4,7 @@ import logging
 import os
 import pickle
 import signal
+import time
 import warnings
 from logging import INFO, WARN
 from os.path import exists, join
@@ -28,11 +29,12 @@ from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
+    NNUNET_DEFAULT_NP,
+    NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
-    NnUNetConfig,
+    NnunetConfig,
     convert_deepsupervision_dict_to_list,
     convert_deepsupervision_list_to_dict,
-    get_valid_nnunet_config,
     nnUNetDataLoaderWrapper,
 )
 
@@ -158,7 +160,7 @@ class nnUNetClient(BasicClient):
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
-        self.nnunet_config: NnUNetConfig
+        self.nnunet_config: NnunetConfig
         self.plans: dict
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -173,20 +175,18 @@ class nnUNetClient(BasicClient):
             Tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
-        # Set the number of processes for each dataloader. Processes are used instead
-        # of threads since the dataloaders fo complex preprocessing and augmentation
+        # Set the number of processes for each dataloader.
         if self.n_dataload_proc is None:
-            self.n_dataload_proc = self.nnunet_config.default_num_processes
+            self.n_dataload_proc = len(os.sched_getaffinity(0))  # Num available cpu's
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
         # Get the nnunet dataloader iterators
         with contextlib.redirect_stdout(None):
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
 
-        # The batchgenerators package used under the hood by the dataloaders
-        # creates an additional stream handler for the root logger
-        # Therefore all logs get printed twice, We can fix this by clearing the
-        # root logger handlers.
+        # The batchgenerators package used under the hood by the dataloaders creates an
+        # additional stream handler for the root logger Therefore all logs get printed
+        # twice, We can fix this by clearing the root logger handlers.
         # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123
         # PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124
         root_logger = logging.getLogger()
@@ -202,6 +202,9 @@ class nnUNetClient(BasicClient):
 
     def get_criterion(self, config: Config) -> _Loss:
         return Module2LossWrapper(self.nnunet_trainer.loss)
+
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return self.nnunet_trainer.optimizer
 
     def get_lr_scheduler(self, config: Config) -> _LRScheduler:
         """
@@ -241,9 +244,6 @@ class nnUNetClient(BasicClient):
             self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
         )
 
-    def get_optimizer(self, config: Config) -> Optimizer:
-        return self.nnunet_trainer.optimizer
-
     def get_max_batch_voxels(self, source_plans: Dict, max_factor: float = 0.05) -> float:
         """
         Determines the maximum number of voxels that should be in a batch
@@ -257,10 +257,10 @@ class nnUNetClient(BasicClient):
             float: Maximum number of voxels that can be in a batch
         """
         # Need to determine input dimensionality
-        if NnUNetConfig._3D_FULLRES.value in source_plans["configurations"]:
-            cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
+        if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
+            cfg = source_plans["configurations"][NnunetConfig._3D_FULLRES.value]
         else:
-            cfg = source_plans["configurations"][NnUNetConfig._2D.value]
+            cfg = source_plans["configurations"][NnunetConfig._2D.value]
 
         # Get total number of voxels in dataset and multiply by max_factor
         image_shape = cfg["median_image_size_in_voxels"]
@@ -324,7 +324,7 @@ class nnUNetClient(BasicClient):
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
 
-    def maybe_preprocess(self, nnunet_config: NnUNetConfig) -> None:
+    def maybe_preprocess(self, nnunet_config: NnunetConfig) -> None:
         """
         Checks if preprocessed data for current plans exists and if not
         preprocesses the nnunet_raw dataset. The preprocessed data is saved in
@@ -335,7 +335,7 @@ class nnUNetClient(BasicClient):
         is {self.data_identifier}_{self.nnunet_config}
 
         Args:
-            nnunet_config (NnUNetConfig): The nnunet config as a NnUNetConfig
+            nnunet_config (NnunetConfig): The nnunet config as a NnunetConfig
                 Enum. Enum type ensures nnunet config is valid
         """
         assert self.data_identifier is not None, "Was expecting data identifier to be initialized in self.create_plans"
@@ -345,7 +345,7 @@ class nnUNetClient(BasicClient):
             preprocess_dataset(
                 dataset_id=self.dataset_id,
                 plans_identifier=self.plans_name,
-                num_processes=[nnunet_config.default_num_processes],
+                num_processes=[NNUNET_DEFAULT_NP[nnunet_config]],
                 configurations=[nnunet_config.value],
             )
         else:
@@ -357,9 +357,11 @@ class nnUNetClient(BasicClient):
         """
         fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
         if self.always_preprocess or not exists(fp_path):
-            log(INFO, "\tExtracting nnunet dataset fingerprint")
+            start = time.time()
             with contextlib.redirect_stdout(None):  # prevent print statements from nnunet method
                 extract_fingerprints(dataset_ids=[self.dataset_id])
+            elapsed = time.time() - start
+            log(INFO, f"\tExtracted nnunet dataset fingerprint in {elapsed:.1f}s")
         else:
             log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
 
@@ -392,7 +394,7 @@ class nnUNetClient(BasicClient):
         self.empty_cache()
 
         # Get nnunet config
-        self.nnunet_config = get_valid_nnunet_config(narrow_config_type(config, "nnunet_config", str))
+        self.nnunet_config = NnunetConfig(config["nnunet_config"])
 
         # Check if dataset fingerprint has already been extracted
         if not self.fingerprint_extracted:
@@ -430,12 +432,15 @@ class nnUNetClient(BasicClient):
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(self.nnunet_config)
+        start = time.time()
         unpack_dataset(  # Reduces load on CPU and RAM during training
             folder=self.nnunet_trainer.preprocessed_dataset_folder,
             unpack_segmentation=self.nnunet_trainer.unpack_dataset,
             overwrite_existing=self.always_preprocess,
             verify_npy=True,
-        )  # Takes about 3 seconds for a small dataset of 24 samples
+        )
+        elapsed = time.time() - start
+        log(INFO, f"\tUnpacked dataset in {elapsed:.1f}s")
 
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
@@ -470,7 +475,7 @@ class nnUNetClient(BasicClient):
         if isinstance(output, torch.Tensor):
             return {"prediction": output}, {}
         elif isinstance(output, (list, tuple)):
-            num_spatial_dims = self.nnunet_config.num_spatial_dims
+            num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
             preds = convert_deepsupervision_list_to_dict(output, num_spatial_dims)
             return preds, {}
         else:
