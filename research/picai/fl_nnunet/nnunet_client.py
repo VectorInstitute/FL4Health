@@ -244,17 +244,15 @@ class nnUNetClient(BasicClient):
             self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
         )
 
-    def get_max_batch_voxels(self, source_plans: Dict, max_factor: float = 0.05) -> float:
+    def get_dataset_n_voxels(self, source_plans: Dict) -> float:
         """
-        Determines the maximum number of voxels that should be in a batch
+        Determines the total number of voxels in the dataset
 
         Args:
             source_plans (Dict): The nnunet plans dict that is being modified
-            max_factor (float): The fraction of the approx total number of voxels to
-                use as the maximum. Defaults to 0.05 corresponding to 5% as this is the nnunet default in 2.5.1
 
         Returns:
-            float: Maximum number of voxels that can be in a batch
+            float: The total number of voxels in the local client dataset
         """
         # Need to determine input dimensionality
         if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
@@ -266,7 +264,7 @@ class nnUNetClient(BasicClient):
         image_shape = cfg["median_image_size_in_voxels"]
         num_samples = self.dataset_json["numTraining"]
         approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * num_samples)
-        return approx_n_voxels * max_factor
+        return approx_n_voxels
 
     def create_plans(self, config: Config) -> Dict[str, Any]:
         """
@@ -298,7 +296,7 @@ class nnUNetClient(BasicClient):
             self.data_identifier = self.plans_name
 
         # Get maximum number of voxels for a batch based on dataset size
-        max_voxels = self.get_max_batch_voxels(plans)
+        max_voxels = self.get_dataset_n_voxels(plans) * 0.05  # Max is 5% of total
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():

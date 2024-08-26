@@ -2,8 +2,8 @@ import warnings
 from enum import Enum
 from typing import Any, Dict, List, Tuple, Union
 
+import numpy as np
 import torch
-from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
@@ -106,7 +106,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
         """
         Wraps nnunet dataloader classes using the pytorch dataloader to make
         them pytorch compatible. Also handles some unique stuff specific to
-        nnunet such as deep supervision and infinite dataloaders
+        nnunet such as deep supervision and infinite dataloaders. The nnunet
+        dataloaders should only be used for training and validation, not final testing.
 
         Args:
             nnunet_dataloader (Union[SingleThreadedAugmenter,
@@ -137,7 +138,6 @@ class nnUNetDataLoaderWrapper(DataLoader):
         # nnunet dataloaders are infinite by default so we have to track steps to stop iteration
         self.current_step = 0
         self.infinite = infinite
-        self.len = len(self.dataset)
 
     def __next__(self) -> Tuple[torch.Tensor, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
         if not self.infinite and self.current_step == self.__len__():
@@ -162,17 +162,24 @@ class nnUNetDataLoaderWrapper(DataLoader):
 
     def __len__(self) -> int:
         """
-        nnUNetDataloaders are 'infinite' meaning they randomly sample batches
-        from the dataset. This makes the distinction between
-        num_samples // batch_size and ceil(num_samples/batch_size)
-        meaningless. We will abritrarily use the later
+        nnunetv2 v2.5.1 hardcodes an 'epoch' as 250 steps. We could set the len to
+        n_samples/batch_size, but this gets complicated as nnunet models operate on
+        patches of the input images, and therefore can have batchsizes larger than the
+        dataset. We would then have epochs with only 1 step!
 
-        Returns:
-            int: integer equal to num_samples // batch_size
+        Here we go through the hassle of computing the ratio between the number of
+        voxels in a sample and the number of voxels in a patch and then using that
+        factor to scale n_samples. This is particularly important for training 2d
+        models on 3d data.
         """
-        num_samples = len(self.dataset)
-        batch_size = self.nnunet_dataloader.batch_size
-        return int(ceil(num_samples / batch_size))
+        sample, _, _ = self.dataset.load_case(self.nnunet_dataloader.indices[0])
+        n_image_voxels = np.prod(sample.shape)
+        n_patch_voxels = np.prod(self.nnunet_dataloader.final_patch_size)
+        # Scale factor is at least one to prevent shrinking the dataset. We can have a
+        # larger patch size sometimes because nnunet will do padding
+        scale = max(n_image_voxels / n_patch_voxels, 1)
+        # Scale n_samples and then divide by batch size to get n_steps per epoch
+        return round((len(self.dataset) * scale) / self.nnunet_dataloader.batch_size)
 
     def reset(self) -> None:
         self.current_step = 0
