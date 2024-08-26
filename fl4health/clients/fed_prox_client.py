@@ -136,7 +136,7 @@ class FedProxClient(BasicClient):
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         return ParameterExchangerWithPacking(ParameterPackerFedProx())
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary.

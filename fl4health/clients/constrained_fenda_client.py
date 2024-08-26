@@ -126,7 +126,7 @@ class ConstrainedFendaClient(FendaClient):
 
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. If a contrastive or PerFCL loss function has
         been defined, it is used to save the local and global feature extraction weights/modules to be used in the
@@ -143,7 +143,7 @@ class ConstrainedFendaClient(FendaClient):
             self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
             self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
-        super().update_after_train(local_steps, loss_dict)
+        super().update_after_train(local_steps, loss_dict, config)
 
     def update_before_train(self, current_server_round: int) -> None:
         """

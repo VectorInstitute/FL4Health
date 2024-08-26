@@ -32,7 +32,7 @@ class ApflClient(BasicClient):
     def is_start_of_local_training(self, step: int) -> bool:
         return step == 0
 
-    def update_after_step(self, step: int) -> None:
+    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
         Called after local train step on client. step is an integer that represents
         the local training step that was most recently completed.

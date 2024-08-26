@@ -73,7 +73,7 @@ def test_setting_old_models(get_client: MoonClient) -> None:  # noqa
     loss = {
         "loss": 0.0,
     }
-    moon_client.update_after_train(0, loss)
+    moon_client.update_after_train(0, loss, {})
 
     # Assert we stored the old model
     assert len(moon_client.old_models_list) == 1
@@ -110,7 +110,7 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     loss = {
         "loss": 0.0,
     }
-    moon_client.update_after_train(0, loss)
+    moon_client.update_after_train(0, loss, config)
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
     _ = moon_client.get_parameters(config)
     new_params = [layer_weights + 0.1 for layer_weights in params]
@@ -137,7 +137,7 @@ def test_getting_parameters(get_client: MoonClient) -> None:  # noqa
     # Do another round to make sure old model list doesn't expand and it contains new parameters
     # Mocking sending parameters to the server, need to make sure the old_model_list is updated
     config["current_server_round"] = 2
-    moon_client.update_after_train(0, loss)
+    moon_client.update_after_train(0, loss, config)
     _ = moon_client.get_parameters(config)
     new_params_2 = [layer_weights + 0.1 for layer_weights in params]
     # Setting parameters once to represent an evaluation set parameters
@@ -280,8 +280,8 @@ def test_popping_old_models_when_queue_fills(get_client: MoonClient) -> None:  #
     original_base_module_params = [copy.deepcopy(val.cpu().numpy()) for val in moon_client.model.state_dict().values()]
     assert len(original_base_module_params) > 0
 
-    moon_client.update_after_train(0, {})
-    moon_client.update_after_train(1, {})
+    moon_client.update_after_train(0, {}, {})
+    moon_client.update_after_train(1, {}, {})
     assert len(moon_client.old_models_list) == 2
 
     # Now we do a little "training," updating the model weights
@@ -291,7 +291,7 @@ def test_popping_old_models_when_queue_fills(get_client: MoonClient) -> None:  #
     new_base_module_params = [copy.deepcopy(val.cpu().numpy()) for val in moon_client.model.state_dict().values()]
     assert len(new_base_module_params) > 0
 
-    moon_client.update_after_train(2, {})
+    moon_client.update_after_train(2, {}, {})
     assert len(moon_client.old_models_list) == 2
 
     # The first "old model" should have the original model parameters.

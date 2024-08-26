@@ -266,7 +266,7 @@ class BasicClient(NumPyClient):
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps, loss_dict)
+        self.update_after_train(local_steps, loss_dict, config)
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
@@ -386,8 +386,8 @@ class BasicClient(NumPyClient):
                 training. Defaults to None.
         """
 
-        log_str = f"Current FL Round: {str(current_round)}\t" if current_round is not None else ""
-        log_str += f"Current Epoch: {str(current_epoch)}" if current_epoch is not None else ""
+        log_str = f"Current FL Round: {int(current_round)} " if current_round is not None else ""
+        log_str += f"Current Epoch: {int(current_epoch)} " if current_epoch is not None else ""
 
         # Maybe add client specific info to initial log string
         client_str, _ = self.get_client_specific_logs(current_round, current_epoch, logging_mode)
@@ -608,6 +608,7 @@ class BasicClient(NumPyClient):
 
         # Compute backward pass and update parameters with optimizer
         losses.backward["backward"].backward()
+        self.transform_gradients(losses)
         self.optimizers["global"].step()
 
         return losses, preds
@@ -635,14 +636,16 @@ class BasicClient(NumPyClient):
         return losses, preds
 
     def train_by_epochs(
-        self, epochs: int, current_round: Optional[int] = None
+        self,
+        epochs: int,
+        current_round: Optional[int] = None,
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         """
         Train locally for the specified number of epochs.
 
         Args:
             epochs (int): The number of epochs for local training.
-            current_round (Optional[int]): The current FL round.
+            current_round (Optional[int], optional): The current FL round.
 
         Returns:
             Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
@@ -658,7 +661,7 @@ class BasicClient(NumPyClient):
             # update before epoch hook
             self.update_before_epoch(epoch=local_epoch)
             for input, target in self.maybe_progress_bar(self.train_loader):
-                self.update_before_step(steps_this_round)
+                self.update_before_step(steps_this_round, current_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
                 if self.is_empty_batch(input):
@@ -670,7 +673,7 @@ class BasicClient(NumPyClient):
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
-                self.update_after_step(steps_this_round)
+                self.update_after_step(steps_this_round, current_round)
                 self.total_steps += 1
                 steps_this_round += 1
             metrics = self.train_metric_manager.compute()
@@ -684,13 +687,16 @@ class BasicClient(NumPyClient):
         return loss_dict, metrics
 
     def train_by_steps(
-        self, steps: int, current_round: Optional[int] = None
+        self,
+        steps: int,
+        current_round: Optional[int] = None,
     ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
         """
         Train locally for the specified number of steps.
 
         Args:
             steps (int): The number of steps to train locally.
+            current_round (Optional[int], optional): The current FL round
 
         Returns:
             Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
@@ -706,7 +712,7 @@ class BasicClient(NumPyClient):
         self._log_header_str(current_round)
         for step in self.maybe_progress_bar(range(steps)):
 
-            self.update_before_step(step)
+            self.update_before_step(step, current_round)
 
             try:
                 input, target = next(train_iterator)
@@ -727,7 +733,7 @@ class BasicClient(NumPyClient):
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
             self.update_metric_manager(preds, target, self.train_metric_manager)
-            self.update_after_step(step)
+            self.update_after_step(step, current_round)
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
@@ -1109,7 +1115,7 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
@@ -1121,20 +1127,22 @@ class BasicClient(NumPyClient):
             local_steps (int): The number of steps so far in the round in the local
                 training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
+            config (Config): The config from the server
         """
         pass
 
-    def update_before_step(self, step: int) -> None:
+    def update_before_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
         Hook method called before local train step.
 
         Args:
             step (int): The local training step that was most recently
                 completed. Resets only at the end of the round.
+            current_round (Optional[int], optional): The current FL server round
         """
         pass
 
-    def update_after_step(self, step: int) -> None:
+    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
         Hook method called after local train step on client. step is an integer that represents
         the local training step that was most recently completed. For example, used by the APFL
@@ -1143,6 +1151,7 @@ class BasicClient(NumPyClient):
         Args:
             step (int): The step number in local training that was most recently
                 completed. Resets only at the end of the round.
+            current_round (Optional[int], optional): The current FL server round
         """
         pass
 
@@ -1185,3 +1194,14 @@ class BasicClient(NumPyClient):
                 "bar_format": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']}" + " :        {l_bar}{bar}{r_bar}",
             }
             return tqdm(iterable, **kwargs)
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Useful for transforming the gradients (such as with gradient
+        clipping) before they are applied to the model weights.
+
+        Args:
+            losses (TrainingLosses): The losses object from the train step
+        """
+        pass

@@ -1,28 +1,30 @@
 import contextlib
+import gc
 import logging
 import os
 import pickle
 import signal
 import warnings
-from logging import INFO
+from logging import INFO, WARN
 from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
-from numpy import ceil
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
-from fl4health.utils.losses import LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
@@ -38,13 +40,12 @@ with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from batchgenerators.dataloading.multi_threaded_augmenter import MultiThreadedAugmenter
-    from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
     from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.training.dataloading.utils import unpack_dataset
+    from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
@@ -72,6 +73,8 @@ class nnUNetClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
+        max_grad_norm: float = 12,
+        n_dataload_proc: Optional[int] = None,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -123,6 +126,11 @@ class nnUNetClient(BasicClient):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics
                 reporter instance to record the metrics during the execution.
                 Defaults to an instance of MetricsReporter with default init parameters.
+            max_grad_norm (float, optional): The maximum gradient norm to use for
+                gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
+            n_dataload_proc (Optional[int], optional): The number of processes to spawn
+                for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
+                defaults for each config
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -145,6 +153,8 @@ class nnUNetClient(BasicClient):
         self.always_preprocess: bool = always_preprocess
         self.plans_name = plans_identifier
         self.fingerprint_extracted = False
+        self.max_grad_norm = max_grad_norm
+        self.n_dataload_proc = n_dataload_proc
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
@@ -163,21 +173,15 @@ class nnUNetClient(BasicClient):
             Tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
-        # flwr 1.9.0 now raises an error any time a process ends.
-        # To prevent errors due to this since dataloaders use multiprocessing
-        # lets overide that behaviour before the child processes are created
-        fl_sigint_handler = signal.getsignal(signal.SIGINT)
-        fl_sigterm_handler = signal.getsignal(signal.SIGTERM)
-        signal.signal(signal.SIGINT, ORIGINAL_SIGINT_HANDLER)
-        signal.signal(signal.SIGTERM, ORIGINAL_SIGTERM_HANDLER)
+        # Set the number of processes for each dataloader. Processes are used instead
+        # of threads since the dataloaders fo complex preprocessing and augmentation
+        if self.n_dataload_proc is None:
+            self.n_dataload_proc = self.nnunet_config.default_num_processes
+        os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
         # Get the nnunet dataloader iterators
         with contextlib.redirect_stdout(None):
             train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
-
-        # Set the signal handlers back to what they were for flwr
-        signal.signal(signal.SIGINT, fl_sigint_handler)
-        signal.signal(signal.SIGTERM, fl_sigterm_handler)
 
         # The batchgenerators package used under the hood by the dataloaders
         # creates an additional stream handler for the root logger
@@ -199,8 +203,70 @@ class nnUNetClient(BasicClient):
     def get_criterion(self, config: Config) -> _Loss:
         return Module2LossWrapper(self.nnunet_trainer.loss)
 
+    def get_lr_scheduler(self, config: Config) -> _LRScheduler:
+        """
+        Creates an LR Scheduler similar to the nnunet default except we set max steps
+        to the total number of steps and update every step. Initial and final LR are
+        the same as nnunet, difference is nnunet sets max steps to num 'epochs', but
+        they define an 'epoch' as exactly 250 steps. Therefore they update every 250
+        steps. Override this method to set your own LR scheduler.
+
+        Args:
+            config (Config): The server config. This method will look for the
+        Returns:
+            _LRScheduler: The default nnunet LR Scheduler for nnunetv2 2.5.1
+        """
+        if not isinstance(self.nnunet_trainer.lr_scheduler, PolyLRScheduler):
+            log(
+                WARN,
+                (
+                    "Nnunet seems to have changed their default LR scheduler to "
+                    f"type: {type(self.nnunet_trainer.lr_scheduler)}. "
+                    "Using PolyLRScheduler instead. Override or update the "
+                    "get_lr_scheduler method of nnUNetClient to change this"
+                ),
+            )
+
+        # Determine total number of steps throughout all FL rounds
+        local_epochs, local_steps, _, _ = self.process_config(config)
+        if local_steps is not None:
+            self.steps_per_round = local_steps
+            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+        elif local_epochs is not None:
+            self.steps_per_round = local_epochs * len(self.train_loader)
+            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+
+        # Create and return LR Scheduler. This is nnunet default for version 2.5.1
+        return PolyLRScheduler(
+            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
+        )
+
     def get_optimizer(self, config: Config) -> Optimizer:
         return self.nnunet_trainer.optimizer
+
+    def get_max_batch_voxels(self, source_plans: Dict, max_factor: float = 0.05) -> float:
+        """
+        Determines the maximum number of voxels that should be in a batch
+
+        Args:
+            source_plans (Dict): The nnunet plans dict that is being modified
+            max_factor (float): The fraction of the approx total number of voxels to
+                use as the maximum. Defaults to 0.05 corresponding to 5% as this is the nnunet default in 2.5.1
+
+        Returns:
+            float: Maximum number of voxels that can be in a batch
+        """
+        # Need to determine input dimensionality
+        if NnUNetConfig._3D_FULLRES.value in source_plans["configurations"]:
+            cfg = source_plans["configurations"][NnUNetConfig._3D_FULLRES.value]
+        else:
+            cfg = source_plans["configurations"][NnUNetConfig._2D.value]
+
+        # Get total number of voxels in dataset and multiply by max_factor
+        image_shape = cfg["median_image_size_in_voxels"]
+        num_samples = self.dataset_json["numTraining"]
+        approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * num_samples)
+        return approx_n_voxels * max_factor
 
     def create_plans(self, config: Config) -> Dict[str, Any]:
         """
@@ -216,9 +282,11 @@ class nnUNetClient(BasicClient):
         # Get the nnunet plans specified by the server
         plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
 
-        # Change plans name
+        # Change plans name.
         if self.plans_name is None:
-            self.plans_name = f"FL_Dataset{self.dataset_id:03d}" + "-" + plans["plans_name"]
+            self.plans_name = "FL_source-" + plans["plans_name"]
+
+        plans["source_plans_name"] = plans["plans_name"]
         plans["plans_name"] = self.plans_name
 
         # Change dataset name
@@ -229,9 +297,8 @@ class nnUNetClient(BasicClient):
         if self.data_identifier is None:
             self.data_identifier = self.plans_name
 
-        # Max batch size for nnunet is 5 percent of dataset
-        num_samples = self.dataset_json["numTraining"]
-        bs_5percent = round(num_samples * 0.05)
+        # Get maximum number of voxels for a batch based on dataset size
+        max_voxels = self.get_max_batch_voxels(plans)
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():
@@ -239,9 +306,14 @@ class nnUNetClient(BasicClient):
             if "data_identifier" in plans["configurations"][c].keys():
                 plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
             # Ensure batch size is at least 2, then at most 5 percent of dataset
-            # Possible extension could be to increase batch size if possible
+            # TODO: Possible extension could be to increase batch size if possible
             if "batch_size" in plans["configurations"][c].keys():
                 old_bs = plans["configurations"][c]["batch_size"]
+                bs_5percent = round(
+                    (  # Patch size is the input shape to the model
+                        max_voxels / np.prod(plans["configurations"][c]["patch_size"], dtype=np.float64)
+                    )
+                )
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
 
@@ -308,6 +380,14 @@ class nnUNetClient(BasicClient):
         """
         log(INFO, "Setting up the nnUNetClient")
 
+        # flwr 1.9.0 now raises an error any time a process ends.
+        # To prevent errors due to this since dataloaders use multiprocessing
+        # lets overide that behaviour before the child processes are created
+        fl_sigint_handler = signal.getsignal(signal.SIGINT)
+        fl_sigterm_handler = signal.getsignal(signal.SIGTERM)
+        signal.signal(signal.SIGINT, ORIGINAL_SIGINT_HANDLER)
+        signal.signal(signal.SIGTERM, ORIGINAL_SIGTERM_HANDLER)
+
         # Empty gpu cache because nnunet does it
         self.empty_cache()
 
@@ -322,7 +402,7 @@ class nnUNetClient(BasicClient):
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
-        with contextlib.redirect_stdout(None):  # prevent print statements from nnunet methods
+        with contextlib.redirect_stdout(None):  # prevent print statements
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
@@ -331,22 +411,6 @@ class nnUNetClient(BasicClient):
                 dataset_json=self.dataset_json,
                 device=self.device,
             )
-
-            # Need to modify num_epochs before initializing so that LRScheduler
-            # receives the right number of epochs
-            # This will anneal LR to near zero each round
-            # TODO: Change default lr schedule behaviour to remember lr across rounds
-            # TODO: Default nnunet behaviour is to define an epoch as 250 steps and
-            # TODO: decrease lr every "epoch"
-            # TODO: Maybe LRScheduler should just be an argument so that users can
-            # TODO: decide how to update LR themselves
-            local_epochs, local_steps, _, _ = self.process_config(config)
-            if local_steps is not None:
-                num_samples = self.dataset_json["numTraining"]
-                batch_size = self.plans["configurations"][self.nnunet_config.value]["batch_size"]
-                steps_per_epoch = ceil(num_samples / batch_size)
-                local_epochs = max(1, int(local_steps / steps_per_epoch))
-            self.nnunet_trainer.num_epochs = local_epochs
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
             # This is done by nnunet_trainer in self.on_train_start, we
@@ -373,9 +437,16 @@ class nnUNetClient(BasicClient):
             verify_npy=True,
         )  # Takes about 3 seconds for a small dataset of 24 samples
 
-        # Parent function sets up optimizer, criterion, parameter_exchanger, dataloaders and reporters.
-        # We have to run this at the end since it depends on the nnunet_trainer
+        # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
+
+        # Must initialize LR scheduler after parent method initializes optimizer
+        self.lr_scheduler = self.get_lr_scheduler(config)
+
+        # Set the signal handlers back to what they were for flwr
+        signal.signal(signal.SIGINT, fl_sigint_handler)
+        signal.signal(signal.SIGTERM, fl_sigterm_handler)
+
         log(INFO, "nnUNetClient Setup Complete")
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
@@ -560,26 +631,30 @@ class nnUNetClient(BasicClient):
         else:
             pass
 
-    def update_before_train(self, current_server_round: int) -> None:
+    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
-        Reset LR at beginning of training so that initial log str has correct LR and
-        not the LR from the previous round
-        """
-        self.nnunet_trainer.lr_scheduler.step(0)
+        Update the learning rate. LR Scheduler is initialized in self.get_lr_scheduler.
 
-    def update_after_step(self, step: int) -> None:
+        Args:
+            step (int): The current step within the context of the entire round
+            current_round (Optional[int], optional). The current FL round. If left as
+                None, we assume the model is finetuning and do not change the learning
+                rate from what it was at the end of training
         """
-        Update the learning rate. This is the current step for the entire round, not the current epoch.
-        """
-        # By default nnunet lr schedulers use epochs
-        current_epoch = int((step + 1) / len(self.train_loader))
-        self.nnunet_trainer.lr_scheduler.step(current_epoch)
+        if current_round is not None:
+            # Determine total number of steps that have occurred so far
+            current_overall_step = ((current_round - 1) * self.steps_per_round) + step
+            assert current_overall_step <= self.total_steps, (
+                "Maximum number of steps for the LR Scheduler has been exceeded. "
+                f"Got {current_overall_step} but max was set to {self.total_steps}"
+            )
+            self.lr_scheduler.step(current_overall_step)  # Update LR
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
     ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
-            lr = self.optimizers["global"].param_groups[0]["lr"]
+            lr = float(self.optimizers["global"].param_groups[0]["lr"])
             if current_epoch is None:
                 # Assume training by steps
                 return f"Initial LR {lr}", []
@@ -620,9 +695,9 @@ class nnUNetClient(BasicClient):
         with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
             plans = planner.plan_experiment()
 
-        # Set plans name to default nnunet plans name. FL related stuff will be
-        # appended in setup_client so that it doesn't overwrite existing default
-        plans["plans_name"] = "nnUNetPlans"
+        # Set plans name to local dataset so we know the source
+        # Dataset name normally begins with Dataset123_, we remove it and keep suffix
+        plans["plans_name"] = self.dataset_name[11:] + "_plans"
         plans_bytes = pickle.dumps(plans)
 
         # Remove plans file . A new one will be generated in self.setup_client
@@ -639,9 +714,8 @@ class nnUNetClient(BasicClient):
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
         """
-        Checks the dataloaders type and if it is a MultiThreadedAugmenter or
-        NonDetMultiThreadedAugmenter calls the _finish method to ensure they
-        are properly shutdown
+        The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
+        shutdown method terminates the child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
@@ -649,15 +723,41 @@ class nnUNetClient(BasicClient):
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
-            if isinstance(dataloader.nnunet_dataloader, (NonDetMultiThreadedAugmenter, MultiThreadedAugmenter)):
-                if dl_name is not None:
-                    log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
-                dataloader.nnunet_dataloader._finish()
+            log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
+            dataloader.shutdown()
+
+        del dataloader
 
     def shutdown(self) -> None:
-        # Not entirely sure if processes potentially opened by nnunet
-        # dataloaders were being ended so ensure that they are ended here
+        # Shutdown dataloader subprocesses gracefully
         self.shutdown_dataloader(self.train_loader, "train_loader")
         self.shutdown_dataloader(self.val_loader, "val_loader")
         self.shutdown_dataloader(self.test_loader, "test_loader")
-        return super().shutdown()
+
+        # Parent shutdown
+        super().shutdown()
+
+        # Unfreeze and collect memory that was frozen during training
+        # See self.update_before_train()
+        gc.unfreeze()
+        gc.collect()
+
+    def update_before_train(self, current_server_round: int) -> None:
+        # Was getting OOM errors that could only be fixed by manually cleaning up RAM
+        # https://github.com/pytorch/pytorch/issues/95462
+        # The above issue seems to be the situation I was in.
+        gc.collect()  # Cleans up unused variables
+        # As the linked issue above points out, calling gc.freeze() greatly reduces the
+        # overhead of garbage collection. (from 1.5s to 0.005s)
+        if current_server_round == 2:
+            # Collect runs even faster if we freeze after the end of the first iteration
+            # Likely because a lot of variables are created in the first pass. If we
+            # freeze before the first pass, gc.collect has to check all those variables
+            gc.freeze()
+
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Apply the gradient clipping performed by the default nnunet trainer. This is
+        the default behaviour for nnunet 2.5.1
+        """
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)

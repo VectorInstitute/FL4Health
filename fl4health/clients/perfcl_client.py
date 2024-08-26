@@ -148,7 +148,7 @@ class PerFclClient(BasicClient):
 
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. In this case, it is used to save the local
         and global feature extraction weights/modules to be used in the next round of client-side training.
@@ -156,6 +156,7 @@ class PerFclClient(BasicClient):
         Args:
             local_steps (int): Number of steps performed during training
             loss_dict (Dict[str, float]): Losses computed during training.
+            config (Config): The config from the server
         """
         assert isinstance(self.model, PerFclModel)
         # First module is the local feature extractor for PerFcl Models
@@ -163,7 +164,7 @@ class PerFclClient(BasicClient):
         # Second module is the global feature extractor for PerFcl Models
         self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
-        super().update_after_train(local_steps, loss_dict)
+        super().update_after_train(local_steps, loss_dict, config)
 
     def update_before_train(self, current_server_round: int) -> None:
         """
