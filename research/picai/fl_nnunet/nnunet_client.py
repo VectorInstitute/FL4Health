@@ -3,7 +3,6 @@ import gc
 import logging
 import os
 import pickle
-import signal
 import warnings
 from logging import INFO, WARN
 from os.path import exists, join
@@ -28,6 +27,9 @@ from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 from research.picai.fl_nnunet.nnunet_utils import (
+    use_default_signal_handlers,  # Used to prevent subprocesses from inheriting the flwr signal handlers
+)
+from research.picai.fl_nnunet.nnunet_utils import (
     Module2LossWrapper,
     NnUNetConfig,
     convert_deepsupervision_dict_to_list,
@@ -48,14 +50,6 @@ with warnings.catch_warnings():
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
-
-
-# Get the default signal handlers used by python before flwr overrides them
-# We need these because the nnunet dataloaders spawn child processes
-# and flwr throws errors when those processes end. So we set the signal handlers
-# for the child processes to the python defaults to avoid this
-ORIGINAL_SIGINT_HANDLER = signal.getsignal(signal.SIGINT)
-ORIGINAL_SIGTERM_HANDLER = signal.getsignal(signal.SIGTERM)
 
 
 class nnUNetClient(BasicClient):
@@ -161,6 +155,7 @@ class nnUNetClient(BasicClient):
         self.nnunet_config: NnUNetConfig
         self.plans: dict
 
+    @use_default_signal_handlers  # Dataloaders use multiprocessing
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
         Gets the nnunet dataloaders and wraps them in another class to make them
@@ -324,6 +319,7 @@ class nnUNetClient(BasicClient):
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
 
+    @use_default_signal_handlers  # Preprocessing spawns subprocesses
     def maybe_preprocess(self, nnunet_config: NnUNetConfig) -> None:
         """
         Checks if preprocessed data for current plans exists and if not
@@ -351,6 +347,7 @@ class nnUNetClient(BasicClient):
         else:
             log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
 
+    @use_default_signal_handlers  # Fingerprint extraction spawns subprocess
     def maybe_extract_fingerprint(self) -> None:
         """
         Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset
@@ -366,6 +363,8 @@ class nnUNetClient(BasicClient):
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
 
+    # Several subprocesses spawned in setup during torch.compile and dataset unpacking
+    @use_default_signal_handlers
     def setup_client(self, config: Config) -> None:
         """
         Ensures the necessary files for training are on disk and initializes
@@ -379,14 +378,6 @@ class nnUNetClient(BasicClient):
                 addition to those required by BasicClient
         """
         log(INFO, "Setting up the nnUNetClient")
-
-        # flwr 1.9.0 now raises an error any time a process ends.
-        # To prevent errors due to this since dataloaders use multiprocessing
-        # lets overide that behaviour before the child processes are created
-        fl_sigint_handler = signal.getsignal(signal.SIGINT)
-        fl_sigterm_handler = signal.getsignal(signal.SIGTERM)
-        signal.signal(signal.SIGINT, ORIGINAL_SIGINT_HANDLER)
-        signal.signal(signal.SIGTERM, ORIGINAL_SIGTERM_HANDLER)
 
         # Empty gpu cache because nnunet does it
         self.empty_cache()
@@ -442,11 +433,6 @@ class nnUNetClient(BasicClient):
 
         # Must initialize LR scheduler after parent method initializes optimizer
         self.lr_scheduler = self.get_lr_scheduler(config)
-
-        # Set the signal handlers back to what they were for flwr
-        signal.signal(signal.SIGINT, fl_sigint_handler)
-        signal.signal(signal.SIGTERM, fl_sigterm_handler)
-
         log(INFO, "nnUNetClient Setup Complete")
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
