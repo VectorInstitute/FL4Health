@@ -207,7 +207,7 @@ def use_default_signal_handlers(fn: Callable) -> Callable:
     python defaults for the execution of the method
 
     flwr 1.9.0 overrides the default signal handlers with handlers that raise an error
-    on any inturruption or termination. Since nnunet spawns child processes which
+    on any interruption or termination. Since nnunet spawns child processes which
     inherit these handlers, when those subprocesses are terminated (which is expected
     behaviour), the flwr signal handlers raise an error (which we don't want).
 
