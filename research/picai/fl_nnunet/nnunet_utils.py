@@ -1,4 +1,6 @@
+import signal
 import warnings
+from collections.abc import Callable
 from logging import ERROR
 from typing import Any, Dict, List, Tuple, Union
 
@@ -197,3 +199,31 @@ class Module2LossWrapper(_Loss):
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return self.loss(pred, target)
+
+
+def use_default_signal_handlers(fn: Callable) -> Callable:
+    """
+    This is a decorator that resets the SIGINT and SIGTERM signal handlers back to the
+    python defaults for the execution of the method
+
+    flwr 1.9.0 overrides the default signal handlers with handlers that raise an error
+    on any inturruption or termination. Since nnunet spawns child processes which
+    inherit these handlers, when those subprocesses are terminated (which is expected
+    behaviour), the flwr signal handlers raise an error (which we don't want).
+
+    Flwr is expected to fix this in the next release. See the following issue:
+    https://github.com/adap/flower/issues/3837
+    """
+
+    def new_fn(*args: Any, **kwargs: Any) -> Any:
+        # Set SIGINT and SIGTERM back to defaults. Method returns previous handler
+        sigint_old = signal.signal(signal.SIGINT, signal.default_int_handler)
+        sigterm_old = signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        # Execute function
+        output = fn(*args, **kwargs)
+        # Reset handlers back to what they were before function call
+        signal.signal(signal.SIGINT, sigint_old)
+        signal.signal(signal.SIGTERM, sigterm_old)
+        return output
+
+    return new_fn
