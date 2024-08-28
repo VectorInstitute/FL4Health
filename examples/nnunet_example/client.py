@@ -30,6 +30,7 @@ def main(
     fold: Union[int, str],
     always_preprocess: bool = False,
     verbose: bool = True,
+    compile: bool = True,
 ) -> None:
     # Log device and server address
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -70,11 +71,12 @@ def main(
         fold=fold,
         always_preprocess=always_preprocess,
         verbose=verbose,
+        compile=compile,
         # BaseClient Args
         device=DEVICE,
         metrics=[dice],
         data_path=dataset_path,  # Argument not actually used by nnUNetClient
-        progress_bar=True,
+        progress_bar=verbose,
     )
 
     start_client(server_address=server_address, client=client.to_client())
@@ -87,7 +89,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="nnunet_example/client.py",
         description="""An exampled of nnUNetClient on any of the Medical
-            Segmentation Decathelon (MSD) datasets. Automatically generates a
+            Segmentation Decathlon (MSD) datasets. Automatically generates a
             nnunet segmentation model and trains it in a federated setting""",
     )
 
@@ -141,24 +143,27 @@ if __name__ == "__main__":
         "--verbose",
         action="store_true",
         required=False,
-        help="[OPTIONAL] Use this flag to see extra INFO logs",
+        help="[OPTIONAL] Use this flag to see extra INFO logs and a progress bar",
     )
     parser.add_argument(
         "--debug",
-        help="Include flag to print DEBUG logs",
+        help="[OPTIONAL] Include flag to print DEBUG logs",
         action="store_const",
         dest="logLevel",
         const=DEBUG,
         default=INFO,
     )
+    parser.add_argument(
+        "--skip-compile",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
+    )
+
     args = parser.parse_args()
 
     # Set the log level
-    from flwr.common.logger import FLOWER_LOGGER
-
-    print(FLOWER_LOGGER.level)
     update_console_handler(level=args.logLevel)
-    print(FLOWER_LOGGER.level)
 
     # Create nnunet directory structure and set environment variables
     nnUNet_raw = join(args.dataset_path, "nnunet_raw")
@@ -194,4 +199,5 @@ if __name__ == "__main__":
         fold=fold,
         always_preprocess=args.always_preprocess,
         verbose=args.verbose,
+        compile=not args.skip_compile,
     )

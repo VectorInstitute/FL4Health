@@ -64,15 +64,16 @@ class nnUNetClient(BasicClient):
         fold: Union[int, str],
         data_identifier: Optional[str] = None,
         plans_identifier: Optional[str] = None,
+        compile: bool = True,
         always_preprocess: bool = False,
-        metrics: Optional[Sequence[Metric]] = None,
-        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
-        progress_bar: bool = False,
         max_grad_norm: float = 12,
         n_dataload_proc: Optional[int] = None,
         verbose: bool = True,
+        metrics: Optional[Sequence[Metric]] = None,
+        progress_bar: bool = False,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[ClientCheckpointModule] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -106,14 +107,27 @@ class nnUNetClient(BasicClient):
                 identifier will be set as 'FL_Dataset000_plansname' where 000
                 is the dataset_id and plansname is the 'plans_name' value of
                 the source plans file.
+            compile (bool, optional): If True, the client will jit compile the pytorch
+                model. This requires some overhead time at the beginning of training to
+                compile the model, but results in faster training times. Defaults to
+                True
             always_preprocess (bool, optional): If True, will preprocess the
                 local client dataset even if the preprocessed data already
                 seems to exist. Defaults to False. The existence of the
                 preprocessed data is determined by matching the provided
                 data_identifier with that of the preprocessed data already on
                 the client.
+            max_grad_norm (float, optional): The maximum gradient norm to use for
+                gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
+            n_dataload_proc (Optional[int], optional): The number of processes to spawn
+                for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
+                defaults for each config
+            verbose (bool, optional): If True the client will log some extra INFO logs.
+                Defaults to False.
             metrics (Sequence[Metric], optional): Metrics to be computed based
                 on the labels and predictions of the client model. Defaults to [].
+            progress_bar (bool, optional): Whether or not to print a progress bar to
+                stdout for training. Defaults to False
             loss_meter_type (LossMeterType, optional): Type of meter used to
                 track and compute the losses over each batch. Defaults to
                 LossMeterType.AVERAGE.
@@ -124,13 +138,6 @@ class nnUNetClient(BasicClient):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics
                 reporter instance to record the metrics during the execution.
                 Defaults to an instance of MetricsReporter with default init parameters.
-            max_grad_norm (float, optional): The maximum gradient norm to use for
-                gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
-            n_dataload_proc (Optional[int], optional): The number of processes to spawn
-                for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
-                defaults for each config
-            verbose (bool, optional): If True the client will log some extra INFO logs.
-                Defaults to False.
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -166,6 +173,12 @@ class nnUNetClient(BasicClient):
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
         self.plans: dict
+
+        # Set nnunet compile environment variable. Nnunet default is to compile
+        if not compile:
+            if self.verbose:
+                log(INFO, "Switching pytorch model jit compile to OFF")
+            os.environ["nnUNet_compile"] = str("false")
 
     @use_default_signal_handlers  # Dataloaders use multiprocessing
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:

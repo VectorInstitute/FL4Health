@@ -31,6 +31,7 @@ def main(
     server_address: str,
     fold: Union[str, int],
     verbose: bool,
+    compile: bool,
 ) -> None:
 
     # Log device and server address
@@ -64,10 +65,11 @@ def main(
         plans_identifier=plans_identifier,
         always_preprocess=always_preprocess,
         verbose=verbose,
+        compile=compile,
         # BaseClient Args
         device=DEVICE,
         metrics=metrics,
-        progress_bar=False,
+        progress_bar=verbose,
         data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 
@@ -129,7 +131,7 @@ if __name__ == "__main__":
         "--verbose",
         action="store_true",
         required=False,
-        help="[OPTIONAL] Use this flag to log extra INFO logs",
+        help="[OPTIONAL] Use this flag to log extra INFO logs and a progress bar",
     )
     parser.add_argument(
         "--debug",
@@ -145,6 +147,12 @@ if __name__ == "__main__":
         action="store_const",
         dest="logLevel",
         const=logging.WARNING,
+    )
+    parser.add_argument(
+        "--skip-compile",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
 
     args = parser.parse_args()
@@ -163,4 +171,5 @@ if __name__ == "__main__":
         server_address=args.server_address,
         fold=fold,
         verbose=args.verbose,
+        compile=not args.skip_compile,
     )
