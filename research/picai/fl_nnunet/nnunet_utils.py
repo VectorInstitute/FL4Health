@@ -194,7 +194,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
         """
         nnunetv2 v2.5.1 hardcodes an 'epoch' as 250 steps. We could set the len to
         n_samples/batch_size, but this gets complicated as nnunet models operate on
-        patches of the input images, and therefore can have batchsizes larger than the
+        patches of the input images, and therefore can have batch sizes larger than the
         dataset. We would then have epochs with only 1 step!
 
         Here we go through the hassle of computing the ratio between the number of

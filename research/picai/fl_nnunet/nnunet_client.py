@@ -718,6 +718,11 @@ class nnUNetClient(BasicClient):
         del dataloader
 
     def shutdown(self) -> None:
+        # Unfreeze and collect memory that was frozen during training
+        # See self.update_before_train()
+        gc.unfreeze()
+        gc.collect()
+
         # Shutdown dataloader subprocesses gracefully
         self.shutdown_dataloader(self.train_loader, "train_loader")
         self.shutdown_dataloader(self.val_loader, "val_loader")
@@ -725,11 +730,6 @@ class nnUNetClient(BasicClient):
 
         # Parent shutdown
         super().shutdown()
-
-        # Unfreeze and collect memory that was frozen during training
-        # See self.update_before_train()
-        gc.unfreeze()
-        gc.collect()
 
     def update_before_train(self, current_server_round: int) -> None:
         # Was getting OOM errors that could only be fixed by manually cleaning up RAM

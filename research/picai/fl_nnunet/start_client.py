@@ -1,5 +1,6 @@
 import argparse
 import warnings
+from functools import partial
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Union
@@ -18,11 +19,7 @@ from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
-from research.picai.fl_nnunet.transforms import (
-    collapse_one_hot_target,
-    get_annotations_from_probs,
-    get_probabilities_from_logits,
-)
+from research.picai.fl_nnunet.transforms import collapse_one_hot_tensor, get_annotations_from_probs
 
 
 def main(
@@ -45,12 +42,13 @@ def main(
             name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-        transforms=[get_probabilities_from_logits, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_annotations_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
         metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
-        transforms=[get_probabilities_from_logits, collapse_one_hot_target],
+        pred_transforms=[torch.sigmoid],
+        target_transforms=[partial(collapse_one_hot_tensor, dim=1)],
     )
 
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
