@@ -1,18 +1,18 @@
-import contextlib
 import gc
 import logging
 import os
 import pickle
 import time
 import warnings
-from logging import INFO, WARN
+from contextlib import redirect_stdout
+from logging import DEBUG, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
-from flwr.common.logger import log
+from flwr.common.logger import FLOWER_LOGGER, console_handler, log
 from flwr.common.typing import Config, Scalar
 from torch import nn
 from torch.nn.modules.loss import _Loss
@@ -35,6 +35,7 @@ from research.picai.fl_nnunet.nnunet_utils import (
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
     NnunetConfig,
+    StreamToLogger,
     convert_deepsupervision_dict_to_list,
     convert_deepsupervision_list_to_dict,
     nnUNetDataLoaderWrapper,
@@ -71,6 +72,7 @@ class nnUNetClient(BasicClient):
         progress_bar: bool = False,
         max_grad_norm: float = 12,
         n_dataload_proc: Optional[int] = None,
+        verbose: bool = True,
     ) -> None:
         """
         A client for training nnunet models. Requires the following additional
@@ -127,6 +129,8 @@ class nnUNetClient(BasicClient):
             n_dataload_proc (Optional[int], optional): The number of processes to spawn
                 for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
                 defaults for each config
+            verbose (bool, optional): If True the client will log some extra INFO logs.
+                Defaults to False.
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -140,7 +144,7 @@ class nnUNetClient(BasicClient):
             progress_bar=progress_bar,
         )
 
-        # Some nnunet specific attributes
+        # Some nnunet client specific attributes
         self.dataset_id: int = dataset_id
         self.dataset_name = convert_id_to_dataset_name(self.dataset_id)
         self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
@@ -151,6 +155,12 @@ class nnUNetClient(BasicClient):
         self.fingerprint_extracted = False
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_proc
+
+        # Autoset verbose to True if console handler is on DEBUG mode
+        self.verbose = verbose if console_handler.level >= INFO else True
+
+        # Used to redirect stdout to logger
+        self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
 
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
@@ -170,25 +180,35 @@ class nnUNetClient(BasicClient):
             Tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
+        t = time.time()
         # Set the number of processes for each dataloader.
         if self.n_dataload_proc is None:
             self.n_dataload_proc = len(os.sched_getaffinity(0))  # Num available cpu's
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
-        # Get the nnunet dataloader iterators
-        with contextlib.redirect_stdout(None):
-            train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
-
         # The batchgenerators package used under the hood by the dataloaders creates an
         # additional stream handler for the root logger Therefore all logs get printed
-        # twice, We can fix this by clearing the root logger handlers.
+        # twice. First we stop the flwr logger from passing logs to the root logger
         # Issue: https://github.com/MIC-DKFZ/batchgenerators/issues/123
         # PR: https://github.com/MIC-DKFZ/batchgenerators/pull/124
+        FLOWER_LOGGER.propagate = False
+
+        # Redirect nnunet output to flwr logger at DEBUG level
+        with redirect_stdout(self.stream2debug):
+            # Get the nnunet dataloader iterators. (Technically augmenter classes)
+            train_loader, val_loader = self.nnunet_trainer.get_dataloaders()
+
+        # Now clear the root handler that was create and turn propagate back to true
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
+        FLOWER_LOGGER.propagate = True
 
+        # Wrap nnunet dataloaders to make them compatible with fl4health
         train_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=train_loader, nnunet_config=self.nnunet_config)
         val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
+
+        if self.verbose:
+            log(INFO, f"\tDataloaders initialized in {time.time()-t:.1f}s")
 
         return train_loader, val_loader
 
@@ -216,7 +236,7 @@ class nnUNetClient(BasicClient):
         """
         if not isinstance(self.nnunet_trainer.lr_scheduler, PolyLRScheduler):
             log(
-                WARN,
+                WARNING,
                 (
                     "Nnunet seems to have changed their default LR scheduler to "
                     f"type: {type(self.nnunet_trainer.lr_scheduler)}. "
@@ -336,13 +356,17 @@ class nnUNetClient(BasicClient):
 
         # Preprocess data if it's not already there
         if self.always_preprocess or not exists(self.nnunet_trainer.preprocessed_dataset_folder):
-            preprocess_dataset(
-                dataset_id=self.dataset_id,
-                plans_identifier=self.plans_name,
-                num_processes=[NNUNET_DEFAULT_NP[nnunet_config]],
-                configurations=[nnunet_config.value],
-            )
-        else:
+            if self.verbose:
+                log(INFO, f"\tPreprocessing local client dataset: {self.dataset_name}")
+            # Unless log level is debugging or lower, hide nnunet output
+            with redirect_stdout(self.stream2debug):
+                preprocess_dataset(
+                    dataset_id=self.dataset_id,
+                    plans_identifier=self.plans_name,
+                    num_processes=[NNUNET_DEFAULT_NP[nnunet_config]],
+                    configurations=[nnunet_config.value],
+                )
+        elif self.verbose:
             log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
 
     @use_default_signal_handlers  # Fingerprint extraction spawns subprocess
@@ -352,12 +376,13 @@ class nnUNetClient(BasicClient):
         """
         fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
         if self.always_preprocess or not exists(fp_path):
-            start = time.time()
-            with contextlib.redirect_stdout(None):  # prevent print statements from nnunet method
+            t = time.time()
+            # Unless log level is DEBUG or lower hide nnunet output
+            with redirect_stdout(self.stream2debug):
                 extract_fingerprints(dataset_ids=[self.dataset_id])
-            elapsed = time.time() - start
-            log(INFO, f"\tExtracted nnunet dataset fingerprint in {elapsed:.1f}s")
-        else:
+            if self.verbose:
+                log(INFO, f"\tExtracted dataset fingerprint in {time.time()-t:.1f}s")
+        elif self.verbose:
             log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
 
         # Avoid extracting fingerprint multiple times when always_preprocess is true
@@ -388,12 +413,14 @@ class nnUNetClient(BasicClient):
         # Check if dataset fingerprint has already been extracted
         if not self.fingerprint_extracted:
             self.maybe_extract_fingerprint()
-        else:
+        elif self.verbose:
             log(INFO, "\tDataset fingerprint has already been extracted. Skipping.")
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
-        with contextlib.redirect_stdout(None):  # prevent print statements
+
+        # Unless log level is DEBUG or lower hide nnunet output
+        with redirect_stdout(self.stream2debug):
             # Create the nnunet trainer
             self.nnunet_trainer = nnUNetTrainer(
                 plans=self.plans,
@@ -429,14 +456,14 @@ class nnUNetClient(BasicClient):
             verify_npy=True,
         )
         elapsed = time.time() - start
-        log(INFO, f"\tUnpacked dataset in {elapsed:.1f}s")
+        if self.verbose:
+            log(INFO, f"\tUnpacked dataset in {elapsed:.1f}s")
 
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
         # Must initialize LR scheduler after parent method initializes optimizer
         self.lr_scheduler = self.get_lr_scheduler(config)
-        log(INFO, "nnUNetClient Setup Complete")
 
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
@@ -652,6 +679,7 @@ class nnUNetClient(BasicClient):
         else:
             return "", []
 
+    @use_default_signal_handlers  # Experiment planner spawns a process i think
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
         Return properties (sample counts and nnunet plans) of client.
@@ -681,7 +709,9 @@ class nnUNetClient(BasicClient):
         # Create experiment planner and plans. Plans name must be temp_plans so that we
         # can safely delete the plans file generated by the experiment planner
         planner = ExperimentPlanner(dataset_name_or_id=self.dataset_id, plans_name="temp_plans")
-        with contextlib.redirect_stdout(None):  # Prevent print statements from experiment planner
+
+        # Unless log level is DEBUG or lower hide nnunet output
+        with redirect_stdout(self.stream2debug):
             plans = planner.plan_experiment()
 
         # Set plans name to local dataset so we know the source
@@ -712,7 +742,8 @@ class nnUNetClient(BasicClient):
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):
-            log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
+            if self.verbose:
+                log(INFO, f"\tShutting down nnunet dataloader: {dl_name}")
             dataloader.shutdown()
 
         del dataloader

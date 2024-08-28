@@ -75,7 +75,6 @@ class NnUNetServer(FlServerWithInitializer):
         plans_bytes = properties["nnunet_plans"]
 
         # Wrap config functions so that nnunet_plans is included
-        log(INFO, "Wrapping strategy config functions to return nnunet_plans")
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": plans_bytes})
         new_eval_cfg_fn = add_items_to_config_fn(self.strategy.configure_evaluate, {"nnunet_plans": plans_bytes})
         setattr(self.strategy, "configure_fit", new_fit_cfg_fn)

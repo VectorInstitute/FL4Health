@@ -1,7 +1,9 @@
+import io
 import signal
 import warnings
 from collections.abc import Callable
 from enum import Enum
+from logging import Logger
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
@@ -9,6 +11,8 @@ import torch
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
+
+from fl4health.utils.typing import LogLevel
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
@@ -238,3 +242,27 @@ class Module2LossWrapper(_Loss):
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         return self.loss(pred, target)
+
+
+class StreamToLogger(io.StringIO):
+    def __init__(self, logger: Logger, level: Union[LogLevel, int]) -> None:
+        """
+        File-like stream object that redirects writes to a logger. Useful for redirecting stdout to a logger.
+
+        Args:
+            logger (Logger): The logger to redirect writes to
+            level (LogLevel): The log level at which to redirect the writes
+        """
+        self.logger = logger
+        self.level = level if isinstance(level, int) else level.value
+        self.linebuf = ""  # idk why this is needed. Got this class from stack overflow
+
+    def write(self, buf: str) -> int:
+        char_count = 0
+        for line in buf.rstrip().splitlines():
+            self.logger.log(self.level, line.rstrip())
+            char_count += len(line.rstrip())
+        return char_count
+
+    def flush(self) -> None:
+        pass

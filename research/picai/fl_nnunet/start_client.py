@@ -1,4 +1,5 @@
 import argparse
+import logging
 import warnings
 from functools import partial
 from logging import INFO
@@ -13,7 +14,7 @@ with warnings.catch_warnings():
 
 import flwr as fl
 import torch
-from flwr.common.logger import log
+from flwr.common.logger import log, update_console_handler
 from torchmetrics.classification import Dice
 from torchmetrics.segmentation import GeneralizedDiceScore
 
@@ -29,6 +30,7 @@ def main(
     always_preprocess: bool,
     server_address: str,
     fold: Union[str, int],
+    verbose: bool,
 ) -> None:
 
     # Log device and server address
@@ -61,6 +63,7 @@ def main(
         data_identifier=data_identifier,
         plans_identifier=plans_identifier,
         always_preprocess=always_preprocess,
+        verbose=verbose,
         # BaseClient Args
         device=DEVICE,
         metrics=metrics,
@@ -122,8 +125,32 @@ if __name__ == "__main__":
         help="The server address for the clients to communicate to the server \
             through. Defaults to 0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Use this flag to log extra INFO logs",
+    )
+    parser.add_argument(
+        "--debug",
+        help="Include flag to print debug logs",
+        action="store_const",
+        dest="logLevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
+    )
+    parser.add_argument(
+        "--quiet",
+        help="Include flag to silence INFO and DEBUG logs",
+        action="store_const",
+        dest="logLevel",
+        const=logging.WARNING,
+    )
 
     args = parser.parse_args()
+
+    # Set log level
+    update_console_handler(level=args.logLevel)
 
     # Convert fold to an integer if it is not 'all'
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
@@ -135,4 +162,5 @@ if __name__ == "__main__":
         always_preprocess=args.always_preprocess,
         server_address=args.server_address,
         fold=fold,
+        verbose=args.verbose,
     )
