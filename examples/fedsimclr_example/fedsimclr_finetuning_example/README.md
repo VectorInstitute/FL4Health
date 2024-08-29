@@ -1,9 +1,6 @@
 # Federated Finetuning of Self Supervised Model.
 This example provides a very simple implementation finetuning a FedSimCLR model. For information about the pretraining stage,
-that needs to be run prior to this, please refer to [fedsimclr_pretraining_example](/examples/fedsimclr_example/fedsimclr_pretraining_example).
-Assuming pretraining has occurred, a checkpoint to the best performing model on the validation set will be saved. This script will load the saved
-model, swap the projection head for a prediction head and finetune the model on a small subset of examples. Since the pretraining script uses the
-training set, the finetuning script uses the test set which is split into training (80%) and validation (20%).
+that needs to be run prior to this, please refer to [fedsimclr_pretraining_example](/examples/fedsimclr_example/fedsimclr_pretraining_example). Assuming pretraining has occurred, a checkpoint to the best performing model on the validation set will be saved. This script will load the saved model, swap the projection head for a prediction head and finetune the model on a small subset of examples. Since the pretraining script uses the training set, the finetuning script uses the test set which is split into training (80%) and validation (20%).
 
 
 ## Running the Example
