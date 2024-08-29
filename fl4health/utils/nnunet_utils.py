@@ -1,13 +1,17 @@
 import io
+import os
 import signal
+import sys
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from enum import Enum
-from logging import Logger
+from importlib import reload
+from logging import DEBUG, INFO, Logger
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
+from flwr.common.logger import log
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
@@ -77,6 +81,46 @@ def use_default_signal_handlers(fn: Callable) -> Callable:
         return output
 
     return new_fn
+
+
+def reload_modules(packages: Sequence[str]) -> None:
+    """
+    Given the names of one or more packages, subpackages or modules, reloads all the
+    modules within the scope of each package or the modules themselves if a module was
+    specified.
+
+    Args:
+        package (Sequence[str]): The absolute names of the packages, subpackages or
+            modules to reload. The entire import hierarchy must be specified. Eg.
+            'package.subpackage' to reload all modules in subpackage, not just
+            'subpackage'. Packages are reloaded in the order they are given
+    """
+    for m_name, module in list(sys.modules.items()):
+        for package in packages:
+            if m_name.startswith(package):
+                try:
+                    reload(module)
+                except Exception as e:
+                    log(DEBUG, f"Failed to reload module {m_name}: {e}")
+
+
+def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
+    """
+    For each keyword argument name and value sets the current environment variable with
+    the same name to that value and then reloads nnunet. Values must be strings
+    """
+    # Set environment variables
+    for key, val in kwargs.items():
+        os.environ[key] = val
+        if verbose:
+            log(INFO, f"Resetting env var '{key}' to '{val}'")
+
+    # Its necessary to reload nnunetv2.paths first, then other modules with env vars
+    reload_modules(["nnunetv2.paths"])
+    reload_modules(["nnunetv2.default_n_proc_DA", "nnunetv2.configuration"])
+    # Reload whatever depends on nnunetv2 environment variables
+    # Be careful. If you reload something with an enum in it, things get messed up.
+    reload_modules(["nnunetv2", "fl4health.clients.nnunet_client"])
 
 
 # The two convert deepsupervision methods are necessary because fl4health requires

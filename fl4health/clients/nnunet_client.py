@@ -385,6 +385,7 @@ class NnunetClient(BasicClient):
         """
         Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset
         """
+
         fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
         if self.always_preprocess or not exists(fp_path):
             t = time.time()

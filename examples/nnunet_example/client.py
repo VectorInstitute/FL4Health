@@ -15,12 +15,14 @@ with warnings.catch_warnings():
 import torch
 from flwr.client import start_client
 from flwr.common.logger import log, update_console_handler
+from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
+from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from fl4health.utils.nnunet_utils import get_segs_from_probs
+from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
 
 
 def main(
@@ -168,27 +170,13 @@ if __name__ == "__main__":
     # Create nnunet directory structure and set environment variables
     nnUNet_raw = join(args.dataset_path, "nnunet_raw")
     nnUNet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
-
-    if not exists(nnUNet_raw):
-        os.makedirs(nnUNet_raw)
-    if not exists(nnUNet_preprocessed):
-        os.makedirs(nnUNet_preprocessed)
-
-    os.environ["nnUNet_raw"] = nnUNet_raw
-    os.environ["nnUNet_preprocessed"] = nnUNet_preprocessed
-    os.environ["nnUNet_results"] = join(args.dataset_path, "nnunet_results")
-
-    log(INFO, "Setting nnunet environment variables")
-    if args.verbose:
-        log(INFO, f"\tnnUNet_raw: {nnUNet_raw}")
-        log(INFO, f"\tnnUNet_preprocessed: {nnUNet_preprocessed}")
-        log(INFO, f"\tnnUNet_results: {join(args.dataset_path, 'nnunet_results')}")
-
-    # Everything that uses nnunetv2 module can only be imported after
-    # environment variables are changed
-    from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
-
-    from fl4health.clients.nnunet_client import NnunetClient
+    os.makedirs(nnUNet_raw, exist_ok=True)
+    os.makedirs(nnUNet_preprocessed, exist_ok=True)
+    set_nnunet_env(
+        nnUNet_raw=nnUNet_raw,
+        nnUNet_preprocessed=nnUNet_preprocessed,
+        nnUNet_results=join(args.dataset_path, "nnUNet_results"),
+    )
 
     # Check fold argument and start main method
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)

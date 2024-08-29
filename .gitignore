@@ -170,5 +170,5 @@ settings.json
 /metrics/
 
 # dev
-temp.py
-tmp.py
+temp*.py
+tmp*.py
