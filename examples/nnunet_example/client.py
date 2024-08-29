@@ -20,7 +20,7 @@ from torchmetrics.segmentation import GeneralizedDiceScore
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from research.picai.fl_nnunet.transforms import get_annotations_from_probs
+from fl4health.utils.nnunet_utils import get_segs_from_probs
 
 
 def main(
@@ -61,11 +61,11 @@ def main(
                 num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
             ).to(DEVICE),
         ),
-        pred_transforms=[torch.sigmoid, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
 
     # Create client
-    client = nnUNetClient(
+    client = NnunetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         fold=fold,
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # environment variables are changed
     from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 
-    from research.picai.fl_nnunet.nnunet_client import nnUNetClient
+    from fl4health.clients.nnunet_client import NnunetClient
 
     # Check fold argument and start main method
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)

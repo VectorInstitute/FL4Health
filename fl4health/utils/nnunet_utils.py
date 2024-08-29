@@ -3,12 +3,11 @@ import signal
 import warnings
 from collections.abc import Callable
 from enum import Enum
-from logging import WARNING, Logger
+from logging import Logger
 from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
-from flwr.common.logger import log
 from torch import nn
 from torch.nn.modules.loss import _Loss
 from torch.utils.data import DataLoader
@@ -23,14 +22,6 @@ with warnings.catch_warnings():
     from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
-
-log(
-    WARNING,
-    (
-        "You are using the old version of nnunet_utils from the research folder. "
-        "Use the one from fl4health.utils instead"
-    ),
-)
 
 
 class NnunetConfig(Enum):
@@ -139,6 +130,57 @@ def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -
     return [tensor for key, tensor in sorted_list]
 
 
+def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
+    """
+    Converts the nnunet model output probabilities to predicted segmentations
+
+    Args:
+        preds (torch.Tensor): The one hot encoded model output probabilities
+            with shape (batch, classes, *additional_dims). The background should be a separate class
+        has_regions (bool, optional): If True, predicted segmentations can be
+            multiple classes at once. The exception is the background class
+            which is assumed to be the first class (class 0). If False, each
+            value in predicted segmentations has only a single class. Defaults to
+            False.
+        threshold (float): When has_regions is True, this is the threshold
+            value used to determine whether or not an output is a part of a
+            class
+
+    Returns:
+        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded
+            binary tensor of 64-bit integers.
+    """
+    if has_regions:
+        pred_segs = preds > threshold
+        # Mask is the inverse of the background class. Ensures that values
+        # classified as background are not part of another class
+        mask = ~pred_segs[:, 0]
+        return pred_segs * mask
+    else:
+        pred_segs = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
+        # one hot encode (OHE) predicted segmentations again
+        # WARNING: Note the '_' after scatter. scatter_ and scatter are both
+        # functions with different functionality. It is easy to introduce a bug
+        # here by using the wrong one
+        pred_segs_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
+        pred_segs_one_hot.scatter_(1, pred_segs, 1)  # ohe -> One Hot Encoded
+        # convert output preds to long since it is binary
+        return pred_segs_one_hot.long()
+
+
+def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
+    """
+    Collapses a one hot encoded tensor so that they are no longer one hot encoded.
+
+    Args:
+        input (torch.Tensor): The binary one hot encoded tensor
+
+    Returns:
+        torch.Tensor: Integer tensor with the specified dim collapsed
+    """
+    return torch.argmax(input.long(), dim=dim).to(input.device)
+
+
 class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
@@ -189,7 +231,8 @@ class nnUNetDataLoaderWrapper(DataLoader):
         else:
             self.current_step += 1
             batch = next(self.nnunet_augmenter)  # This returns a dictionary
-            # Note: When deep supervision is on, target is a list of segmentations at various scales
+            # Note: When deep supervision is on, target is a list of ground truth
+            # segmentations at various spatial scales/resolutions
             # nnUNet has a wrapper for loss functions to enable deep supervision
             inputs: torch.Tensor = batch["data"]
             targets: Union[torch.Tensor, List[torch.Tensor]] = batch["target"]

@@ -13,14 +13,6 @@ FIT_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, 
 EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, EvaluateIns]]]
 CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
 
-log(
-    WARNING,
-    (
-        "You are using the old version of NnUNetServer from the research folder. "
-        "Use the one from fl4health.server instead"
-    ),
-)
-
 
 def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     """
@@ -47,7 +39,7 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     return new_fn
 
 
-class NnUNetServer(FlServerWithInitializer):
+class NnunetServer(FlServerWithInitializer):
     """
     A Basic FlServer with added functionality to ask a client to initialize
     the global nnunet plans if one was not provided in the config. Intended

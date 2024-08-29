@@ -21,8 +21,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from research.picai.fl_nnunet.nnunet_server import NnUNetServer
 
 
 def get_config(
@@ -84,7 +84,7 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    server = NnUNetServer(
+    server = NnunetServer(
         client_manager=SimpleClientManager(),
         strategy=strategy,
     )

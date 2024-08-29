@@ -26,8 +26,7 @@ from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
-from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
-from research.picai.fl_nnunet.nnunet_utils import (
+from fl4health.utils.nnunet_utils import (
     NNUNET_DEFAULT_NP,
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
@@ -38,6 +37,7 @@ from research.picai.fl_nnunet.nnunet_utils import (
     nnUNetDataLoaderWrapper,
     use_default_signal_handlers,
 )
+from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
@@ -52,16 +52,8 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
-log(
-    WARNING,
-    (
-        "You are using the old version of nnUNetClient from the research folder. "
-        "Use the one from fl4health.clients instead"
-    ),
-)
 
-
-class nnUNetClient(BasicClient):
+class NnunetClient(BasicClient):
     def __init__(
         self,
         data_path: Path,

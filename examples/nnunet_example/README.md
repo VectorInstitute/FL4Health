@@ -1,6 +1,6 @@
 # NnUNetClient Example
 
-This example demonstrates how to use the NnUNetClient to train nnunet segmentation models in a federated setting.
+This example demonstrates how to use the NnunetClient to train nnunet segmentation models in a federated setting.
 
 By default this example trains an nnunet model on the Task04_Hippocampus dataset from the Medical Segmentation Decathlon (MSD). However, any of the MSD datasets can be used by specifying them with the msd_dataset_name flag for the client. To run this example first create a config file for the server. An example config has been provided in this directory. The required keys for the config are:
 
@@ -47,7 +47,7 @@ The outputs of a model <ins>prior</ins> to the activation function. Values are u
 
 ### Probabilities:
 
-Probabilities are values constrained to the range (0, 1) that represent a pixel/voxel's probability of being part of a particular class. The predicted probabilities are the outputs of a model <ins>after</ins> after a normalizing activation function such as softmax or sigmoid. An 2d example is shown below. In some instances one might have labels that are probabilities as opposed to integer class labels in which case we would refer to them as ground-truth probabilities.
+Probabilities are values constrained to the range (0, 1) that represent the models confidence of a pixel/voxel being part of a particular class. Similar to other DNN's, they do not necessarily represent actual probabilities, however it is sometimes convenient to interpret them as such. The predicted probabilities are the outputs of a model <ins>after</ins> a normalizing activation function such as softmax or sigmoid. A 2d example is shown below. In some instances one might have labels that are probabilities as opposed to integer class labels in which case we would refer to them as ground-truth probabilities.
 
 ### Detection Maps:
 
@@ -57,13 +57,13 @@ Images that contain an arbitrary number of distinct detected volumes generally d
 
 Detected volumes typically also have a minimum size determined by the number fo pixels/voxels that are a part of the volume. Detection maps may be computed from probabilities in a variety of ways. One example used for 3d medical images can be found in the [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) API. An example of a 2d detection map is shown below.
 
-### Segmentations/Annotations:
+### Segmentations:
 
-I'm still workshopping which of these two terms to use. Images in which pixels have been labelled or assigned one or more specific integer classes. If one hot encoded they must be binary {0, 1} or boolean {False, True} tensors. If not one hot encoded they must be be tensors containing only integers that represent the class labels (eg. constrained to {0, 1, 2, ..., N}). The labels used for segmentation models may be referred to as ground-truth segmentations. Predicted segmentations refers to model predictions that have been processed or thresholded in some way to contain only class labels (the models final prediction of the class with no information on confidence). An example of a binary or one-hot-encoded predicted segmentation is shown below.
+Images in which pixels have been labelled or assigned one or more specific integer classes. If one hot encoded they must be binary {0, 1} or boolean {False, True} tensors. If not one hot encoded they must be be tensors containing only integers that represent the class labels (eg. constrained to {0, 1, 2, ..., N}). The labels/targets for segmentation models may be referred to as ground-truth segmentations. Predicted segmentations refers to model outputs (which are usually probability maps) that have been processed or thresholded in some way to adhere to the definition of a segmentation. They usually represents the model's final prediction of the class with no information on confidence. An example of a binary or one-hot-encoded predicted segmentation is shown below.
 
 #### Examples of different output types in the case of 2d binary segmentation:
 
 
-<img src="assets/probs.png" width="250"/> | <img src="assets/detmap.png" width="250"/>| <img src="assets/annotation.png" width="210"/>|
+<img src="assets/probs.png" width="250"/> | <img src="assets/detmap.png" width="250"/>| <img src="assets/seg.png" width="210"/>|
 :----------------------------:|:------------------------------:|:----------------------------------:
-Probabilities | Detection Map | Segmentation/Annotation |
+Probabilities | Detection Map | Segmentation|

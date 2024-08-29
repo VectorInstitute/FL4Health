@@ -1,8 +1,18 @@
+from logging import WARNING
+
 import torch
+from flwr.common.logger import log
+
+log(
+    WARNING,
+    (
+        "You are using the old version of nnunet transforms from the research folder. "
+        "These methods have been moved to nnunet_utils in fl4health.utils"
+    ),
+)
+
 
 # Some transform functions to use with the TransformsMetric Class
-
-
 def get_annotations_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
     """
     Converts the model output probabilities to predicted annotations
