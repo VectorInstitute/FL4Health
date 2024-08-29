@@ -96,7 +96,7 @@ if __name__ == "__main__":
     )
 
     # I have to use underscores instead of dashes because thats how they
-    # defined it in run smoke tests
+    # defined it in run_smoke_tests
     parser.add_argument(
         "--dataset_path",
         type=str,

@@ -101,7 +101,12 @@ def main(config: dict, server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config_path", action="store", type=str, help="Path to the configuration file")
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to the configuration file. See examples/nnunet_example/README.md for more info",
+    )
     parser.add_argument(
         "--server-address",
         type=str,
