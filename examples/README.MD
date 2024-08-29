@@ -1,8 +1,8 @@
 ## FL4Health Examples
 
-This folder contains a large collection of example implementations of the various methods and capabilities of the FL4Health library. There are several broad categories covered by these examples, including different state-of-the-art global and personalized FL (pFL) methods, aggregation strategies, pre-processing techniques and more.
+This folder contains a large collection of example implementations of the various methods and capabilities of the FL4Health library. There are several broad categories covered by these examples, including different state-of-the-art global and personalized FL (pFL) methods, aggregation strategies, pre-processing techniques and more. For deeper descriptions of the methods supported and components of the library, see [README.MD](../README.md).
 
-Below is an index of these examples, followed by a brief description of what they demonstrate. A README is included in each example folder with instructions on how to run the example and a bit more detail on what the example implements. The examples are listed in alphabetical order. For more details on the library, installing the appropriate environment etc. see [README.MD](../README.md)
+Below is an index of these examples, followed by a brief description of what they demonstrate. A README is included in each example folder with instructions on how to run the example and a bit more detail on what the example implements. The examples are listed in alphabetical order. For more details on the library, installing the appropriate environment etc., see [README.MD](../README.md)
 
 <table>
 <tr>
@@ -57,7 +57,7 @@ Dataset: MNIST
 [dp_fed_examples](dp_fed_examples)
 </td>
 <td>
-The examples in this folder are basic implementations of differentially private (DP) FL training. There are two levels of DP guarantees. Client-level DP refers to guarantees protecting <b>client</b> participation in FL training. Instance-level DP refers to guarantees protecting <b>datapoint</b> participation in FL training. Instance-level DP is classically achieved using DP-SGD on the client-side. The client-level examples include adaptive clipping implementations.
+The examples in this folder are basic implementations of differentially private (DP) FL training. Depending on the threat model, DP ensures that inferring participation of an entity in training (a data point, group of data points, or an entire client) by an attacker is statistically challenging. There are two levels of DP guarantees. Client-level DP refers to guarantees protecting <b>client</b> participation in FL training. Instance-level DP refers to guarantees protecting <b>datapoint</b> participation in FL training. Instance-level DP is classically achieved using DP-SGD on the client-side. The client-level examples include adaptive clipping implementations.
 
 Dataset: CIFAR-10, Medical EHR
 </td>
@@ -101,9 +101,9 @@ Dataset: MNIST
 [feature_alignment_example](feature_alignment_example)
 </td>
 <td>
-Provides an implementation of automatic feature alignment for tabular datasets. When data is represented in dataframes, this implementation automatically unifies the shared features and feature spaces to prepare the datasets for FL prior to training
+Provides an implementation of automatic feature alignment for tabular datasets. When data is represented in dataframes, this implementation automatically unifies the shared features and feature spaces to prepare the datasets for FL prior to training.
 
-Dataset: Mimic3 Tabular Dataset
+Dataset: MIMIC-III Tabular Dataset
 </td>
 </tr>
 <tr>
@@ -112,7 +112,7 @@ Dataset: Mimic3 Tabular Dataset
 [fedbn_example](fedbn_example)
 </td>
 <td>
-This is an example of implementing FedBN. The implementation is quite simple in that it is essentially the basic_example but with an exclusion parameter exchanger.
+This is an example of implementing the FedBN approach. The implementation is quite simple in that it is essentially the basic_example but with an exclusion parameter exchanger to exclude batch normalization layers when exchanging weights between the clients and the server.
 
 Dataset: MNIST
 </td>
@@ -343,7 +343,7 @@ Dataset: CIFAR-10
 [warm_up_example](warm_up_example)
 </td>
 <td>
-This folder provides several implementations of what we refer to as warm-start FL. That is, a model is federally trained using some mechanism, perhaps FedAvg. Thereafter, that pre-trained model is used to initialize further FL training using a different method. The examples herein also provide illustrations of "model surgery" wherein only portions of the warm model are transferred into the new model that will received continued FL training.
+This folder provides several implementations of what we refer to as warm-start FL. That is, a model is federally trained using some mechanism, perhaps FedAvg. Thereafter, that pre-trained model is used to initialize further FL training using a different method. The examples herein also provide illustrations of "model surgery" wherein only portions of the warm model are transferred into the new model that will receive continued FL training.
 
 Dataset: MNIST
 </td>
