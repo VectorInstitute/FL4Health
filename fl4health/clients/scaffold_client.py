@@ -17,7 +17,6 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
-from fl4health.utils.typing import TorchInputType, TorchPredType, TorchTargetType
 
 ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
 
@@ -180,6 +179,13 @@ class ScaffoldClient(BasicClient):
 
         return parameter_delta
 
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Used to modify gradient to correct for client drift in Scaffold.
+        """
+        self.modify_grad()
+
     def compute_updated_control_variates(
         self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
     ) -> NDArrays:
@@ -196,25 +202,6 @@ class ScaffoldClient(BasicClient):
             for delta_control_variate, delta_model_weight in zip(delta_control_variates, delta_model_weights)
         ]
         return updated_client_control_variates
-
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
-        # TorchInputType is simply an alias for the union of
-        # torch.Tensor and Dict[str, torch.Tensor].
-
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
-
-        # Get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward["backward"].backward()
-        self.modify_grad()
-        self.optimizers["global"].step()
-
-        return losses, preds
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
