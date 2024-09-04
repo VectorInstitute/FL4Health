@@ -10,6 +10,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from flwr.server.history import History
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 
 CheckpointScoreFunctionType = Callable[[float, Dict[str, Scalar]], float]
 
@@ -238,33 +239,39 @@ class CentralPerRoundCheckpointer(PerRoundCheckpointer):
 
 
 class ClientPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer], str]]) -> None:
+    def save_checkpoint(
+        self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]]
+    ) -> None:
         """
-        Saves checkpoint_dict consisting of model, optimizer and client name.
+        Saves checkpoint_dict consisting of model, optimizers, client name, total steps and lr schedulers.
 
         Args:
-            checkpoint_dict (Dict[str, Union[nn.Module, Dict[str, Optimizer], str]]): A dictionary with string keys
-                and values of type nn.Module (model), a dictionary of optimizers indexed by string keys and a
-                string representing the client name.
+            checkpoint_dict (Dict[str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]]):
+                A dictionary with string keys and values of type nn.Module (model),
+                a dictionary of optimizers indexed by string keys, an integer representing total steps,
+                string representing the client name and dictionary of _LRScheduler indexed by keys.
         """
         assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
         assert "optimizers" in checkpoint_dict and isinstance(checkpoint_dict["optimizers"], dict)
         assert "client_name" in checkpoint_dict and isinstance(checkpoint_dict["client_name"], str)
+        assert "total_steps" in checkpoint_dict and isinstance(checkpoint_dict["total_steps"], int)
+        assert "lr_schedulers" in checkpoint_dict and isinstance(checkpoint_dict["lr_schedulers"], dict)
 
         torch.save(checkpoint_dict, self.checkpoint_path)
 
-    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer], str]:
+    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]:
         """
         Loads and returns the most recent checkpoint if it exists.
 
         Returns:
-            Tuple[nn.Module, Dict[str, Optimizer], str] A tuple consisting of the model, the dictionary of optimizers
-            and the client name
+            Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]:
+                A tuple consisting of the model, the dictionary of optimizers, the client name,
+                number of total steps and dictionary of learning rate schedulers.
         """
         assert self.checkpoint_exists()
 
         ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["optimizers"], ckpt["client_name"]
+        return ckpt["model"], ckpt["optimizers"], ckpt["client_name"], ckpt["total_steps"], ckpt["lr_schedulers"]
 
 
 class ServerPerRoundCheckpointer(PerRoundCheckpointer):

@@ -3,17 +3,17 @@ import os
 import signal
 import sys
 import warnings
-from collections.abc import Callable, Sequence
 from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, Logger
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 from flwr.common.logger import log
 from torch import nn
 from torch.nn.modules.loss import _Loss
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.utils.typing import LogLevel
@@ -362,3 +362,19 @@ class StreamToLogger(io.StringIO):
 
     def flush(self) -> None:
         pass
+
+
+class PolyLRSchedulerWrapper(_LRScheduler):
+    def __init__(
+        self, optimizer: torch.optim.Optimizer, initial_lr: float, max_steps: int, exponent: float = 0.9
+    ) -> None:
+        self.optimizer = optimizer
+        self.initial_lr = initial_lr
+        self.max_steps = max_steps
+        self.exponent = exponent
+        self._step_count: int
+        super().__init__(optimizer, -1, False)
+
+    def get_lr(self) -> float:
+        new_lr = self.initial_lr * (1 - self._step_count / self.max_steps) ** self.exponent
+        return new_lr

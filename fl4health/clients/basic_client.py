@@ -12,6 +12,7 @@ from flwr.common.logger import LOG_COLORS, log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -265,7 +266,9 @@ class BasicClient(NumPyClient):
             # If per_round_checkpointer not None and checkpoint exists load it and set proper optimizer and attributes.
             # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
-                _, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
+                _, self.optimzers, self.client_name, self.total_steps, self.lr_schedulers = (
+                    self.per_round_checkpointer.load_checkpoint()
+                )
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -307,7 +310,13 @@ class BasicClient(NumPyClient):
         # if per_round_checkpointer is not None
         if self.per_round_checkpointer is not None:
             self.per_round_checkpointer.save_checkpoint(
-                {"model": self.model, "optimizers": self.optimizers, "client_name": self.client_name}
+                {
+                    "model": self.model,
+                    "optimizers": self.optimizers,
+                    "lr_schedulers": self.lr_schedulers,
+                    "total_steps": self.total_steps,
+                    "client_name": self.client_name,
+                }
             )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -700,6 +709,7 @@ class BasicClient(NumPyClient):
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
                 self.update_after_step(steps_this_round, current_round)
+                self.update_lr_schedulers()
                 self.total_steps += 1
                 steps_this_round += 1
             metrics = self.train_metric_manager.compute()
@@ -760,6 +770,7 @@ class BasicClient(NumPyClient):
             self.train_loss_meter.update(losses)
             self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step, current_round)
+            self.update_lr_schedulers()
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
@@ -872,6 +883,15 @@ class BasicClient(NumPyClient):
             self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
+
+        # Must initialize LR scheduler after parent method initializes optimizer
+        # Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return
+        # scheduler for given optimizer
+        self.lr_schedulers = {}
+        for optimizer_key in self.optimizers.keys():
+            lr_scheduler = self.get_lr_scheduler(optimizer_key, config)
+            if lr_scheduler is not None:
+                self.lr_schedulers[optimizer_key] = lr_scheduler
 
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
@@ -1130,6 +1150,29 @@ class BasicClient(NumPyClient):
             NotImplementedError: To be defined in child class.
         """
         raise NotImplementedError
+
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> Union[None, _LRScheduler]:
+        """
+        Optional user defined method that returns learning rate scheduler
+        to be used throughout training for the given optimizer. Defaults to None.
+
+        Args:
+            optimizer_key (str): The key in the optimizer dict corresponding
+                to the optimizer we are optionally defining a learning rate
+                scheduler for.
+            config (Config): The config from the server.
+
+        Returns:
+            Union[None, _LRScheduler]: Client learning rate schedulers.
+        """
+        return None
+
+    def update_lr_schedulers(self) -> None:
+        """
+        Updates any schedulers that exist and verify they haven't exceeded max_steps.
+        """
+        for lr_scheduler in [scheduler for scheduler in self.lr_schedulers.values() if scheduler is not None]:
+            lr_scheduler.step()  # Update LR
 
     def update_before_train(self, current_server_round: int) -> None:
         """

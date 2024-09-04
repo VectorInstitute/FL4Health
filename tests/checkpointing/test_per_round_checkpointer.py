@@ -66,12 +66,16 @@ def test_client_checkpointer() -> None:
 
         assert not client_checkpointer.checkpoint_exists()
 
-        client_checkpointer.save_checkpoint({"model": model, "optimizers": optimizers, "client_name": "bob"})
+        client_checkpointer.save_checkpoint(
+            {"model": model, "optimizers": optimizers, "client_name": "bob", "total_steps": 3, "lr_schedulers": {}}
+        )
 
         assert client_checkpointer.checkpoint_exists()
 
-        model, optimizers, client_name = client_checkpointer.load_checkpoint()
+        model, optimizers, client_name, total_steps, lr_schedulers = client_checkpointer.load_checkpoint()
 
         assert isinstance(model, torch.nn.Module)
         assert isinstance(optimizers, dict)
         assert isinstance(client_name, str)
+        assert isinstance(total_steps, int)
+        assert isinstance(lr_schedulers, dict)

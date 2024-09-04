@@ -31,6 +31,7 @@ from fl4health.utils.nnunet_utils import (
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
     NnunetConfig,
+    PolyLRSchedulerWrapper,
     StreamToLogger,
     convert_deepsupervision_dict_to_list,
     convert_deepsupervision_list_to_dict,
@@ -232,7 +233,7 @@ class NnunetClient(BasicClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return self.nnunet_trainer.optimizer
 
-    def get_lr_scheduler(self, config: Config) -> _LRScheduler:
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
         """
         Creates an LR Scheduler similar to the nnunet default except we set max steps
         to the total number of steps and update every step. Initial and final LR are
@@ -259,15 +260,18 @@ class NnunetClient(BasicClient):
         # Determine total number of steps throughout all FL rounds
         local_epochs, local_steps, _, _ = self.process_config(config)
         if local_steps is not None:
-            self.steps_per_round = local_steps
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+            steps_per_round = local_steps
+            total_steps = int(config["n_server_rounds"]) * steps_per_round
         elif local_epochs is not None:
-            self.steps_per_round = local_epochs * len(self.train_loader)
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+            steps_per_round = local_epochs * len(self.train_loader)
+            total_steps = int(config["n_server_rounds"]) * steps_per_round
+        else:
+            raise ValueError("One of local steps and local epochs must be None")
 
-        # Create and return LR Scheduler. This is nnunet default for version 2.5.1
-        return PolyLRScheduler(
-            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
+        # Create and return LR Scheduler Wrapper for the PolyLRScheduler so that it is
+        # compatible with Torch LRScheduler
+        return PolyLRSchedulerWrapper(
+            self.optimizers[optimizer_key], initial_lr=self.nnunet_trainer.initial_lr, max_steps=total_steps
         )
 
     def get_dataset_n_voxels(self, source_plans: Dict) -> float:
@@ -474,9 +478,6 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-        # Must initialize LR scheduler after parent method initializes optimizer
-        self.lr_scheduler = self.get_lr_scheduler(config)
-
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
         Generate model outputs. Overridden because nnunets output lists when
@@ -658,25 +659,6 @@ class NnunetClient(BasicClient):
             torch.mps.empty_cache()
         else:
             pass
-
-    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
-        """
-        Update the learning rate. LR Scheduler is initialized in self.get_lr_scheduler.
-
-        Args:
-            step (int): The current step within the context of the entire round
-            current_round (Optional[int], optional). The current FL round. If left as
-                None, we assume the model is finetuning and do not change the learning
-                rate from what it was at the end of training
-        """
-        if current_round is not None:
-            # Determine total number of steps that have occurred so far
-            current_overall_step = ((current_round - 1) * self.steps_per_round) + step
-            assert current_overall_step <= self.total_steps, (
-                "Maximum number of steps for the LR Scheduler has been exceeded. "
-                f"Got {current_overall_step} but max was set to {self.total_steps}"
-            )
-            self.lr_scheduler.step(current_overall_step)  # Update LR
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
