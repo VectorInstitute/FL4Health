@@ -6,7 +6,7 @@ import warnings
 from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, Logger
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, no_type_check
 
 import numpy as np
 import torch
@@ -375,6 +375,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         self._step_count: int
         super().__init__(optimizer, -1, False)
 
-    def get_lr(self) -> float:
+    @no_type_check
+    def get_lr(self) -> Sequence[float]:
         new_lr = self.initial_lr * (1 - self._step_count / self.max_steps) ** self.exponent
-        return new_lr
+        return [new_lr] * len(self.optimizer.param_groups)
