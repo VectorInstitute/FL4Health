@@ -4,7 +4,7 @@ __NOTE__: The standard workflow discussed by FLamby is in the next section, but 
 
 Create a python environment with your preferred env manager. We'll use conda below
 ``` bash
-conda create -n flamby_fl4health python=3.9
+conda create -n flamby_fl4health python=3.10
 conda activate flamby_fl4health
 ```
 Install the dependencies of both FLamby and FL4Health using the fixed requirements file at `research/flamby/flamby_requirements.txt`.
@@ -24,7 +24,7 @@ git clone https://github.com/owkin/FLamby.git
 ```
 Create a python environment with your preferred env manager. We'll use conda below
 ``` bash
-conda create -n flamby_fl4health python=3.9
+conda create -n flamby_fl4health python=3.10
 conda activate flamby_fl4health
 ```
 Install the FL4Health requirements
