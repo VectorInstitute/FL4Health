@@ -17,8 +17,8 @@ __Note__: The `server_logs/` and `client_logs/` folders must already exist and t
 In the directory of your choice run
 
 ```bash
-module load python/3.9.10
-python3.9 -m venv <name_of_env>
+module load python/3.10.12
+python3.10 -m venv <name_of_env>
 source <name_of_env>/bin/activate
 pip install --upgrade pip poetry
 poetry install --with "dev, dev-local, test, codestyle"
