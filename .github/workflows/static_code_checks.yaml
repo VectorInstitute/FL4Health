@@ -41,10 +41,7 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # Ignoring vulnerability that just popped up in pytorch
-          # versions < 2.2.0, GHSA-pg7h-5qx3-wjr3
-          # Poetry currently resolves torch version 2.1.2, not sure why, some
-          # other package must be preventing the pytorch version from being
-          # upgraded
+          # Ignoring vulnerability that for cryptography
+          # Fix is 43.0.1 but flwr 1.9 depends on < 43
           ignore-vulns: |
-            GHSA-pg7h-5qx3-wjr3
+            GHSA-h4gh-qq45-vh27
