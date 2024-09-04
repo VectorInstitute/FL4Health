@@ -1,4 +1,4 @@
-# only has to pass for python 3.9
+# only has to pass for python 3.10
 name: PyTest Unit Tests
 
 on:
@@ -15,10 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.10"
       # Display the Python version being used
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
