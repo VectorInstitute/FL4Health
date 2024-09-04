@@ -41,7 +41,7 @@ jobs:
         uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # Ignoring vulnerability that for cryptography
+          # Ignoring vulnerability in cryptography
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
           ignore-vulns: |
             GHSA-h4gh-qq45-vh27
