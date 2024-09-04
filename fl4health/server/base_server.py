@@ -1,11 +1,13 @@
 import datetime
+import timeit
 from logging import DEBUG, INFO, WARN, WARNING
+from pathlib import Path
 from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
-from flwr.common.parameter import parameters_to_ndarrays
+from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.typing import Code, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -13,13 +15,18 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import ServerPerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+
+
+def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
+    # Initializing the model parameters on the server side.
+    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
 class FlServer(Server):
@@ -326,11 +333,14 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        intermediate_checkpoint_dir: Optional[Path] = None,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
         hydrating the provided server model fully such that it can be checkpointed. For custom checkpointing
-        functionality, one need only override _hydrate_model_for_checkpointing.
+        functionality, one need only override _hydrate_model_for_checkpointing. If intermediate_checkpoint_dir
+        is not None, performs per round checkpointing.
+
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -350,16 +360,144 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 performed. Multiple checkpointers can also be passed in a
                 sequence to checkpoint based on multiple criteria. Defaults to
                 None.
+            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
+            intermediate_checkpoint_dir (Path): A directory to store and load checkpoints from for the server
+                during an FL experiment.
         """
         super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
         self.parameter_exchanger = parameter_exchanger
 
+        self.per_round_checkpointer: Union[None, ServerPerRoundCheckpointer]
+
+        if intermediate_checkpoint_dir is not None:
+            self.per_round_checkpointer = ServerPerRoundCheckpointer(intermediate_checkpoint_dir, Path("server.ckpt"))
+        else:
+            self.per_round_checkpointer = None
+
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+        """
+        Overrides method in parent class to call custom fit_with_per_round_checkpointing if an
+        intermediate_checkpoint_dir is provided. Otherwise calls standard fit method.
+
+        Args:
+            num_rounds (int): The number of rounds to perform federated learning.
+            timeout (Optional[float]): The timeout for clients to return results in a given FL round.
+
+        Returns:
+            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+                metrics computed during training and validation. The second element of the tuple is
+                the elapsed time in seconds.
+        """
+        if self.per_round_checkpointer is not None:
+            history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
+
+            if self.wandb_reporter:
+                # report history to W and B
+                self.wandb_reporter.report_metrics(num_rounds, history)
+        else:
+            # parent method includes call to report metrics to wandb if specified
+            history, elapsed_time = super().fit(num_rounds, timeout)
+
+        return history, elapsed_time
+
+    def fit_with_per_epoch_checkpointing(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+        """
+        Runs federated learning for a number of rounds. Heavily based on the fit method from the base
+        server provided by flower (flwr.server.server.Server) except that it is resilient to pre-emptions.
+        It accomplishes this by checkpointing the sever state each round. In the case of pre-emption,
+        when the server is restarted it will load from the most recent checkpoint.
+
+        Args:
+            num_rounds (int): The number of rounds to perform federated learning.
+            timeout (Optional[float]): The timeout for clients to return results in a given FL round.
+
+        Returns:
+            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+                metrics computed during training and validation. The second element of the tuple is
+                the elapsed time in seconds.
+        """
+        # Initialize parameters
+        log(INFO, "Initializing global parameters")
+
+        assert self.per_round_checkpointer is not None
+
+        # if checkpoint exists, update history, server round and model accordingly
+        if self.per_round_checkpointer.checkpoint_exists():
+            model, history, server_round = self.per_round_checkpointer.load_checkpoint()
+            self.parameters = get_initial_model_parameters(model)
+        else:
+            self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
+            history = History()
+            server_round = 1
+
+        if server_round == 1:
+            log(INFO, "Evaluating initial parameters")
+            res = self.strategy.evaluate(0, parameters=self.parameters)
+            if res is not None:
+                log(
+                    INFO,
+                    "initial parameters (loss, other metrics): %s, %s",
+                    res[0],
+                    res[1],
+                )
+                history.add_loss_centralized(server_round=0, loss=res[0])
+                history.add_metrics_centralized(server_round=0, metrics=res[1])
+
+            # Run federated learning for num_rounds
+            log(INFO, "FL starting")
+
+        start_time = timeit.default_timer()
+
+        for current_round in range(server_round, num_rounds + 1):
+            # Train model and replace previous global model
+            res_fit = self.fit_round(server_round=current_round, timeout=timeout)
+            if res_fit:
+                parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
+                if parameters_prime:
+                    self.parameters = parameters_prime
+                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
+
+            # Evaluate model using strategy implementation
+            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
+            if res_cen is not None:
+                loss_cen, metrics_cen = res_cen
+                log(
+                    INFO,
+                    "fit progress: (%s, %s, %s, %s)",
+                    current_round,
+                    loss_cen,
+                    metrics_cen,
+                    timeit.default_timer() - start_time,
+                )
+                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
+                history.add_metrics_centralized(server_round=current_round, metrics=metrics_cen)
+
+            # Evaluate model on a sample of available clients
+            res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
+            if res_fed:
+                loss_fed, evaluate_metrics_fed, _ = res_fed
+                if loss_fed:
+                    history.add_loss_distributed(server_round=current_round, loss=loss_fed)
+                    history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
+
+            # Save checkpoint after training and testing
+            self._hydrate_model_for_checkpointing()
+            self.per_round_checkpointer.save_checkpoint(
+                {"model": self.server_model, "history": history, "server_round": current_round}
+            )
+
+        # Bookkeeping
+        end_time = timeit.default_timer()
+        elapsed_time = end_time - start_time
+        log(INFO, "FL finished in %s", elapsed_time)
+        return history, elapsed_time
 
 
 class FlServerWithInitializer(FlServer):

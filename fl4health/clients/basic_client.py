@@ -15,6 +15,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from fl4health.checkpointing.checkpointer import ClientPerRoundCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -43,6 +44,7 @@ class BasicClient(NumPyClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
+        intermediate_checkpoint_dir: Optional[Path] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -64,6 +66,8 @@ class BasicClient(NumPyClient):
             progress_bar (bool): Whether or not to display a progress bar
                 during client training and validation. Uses tqdm. Defaults to
                 False
+            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
+                checkpoints.
         """
 
         self.data_path = data_path
@@ -71,8 +75,16 @@ class BasicClient(NumPyClient):
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.progress_bar = progress_bar
-
         self.client_name = generate_hash()
+
+        self.per_round_checkpointer: Union[None, ClientPerRoundCheckpointer]
+
+        if intermediate_checkpoint_dir is not None:
+            self.per_round_checkpointer = ClientPerRoundCheckpointer(
+                intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
+            )
+        else:
+            self.per_round_checkpointer = None
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
@@ -231,6 +243,8 @@ class BasicClient(NumPyClient):
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
+        If per_round_checkpointer is not None, on initialization the client checks if a checkpointed client state
+        exists to load and at the end of each round the client state is saved.
 
         Args:
             parameters (NDArrays): The parameters of the model to be used in fit.
@@ -247,6 +261,11 @@ class BasicClient(NumPyClient):
 
         if not self.initialized:
             self.setup_client(config)
+
+            # If per_round_checkpointer not None and checkpoint exists load it and set proper optimizer and attributes.
+            # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
+            if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
+                _, self.optimzers, self.client_name = self.per_round_checkpointer.load_checkpoint()
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -283,6 +302,13 @@ class BasicClient(NumPyClient):
                 "loss_dict": loss_dict,
             },
         )
+
+        # After local client training has finished, checkpoint model, optimizer and client name
+        # if per_round_checkpointer is not None
+        if self.per_round_checkpointer is not None:
+            self.per_round_checkpointer.save_checkpoint(
+                {"model": self.model, "optimizers": self.optimizers, "client_name": self.client_name}
+            )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
