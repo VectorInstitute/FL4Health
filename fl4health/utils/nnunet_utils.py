@@ -107,7 +107,9 @@ def reload_modules(packages: Sequence[str]) -> None:
 def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
     """
     For each keyword argument name and value sets the current environment variable with
-    the same name to that value and then reloads nnunet. Values must be strings
+    the same name to that value and then reloads nnunet. Values must be strings. This
+    is necessary because nnunet checks some environment variables on import, and
+    therefore it mst be imported or reloaded after they are set.
     """
     # Set environment variables
     for key, val in kwargs.items():

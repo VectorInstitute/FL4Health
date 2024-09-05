@@ -171,6 +171,8 @@ class NnunetClient(BasicClient):
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
         self.plans: dict
+        self.steps_per_round: int  # N steps per server round
+        self.max_steps: int  # N_rounds x steps_per_round
 
         # Set nnunet compile environment variable. Nnunet default is to compile
         if not compile:
@@ -257,17 +259,16 @@ class NnunetClient(BasicClient):
             )
 
         # Determine total number of steps throughout all FL rounds
-        local_epochs, local_steps, _, _ = self.process_config(config)
+        local_epochs, local_steps, *_ = self.process_config(config)
         if local_steps is not None:
             self.steps_per_round = local_steps
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
         elif local_epochs is not None:
             self.steps_per_round = local_epochs * len(self.train_loader)
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+        self.max_steps = int(config["n_server_rounds"]) * self.steps_per_round
 
         # Create and return LR Scheduler. This is nnunet default for version 2.5.1
         return PolyLRScheduler(
-            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
+            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.max_steps
         )
 
     def get_dataset_n_voxels(self, source_plans: Dict) -> float:
@@ -670,13 +671,11 @@ class NnunetClient(BasicClient):
                 rate from what it was at the end of training
         """
         if current_round is not None:
-            # Determine total number of steps that have occurred so far
-            current_overall_step = ((current_round - 1) * self.steps_per_round) + step
-            assert current_overall_step <= self.total_steps, (
+            assert self.total_steps <= self.max_steps, (
                 "Maximum number of steps for the LR Scheduler has been exceeded. "
-                f"Got {current_overall_step} but max was set to {self.total_steps}"
+                f"Got {self.total_steps} but max was set to {self.max_steps}"
             )
-            self.lr_scheduler.step(current_overall_step)  # Update LR
+            self.lr_scheduler.step(self.total_steps)  # Update LR
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
