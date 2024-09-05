@@ -70,6 +70,7 @@ class NnunetClient(BasicClient):
         verbose: bool = True,
         metrics: Optional[Sequence[Metric]] = None,
         progress_bar: bool = False,
+        intermediate_checkpoint_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -127,6 +128,8 @@ class NnunetClient(BasicClient):
                 on the labels and predictions of the client model. Defaults to [].
             progress_bar (bool, optional): Whether or not to print a progress bar to
                 stdout for training. Defaults to False
+            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
+                checkpoints.
             loss_meter_type (LossMeterType, optional): Type of meter used to
                 track and compute the losses over each batch. Defaults to
                 LossMeterType.AVERAGE.
@@ -148,6 +151,7 @@ class NnunetClient(BasicClient):
             checkpointer=checkpointer,  # self.checkpointer
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
             progress_bar=progress_bar,
+            intermediate_checkpoint_dir=intermediate_checkpoint_dir,
         )
 
         # Some nnunet client specific attributes

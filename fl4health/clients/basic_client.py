@@ -46,6 +46,7 @@ class BasicClient(NumPyClient):
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
         intermediate_checkpoint_dir: Optional[Path] = None,
+        client_name: Optional[str] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -69,6 +70,8 @@ class BasicClient(NumPyClient):
                 False
             intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
                 checkpoints.
+            client_name (str): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated.
         """
 
         self.data_path = data_path
@@ -76,7 +79,7 @@ class BasicClient(NumPyClient):
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.progress_bar = progress_bar
-        self.client_name = generate_hash()
+        self.client_name = client_name if client_name is not None else generate_hash()
 
         self.per_round_checkpointer: Union[None, ClientPerRoundCheckpointer]
 
@@ -269,6 +272,7 @@ class BasicClient(NumPyClient):
                 _, self.optimzers, self.client_name, self.total_steps, self.lr_schedulers = (
                     self.per_round_checkpointer.load_checkpoint()
                 )
+                log(INFO, f"Loading client state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -318,6 +322,7 @@ class BasicClient(NumPyClient):
                     "client_name": self.client_name,
                 }
             )
+            log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

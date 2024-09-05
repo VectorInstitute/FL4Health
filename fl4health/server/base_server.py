@@ -430,9 +430,11 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         # if checkpoint exists, update history, server round and model accordingly
         if self.per_round_checkpointer.checkpoint_exists():
+            log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
             model, history, server_round = self.per_round_checkpointer.load_checkpoint()
             self.parameters = get_initial_model_parameters(model)
         else:
+            log(INFO, "Initializing server state")
             self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
             history = History()
             server_round = 1
@@ -490,8 +492,9 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
             self.per_round_checkpointer.save_checkpoint(
-                {"model": self.server_model, "history": history, "server_round": current_round}
+                {"model": self.server_model, "history": history, "server_round": current_round + 1}
             )
+            log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
         # Bookkeeping
         end_time = timeit.default_timer()
