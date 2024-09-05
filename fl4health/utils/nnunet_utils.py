@@ -377,5 +377,6 @@ class PolyLRSchedulerWrapper(_LRScheduler):
 
     @no_type_check
     def get_lr(self) -> Sequence[float]:
-        new_lr = self.initial_lr * (1 - self._step_count / self.max_steps) ** self.exponent
+        curr_step = min(self._step_count, self.max_steps)
+        new_lr = self.initial_lr * (1 - curr_step / self.max_steps) ** self.exponent
         return [new_lr] * len(self.optimizer.param_groups)
