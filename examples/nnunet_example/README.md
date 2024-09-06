@@ -55,7 +55,7 @@ Images that contain an arbitrary number of distinct detected volumes generally d
 - Each detected volume is a connected component that must be non-connected and non-overlapping (mutually exclusive) with other volumes of the same class. (Therefore detection maps for multiclass segmentation must be one hot encoded)
 - Each pixel/voxel within a volume must have the same predicted probability. Therefore there is a single confidence/likelihood score for each volume.
 
-Detected volumes typically also have a minimum size determined by the number fo pixels/voxels that are a part of the volume. Detection maps may be computed from probabilities in a variety of ways. One example used for 3d medical images can be found in the [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) API. An example of a 2d detection map is shown below.
+Detected volumes typically also have a minimum size determined by the number of pixels/voxels that are a part of the volume. Detection maps may be computed from probabilities in a variety of ways. One example used for 3d medical images can be found in the [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) API. An example of a 2d detection map is shown below.
 
 ### Segmentations:
 

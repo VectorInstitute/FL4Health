@@ -77,7 +77,6 @@ def main(
         # BaseClient Args
         device=DEVICE,
         metrics=[dice],
-        data_path=dataset_path,  # Argument not actually used by nnUNetClient
         progress_bar=verbose,
     )
 
