@@ -41,30 +41,10 @@ class CifarClient(BasicClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
-    parser.add_argument(
-        "--intermediate_checkpoint_dir",
-        action="store",
-        type=str,
-        help="Path to intermediate checkpoint directory.",
-        default="examples/basic_example/",
-    )
-    parser.add_argument(
-        "--client_name",
-        action="store",
-        type=str,
-        help="Unique string identifier for client",
-    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarClient(
-        data_path,
-        [Accuracy("accuracy")],
-        DEVICE,
-        intermediate_checkpoint_dir=args.intermediate_checkpoint_dir,
-        client_name=args.client_name,
-    )
+    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
-    client.metrics_reporter.dump()
     client.shutdown()

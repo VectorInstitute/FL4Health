@@ -1,0 +1,42 @@
+{
+    "rounds": {
+        "1": {
+            "fit_metrics": {
+                "train - prediction - accuracy": 0.084375
+            },
+            "loss_dict": {
+                "backward": 3.4583
+            }
+        },
+        "2": {
+            "fit_metrics": {
+                "train - prediction - accuracy": 0.0984
+            },
+            "loss_dict": {
+                "backward": 2.3360
+            },
+            "evaluate_metrics": {
+                "val - prediction - accuracy": 0.1119,
+                "test - num_examples": 10000,
+                "test - loss": 2.31002,
+                "test - prediction - accuracy": 0.1112
+            },
+            "loss": 2.3078
+        },
+        "3": {
+            "fit_metrics": {
+                "train - prediction - accuracy": 0.11875
+            },
+            "loss_dict": {
+                "backward": 2.3172
+            },
+            "evaluate_metrics": {
+                "val - prediction - accuracy": 0.1263,
+                "test - num_examples": 10000,
+                "test - loss": 2.3017,
+                "test - prediction - accuracy": 0.1281
+            },
+            "loss": 2.2999
+        }
+    }
+}

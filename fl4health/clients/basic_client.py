@@ -269,7 +269,7 @@ class BasicClient(NumPyClient):
             # If per_round_checkpointer not None and checkpoint exists load it and set proper optimizer and attributes.
             # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
-                _, self.optimzers, self.client_name, self.total_steps, self.lr_schedulers = (
+                _, self.optimzers, self.client_name, self.total_steps, self.lr_schedulers, self.metrics_reporter = (
                     self.per_round_checkpointer.load_checkpoint()
                 )
                 log(INFO, f"Loading client state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
@@ -320,6 +320,7 @@ class BasicClient(NumPyClient):
                     "lr_schedulers": self.lr_schedulers,
                     "total_steps": self.total_steps,
                     "client_name": self.client_name,
+                    "metrics_reporter": self.metrics_reporter,
                 }
             )
             log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")

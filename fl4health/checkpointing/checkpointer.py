@@ -12,6 +12,8 @@ from flwr.server.history import History
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 
+from fl4health.reporting.metrics import MetricsReporter
+
 CheckpointScoreFunctionType = Callable[[float, Dict[str, Scalar]], float]
 
 
@@ -240,7 +242,10 @@ class CentralPerRoundCheckpointer(PerRoundCheckpointer):
 
 class ClientPerRoundCheckpointer(PerRoundCheckpointer):
     def save_checkpoint(
-        self, checkpoint_dict: Dict[str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]]
+        self,
+        checkpoint_dict: Dict[
+            str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler], MetricsReporter]
+        ],
     ) -> None:
         """
         Saves checkpoint_dict consisting of model, optimizers, client name, total steps and lr schedulers.
@@ -256,10 +261,15 @@ class ClientPerRoundCheckpointer(PerRoundCheckpointer):
         assert "client_name" in checkpoint_dict and isinstance(checkpoint_dict["client_name"], str)
         assert "total_steps" in checkpoint_dict and isinstance(checkpoint_dict["total_steps"], int)
         assert "lr_schedulers" in checkpoint_dict and isinstance(checkpoint_dict["lr_schedulers"], dict)
+        assert "metrics_reporter" in checkpoint_dict and isinstance(
+            checkpoint_dict["metrics_reporter"], MetricsReporter
+        )
 
         torch.save(checkpoint_dict, self.checkpoint_path)
 
-    def load_checkpoint(self) -> Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]:
+    def load_checkpoint(
+        self,
+    ) -> Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler], MetricsReporter]:
         """
         Loads and returns the most recent checkpoint if it exists.
 
@@ -271,11 +281,18 @@ class ClientPerRoundCheckpointer(PerRoundCheckpointer):
         assert self.checkpoint_exists()
 
         ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["optimizers"], ckpt["client_name"], ckpt["total_steps"], ckpt["lr_schedulers"]
+        return (
+            ckpt["model"],
+            ckpt["optimizers"],
+            ckpt["client_name"],
+            ckpt["total_steps"],
+            ckpt["lr_schedulers"],
+            ckpt["metrics_reporter"],
+        )
 
 
 class ServerPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, History, int]]) -> None:
+    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, History, int, MetricsReporter]]) -> None:
         """
         Saves checkpoint_dict consisting of model, a history of losses and metrics through validation and the server
         round.
@@ -287,10 +304,13 @@ class ServerPerRoundCheckpointer(PerRoundCheckpointer):
         assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
         assert "history" in checkpoint_dict and isinstance(checkpoint_dict["history"], History)
         assert "server_round" in checkpoint_dict and isinstance(checkpoint_dict["server_round"], int)
+        assert "metrics_reporter" in checkpoint_dict and isinstance(
+            checkpoint_dict["metrics_reporter"], MetricsReporter
+        )
 
         torch.save(checkpoint_dict, self.checkpoint_path)
 
-    def load_checkpoint(self) -> Tuple[nn.Module, History, int]:
+    def load_checkpoint(self) -> Tuple[nn.Module, History, int, MetricsReporter]:
         """
         Loads and returns the most recent checkpoint if it exists.
 
@@ -300,4 +320,4 @@ class ServerPerRoundCheckpointer(PerRoundCheckpointer):
         assert self.checkpoint_exists()
 
         ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["history"], ckpt["server_round"]
+        return ckpt["model"], ckpt["history"], ckpt["server_round"], ckpt["metrics_reporter"]

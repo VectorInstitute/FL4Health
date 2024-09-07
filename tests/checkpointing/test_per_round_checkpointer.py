@@ -49,7 +49,7 @@ def test_server_checkpointer() -> None:
 
         assert server_checkpointer.checkpoint_exists()
 
-        model, history, server_round = server_checkpointer.load_checkpoint()
+        model, history, server_round, _ = server_checkpointer.load_checkpoint()
 
         assert isinstance(model, torch.nn.Module)
         assert isinstance(history, History)
@@ -72,7 +72,7 @@ def test_client_checkpointer() -> None:
 
         assert client_checkpointer.checkpoint_exists()
 
-        model, optimizers, client_name, total_steps, lr_schedulers = client_checkpointer.load_checkpoint()
+        model, optimizers, client_name, total_steps, lr_schedulers, _ = client_checkpointer.load_checkpoint()
 
         assert isinstance(model, torch.nn.Module)
         assert isinstance(optimizers, dict)

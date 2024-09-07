@@ -22,6 +22,7 @@ from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from fl4health.utils.random import generate_hash
 
 
 def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
@@ -37,6 +38,7 @@ class FlServer(Server):
         wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        server_name: Optional[str] = None,
     ) -> None:
         """
         Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
@@ -65,11 +67,12 @@ class FlServer(Server):
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.wandb_reporter = wandb_reporter
         self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
+        self.server_name = server_name if server_name is not None else generate_hash()
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
         else:
-            self.metrics_reporter = MetricsReporter()
+            self.metrics_reporter = MetricsReporter(self.server_name)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
@@ -334,6 +337,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         intermediate_checkpoint_dir: Optional[Path] = None,
+        server_name: Optional[str] = None,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
@@ -364,7 +368,9 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             intermediate_checkpoint_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
         """
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
+        super().__init__(
+            client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter, server_name=server_name
+        )
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
         self.parameter_exchanger = parameter_exchanger
@@ -395,6 +401,8 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
+        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
+
         if self.per_round_checkpointer is not None:
             history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
 
@@ -431,8 +439,10 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         # if checkpoint exists, update history, server round and model accordingly
         if self.per_round_checkpointer.checkpoint_exists():
             log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
-            model, history, server_round = self.per_round_checkpointer.load_checkpoint()
+            model, history, server_round, metrics_reporter = self.per_round_checkpointer.load_checkpoint()
             self.parameters = get_initial_model_parameters(model)
+            self.metrics_reporter = metrics_reporter
+            server_round += 1
         else:
             log(INFO, "Initializing server state")
             self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
@@ -492,7 +502,12 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
             self.per_round_checkpointer.save_checkpoint(
-                {"model": self.server_model, "history": history, "server_round": current_round + 1}
+                {
+                    "model": self.server_model,
+                    "history": history,
+                    "server_round": current_round,
+                    "metrics_reporter": self.metrics_reporter,
+                }
             )
             log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 

@@ -1,6 +1,5 @@
 import argparse
 from functools import partial
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 import flwr as fl
@@ -31,7 +30,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], intermediate_checkpoint_dir: str) -> None:
+def main(config: Dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -64,13 +63,7 @@ def main(config: Dict[str, Any], intermediate_checkpoint_dir: str) -> None:
     )
 
     server = FlServerWithCheckpointing(
-        SimpleClientManager(),
-        model,
-        parameter_exchanger,
-        None,
-        strategy,
-        checkpointers,
-        intermediate_checkpoint_dir=Path(intermediate_checkpoint_dir),
+        SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointers
     )
 
     fl.server.start_server(
@@ -78,8 +71,6 @@ def main(config: Dict[str, Any], intermediate_checkpoint_dir: str) -> None:
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
-    server.metrics_reporter.dump()
 
 
 if __name__ == "__main__":
@@ -91,15 +82,8 @@ if __name__ == "__main__":
         help="Path to configuration file.",
         default="examples/basic_example/config.yaml",
     )
-    parser.add_argument(
-        "--intermediate_checkpoint_dir",
-        action="store",
-        type=str,
-        help="Path to intermediate checkpoint directory.",
-        default="examples/basic_example/",
-    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
 
-    main(config, args.intermediate_checkpoint_dir)
+    main(config)
