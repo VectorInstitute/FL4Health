@@ -9,7 +9,7 @@ from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
-from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformType
+from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformFunction
 
 
 class TestMetricPrefix(Enum):
@@ -184,25 +184,38 @@ class SimpleMetric(Metric, ABC):
 
 
 class TransformsMetric(Metric):
-    def __init__(self, metric: Metric, transforms: List[TorchTransformType]) -> None:
+    def __init__(
+        self,
+        metric: Metric,
+        pred_transforms: Optional[Sequence[TorchTransformFunction]] = None,
+        target_transforms: Optional[Sequence[TorchTransformFunction]] = None,
+    ) -> None:
         """
         A thin wrapper class to allow transforms to be applied to preds and
-        targets prior to calculating metrics
+        targets prior to calculating metrics. Transforms are applied in the order given
 
         Args:
             metric (Metric): A FL4Health compatible metric
-            transforms (List[Callable]): A list of transform functions to apply
-                to the preds and targets. Each callable accept and return preds
-                and targets. Eg. pred, target = transform(pred, target). Use the
-                partial function to change the values of other arguments.
+            pred_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+                list of transform functions to apply to the model predictions before
+                computing the metrics. Each callable must accept and return a torch.
+                Tensor. Use partial to set other arguments.
+            target_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+                list of transform functions to apply to the targets before computing
+                the metrics. Each callable must accept and return a torch.Tensor. Use
+                partial to set other arguments.
         """
         self.metric = metric
-        self.transforms = transforms
+        self.pred_transforms = [] if pred_transforms is None else pred_transforms
+        self.target_transforms = [] if target_transforms is None else target_transforms
         super().__init__(name=self.metric.name)
 
     def update(self, pred: torch.Tensor, target: torch.Tensor) -> None:
-        for transform in self.transforms:
-            pred, target = transform(pred, target)
+        for transform in self.pred_transforms:
+            pred = transform(pred)
+
+        for transform in self.target_transforms:
+            target = transform(target)
 
         self.metric.update(pred, target)
 

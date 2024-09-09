@@ -836,6 +836,7 @@ class BasicClient(NumPyClient):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = self.get_test_data_loader(config)
+
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
         # and as such, we will make that assumption.

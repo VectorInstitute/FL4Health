@@ -8,13 +8,10 @@ from typing import Optional
 import yaml
 
 with warnings.catch_warnings():
-    # Need to import lightning utilities now in order to avoid deprecation
-    # warnings. Ignore flake8 warning saying that it is unused
-    # lightning utilities is imported by some of the dependencies
-    # so by importing it now and filtering the warnings
-    # https://github.com/Lightning-AI/utilities/issues/119
+    # Silence deprecation warnings from sentry sdk due to flwr and wandb
+    # https://github.com/adap/flower/issues/4086
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import lightning_utilities  # noqa: F401
+    import wandb  # noqa: F401
 
 import flwr as fl
 import torch
@@ -24,8 +21,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
-from research.picai.fl_nnunet.nnunet_server import NnUNetServer
 
 
 def get_config(
@@ -87,7 +84,7 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    server = NnUNetServer(
+    server = NnunetServer(
         client_manager=SimpleClientManager(),
         strategy=strategy,
     )
@@ -104,7 +101,12 @@ def main(config: dict, server_address: str) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config_path", action="store", type=str, help="Path to the configuration file")
+    parser.add_argument(
+        "--config_path",
+        action="store",
+        type=str,
+        help="Path to the configuration file. See examples/nnunet_example/README.md for more info",
+    )
     parser.add_argument(
         "--server-address",
         type=str,

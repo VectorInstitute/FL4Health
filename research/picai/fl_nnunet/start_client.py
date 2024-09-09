@@ -1,31 +1,26 @@
 import argparse
+import logging
 import warnings
+from functools import partial
 from logging import INFO
 from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
-    # Need to import lightning utilities now in order to avoid deprecation
-    # warnings. Ignore flake8 warning saying that it is unused
-    # lightning utilities is imported by some of the dependencies
-    # so by importing it now and filtering the warnings
-    # https://github.com/Lightning-AI/utilities/issues/119
+    # Silence deprecation warnings from sentry sdk due to flwr and wandb
+    # https://github.com/adap/flower/issues/4086
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import lightning_utilities  # noqa: F401
+    import wandb  # noqa: F401
 
 import flwr as fl
 import torch
-from flwr.common.logger import log
+from flwr.common.logger import log, update_console_handler
 from torchmetrics.classification import Dice
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from research.picai.fl_nnunet.nnunet_client import nnUNetClient
-from research.picai.fl_nnunet.transforms import (
-    collapse_one_hot_target,
-    get_annotations_from_probs,
-    get_probabilities_from_logits,
-)
+from research.picai.fl_nnunet.transforms import collapse_one_hot_tensor, get_annotations_from_probs
 
 
 def main(
@@ -35,6 +30,8 @@ def main(
     always_preprocess: bool,
     server_address: str,
     fold: Union[str, int],
+    verbose: bool,
+    compile: bool,
 ) -> None:
 
     # Log device and server address
@@ -48,12 +45,13 @@ def main(
             name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-        transforms=[get_probabilities_from_logits, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_annotations_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
         metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
-        transforms=[get_probabilities_from_logits, collapse_one_hot_target],
+        pred_transforms=[torch.sigmoid],
+        target_transforms=[partial(collapse_one_hot_tensor, dim=1)],
     )
 
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
@@ -66,10 +64,12 @@ def main(
         data_identifier=data_identifier,
         plans_identifier=plans_identifier,
         always_preprocess=always_preprocess,
+        verbose=verbose,
+        compile=compile,
         # BaseClient Args
         device=DEVICE,
         metrics=metrics,
-        progress_bar=False,
+        progress_bar=verbose,
         data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 
@@ -127,8 +127,38 @@ if __name__ == "__main__":
         help="The server address for the clients to communicate to the server \
             through. Defaults to 0.0.0.0:8080",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Use this flag to log extra INFO logs and a progress bar",
+    )
+    parser.add_argument(
+        "--debug",
+        help="Include flag to print debug logs",
+        action="store_const",
+        dest="logLevel",
+        const=logging.DEBUG,
+        default=logging.INFO,
+    )
+    parser.add_argument(
+        "--quiet",
+        help="Include flag to silence INFO and DEBUG logs",
+        action="store_const",
+        dest="logLevel",
+        const=logging.WARNING,
+    )
+    parser.add_argument(
+        "--skip-compile",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
+    )
 
     args = parser.parse_args()
+
+    # Set log level
+    update_console_handler(level=args.logLevel)
 
     # Convert fold to an integer if it is not 'all'
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
@@ -140,4 +170,6 @@ if __name__ == "__main__":
         always_preprocess=args.always_preprocess,
         server_address=args.server_address,
         fold=fold,
+        verbose=args.verbose,
+        compile=not args.skip_compile,
     )

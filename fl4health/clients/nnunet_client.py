@@ -26,18 +26,20 @@ from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
-from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
-from research.picai.fl_nnunet.nnunet_utils import (
+from fl4health.utils.nnunet_utils import (
     NNUNET_DEFAULT_NP,
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
     NnunetConfig,
     StreamToLogger,
-    convert_deepsupervision_dict_to_list,
-    convert_deepsupervision_list_to_dict,
+    convert_deep_supervision_dict_to_list,
+    convert_deep_supervision_list_to_dict,
+    get_dataset_n_voxels,
     nnUNetDataLoaderWrapper,
+    prepare_loss_arg,
     use_default_signal_handlers,
 )
+from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
@@ -52,19 +54,10 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
 
-log(
-    WARNING,
-    (
-        "You are using the old version of nnUNetClient from the research folder. "
-        "Use the one from fl4health.clients instead"
-    ),
-)
 
-
-class nnUNetClient(BasicClient):
+class NnunetClient(BasicClient):
     def __init__(
         self,
-        data_path: Path,
         device: torch.device,
         dataset_id: int,
         fold: Union[int, str],
@@ -73,7 +66,7 @@ class nnUNetClient(BasicClient):
         compile: bool = True,
         always_preprocess: bool = False,
         max_grad_norm: float = 12,
-        n_dataload_proc: Optional[int] = None,
+        n_dataload_processes: Optional[int] = None,
         verbose: bool = True,
         metrics: Optional[Sequence[Metric]] = None,
         progress_bar: bool = False,
@@ -82,15 +75,13 @@ class nnUNetClient(BasicClient):
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
-        A client for training nnunet models. Requires the following additional
-        keys in the config sent from the server
+        A client for training nnunet models. Requires the nnunet environment variables
+        to be set. Also requires the following additional keys in the config sent from
+        the server
             'nnunet_plans': (serialized dict)
             'nnunet_config': (str)
 
         Args:
-            data_path (Path): Required by the parent class but not used by
-                nnUNetClient since it uses the nnunet environment variables
-                to determine the data location.
             device (torch.device): Device indicator for where to send the
                 model, batches, labels etc. Often 'cpu' or 'cuda' or 'mps'
             dataset_id (int): The nnunet dataset id for the local client dataset
@@ -125,11 +116,11 @@ class nnUNetClient(BasicClient):
                 the client.
             max_grad_norm (float, optional): The maximum gradient norm to use for
                 gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
-            n_dataload_proc (Optional[int], optional): The number of processes to spawn
-                for each nnunet dataloader. If left as None we use the nnunetv2 2.5.1
-                defaults for each config
+            n_dataload_processes (Optional[int], optional): The number of processes to
+                spawn for each nnunet dataloader. If left as None we use the nnunetv2
+                version 2.5.1 defaults for each config
             verbose (bool, optional): If True the client will log some extra INFO logs.
-                Defaults to False.
+                Defaults to False unless the log level is DEBUG or lower.
             metrics (Sequence[Metric], optional): Metrics to be computed based
                 on the labels and predictions of the client model. Defaults to [].
             progress_bar (bool, optional): Whether or not to print a progress bar to
@@ -148,7 +139,7 @@ class nnUNetClient(BasicClient):
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
         super().__init__(
-            data_path=data_path,  # self.data_path, not used by nnUNetClient
+            data_path=Path("dummy/path"),  # data_path not used by NnunetClient
             metrics=metrics,  # self.metrics
             device=device,  # self.device
             loss_meter_type=loss_meter_type,
@@ -163,11 +154,11 @@ class nnUNetClient(BasicClient):
         self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
         self.fold = fold
         self.data_identifier = data_identifier
-        self.always_preprocess: bool = always_preprocess
+        self.always_preprocess = always_preprocess
         self.plans_name = plans_identifier
         self.fingerprint_extracted = False
         self.max_grad_norm = max_grad_norm
-        self.n_dataload_proc = n_dataload_proc
+        self.n_dataload_proc = n_dataload_processes
 
         # Autoset verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
@@ -178,7 +169,9 @@ class nnUNetClient(BasicClient):
         # nnunet specific attributes to be initialized in setup_client
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
-        self.plans: dict
+        self.plans: dict[str, Any]
+        self.steps_per_round: int  # N steps per server round
+        self.max_steps: int  # N_rounds x steps_per_round
 
         # Set nnunet compile environment variable. Nnunet default is to compile
         if not compile:
@@ -199,10 +192,11 @@ class nnUNetClient(BasicClient):
             Tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
-        t = time.time()
+        start_time = time.time()
         # Set the number of processes for each dataloader.
         if self.n_dataload_proc is None:
-            self.n_dataload_proc = len(os.sched_getaffinity(0))  # Num available cpu's
+            # Nnunet default is 12 or max cpu's. We decrease max by 1 just in case
+            self.n_dataload_proc = min(12, len(os.sched_getaffinity(0)) - 1)
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
         # The batchgenerators package used under the hood by the dataloaders creates an
@@ -227,7 +221,7 @@ class nnUNetClient(BasicClient):
         val_loader = nnUNetDataLoaderWrapper(nnunet_augmenter=val_loader, nnunet_config=self.nnunet_config)
 
         if self.verbose:
-            log(INFO, f"\tDataloaders initialized in {time.time()-t:.1f}s")
+            log(INFO, f"\tDataloaders initialized in {time.time()-start_time:.1f}s")
 
         return train_loader, val_loader
 
@@ -265,40 +259,17 @@ class nnUNetClient(BasicClient):
             )
 
         # Determine total number of steps throughout all FL rounds
-        local_epochs, local_steps, _, _ = self.process_config(config)
+        local_epochs, local_steps, *_ = self.process_config(config)
         if local_steps is not None:
             self.steps_per_round = local_steps
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
         elif local_epochs is not None:
             self.steps_per_round = local_epochs * len(self.train_loader)
-            self.total_steps = int(config["n_server_rounds"]) * self.steps_per_round
+        self.max_steps = int(config["n_server_rounds"]) * self.steps_per_round
 
         # Create and return LR Scheduler. This is nnunet default for version 2.5.1
         return PolyLRScheduler(
-            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.total_steps
+            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.max_steps
         )
-
-    def get_dataset_n_voxels(self, source_plans: Dict) -> float:
-        """
-        Determines the total number of voxels in the dataset
-
-        Args:
-            source_plans (Dict): The nnunet plans dict that is being modified
-
-        Returns:
-            float: The total number of voxels in the local client dataset
-        """
-        # Need to determine input dimensionality
-        if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
-            cfg = source_plans["configurations"][NnunetConfig._3D_FULLRES.value]
-        else:
-            cfg = source_plans["configurations"][NnunetConfig._2D.value]
-
-        # Get total number of voxels in dataset and multiply by max_factor
-        image_shape = cfg["median_image_size_in_voxels"]
-        num_samples = self.dataset_json["numTraining"]
-        approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * num_samples)
-        return approx_n_voxels
 
     def create_plans(self, config: Config) -> Dict[str, Any]:
         """
@@ -324,19 +295,21 @@ class nnUNetClient(BasicClient):
         # Change dataset name
         plans["dataset_name"] = self.dataset_name
 
-        # Change data identifier and ensure batch size is within nnunet limits
-        # =====================================================================
+        # Change data identifier
         if self.data_identifier is None:
             self.data_identifier = self.plans_name
 
         # Get maximum number of voxels for a batch based on dataset size
-        max_voxels = self.get_dataset_n_voxels(plans) * 0.05  # Max is 5% of total
+        # TODO: This function assumes the median image size of the local dataset is the
+        # same as the one from which the plans file was created. Better way to do it is
+        # to pass fingerprint as a param and compute median image size manually.
+        n_cases = self.dataset_json["numTraining"]
+        max_voxels = get_dataset_n_voxels(plans, n_cases) * 0.05  # Max is 5% of total
 
         # Iterate through nnunet configs in plans file
         for c in plans["configurations"].keys():
             # Change the data identifier
-            if "data_identifier" in plans["configurations"][c].keys():
-                plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
+            plans["configurations"][c]["data_identifier"] = self.data_identifier + "_" + c
             # Ensure batch size is at least 2, then at most 5 percent of dataset
             # TODO: Possible extension could be to increase batch size if possible
             if "batch_size" in plans["configurations"][c].keys():
@@ -348,10 +321,11 @@ class nnUNetClient(BasicClient):
                 )
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
+            else:
+                log(WARNING, ("Did not find a 'batch_size' key in the nnunet plans " f"dict for nnunet config: {c}"))
 
         # Can't run nnunet preprocessing without saving plans file
-        if not exists(join(nnUNet_preprocessed, self.dataset_name)):
-            os.makedirs(join(nnUNet_preprocessed, self.dataset_name))
+        os.makedirs(join(nnUNet_preprocessed, self.dataset_name), exist_ok=True)
         plans_save_path = join(nnUNet_preprocessed, self.dataset_name, self.plans_name + ".json")
         save_json(plans, plans_save_path, sort_keys=False)
         return plans
@@ -393,16 +367,22 @@ class nnUNetClient(BasicClient):
         """
         Checks if nnunet dataset fingerprint already exists and if not extracts one from the dataset
         """
-        fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
-        if self.always_preprocess or not exists(fp_path):
-            t = time.time()
-            # Unless log level is DEBUG or lower hide nnunet output
-            with redirect_stdout(self.stream2debug):
-                extract_fingerprints(dataset_ids=[self.dataset_id])
-            if self.verbose:
-                log(INFO, f"\tExtracted dataset fingerprint in {time.time()-t:.1f}s")
+        # Check first whether this client instance has already extracted a dataset fp
+        # Possible if the client was asked to generate the nnunet plans for the server
+        if not self.fingerprint_extracted:
+            fp_path = join(nnUNet_preprocessed, self.dataset_name, "dataset_fingerprint.json")
+            # Check if fp already exists or if we want to redo fp extraction
+            if self.always_preprocess or not exists(fp_path):
+                start = time.time()
+                # Unless log level is DEBUG or lower hide nnunet output
+                with redirect_stdout(self.stream2debug):
+                    extract_fingerprints(dataset_ids=[self.dataset_id])
+                if self.verbose:
+                    log(INFO, f"\tExtracted dataset fingerprint in {time.time()-start:.1f}s")
+            elif self.verbose:
+                log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
         elif self.verbose:
-            log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
+            log(INFO, "\tThis client instance has already extracted the dataset fingerprint. Skipping.")
 
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
@@ -430,10 +410,7 @@ class nnUNetClient(BasicClient):
         self.nnunet_config = NnunetConfig(config["nnunet_config"])
 
         # Check if dataset fingerprint has already been extracted
-        if not self.fingerprint_extracted:
-            self.maybe_extract_fingerprint()
-        elif self.verbose:
-            log(INFO, "\tDataset fingerprint has already been extracted. Skipping.")
+        self.maybe_extract_fingerprint()
 
         # Create the nnunet plans for the local client
         self.plans = self.create_plans(config=config)
@@ -454,16 +431,13 @@ class nnUNetClient(BasicClient):
             # do it manually since nnunet_trainer not being used for training
             self.nnunet_trainer.set_deep_supervision_enabled(self.nnunet_trainer.enable_deep_supervision)
 
-        # Prevent nnunet from generating log files. And delete empty output directories
+        # Prevent nnunet from generating log files and delete empty output directories
         os.remove(self.nnunet_trainer.log_file)
         self.nnunet_trainer.log_file = os.devnull
         output_folder = Path(self.nnunet_trainer.output_folder)
-        while True:
-            if len(os.listdir(output_folder)) == 0:
-                os.rmdir(output_folder)
-                output_folder = output_folder.parent
-            else:
-                break
+        while len(os.listdir(output_folder)) == 0:
+            os.rmdir(output_folder)
+            output_folder = output_folder.parent
 
         # Preprocess nnunet_raw data if needed
         self.maybe_preprocess(self.nnunet_config)
@@ -474,9 +448,8 @@ class nnUNetClient(BasicClient):
             overwrite_existing=self.always_preprocess,
             verify_npy=True,
         )
-        elapsed = time.time() - start
         if self.verbose:
-            log(INFO, f"\tUnpacked dataset in {elapsed:.1f}s")
+            log(INFO, f"\tUnpacked dataset in {time.time()-start:.1f}s")
 
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
@@ -506,7 +479,7 @@ class nnUNetClient(BasicClient):
             return {"prediction": output}, {}
         elif isinstance(output, (list, tuple)):
             num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
-            preds = convert_deepsupervision_list_to_dict(output, num_spatial_dims)
+            preds = convert_deep_supervision_list_to_dict(output, num_spatial_dims)
             return preds, {}
         else:
             raise TypeError(
@@ -532,19 +505,7 @@ class nnUNetClient(BasicClient):
                 where the first element is the loss and the second element is an
                 optional additional loss
         """
-        # Check if deep supervision is on by checking the number of items in the pred and target dictionaries
-
-        def prepare_loss_arg(
-            tensor: Union[torch.Tensor, Dict[str, torch.Tensor]]
-        ) -> Union[torch.Tensor, List[torch.Tensor]]:
-            if isinstance(tensor, torch.Tensor):
-                return tensor
-            elif isinstance(tensor, dict):
-                if len(tensor) > 1:
-                    return convert_deepsupervision_dict_to_list(tensor)
-                else:
-                    return list(tensor.values())[0]
-
+        # prepare loss args check if deep supervision is on and returns list if so
         loss_preds = prepare_loss_arg(preds)
         loss_targets = prepare_loss_arg(target)
 
@@ -554,11 +515,10 @@ class nnUNetClient(BasicClient):
         ), f"Got unexpected types for preds and targets: {type(loss_preds)} and {type(loss_targets)}"
 
         if isinstance(loss_preds, list):
-            assert len(loss_preds) == len(
-                loss_targets
-            ), f"""Was expecting the number of predictions and targets to be
-                the same. Got {len(loss_preds)} predictions and
-                {len(loss_targets)} targets"""
+            assert len(loss_preds) == len(loss_targets), (
+                "Was expecting the number of predictions and targets to be the same. "
+                f"Got {len(loss_preds)} predictions and {len(loss_targets)} targets."
+            )
 
         return self.criterion(loss_preds, loss_targets), None
 
@@ -615,7 +575,7 @@ class nnUNetClient(BasicClient):
         """
         if len(preds) > 1:
             # for nnunet the first pred in the output list is the main one
-            m_pred = convert_deepsupervision_dict_to_list(preds)[0]
+            m_pred = convert_deep_supervision_dict_to_list(preds)[0]
 
         if isinstance(target, torch.Tensor):
             m_target = target
@@ -624,7 +584,7 @@ class nnUNetClient(BasicClient):
                 # If deep supervision is in use, we drop the additional targets
                 # when calculating the metrics as we only care about the
                 # original target which by default in nnunet is at index 0
-                m_target = convert_deepsupervision_dict_to_list(target)[0]
+                m_target = convert_deep_supervision_dict_to_list(target)[0]
             else:
                 m_target = list(target.values())[0]
         else:
@@ -647,12 +607,12 @@ class nnUNetClient(BasicClient):
             m_target_one_hot = m_target
 
         # Check if ignore label is in use. The nnunet loss figures this out on
-        # it's own, but we do it it manually here for the metrics
+        # it's own, but we do it manually here for the metrics
         if self.nnunet_trainer.label_manager.ignore_label is not None:
             m_pred, m_target_one_hot = self.mask_data(m_pred, m_target_one_hot)
 
-        # m_pred is one hot encoded output logits. Maybe masked by ignore label
-        # m_target_one_hot is one hot encoded boolean label. Maybe masked by ignore label
+        # m_pred is one hot encoded (OHE) output logits. Maybe masked by ignore label
+        # m_target_one_hot is OHE boolean label. Maybe masked by ignore label
         metric_manager.update({"prediction": m_pred}, m_target_one_hot)
 
     def empty_cache(self) -> None:
@@ -663,8 +623,6 @@ class nnUNetClient(BasicClient):
             torch.cuda.empty_cache()
         elif self.device.type == "mps":
             torch.mps.empty_cache()
-        else:
-            pass
 
     def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
@@ -677,13 +635,11 @@ class nnUNetClient(BasicClient):
                 rate from what it was at the end of training
         """
         if current_round is not None:
-            # Determine total number of steps that have occurred so far
-            current_overall_step = ((current_round - 1) * self.steps_per_round) + step
-            assert current_overall_step <= self.total_steps, (
+            assert self.total_steps <= self.max_steps, (
                 "Maximum number of steps for the LR Scheduler has been exceeded. "
-                f"Got {current_overall_step} but max was set to {self.total_steps}"
+                f"Got {self.total_steps} but max was set to {self.max_steps}"
             )
-            self.lr_scheduler.step(current_overall_step)  # Update LR
+            self.lr_scheduler.step(self.total_steps)  # Update LR
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
@@ -698,7 +654,7 @@ class nnUNetClient(BasicClient):
         else:
             return "", []
 
-    @use_default_signal_handlers  # Experiment planner spawns a process i think
+    @use_default_signal_handlers  # Experiment planner spawns a process I think
     def get_properties(self, config: Config) -> Dict[str, Scalar]:
         """
         Return properties (sample counts and nnunet plans) of client.
@@ -722,8 +678,7 @@ class nnUNetClient(BasicClient):
             return properties
 
         # Check if local nnunet dataset fingerprint needs to be extracted
-        if not self.fingerprint_extracted:
-            self.maybe_extract_fingerprint()
+        self.maybe_extract_fingerprint()
 
         # Create experiment planner and plans. Plans name must be temp_plans so that we
         # can safely delete the plans file generated by the experiment planner
@@ -799,4 +754,4 @@ class nnUNetClient(BasicClient):
         Apply the gradient clipping performed by the default nnunet trainer. This is
         the default behaviour for nnunet 2.5.1
         """
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)
+        nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)

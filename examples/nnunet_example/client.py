@@ -1,29 +1,28 @@
 import argparse
 import os
 import warnings
-from logging import INFO
+from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
 from typing import Union
 
 with warnings.catch_warnings():
-    # Need to import lightning utilities now in order to avoid deprecation
-    # warnings. Ignore flake8 warning saying that it is unused
-    # lightning utilities is imported by some of the dependencies
-    # so by importing it now and filtering the warnings
-    # https://github.com/Lightning-AI/utilities/issues/119
+    # Silence deprecation warnings from sentry sdk due to flwr and wandb
+    # https://github.com/adap/flower/issues/4086
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import lightning_utilities  # noqa: F401
+    import wandb  # noqa: F401
 
 import torch
 from flwr.client import start_client
-from flwr.common.logger import log
+from flwr.common.logger import log, update_console_handler
+from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
+from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
-from research.picai.fl_nnunet.transforms import get_annotations_from_probs, get_probabilities_from_logits
+from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
 
 
 def main(
@@ -32,8 +31,9 @@ def main(
     server_address: str,
     fold: Union[int, str],
     always_preprocess: bool = False,
+    verbose: bool = True,
+    compile: bool = True,
 ) -> None:
-
     # Log device and server address
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Using device: {DEVICE}")
@@ -63,20 +63,21 @@ def main(
                 num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
             ).to(DEVICE),
         ),
-        transforms=[get_probabilities_from_logits, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
 
     # Create client
-    client = nnUNetClient(
+    client = NnunetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         fold=fold,
         always_preprocess=always_preprocess,
+        verbose=verbose,
+        compile=compile,
         # BaseClient Args
         device=DEVICE,
         metrics=[dice],
-        data_path=dataset_path,  # Argument not actually used by nnUNetClient
-        progress_bar=True,
+        progress_bar=verbose,
     )
 
     start_client(server_address=server_address, client=client.to_client())
@@ -89,12 +90,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="nnunet_example/client.py",
         description="""An exampled of nnUNetClient on any of the Medical
-            Segmentation Decathelon (MSD) datasets. Automatically generates a
+            Segmentation Decathlon (MSD) datasets. Automatically generates a
             nnunet segmentation model and trains it in a federated setting""",
     )
 
     # I have to use underscores instead of dashes because thats how they
-    # defined it in run smoke tests
+    # defined it in run_smoke_tests
     parser.add_argument(
         "--dataset_path",
         type=str,
@@ -139,28 +140,42 @@ if __name__ == "__main__":
         help="""[OPTIONAL] The server address for the clients to communicate
             to the server through. Defaults to 0.0.0.0:8080""",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Use this flag to see extra INFO logs and a progress bar",
+    )
+    parser.add_argument(
+        "--debug",
+        help="[OPTIONAL] Include flag to print DEBUG logs",
+        action="store_const",
+        dest="logLevel",
+        const=DEBUG,
+        default=INFO,
+    )
+    parser.add_argument(
+        "--skip-compile",
+        action="store_true",
+        required=False,
+        help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
+    )
+
     args = parser.parse_args()
+
+    # Set the log level
+    update_console_handler(level=args.logLevel)
 
     # Create nnunet directory structure and set environment variables
     nnUNet_raw = join(args.dataset_path, "nnunet_raw")
     nnUNet_preprocessed = join(args.dataset_path, "nnunet_preprocessed")
-    if not exists(nnUNet_raw):
-        os.makedirs(nnUNet_raw)
-    if not exists(nnUNet_preprocessed):
-        os.makedirs(nnUNet_preprocessed)
-    os.environ["nnUNet_raw"] = nnUNet_raw
-    os.environ["nnUNet_preprocessed"] = nnUNet_preprocessed
-    os.environ["nnUNet_results"] = join(args.dataset_path, "nnunet_results")
-    log(INFO, "Setting nnunet environment variables")
-    log(INFO, f"\tnnUNet_raw: {nnUNet_raw}")
-    log(INFO, f"\tnnUNet_preprocessed: {nnUNet_preprocessed}")
-    log(INFO, f"\tnnUNet_results: {join(args.dataset_path, 'nnunet_results')}")
-
-    # Everything that uses nnunetv2 module can only be imported after
-    # environment variables are changed
-    from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
-
-    from research.picai.fl_nnunet.nnunet_client import nnUNetClient
+    os.makedirs(nnUNet_raw, exist_ok=True)
+    os.makedirs(nnUNet_preprocessed, exist_ok=True)
+    set_nnunet_env(
+        nnUNet_raw=nnUNet_raw,
+        nnUNet_preprocessed=nnUNet_preprocessed,
+        nnUNet_results=join(args.dataset_path, "nnUNet_results"),
+    )
 
     # Check fold argument and start main method
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
@@ -170,4 +185,6 @@ if __name__ == "__main__":
         server_address=args.server_address,
         fold=fold,
         always_preprocess=args.always_preprocess,
+        verbose=args.verbose,
+        compile=not args.skip_compile,
     )

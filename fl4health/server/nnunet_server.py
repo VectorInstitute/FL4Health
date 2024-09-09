@@ -1,4 +1,4 @@
-from logging import INFO, WARNING
+from logging import INFO
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 from flwr.common import Parameters
@@ -12,14 +12,6 @@ from fl4health.server.base_server import FlServerWithInitializer
 FIT_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, FitIns]]]
 EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, EvaluateIns]]]
 CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
-
-log(
-    WARNING,
-    (
-        "You are using the old version of NnUNetServer from the research folder. "
-        "Use the one from fl4health.server instead"
-    ),
-)
 
 
 def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
@@ -47,7 +39,7 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     return new_fn
 
 
-class NnUNetServer(FlServerWithInitializer):
+class NnunetServer(FlServerWithInitializer):
     """
     A Basic FlServer with added functionality to ask a client to initialize
     the global nnunet plans if one was not provided in the config. Intended
@@ -75,7 +67,7 @@ class NnUNetServer(FlServerWithInitializer):
         if properties_res.status.code == Code.OK:
             log(INFO, "Recieved global nnunet plans from one random client")
         else:
-            log(WARNING, "Failed to receive properties from client to initialize nnunet plans")
+            raise Exception("Failed to receive properties from client to initialize nnunet plans")
 
         properties = properties_res.properties
 
