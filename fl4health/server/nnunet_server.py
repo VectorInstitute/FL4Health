@@ -1,4 +1,4 @@
-from logging import INFO, WARNING
+from logging import INFO
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 from flwr.common import Parameters
@@ -67,7 +67,7 @@ class NnunetServer(FlServerWithInitializer):
         if properties_res.status.code == Code.OK:
             log(INFO, "Recieved global nnunet plans from one random client")
         else:
-            log(WARNING, "Failed to receive properties from client to initialize nnunet plans")
+            raise Exception("Failed to receive properties from client to initialize nnunet plans")
 
         properties = properties_res.properties
 

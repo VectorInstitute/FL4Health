@@ -33,8 +33,8 @@ from fl4health.utils.nnunet_utils import (
     NnunetConfig,
     PolyLRSchedulerWrapper,
     StreamToLogger,
-    convert_deepsupervision_dict_to_list,
-    convert_deepsupervision_list_to_dict,
+    convert_deep_supervision_dict_to_list,
+    convert_deep_supervision_list_to_dict,
     nnUNetDataLoaderWrapper,
     use_default_signal_handlers,
 )
@@ -504,7 +504,7 @@ class NnunetClient(BasicClient):
             return {"prediction": output}, {}
         elif isinstance(output, (list, tuple)):
             num_spatial_dims = NNUNET_N_SPATIAL_DIMS[self.nnunet_config]
-            preds = convert_deepsupervision_list_to_dict(output, num_spatial_dims)
+            preds = convert_deep_supervision_list_to_dict(output, num_spatial_dims)
             return preds, {}
         else:
             raise TypeError(
@@ -539,7 +539,7 @@ class NnunetClient(BasicClient):
                 return tensor
             elif isinstance(tensor, dict):
                 if len(tensor) > 1:
-                    return convert_deepsupervision_dict_to_list(tensor)
+                    return convert_deep_supervision_dict_to_list(tensor)
                 else:
                     return list(tensor.values())[0]
 
@@ -613,7 +613,7 @@ class NnunetClient(BasicClient):
         """
         if len(preds) > 1:
             # for nnunet the first pred in the output list is the main one
-            m_pred = convert_deepsupervision_dict_to_list(preds)[0]
+            m_pred = convert_deep_supervision_dict_to_list(preds)[0]
 
         if isinstance(target, torch.Tensor):
             m_target = target
@@ -622,7 +622,7 @@ class NnunetClient(BasicClient):
                 # If deep supervision is in use, we drop the additional targets
                 # when calculating the metrics as we only care about the
                 # original target which by default in nnunet is at index 0
-                m_target = convert_deepsupervision_dict_to_list(target)[0]
+                m_target = convert_deep_supervision_dict_to_list(target)[0]
             else:
                 m_target = list(target.values())[0]
         else:

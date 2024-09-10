@@ -107,7 +107,9 @@ def reload_modules(packages: Sequence[str]) -> None:
 def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
     """
     For each keyword argument name and value sets the current environment variable with
-    the same name to that value and then reloads nnunet. Values must be strings
+    the same name to that value and then reloads nnunet. Values must be strings. This
+    is necessary because nnunet checks some environment variables on import, and
+    therefore it must be imported or reloaded after they are set.
     """
     # Set environment variables
     for key, val in kwargs.items():
@@ -125,7 +127,7 @@ def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
 
 # The two convert deepsupervision methods are necessary because fl4health requires
 # predictions, targets and inputs to be single torch.Tensors or Dicts of torch.Tensors
-def convert_deepsupervision_list_to_dict(
+def convert_deep_supervision_list_to_dict(
     tensor_list: Union[List[torch.Tensor], Tuple[torch.Tensor]], num_spatial_dims: int
 ) -> Dict[str, torch.Tensor]:
     """
@@ -156,7 +158,7 @@ def convert_deepsupervision_list_to_dict(
     return tensors
 
 
-def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
+def convert_deep_supervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
     """
     Converts a dictionary of tensors back into a list so that it can be used
     by nnunet deep supervision loss functions
@@ -225,6 +227,52 @@ def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
     return torch.argmax(input.long(), dim=dim).to(input.device)
 
 
+def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
+    """
+    Determines the total number of voxels in the dataset. Used by NnunetClient to
+    determine the maximum batch size.
+
+    Args:
+        source_plans (Dict): The nnunet plans dict that is being modified
+        n_cases (int): The number of cases in the dataset
+
+    Returns:
+        float: The total number of voxels in the local client dataset
+    """
+    # Need to determine input dimensionality
+    if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
+        cfg = source_plans["configurations"][NnunetConfig._3D_FULLRES.value]
+    else:
+        cfg = source_plans["configurations"][NnunetConfig._2D.value]
+
+    # Get total number of voxels in dataset
+    image_shape = cfg["median_image_size_in_voxels"]
+    approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * n_cases)
+    return approx_n_voxels
+
+
+def prepare_loss_arg(tensor: torch.Tensor | Dict[str, torch.Tensor]) -> Union[torch.Tensor, List[torch.Tensor]]:
+    """
+    Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
+
+    Args:
+        tensor (torch.Tensor | Dict[str, torch.Tensor]): The input tensor
+
+    Returns:
+        torch.Tensor | List[torch.Tensor]: The tensor ready to be passed to the loss
+            function. A single tensor if not using deep supervision and a list of
+            tensors if deep supervision is on.
+    """
+    # TODO: IDK why we have to make assumptions when we could just have a boolean state
+    if isinstance(tensor, torch.Tensor):
+        return tensor  # If input is a tensor then no changes required
+    elif isinstance(tensor, dict):
+        if len(tensor) > 1:  # Assume deep supervision is on and return a list
+            return convert_deep_supervision_dict_to_list(tensor)
+        else:  # If dict has only one item, assume deep supervision is off
+            return list(tensor.values())[0]  # return the torch.Tensor
+
+
 class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
@@ -281,7 +329,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             inputs: torch.Tensor = batch["data"]
             targets: Union[torch.Tensor, List[torch.Tensor]] = batch["target"]
             if isinstance(targets, list):
-                target_dict = convert_deepsupervision_list_to_dict(targets, self.num_spatial_dims)
+                target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
                 return inputs, target_dict
             elif isinstance(targets, torch.Tensor):
                 return inputs, targets

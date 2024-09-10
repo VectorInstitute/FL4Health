@@ -69,6 +69,7 @@ def main(
     # Create client
     client = NnunetClient(
         # Args specific to nnUNetClient
+        data_path=Path("./"),
         dataset_id=dataset_id,
         fold=fold,
         always_preprocess=always_preprocess,
@@ -77,7 +78,6 @@ def main(
         # BaseClient Args
         device=DEVICE,
         metrics=[dice],
-        data_path=dataset_path,  # Argument not actually used by nnUNetClient
         progress_bar=verbose,
     )
 

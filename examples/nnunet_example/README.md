@@ -39,7 +39,7 @@ python -m examples.nnunet_example.client --dataset_path examples/datasets/nnunet
 
 The MSD dataset will be downloaded and prepared automatically by the nnunet example script if it does not already exist. The dataset_path flag is used as more of a data working directory by the client. The client will create nnunet_raw, nnunet_preprocessed and nnunet_results sub directories if they do not already exist in the dataset_path folder. The dataset itself will be stored in a folder within nnunet_raw. Therefore when checking if the data already exists, the client will look for the following folder '{dataset_path}/nnunet_raw/{dataset_name}'
 
-## Defenitions
+## Definitions
 
 ### Logits:
 
@@ -55,7 +55,7 @@ Images that contain an arbitrary number of distinct detected volumes generally d
 - Each detected volume is a connected component that must be non-connected and non-overlapping (mutually exclusive) with other volumes of the same class. (Therefore detection maps for multiclass segmentation must be one hot encoded)
 - Each pixel/voxel within a volume must have the same predicted probability. Therefore there is a single confidence/likelihood score for each volume.
 
-Detected volumes typically also have a minimum size determined by the number fo pixels/voxels that are a part of the volume. Detection maps may be computed from probabilities in a variety of ways. One example used for 3d medical images can be found in the [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) API. An example of a 2d detection map is shown below.
+Detected volumes typically also have a minimum size determined by the number of pixels/voxels that are a part of the volume. Detection maps may be computed from probabilities in a variety of ways. One example used for 3d medical images can be found in the [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) API. An example of a 2d detection map is shown below.
 
 ### Segmentations:
 
