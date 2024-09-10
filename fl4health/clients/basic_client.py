@@ -702,7 +702,7 @@ class BasicClient(NumPyClient):
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
                 self.update_after_step(steps_this_round, current_round)
-                self.update_lr_schedulers()
+                self.update_lr_schedulers(epoch=local_epoch)
                 self.total_steps += 1
                 steps_this_round += 1
             metrics = self.train_metric_manager.compute()
@@ -763,7 +763,7 @@ class BasicClient(NumPyClient):
             self.train_loss_meter.update(losses)
             self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step, current_round)
-            self.update_lr_schedulers()
+            self.update_lr_schedulers(step=step)
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
@@ -1160,10 +1160,18 @@ class BasicClient(NumPyClient):
         """
         return None
 
-    def update_lr_schedulers(self) -> None:
+    def update_lr_schedulers(self, step: Union[int, None] = None, epoch: Union[int, None] = None) -> None:
         """
-        Updates any schedulers that exist.
+        Updates any schedulers that exist. Can be overridden to customize update logic based on client state
+            (ie self.total_steps).
+
+        Args:
+            step (Union[int, None]): If using local_steps, current step of this round. Otherwise None.
+            epoch (Union[int, None]): If using local_epochs current epoch of this round. Otherwise None.
         """
+
+        assert (step is None) ^ (epoch is None)
+
         for lr_scheduler in [scheduler for scheduler in self.lr_schedulers.values() if scheduler is not None]:
             lr_scheduler.step()  # Update LR
 
