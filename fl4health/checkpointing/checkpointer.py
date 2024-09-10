@@ -2,17 +2,12 @@ import os
 from abc import ABC, abstractmethod
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Optional
 
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Scalar
-from flwr.server.history import History
-from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
-
-from fl4health.reporting.metrics import MetricsReporter
 
 CheckpointScoreFunctionType = Callable[[float, Dict[str, Scalar]], float]
 
@@ -175,7 +170,6 @@ class PerRoundCheckpointer(ABC):
         """
         self.checkpoint_path = os.path.join(checkpoint_dir, checkpoint_name)
 
-    @abstractmethod
     def save_checkpoint(self, checkpoint_dict: Dict[str, Any]) -> None:
         """
         Saves checkpoint_dict to checkpoint path.
@@ -183,24 +177,19 @@ class PerRoundCheckpointer(ABC):
         Args:
             checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type
                 Any representing the state to checkpoint.
-
-        Raises:
-            NotImplementedError: To be implemented by child classes.
         """
-        raise NotImplementedError
+        torch.save(checkpoint_dict, self.checkpoint_path)
 
-    @abstractmethod
-    def load_checkpoint(self) -> Tuple[Any, ...]:
+    def load_checkpoint(self) -> Dict[str, Any]:
         """
         Loads and returns the most recent checkpoint if it exists.
 
         Returns:
-            Tuple[Any, ...]: A tuple where each entry is an element of the checkpointed state.
-
-        Raises:
-            NotImplementedError: To be implemented by child classes.
+            Dict[str, Any] A dictionary representing the checkpointed state.
         """
-        raise NotImplementedError
+        assert self.checkpoint_exists()
+
+        return torch.load(self.checkpoint_path)
 
     def checkpoint_exists(self) -> bool:
         """
@@ -210,114 +199,3 @@ class PerRoundCheckpointer(ABC):
             bool: Whether or not a checkpoint exists.
         """
         return os.path.exists(self.checkpoint_path)
-
-
-class CentralPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, Optimizer, int]]) -> None:
-        """
-        Saves checkpoint_dict consisting of model, optimizer and round to checkpoint path.
-
-        Args:
-            checkpoint_dict (Dict[str, Union[nn.Module, Optimizer, int]]): A dictionary with string keys and values of
-                type nn.Module (model), Optimizer (optimizer) and int (round).
-        """
-        assert "epoch" in checkpoint_dict and isinstance(checkpoint_dict["epoch"], int)
-        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
-        assert "optimizer" in checkpoint_dict and isinstance(checkpoint_dict["optimizer"], Optimizer)
-
-        torch.save(checkpoint_dict, self.checkpoint_path)
-
-    def load_checkpoint(self) -> Tuple[nn.Module, Optimizer, int]:
-        """
-        Loads and returns the most recent checkpoint if it exists.
-
-        Returns:
-            Tuple[nn.Module, Optimizer, int] A tuple consisting of the model, optimizer and round.
-        """
-        assert self.checkpoint_exists()
-
-        ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
-
-
-class ClientPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(
-        self,
-        checkpoint_dict: Dict[
-            str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler], MetricsReporter]
-        ],
-    ) -> None:
-        """
-        Saves checkpoint_dict consisting of model, optimizers, client name, total steps and lr schedulers.
-
-        Args:
-            checkpoint_dict (Dict[str, Union[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]]):
-                A dictionary with string keys and values of type nn.Module (model),
-                a dictionary of optimizers indexed by string keys, an integer representing total steps,
-                string representing the client name and dictionary of _LRScheduler indexed by keys.
-        """
-        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
-        assert "optimizers" in checkpoint_dict and isinstance(checkpoint_dict["optimizers"], dict)
-        assert "client_name" in checkpoint_dict and isinstance(checkpoint_dict["client_name"], str)
-        assert "total_steps" in checkpoint_dict and isinstance(checkpoint_dict["total_steps"], int)
-        assert "lr_schedulers" in checkpoint_dict and isinstance(checkpoint_dict["lr_schedulers"], dict)
-        assert "metrics_reporter" in checkpoint_dict and isinstance(
-            checkpoint_dict["metrics_reporter"], MetricsReporter
-        )
-
-        torch.save(checkpoint_dict, self.checkpoint_path)
-
-    def load_checkpoint(
-        self,
-    ) -> Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler], MetricsReporter]:
-        """
-        Loads and returns the most recent checkpoint if it exists.
-
-        Returns:
-            Tuple[nn.Module, Dict[str, Optimizer], str, int, Dict[str, _LRScheduler]]:
-                A tuple consisting of the model, the dictionary of optimizers, the client name,
-                number of total steps and dictionary of learning rate schedulers.
-        """
-        assert self.checkpoint_exists()
-
-        ckpt = torch.load(self.checkpoint_path)
-        return (
-            ckpt["model"],
-            ckpt["optimizers"],
-            ckpt["client_name"],
-            ckpt["total_steps"],
-            ckpt["lr_schedulers"],
-            ckpt["metrics_reporter"],
-        )
-
-
-class ServerPerRoundCheckpointer(PerRoundCheckpointer):
-    def save_checkpoint(self, checkpoint_dict: Dict[str, Union[nn.Module, History, int, MetricsReporter]]) -> None:
-        """
-        Saves checkpoint_dict consisting of model, a history of losses and metrics through validation and the server
-        round.
-
-        Args:
-            checkpoint_dict (Dict[str, Union[nn.Module, History, int]]): A dictionary with string keys and values of
-                type nn.Module (model), History (losses and metrics) and int (server round).
-        """
-        assert "model" in checkpoint_dict and isinstance(checkpoint_dict["model"], nn.Module)
-        assert "history" in checkpoint_dict and isinstance(checkpoint_dict["history"], History)
-        assert "server_round" in checkpoint_dict and isinstance(checkpoint_dict["server_round"], int)
-        assert "metrics_reporter" in checkpoint_dict and isinstance(
-            checkpoint_dict["metrics_reporter"], MetricsReporter
-        )
-
-        torch.save(checkpoint_dict, self.checkpoint_path)
-
-    def load_checkpoint(self) -> Tuple[nn.Module, History, int, MetricsReporter]:
-        """
-        Loads and returns the most recent checkpoint if it exists.
-
-        Returns:
-            Tuple[nn.Module, History, int] A tuple consisting of the model, history and round for the server.
-        """
-        assert self.checkpoint_exists()
-
-        ckpt = torch.load(self.checkpoint_path)
-        return ckpt["model"], ckpt["history"], ckpt["server_round"], ckpt["metrics_reporter"]

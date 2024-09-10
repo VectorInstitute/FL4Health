@@ -15,7 +15,7 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import ServerPerRoundCheckpointer, TorchCheckpointer
+from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
@@ -375,12 +375,17 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         # To facilitate model rehydration from server-side state for checkpointing
         self.parameter_exchanger = parameter_exchanger
 
-        self.per_round_checkpointer: Union[None, ServerPerRoundCheckpointer]
+        self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
         if intermediate_checkpoint_dir is not None:
-            self.per_round_checkpointer = ServerPerRoundCheckpointer(intermediate_checkpoint_dir, Path("server.ckpt"))
+            self.per_round_checkpointer = PerRoundCheckpointer(
+                intermediate_checkpoint_dir, Path(f"{self.server_name}.ckpt")
+            )
         else:
             self.per_round_checkpointer = None
+
+        self.current_round: int
+        self.history: History
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         model_ndarrays = parameters_to_ndarrays(self.parameters)
@@ -438,18 +443,14 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         # if checkpoint exists, update history, server round and model accordingly
         if self.per_round_checkpointer.checkpoint_exists():
-            log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
-            model, history, server_round, metrics_reporter = self.per_round_checkpointer.load_checkpoint()
-            self.parameters = get_initial_model_parameters(model)
-            self.metrics_reporter = metrics_reporter
-            server_round += 1
+            self.load_checkpoint()
         else:
             log(INFO, "Initializing server state")
             self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
-            history = History()
-            server_round = 1
+            self.history = History()
+            self.current_round = 1
 
-        if server_round == 1:
+        if self.current_round == 1:
             log(INFO, "Evaluating initial parameters")
             res = self.strategy.evaluate(0, parameters=self.parameters)
             if res is not None:
@@ -459,63 +460,102 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                     res[0],
                     res[1],
                 )
-                history.add_loss_centralized(server_round=0, loss=res[0])
-                history.add_metrics_centralized(server_round=0, metrics=res[1])
+                self.history.add_loss_centralized(server_round=0, loss=res[0])
+                self.history.add_metrics_centralized(server_round=0, metrics=res[1])
 
             # Run federated learning for num_rounds
             log(INFO, "FL starting")
 
         start_time = timeit.default_timer()
 
-        for current_round in range(server_round, num_rounds + 1):
+        while self.current_round < (num_rounds + 1):
             # Train model and replace previous global model
-            res_fit = self.fit_round(server_round=current_round, timeout=timeout)
+            res_fit = self.fit_round(server_round=self.current_round, timeout=timeout)
             if res_fit:
                 parameters_prime, fit_metrics, _ = res_fit  # fit_metrics_aggregated
                 if parameters_prime:
                     self.parameters = parameters_prime
-                history.add_metrics_distributed_fit(server_round=current_round, metrics=fit_metrics)
+                self.history.add_metrics_distributed_fit(server_round=self.current_round, metrics=fit_metrics)
 
             # Evaluate model using strategy implementation
-            res_cen = self.strategy.evaluate(current_round, parameters=self.parameters)
+            res_cen = self.strategy.evaluate(self.current_round, parameters=self.parameters)
             if res_cen is not None:
                 loss_cen, metrics_cen = res_cen
                 log(
                     INFO,
                     "fit progress: (%s, %s, %s, %s)",
-                    current_round,
+                    self.current_round,
                     loss_cen,
                     metrics_cen,
                     timeit.default_timer() - start_time,
                 )
-                history.add_loss_centralized(server_round=current_round, loss=loss_cen)
-                history.add_metrics_centralized(server_round=current_round, metrics=metrics_cen)
+                self.history.add_loss_centralized(server_round=self.current_round, loss=loss_cen)
+                self.history.add_metrics_centralized(server_round=self.current_round, metrics=metrics_cen)
 
             # Evaluate model on a sample of available clients
-            res_fed = self.evaluate_round(server_round=current_round, timeout=timeout)
+            res_fed = self.evaluate_round(server_round=self.current_round, timeout=timeout)
             if res_fed:
                 loss_fed, evaluate_metrics_fed, _ = res_fed
                 if loss_fed:
-                    history.add_loss_distributed(server_round=current_round, loss=loss_fed)
-                    history.add_metrics_distributed(server_round=current_round, metrics=evaluate_metrics_fed)
+                    self.history.add_loss_distributed(server_round=self.current_round, loss=loss_fed)
+                    self.history.add_metrics_distributed(server_round=self.current_round, metrics=evaluate_metrics_fed)
+
+            self.current_round += 1
 
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
-            self.per_round_checkpointer.save_checkpoint(
-                {
-                    "model": self.server_model,
-                    "history": history,
-                    "server_round": current_round,
-                    "metrics_reporter": self.metrics_reporter,
-                }
-            )
-            log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+            self.save_checkpoint(self.history)
 
         # Bookkeeping
         end_time = timeit.default_timer()
         elapsed_time = end_time - start_time
         log(INFO, "FL finished in %s", elapsed_time)
-        return history, elapsed_time
+        return self.history, elapsed_time
+
+    def save_checkpoint(self, history: History) -> None:
+        """
+        Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
+            schedulers and the metrics reporter. This method can be overridden to add any necessary state
+            to the checkpoint.
+        """
+
+        assert self.per_round_checkpointer is not None
+
+        ckpt = {
+            "model": self.server_model,
+            "history": history,
+            "current_round": self.current_round,
+            "metrics_reporter": self.metrics_reporter,
+            "server_name": self.server_name,
+        }
+
+        self.per_round_checkpointer.save_checkpoint(ckpt)
+
+        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+    def load_checkpoint(self) -> None:
+        """
+        Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
+            schedulers and the metrics reporter. The method can be overridden to add any necessary state
+            when loading the checkpoint.
+        """
+        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
+
+        ckpt = self.per_round_checkpointer.load_checkpoint()
+
+        assert "model" in ckpt and isinstance(ckpt["model"], nn.Module)
+        assert "server_name" in ckpt and isinstance(ckpt["server_name"], str)
+        assert "current_round" in ckpt and isinstance(ckpt["current_round"], int)
+        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+        assert "history" in ckpt and isinstance(ckpt["history"], History)
+
+        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+        self.current_round = ckpt["current_round"]
+        self.server_name = ckpt["server_name"]
+        self.metrics_reporter = ckpt["metrics_reporter"]
+        self.history = ckpt["history"]
+        self.parameters = get_initial_model_parameters(ckpt["model"])
 
 
 class FlServerWithInitializer(FlServer):

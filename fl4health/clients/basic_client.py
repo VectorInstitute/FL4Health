@@ -16,7 +16,7 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from fl4health.checkpointing.checkpointer import ClientPerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -81,10 +81,10 @@ class BasicClient(NumPyClient):
         self.progress_bar = progress_bar
         self.client_name = client_name if client_name is not None else generate_hash()
 
-        self.per_round_checkpointer: Union[None, ClientPerRoundCheckpointer]
+        self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
         if intermediate_checkpoint_dir is not None:
-            self.per_round_checkpointer = ClientPerRoundCheckpointer(
+            self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
             )
         else:
@@ -269,10 +269,7 @@ class BasicClient(NumPyClient):
             # If per_round_checkpointer not None and checkpoint exists load it and set proper optimizer and attributes.
             # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
-                _, self.optimzers, self.client_name, self.total_steps, self.lr_schedulers, self.metrics_reporter = (
-                    self.per_round_checkpointer.load_checkpoint()
-                )
-                log(INFO, f"Loading client state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+                self.load_checkpoint()
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -313,17 +310,7 @@ class BasicClient(NumPyClient):
         # After local client training has finished, checkpoint model, optimizer and client name
         # if per_round_checkpointer is not None
         if self.per_round_checkpointer is not None:
-            self.per_round_checkpointer.save_checkpoint(
-                {
-                    "model": self.model,
-                    "optimizers": self.optimizers,
-                    "lr_schedulers": self.lr_schedulers,
-                    "total_steps": self.total_steps,
-                    "client_name": self.client_name,
-                    "metrics_reporter": self.metrics_reporter,
-                }
-            )
-            log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+            self.save_checkpoint()
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -1281,3 +1268,47 @@ class BasicClient(NumPyClient):
             losses (TrainingLosses): The losses object from the train step
         """
         pass
+
+    def save_checkpoint(self) -> None:
+        """
+        Saves checkpoint dict consisting of client name, total steps, lr schedulers
+            and metrics reporter. Method can be overridden to augment saved checkpointed state.
+        """
+
+        assert self.per_round_checkpointer is not None
+
+        ckpt = {
+            "lr_schedulers": self.lr_schedulers,
+            "total_steps": self.total_steps,
+            "client_name": self.client_name,
+            "metrics_reporter": self.metrics_reporter,
+            "optimizers": {key: opt.state_dict()["state"] for key, opt in self.optimizers.items()},
+        }
+
+        self.per_round_checkpointer.save_checkpoint(ckpt)
+
+        log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+    def load_checkpoint(self) -> None:
+        """
+        Load checkpoint dict consisting of client name, total steps, lr schedulers and metrics
+            reporter. Method can be overriden to augment loaded checkpointed state.
+        """
+        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
+
+        ckpt = self.per_round_checkpointer.load_checkpoint()
+
+        assert "lr_schedulers" in ckpt and isinstance(ckpt["lr_schedulers"], dict)
+        assert "client_name" in ckpt and isinstance(ckpt["client_name"], str)
+        assert "total_steps" in ckpt and isinstance(ckpt["total_steps"], int)
+        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+
+        self.total_steps = ckpt["total_steps"]
+        self.client_name = ckpt["client_name"]
+        self.total_steps = ckpt["total_steps"]
+        self.metrics_reporter = ckpt["metrics_reporter"]
+
+        for opt, state in zip(self.optimizers.values(), ckpt["optimizers"].values()):
+            opt_state_dict = opt.state_dict()
+            opt_state_dict["state"] = state
+            opt.load_state_dict(opt_state_dict)
