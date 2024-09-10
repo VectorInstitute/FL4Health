@@ -640,7 +640,7 @@ if __name__ == "__main__":
             server_python_path="examples.fedprox_example.server",
             client_python_path="examples.fedprox_example.client",
             config_path="tests/smoke_tests/fedprox_config.yaml",
-            dataset_path="examples/datasets/cifar_data/",
+            dataset_path="examples/datasets/mnist_data/",
             seed=42,
             server_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_server_metrics.json"),
             client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
