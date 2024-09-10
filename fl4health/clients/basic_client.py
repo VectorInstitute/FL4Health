@@ -1271,8 +1271,8 @@ class BasicClient(NumPyClient):
 
     def save_checkpoint(self) -> None:
         """
-        Saves checkpoint dict consisting of client name, total steps, lr schedulers
-            and metrics reporter. Method can be overridden to augment saved checkpointed state.
+        Saves checkpoint dict consisting of client name, total steps, lr schedulers,
+            metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
         """
 
         assert self.per_round_checkpointer is not None
@@ -1291,8 +1291,8 @@ class BasicClient(NumPyClient):
 
     def load_checkpoint(self) -> None:
         """
-        Load checkpoint dict consisting of client name, total steps, lr schedulers and metrics
-            reporter. Method can be overriden to augment loaded checkpointed state.
+        Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
+            reporter and optimizers state. Method can be overriden to augment loaded checkpointed state.
         """
         assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
 

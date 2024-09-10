@@ -19,7 +19,7 @@
         "3": {
             "metrics_aggregated": {
                 "val - prediction - accuracy": 0.0936,
-                "test - prediction - accuracy": 0.0967,
+                "test - prediction - accuracy": 0.0972,
                 "test - loss - aggregated": 2.3010
             },
             "loss_aggregated": 2.2999
