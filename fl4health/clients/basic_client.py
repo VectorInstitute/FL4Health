@@ -266,7 +266,7 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
-            # If per_round_checkpointer not None and checkpoint exists load it and set proper optimizer and attributes.
+            # If per_round_checkpointer not None and checkpoint exists load it and set attributes.
             # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
                 self.load_checkpoint()
@@ -307,7 +307,7 @@ class BasicClient(NumPyClient):
             },
         )
 
-        # After local client training has finished, checkpoint model, optimizer and client name
+        # After local client training has finished, checkpoint client state
         # if per_round_checkpointer is not None
         if self.per_round_checkpointer is not None:
             self.save_checkpoint()
@@ -1162,7 +1162,7 @@ class BasicClient(NumPyClient):
 
     def update_lr_schedulers(self) -> None:
         """
-        Updates any schedulers that exist and verify they haven't exceeded max_steps.
+        Updates any schedulers that exist.
         """
         for lr_scheduler in [scheduler for scheduler in self.lr_schedulers.values() if scheduler is not None]:
             lr_scheduler.step()  # Update LR
@@ -1282,7 +1282,7 @@ class BasicClient(NumPyClient):
             "total_steps": self.total_steps,
             "client_name": self.client_name,
             "metrics_reporter": self.metrics_reporter,
-            "optimizers": {key: opt.state_dict()["state"] for key, opt in self.optimizers.items()},
+            "optimizers_state": {key: opt.state_dict()["state"] for key, opt in self.optimizers.items()},
         }
 
         self.per_round_checkpointer.save_checkpoint(ckpt)
@@ -1302,13 +1302,17 @@ class BasicClient(NumPyClient):
         assert "client_name" in ckpt and isinstance(ckpt["client_name"], str)
         assert "total_steps" in ckpt and isinstance(ckpt["total_steps"], int)
         assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+        assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
 
         self.total_steps = ckpt["total_steps"]
         self.client_name = ckpt["client_name"]
         self.total_steps = ckpt["total_steps"]
         self.metrics_reporter = ckpt["metrics_reporter"]
 
-        for opt, state in zip(self.optimizers.values(), ckpt["optimizers"].values()):
+        # Optimizer is updated in setup_client to reference model weights from server
+        # Thus, only optimizer state (per parameter values such as momentum)
+        # should be loaded
+        for opt, state in zip(self.optimizers.values(), ckpt["optimizers_state"].values()):
             opt_state_dict = opt.state_dict()
             opt_state_dict["state"] = state
             opt.load_state_dict(opt_state_dict)

@@ -62,6 +62,7 @@ class FlServer(Server):
                 will overwrite on another. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            server_name (Optional[str]): An optional string name to uniquely identify server.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
@@ -367,6 +368,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
             intermediate_checkpoint_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
+            server_name (Optional[str]): An optional string name to uniquely identify server.
         """
         super().__init__(
             client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter, server_name=server_name
@@ -504,7 +506,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
-            self.save_checkpoint(self.history)
+            self.save_checkpoint()
 
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -512,18 +514,17 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         log(INFO, "FL finished in %s", elapsed_time)
         return self.history, elapsed_time
 
-    def save_checkpoint(self, history: History) -> None:
+    def save_checkpoint(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
-            schedulers and the metrics reporter. This method can be overridden to add any necessary state
-            to the checkpoint.
+            This method can be overridden to add any necessary state to the checkpoint.
         """
 
         assert self.per_round_checkpointer is not None
 
         ckpt = {
             "model": self.server_model,
-            "history": history,
+            "history": self.history,
             "current_round": self.current_round,
             "metrics_reporter": self.metrics_reporter,
             "server_name": self.server_name,
@@ -536,8 +537,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def load_checkpoint(self) -> None:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
-            schedulers and the metrics reporter. The method can be overridden to add any necessary state
-            when loading the checkpoint.
+            The method can be overridden to add any necessary state when loading the checkpoint.
         """
         assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
 
