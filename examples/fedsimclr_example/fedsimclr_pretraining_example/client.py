@@ -14,8 +14,10 @@ from examples.models.ssl_models import CifarSslEncoder, CifarSslPredictionHead, 
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.contrastive_loss import NtXentLoss
 from fl4health.model_bases.fedsimclr_base import FedSimClrModel
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.dataset import SslTensorDataset
 from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
+from fl4health.utils.typing import TorchTargetType
 
 
 def get_transforms() -> Tuple[Callable, Callable]:
@@ -64,7 +66,7 @@ def get_pretrain_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, D
 
 class SslCifarClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader = get_pretrain_dataset(self.data_path, batch_size)
         return train_loader, val_loader
 
@@ -80,7 +82,7 @@ class SslCifarClient(BasicClient):
         )
         return ssl_model.to(self.device)
 
-    def transform_target(self, target: torch.Tensor) -> torch.Tensor:
+    def transform_target(self, target: TorchTargetType) -> TorchTargetType:
         return self.model(target)
 
 

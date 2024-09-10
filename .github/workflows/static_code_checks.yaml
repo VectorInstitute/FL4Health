@@ -1,4 +1,4 @@
-# only has to pass for python 3.9
+# only has to pass for python 3.10
 name: Static code checks
 
 on:
@@ -15,10 +15,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - name: Install and configure Poetry
         uses: snok/install-poetry@v1
         with:
@@ -38,14 +38,10 @@ jobs:
           source .venv/bin/activate
           pre-commit run --all-files
       - name: pip-audit (gh-action-pip-audit)
-        uses: pypa/gh-action-pip-audit@v1.0.8
+        uses: pypa/gh-action-pip-audit@v1.1.0
         with:
           virtual-environment: .venv/
-          # ignoring security vulnerabilities in cryptography
-          # because flwr 1.7 depends on them. Opening an issue
-          # with flwr. Likely can remove this in flwr 1.8.
+          # Ignoring vulnerability in cryptography
+          # Fix is 43.0.1 but flwr 1.9 depends on < 43
           ignore-vulns: |
-            GHSA-3ww4-gg4f-jr7f
-            GHSA-9v9h-cgj8-h64p
-            GHSA-6vqw-3v5j-54x4
-            GHSA-cqh9-jfqr-h9jj
+            GHSA-h4gh-qq45-vh27

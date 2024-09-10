@@ -16,6 +16,7 @@ from examples.models.sequential_split_models import (
 )
 from fl4health.clients.fedrep_client import FedRepClient
 from fl4health.model_bases.fedrep_base import FedRepModel
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -23,9 +24,9 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class CifarFedRepClient(FedRepClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        sample_percentage = self.narrow_config_type(config, "sample_percentage", float)
-        beta = self.narrow_config_type(config, "beta", float)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        sample_percentage = narrow_config_type(config, "sample_percentage", float)
+        beta = narrow_config_type(config, "beta", float)
         assert beta > 0 and 0 < sample_percentage < 1
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=sample_percentage, beta=beta)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size, sampler=sampler)

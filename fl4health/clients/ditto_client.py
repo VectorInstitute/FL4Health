@@ -9,11 +9,13 @@ from flwr.common.typing import Config, NDArrays, Scalar
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class DittoClient(BasicClient):
@@ -79,6 +81,11 @@ class DittoClient(BasicClient):
         assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
         self.optimizers = optimizers
 
+    def get_global_model(self, config: Config) -> nn.Module:
+        # The global model should be the same architecture as the local model so
+        # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
+        return self.get_model(config).to(self.device)
+
     def setup_client(self, config: Config) -> None:
         """
         Set dataloaders, optimizers, parameter exchangers and other attributes derived from these.
@@ -89,7 +96,7 @@ class DittoClient(BasicClient):
         """
         # Need to setup the global model here as well. It should be the same architecture as the local model so
         # we reuse the get_model call. We explicitly send the model to the desired device. This is idempotent.
-        self.global_model = self.get_model(config).to(self.device)
+        self.global_model = self.get_global_model(config)
         # The rest of the setup is the same
         super().setup_client(config)
 
@@ -137,7 +144,7 @@ class DittoClient(BasicClient):
         assert self.global_model is not None and self.model is not None
         assert self.parameter_exchanger is not None and isinstance(self.parameter_exchanger, FullParameterExchanger)
 
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_config_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
             log(INFO, "Initializing the global and local models weights for the first time")
             self.initialize_all_model_weights(parameters, config)
@@ -147,13 +154,15 @@ class DittoClient(BasicClient):
             log(INFO, "Setting the global model weights")
             self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-    def update_before_train(self, current_server_round: int) -> None:
+    def save_initial_global_tensors(self) -> None:
         # Saving the initial weights GLOBAL MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.initial_global_tensors = [
             initial_layer_weights.detach().clone() for initial_layer_weights in self.global_model.parameters()
         ]
 
+    def update_before_train(self, current_server_round: int) -> None:
+        self.save_initial_global_tensors()
         return super().update_before_train(current_server_round)
 
     def initialize_all_model_weights(self, parameters: NDArrays, config: Config) -> None:
@@ -203,9 +212,7 @@ class DittoClient(BasicClient):
         self.global_model.train()
         return super().train_by_steps(steps, current_round)
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         """
         Mechanics of training loop follow from original Ditto implementation: https://github.com/litian96/ditto
         As in the implementation there, steps of the global and local models are done in tandem and for the same
@@ -248,7 +255,7 @@ class DittoClient(BasicClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -284,9 +291,9 @@ class DittoClient(BasicClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the local model loss and any additional losses given predictions of the model and ground truth data.
@@ -314,9 +321,9 @@ class DittoClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the global and local models and ground truth data.
@@ -359,9 +366,9 @@ class DittoClient(BasicClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.

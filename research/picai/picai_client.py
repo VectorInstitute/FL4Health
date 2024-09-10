@@ -84,7 +84,7 @@ class PicaiClient(BasicClient):
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
-        self.update_after_train(local_steps, loss_dict)
+        self.update_after_train(local_steps, loss_dict, config)
 
         # After local client training has finished, checkpoint model, optimizer and client name
         self.per_round_checkpointer.save_checkpoint(

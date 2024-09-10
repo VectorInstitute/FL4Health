@@ -6,11 +6,12 @@ import torch
 from flwr.common.logger import log
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient, Config
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class MoonClient(BasicClient):
@@ -64,7 +65,7 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: Optional[torch.nn.Module] = None
 
-    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input. This function also produces the
         necessary features from the global_model (aggregated model from server) and old_models (previous client-side
@@ -99,7 +100,7 @@ class MoonClient(BasicClient):
             features.update({"global_features": global_model_features["features"]})
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         This function is called immediately after client-side training has completed. This function saves the final
         trained model to the list of old models to be used in subsequent server rounds
@@ -107,6 +108,7 @@ class MoonClient(BasicClient):
         Args:
             local_steps (int): Number of local steps performed during training
             loss_dict (Dict[str, float]): Loss dictionary associated with training.
+            config (Config): The config from the server
         """
         assert isinstance(self.model, SequentiallySplitModel)
         # Save the parameters of the old LOCAL model
@@ -117,7 +119,7 @@ class MoonClient(BasicClient):
         if len(self.old_models_list) > self.len_old_models_buffer:
             self.old_models_list.pop(0)
 
-        super().update_after_train(local_steps, loss_dict)
+        super().update_after_train(local_steps, loss_dict, config)
 
     def update_before_train(self, current_server_round: int) -> None:
         """
@@ -135,9 +137,9 @@ class MoonClient(BasicClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
@@ -174,9 +176,9 @@ class MoonClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training loss given predictions and features of the model and ground truth data. Loss includes
@@ -206,9 +208,9 @@ class MoonClient(BasicClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions and features of the model and ground truth data. Loss includes

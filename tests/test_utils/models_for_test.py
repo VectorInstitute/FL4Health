@@ -777,3 +777,45 @@ class MnistNetWithBnAndFrozen(nn.Module):
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
+
+
+class CompositeConvNet(nn.Module):
+    def __init__(self) -> None:
+        super(CompositeConvNet, self).__init__()
+
+        # Convolutional layers
+        self.conv1d = nn.Conv1d(in_channels=1, out_channels=2, kernel_size=3, stride=1, padding=1)
+        self.conv2d = nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=1, padding=1)
+        self.conv3d = nn.Conv3d(in_channels=3, out_channels=8, kernel_size=3, stride=1, padding=1)
+
+        self.linear = nn.Linear(1812, 10)
+
+    def forward(self, x1d: torch.Tensor, x2d: torch.Tensor, x3d: torch.Tensor) -> torch.Tensor:
+        # Forward pass through each layer
+        x1d = self.conv1d(x1d)
+        x2d = self.conv2d(x2d)
+        x3d = self.conv3d(x3d)
+
+        # Flatten or reshape the tensors before concatenation
+        x1d = x1d.view(x1d.size(0), -1)  # Flatten x1d to 1D tensor
+        x2d = x2d.view(x2d.size(0), -1)  # Flatten x2d to 1D tensor
+        x3d = x3d.view(x3d.size(0), -1)  # Flatten x3d to 1D tensor
+
+        # Concatenate flattened tensors along dim=1
+        combined = torch.cat((x1d, x2d, x3d), dim=1)
+
+        print(combined.shape)
+
+        # Linear layer
+        output = self.linear(combined)
+
+        return output
+
+
+class ModelWrapper(nn.Module):
+    def __init__(self, module: nn.Module) -> None:
+        super().__init__()
+        self.model = module
+
+    def forward(self, *args: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(*args)

@@ -90,7 +90,7 @@ def move_plans_between_datasets(finetune_id: int, pretrain_plans: str, finetune_
             plans["configurations"][c]["batch_size"] = new_bs
 
     ft_plans_path = os.path.join(nnUNet_preprocessed, ft_dataset_name, finetune_plans_identifier + ".json")
-    save_json(plans, ft_plans_path)
+    save_json(plans, ft_plans_path, sort_keys=False)
 
 
 def transfer_metadata(finetune_id: int, pretrain_id: int, pretrain_plans: str) -> str:

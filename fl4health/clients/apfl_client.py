@@ -1,16 +1,17 @@
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class ApflClient(BasicClient):
@@ -31,7 +32,7 @@ class ApflClient(BasicClient):
     def is_start_of_local_training(self, step: int) -> bool:
         return step == 0
 
-    def update_after_step(self, step: int) -> None:
+    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         """
         Called after local train step on client. step is an integer that represents
         the local training step that was most recently completed.
@@ -39,9 +40,7 @@ class ApflClient(BasicClient):
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
@@ -81,9 +80,9 @@ class ApflClient(BasicClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Union[torch.Tensor, Dict[str, torch.Tensor]],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.

@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays
 from opacus.optimizers.optimizer import DPOptimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
@@ -179,6 +179,13 @@ class ScaffoldClient(BasicClient):
 
         return parameter_delta
 
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Used to modify gradient to correct for client drift in Scaffold.
+        """
+        self.modify_grad()
+
     def compute_updated_control_variates(
         self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
     ) -> NDArrays:
@@ -196,34 +203,13 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
-        # TorchInputType is simply an alias for the union of
-        # torch.Tensor and Dict[str, torch.Tensor].
-
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
-
-        # Get predictions and compute loss
-        preds, features = self.predict(input)
-        target = self.transform_target(target)  # Apply transformation (Defaults to identity)
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward["backward"].backward()
-        self.modify_grad()
-        self.optimizers["global"].step()
-
-        return losses, preds
-
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         model_size = len(self.model.state_dict())
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary.

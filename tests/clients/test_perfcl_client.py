@@ -32,7 +32,7 @@ def test_getting_parameters(get_perfcl_client: PerFclClient) -> None:  # noqa
     }
     # Do an update after training. This should be setting the required old models for the contrastive loss
     # calculations in the next round.
-    perfcl_client.update_after_train(0, loss)
+    perfcl_client.update_after_train(0, loss, config)
 
     # Get parameters that we send to the server for aggregation. Should be the params_global values.
     global_params_for_server = perfcl_client.get_parameters(config)
@@ -161,7 +161,7 @@ def test_setting_old_models(get_perfcl_client: PerFclClient) -> None:  # noqa
     loss = {
         "loss": 0.0,
     }
-    perfcl_client.update_after_train(0, loss)
+    perfcl_client.update_after_train(0, loss, {})
 
     assert perfcl_client.old_local_module is not None
     old_local_params = [
@@ -229,7 +229,7 @@ def test_computing_loss(get_perfcl_client: PerFclClient) -> None:  # noqa
 
     # Now we mock having "set" the right components. So we should compute the full set of loss components
     perfcl_client.update_before_train(0)
-    perfcl_client.update_after_train(0, {})
+    perfcl_client.update_after_train(0, {}, {})
 
     training_loss = perfcl_client.compute_training_loss(preds=preds, target=target, features=features)
     evaluation_loss = perfcl_client.compute_evaluation_loss(preds=preds, target=target, features=features)
