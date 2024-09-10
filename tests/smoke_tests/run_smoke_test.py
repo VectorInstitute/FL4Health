@@ -624,17 +624,6 @@ def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.fedprox_example.server",
-            client_python_path="examples.fedprox_example.client",
-            config_path="tests/smoke_tests/fedprox_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
-        )
-    )
-    loop.run_until_complete(
         run_fault_tolerance_smoke_test(
             server_python_path="tests.smoke_tests.load_from_checkpoint_example.server",
             client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
@@ -660,6 +649,17 @@ if __name__ == "__main__":
             client_python_path="examples.nnunet_example.client",
             config_path="tests/smoke_tests/nnunet_config_3d.yaml",
             dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.fedprox_example.server",
+            client_python_path="examples.fedprox_example.client",
+            config_path="tests/smoke_tests/fedprox_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
         )
     )
     loop.run_until_complete(
