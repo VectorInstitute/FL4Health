@@ -629,7 +629,7 @@ if __name__ == "__main__":
             client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
             config_path="tests/smoke_tests/load_from_checkpoint_example/config.yaml",
             partial_config_path="tests/smoke_tests/load_from_checkpoint_example/partial_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
+            dataset_path="examples/datasets/cifar_data/",
             seed=42,
             server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
             client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
