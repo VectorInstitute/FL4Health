@@ -134,7 +134,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
             log(INFO, f"Setting seed to {self.hash_key} for Numpy and Torch Generators")
             self.np_generator = np.random.default_rng(self.hash_key)
             self.torch_generator = torch.Generator()
-        
+
         if self.np_generator is None:
             self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
         else:

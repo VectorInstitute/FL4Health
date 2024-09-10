@@ -75,7 +75,7 @@ def load_cifar10_data(
     sampler: Optional[LabelBasedSampler] = None,
     hash_key: Optional[int] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 (training and validation set). Validation_portion specifies the portion of the training 
+    """Load CIFAR-10 (training and validation set). Validation_portion specifies the portion of the training
     set to be used as validation set. If validation_portion is 0, the validation set is the test set."""
 
     log(INFO, f"Data directory: {str(data_dir)}")
