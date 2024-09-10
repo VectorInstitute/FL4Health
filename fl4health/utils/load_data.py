@@ -75,7 +75,9 @@ def load_cifar10_data(
     sampler: Optional[LabelBasedSampler] = None,
     hash_key: Optional[int] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    """Load CIFAR-10 (training and validation set)."""
+    """Load CIFAR-10 (training and validation set). Validation_portion specifies the portion of the training 
+    set to be used as validation set. If validation_portion is 0, the validation set is the test set."""
+
     log(INFO, f"Data directory: {str(data_dir)}")
     transform = transforms.Compose(
         [
@@ -86,7 +88,7 @@ def load_cifar10_data(
 
     training_set: BaseDataset = Cifar10Dataset(data_dir, train=True, transform=transform)
     validation_set: BaseDataset
-    if validation_portion == 0:
+    if validation_portion == 0.0:
         validation_set = Cifar10Dataset(data_dir, train=False, transform=transform)
     else:
         validation_set = Cifar10Dataset(data_dir, train=True, transform=transform)

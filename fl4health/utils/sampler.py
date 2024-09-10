@@ -126,13 +126,20 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         beta: float = 100,
     ) -> None:
         super().__init__(unique_labels)
+
         self.hash_key = hash_key
+        self.np_generator = None
+        self.torch_generator = None
         if self.hash_key is not None:
-            log(INFO, f"Setting seed to {self.hash_key} for Numpy Generator")
-            np_generator = np.random.default_rng(self.hash_key)
-            self.probabilities = np_generator.dirichlet(np.repeat(beta, self.num_classes))
-        else:
+            log(INFO, f"Setting seed to {self.hash_key} for Numpy and Torch Generators")
+            self.np_generator = np.random.default_rng(self.hash_key)
+            self.torch_generator = torch.Generator()
+        
+        if self.np_generator is None:
             self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
+        else:
+            self.probabilities = self.np_generator.dirichlet(np.repeat(beta, self.num_classes))
+
         log(INFO, f"Setting probabilities to {self.probabilities}")
         self.sample_percentage = sample_percentage
 
@@ -147,18 +154,12 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         num_samples_per_class = [math.ceil(prob * total_num_samples) for prob in self.probabilities]
 
-        torch_generator = None
-        if self.hash_key is not None:
-            log(INFO, f"Setting seed to {self.hash_key} for Torch Generator")
-            torch_generator = torch.Generator()
-            torch_generator.manual_seed(self.hash_key)
-
         # For each class sample the given number of samples from the class specific indices
         # torch.multinomial is used to uniformly sample indices the size of given number of samples
         sampled_class_idx_list = [
             class_idx[
                 torch.multinomial(
-                    torch.ones(class_idx.size(0)), num_samples, replacement=True, generator=torch_generator
+                    torch.ones(class_idx.size(0)), num_samples, replacement=True, generator=self.torch_generator
                 )
             ]
             for class_idx, num_samples in zip(class_idx_list, num_samples_per_class)
