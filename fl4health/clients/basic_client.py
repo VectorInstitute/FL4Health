@@ -1312,7 +1312,7 @@ class BasicClient(NumPyClient):
         assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
         assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
 
-        self.total_steps = ckpt["total_steps"]
+        self.lr_schedulers = ckpt["lr_schedulers"]
         self.client_name = ckpt["client_name"]
         self.total_steps = ckpt["total_steps"]
         self.metrics_reporter = ckpt["metrics_reporter"]
