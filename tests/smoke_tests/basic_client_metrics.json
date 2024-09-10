@@ -34,7 +34,7 @@
                 "val - prediction - accuracy": 0.0936,
                 "test - num_examples": 10000,
                 "test - loss": 2.30109,
-                "test - prediction - accuracy": 0.0967
+                "test - prediction - accuracy": 0.0972
             },
             "loss": 2.2999
         }
