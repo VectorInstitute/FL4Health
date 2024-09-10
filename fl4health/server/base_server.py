@@ -73,7 +73,7 @@ class FlServer(Server):
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
         else:
-            self.metrics_reporter = MetricsReporter(self.server_name)
+            self.metrics_reporter = MetricsReporter()
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
