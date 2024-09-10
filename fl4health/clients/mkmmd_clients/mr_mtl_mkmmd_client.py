@@ -7,12 +7,12 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
-from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class MrMtlMkMmdClient(MrMtlClient):
@@ -115,7 +115,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         valid_components_present = self.initial_global_model is not None
         return step_at_interval and valid_components_present
 
-    def update_after_step(self, step: int) -> None:
+    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
             assert self.initial_global_model is not None
             # Get the feature distribution of the local and init global features with evaluation mode
@@ -215,11 +215,8 @@ class MrMtlMkMmdClient(MrMtlClient):
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
 
     def compute_loss_and_additional_losses(
-        self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
+    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
