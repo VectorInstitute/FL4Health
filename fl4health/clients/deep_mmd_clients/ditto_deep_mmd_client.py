@@ -8,12 +8,12 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
-from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class DittoDeepMmdClient(DittoClient):
@@ -140,9 +140,9 @@ class DittoDeepMmdClient(DittoClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions (and potentially features) of the model and ground truth data.
@@ -163,25 +163,21 @@ class DittoDeepMmdClient(DittoClient):
         return super().compute_evaluation_loss(preds, features, target)
 
     def compute_loss_and_additional_losses(
-        self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
-            target (torch.Tensor): Ground truth data to evaluate predictions against.
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+            features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Dict[str, torch.Tensor]]; A tuple with:
-                - The tensor for the total loss
-                - A dictionary with `local_loss`, `global_loss`, `total_loss` and, based on client attributes set
-                from server config, also `deep_mmd_loss`, `feature_l2_norm_loss` keys and their respective calculated
-                values.
+            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+                - The tensor for the loss
+                - A dictionary of additional losses with their names and values, or None if
+                    there are no additional losses.
         """
         total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 

@@ -7,24 +7,23 @@ import torch
 class ModelLatentF(torch.nn.Module):
     """Latent space for both domains."""
 
-    def __init__(self, x_in: int, H: int, x_out: int):
+    def __init__(self, x_in_dim: int, hidden_dim: int, x_out_dim: int):
         """Init latent features."""
-        super(ModelLatentF, self).__init__()
-        self.restored = False
+        super().__init__()
         self.latent = torch.nn.Sequential(
-            torch.nn.Linear(x_in, H, bias=True),
+            torch.nn.Linear(x_in_dim, hidden_dim, bias=True),
             torch.nn.Softplus(),
-            torch.nn.Linear(H, H, bias=True),
+            torch.nn.Linear(hidden_dim, hidden_dim, bias=True),
             torch.nn.Softplus(),
-            torch.nn.Linear(H, H, bias=True),
+            torch.nn.Linear(hidden_dim, hidden_dim, bias=True),
             torch.nn.Softplus(),
-            torch.nn.Linear(H, x_out, bias=True),
+            torch.nn.Linear(hidden_dim, x_out_dim, bias=True),
         )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward the LeNet."""
-        fealant = self.latent(input)
-        return fealant
+        feature_latent_map = self.latent(input)
+        return feature_latent_map
 
 
 class DeepMmdLoss(torch.nn.Module):
