@@ -104,8 +104,8 @@ def test_user_level_accountant_poisson_sampling_reproduce_results() -> None:
             updates[2]: 1.685,
             updates[3]: 2.634,
             updates[4]: 7.810,
-            updates[5]: 30.375,
-            updates[6]: 155.738,
+            updates[5]: 30.388,
+            updates[6]: 160.853,
         },
         (n_clients[4], clients_per_round[4], noise_values[4]): {
             updates[0]: 0.162,

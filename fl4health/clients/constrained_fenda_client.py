@@ -8,13 +8,13 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import TorchInputType
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
 class ConstrainedFendaClient(FendaClient):
@@ -93,7 +93,7 @@ class ConstrainedFendaClient(FendaClient):
         }
         return target_keys.issubset(features.keys())
 
-    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
@@ -126,7 +126,7 @@ class ConstrainedFendaClient(FendaClient):
 
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. If a contrastive or PerFCL loss function has
         been defined, it is used to save the local and global feature extraction weights/modules to be used in the
@@ -143,7 +143,7 @@ class ConstrainedFendaClient(FendaClient):
             self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
             self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
 
-        super().update_after_train(local_steps, loss_dict)
+        super().update_after_train(local_steps, loss_dict, config)
 
     def update_before_train(self, current_server_round: int) -> None:
         """
@@ -165,9 +165,9 @@ class ConstrainedFendaClient(FendaClient):
 
     def compute_loss_and_additional_losses(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
@@ -225,9 +225,9 @@ class ConstrainedFendaClient(FendaClient):
 
     def compute_evaluation_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> EvaluationLosses:
         """
         Computes evaluation loss given predictions of the model and ground truth data. Optionally computes

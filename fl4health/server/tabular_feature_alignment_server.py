@@ -79,13 +79,13 @@ class TabularFeatureAlignmentServer(FlServer):
         self.dimension_info[INPUT_DIMENSION] = input_dimension
         self.dimension_info[OUTPUT_DIMENSION] = output_dimension
 
-    def _get_initial_parameters(self, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
         assert INPUT_DIMENSION in self.dimension_info and OUTPUT_DIMENSION in self.dimension_info
         input_dimension = self.dimension_info[INPUT_DIMENSION]
         output_dimension = self.dimension_info[OUTPUT_DIMENSION]
         return self.initialize_parameters(input_dimension, output_dimension)
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> History:
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """Run federated averaging for a number of rounds."""
         assert isinstance(self.strategy, BasicFedAvg)
 

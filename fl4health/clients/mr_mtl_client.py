@@ -13,6 +13,7 @@ from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
 
 
 class MrMtlClient(BasicClient):
@@ -72,20 +73,6 @@ class MrMtlClient(BasicClient):
         # The rest of the setup is the same
         super().setup_client(config)
 
-    def get_parameters(self, config: Config) -> NDArrays:
-        """
-        For MR-MTL, we transfer the LOCAL model weights to the server to be aggregated and set as INITIAL GLOBAL model
-        weights on client side.
-
-        Args:
-            config (Config): The config is sent by the FL server to allow for customization in the function if desired.
-
-        Returns:
-            NDArrays: LOCAL model weights to be sent to the server for aggregation
-        """
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
-
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         The parameters being pass are to be routed to the initial global model to be used in a penalty term in
@@ -128,9 +115,9 @@ class MrMtlClient(BasicClient):
 
     def compute_training_loss(
         self,
-        preds: Dict[str, torch.Tensor],
-        features: Dict[str, torch.Tensor],
-        target: torch.Tensor,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
     ) -> TrainingLosses:
         """
         Computes training losses given predictions of the modes and ground truth data. We add to vanilla loss

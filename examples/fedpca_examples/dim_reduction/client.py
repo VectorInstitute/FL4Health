@@ -14,33 +14,29 @@ from torchvision.transforms import transforms
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.preprocessing.pca_preprocessor import PcaPreprocessor
-from fl4health.utils.dataset import BaseDataset, MnistDataset
+from fl4health.utils.config import narrow_config_type
+from fl4health.utils.load_data import get_train_and_val_mnist_datasets
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
-def get_mnist_dataset(data_dir: Path, train: bool) -> MnistDataset:
-    transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize((0.5), (0.5)),
-        ]
-    )
-    return MnistDataset(data_dir, train=train, transform=transform)
-
-
 class MnistFedPcaClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        pca_path = Path(self.narrow_config_type(config, "pca_path", str))
-        new_dimension = self.narrow_config_type(config, "new_dimension", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        pca_path = Path(narrow_config_type(config, "pca_path", str))
+        new_dimension = narrow_config_type(config, "new_dimension", int)
         pca_preprocessor = PcaPreprocessor(pca_path)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.6, beta=0.75)
 
         # Get training and validation datasets.
-        train_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=True)
-        validation_dataset: BaseDataset = get_mnist_dataset(data_dir=self.data_path, train=False)
+        transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5), (0.5)),
+            ]
+        )
+        train_dataset, validation_dataset = get_train_and_val_mnist_datasets(self.data_path, transform)
         train_dataset = sampler.subsample(dataset=train_dataset)
         validation_dataset = sampler.subsample(dataset=validation_dataset)
 
@@ -60,7 +56,7 @@ class MnistFedPcaClient(BasicClient):
         return torch.optim.AdamW(self.model.parameters(), lr=0.0001)
 
     def get_model(self, config: Config) -> nn.Module:
-        new_dimension = self.narrow_config_type(config, "new_dimension", int)
+        new_dimension = narrow_config_type(config, "new_dimension", int)
         return MnistNet(input_dim=new_dimension).to(self.device)
 
 

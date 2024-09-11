@@ -146,6 +146,11 @@ settings.json
 **/datasets/mimic3d/mimic3d_hospital1.csv
 **/datasets/mimic3d/mimic3d_hospital2.csv
 **/datasets/agnews_data/**
+**/datasets/skin_cancer/HAM10000/**
+**/datasets/skin_cancer/PAD-UFES-20/**
+**/datasets/skin_cancer/ISIC_2019/**
+**/datasets/skin_cancer/Derm7pt/**
+**/datasets/nnunet/**
 
 # logs
 
@@ -163,3 +168,7 @@ settings.json
 **/*.png
 **/*.pt
 /metrics/
+
+# dev
+temp*.py
+tmp*.py

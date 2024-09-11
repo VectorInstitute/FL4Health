@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkmmdClient
+from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -28,7 +28,7 @@ for i in range(16):
 FED_ISIC2019_BASELINE_LAYERS += ["base_model._dropout"]
 
 
-class FedIsic2019MrMtlClient(MrMtlMkmmdClient):
+class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
+        "--lam", action="store", type=float, help="MR-MTL loss weight for local model training", default=0.01
     )
     parser.add_argument(
         "--seed",
@@ -172,6 +172,7 @@ if __name__ == "__main__":
     log(INFO, f"Mu: {args.mu}")
     log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
+    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)

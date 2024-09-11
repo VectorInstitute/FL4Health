@@ -9,6 +9,8 @@ from flwr.common.typing import Metrics, Optional, Scalar
 from sklearn import metrics as sklearn_metrics
 from torchmetrics import Metric as TMetric
 
+from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformFunction
+
 
 class TestMetricPrefix(Enum):
     TEST_PREFIX = "test -"
@@ -181,6 +183,49 @@ class SimpleMetric(Metric, ABC):
         raise NotImplementedError
 
 
+class TransformsMetric(Metric):
+    def __init__(
+        self,
+        metric: Metric,
+        pred_transforms: Optional[Sequence[TorchTransformFunction]] = None,
+        target_transforms: Optional[Sequence[TorchTransformFunction]] = None,
+    ) -> None:
+        """
+        A thin wrapper class to allow transforms to be applied to preds and
+        targets prior to calculating metrics. Transforms are applied in the order given
+
+        Args:
+            metric (Metric): A FL4Health compatible metric
+            pred_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+                list of transform functions to apply to the model predictions before
+                computing the metrics. Each callable must accept and return a torch.
+                Tensor. Use partial to set other arguments.
+            target_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+                list of transform functions to apply to the targets before computing
+                the metrics. Each callable must accept and return a torch.Tensor. Use
+                partial to set other arguments.
+        """
+        self.metric = metric
+        self.pred_transforms = [] if pred_transforms is None else pred_transforms
+        self.target_transforms = [] if target_transforms is None else target_transforms
+        super().__init__(name=self.metric.name)
+
+    def update(self, pred: torch.Tensor, target: torch.Tensor) -> None:
+        for transform in self.pred_transforms:
+            pred = transform(pred)
+
+        for transform in self.target_transforms:
+            target = transform(target)
+
+        self.metric.update(pred, target)
+
+    def compute(self, name: Optional[str]) -> Metrics:
+        return self.metric.compute(name)
+
+    def clear(self) -> None:
+        return self.metric.clear()
+
+
 class BinarySoftDiceCoefficient(SimpleMetric):
     def __init__(
         self,
@@ -325,22 +370,36 @@ class MetricManager:
         self.metric_manager_name = metric_manager_name
         self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
 
-    def update(self, preds: Dict[str, torch.Tensor], target: torch.Tensor) -> None:
+    def update(self, preds: TorchPredType, target: TorchTargetType) -> None:
         """
         Updates (or creates then updates) a list of metrics for each prediction type.
 
         Args:
-            preds (Dict[str, torch.Tensor]): A dictionary of preds from the model
-            target (torch.Tensor): The ground truth labels for the data
+            preds (TorchPredType): A dictionary of preds from the model
+            target (TorchTargetType): The ground truth labels for the data. If
+                target is a dictionary with more than one item, then each value
+                in the preds dictionary is evaluated with the value that has
+                the same key in the target dictionary. If target has only one
+                item or is a torch.Tensor, then the same target is used for all
+                predictions
         """
         if not self.metrics_per_prediction_type:
             self.metrics_per_prediction_type = {key: copy.deepcopy(self.original_metrics) for key in preds.keys()}
 
+        # Check if there are multiple targets
+        if isinstance(target, dict):
+            if len(target.keys()) > 1:
+                self.check_target_prediction_keys_equal(preds, target)
+            else:  # There is only one target, get tensor from dict
+                target = list(target.values())[0]
         for prediction_key, pred in preds.items():
             metrics_for_prediction_type = self.metrics_per_prediction_type[prediction_key]
             assert len(preds) == len(self.metrics_per_prediction_type)
             for metric_for_prediction_type in metrics_for_prediction_type:
-                metric_for_prediction_type.update(pred, target)
+                if isinstance(target, torch.Tensor):
+                    metric_for_prediction_type.update(pred, target)
+                else:
+                    metric_for_prediction_type.update(pred, target[prediction_key])
 
     def compute(self) -> Metrics:
         """
@@ -363,3 +422,12 @@ class MetricManager:
         Clears metrics for each of the prediction type.
         """
         self.metrics_per_prediction_type = {}
+
+    def check_target_prediction_keys_equal(
+        self, preds: Dict[str, torch.Tensor], target: Dict[str, torch.Tensor]
+    ) -> None:
+        assert target.keys() == preds.keys(), (
+            "Received a dict with multiple targets, but the keys of the "
+            "targets do not match the keys of the predictions. Please pass a "
+            "single target or ensure the keys between preds and target are the same"
+        )
