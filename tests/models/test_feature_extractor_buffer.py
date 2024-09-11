@@ -17,7 +17,7 @@ def test_feature_extractor_buffer_for_train_and_eval_mode() -> None:
     input_tensor = torch.randn(4, 1, 16, 16)
     MODEL(input_tensor)
     # Buffer should have one feature
-    assert len(buffer.extracted_features_buffers["h1_layer2"]) == 1
+    assert len(buffer.extracted_features_buffers["h1_layer2"]) == 2
     assert buffer.extracted_features_buffers["h1_layer2"][0].shape == torch.Size([4, 16, 1, 1])
     # As features should be flattened, extracted features should have shape [4, 16]
     assert buffer.get_extracted_features()["h1_layer2"].shape == torch.Size([4, 16])

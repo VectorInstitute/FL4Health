@@ -25,7 +25,6 @@ aiohttp = "^3.9.3"
 ecos = "2.0.7.post1"
 qpth = "^0.0.16"
 urllib3 = "^2.2.2"
-torchsummary = "^1.5.1"
 grpcio = "^1.60.0,!=1.64.2,!=1.65.1,!=1.65.2,!=1.65.4"
 # Problematic grpcio versions cause issues, should be fixed in next flwr update
 # See https://github.com/adap/flower/pull/3853

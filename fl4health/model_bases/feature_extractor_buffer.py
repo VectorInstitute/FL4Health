@@ -17,10 +17,9 @@ class FeatureExtractorBuffer:
 
         Args:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (Dict[str, bool]):  Dictionary of layers to extract features from them
-                and whether to flatten them. Keys are the layer names that extracted from the named_modules and values
-                are boolean.
-
+            flatten_feature_extraction_layers (Dict[str, bool]): Dictionary of layers to extract features from them and
+            whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
+            boolean.
         Attributes:
             model (nn.Module): The neural network model.
             flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
@@ -66,8 +65,15 @@ class FeatureExtractorBuffer:
 
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
         """
-        Traverse the hierarchical attributes of the module to get the desired attribute, as hooks should be
+        Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
         registered to specific layers of the model, not to nn.Sequential or nn.ModuleList.
+
+        Args:
+            module (nn.Module): The nn.Module object to traverse.
+            layer_hierarchy (List[str]): The hirearchical list of name of desired layer.
+
+        Returns:
+            nn.Module: The desired layer of the model.
         """
         if len(layer_hierarchy) == 1:
             return getattr(module, layer_hierarchy[0])
@@ -77,9 +83,11 @@ class FeatureExtractorBuffer:
     def find_last_common_prefix(self, prefix: str, layers_name: List[str]) -> str:
         """
         Check the model's list of named modules to filter any layer that starts with the given prefix and
-        return the last one. Here we assume the list of named modules is sorted in the order of the model's
-        forward pass with depth-first traversal. This will allow the user to specify the generic name of the
-        layer instead of the full hierarchical name.
+        return the last one.
+
+        Here we assume the list of named modules is sorted in the order of the model's forward pass with
+        depth-first traversal. This will allow the user to specify the generic name of the layer instead of
+        the full hierarchical name.
         """
         filtered_layers = [layer for layer in layers_name if layer.startswith(prefix)]
 
