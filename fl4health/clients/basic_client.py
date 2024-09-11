@@ -1286,7 +1286,7 @@ class BasicClient(NumPyClient):
         assert self.per_round_checkpointer is not None
 
         ckpt = {
-            "lr_schedulers": self.lr_schedulers,
+            "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
             "total_steps": self.total_steps,
             "client_name": self.client_name,
             "metrics_reporter": self.metrics_reporter,
@@ -1306,13 +1306,12 @@ class BasicClient(NumPyClient):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        assert "lr_schedulers" in ckpt and isinstance(ckpt["lr_schedulers"], dict)
+        assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
         assert "client_name" in ckpt and isinstance(ckpt["client_name"], str)
         assert "total_steps" in ckpt and isinstance(ckpt["total_steps"], int)
         assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
         assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
 
-        self.lr_schedulers = ckpt["lr_schedulers"]
         self.client_name = ckpt["client_name"]
         self.total_steps = ckpt["total_steps"]
         self.metrics_reporter = ckpt["metrics_reporter"]
@@ -1324,3 +1323,8 @@ class BasicClient(NumPyClient):
             opt_state_dict = opt.state_dict()
             opt_state_dict["state"] = state
             opt.load_state_dict(opt_state_dict)
+
+        # Schedulers initialized in setup_client to reference correct optimizers
+        # Here we load in all other aspects of the scheduler state
+        for key in self.lr_schedulers:
+            self.lr_schedulers[key].load_state_dict(ckpt["lr_schedulers_state"][key])
