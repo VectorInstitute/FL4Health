@@ -1172,7 +1172,7 @@ class BasicClient(NumPyClient):
 
         assert (step is None) ^ (epoch is None)
 
-        for lr_scheduler in [scheduler for scheduler in self.lr_schedulers.values() if scheduler is not None]:
+        for lr_scheduler in self.lr_schedulers.values():
             lr_scheduler.step()  # Update LR
 
     def update_before_train(self, current_server_round: int) -> None:

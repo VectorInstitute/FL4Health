@@ -3,7 +3,6 @@ import logging
 import warnings
 from functools import partial
 from logging import INFO
-from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
@@ -70,7 +69,6 @@ def main(
         device=DEVICE,
         metrics=metrics,
         progress_bar=verbose,
-        data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
