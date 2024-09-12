@@ -12,9 +12,11 @@ from flwr.common.logger import LOG_COLORS, log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
+from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
@@ -43,6 +45,8 @@ class BasicClient(NumPyClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
+        intermediate_checkpoint_dir: Optional[Path] = None,
+        client_name: Optional[str] = None,
     ) -> None:
         """
         Base FL Client with functionality to train, evaluate, log, report and checkpoint.
@@ -63,6 +67,9 @@ class BasicClient(NumPyClient):
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             progress_bar (bool): Whether or not to display a progress bar during client training and validation.
                 Uses tqdm. Defaults to False
+            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round checkpoints.
+            client_name (str): An optional client name that uniquely identifies a client. If not passed, a hash is
+                randomly generated.
         """
 
         self.data_path = data_path
@@ -70,8 +77,16 @@ class BasicClient(NumPyClient):
         self.metrics = metrics
         self.checkpointer = checkpointer
         self.progress_bar = progress_bar
+        self.client_name = client_name if client_name is not None else generate_hash()
 
-        self.client_name = generate_hash()
+        self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
+
+        if intermediate_checkpoint_dir is not None:
+            self.per_round_checkpointer = PerRoundCheckpointer(
+                intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
+            )
+        else:
+            self.per_round_checkpointer = None
 
         if metrics_reporter is not None:
             self.metrics_reporter = metrics_reporter
@@ -230,6 +245,8 @@ class BasicClient(NumPyClient):
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
+        If per_round_checkpointer is not None, on initialization the client checks if a checkpointed client state
+        exists to load and at the end of each round the client state is saved.
 
         Args:
             parameters (NDArrays): The parameters of the model to be used in fit.
@@ -246,6 +263,11 @@ class BasicClient(NumPyClient):
 
         if not self.initialized:
             self.setup_client(config)
+
+            # If per_round_checkpointer not None and checkpoint exists load it and set attributes.
+            # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
+            if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
+                self.load_checkpoint()
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -282,6 +304,11 @@ class BasicClient(NumPyClient):
                 "loss_dict": loss_dict,
             },
         )
+
+        # After local client training has finished, checkpoint client state
+        # if per_round_checkpointer is not None
+        if self.per_round_checkpointer is not None:
+            self.save_checkpoint()
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -673,6 +700,7 @@ class BasicClient(NumPyClient):
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
                 self.update_after_step(steps_this_round, current_round)
+                self.update_lr_schedulers(epoch=local_epoch)
                 self.total_steps += 1
                 steps_this_round += 1
             metrics = self.train_metric_manager.compute()
@@ -733,6 +761,7 @@ class BasicClient(NumPyClient):
             self.train_loss_meter.update(losses)
             self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step, current_round)
+            self.update_lr_schedulers(step=step)
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
@@ -835,6 +864,7 @@ class BasicClient(NumPyClient):
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.test_loader = self.get_test_data_loader(config)
+
         # The following lines are type ignored because torch datasets are not "Sized"
         # IE __len__ is considered optionally defined. In practice, it is almost always defined
         # and as such, we will make that assumption.
@@ -844,6 +874,15 @@ class BasicClient(NumPyClient):
             self.num_test_samples = len(self.test_loader.dataset)  # type: ignore
 
         self.set_optimizer(config)
+
+        # Must initialize LR scheduler after parent method initializes optimizer
+        # Add lr_scheduler to dictionary if user overrides get_lr_scheduler to return
+        # scheduler for given optimizer
+        self.lr_schedulers = {}
+        for optimizer_key in self.optimizers.keys():
+            lr_scheduler = self.get_lr_scheduler(optimizer_key, config)
+            if lr_scheduler is not None:
+                self.lr_schedulers[optimizer_key] = lr_scheduler
 
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
@@ -898,8 +937,6 @@ class BasicClient(NumPyClient):
             # Note that this assumes the keys of the input match (exactly) the keyword args
             # of self.model.forward().
             output = self.model(**input)
-        else:
-            raise TypeError('"input" must be of type torch.Tensor or Dict[str, torch.Tensor].')
 
         if isinstance(output, dict):
             return output, {}
@@ -1103,6 +1140,37 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> Union[None, _LRScheduler]:
+        """
+        Optional user defined method that returns learning rate scheduler
+        to be used throughout training for the given optimizer. Defaults to None.
+
+        Args:
+            optimizer_key (str): The key in the optimizer dict corresponding
+                to the optimizer we are optionally defining a learning rate
+                scheduler for.
+            config (Config): The config from the server.
+
+        Returns:
+            Union[None, _LRScheduler]: Client learning rate schedulers.
+        """
+        return None
+
+    def update_lr_schedulers(self, step: Union[int, None] = None, epoch: Union[int, None] = None) -> None:
+        """
+        Updates any schedulers that exist. Can be overridden to customize update logic based on client state
+            (ie self.total_steps).
+
+        Args:
+            step (Union[int, None]): If using local_steps, current step of this round. Otherwise None.
+            epoch (Union[int, None]): If using local_epochs current epoch of this round. Otherwise None.
+        """
+
+        assert (step is None) ^ (epoch is None)
+
+        for lr_scheduler in self.lr_schedulers.values():
+            lr_scheduler.step()  # Update LR
+
     def update_before_train(self, current_server_round: int) -> None:
         """
         Hook method called before training with the number of current server rounds performed.
@@ -1203,3 +1271,55 @@ class BasicClient(NumPyClient):
             losses (TrainingLosses): The losses object from the train step
         """
         pass
+
+    def save_checkpoint(self) -> None:
+        """
+        Saves checkpoint dict consisting of client name, total steps, lr schedulers,
+            metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
+        """
+
+        assert self.per_round_checkpointer is not None
+
+        ckpt = {
+            "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
+            "total_steps": self.total_steps,
+            "client_name": self.client_name,
+            "metrics_reporter": self.metrics_reporter,
+            "optimizers_state": {key: opt.state_dict()["state"] for key, opt in self.optimizers.items()},
+        }
+
+        self.per_round_checkpointer.save_checkpoint(ckpt)
+
+        log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+    def load_checkpoint(self) -> None:
+        """
+        Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
+            reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
+        """
+        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
+
+        ckpt = self.per_round_checkpointer.load_checkpoint()
+
+        assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
+        assert "client_name" in ckpt and isinstance(ckpt["client_name"], str)
+        assert "total_steps" in ckpt and isinstance(ckpt["total_steps"], int)
+        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+        assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
+
+        self.client_name = ckpt["client_name"]
+        self.total_steps = ckpt["total_steps"]
+        self.metrics_reporter = ckpt["metrics_reporter"]
+
+        # Optimizer is updated in setup_client to reference model weights from server
+        # Thus, only optimizer state (per parameter values such as momentum)
+        # should be loaded
+        for opt, state in zip(self.optimizers.values(), ckpt["optimizers_state"].values()):
+            opt_state_dict = opt.state_dict()
+            opt_state_dict["state"] = state
+            opt.load_state_dict(opt_state_dict)
+
+        # Schedulers initialized in setup_client to reference correct optimizers
+        # Here we load in all other aspects of the scheduler state
+        for key in self.lr_schedulers:
+            self.lr_schedulers[key].load_state_dict(ckpt["lr_schedulers_state"][key])

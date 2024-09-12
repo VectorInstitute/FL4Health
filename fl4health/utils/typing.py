@@ -10,7 +10,7 @@ TorchInputType = Union[torch.Tensor, Dict[str, torch.Tensor]]
 TorchTargetType = Union[torch.Tensor, Dict[str, torch.Tensor]]
 TorchPredType = Dict[str, torch.Tensor]
 TorchFeatureType = Dict[str, torch.Tensor]
-TorchTransformType = Callable[[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor]]
+TorchTransformFunction = Callable[[torch.Tensor], torch.Tensor]
 LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
 
 

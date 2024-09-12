@@ -14,7 +14,7 @@ import torch
 import yaml
 from flwr.common.logger import log
 
-from research.picai.fl_nnunet.nnunet_utils import NnUNetConfig
+from research.picai.fl_nnunet.nnunet_utils import NnunetConfig
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
@@ -203,7 +203,7 @@ def predict(
     model_count = 0
     cfg_folders = []
     for i, key in enumerate(config.keys()):
-        if key in [cfg.value for cfg in NnUNetConfig]:
+        if key in [cfg.value for cfg in NnunetConfig]:
             # Get predictor for config
             predictor = get_predictor(
                 ckpt_list=config[key], nnunet_config=str(key), dataset_json=dataset_json, plans=plans

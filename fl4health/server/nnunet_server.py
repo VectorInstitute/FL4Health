@@ -1,4 +1,4 @@
-from logging import INFO, WARN
+from logging import INFO
 from typing import Any, Callable, List, Optional, Tuple, Union
 
 from flwr.common import Parameters
@@ -39,7 +39,7 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     return new_fn
 
 
-class NnUNetServer(FlServerWithInitializer):
+class NnunetServer(FlServerWithInitializer):
     """
     A Basic FlServer with added functionality to ask a client to initialize
     the global nnunet plans if one was not provided in the config. Intended
@@ -67,7 +67,7 @@ class NnUNetServer(FlServerWithInitializer):
         if properties_res.status.code == Code.OK:
             log(INFO, "Recieved global nnunet plans from one random client")
         else:
-            log(WARN, "Failed to receive properties from client to initialize nnnunet plans")
+            raise Exception("Failed to receive properties from client to initialize nnunet plans")
 
         properties = properties_res.properties
 
@@ -75,7 +75,6 @@ class NnUNetServer(FlServerWithInitializer):
         plans_bytes = properties["nnunet_plans"]
 
         # Wrap config functions so that nnunet_plans is included
-        log(INFO, "Wrapping strategy config functions to return nnunet_plans")
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": plans_bytes})
         new_eval_cfg_fn = add_items_to_config_fn(self.strategy.configure_evaluate, {"nnunet_plans": plans_bytes})
         setattr(self.strategy, "configure_fit", new_fit_cfg_fn)

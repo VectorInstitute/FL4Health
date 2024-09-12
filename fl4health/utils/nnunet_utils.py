@@ -1,16 +1,19 @@
 import io
+import os
 import signal
+import sys
 import warnings
-from collections.abc import Callable
 from enum import Enum
-from logging import WARNING, Logger
-from typing import Any, Dict, List, Tuple, Union
+from importlib import reload
+from logging import DEBUG, INFO, Logger
+from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, no_type_check
 
 import numpy as np
 import torch
 from flwr.common.logger import log
 from torch import nn
 from torch.nn.modules.loss import _Loss
+from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.utils.typing import LogLevel
@@ -23,14 +26,6 @@ with warnings.catch_warnings():
     from batchgenerators.dataloading.nondet_multi_threaded_augmenter import NonDetMultiThreadedAugmenter
     from batchgenerators.dataloading.single_threaded_augmenter import SingleThreadedAugmenter
     from nnunetv2.training.dataloading.nnunet_dataset import nnUNetDataset
-
-log(
-    WARNING,
-    (
-        "You are using the old version of nnunet_utils from the research folder. "
-        "Use the one from fl4health.utils instead"
-    ),
-)
 
 
 class NnunetConfig(Enum):
@@ -88,9 +83,51 @@ def use_default_signal_handlers(fn: Callable) -> Callable:
     return new_fn
 
 
+def reload_modules(packages: Sequence[str]) -> None:
+    """
+    Given the names of one or more packages, subpackages or modules, reloads all the
+    modules within the scope of each package or the modules themselves if a module was
+    specified.
+
+    Args:
+        package (Sequence[str]): The absolute names of the packages, subpackages or
+            modules to reload. The entire import hierarchy must be specified. Eg.
+            'package.subpackage' to reload all modules in subpackage, not just
+            'subpackage'. Packages are reloaded in the order they are given
+    """
+    for m_name, module in list(sys.modules.items()):
+        for package in packages:
+            if m_name.startswith(package):
+                try:
+                    reload(module)
+                except Exception as e:
+                    log(DEBUG, f"Failed to reload module {m_name}: {e}")
+
+
+def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
+    """
+    For each keyword argument name and value sets the current environment variable with
+    the same name to that value and then reloads nnunet. Values must be strings. This
+    is necessary because nnunet checks some environment variables on import, and
+    therefore it must be imported or reloaded after they are set.
+    """
+    # Set environment variables
+    for key, val in kwargs.items():
+        os.environ[key] = val
+        if verbose:
+            log(INFO, f"Resetting env var '{key}' to '{val}'")
+
+    # Its necessary to reload nnunetv2.paths first, then other modules with env vars
+    reload_modules(["nnunetv2.paths"])
+    reload_modules(["nnunetv2.default_n_proc_DA", "nnunetv2.configuration"])
+    # Reload whatever depends on nnunetv2 environment variables
+    # Be careful. If you reload something with an enum in it, things get messed up.
+    reload_modules(["nnunetv2", "fl4health.clients.nnunet_client"])
+
+
 # The two convert deepsupervision methods are necessary because fl4health requires
 # predictions, targets and inputs to be single torch.Tensors or Dicts of torch.Tensors
-def convert_deepsupervision_list_to_dict(
+def convert_deep_supervision_list_to_dict(
     tensor_list: Union[List[torch.Tensor], Tuple[torch.Tensor]], num_spatial_dims: int
 ) -> Dict[str, torch.Tensor]:
     """
@@ -121,7 +158,7 @@ def convert_deepsupervision_list_to_dict(
     return tensors
 
 
-def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
+def convert_deep_supervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
     """
     Converts a dictionary of tensors back into a list so that it can be used
     by nnunet deep supervision loss functions
@@ -137,6 +174,103 @@ def convert_deepsupervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
+
+
+def get_segs_from_probs(preds: torch.Tensor, has_regions: bool = False, threshold: float = 0.5) -> torch.Tensor:
+    """
+    Converts the nnunet model output probabilities to predicted segmentations
+
+    Args:
+        preds (torch.Tensor): The one hot encoded model output probabilities
+            with shape (batch, classes, *additional_dims). The background should be a separate class
+        has_regions (bool, optional): If True, predicted segmentations can be
+            multiple classes at once. The exception is the background class
+            which is assumed to be the first class (class 0). If False, each
+            value in predicted segmentations has only a single class. Defaults to
+            False.
+        threshold (float): When has_regions is True, this is the threshold
+            value used to determine whether or not an output is a part of a
+            class
+
+    Returns:
+        torch.Tensor: tensor containing the predicted segmentations as a one hot encoded
+            binary tensor of 64-bit integers.
+    """
+    if has_regions:
+        pred_segs = preds > threshold
+        # Mask is the inverse of the background class. Ensures that values
+        # classified as background are not part of another class
+        mask = ~pred_segs[:, 0]
+        return pred_segs * mask
+    else:
+        pred_segs = preds.argmax(1)[:, None]  # shape (batch, 1, additional_dims)
+        # one hot encode (OHE) predicted segmentations again
+        # WARNING: Note the '_' after scatter. scatter_ and scatter are both
+        # functions with different functionality. It is easy to introduce a bug
+        # here by using the wrong one
+        pred_segs_one_hot = torch.zeros(preds.shape, device=preds.device, dtype=torch.float32)
+        pred_segs_one_hot.scatter_(1, pred_segs, 1)  # ohe -> One Hot Encoded
+        # convert output preds to long since it is binary
+        return pred_segs_one_hot.long()
+
+
+def collapse_one_hot_tensor(input: torch.Tensor, dim: int = 0) -> torch.Tensor:
+    """
+    Collapses a one hot encoded tensor so that they are no longer one hot encoded.
+
+    Args:
+        input (torch.Tensor): The binary one hot encoded tensor
+
+    Returns:
+        torch.Tensor: Integer tensor with the specified dim collapsed
+    """
+    return torch.argmax(input.long(), dim=dim).to(input.device)
+
+
+def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
+    """
+    Determines the total number of voxels in the dataset. Used by NnunetClient to
+    determine the maximum batch size.
+
+    Args:
+        source_plans (Dict): The nnunet plans dict that is being modified
+        n_cases (int): The number of cases in the dataset
+
+    Returns:
+        float: The total number of voxels in the local client dataset
+    """
+    # Need to determine input dimensionality
+    if NnunetConfig._3D_FULLRES.value in source_plans["configurations"]:
+        cfg = source_plans["configurations"][NnunetConfig._3D_FULLRES.value]
+    else:
+        cfg = source_plans["configurations"][NnunetConfig._2D.value]
+
+    # Get total number of voxels in dataset
+    image_shape = cfg["median_image_size_in_voxels"]
+    approx_n_voxels = float(np.prod(image_shape, dtype=np.float64) * n_cases)
+    return approx_n_voxels
+
+
+def prepare_loss_arg(tensor: torch.Tensor | Dict[str, torch.Tensor]) -> Union[torch.Tensor, List[torch.Tensor]]:
+    """
+    Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
+
+    Args:
+        tensor (torch.Tensor | Dict[str, torch.Tensor]): The input tensor
+
+    Returns:
+        torch.Tensor | List[torch.Tensor]: The tensor ready to be passed to the loss
+            function. A single tensor if not using deep supervision and a list of
+            tensors if deep supervision is on.
+    """
+    # TODO: IDK why we have to make assumptions when we could just have a boolean state
+    if isinstance(tensor, torch.Tensor):
+        return tensor  # If input is a tensor then no changes required
+    elif isinstance(tensor, dict):
+        if len(tensor) > 1:  # Assume deep supervision is on and return a list
+            return convert_deep_supervision_dict_to_list(tensor)
+        else:  # If dict has only one item, assume deep supervision is off
+            return list(tensor.values())[0]  # return the torch.Tensor
 
 
 class nnUNetDataLoaderWrapper(DataLoader):
@@ -189,12 +323,13 @@ class nnUNetDataLoaderWrapper(DataLoader):
         else:
             self.current_step += 1
             batch = next(self.nnunet_augmenter)  # This returns a dictionary
-            # Note: When deep supervision is on, target is a list of segmentations at various scales
+            # Note: When deep supervision is on, target is a list of ground truth
+            # segmentations at various spatial scales/resolutions
             # nnUNet has a wrapper for loss functions to enable deep supervision
             inputs: torch.Tensor = batch["data"]
             targets: Union[torch.Tensor, List[torch.Tensor]] = batch["target"]
             if isinstance(targets, list):
-                target_dict = convert_deepsupervision_list_to_dict(targets, self.num_spatial_dims)
+                target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
                 return inputs, target_dict
             elif isinstance(targets, torch.Tensor):
                 return inputs, targets
@@ -275,3 +410,21 @@ class StreamToLogger(io.StringIO):
 
     def flush(self) -> None:
         pass
+
+
+class PolyLRSchedulerWrapper(_LRScheduler):
+    def __init__(
+        self, optimizer: torch.optim.Optimizer, initial_lr: float, max_steps: int, exponent: float = 0.9
+    ) -> None:
+        self.optimizer = optimizer
+        self.initial_lr = initial_lr
+        self.max_steps = max_steps
+        self.exponent = exponent
+        self._step_count: int
+        super().__init__(optimizer, -1, False)
+
+    @no_type_check
+    def get_lr(self) -> Sequence[float]:
+        curr_step = min(self._step_count, self.max_steps)
+        new_lr = self.initial_lr * (1 - curr_step / self.max_steps) ** self.exponent
+        return [new_lr] * len(self.optimizer.param_groups)
