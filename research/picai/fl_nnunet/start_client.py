@@ -3,7 +3,6 @@ import logging
 import warnings
 from functools import partial
 from logging import INFO
-from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
@@ -18,8 +17,8 @@ from flwr.common.logger import log, update_console_handler
 from torchmetrics.classification import Dice
 from torchmetrics.segmentation import GeneralizedDiceScore
 
+from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
-from research.picai.fl_nnunet.nnunet_client import nnUNetClient
 from research.picai.fl_nnunet.transforms import collapse_one_hot_tensor, get_annotations_from_probs
 
 
@@ -57,7 +56,7 @@ def main(
     metrics = [dice1, dice2]  # Oddly each of these dice metrics is drastically different.
 
     # Create and start client
-    client = nnUNetClient(
+    client = NnunetClient(
         # Args specific to nnUNetClient
         dataset_id=dataset_id,
         fold=fold,
@@ -70,7 +69,6 @@ def main(
         device=DEVICE,
         metrics=metrics,
         progress_bar=verbose,
-        data_path=Path("dummy/path"),  # Argument not used by nnUNetClient
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
