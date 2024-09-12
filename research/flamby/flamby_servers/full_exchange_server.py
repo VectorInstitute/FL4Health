@@ -21,8 +21,8 @@ class FullExchangeServer(FlServerWithCheckpointing):
         parameter_exchanger = FullParameterExchanger()
         super().__init__(
             client_manager=client_manager,
-            model=model,
             parameter_exchanger=parameter_exchanger,
+            model=model,
             strategy=strategy,
             checkpointer=checkpointer,
         )

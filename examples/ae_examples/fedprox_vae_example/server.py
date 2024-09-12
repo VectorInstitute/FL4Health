@@ -66,7 +66,14 @@ def main(config: Dict[str, Any]) -> None:
         proximal_weight=config["proximal_weight"],
     )
 
-    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
+    server = FlServerWithCheckpointing(
+        client_manager=SimpleClientManager(),
+        parameter_exchanger=parameter_exchanger,
+        model=model,
+        wandb_reporter=None,
+        strategy=strategy,
+        checkpointer=checkpointer,
+    )
 
     fl.server.start_server(
         server=server,

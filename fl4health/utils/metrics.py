@@ -13,6 +13,7 @@ from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransfor
 
 
 class TestMetricPrefix(Enum):
+    __test__ = False
     TEST_PREFIX = "test -"
 
 

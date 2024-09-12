@@ -31,7 +31,6 @@ class FedIsic2019DittoClient(DittoClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
@@ -41,7 +40,6 @@ class FedIsic2019DittoClient(DittoClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -111,9 +109,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -126,7 +121,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Lambda: {args.lam}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
@@ -141,7 +135,6 @@ if __name__ == "__main__":
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        lam=args.lam,
         checkpointer=checkpointer,
     )
 

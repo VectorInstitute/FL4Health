@@ -606,6 +606,14 @@ if __name__ == "__main__":
     )
     loop.run_until_complete(
         run_smoke_test(
+            server_python_path="examples.mrmtl_example.server",
+            client_python_path="examples.mrmtl_example.client",
+            config_path="tests/smoke_tests/mrmtl_example.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
             server_python_path="examples.fenda_example.server",
             client_python_path="examples.fenda_example.client",
             config_path="tests/smoke_tests/fenda_config.yaml",

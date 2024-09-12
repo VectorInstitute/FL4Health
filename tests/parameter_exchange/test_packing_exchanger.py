@@ -7,9 +7,9 @@ import torch
 from flwr.common.typing import NDArrays
 from torch import Tensor
 
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import (
-    ParameterPackerFedProx,
+    ParameterPackerAdaptiveConstraint,
     ParameterPackerWithClippingBit,
     ParameterPackerWithControlVariates,
     ParameterPackerWithLayerNames,
@@ -47,7 +47,7 @@ def test_parameter_exchanger_with_control_variates(get_ndarrays: NDArrays) -> No
     model_weights = get_ndarrays  # noqa
     control_variates = get_ndarrays  # noqa
 
-    exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(len(model_weights)))
+    exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(len(model_weights)))
     packed_params = exchanger.pack_parameters(model_weights, control_variates)
 
     assert len(packed_params) == len(model_weights) + len(control_variates)
@@ -73,7 +73,7 @@ def test_parameter_exchanger_with_clipping_bits(get_ndarrays: NDArrays) -> None:
     model_weights = get_ndarrays  # noqa
     clipping_bit = 0.0
 
-    exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
+    exchanger = FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
 
     packed_params = exchanger.pack_parameters(model_weights, clipping_bit)
 
@@ -97,7 +97,7 @@ def test_parameter_exchanger_fedprox(get_ndarrays: NDArrays) -> None:  # noqa
     model_weights = get_ndarrays  # noqa
     extra_fedprox_variable = 0.0
 
-    exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
+    exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
     packed_params = exchanger.pack_parameters(model_weights, extra_fedprox_variable)
 

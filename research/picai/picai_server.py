@@ -55,8 +55,8 @@ class PicaiServer(FlServerWithCheckpointing):
         assert wandb_reporter is None
         super().__init__(
             client_manager=client_manager,
-            model=model,
             parameter_exchanger=parameter_exchanger,
+            model=model,
             strategy=strategy,
             wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
@@ -66,7 +66,7 @@ class PicaiServer(FlServerWithCheckpointing):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Overrides method in parent class to call custom fit_with_per_round_checkpointing that is resilient
-        against pre-emptions.
+        against preemptions.
 
         Args:
             num_rounds (int): The number of rounds to perform federated learning.
@@ -163,6 +163,7 @@ class PicaiServer(FlServerWithCheckpointing):
 
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
+            assert self.server_model is not None
             self.per_round_checkpointer.save_checkpoint(
                 {"model": self.server_model, "history": history, "server_round": current_round}
             )

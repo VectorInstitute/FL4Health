@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistMrMtlClient(data_path, [Accuracy()], DEVICE, lam=0.1)
+    client = MnistMrMtlClient(data_path, [Accuracy()], DEVICE)
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
