@@ -267,12 +267,12 @@ class NnunetClient(BasicClient):
         local_epochs, local_steps, _, _ = self.process_config(config)
         if local_steps is not None:
             steps_per_round = local_steps
-            total_steps = int(config["n_server_rounds"]) * steps_per_round
         elif local_epochs is not None:
             steps_per_round = local_epochs * len(self.train_loader)
-            total_steps = int(config["n_server_rounds"]) * steps_per_round
         else:
-            raise ValueError("One of local steps and local epochs must be None")
+            raise ValueError("One of local steps or local epochs must be specified")
+
+        total_steps = int(config["n_server_rounds"]) * steps_per_round
 
         # Create and return LR Scheduler Wrapper for the PolyLRScheduler so that it is
         # compatible with Torch LRScheduler
