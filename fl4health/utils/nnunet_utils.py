@@ -423,6 +423,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         self._step_count: int
         super().__init__(optimizer, -1, False)
 
+    # mypy incorrectly infers get_lr returns a float
     @no_type_check
     def get_lr(self) -> Sequence[float]:
         curr_step = min(self._step_count, self.max_steps)

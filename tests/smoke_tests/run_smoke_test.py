@@ -346,7 +346,7 @@ async def run_fault_tolerance_smoke_test(
         server_python_path,
         "--config_path",
         partial_config_path,
-        "--intermediate_checkpoint_dir",
+        "--intermediate_server_state_dir",
         intermediate_checkpoint_dir,
         "--server_name",
         server_name,
@@ -356,7 +356,7 @@ async def run_fault_tolerance_smoke_test(
         server_python_path,
         "--config_path",
         config_path,
-        "--intermediate_checkpoint_dir",
+        "--intermediate_server_state_dir",
         intermediate_checkpoint_dir,
         "--server_name",
         server_name,
@@ -366,7 +366,7 @@ async def run_fault_tolerance_smoke_test(
         client_python_path,
         "--dataset_path",
         dataset_path,
-        "--intermediate_checkpoint_dir",
+        "--intermediate_client_state_dir",
         intermediate_checkpoint_dir,
     ]
     if seed is not None:

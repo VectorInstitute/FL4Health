@@ -32,7 +32,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], intermediate_checkpoint_dir: str, server_name: str) -> None:
+def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -71,7 +71,7 @@ def main(config: Dict[str, Any], intermediate_checkpoint_dir: str, server_name: 
         None,
         strategy,
         checkpointers,
-        intermediate_checkpoint_dir=Path(intermediate_checkpoint_dir),
+        intermediate_server_state_dir=Path(intermediate_server_state_dir),
         server_name=server_name,
     )
 
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         default="tests/smoke_tests/load_from_checkpoint_example/config.yaml",
     )
     parser.add_argument(
-        "--intermediate_checkpoint_dir",
+        "--intermediate_server_state_dir",
         action="store",
         type=str,
         help="Path to intermediate checkpoint directory.",
@@ -120,4 +120,4 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.intermediate_checkpoint_dir, args.server_name)
+    main(config, args.intermediate_server_state_dir, args.server_name)
