@@ -1321,7 +1321,7 @@ class BasicClient(NumPyClient):
         # should be loaded
         for key in self.optimizers.keys():
             optimizer = self.optimizers[key]
-            optimizer_state = ckpt[key]
+            optimizer_state = ckpt["optimizers_state"][key]
             optimizer_state_dict = optimizer.state_dict()
             optimizer_state_dict["state"] = optimizer_state
             optimizer.load_state_dict(optimizer_state_dict)
