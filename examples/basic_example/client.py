@@ -18,6 +18,7 @@ from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(BasicClient):
+    # comment
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
