@@ -784,7 +784,7 @@ if __name__ == "__main__":
         run_smoke_test(
             server_python_path="examples.mrmtl_example.server",
             client_python_path="examples.mrmtl_example.client",
-            config_path="tests/smoke_tests/mrmtl_example.yaml",
+            config_path="tests/smoke_tests/mrmtl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
         )
     )
