@@ -782,9 +782,9 @@ if __name__ == "__main__":
     )
     loop.run_until_complete(
         run_smoke_test(
-            server_python_path="examples.mrmtl_example.server",
-            client_python_path="examples.mrmtl_example.client",
-            config_path="tests/smoke_tests/mrmtl_config.yaml",
+            server_python_path="examples.mr_mtl_example.server",
+            client_python_path="examples.mr_mtl_example.client",
+            config_path="tests/smoke_tests/mr_mtl_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
         )
     )
