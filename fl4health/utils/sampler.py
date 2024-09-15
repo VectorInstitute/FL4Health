@@ -1,14 +1,14 @@
 import math
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Set, TypeVar
+from typing import Any, List, Set, TypeVar, Union
 
 import numpy as np
 import torch
 
-from fl4health.utils.dataset import DictionaryDataset, TensorDataset
+from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
 T = TypeVar("T")
-D = TypeVar("D", TensorDataset, DictionaryDataset)
+D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
 
 
 class LabelBasedSampler(ABC):
@@ -20,23 +20,6 @@ class LabelBasedSampler(ABC):
     def __init__(self, unique_labels: List[Any]) -> None:
         self.unique_labels = unique_labels
         self.num_classes = len(self.unique_labels)
-
-    def select_by_indices(self, dataset: D, selected_indices: torch.Tensor) -> D:
-        if isinstance(dataset, TensorDataset):
-            assert dataset.targets is not None
-            dataset.targets = dataset.targets[selected_indices]
-            dataset.data = dataset.data[selected_indices]
-            return dataset
-        elif isinstance(dataset, DictionaryDataset):
-            new_targets = dataset.targets[selected_indices]
-            new_data: Dict[str, List[torch.Tensor]] = {}
-            for key, val in dataset.data.items():
-                # Since val is a list of tensors, we can't directly index into it
-                # using selected_indices.
-                new_data[key] = [val[i] for i in selected_indices]
-            return DictionaryDataset(new_data, new_targets)
-        else:
-            raise TypeError("Dataset type is not supported by this sampler.")
 
     @abstractmethod
     def subsample(self, dataset: D) -> D:
@@ -61,6 +44,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         """
         Returns a new dataset where samples part of minority_labels are downsampled
         """
+        assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         selected_indices_list: List[torch.Tensor] = []
         for label in self.unique_labels:
             # Get indices of samples equal to the current label
@@ -74,7 +58,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
         selected_indices = torch.cat(selected_indices_list, dim=0)
 
-        return self.select_by_indices(dataset, selected_indices)
+        return select_by_indices(dataset, selected_indices)
 
     def _get_random_subsample(self, tensor_to_subsample: torch.Tensor, subsample_size: int) -> torch.Tensor:
         # NOTE: Assumes subsampling on rows
@@ -108,6 +92,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         """
         Returns a new dataset where samples are selected based on a dirichlet distribution over labels
         """
+        assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         total_num_samples = int(len(dataset) * self.sample_percentage)
         targets = dataset.targets
 
@@ -128,4 +113,4 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         # may differ from total_num_samples so we resample to ensure correct count
         selected_indices = selected_indices[:total_num_samples]
 
-        return self.select_by_indices(dataset, selected_indices)
+        return select_by_indices(dataset, selected_indices)
