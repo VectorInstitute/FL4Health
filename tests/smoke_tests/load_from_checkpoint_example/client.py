@@ -31,7 +31,7 @@ class CifarClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
-        intermediate_checkpoint_dir: Optional[Path] = None,
+        intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
         seed: int = 42,
     ) -> None:
@@ -43,7 +43,7 @@ class CifarClient(BasicClient):
             checkpointer,
             metrics_reporter,
             progress_bar,
-            intermediate_checkpoint_dir,
+            intermediate_client_state_dir,
             client_name,
         )
         self.seed = seed
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     parser.add_argument(
-        "--intermediate_checkpoint_dir",
+        "--intermediate_client_state_dir",
         action="store",
         type=str,
         help="Path to intermediate checkpoint directory.",
@@ -107,7 +107,7 @@ if __name__ == "__main__":
         data_path,
         [Accuracy("accuracy")],
         DEVICE,
-        intermediate_checkpoint_dir=args.intermediate_checkpoint_dir,
+        intermediate_client_state_dir=args.intermediate_client_state_dir,
         client_name=args.client_name,
         seed=args.seed,
     )
