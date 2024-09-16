@@ -16,24 +16,28 @@
 ###############################################
 # Usage:
 #
-# sbatch research/cifar10/ditto/run_fold_experiment.slrm \
+# sbatch research/cifar10/ditto_deep_mmd/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/ \
 #   client_side_learning_rate_value \
 #   lambda value \
+#   mu value \
+#   deep_mmd_loss_depth \
 #   server_address\
 #   client_beta
 #
 # Example:
-# sbatch research/cifar10/ditto/run_fold_experiment.slrm \
-#   research/cifar10/ditto/config.yaml \
-#   research/cifar10/ditto/hp_results/ \
+# sbatch research/cifar10/ditto_deep_mmd/run_fold_experiment.slrm \
+#   research/cifar10/ditto_deep_mmd/config.yaml \
+#   research/cifar10/ditto_deep_mmd/hp_results/ \
 #   /datasets/cifar10 \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.01 \
+#   0.1 \
+#   2 \
 #   0.0.0.0:8080\
 #   0.1
 #

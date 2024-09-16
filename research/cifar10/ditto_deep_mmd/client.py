@@ -48,6 +48,7 @@ class CifarDittoClient(DittoDeepMmdClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         size_feature_extraction_layers = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
+        flatten_feature_extraction_layers = {key: True for key in size_feature_extraction_layers}
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -56,7 +57,7 @@ class CifarDittoClient(DittoDeepMmdClient):
             checkpointer=checkpointer,
             lam=lam,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
-            flatten_feature_extraction_layers={key: True for key in size_feature_extraction_layers},
+            flatten_feature_extraction_layers=flatten_feature_extraction_layers,
             size_feature_extraction_layers=size_feature_extraction_layers,
         )
         self.client_number = client_number
@@ -171,14 +172,7 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the mkmmd losses",
-        required=False,
-    )
-    parser.add_argument(
-        "--l2",
-        action="store",
-        type=float,
-        help="Weight for the feature l2 norm loss as a regularizer",
+        help="Weight for the Deep MMD losses",
         required=False,
     )
     parser.add_argument(
@@ -189,14 +183,6 @@ if __name__ == "__main__":
         required=False,
         default=1,
     )
-    parser.add_argument(
-        "--beta_update_interval",
-        action="store",
-        type=int,
-        help="Interval for updating the beta values",
-        required=False,
-        default=20,
-    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -205,7 +191,6 @@ if __name__ == "__main__":
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Lambda: {args.lam}")
     log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
 
     # Set the random seed for reproducibility

@@ -45,6 +45,7 @@ class CifarDittoClient(DittoMkMmdClient):
         beta_global_update_interval: int = 20,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
+        flatten_feature_extraction_layers = {key: True for key in BASELINE_LAYERS[-1 * mkmmd_loss_depth :]}
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -53,7 +54,7 @@ class CifarDittoClient(DittoMkMmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            flatten_feature_extraction_layers={key: True for key in BASELINE_LAYERS[-1 * mkmmd_loss_depth :]},
+            flatten_feature_extraction_layers=flatten_feature_extraction_layers,
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
         )

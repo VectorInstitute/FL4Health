@@ -163,6 +163,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Lambda: {args.lam}")
+    log(INFO, f"Beta: {args.beta}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)

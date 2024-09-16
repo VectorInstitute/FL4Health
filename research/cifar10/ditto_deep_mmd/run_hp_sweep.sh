@@ -3,16 +3,16 @@
 ###############################################
 # Usage:
 #
-#  ./research/cifar10/ditto/run_hp_sweep.sh \
+#  ./research/cifar10/ditto_deep_mmd/run_hp_sweep.sh \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
 #   path_to_desired_venv/
 #
 # Example:
-# ./research/cifar10/ditto/run_hp_sweep.sh \
-#   research/cifar10/ditto/config.yaml \
-#   research/cifar10/ditto \
+# ./research/cifar10/ditto_deep_mmd/run_hp_sweep.sh \
+#   research/cifar10/ditto_deep_mmd/config.yaml \
+#   research/cifar10/ditto_deep_mmd \
 #   /datasets/cifar10 \
 #   /h/demerson/vector_repositories/fl4health_env/
 #
@@ -25,7 +25,6 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-# Cifar 10 LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 BETA_VALUES=( 0.1 0.5 5.0 )
 LAM_VALUES=( 0.01 0.1 1.0 )
