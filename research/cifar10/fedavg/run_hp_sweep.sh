@@ -25,7 +25,6 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-# Cifar 10 LR Hyperparmeters from paper are not suitable for AdamW
 LR_VALUES=( 0.00001 0.0001 0.001 0.01 0.1 )
 BETA_VALUES=( 0.1 0.5 5.0 )
 

@@ -22,7 +22,7 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
-from research.cifar10.model import ConvNet2
+from research.cifar10.model import ConvNet
 
 NUM_CLIENTS = 10
 
@@ -93,7 +93,7 @@ class CifarFedAvgClient(BasicClient):
         return torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
 
     def get_model(self, config: Config) -> nn.Module:
-        return ConvNet2(in_channels=3).to(self.device)
+        return ConvNet(in_channels=3).to(self.device)
 
 
 if __name__ == "__main__":

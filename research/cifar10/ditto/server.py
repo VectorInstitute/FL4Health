@@ -13,7 +13,7 @@ from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-from research.cifar10.model import ConvNet2
+from research.cifar10.model import ConvNet
 from research.cifar10.personal_server import PersonalServer
 
 
@@ -45,7 +45,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNet2(in_channels=3)
+    model = ConvNet(in_channels=3)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
         min_fit_clients=config["n_clients"],

@@ -22,7 +22,7 @@ from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
-from research.cifar10.model import ConvNet2
+from research.cifar10.model import ConvNet
 
 NUM_CLIENTS = 10
 BASELINE_LAYERS = ["bn1", "bn2", "fc1"]
@@ -107,7 +107,7 @@ class CifarDittoClient(DittoMkMmdClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:
-        return ConvNet2(in_channels=3).to(self.device)
+        return ConvNet(in_channels=3).to(self.device)
 
 
 if __name__ == "__main__":
@@ -206,6 +206,7 @@ if __name__ == "__main__":
     log(INFO, f"Mu: {args.mu}")
     log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
+    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
