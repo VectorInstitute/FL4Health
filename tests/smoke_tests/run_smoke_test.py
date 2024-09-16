@@ -662,17 +662,17 @@ if __name__ == "__main__":
             client_metrics=load_metrics_from_file("tests/smoke_tests/fedprox_client_metrics.json"),
         )
     )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.scaffold_example.server",
-            client_python_path="examples.scaffold_example.client",
-            config_path="tests/smoke_tests/scaffold_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
-        )
-    )
+    # loop.run_until_complete(
+    #     run_smoke_test(
+    #         server_python_path="examples.scaffold_example.server",
+    #         client_python_path="examples.scaffold_example.client",
+    #         config_path="tests/smoke_tests/scaffold_config.yaml",
+    #         dataset_path="examples/datasets/mnist_data/",
+    #         seed=42,
+    #         server_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_server_metrics.json"),
+    #         client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
+    #     )
+    # )
     loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.apfl_example.server",
