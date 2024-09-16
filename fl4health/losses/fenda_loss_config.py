@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 
 import torch
 
-from fl4health.losses.contrastive_loss import ContrastiveLoss
+from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.losses.cosine_similarity_loss import CosineSimilarityLoss
 from fl4health.losses.perfcl_loss import PerFclLoss
 
@@ -27,10 +27,10 @@ class CosineSimilarityLossContainer:
         self.cos_sim_loss_function = CosineSimilarityLoss(device)
 
 
-class ContrastiveLossContainer:
+class MoonContrastiveLossContainer:
     def __init__(self, device: torch.device, contrastive_loss_weight: float, temperature: float = 0.5) -> None:
         self.contrastive_loss_weight = contrastive_loss_weight
-        self.contrastive_loss_function = ContrastiveLoss(device, temperature)
+        self.contrastive_loss_function = MoonContrastiveLoss(device, temperature)
 
 
 class ConstrainedFendaLossContainer:
@@ -38,7 +38,7 @@ class ConstrainedFendaLossContainer:
         self,
         perfcl_loss_config: Optional[PerFclLossContainer],
         cosine_similarity_loss_config: Optional[CosineSimilarityLossContainer],
-        contrastive_loss_config: Optional[ContrastiveLossContainer],
+        contrastive_loss_config: Optional[MoonContrastiveLossContainer],
     ) -> None:
         self.perfcl_loss_config = perfcl_loss_config
         self.cos_sim_loss_config = cosine_similarity_loss_config

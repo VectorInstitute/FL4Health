@@ -18,6 +18,7 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.preprocessing.warmed_up_module import WarmedUpModule
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -48,7 +49,7 @@ class MnistFendaClient(FendaClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 

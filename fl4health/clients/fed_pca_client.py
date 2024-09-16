@@ -2,7 +2,7 @@ import random
 import string
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Tuple, Type, TypeVar
+from typing import Dict, Tuple
 
 import torch
 from flwr.client.numpy_client import NumPyClient
@@ -13,8 +13,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.model_bases.pca import PcaModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-
-T = TypeVar("T")
+from fl4health.utils.config import narrow_config_type
 
 
 class FedPCAClient(NumPyClient):
@@ -38,8 +37,18 @@ class FedPCAClient(NumPyClient):
         return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
 
     def get_parameters(self, config: Config) -> NDArrays:
-        assert self.model is not None and self.parameter_exchanger is not None
-        return self.parameter_exchanger.push_parameters(self.model, config=config)
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+            return self.parameter_exchanger.push_parameters(self.model, config=config)
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
@@ -49,16 +58,6 @@ class FedPCAClient(NumPyClient):
         """
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         self.save_model()
-
-    def narrow_config_type(self, config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
-        if config_key not in config:
-            raise ValueError(f"{config_key} is not present in the Config.")
-
-        config_value = config[config_key]
-        if isinstance(config_value, narrow_type_to):
-            return config_value
-        else:
-            raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         """
@@ -71,9 +70,9 @@ class FedPCAClient(NumPyClient):
         """
         Returns an instance of the PCAModule.
         """
-        low_rank = self.narrow_config_type(config, "low_rank", bool)
-        full_svd = self.narrow_config_type(config, "full_svd", bool)
-        rank_estimation = self.narrow_config_type(config, "rank_estimation", int)
+        low_rank = narrow_config_type(config, "low_rank", bool)
+        full_svd = narrow_config_type(config, "full_svd", bool)
+        rank_estimation = narrow_config_type(config, "rank_estimation", int)
         return PcaModule(low_rank, full_svd, rank_estimation).to(self.device)
 
     def setup_client(self, config: Config) -> None:
@@ -98,7 +97,7 @@ class FedPCAClient(NumPyClient):
         """Perform PCA using the locally held dataset."""
         if not self.initialized:
             self.setup_client(config)
-        center_data = self.narrow_config_type(config, "center_data", bool)
+        center_data = narrow_config_type(config, "center_data", bool)
 
         principal_components, singular_values = self.model(self.train_data_tensor, center_data)
         self.model.set_principal_components(principal_components, singular_values)
@@ -124,9 +123,7 @@ class FedPCAClient(NumPyClient):
             self.model.set_data_mean(self.model.maybe_reshape(self.train_data_tensor))
         self.set_parameters(parameters, config)
         num_components_eval = (
-            self.narrow_config_type(config, "num_components_eval", int)
-            if "num_components_eval" in config.keys()
-            else None
+            narrow_config_type(config, "num_components_eval", int) if "num_components_eval" in config.keys() else None
         )
         val_data_tensor_prepared = self.model.center_data(self.model.maybe_reshape(self.val_data_tensor)).to(
             self.device

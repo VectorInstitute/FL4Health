@@ -64,6 +64,66 @@ class SmallCnn(nn.Module):
         return x
 
 
+class HierarchicalCnn(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.h1_layer1 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=1, out_channels=2, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=2, out_channels=4, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.h1_layer2 = nn.ModuleDict(
+            {
+                "h2_layer1": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=4, out_channels=8, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+                "h2_layer2": nn.ModuleDict(
+                    {
+                        "conv": nn.Conv2d(in_channels=8, out_channels=16, kernel_size=3, padding=1),
+                        "pool": nn.MaxPool2d(kernel_size=2, stride=2),
+                    }
+                ),
+            }
+        )
+
+        self.classifier = nn.ModuleDict(
+            {"fc": nn.Linear(1 * 4 * 4, 10), "relu": nn.ReLU()}  # Assuming input image size is 64x64
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.h1_layer1["h2_layer1"]["conv"](x)
+        x = self.h1_layer1["h2_layer1"]["pool"](x)
+        x = self.h1_layer1["h2_layer2"]["conv"](x)
+        x = self.h1_layer1["h2_layer2"]["pool"](x)
+
+        x = self.h1_layer2["h2_layer1"]["conv"](x)
+        x = self.h1_layer2["h2_layer1"]["pool"](x)
+        x = self.h1_layer2["h2_layer2"]["conv"](x)
+        x = self.h1_layer2["h2_layer2"]["pool"](x)
+
+        x = torch.flatten(x, 1)
+        x = self.classifier["fc"](x)
+        x = self.classifier["relu"](x)
+
+        return x
+
+
 class FeatureCnn(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -717,3 +777,45 @@ class MnistNetWithBnAndFrozen(nn.Module):
         x = x.view(-1, 16 * 4 * 4)
         x = F.relu(self.fc1(x))
         return x
+
+
+class CompositeConvNet(nn.Module):
+    def __init__(self) -> None:
+        super(CompositeConvNet, self).__init__()
+
+        # Convolutional layers
+        self.conv1d = nn.Conv1d(in_channels=1, out_channels=2, kernel_size=3, stride=1, padding=1)
+        self.conv2d = nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=1, padding=1)
+        self.conv3d = nn.Conv3d(in_channels=3, out_channels=8, kernel_size=3, stride=1, padding=1)
+
+        self.linear = nn.Linear(1812, 10)
+
+    def forward(self, x1d: torch.Tensor, x2d: torch.Tensor, x3d: torch.Tensor) -> torch.Tensor:
+        # Forward pass through each layer
+        x1d = self.conv1d(x1d)
+        x2d = self.conv2d(x2d)
+        x3d = self.conv3d(x3d)
+
+        # Flatten or reshape the tensors before concatenation
+        x1d = x1d.view(x1d.size(0), -1)  # Flatten x1d to 1D tensor
+        x2d = x2d.view(x2d.size(0), -1)  # Flatten x2d to 1D tensor
+        x3d = x3d.view(x3d.size(0), -1)  # Flatten x3d to 1D tensor
+
+        # Concatenate flattened tensors along dim=1
+        combined = torch.cat((x1d, x2d, x3d), dim=1)
+
+        print(combined.shape)
+
+        # Linear layer
+        output = self.linear(combined)
+
+        return output
+
+
+class ModelWrapper(nn.Module):
+    def __init__(self, module: nn.Module) -> None:
+        super().__init__()
+        self.model = module
+
+    def forward(self, *args: torch.Tensor) -> torch.Tensor:
+        return self.model.forward(*args)

@@ -17,9 +17,9 @@ class FeatureExtractorBuffer:
 
         Args:
             model (nn.Module): The neural network model.
-            flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
-                extraction layers.
-
+            flatten_feature_extraction_layers (Dict[str, bool]): Dictionary of layers to extract features from them and
+            whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
+            boolean.
         Attributes:
             model (nn.Module): The neural network model.
             flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
@@ -63,37 +63,64 @@ class FeatureExtractorBuffer:
         """
         self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers.keys()}
 
-    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchicy: List[str]) -> nn.Module:
-        if len(layer_hierarchicy) == 1:
-            return getattr(module, layer_hierarchicy[0])
+    def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
+        """
+        Traverse the hierarchical attributes of the module to get the desired attribute. Hooks should be
+        registered to specific layers of the model, not to nn.Sequential or nn.ModuleList.
+
+        Args:
+            module (nn.Module): The nn.Module object to traverse.
+            layer_hierarchy (List[str]): The hirearchical list of name of desired layer.
+
+        Returns:
+            nn.Module: The desired layer of the model.
+        """
+        if len(layer_hierarchy) == 1:
+            return getattr(module, layer_hierarchy[0])
         else:
-            return self.get_hierarchical_attr(getattr(module, layer_hierarchicy[0]), layer_hierarchicy[1:])
+            return self.get_hierarchical_attr(getattr(module, layer_hierarchy[0]), layer_hierarchy[1:])
+
+    def find_last_common_prefix(self, prefix: str, layers_name: List[str]) -> str:
+        """
+        Check the model's list of named modules to filter any layer that starts with the given prefix and
+        return the last one.
+
+        Here we assume the list of named modules is sorted in the order of the model's forward pass with
+        depth-first traversal. This will allow the user to specify the generic name of the layer instead of
+        the full hierarchical name.
+        """
+        filtered_layers = [layer for layer in layers_name if layer.startswith(prefix)]
+
+        # Return the last element that matches the criteria
+        return filtered_layers[-1]
 
     def _maybe_register_hooks(self) -> None:
         """
         Checks if hooks are already registered and registers them if not.
-        Hooks extract the intermediat feature as output of the selected layers in the model.
+        Hooks extract the intermediate feature as output of the selected layers in the model.
         """
         if len(self.fhooks) == 0:
             log(INFO, "Starting to register hooks:")
-            named_layers = dict(self.model.named_modules())
-            for layer in named_layers.keys():
-                if layer in self.flatten_feature_extraction_layers.keys():
-                    # Split the layer name by '.' to get the hirarchial attribute
-                    log(INFO, f"Registering hook for layer: {layer}")
-                    layer_hierarchicy = layer.split(".")
-                    self.fhooks.append(
-                        self.get_hierarchical_attr(self.model, layer_hierarchicy).register_forward_hook(
-                            self.forward_hook(layer)
-                        )
+            named_layers = list(dict(self.model.named_modules()).keys())
+            for layer in self.flatten_feature_extraction_layers.keys():
+                log(INFO, f"Registering hook for layer: {layer}")
+                # Find the the last specific layer under a given generic name
+                specific_layer = self.find_last_common_prefix(layer, named_layers)
+                # Split the specific layer name by '.' to get the hierarchical attribute
+                layer_hierarchicy_list = specific_layer.split(".")
+                self.fhooks.append(
+                    self.get_hierarchical_attr(self.model, layer_hierarchicy_list).register_forward_hook(
+                        self.forward_hook(layer)
                     )
+                )
         else:
             log(INFO, "Hooks already registered.")
 
     def remove_hooks(self) -> None:
         """
-        Removes the hooks from the model for and clears the hook list. This method is used to remove any hooks that
-        have been added to the feature extractor buffer. It is typically called prior to checkpointing the model.
+        Removes the hooks from the model for checkpointing and clears the hook list. This method is used to remove
+        any hooks that have been added to the feature extractor buffer. It is typically called prior to checkpointing
+        the model.
 
         Returns:
             None

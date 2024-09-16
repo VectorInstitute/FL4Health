@@ -1,0 +1,10 @@
+# FL4Health Settings:
+n_clients: 1
+n_server_rounds: 1000
+server_address: '0.0.0.0:8080'
+local_steps: 256
+
+# nnunet Settings:
+nnunet_config: 2d
+fold: 0
+nnunet_plans: /ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_preprocessed/Dataset005_Haider_710/nnUNetPlans.json
