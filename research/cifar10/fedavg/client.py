@@ -13,7 +13,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.config import narrow_config_type
@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpointer = ClientCheckpointModule(pre_aggregation=LatestTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
     data_path = Path(args.dataset_dir)
     client = CifarFedAvgClient(
