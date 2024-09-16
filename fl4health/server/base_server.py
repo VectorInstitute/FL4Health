@@ -7,7 +7,7 @@ from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Unio
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
-from flwr.common.parameter import ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Code, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -22,12 +22,8 @@ from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
-
-
-def get_initial_model_parameters(client_model: nn.Module) -> Parameters:
-    # Initializing the model parameters on the server side.
-    return ndarrays_to_parameters([val.cpu().numpy() for _, val in client_model.state_dict().items()])
 
 
 class FlServer(Server):
@@ -337,13 +333,13 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
-        intermediate_checkpoint_dir: Optional[Path] = None,
+        intermediate_server_state_dir: Optional[Path] = None,
         server_name: Optional[str] = None,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
         hydrating the provided server model fully such that it can be checkpointed. For custom checkpointing
-        functionality, one need only override _hydrate_model_for_checkpointing. If intermediate_checkpoint_dir
+        functionality, one need only override _hydrate_model_for_checkpointing. If intermediate_server_state_dir
         is not None, performs per round checkpointing.
 
 
@@ -366,7 +362,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 sequence to checkpoint based on multiple criteria. Defaults to
                 None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-            intermediate_checkpoint_dir (Path): A directory to store and load checkpoints from for the server
+            intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
             server_name (Optional[str]): An optional string name to uniquely identify server.
         """
@@ -379,9 +375,9 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
-        if intermediate_checkpoint_dir is not None:
+        if intermediate_server_state_dir is not None:
             self.per_round_checkpointer = PerRoundCheckpointer(
-                intermediate_checkpoint_dir, Path(f"{self.server_name}.ckpt")
+                intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
             )
         else:
             self.per_round_checkpointer = None
@@ -397,7 +393,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Overrides method in parent class to call custom fit_with_per_round_checkpointing if an
-        intermediate_checkpoint_dir is provided. Otherwise calls standard fit method.
+        intermediate_server_state_dir is provided. Otherwise calls standard fit method.
 
         Args:
             num_rounds (int): The number of rounds to perform federated learning.
@@ -426,7 +422,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
         server provided by flower (flwr.server.server.Server) except that it is resilient to pre-emptions.
-        It accomplishes this by checkpointing the sever state each round. In the case of pre-emption,
+        It accomplishes this by checkpointing the server state each round. In the case of pre-emption,
         when the server is restarted it will load from the most recent checkpoint.
 
         Args:
@@ -445,7 +441,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         # if checkpoint exists, update history, server round and model accordingly
         if self.per_round_checkpointer.checkpoint_exists():
-            self.load_checkpoint()
+            self.load_server_state()
         else:
             log(INFO, "Initializing server state")
             self.parameters = self._get_initial_parameters(server_round=1, timeout=timeout)
@@ -506,7 +502,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
             # Save checkpoint after training and testing
             self._hydrate_model_for_checkpointing()
-            self.save_checkpoint()
+            self.save_server_state()
 
         # Bookkeeping
         end_time = timeit.default_timer()
@@ -514,7 +510,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         log(INFO, "FL finished in %s", elapsed_time)
         return self.history, elapsed_time
 
-    def save_checkpoint(self) -> None:
+    def save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
             This method can be overridden to add any necessary state to the checkpoint.
@@ -534,7 +530,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
-    def load_checkpoint(self) -> None:
+    def load_server_state(self) -> None:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
             The method can be overridden to add any necessary state when loading the checkpoint.
@@ -555,7 +551,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         self.server_name = ckpt["server_name"]
         self.metrics_reporter = ckpt["metrics_reporter"]
         self.history = ckpt["history"]
-        self.parameters = get_initial_model_parameters(ckpt["model"])
+        self.parameters = get_all_model_parameters(ckpt["model"])
 
 
 class FlServerWithInitializer(FlServer):
