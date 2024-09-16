@@ -1319,8 +1319,7 @@ class BasicClient(NumPyClient):
         # Optimizer is updated in setup_client to reference model weights from server
         # Thus, only optimizer state (per parameter values such as momentum)
         # should be loaded
-        for key in self.optimizers.keys():
-            optimizer = self.optimizers[key]
+        for key, optimizer in self.optimizers.items():
             optimizer_state = ckpt["optimizers_state"][key]
             optimizer_state_dict = optimizer.state_dict()
             optimizer_state_dict["state"] = optimizer_state
