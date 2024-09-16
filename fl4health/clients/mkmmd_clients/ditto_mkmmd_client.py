@@ -26,7 +26,7 @@ class DittoMkMmdClient(DittoClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
-        flatten_feature_extraction_layers: Optional[Dict[str, bool]] = None,
+        flatten_feature_extraction_layers: Optional[Sequence[str]] = None,
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: int = 20,
     ) -> None:
@@ -47,9 +47,8 @@ class DittoMkMmdClient(DittoClient):
                 None.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            flatten_feature_extraction_layers (Optional[Dict[str, bool]], optional): Dictionary of layers to extract
-                features from them and whether to flatten them. Keys are the layer names that are extracted from the
-                named_modules and values are boolean. Defaults to None.
+            flatten_feature_extraction_layers (Optional[Sequence[str]], optional): List of layers to extract
+                flatten features from them. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
             beta_global_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. If
@@ -84,11 +83,12 @@ class DittoMkMmdClient(DittoClient):
         else:
             raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         if flatten_feature_extraction_layers:
-            self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
+            # By default, all of the fetures should be flattened for the MK-MMD loss
+            self.feature_extraction_layers = {layer: True for layer in flatten_feature_extraction_layers}
         else:
-            self.flatten_feature_extraction_layers = {}
+            self.feature_extraction_layers = {}
         self.mkmmd_losses = {}
-        for layer in self.flatten_feature_extraction_layers.keys():
+        for layer in self.feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
                 device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
             ).to(self.device)
@@ -101,7 +101,7 @@ class DittoMkMmdClient(DittoClient):
         super().setup_client(config)
         self.local_feature_extractor = FeatureExtractorBuffer(
             model=self.model,
-            flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
+            feature_extraction_layers=self.feature_extraction_layers,
         )
 
     def update_before_train(self, current_server_round: int) -> None:
@@ -114,7 +114,7 @@ class DittoMkMmdClient(DittoClient):
         self.initial_global_model = self.clone_and_freeze_model(self.global_model)
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
-            flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
+            feature_extraction_layers=self.feature_extraction_layers,
         )
         # Register hooks to extract features from the initial global model if not already registered
         self.initial_global_feature_extractor._maybe_register_hooks()
