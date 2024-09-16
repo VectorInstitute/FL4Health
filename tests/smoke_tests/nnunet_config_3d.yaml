@@ -1,0 +1,8 @@
+# Parameters that describe the server
+n_server_rounds: 1
+
+# Parameters that describe the clients
+n_clients: 1
+local_steps: 5
+
+nnunet_config: 3d_fullres

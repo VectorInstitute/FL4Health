@@ -68,6 +68,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     server.metrics_reporter.dump()
+    server.shutdown()
 
 
 if __name__ == "__main__":

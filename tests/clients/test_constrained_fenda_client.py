@@ -34,7 +34,7 @@ def test_getting_parameters(get_constrained_fenda_client: ConstrainedFendaClient
     }
     # Do an update after training. This should be setting the required old models for the contrastive loss
     # calculations in the next round.
-    const_fenda_client.update_after_train(0, loss)
+    const_fenda_client.update_after_train(0, loss, config)
 
     # Get parameters that we send to the server for aggregation. Should be the params_global values.
     global_params_for_server = const_fenda_client.get_parameters(config)
@@ -188,7 +188,7 @@ def test_setting_old_models(get_constrained_fenda_client: ConstrainedFendaClient
     loss = {
         "loss": 0.0,
     }
-    const_fenda_client.update_after_train(0, loss)
+    const_fenda_client.update_after_train(0, loss, {})
 
     assert const_fenda_client.old_local_module is not None
     old_local_params = [
@@ -239,7 +239,7 @@ def test_setting_not_setting_old_models(get_constrained_fenda_client: Constraine
     loss = {
         "loss": 0.0,
     }
-    const_fenda_client.update_after_train(0, loss)
+    const_fenda_client.update_after_train(0, loss, {})
 
     # Make sure they are still None
     assert const_fenda_client.old_local_module is None

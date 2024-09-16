@@ -1,4 +1,3 @@
-import copy
 import math
 from abc import ABC, abstractmethod
 from logging import INFO
@@ -8,10 +7,10 @@ import numpy as np
 import torch
 from flwr.common.logger import log
 
-from fl4health.utils.dataset import BaseDataset, DictionaryDataset
+from fl4health.utils.dataset import DictionaryDataset, TensorDataset
 
 T = TypeVar("T")
-D = TypeVar("D", BaseDataset, DictionaryDataset)
+D = TypeVar("D", TensorDataset, DictionaryDataset)
 
 
 class LabelBasedSampler(ABC):
@@ -25,11 +24,11 @@ class LabelBasedSampler(ABC):
         self.num_classes = len(self.unique_labels)
 
     def select_by_indices(self, dataset: D, selected_indices: torch.Tensor) -> D:
-        if isinstance(dataset, BaseDataset):
-            modified_dataset = copy.deepcopy(dataset)
-            modified_dataset.targets = dataset.targets[selected_indices]
-            modified_dataset.data = dataset.data[selected_indices]
-            return modified_dataset
+        if isinstance(dataset, TensorDataset):
+            assert dataset.targets is not None
+            dataset.targets = dataset.targets[selected_indices]
+            dataset.data = dataset.data[selected_indices]
+            return dataset
         elif isinstance(dataset, DictionaryDataset):
             new_targets = dataset.targets[selected_indices]
             new_data: Dict[str, List[torch.Tensor]] = {}
@@ -44,22 +43,6 @@ class LabelBasedSampler(ABC):
     @abstractmethod
     def subsample(self, dataset: D) -> D:
         raise NotImplementedError
-
-
-class IndexLabelBasedSampler(LabelBasedSampler):
-    """
-    This class is used to subsample a dataset based on the indices of the samples.
-    In particular, the IndexLabelBasedSampler explicitly selects samples based on the
-    selected_indices args used to construct the object. This is useful when you want to
-    select a specific subset of samples from a dataset for training and validation.
-    """
-
-    def __init__(self, unique_labels: List[T], selected_indices: List[int]) -> None:
-        super().__init__(unique_labels)
-        self.selected_indices = torch.Tensor(selected_indices).long()
-
-    def subsample(self, dataset: D) -> D:
-        return self.select_by_indices(dataset, self.selected_indices)
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):

@@ -1,25 +1,13 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 import torch
 from scipy.stats import chisquare
 
-from fl4health.utils.dataset import SyntheticDataset
+from fl4health.utils.load_data import get_train_and_val_mnist_datasets
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler, MinorityLabelBasedSampler
-
-
-def construct_synthetic_dataset() -> SyntheticDataset:
-    # set seed for creation
-    torch.manual_seed(42)
-    random_inputs = torch.rand((10000, 3, 3))
-    # Note high is exclusive here
-    random_labels = torch.randint(low=0, high=10, size=(10000, 1))
-    # unset seed thereafter
-    torch.seed()
-    return SyntheticDataset(random_inputs, random_labels)
-
-
-SYNTHETIC_DATASET = construct_synthetic_dataset()
 
 
 def test_minority_sampler() -> None:
@@ -29,17 +17,35 @@ def test_minority_sampler() -> None:
         unique_labels=list(range(10)), downsampling_ratio=downsampling_ratio, minority_labels=minority_numbers
     )
 
-    ds = SYNTHETIC_DATASET
-    samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
+    train_ds, val_ds = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
 
-    ds_new = sampler.subsample(ds)
+    # Training
+    assert train_ds.targets is not None
+
+    samples_per_class = [train_ds.targets[train_ds.targets == i].size(0) for i in range(10)]
+
+    train_ds_new = sampler.subsample(train_ds)
 
     new_samples_per_class = [
         int(num_samples * downsampling_ratio) if i in minority_numbers else num_samples
         for i, num_samples in enumerate(samples_per_class)
     ]
 
-    assert len(ds_new) == sum(new_samples_per_class)
+    assert len(train_ds_new) == sum(new_samples_per_class)
+
+    # Validation
+    assert val_ds.targets is not None
+
+    samples_per_class = [val_ds.targets[val_ds.targets == i].size(0) for i in range(10)]
+
+    val_ds_new = sampler.subsample(val_ds)
+
+    new_samples_per_class = [
+        int(num_samples * downsampling_ratio) if i in minority_numbers else num_samples
+        for i, num_samples in enumerate(samples_per_class)
+    ]
+
+    assert len(val_ds_new) == sum(new_samples_per_class)
 
 
 def test_dirichlet_sampler_probability_assignment() -> None:
@@ -79,12 +85,19 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
     set_all_random_seeds(2023)
     sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+
+    # Training
+    assert train_ds.targets is not None
+
     # No heterogeneity
     relative_probabilities = [1] * 10
     sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
 
-    new_ds = sampler.subsample(SYNTHETIC_DATASET)
-    new_samples_per_class = [new_ds.targets[new_ds.targets == i].size(0) for i in range(10)]
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
     new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
 
     # Assert that probabilities of sampled indices are close to assigned probabilities
@@ -95,8 +108,10 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
     relative_probabilities = [i for i in range(1, 11)]
     sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
 
-    new_ds = sampler.subsample(SYNTHETIC_DATASET)
-    new_samples_per_class = [new_ds.targets[new_ds.targets == i].size(0) for i in range(10)]
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
     new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
 
     # Assert that probabilities of sampled indices are close to assigned probabilities
@@ -106,8 +121,10 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
     # Extreme heterogeneity
     relative_probabilities = [i for i in range(1, 101, 10)]
     sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
-    new_ds = sampler.subsample(SYNTHETIC_DATASET)
-    new_samples_per_class = [new_ds.targets[new_ds.targets == i].size(0) for i in range(10)]
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
     new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
 
     # Assert that probabilities of sampled indices are close to assigned probabilities
@@ -125,20 +142,26 @@ def test_dirichlet_sampler_without_hash_key() -> None:
     sampler_1 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
     sampler_2 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+
     # Training
-    ds = SYNTHETIC_DATASET
-    samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
+    assert train_ds.targets is not None
 
-    new_ds_1 = sampler_1.subsample(ds)
-    new_samples_per_class_1 = [new_ds_1.targets[new_ds_1.targets == i].size(0) for i in range(10)]
+    samples_per_class = [train_ds.targets[train_ds.targets == i].size(0) for i in range(10)]
 
-    new_ds_2 = sampler_2.subsample(ds)
-    new_samples_per_class_2 = [new_ds_2.targets[new_ds_2.targets == i].size(0) for i in range(10)]
+    train_new_ds_1 = sampler_1.subsample(train_ds)
+    assert train_new_ds_1.targets is not None
+
+    new_samples_per_class_1 = [train_new_ds_1.targets[train_new_ds_1.targets == i].size(0) for i in range(10)]
+
+    train_new_ds_2 = sampler_2.subsample(train_ds)
+    assert train_new_ds_2.targets is not None
+
+    new_samples_per_class_2 = [train_new_ds_2.targets[train_new_ds_2.targets == i].size(0) for i in range(10)]
 
     _, p_val_1 = chisquare(f_obs=new_samples_per_class_1, f_exp=samples_per_class)
     _, p_val_2 = chisquare(f_obs=new_samples_per_class_2, f_exp=samples_per_class)
     _, p_val_3 = chisquare(f_obs=new_samples_per_class_1, f_exp=new_samples_per_class_2)
-
     # Assert that the new distribution with sampler_1 is different from the original distribution
     assert p_val_1 < 0.01
     # Assert that the new distribution with sampler_2 is different from the original distribution
@@ -161,14 +184,22 @@ def test_dirichlet_sampler_with_hash_key() -> None:
         unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1, hash_key=1000
     )
 
-    ds = SYNTHETIC_DATASET
-    samples_per_class = [ds.targets[ds.targets == i].size(0) for i in range(10)]
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
 
-    new_ds_1 = sampler_1.subsample(ds)
-    new_samples_per_class_1 = [new_ds_1.targets[new_ds_1.targets == i].size(0) for i in range(10)]
+    # Training
+    assert train_ds.targets is not None
 
-    new_ds_2 = sampler_2.subsample(ds)
-    new_samples_per_class_2 = [new_ds_2.targets[new_ds_2.targets == i].size(0) for i in range(10)]
+    samples_per_class = [train_ds.targets[train_ds.targets == i].size(0) for i in range(10)]
+
+    train_new_ds_1 = sampler_1.subsample(train_ds)
+    assert train_new_ds_1.targets is not None
+
+    new_samples_per_class_1 = [train_new_ds_1.targets[train_new_ds_1.targets == i].size(0) for i in range(10)]
+
+    train_new_ds_2 = sampler_2.subsample(train_ds)
+    assert train_new_ds_2.targets is not None
+
+    new_samples_per_class_2 = [train_new_ds_2.targets[train_new_ds_2.targets == i].size(0) for i in range(10)]
 
     _, p_val_1 = chisquare(f_obs=new_samples_per_class_1, f_exp=samples_per_class)
     _, p_val_2 = chisquare(f_obs=new_samples_per_class_2, f_exp=samples_per_class)
@@ -183,7 +214,7 @@ def test_dirichlet_sampler_with_hash_key() -> None:
 
     # We also want to make sure the hash key fixed the probability distribution for sampling and the sampling itself
     assert np.allclose(sampler_1.probabilities, sampler_2.probabilities, rtol=0.0, atol=1e-5)
-    assert torch.allclose(new_ds_1.targets, new_ds_2.targets, rtol=0.0, atol=1e-5)
-    assert torch.allclose(new_ds_1.data, new_ds_2.data, rtol=0.0, atol=1e-5)
+    assert torch.allclose(train_new_ds_2.targets, train_new_ds_2.targets, rtol=0.0, atol=1e-5)
+    assert torch.allclose(train_new_ds_2.data, train_new_ds_2.data, rtol=0.0, atol=1e-5)
 
     unset_all_random_seeds()

@@ -6,15 +6,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import torch
 import yaml
 from flwr.common.typing import Config
 from pytest import approx
 from six.moves import urllib
 
-from examples.fedprox_example.client import MnistFedProxClient
-from fl4health.utils.load_data import load_cifar10_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
 
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
 logger = logging.getLogger()
@@ -136,7 +133,7 @@ async def run_smoke_test(
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)
 
-    _preload_dataset(dataset_path, config)
+    _preload_dataset(dataset_path, config, seed)
 
     # Start the server and capture its process object
     logger.info("Starting server...")
@@ -156,6 +153,7 @@ async def run_smoke_test(
     full_server_output = ""
     startup_messages = [
         # printed by fedprox, apfl, basic_example, fedbn, fedper, fedrep, and ditto, FENDA, fl_plus_local_ft and moon
+        # Update, this is no longer in output, examples are actually being triggered by the [ROUND 1] startup message
         "FL starting",
         # printed by scaffold
         "Using Warm Start Strategy. Waiting for clients to be available for polling",
@@ -163,6 +161,11 @@ async def run_smoke_test(
         "Polling Clients for sample counts",
         # printed by federated_eval
         "Federated Evaluation Starting",
+        "[ROUND 1]",
+        # As far as I can tell this is printed by most servers that inherit from FlServer
+        "Flower ECE: gRPC server running ",
+        "gRPC server running",
+        "server running",
     ]
 
     output_found = False
@@ -237,22 +240,21 @@ async def run_smoke_test(
             "[ASSERT ERROR] Federated Evaluation Finished message not found for server."
         )
     else:
-        assert f"evaluate_round {config['n_server_rounds']}" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] Last FL round message not found for server."
+        assert "[SUMMARY]" in full_server_output, (
+            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] [SUMMARY] message not found for server."
         )
-        assert "FL finished" in full_server_output, (
-            f"Full output:\n{full_server_output}\n" "[ASSERT ERROR] FL finished message not found for server."
-        )
-    assert all(
-        message in full_server_output
-        for message in [
-            "app_fit: losses_distributed",
-            "app_fit: metrics_distributed_fit",
-            "app_fit: metrics_distributed",
-            "app_fit: losses_centralized",
-            "app_fit: metrics_centralized",
-        ]
-    ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+    if not assert_evaluation_logs:
+        assert all(
+            message in full_server_output
+            for message in [
+                "History (loss, distributed):",
+                "History (metrics, distributed, fit):",
+            ]
+        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
+    else:
+        assert all(
+            message in full_server_output for message in ["History (metrics, distributed, evaluate):"]
+        ), f"Full output:\n{full_server_output}\n[ASSERT ERROR] Metrics message not found for server."
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
@@ -284,7 +286,171 @@ async def run_smoke_test(
     logger.info("All checks passed. Test finished.")
 
 
-def _preload_dataset(dataset_path: str, config: Config) -> None:
+async def run_fault_tolerance_smoke_test(
+    server_python_path: str,
+    client_python_path: str,
+    config_path: str,
+    partial_config_path: str,
+    dataset_path: str,
+    server_metrics: Dict[str, Any],
+    client_metrics: Dict[str, Any],
+    seed: Optional[int] = None,
+    intermediate_checkpoint_dir: str = "./",
+    server_name: str = "server",
+) -> None:
+    """Runs a smoke test for a given server, client, and dataset configuration.
+
+    Args:
+        server_python_path (str): the path for the executable server module
+        client_python_path (str): the path for the executable client module
+        config_path (str): the path for the config yaml file. The following attributes are required
+            by this function:
+            `n_clients`: the number of clients to be started
+            `n_server_rounds`:  the number of rounds to be ran by the server
+            `batch_size`: the size of the batch, to be used by the dataset preloader
+        partial_config_path (str): the path for the partial config yaml file.
+            Used to pass to server and client to partially execute an FL run to validate checkpointing.
+
+            The following attributes are required
+            by this function and should be the same as those at config_path except n_server_rounds which should be 1:
+            `n_clients`: the number of clients to be started
+            `n_server_rounds`:  the number of rounds to be ran by the server
+            `batch_size`: the size of the batch, to be used by the dataset preloader
+        dataset_path (str): the path of the dataset. Depending on which dataset is being used, it will ty to preload it
+            to avoid problems when running on different runtimes.
+        intermediate_checkpoint_dir (str): Path to store intermediate checkpoints for server and client.
+        seed (Optional[int]): The random seed to be passed in to both the client and the server.
+        server_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+            saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+        client_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+            saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
+    """
+    clear_metrics_folder()
+
+    logger.info("Running smoke tests with parameters:")
+    logger.info(f"\tServer : {server_python_path}")
+    logger.info(f"\tClient : {client_python_path}")
+    logger.info(f"\tConfig : {config_path}")
+    logger.info(f"\tDataset: {dataset_path}")
+    logger.info(f"\tCheckpoint Directory: {intermediate_checkpoint_dir}")
+
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
+    _preload_dataset(dataset_path, config, seed)
+
+    # Start the server and capture its process object
+    logger.info("Starting server...")
+    partial_server_args = [
+        "-m",
+        server_python_path,
+        "--config_path",
+        partial_config_path,
+        "--intermediate_server_state_dir",
+        intermediate_checkpoint_dir,
+        "--server_name",
+        server_name,
+    ]
+    server_args = [
+        "-m",
+        server_python_path,
+        "--config_path",
+        config_path,
+        "--intermediate_server_state_dir",
+        intermediate_checkpoint_dir,
+        "--server_name",
+        server_name,
+    ]
+    client_args = [
+        "-m",
+        client_python_path,
+        "--dataset_path",
+        dataset_path,
+        "--intermediate_client_state_dir",
+        intermediate_checkpoint_dir,
+    ]
+    if seed is not None:
+        partial_server_args.extend(["--seed", str(seed)])
+        server_args.extend(["--seed", str(seed)])
+        client_args.extend(["--seed", str(seed)])
+
+    server_process = await asyncio.create_subprocess_exec(
+        "python",
+        *partial_server_args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+
+    # Start n number of clients and capture their process objects
+    client_processes = []
+    for i in range(config["n_clients"]):
+        logger.info(f"Starting client {i}")
+
+        curr_client_args = client_args + ["--client_name", str(i)]
+
+        client_process = await asyncio.create_subprocess_exec(
+            "python",
+            *curr_client_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        client_processes.append(client_process)
+
+    for i in range(len(client_processes)):
+        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+
+    logger.info("All clients finished execution")
+
+    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+
+    logger.info("Server has finished execution")
+
+    server_process = await asyncio.create_subprocess_exec(
+        "python",
+        *server_args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+
+    logger.info("Server started")
+
+    # Start n number of clients and capture their process objects
+    client_processes = []
+    for i in range(config["n_clients"]):
+        logger.info(f"Starting client {i}")
+
+        curr_client_args = client_args + ["--client_name", str(i)]
+
+        client_process = await asyncio.create_subprocess_exec(
+            "python",
+            *curr_client_args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        client_processes.append(client_process)
+
+    for i in range(len(client_processes)):
+        await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+
+    logger.info("All clients finished execution")
+
+    await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
+
+    logger.info("Server has finished execution")
+
+    server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
+    assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
+
+    # client assertions
+    client_errors = []
+    for i in range(len(client_processes)):
+        client_errors.extend(_assert_metrics(MetricType.CLIENT, client_metrics))
+        assert len(client_errors) == 0, f"Client metrics check failed. Errors: {client_errors}"
+
+    logger.info("All checks passed. Test finished.")
+
+
+def _preload_dataset(dataset_path: str, config: Config, seed: Optional[int] = None) -> None:
     if "mnist" in dataset_path:
         logger.info("Preloading MNIST dataset...")
 
@@ -296,15 +462,23 @@ def _preload_dataset(dataset_path: str, config: Config) -> None:
 
         # Creating a client and getting the data loaders will trigger
         # the dataset's download
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        client = MnistFedProxClient(Path(dataset_path), [Accuracy()], device)
-        client.get_data_loaders(config)
+        logger.info("Preloading MNIST dataset...")
+
+        if seed is not None:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
+        else:
+            load_mnist_data(Path(dataset_path), int(config["batch_size"]))
 
         logger.info("Finished preloading MNIST dataset")
 
     elif "cifar" in dataset_path:
         logger.info("Preloading CIFAR10 dataset...")
-        load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
+        if seed is not None:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+        else:
+            load_cifar10_data(Path(dataset_path), int(config["batch_size"]))
+
         logger.info("Finished preloading CIFAR10 dataset")
 
     else:
@@ -450,6 +624,34 @@ def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(
+        run_fault_tolerance_smoke_test(
+            server_python_path="tests.smoke_tests.load_from_checkpoint_example.server",
+            client_python_path="tests.smoke_tests.load_from_checkpoint_example.client",
+            config_path="tests/smoke_tests/load_from_checkpoint_example/config.yaml",
+            partial_config_path="tests/smoke_tests/load_from_checkpoint_example/partial_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/basic_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/basic_client_metrics.json"),
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_2d.yaml",
+            dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(  # By default will use Task04_Hippocampus Dataset
+            server_python_path="examples.nnunet_example.server",
+            client_python_path="examples.nnunet_example.client",
+            config_path="tests/smoke_tests/nnunet_config_3d.yaml",
+            dataset_path="examples/datasets/nnunet",
+        )
+    )
+    loop.run_until_complete(
         run_smoke_test(
             server_python_path="examples.fedprox_example.server",
             client_python_path="examples.fedprox_example.client",
@@ -588,6 +790,15 @@ if __name__ == "__main__":
     )
     loop.run_until_complete(
         run_smoke_test(
+            server_python_path="examples.fenda_ditto_example.server",
+            client_python_path="examples.fenda_ditto_example.client",
+            config_path="tests/smoke_tests/fenda_ditto_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            checkpoint_path="examples/assets/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
             server_python_path="examples.perfcl_example.server",
             client_python_path="examples.perfcl_example.client",
             config_path="tests/smoke_tests/perfcl_config.yaml",
@@ -616,6 +827,14 @@ if __name__ == "__main__":
             client_python_path="examples.ensemble_example.client",
             config_path="tests/smoke_tests/ensemble_config.yaml",
             dataset_path="examples/datasets/mnist_data/",
+        )
+    )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.flash_example.server",
+            client_python_path="examples.flash_example.client",
+            config_path="tests/smoke_tests/flash_config.yaml",
+            dataset_path="examples/datasets/cifar_data/",
         )
     )
     loop.close()

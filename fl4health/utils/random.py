@@ -1,4 +1,5 @@
 import random
+import string
 from logging import INFO
 from typing import Optional
 
@@ -33,3 +34,16 @@ def unset_all_random_seeds() -> None:
     random.seed(None)
     np.random.seed(None)
     torch.seed()
+
+
+def generate_hash(length: int = 8) -> str:
+    """
+    Generates unique hash used as id for client.
+
+    Args:
+       length (int): The length of the hash.
+
+    Returns:
+        str: client id
+    """
+    return "".join(random.choice(string.ascii_lowercase) for _ in range(length))

@@ -28,6 +28,8 @@ poetry install --with "dev, dev-local, test, codestyle"
 
 Note that the with command is installing all libraries required for the full development workflow. See the `pyproject.toml` file for additional details as to what is installed with each of these options.
 
+If you need to update the environment libraries, you should change the requirements in the `pyproject.toml` and then update the `poetry.lock` using the command `poetry update`
+
 ## Coding Guidelines, Formatters, and Checks
 
 For code style, we recommend the [google style guide](https://google.github.io/styleguide/pyguide.html).

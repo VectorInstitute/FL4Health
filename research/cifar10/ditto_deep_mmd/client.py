@@ -16,7 +16,8 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.mkmmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -66,8 +67,8 @@ class CifarDittoClient(DittoDeepMmdClient):
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        n_clients = self.narrow_config_type(config, "n_clients", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        n_clients = narrow_config_type(config, "n_clients", int)
         # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
@@ -80,15 +81,15 @@ class CifarDittoClient(DittoDeepMmdClient):
         train_loader, val_loader, _ = load_cifar10_data(
             self.data_path,
             batch_size,
-            validation_portion=0.2,
+            validation_proportion=0.2,
             sampler=sampler,
             hash_key=100,
         )
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
-        n_clients = self.narrow_config_type(config, "n_clients", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        n_clients = narrow_config_type(config, "n_clients", int)
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
             sample_percentage=1.0 / n_clients,

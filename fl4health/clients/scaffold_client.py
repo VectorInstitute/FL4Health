@@ -1,14 +1,17 @@
 import copy
+from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
 
 import torch
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 from opacus.optimizers.optimizer import DPOptimizer
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, TorchInputType
+from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
@@ -54,16 +57,29 @@ class ScaffoldClient(BasicClient):
         """
         Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
-        assert self.model is not None and self.parameter_exchanger is not None
+        if not self.initialized:
+            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
 
-        model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+            # If initialized==False, the server is requesting model parameters from which to initialize all other
+            # clients. As such get_parameters is being called before fit or evaluate, so we must call
+            # setup_client first.
+            self.setup_client(config)
 
-        # Weights and control variates updates sent to server for aggregation
-        # Control variates updates sent because only client has access to previous client control variate
-        # Therefore it can only be computed locally
-        assert self.client_control_variates_updates is not None
-        packed_params = self.parameter_exchanger.pack_parameters(model_weights, self.client_control_variates_updates)
-        return packed_params
+            # Need all parameters even if normally exchanging partial
+            return FullParameterExchanger().push_parameters(self.model, config=config)
+        else:
+            assert self.model is not None and self.parameter_exchanger is not None
+
+            model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
+
+            # Weights and control variates updates sent to server for aggregation
+            # Control variates updates sent because only client has access to previous client control variate
+            # Therefore it can only be computed locally
+            assert self.client_control_variates_updates is not None
+            packed_params = self.parameter_exchanger.pack_parameters(
+                model_weights, self.client_control_variates_updates
+            )
+            return packed_params
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
@@ -163,6 +179,13 @@ class ScaffoldClient(BasicClient):
 
         return parameter_delta
 
+    def transform_gradients(self, losses: TrainingLosses) -> None:
+        """
+        Hook function for model training only called after backwards pass but before
+        optimizer step. Used to modify gradient to correct for client drift in Scaffold.
+        """
+        self.modify_grad()
+
     def compute_updated_control_variates(
         self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
     ) -> NDArrays:
@@ -180,33 +203,13 @@ class ScaffoldClient(BasicClient):
         ]
         return updated_client_control_variates
 
-    def train_step(
-        self, input: TorchInputType, target: torch.Tensor
-    ) -> Tuple[TrainingLosses, Dict[str, torch.Tensor]]:
-        # TorchInputType is simply an alias for the union of
-        # torch.Tensor and Dict[str, torch.Tensor].
-
-        # Clear gradients from optimizer if they exist
-        self.optimizers["global"].zero_grad()
-
-        # Get predictions and compute loss
-        preds, features = self.predict(input)
-        losses = self.compute_training_loss(preds, features, target)
-
-        # Calculate backward pass, modify grad to account for client drift, update params
-        losses.backward["backward"].backward()
-        self.modify_grad()
-        self.optimizers["global"].step()
-
-        return losses, preds
-
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         model_size = len(self.model.state_dict())
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float]) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary.
