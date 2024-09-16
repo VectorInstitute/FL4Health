@@ -228,8 +228,8 @@ class DittoMkMmdClient(DittoClient):
             # Compute the features of the initial_global_model
             self.initial_global_model(input)
             initial_global_features = self.initial_global_feature_extractor.get_extracted_features()
-            for key in initial_global_features.keys():
-                features[" ".join(["init_global", key])] = initial_global_features[key]
+            for key, initial_global_feature in initial_global_features.items():
+                features[" ".join(["init_global", key])] = initial_global_feature
 
         return {"global": global_preds, "local": local_preds}, features
 
