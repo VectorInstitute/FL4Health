@@ -52,9 +52,10 @@ class MrMtlMkMmdClient(MrMtlClient):
                 named_modules and values are boolean. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
-            beta_global_update_interval (int, optional): interval at which to update the betas for the
-                MK-MMD loss. Defaults to 20. If set to -1, the betas will be updated for each individual batch.
-                If set to 0, the betas will not be updated.
+            beta_global_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. If
+                set to above 0, the betas will be updated based on whole distribution of latent features of data with
+                the given update interval. If set to 0, the betas will not be updated. If set to -1, the betas will be
+                updated after each individual batch based on only that individual batch. Defaults to 20.
         """
         super().__init__(
             data_path=data_path,
@@ -89,7 +90,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         self.mkmmd_losses = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
-                device=self.device, minimize_type_two_error=True, normalize_features=True
+                device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
             ).to(self.device)
 
         self.local_feature_extractor: FeatureExtractorBuffer
@@ -114,7 +115,6 @@ class MrMtlMkMmdClient(MrMtlClient):
         self.initial_global_feature_extractor._maybe_register_hooks()
 
     def _should_optimize_betas(self, step: int) -> bool:
-        assert self.beta_global_update_interval is not None
         step_at_interval = (step - 1) % self.beta_global_update_interval == 0
         valid_components_present = self.initial_global_model is not None
         return step_at_interval and valid_components_present
@@ -131,11 +131,10 @@ class MrMtlMkMmdClient(MrMtlClient):
                 self.model, self.initial_global_model
             )
             # Update betas for the MK-MMD loss based on gathered features during training
-            if self.mkmmd_loss_weight != 0:
-                for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
-                    layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
-                        X=local_distributions[layer], Y=initial_global_distributions[layer], lambda_m=1e-5
-                    )
+            for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
+                layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
+                    X=local_distributions[layer], Y=initial_global_distributions[layer], lambda_m=1e-5
+                )
 
         return super().update_after_step(step)
 
@@ -190,7 +189,7 @@ class MrMtlMkMmdClient(MrMtlClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> Tuple[TorchPredType, TorchFeatureType]:
         """
          Computes the predictions for both models and pack them into the prediction dictionary
 
@@ -233,7 +232,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -271,7 +270,7 @@ class MrMtlMkMmdClient(MrMtlClient):
                 additional_losses["_".join(["mkmmd_loss", layer])] = mkmmd_loss
                 total_mkmmd_loss += mkmmd_loss
             total_loss += self.mkmmd_loss_weight * total_mkmmd_loss
-            additional_losses["mkmmd_loss"] = total_mkmmd_loss
+            additional_losses["mkmmd_loss_total"] = total_mkmmd_loss
         if self.feature_l2_norm_weight:
             # Compute the average L2 norm of the features over the batch
             feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])

@@ -11,7 +11,7 @@ from monai.data.dataloader import DataLoader
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, CentralPerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, PerRoundCheckpointer
 from fl4health.utils.metrics import MetricManager
 
 
@@ -34,9 +34,7 @@ class SingleNodeTrainer:
             os.mkdir(checkpoint_dir)
 
         per_round_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = CentralPerRoundCheckpointer(
-            Path(checkpoint_dir), Path(per_round_checkpoint_name)
-        )
+        self.per_epoch_checkpointer = PerRoundCheckpointer(Path(checkpoint_dir), Path(per_round_checkpoint_name))
         best_metric_checkpoint_name = "best_ckpt.pkl"
         self.checkpointer = BestLossTorchCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 
@@ -51,7 +49,8 @@ class SingleNodeTrainer:
         if not self.per_epoch_checkpointer.checkpoint_exists():
             self.per_epoch_checkpointer.save_checkpoint({"model": self.model, "optimizer": self.optimizer, "epoch": 0})
 
-        self.model, self.optimizer, self.epoch = self.per_epoch_checkpointer.load_checkpoint()
+        ckpt = self.per_epoch_checkpointer.load_checkpoint()
+        self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
     def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
         if self.checkpointer:

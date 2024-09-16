@@ -13,6 +13,10 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torchmetrics.classification import MultilabelAveragePrecision
 
+from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.clients.basic_client import BasicClient
+from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, TorchMetric
 from research.picai.data_utils import (
     get_dataloader,
@@ -23,28 +27,36 @@ from research.picai.data_utils import (
 )
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
-from research.picai.picai_client import PicaiClient
 
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-class PicaiFedAvgClient(PicaiClient):
+class PicaiFedAvgClient(BasicClient):
     def __init__(
         self,
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        intermediate_checkpoint_dir: Path,
-        overviews_dir: Path,
+        loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        checkpointer: Optional[ClientCheckpointModule] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
+        progress_bar: bool = False,
+        intermediate_checkpoint_dir: Optional[Path] = None,
+        overviews_dir: Path = Path("./"),
         data_partition: Optional[int] = None,
     ) -> None:
         super().__init__(
-            data_path,
-            metrics,
-            device,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            checkpointer=checkpointer,
+            metrics_reporter=metrics_reporter,
+            progress_bar=progress_bar,
             intermediate_checkpoint_dir=intermediate_checkpoint_dir,
-            data_partition=data_partition,
         )
+
+        self.data_partition = data_partition
         self.overviews_dir = overviews_dir
         self.class_proportions: torch.Tensor
 

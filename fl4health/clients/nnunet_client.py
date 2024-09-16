@@ -31,6 +31,7 @@ from fl4health.utils.nnunet_utils import (
     NNUNET_N_SPATIAL_DIMS,
     Module2LossWrapper,
     NnunetConfig,
+    PolyLRSchedulerWrapper,
     StreamToLogger,
     convert_deep_supervision_dict_to_list,
     convert_deep_supervision_list_to_dict,
@@ -70,6 +71,7 @@ class NnunetClient(BasicClient):
         verbose: bool = True,
         metrics: Optional[Sequence[Metric]] = None,
         progress_bar: bool = False,
+        intermediate_checkpoint_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -125,6 +127,8 @@ class NnunetClient(BasicClient):
                 on the labels and predictions of the client model. Defaults to [].
             progress_bar (bool, optional): Whether or not to print a progress bar to
                 stdout for training. Defaults to False
+            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
+                checkpoints.
             loss_meter_type (LossMeterType, optional): Type of meter used to
                 track and compute the losses over each batch. Defaults to
                 LossMeterType.AVERAGE.
@@ -146,6 +150,7 @@ class NnunetClient(BasicClient):
             checkpointer=checkpointer,  # self.checkpointer
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
             progress_bar=progress_bar,
+            intermediate_checkpoint_dir=intermediate_checkpoint_dir,
         )
 
         # Some nnunet client specific attributes
@@ -234,7 +239,7 @@ class NnunetClient(BasicClient):
     def get_optimizer(self, config: Config) -> Optimizer:
         return self.nnunet_trainer.optimizer
 
-    def get_lr_scheduler(self, config: Config) -> _LRScheduler:
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
         """
         Creates an LR Scheduler similar to the nnunet default except we set max steps
         to the total number of steps and update every step. Initial and final LR are
@@ -259,16 +264,20 @@ class NnunetClient(BasicClient):
             )
 
         # Determine total number of steps throughout all FL rounds
-        local_epochs, local_steps, *_ = self.process_config(config)
+        local_epochs, local_steps, _, _ = self.process_config(config)
         if local_steps is not None:
-            self.steps_per_round = local_steps
+            steps_per_round = local_steps
         elif local_epochs is not None:
-            self.steps_per_round = local_epochs * len(self.train_loader)
-        self.max_steps = int(config["n_server_rounds"]) * self.steps_per_round
+            steps_per_round = local_epochs * len(self.train_loader)
+        else:
+            raise ValueError("One of local steps or local epochs must be specified")
 
-        # Create and return LR Scheduler. This is nnunet default for version 2.5.1
-        return PolyLRScheduler(
-            self.optimizers["global"], initial_lr=self.nnunet_trainer.initial_lr, max_steps=self.max_steps
+        total_steps = int(config["n_server_rounds"]) * steps_per_round
+
+        # Create and return LR Scheduler Wrapper for the PolyLRScheduler so that it is
+        # compatible with Torch LRScheduler
+        return PolyLRSchedulerWrapper(
+            self.optimizers[optimizer_key], initial_lr=self.nnunet_trainer.initial_lr, max_steps=total_steps
         )
 
     def create_plans(self, config: Config) -> Dict[str, Any]:
@@ -454,9 +463,6 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-        # Must initialize LR scheduler after parent method initializes optimizer
-        self.lr_scheduler = self.get_lr_scheduler(config)
-
     def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
         """
         Generate model outputs. Overridden because nnunets output lists when
@@ -623,23 +629,6 @@ class NnunetClient(BasicClient):
             torch.cuda.empty_cache()
         elif self.device.type == "mps":
             torch.mps.empty_cache()
-
-    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
-        """
-        Update the learning rate. LR Scheduler is initialized in self.get_lr_scheduler.
-
-        Args:
-            step (int): The current step within the context of the entire round
-            current_round (Optional[int], optional). The current FL round. If left as
-                None, we assume the model is finetuning and do not change the learning
-                rate from what it was at the end of training
-        """
-        if current_round is not None:
-            assert self.total_steps <= self.max_steps, (
-                "Maximum number of steps for the LR Scheduler has been exceeded. "
-                f"Got {self.total_steps} but max was set to {self.max_steps}"
-            )
-            self.lr_scheduler.step(self.total_steps)  # Update LR
 
     def get_client_specific_logs(
         self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
