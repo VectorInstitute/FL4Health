@@ -47,16 +47,16 @@ class DeepMmdLoss(torch.nn.Module):
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
 
         # Initialize parameters
-        self.epsilonOPT: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
-        self.epsilonOPT.requires_grad = self.training
-        self.sigmaOPT: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
-        self.sigmaOPT.requires_grad = self.training
-        self.sigma0OPT: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
-        self.sigma0OPT.requires_grad = self.training
+        self.epsilon_opt: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
+        self.epsilon_opt.requires_grad = self.training
+        self.sigma_opt: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
+        self.sigma_opt.requires_grad = self.training
+        self.sigma0_opt: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
+        self.sigma0_opt.requires_grad = self.training
 
         # Initialize optimizers
         self.optimizer_F = torch.optim.Adam(
-            list(self.featurizer.parameters()) + [self.epsilonOPT] + [self.sigmaOPT] + [self.sigma0OPT], lr=self.lr
+            list(self.featurizer.parameters()) + [self.epsilon_opt] + [self.sigma_opt] + [self.sigma0_opt], lr=self.lr
         )
 
     def Pdist2(self, x: torch.Tensor, y: Optional[torch.Tensor]) -> torch.Tensor:
@@ -152,9 +152,9 @@ class DeepMmdLoss(torch.nn.Module):
         """Train the kernel."""
 
         self.featurizer.train()
-        self.sigmaOPT.requires_grad = True
-        self.sigma0OPT.requires_grad = True
-        self.epsilonOPT.requires_grad = True
+        self.sigma_opt.requires_grad = True
+        self.sigma0_opt.requires_grad = True
+        self.epsilon_opt.requires_grad = True
 
         features = torch.cat([X, Y], 0)
 
@@ -166,9 +166,9 @@ class DeepMmdLoss(torch.nn.Module):
         # Compute output of deep network
         model_output = self.featurizer(features)
         # Compute epsilon, sigma and sigma_0
-        ep = torch.exp(self.epsilonOPT) / (1 + torch.exp(self.epsilonOPT))
-        sigma = self.sigmaOPT**2
-        sigma0_u = self.sigma0OPT**2
+        ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
+        sigma = self.sigma_opt**2
+        sigma0_u = self.sigma0_opt**2
         # Compute Compute J (STAT_u)
         mmd_value_temp, mmd_var_temp, _ = self.MMDu(
             Fea=model_output,
@@ -192,18 +192,18 @@ class DeepMmdLoss(torch.nn.Module):
         """Train the kernel."""
 
         self.featurizer.eval()
-        self.sigmaOPT.requires_grad = False
-        self.sigma0OPT.requires_grad = False
-        self.epsilonOPT.requires_grad = False
+        self.sigma_opt.requires_grad = False
+        self.sigma0_opt.requires_grad = False
+        self.epsilon_opt.requires_grad = False
 
         features = torch.cat([X, Y], 0)
 
         # Compute output of deep network
         model_output = self.featurizer(features)
         # Compute epsilon, sigma and sigma_0
-        ep = torch.exp(self.epsilonOPT) / (1 + torch.exp(self.epsilonOPT))
-        sigma = self.sigmaOPT**2
-        sigma0_u = self.sigma0OPT**2
+        ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
+        sigma = self.sigma_opt**2
+        sigma0_u = self.sigma0_opt**2
         # Compute Compute J (STAT_u)
         mmd_value_temp, _, _ = self.MMDu(
             Fea=model_output,
@@ -212,6 +212,7 @@ class DeepMmdLoss(torch.nn.Module):
             sigma=sigma,
             sigma0=sigma0_u,
             epsilon=ep,
+            is_var_computed = False,
         )
 
         return mmd_value_temp
