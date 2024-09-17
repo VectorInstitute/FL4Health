@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 from fl4health.utils.dataset import SyntheticDataset
-from fl4health.utils.partitioners import LabelBasedDirichletAllocation
+from fl4health.utils.partitioners import DirichletLabelBasedAllocation
 
 
 def construct_synthetic_dataset() -> SyntheticDataset:
@@ -23,7 +23,7 @@ def test_dirichlet_allocation_partitioner() -> None:
     # setting numpy seed for reproducibility
     np.random.seed(42)
     # Should be a fairly uniform partitioner with a large beta
-    uniform_partitioner = LabelBasedDirichletAllocation(
+    uniform_partitioner = DirichletLabelBasedAllocation(
         number_of_partitions=5, unique_labels=list(range(10)), beta=100.0
     )
     partitioned_datasets = uniform_partitioner.partition_dataset(SYNTHETIC_DATASET)
@@ -45,7 +45,7 @@ def test_dirichlet_allocation_partitioner() -> None:
     assert len(torch.where(partition_4_targets == 5)[0]) == 232
 
     # Should be a skewed partitioner with a small beta
-    heterogeneous_partitioner = LabelBasedDirichletAllocation(
+    heterogeneous_partitioner = DirichletLabelBasedAllocation(
         number_of_partitions=10, unique_labels=list(range(10)), beta=1.0, min_label_examples=2
     )
     partitioned_datasets = heterogeneous_partitioner.partition_dataset(SYNTHETIC_DATASET, max_retries=5)

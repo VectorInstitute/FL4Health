@@ -93,6 +93,16 @@ class SslTensorDataset(TensorDataset):
 
 class DictionaryDataset(Dataset):
     def __init__(self, data: Dict[str, List[torch.Tensor]], targets: torch.Tensor) -> None:
+        """
+        A torch dataset that supports a dictionary of input data rather than just a torch.Tensor. This kind of dataset
+        is useful when dealing with non-trivial inputs to a model. For example, a language model may require token ids
+        AND attention masks. This dataset supports that functionality.
+
+        Args:
+            data (Dict[str, List[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
+                of tensors.
+            targets (torch.Tensor): Target tensor.
+        """
         self.data = data
         self.targets = targets
 
@@ -111,7 +121,8 @@ class SyntheticDataset(TensorDataset):
         targets: torch.Tensor,
     ):
         """
-        A dataset for synthetically created data strictly in the form of pytorch tensors.
+        A dataset for synthetically created data strictly in the form of pytorch tensors. Generally, this dataset
+        is just used for tests.
         Args:
             data (torch.Tensor): Data tensor with first dimension corresponding to the number of datapoints
             targets (torch.Tensor): Target tensor with first dimension corresponding to the number of datapoints
@@ -134,6 +145,20 @@ D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
 
 
 def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
+    """
+    This function is used to extract a subset of a dataset sliced by the indices in the tensor selected_indices. The
+    dataset returned should be of the same type as the input but with only data associated with the given indices.
+
+    Args:
+        dataset (D): Dataset to be "subsampled" using the provided indices.
+        selected_indices (torch.Tensor): Indices within the datasets data and targets (if they exist) to select
+
+    Raises:
+        TypeError: Will throw an error if the dataset provided is not supported
+
+    Returns:
+        D: Dataset with only the data associated with the provided indices. Must be of a supported type.
+    """
     if isinstance(dataset, TensorDataset):
         modified_dataset = copy.deepcopy(dataset)
         modified_dataset.data = dataset.data[selected_indices]
