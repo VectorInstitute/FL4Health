@@ -42,6 +42,34 @@ class ClientCheckpointModule:
         self.post_aggregation = (
             [post_aggregation] if isinstance(post_aggregation, TorchCheckpointer) else post_aggregation
         )
+        self._check_if_shared_checkpoint_names()
+
+    def _check_if_shared_checkpoint_names(self) -> None:
+        """
+        This function is meant to throw an exception if there is an overlap in the paths to which their checkpointers
+        will save checkpoints to avoid accidental overwriting.
+        """
+
+        pre_aggregation_paths = (
+            [checkpointer.best_checkpoint_path for checkpointer in self.pre_aggregation]
+            if self.pre_aggregation
+            else []
+        )
+        post_aggregation_paths = (
+            [checkpointer.best_checkpoint_path for checkpointer in self.post_aggregation]
+            if self.post_aggregation
+            else []
+        )
+
+        all_paths = pre_aggregation_paths + post_aggregation_paths
+        unique_paths = set(all_paths)
+
+        if len(unique_paths) != len(all_paths):
+            formatted_all_paths = "\n".join(all_paths)
+            raise ValueError(
+                "The paths of all of your checkpointers should be unique otherwise overwrites are possible and data "
+                f"will be lost. The current paths are:\n{formatted_all_paths}"
+            )
 
     def maybe_checkpoint(
         self, model: nn.Module, loss: float, metrics: Dict[str, Scalar], mode: CheckpointMode

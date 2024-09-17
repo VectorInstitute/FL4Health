@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List
 
+import pytest
 import torch
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer, TorchCheckpointer
@@ -151,3 +152,18 @@ def test_client_checkpointer_module_with_sequence_of_checkpointers(tmp_path: Pat
     assert isinstance(loaded_post_model, LinearTransform)
     # post aggregation model should be the same as model_1
     assert torch.equal(model_1.linear.weight, loaded_post_model.linear.weight)
+
+
+def test_path_duplication_check(tmp_path: Path) -> None:
+    checkpoint_dir = tmp_path.joinpath("resources")
+    checkpoint_dir.mkdir()
+    pre_aggregation_checkpointer: List[TorchCheckpointer] = [
+        BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
+        LatestTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
+    ]
+    post_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "post_agg.pkl")
+    # We have duplicate names, so we want to raise an error to prevent data loss/checkpoint overwrites
+    with pytest.raises(ValueError):
+        ClientCheckpointModule(
+            pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
+        )
