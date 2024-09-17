@@ -45,7 +45,6 @@ class CifarDittoClient(DittoMkMmdClient):
         beta_global_update_interval: int = 20,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
-        flatten_feature_extraction_layers = {key: True for key in BASELINE_LAYERS[-1 * mkmmd_loss_depth :]}
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -54,7 +53,7 @@ class CifarDittoClient(DittoMkMmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            flatten_feature_extraction_layers=flatten_feature_extraction_layers,
+            feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
         )
@@ -89,6 +88,9 @@ class CifarDittoClient(DittoMkMmdClient):
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
         n_clients = narrow_config_type(config, "n_clients", int)
+        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients 
+        # Also as hash_key is same between train and test sampler, the test data distribution will be same 
+        # as the train data distribution
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
             sample_percentage=1.0 / n_clients,
@@ -192,7 +194,7 @@ if __name__ == "__main__":
         "--beta_update_interval",
         action="store",
         type=int,
-        help="Interval for updating the beta values",
+        help="Interval for updating the beta values of mkmmd loss",
         required=False,
         default=20,
     )
@@ -213,7 +215,7 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpointer = ClientCheckpointModule(pre_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
     data_path = Path(args.dataset_dir)
     client = CifarDittoClient(

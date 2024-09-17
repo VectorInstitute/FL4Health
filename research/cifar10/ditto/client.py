@@ -79,6 +79,9 @@ class CifarDittoClient(DittoClient):
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
         n_clients = narrow_config_type(config, "n_clients", int)
+        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients 
+        # Also as hash_key is same between train and test sampler, the test data distribution will be same 
+        # as the train data distribution
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
             sample_percentage=1.0 / n_clients,
@@ -170,7 +173,7 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpointer = ClientCheckpointModule(pre_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
     data_path = Path(args.dataset_dir)
     client = CifarDittoClient(
