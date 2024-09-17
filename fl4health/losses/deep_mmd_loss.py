@@ -212,7 +212,7 @@ class DeepMmdLoss(torch.nn.Module):
             sigma=sigma,
             sigma0=sigma0_u,
             epsilon=ep,
-            is_var_computed = False,
+            is_var_computed=False,
         )
 
         return mmd_value_temp
