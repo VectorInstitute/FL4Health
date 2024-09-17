@@ -79,8 +79,8 @@ class CifarDittoClient(DittoClient):
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
         n_clients = narrow_config_type(config, "n_clients", int)
-        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients 
-        # Also as hash_key is same between train and test sampler, the test data distribution will be same 
+        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+        # Also as hash_key is same between train and test sampler, the test data distribution will be same
         # as the train data distribution
         sampler = DirichletLabelBasedSampler(
             list(range(10)),
