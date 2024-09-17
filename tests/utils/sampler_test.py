@@ -1,8 +1,12 @@
 from pathlib import Path
 
+import numpy as np
+import pytest
+import torch
 from scipy.stats import chisquare
 
 from fl4health.utils.load_data import get_train_and_val_mnist_datasets
+from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler, MinorityLabelBasedSampler
 
 
@@ -44,40 +48,173 @@ def test_minority_sampler() -> None:
     assert len(val_ds_new) == sum(new_samples_per_class)
 
 
-def test_dirichlet_sampler() -> None:
-    # Kind of hacky way to ensure sampled label distribution differs from original label distribution
+def test_dirichlet_sampler_probability_assignment() -> None:
+    # Set the random seeds
+    set_all_random_seeds(2023)
+
+    # Very mild heterogeneity with beta 100
+    sampler_1 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=100)
+    prob_ratio_1 = min(sampler_1.probabilities) / max(sampler_1.probabilities)
+
+    # Mild heterogeneity with beta 1
+    sampler_2 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=10)
+    prob_ratio_2 = min(sampler_2.probabilities) / max(sampler_2.probabilities)
+
+    # Assert that the probabilities are more evenly distributed with higher beta
+    assert prob_ratio_1 > prob_ratio_2
+
+    # Severe heterogeneity with beta 0.1
+    sampler_3 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.5)
+    prob_ratio_3 = min(sampler_3.probabilities) / max(sampler_3.probabilities)
+
+    # Assert that the probabilities are more evenly distributed with higher beta
+    assert prob_ratio_2 > prob_ratio_3
+
+    # Very severe heterogeneity with beta 0.0001
+    sampler_4 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.001)
+    prob_ratio_4 = min(sampler_4.probabilities) / max(sampler_4.probabilities)
+
+    # Assert that the probabilities are more evenly distributed with higher beta
+    assert prob_ratio_3 > prob_ratio_4
+
+    unset_all_random_seeds()
+
+
+def test_dirichlet_sampler_with_assigned_probability() -> None:
+    # Set the random seeds
+    set_all_random_seeds(2023)
     sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
-    train_ds, val_ds = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+
+    # Training
+    assert train_ds.targets is not None
+
+    # No heterogeneity
+    relative_probabilities = [1] * 10
+    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
+    new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
+
+    # Assert that probabilities of sampled indices are close to assigned probabilities
+    for i in range(10):
+        assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
+
+    # Mild heterogeneity
+    relative_probabilities = [i for i in range(1, 11)]
+    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
+    new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
+
+    # Assert that probabilities of sampled indices are close to assigned probabilities
+    for i in range(10):
+        assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
+
+    # Extreme heterogeneity
+    relative_probabilities = [i for i in range(1, 101, 10)]
+    sampler.probabilities = np.array([i for i in relative_probabilities]) / sum([i for i in relative_probabilities])
+    train_new_ds = sampler.subsample(train_ds)
+    assert train_new_ds.targets is not None
+
+    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
+    new_probabilities = [x / sum(new_samples_per_class) for x in new_samples_per_class]
+
+    # Assert that probabilities of sampled indices are close to assigned probabilities
+    for i in range(10):
+        assert pytest.approx(new_probabilities[i], abs=0.001) == sampler.probabilities[i]
+
+    unset_all_random_seeds()
+
+
+def test_dirichlet_sampler_without_hash_key() -> None:
+    # Set the random seeds
+    set_all_random_seeds(2023)
+    # Kind of hacky way to ensure sampled label distribution differs from original label distribution
+    # Here we don't set the hash_key to have different random samplers
+    sampler_1 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
+    sampler_2 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
+
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
 
     # Training
     assert train_ds.targets is not None
 
     samples_per_class = [train_ds.targets[train_ds.targets == i].size(0) for i in range(10)]
 
-    train_new_ds = sampler.subsample(train_ds)
+    train_new_ds_1 = sampler_1.subsample(train_ds)
+    assert train_new_ds_1.targets is not None
 
-    assert train_new_ds.targets is not None
+    new_samples_per_class_1 = [train_new_ds_1.targets[train_new_ds_1.targets == i].size(0) for i in range(10)]
 
-    new_samples_per_class = [train_new_ds.targets[train_new_ds.targets == i].size(0) for i in range(10)]
+    train_new_ds_2 = sampler_2.subsample(train_ds)
+    assert train_new_ds_2.targets is not None
 
-    _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)
+    new_samples_per_class_2 = [train_new_ds_2.targets[train_new_ds_2.targets == i].size(0) for i in range(10)]
 
-    # Assert that the new distribution is different from the original distribution
-    assert p_val < 0.01
+    _, p_val_1 = chisquare(f_obs=new_samples_per_class_1, f_exp=samples_per_class)
+    _, p_val_2 = chisquare(f_obs=new_samples_per_class_2, f_exp=samples_per_class)
+    _, p_val_3 = chisquare(f_obs=new_samples_per_class_1, f_exp=new_samples_per_class_2)
+    # Assert that the new distribution with sampler_1 is different from the original distribution
+    assert p_val_1 < 0.01
+    # Assert that the new distribution with sampler_2 is different from the original distribution
+    assert p_val_2 < 0.01
+    # Assert that the new distributions with sampler_1 and sampler_2 are different due to different random seeds
+    assert p_val_3 < 0.01
 
-    # Validation
-    assert val_ds.targets is not None
+    unset_all_random_seeds()
 
-    samples_per_class = [val_ds.targets[val_ds.targets == i].size(0) for i in range(10)]
 
-    val_new_ds = sampler.subsample(val_ds)
+def test_dirichlet_sampler_with_hash_key() -> None:
+    # Set the random seeds
+    set_all_random_seeds(2023)
+    # Kind of hacky way to ensure sampled label distribution differs from original label distribution
+    # Here we set the hash_key to the same value for both samplers
+    sampler_1 = DirichletLabelBasedSampler(
+        unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1, hash_key=1000
+    )
+    sampler_2 = DirichletLabelBasedSampler(
+        unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1, hash_key=1000
+    )
 
-    assert val_new_ds.targets is not None
+    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
 
-    new_samples_per_class = [val_new_ds.targets[val_new_ds.targets == i].size(0) for i in range(10)]
+    # Training
+    assert train_ds.targets is not None
 
-    _, p_val = chisquare(f_obs=new_samples_per_class, f_exp=samples_per_class)
+    samples_per_class = [train_ds.targets[train_ds.targets == i].size(0) for i in range(10)]
 
-    # Assert that the new distribution is different from the original distribution
-    assert p_val < 0.01
+    train_new_ds_1 = sampler_1.subsample(train_ds)
+    assert train_new_ds_1.targets is not None
+
+    new_samples_per_class_1 = [train_new_ds_1.targets[train_new_ds_1.targets == i].size(0) for i in range(10)]
+
+    train_new_ds_2 = sampler_2.subsample(train_ds)
+    assert train_new_ds_2.targets is not None
+
+    new_samples_per_class_2 = [train_new_ds_2.targets[train_new_ds_2.targets == i].size(0) for i in range(10)]
+
+    _, p_val_1 = chisquare(f_obs=new_samples_per_class_1, f_exp=samples_per_class)
+    _, p_val_2 = chisquare(f_obs=new_samples_per_class_2, f_exp=samples_per_class)
+    _, p_val_3 = chisquare(f_obs=new_samples_per_class_1, f_exp=new_samples_per_class_2)
+
+    # Assert that the new distribution with sampler_1 is different from the original distribution
+    assert p_val_1 < 0.01
+    # Assert that the new distribution with sampler_2 is different from the original distribution
+    assert p_val_2 < 0.01
+    # Assert that the new distributions with sampler_1 and sampler_1 are same due to same hash_key
+    assert p_val_3 == 1.0
+
+    # We also want to make sure the hash key fixed the probability distribution for sampling and the sampling itself
+    assert np.allclose(sampler_1.probabilities, sampler_2.probabilities, rtol=0.0, atol=1e-5)
+    assert torch.allclose(train_new_ds_2.targets, train_new_ds_2.targets, rtol=0.0, atol=1e-5)
+    assert torch.allclose(train_new_ds_2.data, train_new_ds_2.data, rtol=0.0, atol=1e-5)
+
+    unset_all_random_seeds()

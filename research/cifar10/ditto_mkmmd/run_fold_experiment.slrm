@@ -3,20 +3,20 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
 #SBATCH --mem=32G
 #SBATCH --partition=a40
-#SBATCH --qos=m
+#SBATCH --qos=m2
 #SBATCH --job-name=fl_five_fold_exp
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
-#SBATCH --time=12:00:00
+#SBATCH --time=4:00:00
 
 ###############################################
 # Usage:
 #
-# sbatch research/flamby/fed_isic2019/ditto_deep_mmd/run_fold_experiment.slrm \
+# sbatch research/cifar10/ditto_mkmmd/run_fold_experiment.slrm \
 #   path_to_config.yaml \
 #   path_to_folder_for_artifacts/ \
 #   path_to_folder_for_dataset/ \
@@ -24,23 +24,30 @@
 #   client_side_learning_rate_value \
 #   lambda value \
 #   mu value \
-#   depp_mmd_loss_depth value \
-#   server_address
+#   l2 value \
+#   mkmmd_loss_depth \
+#   beta_update_interval \
+#   server_address\
+#   client_beta
 #
 # Example:
-# sbatch research/flamby/fed_isic2019/ditto_deep_mmd/run_fold_experiment.slrm \
-#   research/flamby/fed_isic2019/ditto_deep_mmd/config.yaml \
-#   research/flamby/fed_isic2019/ditto_deep_mmd/hp_results/ \
-#   /Users/david/Desktop/FLambyDatasets/fedisic2019/ \
+# sbatch research/cifar10/ditto_mkmmd/run_fold_experiment.slrm \
+#   research/cifar10/ditto_mkmmd/config.yaml \
+#   research/cifar10/ditto_mkmmd/hp_results/ \
+#   /datasets/cifar10 \
 #   /h/demerson/vector_repositories/fl4health_env/ \
 #   0.0001 \
 #   0.01 \
 #   0.1 \
-#   0.0.0.0:8080
+#   0.1 \
+#   2 \
+#   20 \
+#   0.0.0.0:8080\
+#   0.1
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs ditto. As such the data paths and python launch commands are hardcoded. If you want to change
+# 2) This example runs ditto MkMMD. As such the data paths and python launch commands are hardcoded. If you want to change
 # the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################
@@ -70,8 +77,11 @@ VENV_PATH=$4
 CLIENT_LR=$5
 LAM_VALUE=$6
 MU_VALUE=$7
-DEEP_MMD_LOSS_DEPTH=$8
-SERVER_ADDRESS=$9
+L2_VALUE=$8
+MKMMD_LOSS_DEPTH=$9
+BETA_INTERVAL=${10}
+SERVER_ADDRESS=${11}
+CLIENT_BETA=${12}
 
 # Create the artifact directory
 mkdir "${ARTIFACT_DIR}"
@@ -126,7 +136,7 @@ do
     echo "Server logging at: ${SERVER_OUTPUT_FILE}"
     echo "Launching Server"
 
-    nohup python -m research.flamby.fed_isic2019.ditto_deep_mmd.server \
+    nohup python -m research.cifar10.ditto_mkmmd.server \
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
@@ -136,7 +146,7 @@ do
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=6
+    n_clients=10
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -144,7 +154,7 @@ do
 
         CLIENT_LOG_PATH="${RUN_DIR}${CLIENT_NAME}.out"
         echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-        nohup python -m research.flamby.fed_isic2019.ditto_deep_mmd.client \
+        nohup python -m research.cifar10.ditto_mkmmd.client \
             --artifact_dir ${ARTIFACT_DIR} \
             --dataset_dir ${DATASET_DIR} \
             --run_name ${RUN_NAME} \
@@ -152,9 +162,12 @@ do
             --learning_rate ${CLIENT_LR} \
             --lam ${LAM_VALUE} \
             --mu ${MU_VALUE} \
-            --deep_mmd_loss_depth ${DEEP_MMD_LOSS_DEPTH} \
+            --l2 ${L2_VALUE} \
+            --mkmmd_loss_depth ${MKMMD_LOSS_DEPTH} \
+            --beta_update_interval ${BETA_INTERVAL} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
+            --beta ${CLIENT_BETA} \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

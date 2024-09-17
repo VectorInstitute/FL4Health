@@ -28,11 +28,13 @@ class ToNumpy:
 
 
 def split_data_and_targets(
-    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2
+    data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2, hash_key: Optional[int] = None
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
     total_size = data.shape[0]
     train_size = int(total_size * (1 - validation_proportion))
+    if hash_key is not None:
+        random.seed(hash_key)
     train_indices = random.sample(range(total_size), train_size)
     val_indices = [i for i in range(total_size) if i not in train_indices]
     train_data, train_targets = data[train_indices], targets[train_indices]
@@ -52,10 +54,13 @@ def get_train_and_val_mnist_datasets(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     validation_proportion: float = 0.2,
+    hash_key: Optional[int] = None,
 ) -> Tuple[TensorDataset, TensorDataset]:
     data, targets = get_mnist_data_and_target_tensors(data_dir, True)
 
-    train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets, validation_proportion)
+    train_data, train_targets, val_data, val_targets = split_data_and_targets(
+        data, targets, validation_proportion, hash_key
+    )
 
     training_set = TensorDataset(train_data, train_targets, transform=transform, target_transform=target_transform)
     validation_set = TensorDataset(val_data, val_targets, transform=transform, target_transform=target_transform)
@@ -70,6 +75,7 @@ def load_mnist_data(
     target_transform: Optional[Callable] = None,
     dataset_converter: Optional[DatasetConverter] = None,
     validation_proportion: float = 0.2,
+    hash_key: Optional[int] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """
     Load MNIST Dataset (training and validation set).
@@ -85,6 +91,8 @@ def load_mnist_data(
             the input and/or target of train and validation dataset.
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
+        hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
+            dataset.
 
     Returns:
         Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
@@ -101,7 +109,7 @@ def load_mnist_data(
             ]
         )
     training_set, validation_set = get_train_and_val_mnist_datasets(
-        data_dir, transform, target_transform, validation_proportion
+        data_dir, transform, target_transform, validation_proportion, hash_key
     )
 
     if sampler is not None:
@@ -173,10 +181,13 @@ def get_train_and_val_cifar10_datasets(
     transform: Optional[Callable] = None,
     target_transform: Optional[Callable] = None,
     validation_proportion: float = 0.2,
+    hash_key: Optional[int] = None,
 ) -> Tuple[TensorDataset, TensorDataset]:
     data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
 
-    train_data, train_targets, val_data, val_targets = split_data_and_targets(data, targets, validation_proportion)
+    train_data, train_targets, val_data, val_targets = split_data_and_targets(
+        data, targets, validation_proportion, hash_key
+    )
 
     training_set = TensorDataset(train_data, train_targets, transform=transform, target_transform=target_transform)
     validation_set = TensorDataset(val_data, val_targets, transform=transform, target_transform=target_transform)
@@ -189,6 +200,7 @@ def load_cifar10_data(
     batch_size: int,
     sampler: Optional[LabelBasedSampler] = None,
     validation_proportion: float = 0.2,
+    hash_key: Optional[int] = None,
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     """
     Load CIFAR10 Dataset (training and validation set).
@@ -200,6 +212,8 @@ def load_cifar10_data(
         sampler (Optional[LabelBasedSampler]): Optional sampler to subsample dataset based on labels.
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
+        hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
+            dataset.
 
     Returns:
         Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
@@ -214,7 +228,9 @@ def load_cifar10_data(
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
-    training_set, validation_set = get_train_and_val_cifar10_datasets(data_dir, transform, None, validation_proportion)
+    training_set, validation_set = get_train_and_val_cifar10_datasets(
+        data_dir, transform, None, validation_proportion, hash_key
+    )
 
     if sampler is not None:
         training_set = sampler.subsample(training_set)

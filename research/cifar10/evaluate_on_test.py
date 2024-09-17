@@ -1,21 +1,25 @@
 import argparse
 from logging import INFO
+from pathlib import Path
 from typing import Dict
 
 import torch
-from flamby.datasets.fed_heart_disease import BATCH_SIZE, NUM_CLIENTS, FedHeartDisease
 from flwr.common.logger import log
-from torch.utils.data import DataLoader
 
+from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
-from research.flamby.utils import (
-    evaluate_fed_heart_disease_model,
+from fl4health.utils.sampler import DirichletLabelBasedSampler
+from research.cifar10.utils import (
+    evaluate_cifar10_model,
     get_all_run_folders,
     get_metric_avg_std,
     load_global_model,
     load_local_model,
     write_measurement_results,
 )
+
+NUM_CLIENTS = 10
+BATCH_SIZE = 32
 
 
 def main(
@@ -24,12 +28,13 @@ def main(
     eval_write_path: str,
     eval_local_models: bool,
     eval_global_model: bool,
+    heterogeneity_level: float,
     is_apfl: bool,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
-    metrics = [Accuracy("FedHeartDisease_accuracy")]
+    metrics = [Accuracy("cifar10_accuracy")]
 
     all_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_server_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
@@ -37,15 +42,20 @@ def main(
     # First we test each client's best model on local test data and the best server model on that same data
 
     for client_number in range(NUM_CLIENTS):
-        client_test_dataset = FedHeartDisease(center=client_number, train=False, pooled=False, data_path=dataset_dir)
-        test_loader = DataLoader(client_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / NUM_CLIENTS,
+            beta=heterogeneity_level,
+            hash_key=client_number,
+        )
+        test_loader, _ = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
 
         local_test_metrics = []
         server_test_metrics = []
         for run_folder_dir in all_run_folder_dir:
             if eval_local_models:
                 local_model = load_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_fed_heart_disease_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_cifar10_model(local_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -56,9 +66,7 @@ def main(
 
             if eval_global_model:
                 server_model = load_global_model(run_folder_dir)
-                server_run_metric = evaluate_fed_heart_disease_model(
-                    server_model, test_loader, metrics, device, is_apfl
-                )
+                server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -105,24 +113,6 @@ def main(
         log(INFO, f"Avg. Server Model Test Performance Over all clients: {all_server_avg_test_metric}")
         log(INFO, f"Std. Dev. Server Model Test Performance Over all clients: {all_server_std_test_metric}")
 
-    if eval_global_model:
-        # Next we test server checkpointed best model on pooled test data
-        pooled_test_dataset = FedHeartDisease(center=0, train=False, pooled=True, data_path=dataset_dir)
-        pooled_test_loader = DataLoader(pooled_test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-
-        test_metrics = []
-        for run_folder_dir in all_run_folder_dir:
-            model = load_global_model(run_folder_dir)
-            run_metric = evaluate_fed_heart_disease_model(model, pooled_test_loader, metrics, device, is_apfl)
-            log(INFO, f"Server, Run folder: {run_folder_dir}: Test Performance: {run_metric}")
-            test_metrics.append(run_metric)
-
-        avg_server_test_metric, std_server_test_metric = get_metric_avg_std(test_metrics)
-        log(INFO, f"Server Average Test Performance on Pooled Data: {avg_server_test_metric}")
-        log(INFO, f"Server St. Dev. Test Performance on Pooled Data: {std_server_test_metric}")
-        test_results["server_avg_pooled"] = avg_server_test_metric
-        test_results["server_std_pooled"] = std_server_test_metric
-
     write_measurement_results(eval_write_path, test_results)
 
 
@@ -139,7 +129,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
+        help="Path to the preprocessed Cifar10 Dataset (ex. path/to/cifar10)",
         required=True,
     )
     parser.add_argument(
@@ -165,6 +155,14 @@ if __name__ == "__main__":
         action="store_true",
         help="boolean to indicate whether we're evaluating an APFL model or not, as those model have special args",
     )
+    parser.add_argument(
+        "--beta",
+        action="store",
+        type=float,
+        help="Heterogeneity level for the dataset",
+        required=False,
+        default=0.1,
+    )
 
     args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
@@ -172,6 +170,7 @@ if __name__ == "__main__":
     log(INFO, f"Eval Write Path: {args.eval_write_path}")
     log(INFO, f"Run Local Models: {args.eval_local_models}")
     log(INFO, f"Run Global Model: {args.eval_global_model}")
+    log(INFO, f"Heterogeneity level for the dataset: {args.beta}")
     log(INFO, f"Is APFL Run: {args.is_apfl}")
 
     assert args.eval_local_models or args.eval_global_model
@@ -181,5 +180,6 @@ if __name__ == "__main__":
         args.eval_write_path,
         args.eval_local_models,
         args.eval_global_model,
+        args.beta,
         args.is_apfl,
     )

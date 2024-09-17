@@ -1,6 +1,5 @@
 import argparse
 import os
-from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
 from typing import Dict, Optional, Sequence, Tuple
@@ -8,7 +7,6 @@ from typing import Dict, Optional, Sequence, Tuple
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -17,19 +15,19 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.deep_mmd_clients.ditto_deep_mmd_client import DittoDeepMmdClient
+from fl4health.clients.ditto_client import DittoClient
+from fl4health.utils.config import narrow_config_type
+from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import BalancedAccuracy, Metric
+from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+from fl4health.utils.sampler import DirichletLabelBasedSampler
+from research.cifar10.model import ConvNet
 
-FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
-for i in range(16):
-    FED_ISIC2019_BASELINE_LAYERS[f"base_model._blocks.{i}"] = 64
-FED_ISIC2019_BASELINE_LAYERS["base_model._dropout"] = 1280
+NUM_CLIENTS = 10
 
 
-class FedIsic2019DittoClient(DittoDeepMmdClient):
+class CifarDittoClient(DittoClient):
     def __init__(
         self,
         data_path: Path,
@@ -37,15 +35,11 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam: float = 0,
+        lam: float,
+        heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        deep_mmd_loss_weight: float = 10,
-        deep_mmd_loss_depth: int = 1,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
-        size_feature_extraction_layers = OrderedDict(
-            list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
-        )
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -53,36 +47,57 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             lam=lam,
-            deep_mmd_loss_weight=deep_mmd_loss_weight,
-            flatten_feature_extraction_layers={key: True for key in size_feature_extraction_layers},
-            size_feature_extraction_layers=size_feature_extraction_layers,
         )
         self.client_number = client_number
+        self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
 
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
-            self.client_number, str(self.data_path)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        n_clients = narrow_config_type(config, "n_clients", int)
+        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+        sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / n_clients,
+            beta=self.heterogeneity_level,
+            hash_key=self.client_number,
         )
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        val_loader = DataLoader(validation_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        # Set the same hash_key for the train_loader and val_loader to ensure the same data split
+        # of train and validation for all clients
+        train_loader, val_loader, _ = load_cifar10_data(
+            self.data_path,
+            batch_size,
+            validation_proportion=0.2,
+            sampler=sampler,
+            hash_key=100,
+        )
         return train_loader, val_loader
 
-    def get_model(self, config: Config) -> nn.Module:
-        model: nn.Module = Baseline().to(self.device)
-        return model
-
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+        batch_size = narrow_config_type(config, "batch_size", int)
+        n_clients = narrow_config_type(config, "n_clients", int)
+        sampler = DirichletLabelBasedSampler(
+            list(range(10)),
+            sample_percentage=1.0 / n_clients,
+            beta=self.heterogeneity_level,
+            hash_key=self.client_number,
+        )
+        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
+        return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
-        return BaselineLoss()
+        return torch.nn.CrossEntropyLoss()
+
+    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+        global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)
+        local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
+        return {"global": global_optimizer, "local": local_optimizer}
+
+    def get_model(self, config: Config) -> nn.Module:
+        return ConvNet(in_channels=3).to(self.device)
 
 
 if __name__ == "__main__":
@@ -98,7 +113,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
+        help="Path to the preprocessed Cifar 10 Dataset",
         required=True,
     )
     parser.add_argument(
@@ -118,11 +133,11 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
+        help="Number of the client for dataset loading",
         required=True,
     )
     parser.add_argument(
-        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
+        "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.1
     )
     parser.add_argument(
         "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
@@ -135,34 +150,11 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--mu",
+        "--beta",
         action="store",
         type=float,
-        help="Weight for the mkmmd losses",
-        required=False,
-    )
-    parser.add_argument(
-        "--l2",
-        action="store",
-        type=float,
-        help="Weight for the feature l2 norm loss as a regularizer",
-        required=False,
-    )
-    parser.add_argument(
-        "--deep_mmd_loss_depth",
-        action="store",
-        type=int,
-        help="Depth of applying the deep mmd loss",
-        required=False,
-        default=1,
-    )
-    parser.add_argument(
-        "--beta_update_interval",
-        action="store",
-        type=int,
-        help="Interval for updating the beta values",
-        required=False,
-        default=20,
+        help="Heterogeneity level for the dataset",
+        required=True,
     )
     args = parser.parse_args()
 
@@ -171,9 +163,7 @@ if __name__ == "__main__":
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Lambda: {args.lam}")
-    log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
-    log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
+    log(INFO, f"Beta: {args.beta}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
@@ -182,19 +172,17 @@ if __name__ == "__main__":
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
     checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
-    client = FedIsic2019DittoClient(
-        data_path=Path(args.dataset_dir),
-        metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
+    data_path = Path(args.dataset_dir)
+    client = CifarDittoClient(
+        data_path=data_path,
+        metrics=[Accuracy("accuracy")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
+        heterogeneity_level=args.beta,
         lam=args.lam,
         checkpointer=checkpointer,
-        deep_mmd_loss_depth=args.deep_mmd_loss_depth,
-        deep_mmd_loss_weight=args.mu,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
-
-    # Shutdown the client gracefully
     client.shutdown()

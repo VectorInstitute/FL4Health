@@ -125,7 +125,7 @@ def main(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate Holdout Global")
+    parser = argparse.ArgumentParser(description="Evaluate Trained Models on Test Data")
     parser.add_argument(
         "--artifact_dir",
         action="store",
