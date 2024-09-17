@@ -1,8 +1,9 @@
 from pathlib import Path
+from typing import List
 
 import torch
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer, TorchCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer
 from fl4health.utils.privacy_utilities import convert_model_to_opacus_model
@@ -29,10 +30,8 @@ def test_client_checkpointer_module_opacus(tmp_path: Path) -> None:
     checkpointer.maybe_checkpoint(model_1, 0.78, {"test_1": 1.0}, CheckpointMode.PRE_AGGREGATION)
     checkpointer.maybe_checkpoint(model_2, 0.78, {"test_1": 1.0}, CheckpointMode.POST_AGGREGATION)
 
-    assert isinstance(checkpointer.pre_aggregation, BestLossOpacusCheckpointer)
-    assert isinstance(checkpointer.post_aggregation, BestLossOpacusCheckpointer)
-    checkpointer.pre_aggregation.load_best_checkpoint_into_model(loaded_pre_model)
-    checkpointer.post_aggregation.load_best_checkpoint_into_model(loaded_post_model)
+    pre_aggregation_checkpointer.load_best_checkpoint_into_model(loaded_pre_model)
+    post_aggregation_checkpointer.load_best_checkpoint_into_model(loaded_post_model)
 
     assert isinstance(loaded_pre_model, LinearTransform)
     # pre aggregation model should be the same as model_1
@@ -44,8 +43,8 @@ def test_client_checkpointer_module_opacus(tmp_path: Path) -> None:
 
     checkpointer.maybe_checkpoint(model_2, 0.68, {"test_1": 1.0}, CheckpointMode.PRE_AGGREGATION)
     checkpointer.maybe_checkpoint(model_1, 0.68, {"test_1": 1.0}, CheckpointMode.POST_AGGREGATION)
-    checkpointer.pre_aggregation.load_best_checkpoint_into_model(loaded_pre_model)
-    checkpointer.post_aggregation.load_best_checkpoint_into_model(loaded_post_model)
+    pre_aggregation_checkpointer.load_best_checkpoint_into_model(loaded_pre_model)
+    post_aggregation_checkpointer.load_best_checkpoint_into_model(loaded_post_model)
 
     assert isinstance(loaded_pre_model, LinearTransform)
     # pre aggregation model should be the same as model_1
@@ -73,8 +72,8 @@ def test_client_checkpointer_module(tmp_path: Path) -> None:
 
     assert checkpointer.pre_aggregation is not None
     assert checkpointer.post_aggregation is not None
-    loaded_pre_model = checkpointer.pre_aggregation.load_best_checkpoint()
-    loaded_post_model = checkpointer.post_aggregation.load_best_checkpoint()
+    loaded_pre_model = pre_aggregation_checkpointer.load_best_checkpoint()
+    loaded_post_model = post_aggregation_checkpointer.load_best_checkpoint()
 
     assert isinstance(loaded_pre_model, LinearTransform)
     # pre aggregation model should be the same as model_1
@@ -86,8 +85,8 @@ def test_client_checkpointer_module(tmp_path: Path) -> None:
 
     checkpointer.maybe_checkpoint(model_2, 0.68, {"test_1": 1.0}, CheckpointMode.PRE_AGGREGATION)
     checkpointer.maybe_checkpoint(model_1, 0.68, {"test_1": 1.0}, CheckpointMode.POST_AGGREGATION)
-    loaded_pre_model = checkpointer.pre_aggregation.load_best_checkpoint()
-    loaded_post_model = checkpointer.post_aggregation.load_best_checkpoint()
+    loaded_pre_model = pre_aggregation_checkpointer.load_best_checkpoint()
+    loaded_post_model = post_aggregation_checkpointer.load_best_checkpoint()
 
     assert isinstance(loaded_pre_model, LinearTransform)
     # pre aggregation model should be the same as model_1
@@ -95,4 +94,60 @@ def test_client_checkpointer_module(tmp_path: Path) -> None:
 
     assert isinstance(loaded_post_model, LinearTransform)
     # post aggregation model should be the same as model_2
+    assert torch.equal(model_1.linear.weight, loaded_post_model.linear.weight)
+
+
+def test_client_checkpointer_module_with_sequence_of_checkpointers(tmp_path: Path) -> None:
+    checkpoint_dir = tmp_path.joinpath("resources")
+    checkpoint_dir.mkdir()
+    pre_aggregation_checkpointer: List[TorchCheckpointer] = [
+        BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
+        LatestTorchCheckpointer(str(checkpoint_dir), "pre_agg_latest.pkl"),
+    ]
+    post_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "post_agg.pkl")
+    checkpoint_module = ClientCheckpointModule(
+        pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
+    )
+
+    model_1 = LinearTransform()
+    model_2 = LinearTransform()
+
+    checkpoint_module.maybe_checkpoint(model_1, 0.78, {"test_1": 1.0}, CheckpointMode.PRE_AGGREGATION)
+    checkpoint_module.maybe_checkpoint(model_2, 0.78, {"test_1": 1.0}, CheckpointMode.POST_AGGREGATION)
+
+    assert checkpoint_module.pre_aggregation is not None
+    assert checkpoint_module.post_aggregation is not None
+
+    loaded_pre_model_best = pre_aggregation_checkpointer[0].load_best_checkpoint()
+    loaded_pre_model_latest = pre_aggregation_checkpointer[1].load_best_checkpoint()
+    loaded_post_model = post_aggregation_checkpointer.load_best_checkpoint()
+
+    assert isinstance(loaded_pre_model_best, LinearTransform)
+    # pre aggregation model should be the same as model_1
+    assert torch.equal(model_1.linear.weight, loaded_pre_model_best.linear.weight)
+
+    assert isinstance(loaded_pre_model_latest, LinearTransform)
+    # pre aggregation model should be the same as model_1
+    assert torch.equal(model_1.linear.weight, loaded_pre_model_latest.linear.weight)
+
+    assert isinstance(loaded_post_model, LinearTransform)
+    # post aggregation model should be the same as model_2
+    assert torch.equal(model_2.linear.weight, loaded_post_model.linear.weight)
+
+    checkpoint_module.maybe_checkpoint(model_2, 0.88, {"test_1": 1.0}, CheckpointMode.PRE_AGGREGATION)
+    checkpoint_module.maybe_checkpoint(model_1, 0.68, {"test_1": 1.0}, CheckpointMode.POST_AGGREGATION)
+    loaded_pre_model_best = pre_aggregation_checkpointer[0].load_best_checkpoint()
+    loaded_pre_model_latest = pre_aggregation_checkpointer[1].load_best_checkpoint()
+    loaded_post_model = post_aggregation_checkpointer.load_best_checkpoint()
+
+    assert isinstance(loaded_pre_model_best, LinearTransform)
+    # pre aggregation model should be the same as model_1 since the metric isn't better than the previous one
+    assert torch.equal(model_1.linear.weight, loaded_pre_model_best.linear.weight)
+
+    assert isinstance(loaded_pre_model_latest, LinearTransform)
+    # pre aggregation model should be the same as model_2
+    assert torch.equal(model_2.linear.weight, loaded_pre_model_latest.linear.weight)
+
+    assert isinstance(loaded_post_model, LinearTransform)
+    # post aggregation model should be the same as model_1
     assert torch.equal(model_1.linear.weight, loaded_post_model.linear.weight)
