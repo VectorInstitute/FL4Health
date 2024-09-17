@@ -8,7 +8,7 @@ from torch.utils.hooks import RemovableHandle
 
 
 class FeatureExtractorBuffer:
-    def __init__(self, model: nn.Module, feature_extraction_layers: Dict[str, bool]) -> None:
+    def __init__(self, model: nn.Module, flatten_feature_extraction_layers: Dict[str, bool]) -> None:
         """
         This class is used to extract features from the intermediate layers of a neural network model and store them in
         a buffer. The features are extracted using additional hooks that are registered to the model. The extracted
@@ -17,12 +17,12 @@ class FeatureExtractorBuffer:
 
         Args:
             model (nn.Module): The neural network model.
-            feature_extraction_layers (Dict[str, bool]): Dictionary of layers to extract features from them and
+            flatten_feature_extraction_layers (Dict[str, bool]): Dictionary of layers to extract features from them and
             whether to flatten them. Keys are the layer names that are extracted from the named_modules and values are
             boolean.
         Attributes:
             model (nn.Module): The neural network model.
-            feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
+            flatten_feature_extraction_layers (Dict[str, bool]): A dictionary specifying whether to flatten the feature
                 extraction layers.
             fhooks (List[RemovableHandle]): A list to store the handles for removing hooks.
             accumulate_features (bool): A flag indicating whether to accumulate features.
@@ -30,12 +30,12 @@ class FeatureExtractorBuffer:
                 for each layer.
         """
         self.model = model
-        self.feature_extraction_layers = feature_extraction_layers
+        self.flatten_feature_extraction_layers = flatten_feature_extraction_layers
         self.fhooks: List[RemovableHandle] = []
 
         self.accumulate_features: bool = False
         self.extracted_features_buffers: Dict[str, List[torch.Tensor]] = {
-            layer: [] for layer in feature_extraction_layers.keys()
+            layer: [] for layer in flatten_feature_extraction_layers.keys()
         }
 
     def enable_accumulating_features(self) -> None:
@@ -61,7 +61,7 @@ class FeatureExtractorBuffer:
         """
         Clears the extracted features buffers for all layers.
         """
-        self.extracted_features_buffers = {layer: [] for layer in self.feature_extraction_layers.keys()}
+        self.extracted_features_buffers = {layer: [] for layer in self.flatten_feature_extraction_layers.keys()}
 
     def get_hierarchical_attr(self, module: nn.Module, layer_hierarchy: List[str]) -> nn.Module:
         """
@@ -102,7 +102,7 @@ class FeatureExtractorBuffer:
         if len(self.fhooks) == 0:
             log(INFO, "Starting to register hooks:")
             named_layers = list(dict(self.model.named_modules()).keys())
-            for layer in self.feature_extraction_layers.keys():
+            for layer in self.flatten_feature_extraction_layers.keys():
                 log(INFO, f"Registering hook for layer: {layer}")
                 # Find the the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
@@ -178,7 +178,7 @@ class FeatureExtractorBuffer:
         for layer in self.extracted_features_buffers:
             features[layer] = (
                 self.flatten(torch.cat(self.extracted_features_buffers[layer], dim=0))
-                if self.feature_extraction_layers[layer]
+                if self.flatten_feature_extraction_layers[layer]
                 else torch.cat(self.extracted_features_buffers[layer], dim=0)
             )
 

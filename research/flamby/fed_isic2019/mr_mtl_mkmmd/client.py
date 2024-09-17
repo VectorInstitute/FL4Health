@@ -52,7 +52,7 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
             checkpointer=checkpointer,
             lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
-            flatten_feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
+            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
             beta_global_update_interval=beta_global_update_interval,
         )
