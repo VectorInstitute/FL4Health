@@ -71,7 +71,7 @@ class NnunetClient(BasicClient):
         verbose: bool = True,
         metrics: Optional[Sequence[Metric]] = None,
         progress_bar: bool = False,
-        intermediate_checkpoint_dir: Optional[Path] = None,
+        intermediate_client_state_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
@@ -127,7 +127,7 @@ class NnunetClient(BasicClient):
                 on the labels and predictions of the client model. Defaults to [].
             progress_bar (bool, optional): Whether or not to print a progress bar to
                 stdout for training. Defaults to False
-            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
+            intermediate_client_state_dir (Optional[Path]): An optional path to store per round
                 checkpoints.
             loss_meter_type (LossMeterType, optional): Type of meter used to
                 track and compute the losses over each batch. Defaults to
@@ -150,7 +150,7 @@ class NnunetClient(BasicClient):
             checkpointer=checkpointer,  # self.checkpointer
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
             progress_bar=progress_bar,
-            intermediate_checkpoint_dir=intermediate_checkpoint_dir,
+            intermediate_client_state_dir=intermediate_client_state_dir,
         )
 
         # Some nnunet client specific attributes
@@ -165,7 +165,7 @@ class NnunetClient(BasicClient):
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
 
-        # Autoset verbose to True if console handler is on DEBUG mode
+        # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
 
         # Used to redirect stdout to logger
@@ -279,6 +279,7 @@ class NnunetClient(BasicClient):
 
         # Create and return LR Scheduler Wrapper for the PolyLRScheduler so that it is
         # compatible with Torch LRScheduler
+        # Create and return LR Scheduler. This is nnunet default for version 2.5.1
         return PolyLRSchedulerWrapper(
             self.optimizers[optimizer_key], initial_lr=self.nnunet_trainer.initial_lr, max_steps=total_steps
         )
