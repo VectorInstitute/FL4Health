@@ -41,7 +41,7 @@ class PicaiFedAvgClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
-        intermediate_checkpoint_dir: Optional[Path] = None,
+        intermediate_client_state_dir: Optional[Path] = None,
         overviews_dir: Path = Path("./"),
         data_partition: Optional[int] = None,
     ) -> None:
@@ -53,7 +53,7 @@ class PicaiFedAvgClient(BasicClient):
             checkpointer=checkpointer,
             metrics_reporter=metrics_reporter,
             progress_bar=progress_bar,
-            intermediate_checkpoint_dir=intermediate_checkpoint_dir,
+            intermediate_client_state_dir=intermediate_client_state_dir,
         )
 
         self.data_partition = data_partition
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         data_path=Path(args.base_dir),
         metrics=metrics,
         device=DEVICE,
-        intermediate_checkpoint_dir=args.artifact_dir,
+        intermediate_client_state_dir=args.artifact_dir,
         overviews_dir=args.overviews_dir,
         data_partition=args.data_partition,
     )

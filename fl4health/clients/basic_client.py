@@ -45,7 +45,7 @@ class BasicClient(NumPyClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
         progress_bar: bool = False,
-        intermediate_checkpoint_dir: Optional[Path] = None,
+        intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
     ) -> None:
         """
@@ -68,7 +68,7 @@ class BasicClient(NumPyClient):
             progress_bar (bool): Whether or not to display a progress bar
                 during client training and validation. Uses tqdm. Defaults to
                 False
-            intermediate_checkpoint_dir (Optional[Path]): An optional path to store per round
+            intermediate_client_state_dir (Optional[Path]): An optional path to store per round
                 checkpoints.
             client_name (str): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated.
@@ -83,9 +83,9 @@ class BasicClient(NumPyClient):
 
         self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
-        if intermediate_checkpoint_dir is not None:
+        if intermediate_client_state_dir is not None:
             self.per_round_checkpointer = PerRoundCheckpointer(
-                intermediate_checkpoint_dir, Path(f"client_{self.client_name}.pt")
+                intermediate_client_state_dir, Path(f"client_{self.client_name}.pt")
             )
         else:
             self.per_round_checkpointer = None
@@ -269,7 +269,7 @@ class BasicClient(NumPyClient):
             # If per_round_checkpointer not None and checkpoint exists load it and set attributes.
             # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
-                self.load_checkpoint()
+                self.load_client_state()
 
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
@@ -310,7 +310,7 @@ class BasicClient(NumPyClient):
         # After local client training has finished, checkpoint client state
         # if per_round_checkpointer is not None
         if self.per_round_checkpointer is not None:
-            self.save_checkpoint()
+            self.save_client_state()
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -1277,7 +1277,7 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def save_checkpoint(self) -> None:
+    def save_client_state(self) -> None:
         """
         Saves checkpoint dict consisting of client name, total steps, lr schedulers,
             metrics reporter and optimizers state. Method can be overridden to augment saved checkpointed state.
@@ -1290,14 +1290,14 @@ class BasicClient(NumPyClient):
             "total_steps": self.total_steps,
             "client_name": self.client_name,
             "metrics_reporter": self.metrics_reporter,
-            "optimizers_state": {key: opt.state_dict()["state"] for key, opt in self.optimizers.items()},
+            "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
         }
 
         self.per_round_checkpointer.save_checkpoint(ckpt)
 
         log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
-    def load_checkpoint(self) -> None:
+    def load_client_state(self) -> None:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
             reporter and optimizers state. Method can be overriden to augment loaded checkpointed state.
@@ -1319,10 +1319,11 @@ class BasicClient(NumPyClient):
         # Optimizer is updated in setup_client to reference model weights from server
         # Thus, only optimizer state (per parameter values such as momentum)
         # should be loaded
-        for opt, state in zip(self.optimizers.values(), ckpt["optimizers_state"].values()):
-            opt_state_dict = opt.state_dict()
-            opt_state_dict["state"] = state
-            opt.load_state_dict(opt_state_dict)
+        for key, optimizer in self.optimizers.items():
+            optimizer_state = ckpt["optimizers_state"][key]
+            optimizer_state_dict = optimizer.state_dict()
+            optimizer_state_dict["state"] = optimizer_state
+            optimizer.load_state_dict(optimizer_state_dict)
 
         # Schedulers initialized in setup_client to reference correct optimizers
         # Here we load in all other aspects of the scheduler state
