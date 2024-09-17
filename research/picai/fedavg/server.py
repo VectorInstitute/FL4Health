@@ -68,7 +68,7 @@ def main(config: Dict[str, Any], server_address: str, n_clients: int) -> None:
         model=model,
         parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
-        intermediate_checkpoint_dir=args.artifact_dir,
+        intermediate_server_state_dir=args.artifact_dir,
     )
 
     fl.server.start_server(
