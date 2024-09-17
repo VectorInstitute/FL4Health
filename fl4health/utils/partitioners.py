@@ -30,6 +30,16 @@ class DirichletLabelBasedAllocation:
         np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
         np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
 
+        Example Usage:
+            original_dataset = SyntheticDataset(
+                torch.rand((10000, 3, 3)),
+                torch.randint(low=0, high=10, size=(10000, 1))
+            )
+            heterogeneous_partitioner = DirichletLabelBasedAllocation(
+                number_of_partitions=10, unique_labels=list(range(10)), beta=10.0, min_label_examples=2
+            )
+            partitioned_datasets = heterogeneous_partitioner.partition_dataset(original_dataset, max_retries=5)
+
         Args:
             number_of_partitions (int): Number of new datasets that we want to break the current dataset into
             unique_labels (List[T]): This is the set of labels through which we'll iterate to perform allocation
