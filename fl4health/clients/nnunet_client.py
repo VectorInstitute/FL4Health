@@ -669,6 +669,9 @@ class NnunetClient(BasicClient):
         if "nnunet_plans" in config.keys():
             properties = super().get_properties(config)
             properties["nnunet_plans"] = config["nnunet_plans"]
+            properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
+            properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
+            properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
             return properties
 
         # Check if local nnunet dataset fingerprint needs to be extracted
@@ -697,6 +700,9 @@ class NnunetClient(BasicClient):
         config["nnunet_plans"] = plans_bytes
         properties = super().get_properties(config)
         properties["nnunet_plans"] = plans_bytes
+        properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
+        properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
+        properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
         return properties
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:

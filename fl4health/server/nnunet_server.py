@@ -1,13 +1,29 @@
+import warnings
+import pickle
 from logging import INFO
-from typing import Any, Callable, List, Optional, Tuple, Union
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
+import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.typing import Code, Config, EvaluateIns, FitIns, GetPropertiesIns
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
+from flwr.server.history import History
+from flwr.server.strategy import Strategy
 
-from fl4health.server.base_server import FlServerWithInitializer
+from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.metrics import MetricsReporter
+from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
+from fl4health.utils.config import narrow_config_type
+from fl4health.utils.nnunet_utils import NnunetConfig
+
+with warnings.catch_warnings():
+    from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
+    from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 
 FIT_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, FitIns]]]
 EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, EvaluateIns]]]
@@ -39,12 +55,63 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     return new_fn
 
 
-class NnunetServer(FlServerWithInitializer):
-    """
-    A Basic FlServer with added functionality to ask a client to initialize
-    the global nnunet plans if one was not provided in the config. Intended
-    for use with NnUNetClient
-    """
+class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
+    def __init__(
+        self,
+        client_manager: ClientManager,
+        model: nn.Module,
+        parameter_exchanger: ParameterExchanger,
+        wandb_reporter: Optional[ServerWandBReporter] = None,
+        strategy: Optional[Strategy] = None,
+        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
+        metrics_reporter: Optional[MetricsReporter] = None,
+        intermediate_server_state_dir: Optional[Path] = None,
+        server_name: Optional[str] = None,
+    ) -> None:
+        FlServerWithCheckpointing.__init__(
+            self,
+            client_manager=client_manager,
+            model=model,
+            parameter_exchanger=parameter_exchanger,
+            wandb_reporter=wandb_reporter,
+            strategy=strategy,
+            checkpointer=checkpointer,
+            metrics_reporter=metrics_reporter,
+            intermediate_server_state_dir=intermediate_server_state_dir,
+            server_name=server_name,
+        )
+        """
+        A Basic FlServer with added functionality to ask a client to initialize
+        the global nnunet plans if one was not provided in the config. Intended
+        for use with NnUNetClient
+        """
+        self.initialized = False
+
+    def load_server_model(self, config: Config) -> None:
+        plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
+        plans_manager = PlansManager(plans)
+        nnunet_config = NnunetConfig(config["nnunet_config"])
+        configuration_manager = plans_manager.get_configuration(nnunet_config.value)
+        model = nnUNetTrainer.build_network_architecture(
+            configuration_manager.network_arch_class_name,
+            configuration_manager.network_arch_init_kwargs,
+            configuration_manager.network_arch_init_kwargs_req_import,
+            int(config["num_input_channels"]),
+            int(config["num_segmentation_heads"]),
+            bool(config["enable_deep_supervision"]),
+        )
+
+        self.server_model = model
+
+    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+        """
+        Same as parent method except initialize hook method is called first
+        """
+        # Initialize the server
+        if not self.initialized:
+            self.initialize(server_round=0, timeout=timeout)
+
+        return FlServerWithCheckpointing.fit(self, num_rounds, timeout)
 
     def initialize(self, server_round: int, timeout: Optional[float] = None) -> None:
         # Get fit config
