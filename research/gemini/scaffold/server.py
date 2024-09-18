@@ -17,8 +17,8 @@ from flwr.server.strategy import Strategy
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingWithoutReplacementClientManager
 from fl4health.parameter_exchange.packing_exchanger import (
+    FullParameterExchangerWithPacking,
     ParameterExchangerWithControlVariates,
-    ParameterExchangerWithPacking,
 )
 from fl4health.server.server import FlServer
 from fl4health.strategies.scaffold import Scaffold
@@ -39,7 +39,7 @@ class GeminiSCAFFOLDServer(FlServer):
         self.client_model = client_model
         # To help with model rehydration
         self.parameter_exchanger = ParameterExchangerWithControlVariates()
-        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
+        self.parameter_exchanger: FullParameterExchangerWithPacking[NDArrays]
         super().__init__(client_manager, strategy, checkpointer=checkpointer)
 
     def _hydrate_model_for_checkpointing(self) -> None:

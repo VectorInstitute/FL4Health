@@ -11,8 +11,8 @@ from flwr.server.client_manager import SimpleClientManager
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.reporting.fl_wandb import ServerWandBReporter
-from fl4health.server.base_server import FlServer
-from fl4health.strategies.fedprox import FedProx
+from fl4health.server.adaptive_constraint_servers.fedprox_server import FedProxServer
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -59,8 +59,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
 
     initial_model = MnistNet()
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
+    # FedProx proximal weight mu
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -71,15 +72,15 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
-        proximal_weight_delta=config["proximal_weight_delta"],
-        proximal_weight_patience=config["proximal_weight_patience"],
+        adapt_loss_weight=config["adapt_proximal_weight"],
+        initial_loss_weight=config["initial_proximal_weight"],
+        loss_weight_delta=config["proximal_weight_delta"],
+        loss_weight_patience=config["proximal_weight_patience"],
     )
 
     wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, wandb_reporter=wandb_reporter)
 
     fl.server.start_server(
         server=server,
@@ -88,7 +89,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
     # Shutdown the server gracefully
     server.shutdown()
-
     server.metrics_reporter.dump()
 
 

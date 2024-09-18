@@ -45,19 +45,19 @@ class ParameterPackerWithClippingBit(ParameterPacker[float]):
         return model_parameters, clipping_bound
 
 
-class ParameterPackerFedProx(ParameterPacker[float]):
-    def pack_parameters(self, model_weights: NDArrays, extra_fedprox_variable: float) -> NDArrays:
-        return model_weights + [np.array(extra_fedprox_variable)]
+class ParameterPackerAdaptiveConstraint(ParameterPacker[float]):
+    def pack_parameters(self, model_weights: NDArrays, extra_adaptive_variable: float) -> NDArrays:
+        return model_weights + [np.array(extra_adaptive_variable)]
 
     def unpack_parameters(self, packed_parameters: NDArrays) -> Tuple[NDArrays, float]:
-        # The last entry is extra packed fedprox variable
+        # The last entry is an extra packed adaptive constraint variable (information to allow for adaptation)
         split_size = len(packed_parameters) - 1
         model_parameters = packed_parameters[:split_size]
         # The packed contents should have length 1
         packed_contents = packed_parameters[split_size:]
         assert len(packed_contents) == 1
-        extra_fedprox_variable = float(packed_contents[0])
-        return model_parameters, extra_fedprox_variable
+        extra_adaptive_variable = float(packed_contents[0])
+        return model_parameters, extra_adaptive_variable
 
 
 class ParameterPackerWithLayerNames(ParameterPacker[List[str]]):

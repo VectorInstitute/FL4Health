@@ -22,11 +22,11 @@ def test_setting_initial_weights(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.set_parameters(packed_params, config, fitting_round=True)
     fed_prox_client.update_before_train(4)
 
-    assert fed_prox_client.initial_tensors is not None
+    assert fed_prox_client.drift_penalty_tensors is not None
     # Tensors should be conv1 weights, biases, conv2 weights, biases, fc1 weights, biases (so 6 total)
-    assert len(fed_prox_client.initial_tensors) == 6
+    assert len(fed_prox_client.drift_penalty_tensors) == 6
     # Make sure that each layer tensor has a non-zero norm
-    for layer_tensor in fed_prox_client.initial_tensors:
+    for layer_tensor in fed_prox_client.drift_penalty_tensors:
         assert torch.linalg.norm(layer_tensor) > 0.0
 
 
@@ -43,11 +43,11 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.update_before_train(4)
 
     # Make sure proximal weight has been set.
-    assert fed_prox_client.proximal_weight == proximal_weight
+    assert fed_prox_client.drift_penalty_weight == proximal_weight
 
     # We've taken no training steps so the proximal loss should be 0.0
-    weight_drift_loss: torch.Tensor = fed_prox_client.proximal_loss_function(
-        fed_prox_client.model, fed_prox_client.initial_tensors, fed_prox_client.proximal_weight
+    weight_drift_loss: torch.Tensor = fed_prox_client.penalty_loss_function(
+        fed_prox_client.model, fed_prox_client.drift_penalty_tensors, fed_prox_client.drift_penalty_weight
     )
     assert weight_drift_loss.detach().item() == 0.0
 
@@ -57,12 +57,12 @@ def test_forming_proximal_loss(get_client: FedProxClient) -> None:  # noqa
     }
     fed_prox_client.model.load_state_dict(perturbed_state_dict, strict=True)
 
-    weight_drift_loss = fed_prox_client.proximal_loss_function(
-        fed_prox_client.model, fed_prox_client.initial_tensors, fed_prox_client.proximal_weight
+    weight_drift_loss = fed_prox_client.penalty_loss_function(
+        fed_prox_client.model, fed_prox_client.drift_penalty_tensors, fed_prox_client.drift_penalty_weight
     )
-    assert pytest.approx(weight_drift_loss.detach().item(), abs=0.002) == (fed_prox_client.proximal_weight / 2.0) * (
-        1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32
-    )
+    assert pytest.approx(weight_drift_loss.detach().item(), abs=0.002) == (
+        fed_prox_client.drift_penalty_weight / 2.0
+    ) * (1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32)
 
 
 @pytest.mark.parametrize("type,model", [(FedProxClient, LinearTransform())])
@@ -83,8 +83,8 @@ def test_proximal_loss_derivative(get_client: FedProxClient) -> None:  # noqa
     }
     fed_prox_client.model.load_state_dict(perturbed_state_dict, strict=True)
 
-    proximal_loss = fed_prox_client.proximal_loss_function(
-        fed_prox_client.model, fed_prox_client.initial_tensors, fed_prox_client.proximal_weight
+    proximal_loss = fed_prox_client.penalty_loss_function(
+        fed_prox_client.model, fed_prox_client.drift_penalty_tensors, fed_prox_client.drift_penalty_weight
     )
     proximal_loss.backward()
     linear_gradient = list(fed_prox_client.model.parameters())[0].grad
@@ -114,8 +114,8 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.update_before_train(1)
 
     # We've taken no training steps so the proximal loss should be 0.0
-    weight_drift_loss: torch.Tensor = fed_prox_client.proximal_loss_function(
-        fed_prox_client.model, fed_prox_client.initial_tensors, fed_prox_client.proximal_weight
+    weight_drift_loss: torch.Tensor = fed_prox_client.penalty_loss_function(
+        fed_prox_client.model, fed_prox_client.drift_penalty_tensors, fed_prox_client.drift_penalty_weight
     )
     assert weight_drift_loss.detach().item() == 0.0
 
@@ -128,7 +128,7 @@ def test_setting_proximal_weight(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.set_parameters(packed_perturbed_params, config, fitting_round=True)
     fed_prox_client.update_before_train(2)
 
-    assert fed_prox_client.proximal_weight == perturbed_proximal_weight
+    assert fed_prox_client.drift_penalty_weight == perturbed_proximal_weight
 
 
 @pytest.mark.parametrize("type,model", [(FedProxClient, SmallCnn())])
@@ -145,8 +145,8 @@ def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
     fed_prox_client.update_before_train(4)
 
     # We've taken no training steps so the proximal loss should be 0.0
-    weight_drift_loss: torch.Tensor = fed_prox_client.proximal_loss_function(
-        fed_prox_client.model, fed_prox_client.initial_tensors, fed_prox_client.proximal_weight
+    weight_drift_loss: torch.Tensor = fed_prox_client.penalty_loss_function(
+        fed_prox_client.model, fed_prox_client.drift_penalty_tensors, fed_prox_client.drift_penalty_weight
     )
     assert weight_drift_loss.detach().item() == 0.0
 

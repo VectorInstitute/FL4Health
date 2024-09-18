@@ -5,7 +5,8 @@ import torch
 from flwr.common import Config
 
 from fl4health.clients.mr_mtl_client import MrMtlClient
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from tests.clients.fixtures import get_client  # noqa
 from tests.test_utils.models_for_test import SmallCnn
 
@@ -15,12 +16,14 @@ def test_setting_global_weights(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
     mr_mtl_client.initial_global_model = SmallCnn()
-    mr_mtl_client.parameter_exchanger = FullParameterExchanger()
+    mr_mtl_client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
     config: Config = {}
+    drift_penalty_weight = 10.0
 
     old_params = [val.cpu().numpy() for _, val in mr_mtl_client.model.state_dict().items()]
     params = [val.cpu().numpy() + 1.0 for _, val in mr_mtl_client.model.state_dict().items()]
-    mr_mtl_client.set_parameters(params, config, fitting_round=True)
+    packed_params = mr_mtl_client.parameter_exchanger.pack_parameters(params, drift_penalty_weight)
+    mr_mtl_client.set_parameters(packed_params, config, fitting_round=True)
 
     # We should set only init global model to params and store the global model values
     # Make sure that we saved the right parameters
@@ -37,18 +40,22 @@ def test_forming_mr_loss(get_client: MrMtlClient) -> None:  # noqa
     torch.manual_seed(42)
     mr_mtl_client = get_client
     mr_mtl_client.initial_global_model = SmallCnn()
-    mr_mtl_client.parameter_exchanger = FullParameterExchanger()
+    mr_mtl_client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
     config: Config = {}
+    drift_penalty_weight = 10.0
 
     params = [val.cpu().numpy() + 0.1 for _, val in mr_mtl_client.model.state_dict().items()]
-    mr_mtl_client.set_parameters(params, config, fitting_round=True)
+    packed_params = mr_mtl_client.parameter_exchanger.pack_parameters(params, drift_penalty_weight)
+    mr_mtl_client.set_parameters(packed_params, config, fitting_round=True)
     mr_mtl_client.update_before_train(4)
 
-    mr_mtl_loss = mr_mtl_client.mr_mtl_drift_loss_function(
-        mr_mtl_client.model, mr_mtl_client.initial_global_tensors, mr_mtl_client.lam
+    mr_mtl_loss = mr_mtl_client.penalty_loss_function(
+        mr_mtl_client.model, mr_mtl_client.drift_penalty_tensors, mr_mtl_client.drift_penalty_weight
     )
 
-    assert pytest.approx(mr_mtl_loss.detach().item(), abs=0.02) == (mr_mtl_client.lam / 2.0) * (
+    assert mr_mtl_client.drift_penalty_weight == 10.0
+
+    assert pytest.approx(mr_mtl_loss.detach().item(), abs=0.02) == (mr_mtl_client.drift_penalty_weight / 2.0) * (
         1.5 + 0.06 + 24.0 + 81.92 + 0.16 + 0.32
     )
 
@@ -59,14 +66,17 @@ def test_compute_loss(get_client: MrMtlClient) -> None:  # noqa
     mr_mtl_client = get_client
     mr_mtl_client.initial_global_model = SmallCnn()
     mr_mtl_client.initial_global_model.eval()
-    mr_mtl_client.parameter_exchanger = FullParameterExchanger()
+    mr_mtl_client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
     config: Config = {}
     mr_mtl_client.criterion = torch.nn.CrossEntropyLoss()
-    mr_mtl_client.lam = 1.0
+    drift_penalty_weight = 1.0
 
     params = [val.cpu().numpy() for _, val in mr_mtl_client.model.state_dict().items()]
-    mr_mtl_client.set_parameters(params, config, fitting_round=True)
+    packed_params = mr_mtl_client.parameter_exchanger.pack_parameters(params, drift_penalty_weight)
+    mr_mtl_client.set_parameters(packed_params, config, fitting_round=True)
     mr_mtl_client.update_before_train(current_server_round=4)
+
+    assert mr_mtl_client.drift_penalty_weight == 1.0
 
     # Make sure the local model is set to train
     assert mr_mtl_client.model.training is True

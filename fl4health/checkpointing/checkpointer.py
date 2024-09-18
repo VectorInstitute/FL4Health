@@ -32,7 +32,7 @@ class TorchCheckpointer(ABC):
 
         Args:
             model (nn.Module): Model to potentially save via the checkpointer
-            loss (float): Computed loss associated with the model (if provided).
+            loss (float): Computed loss associated with the model.
             metrics (Dict[str, float]): Computed metrics associated with the model.
 
         Raises:

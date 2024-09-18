@@ -165,7 +165,7 @@ class NnunetClient(BasicClient):
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
 
-        # Autoset verbose to True if console handler is on DEBUG mode
+        # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
 
         # Used to redirect stdout to logger
@@ -201,7 +201,10 @@ class NnunetClient(BasicClient):
         # Set the number of processes for each dataloader.
         if self.n_dataload_proc is None:
             # Nnunet default is 12 or max cpu's. We decrease max by 1 just in case
-            self.n_dataload_proc = min(12, len(os.sched_getaffinity(0)) - 1)
+            # NOTE: The type: ignore here is to skip issues where a local operating system is not compatible
+            # with sched_getaffinity (older versions of MacOS, for example). The code still won't run but mypy won't
+            # complain. Workarounds like using os.cpu_count(), while not exactly the same, are possible.
+            self.n_dataload_proc = min(12, len(os.sched_getaffinity(0)) - 1)  # type: ignore
         os.environ["nnUNet_n_proc_DA"] = str(self.n_dataload_proc)
 
         # The batchgenerators package used under the hood by the dataloaders creates an

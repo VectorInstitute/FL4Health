@@ -5,11 +5,11 @@ from typing import Any, Dict, Optional
 import flwr as fl
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.server.base_server import FlServer
+from fl4health.server.adaptive_constraint_servers.ditto_server import DittoServer
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -46,7 +46,7 @@ def main(config: Dict[str, Any]) -> None:
     initial_model = MnistNet()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -57,10 +57,12 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),
+        initial_loss_weight=0.1,
+        adapt_loss_weight=False,
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy)
+    server = DittoServer(client_manager=client_manager, strategy=strategy)
 
     fl.server.start_server(
         server=server,

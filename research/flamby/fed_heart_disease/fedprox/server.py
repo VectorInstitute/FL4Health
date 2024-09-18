@@ -10,11 +10,11 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.strategies.fedprox import FedProx
+from fl4health.server.adaptive_constraint_servers.fedprox_server import FedProxServer
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
-from research.flamby.flamby_servers.fedprox_server import FedProxServer
 from research.flamby.utils import fit_config, summarize_model_info
 
 
@@ -41,7 +41,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     summarize_model_info(model)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -52,10 +52,10 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        proximal_weight=mu,
+        initial_loss_weight=mu,
     )
 
-    server = FedProxServer(client_manager, model, strategy, checkpointer)
+    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=model, checkpointer=checkpointer)
 
     fl.server.start_server(
         server=server,

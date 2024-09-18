@@ -80,7 +80,12 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     parameter_exchanger = FullParameterExchanger()
 
     server = FlServerWithCheckpointing(
-        PoissonSamplingClientManager(), initial_model, parameter_exchanger, None, None, checkpointer
+        client_manager=PoissonSamplingClientManager(),
+        parameter_exchanger=parameter_exchanger,
+        model=initial_model,
+        wandb_reporter=None,
+        strategy=None,
+        checkpointer=checkpointer,
     )
     # Parameters after aggregation (i.e. the updated server-side model)
     server.parameters = ndarrays_to_parameters(parameter_exchanger.push_parameters(updated_model))
