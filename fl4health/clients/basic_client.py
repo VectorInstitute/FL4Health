@@ -1300,7 +1300,7 @@ class BasicClient(NumPyClient):
     def load_client_state(self) -> None:
         """
         Load checkpoint dict consisting of client name, total steps, lr schedulers, metrics
-            reporter and optimizers state. Method can be overriden to augment loaded checkpointed state.
+            reporter and optimizers state. Method can be overridden to augment loaded checkpointed state.
         """
         assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
 
