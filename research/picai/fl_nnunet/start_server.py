@@ -20,6 +20,7 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
@@ -85,8 +86,12 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    # server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
-    server = NnunetServer(client_manager=SimpleClientManager(), strategy=strategy)
+    server = NnunetServer(
+        parameter_exchanger=FullParameterExchanger(),
+        model=None,
+        client_manager=SimpleClientManager(),
+        strategy=strategy,
+    )
 
     fl.server.start_server(
         server=server,
