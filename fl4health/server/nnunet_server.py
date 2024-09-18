@@ -1,5 +1,5 @@
-import warnings
 import pickle
+import warnings
 from logging import INFO
 from pathlib import Path
 from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
@@ -59,8 +59,8 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
         parameter_exchanger: ParameterExchanger,
+        model: Optional[nn.Module] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
