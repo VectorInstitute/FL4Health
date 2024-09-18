@@ -157,11 +157,22 @@ def test_client_checkpointer_module_with_sequence_of_checkpointers(tmp_path: Pat
 def test_path_duplication_check(tmp_path: Path) -> None:
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    pre_aggregation_checkpointer: List[TorchCheckpointer] = [
+    pre_aggregation_checkpointer = [
         BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
         LatestTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
     ]
     post_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "post_agg.pkl")
+    # We have duplicate names, so we want to raise an error to prevent data loss/checkpoint overwrites
+    with pytest.raises(ValueError):
+        ClientCheckpointModule(
+            pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
+        )
+
+    pre_aggregation_checkpointer = [
+        BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
+        LatestTorchCheckpointer(str(checkpoint_dir), "pre_agg_latest.pkl"),
+    ]
+    post_aggregation_checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl")
     # We have duplicate names, so we want to raise an error to prevent data loss/checkpoint overwrites
     with pytest.raises(ValueError):
         ClientCheckpointModule(
