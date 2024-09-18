@@ -1,44 +1,29 @@
 import math
 from abc import ABC, abstractmethod
 from logging import INFO
-from typing import Any, Dict, List, Optional, Set, TypeVar
+from typing import Any, List, Optional, Set, TypeVar, Union
 
 import numpy as np
 import torch
 from flwr.common.logger import log
 
-from fl4health.utils.dataset import DictionaryDataset, TensorDataset
+from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
 T = TypeVar("T")
-D = TypeVar("D", TensorDataset, DictionaryDataset)
+D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
 
 
 class LabelBasedSampler(ABC):
-    """
-    This is an abstract class to be extended to create dataset samplers
-    based on the class of samples.
-    """
 
     def __init__(self, unique_labels: List[Any]) -> None:
+        """
+        This is an abstract class to be extended to create dataset samplers based on the class of samples.
+
+        Args:
+            unique_labels (List[Any]): The full set of labels contained in the dataset.
+        """
         self.unique_labels = unique_labels
         self.num_classes = len(self.unique_labels)
-
-    def select_by_indices(self, dataset: D, selected_indices: torch.Tensor) -> D:
-        if isinstance(dataset, TensorDataset):
-            assert dataset.targets is not None
-            dataset.targets = dataset.targets[selected_indices]
-            dataset.data = dataset.data[selected_indices]
-            return dataset
-        elif isinstance(dataset, DictionaryDataset):
-            new_targets = dataset.targets[selected_indices]
-            new_data: Dict[str, List[torch.Tensor]] = {}
-            for key, val in dataset.data.items():
-                # Since val is a list of tensors, we can't directly index into it
-                # using selected_indices.
-                new_data[key] = [val[i] for i in selected_indices]
-            return DictionaryDataset(new_data, new_targets)
-        else:
-            raise TypeError("Dataset type is not supported by this sampler.")
 
     @abstractmethod
     def subsample(self, dataset: D) -> D:
@@ -46,15 +31,21 @@ class LabelBasedSampler(ABC):
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):
-    """
-    This class is used to subsample a dataset so the classes are distributed in a non-IID way.
-    In particular, the MinorityLabelBasedSampler explicitly downsamples classes based on the
-    downsampling_ratio and minority_labels args used to construct the object. Subsampling a dataset is
-    accomplished by calling the subsample method and passing a BaseDataset object. This will return
-    the resulting subsampled dataset.
-    """
-
     def __init__(self, unique_labels: List[T], downsampling_ratio: float, minority_labels: Set[T]) -> None:
+        """
+        This class is used to subsample a dataset so the classes are distributed in a non-IID way.
+        In particular, the MinorityLabelBasedSampler explicitly downsamples classes based on the
+        downsampling_ratio and minority_labels args used to construct the object. Subsampling a dataset is
+        accomplished by calling the subsample method and passing a BaseDataset object. This will return
+        the resulting subsampled dataset.
+
+        Args:
+            unique_labels (List[T]): The full set of labels contained in the dataset.
+            downsampling_ratio (float): The percentage to which the specified "minority" labels are downsampled. For
+                example, if a label L has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints with
+                label L are discarded.
+            minority_labels (Set[T]): The labels subject to downsampling.
+        """
         super().__init__(unique_labels)
         self.downsampling_ratio = downsampling_ratio
         self.minority_labels = minority_labels
@@ -62,7 +53,14 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
     def subsample(self, dataset: D) -> D:
         """
         Returns a new dataset where samples part of minority_labels are downsampled
+
+        Args:
+            dataset (D): Dataset to be modified, through downsampling on specified labels.
+
+        Returns:
+            D: New dataset with downsampled labels.
         """
+        assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
         selected_indices_list: List[torch.Tensor] = []
         for label in self.unique_labels:
             # Get indices of samples equal to the current label
@@ -76,31 +74,29 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
         selected_indices = torch.cat(selected_indices_list, dim=0)
 
-        return self.select_by_indices(dataset, selected_indices)
+        return select_by_indices(dataset, selected_indices)
 
     def _get_random_subsample(self, tensor_to_subsample: torch.Tensor, subsample_size: int) -> torch.Tensor:
+        """
+        Given a tensor a new tensor is created by selecting a set of rows from the original tensor of
+        size subsample_size
+
+        Args:
+            tensor_to_subsample (torch.Tensor): Tensor to be subsampled. Assumes that we're subsampling rows of the
+                tensor
+            subsample_size (int): How many rows we want to extract from the tensor.
+
+        Returns:
+            torch.Tensor: New tensor with subsampled rows
+        """
         # NOTE: Assumes subsampling on rows
         tensor_size = tensor_to_subsample.shape[0]
+        assert subsample_size < tensor_size
         permutation = torch.randperm(tensor_size)
         return tensor_to_subsample[permutation[:subsample_size]]
 
 
 class DirichletLabelBasedSampler(LabelBasedSampler):
-    """
-    class used to subsample a dataset so the classes of samples are distributed in a non-IID way.
-    In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
-    of samples from each class. The sampler is constructed by passing a beta parameter that determines
-    the level of heterogeneity and a sample_percentage that determines the relative size of the modified
-    dataset. Subsampling a dataset is accomplished by calling the subsample method and passing a BaseDataset object.
-    This will return the resulting subsampled dataset.
-
-    NOTE: The range for beta is (0, infinity). The larger the value of beta, the more evenly the multinomial
-    probability of the labels will be. The smaller beta is the more heterogeneous it is.
-
-    np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
-    np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
-    """
-
     def __init__(
         self,
         unique_labels: List[Any],
@@ -108,6 +104,28 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         sample_percentage: float = 0.5,
         beta: float = 100,
     ) -> None:
+        """
+        class used to subsample a dataset so the classes of samples are distributed in a non-IID way.
+        In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
+        of samples from each class. The sampler is constructed by passing a beta parameter that determines
+        the level of heterogeneity and a sample_percentage that determines the relative size of the modified
+        dataset. Subsampling a dataset is accomplished by calling the subsample method and passing a BaseDataset
+        object. This will return the resulting subsampled dataset.
+
+        NOTE: The range for beta is (0, infinity). The larger the value of beta, the more evenly the multinomial
+        probability of the labels will be. The smaller beta is the more heterogeneous it is.
+
+        np.random.dirichlet([1]*5): array([0.23645891, 0.08857052, 0.29519184, 0.2999956 , 0.07978313])
+        np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
+
+        Args:
+            unique_labels (List[Any]): The full set of labels contained in the dataset.
+            sample_percentage (float, optional): The downsampling of the entire dataset to do. For example, if this
+                value is 0.5 and the dataset is of size 100, we will end up with 50 total data points. Defaults to 0.5.
+            beta (float, optional): This controls the heterogeneity of the label sampling. The smaller the beta, the
+                more skewed the label assignments will be for the dataset. Defaults to 100.
+            hash_key (Optional[int], optional): Seed for the random number generators and samplers. Defaults to None.
+        """
         super().__init__(unique_labels)
 
         self.hash_key = hash_key
@@ -126,7 +144,16 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
     def subsample(self, dataset: D) -> D:
         """
         Returns a new dataset where samples are selected based on a dirichlet distribution over labels
+
+        Args:
+            dataset (D): Dataset to be modified, through downsampling on specified labels.
+
+        Returns:
+            D: New dataset with downsampled labels.
         """
+        assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
+        assert self.sample_percentage <= 1.0
+
         total_num_samples = int(len(dataset) * self.sample_percentage)
         targets = dataset.targets
 
@@ -150,4 +177,4 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         # may differ from total_num_samples so we resample to ensure correct count
         selected_indices = selected_indices[:total_num_samples]
 
-        return self.select_by_indices(dataset, selected_indices)
+        return select_by_indices(dataset, selected_indices)
