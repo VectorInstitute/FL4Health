@@ -10,7 +10,7 @@ class ConvNet(Module):
         in_channels: int,
         h: int = 32,
         w: int = 32,
-        hidden: int = 2048,
+        hidden: int = 512,
         class_num: int = 10,
         use_bn: bool = True,
         dropout: float = 0.0,
