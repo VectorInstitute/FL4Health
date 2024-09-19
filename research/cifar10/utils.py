@@ -51,7 +51,7 @@ def evaluate_cifar10_model(
 
 
 def load_eval_best_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
-    model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation+client_{client_number}_best_model.pkl")
+    model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation_client_{client_number}_best_model.pkl")
     model = torch.load(model_checkpoint_path)
     return model
 
