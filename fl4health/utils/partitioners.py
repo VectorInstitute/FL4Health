@@ -49,18 +49,18 @@ class DirichletLabelBasedAllocation:
             number_of_partitions (int): Number of new datasets that we want to break the current dataset into
             unique_labels (List[T]): This is the set of labels through which we'll iterate to perform allocation
             min_label_examples (Optional[int], optional): This is an optional input if you want to ensure a minimum
-                number of labels is present on each partition.
+                number of labels is present on each partition. If prior distribution is provided, this is ignored.
                 NOTE: This does not guarantee feasibility. That is, if you have a very small beta and request a large
                 minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum isn't
                 satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of times.
                 Otherwise the partitioner "gives up". Defaults to None.
             beta (Optional[float]): This controls the heterogeneity of the partition allocations. The smaller the beta,
-              the more skewed the label assignments will be to different clients. It is mutually exclusive with the
-              prior.
+              the more skewed the label assignments will be to different clients. It is mutually exclusive with given
+              prior distribution..
             prior_distribution (Optional[Dict[T, np.ndarray]], optional): This is an optional input if you want to
               provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
               the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It is
-              mutually exclusive with the beta parameter.
+              mutually exclusive with the beta parameter and min_label_examples.
         """
         assert beta is not None or prior_distribution is not None, "Either beta or prior must be provided"
         assert beta is None or prior_distribution is None, "Either beta or prior must be provided, not both"
@@ -160,7 +160,8 @@ class DirichletLabelBasedAllocation:
                 partitioned_indices_for_label, min_selected_labels, partitioned_probability = (
                     self.partition_label_indices(label, label_indices)
                 )
-                if min_selected_labels >= self.min_label_examples:
+                # If the minimum number of labels is satisfied or if there is a prior distribution, we accept the
+                if self.prior_distribution is not None or min_selected_labels >= self.min_label_examples:
                     partitioned_probabilities[label] = partitioned_probability
                     for i, indices_for_label_partition in enumerate(partitioned_indices_for_label):
                         partitioned_indices[i] = torch.cat((partitioned_indices[i], indices_for_label_partition))
