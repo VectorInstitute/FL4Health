@@ -46,14 +46,12 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config["n_clients"],
     )
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-    checkpoint_name = "server_best_model.pkl"
-    federated_checkpointing: bool = config.get("federated_checkpointing", True)
-    log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
-    checkpointer = (
-        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
-        if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
-    )
+    best_checkpoint_name = "server_best_model.pkl"
+    last_checkpoint_name = "server_last_model.pkl"
+    checkpointer = [
+        BestLossTorchCheckpointer(checkpoint_dir, best_checkpoint_name),
+        LatestTorchCheckpointer(checkpoint_dir, last_checkpoint_name),
+    ]
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
     model = ConvNet(in_channels=3)
@@ -80,9 +78,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    if federated_checkpointing:
-        assert isinstance(checkpointer, BestLossTorchCheckpointer)
-        log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
+    assert isinstance(checkpointer[0], BestLossTorchCheckpointer)
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer[0].best_score}")
 
     # Shutdown the server gracefully
     server.shutdown()

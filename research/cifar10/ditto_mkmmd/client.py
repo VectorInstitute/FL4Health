@@ -13,7 +13,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
 from fl4health.utils.config import narrow_config_type
@@ -104,6 +104,8 @@ class CifarDittoClient(DittoMkMmdClient):
         return torch.nn.CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+        # Following the implementation in pFL-Bench : A Comprehensive Benchmark for Personalized
+        # Federated Learning (https://arxiv.org/pdf/2405.17724) for cifar10 dataset we use SGD optimizer
         global_optimizer = torch.optim.SGD(self.global_model.parameters(), lr=self.learning_rate, momentum=0.9)
         local_optimizer = torch.optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=0.9)
         return {"global": global_optimizer, "local": local_optimizer}
@@ -213,9 +215,22 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
-    checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(pre_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    pre_aggregation_best_checkpoint_name = f"pre_aggregation_client_{args.client_number}_best_model.pkl"
+    pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
+    post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
+    post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
+    checkpointer = ClientCheckpointModule(
+        pre_aggregation=[
+            BestLossTorchCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
+            LatestTorchCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
+        ],
+        post_aggregation=[
+            BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
+            BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
+        ],
+    )
 
     data_path = Path(args.dataset_dir)
     client = CifarDittoClient(

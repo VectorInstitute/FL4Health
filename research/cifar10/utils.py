@@ -14,8 +14,14 @@ def get_all_run_folders(artifact_dir: str) -> List[str]:
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def load_global_model(run_folder_dir: str) -> nn.Module:
+def load_best_global_model(run_folder_dir: str) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, "server_best_model.pkl")
+    model = torch.load(model_checkpoint_path)
+    return model
+
+
+def load_last_global_model(run_folder_dir: str) -> nn.Module:
+    model_checkpoint_path = os.path.join(run_folder_dir, "server_last_model.pkl")
     model = torch.load(model_checkpoint_path)
     return model
 
@@ -44,8 +50,26 @@ def evaluate_cifar10_model(
     return accuracy
 
 
-def load_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
-    model_checkpoint_path = os.path.join(run_folder_dir, f"client_{client_number}_best_model.pkl")
+def load_eval_best_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
+    model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation+client_{client_number}_best_model.pkl")
+    model = torch.load(model_checkpoint_path)
+    return model
+
+
+def load_eval_last_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
+    model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation_client_{client_number}_last_model.pkl")
+    model = torch.load(model_checkpoint_path)
+    return model
+
+
+def load_eval_best_post_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
+    model_checkpoint_path = os.path.join(run_folder_dir, f"post_aggregation_client_{client_number}_best_model.pkl")
+    model = torch.load(model_checkpoint_path)
+    return model
+
+
+def load_eval_last_post_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
+    model_checkpoint_path = os.path.join(run_folder_dir, f"post_aggregation_client_{client_number}_last_model.pkl")
     model = torch.load(model_checkpoint_path)
     return model
 
