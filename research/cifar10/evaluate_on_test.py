@@ -232,7 +232,7 @@ def main(
                 if eval_over_aggregated_test_data:
 
                     agg_server_run_metric = evaluate_cifar10_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
+                        server_model, aggregated_test_loader, metrics, device, is_apfl
                     )
                     log(
                         INFO,
@@ -242,31 +242,31 @@ def main(
                     best_server_agg_test_metrics.append(agg_server_run_metric)
                     all_best_server_agg_test_metrics[run_folder_dir] += agg_server_run_metric / NUM_CLIENTS
 
-        if eval_last_global_model:
-            server_model = load_last_global_model(run_folder_dir)
-            server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
-            log(
-                INFO,
-                f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                f"Server Last Model Test Performance: {server_run_metric}",
-            )
-            last_server_test_metrics.append(server_run_metric)
-            all_last_server_test_metrics[run_folder_dir] += (
-                server_run_metric * num_examples["eval_set"] / aggregated_num_examples
-            )
-
-            if eval_over_aggregated_test_data:
-
-                agg_server_run_metric = evaluate_cifar10_model(
-                    local_model, aggregated_test_loader, metrics, device, is_apfl
-                )
+            if eval_last_global_model:
+                server_model = load_last_global_model(run_folder_dir)
+                server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                    f"Aggregated Server Last Model Test Performance: {agg_server_run_metric}",
+                    f"Server Last Model Test Performance: {server_run_metric}",
                 )
-                last_server_agg_test_metrics.append(agg_server_run_metric)
-                all_last_server_agg_test_metrics[run_folder_dir] += agg_server_run_metric / NUM_CLIENTS
+                last_server_test_metrics.append(server_run_metric)
+                all_last_server_test_metrics[run_folder_dir] += (
+                    server_run_metric * num_examples["eval_set"] / aggregated_num_examples
+                )
+
+                if eval_over_aggregated_test_data:
+
+                    agg_server_run_metric = evaluate_cifar10_model(
+                        server_model, aggregated_test_loader, metrics, device, is_apfl
+                    )
+                    log(
+                        INFO,
+                        f"Client Number {client_number}, Run folder: {run_folder_dir}: "
+                        f"Aggregated Server Last Model Test Performance: {agg_server_run_metric}",
+                    )
+                    last_server_agg_test_metrics.append(agg_server_run_metric)
+                    all_last_server_agg_test_metrics[run_folder_dir] += agg_server_run_metric / NUM_CLIENTS
 
         # Write the results for each client
         if eval_best_pre_aggregation_local_models:
@@ -389,68 +389,68 @@ def main(
                 test_results[f"agg_client_{client_number}_post_last_model_local_std"] = std_test_metric
 
         if eval_best_global_model:
-            avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(best_server_test_metrics)
+            avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(best_server_test_metrics)
             log(
                 INFO,
                 f"Server Best model Average Test Performance on Client {client_number} "
-                f"Data: {avg_server_test_local_metric}",
+                f"Data: {avg_server_test_global_metric}",
             )
             log(
                 INFO,
                 f"Server Best model St. Dev. Test Performance on Client {client_number} "
-                f"Data: {std_server_test_local_metric}",
+                f"Data: {std_server_test_global_metric}",
             )
-            test_results[f"server_best_model_client_{client_number}_avg"] = avg_server_test_local_metric
-            test_results[f"server_best_model_client_{client_number}_std"] = std_server_test_local_metric
+            test_results[f"server_best_model_client_{client_number}_avg"] = avg_server_test_global_metric
+            test_results[f"server_best_model_client_{client_number}_std"] = std_server_test_global_metric
 
             if eval_over_aggregated_test_data:
-                avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(
+                avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
                     best_server_agg_test_metrics
                 )
                 log(
                     INFO,
                     f"Aggregated Server Best model Average Test Performance on Client {client_number} "
-                    f"Data: {avg_server_test_local_metric}",
+                    f"Data: {avg_server_test_global_metric}",
                 )
                 log(
                     INFO,
                     f"Aggregated Server Best model St. Dev. Test Performance on Client {client_number} "
-                    f"Data: {std_server_test_local_metric}",
+                    f"Data: {std_server_test_global_metric}",
                 )
-                test_results[f"agg_server_best_model_client_{client_number}_avg"] = avg_server_test_local_metric
-                test_results[f"agg_server_best_model_client_{client_number}_std"] = std_server_test_local_metric
+                test_results[f"agg_server_best_model_client_{client_number}_avg"] = avg_server_test_global_metric
+                test_results[f"agg_server_best_model_client_{client_number}_std"] = std_server_test_global_metric
 
         if eval_last_global_model:
-            avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(last_server_test_metrics)
+            avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(last_server_test_metrics)
             log(
                 INFO,
                 f"Server Last model Average Test Performance on Client {client_number} "
-                f"Data: {avg_server_test_local_metric}",
+                f"Data: {avg_server_test_global_metric}",
             )
             log(
                 INFO,
                 f"Server Last model St. Dev. Test Performance on Client {client_number} "
-                f"Data: {std_server_test_local_metric}",
+                f"Data: {std_server_test_global_metric}",
             )
-            test_results[f"server_last_model_client_{client_number}_avg"] = avg_server_test_local_metric
-            test_results[f"server_last_model_client_{client_number}_std"] = std_server_test_local_metric
+            test_results[f"server_last_model_client_{client_number}_avg"] = avg_server_test_global_metric
+            test_results[f"server_last_model_client_{client_number}_std"] = std_server_test_global_metric
 
             if eval_over_aggregated_test_data:
-                avg_server_test_local_metric, std_server_test_local_metric = get_metric_avg_std(
+                avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
                     last_server_agg_test_metrics
                 )
                 log(
                     INFO,
                     f"Aggregated Server Last model Average Test Performance on Client {client_number} "
-                    f"Data: {avg_server_test_local_metric}",
+                    f"Data: {avg_server_test_global_metric}",
                 )
                 log(
                     INFO,
                     f"Aggregated Server Last model St. Dev. Test Performance on Client {client_number} "
-                    f"Data: {std_server_test_local_metric}",
+                    f"Data: {std_server_test_global_metric}",
                 )
-                test_results[f"agg_server_last_model_client_{client_number}_avg"] = avg_server_test_local_metric
-                test_results[f"agg_server_last_model_client_{client_number}_std"] = std_server_test_local_metric
+                test_results[f"agg_server_last_model_client_{client_number}_avg"] = avg_server_test_global_metric
+                test_results[f"agg_server_last_model_client_{client_number}_std"] = std_server_test_global_metric
 
     if eval_best_pre_aggregation_local_models:
         all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_pre_best_local_test_metrics.values()))
