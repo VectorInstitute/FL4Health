@@ -26,7 +26,7 @@ def test_dirichlet_allocation_partitioner() -> None:
     uniform_partitioner = DirichletLabelBasedAllocation(
         number_of_partitions=5, unique_labels=list(range(10)), beta=100.0
     )
-    partitioned_datasets = uniform_partitioner.partition_dataset(SYNTHETIC_DATASET)
+    partitioned_datasets, _ = uniform_partitioner.partition_dataset(SYNTHETIC_DATASET)
 
     assert len(partitioned_datasets) == 5
     partition_0_targets = partitioned_datasets[0].targets
@@ -48,7 +48,7 @@ def test_dirichlet_allocation_partitioner() -> None:
     heterogeneous_partitioner = DirichletLabelBasedAllocation(
         number_of_partitions=10, unique_labels=list(range(10)), beta=1.0, min_label_examples=2
     )
-    partitioned_datasets = heterogeneous_partitioner.partition_dataset(SYNTHETIC_DATASET, max_retries=5)
+    partitioned_datasets, _ = heterogeneous_partitioner.partition_dataset(SYNTHETIC_DATASET, max_retries=5)
 
     assert len(partitioned_datasets) == 10
     partition_0_targets = partitioned_datasets[0].targets
