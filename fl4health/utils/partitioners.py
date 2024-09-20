@@ -59,8 +59,8 @@ class DirichletLabelBasedAllocation:
               prior distribution..
             prior_distribution (Optional[Dict[T, np.ndarray]], optional): This is an optional input if you want to
               provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
-              the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It is
-              mutually exclusive with the beta parameter and min_label_examples.
+              the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
+              is mutually exclusive with the beta parameter and min_label_examples.
         """
         assert beta is not None or prior_distribution is not None, "Either beta or prior must be provided"
         assert beta is None or prior_distribution is None, "Either beta or prior must be provided, not both"
