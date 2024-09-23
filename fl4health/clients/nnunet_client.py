@@ -75,6 +75,7 @@ class NnunetClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        client_name: Optional[str] = None,
     ) -> None:
         """
         A client for training nnunet models. Requires the nnunet environment variables
@@ -151,6 +152,7 @@ class NnunetClient(BasicClient):
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
             progress_bar=progress_bar,
             intermediate_client_state_dir=intermediate_client_state_dir,
+            client_name=client_name,
         )
 
         # Some nnunet client specific attributes
