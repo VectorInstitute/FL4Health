@@ -19,6 +19,8 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
 from fl4health.utils.config import narrow_config_type
+from fl4health.utils.nnunet_utils import NnunetConfig
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
@@ -86,17 +88,32 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         """
         self.initialized = False
 
-    def load_server_model(self, config: Config) -> None:
-        plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
+        self.nnunet_plans_bytes: bytes
+        self.num_input_channels: int
+        self.num_segmentation_heads: int
+        self.enable_deep_supervision: bool
+        self.nnunet_config: NnunetConfig
+
+    def initialize_server_model(self) -> None:
+        # Ensure required attributes are set
+        assert (
+            self.nnunet_plans_bytes is not None
+            and self.num_input_channels is not None
+            and self.num_segmentation_heads is not None
+            and self.enable_deep_supervision is not None
+            and self.nnunet_config is not None
+        )
+
+        plans = pickle.loads(self.nnunet_plans_bytes)
         plans_manager = PlansManager(plans)
-        configuration_manager = plans_manager.get_configuration(config["nnunet_config"])
+        configuration_manager = plans_manager.get_configuration(self.nnunet_config.value)
         model = nnUNetTrainer.build_network_architecture(
             configuration_manager.network_arch_class_name,
             configuration_manager.network_arch_init_kwargs,
             configuration_manager.network_arch_init_kwargs_req_import,
-            int(config["num_input_channels"]),
-            int(config["num_segmentation_heads"]),
-            bool(config["enable_deep_supervision"]),
+            self.num_input_channels,
+            self.num_segmentation_heads,
+            self.enable_deep_supervision,
         )
 
         self.server_model = model
@@ -121,34 +138,114 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             self.initialized = True
             return
 
-        # Sample properties from a random client to initialize plans
-        log(INFO, "")
-        log(INFO, "[PRE-INIT]")
-        log(INFO, "Requesting initialization of global nnunet plans from one random client via get_properties")
-        random_client = self._client_manager.sample(1)[0]
-        ins = GetPropertiesIns(config=config)
-        properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=server_round)
+        # If no prior checkpoints exist, initialize server by sampling clients to get required properties to set
+        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
+            # Sample properties from a random client to initialize plans
+            log(INFO, "")
+            log(INFO, "[PRE-INIT]")
+            log(INFO, "Requesting initialization of global nnunet plans from one random client via get_properties")
+            random_client = self._client_manager.sample(1)[0]
+            ins = GetPropertiesIns(config=config)
+            properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=server_round)
 
-        if properties_res.status.code == Code.OK:
-            log(INFO, "Recieved global nnunet plans from one random client")
+            if properties_res.status.code == Code.OK:
+                log(INFO, "Recieved global nnunet plans from one random client")
+            else:
+                raise Exception("Failed to receive properties from client to initialize nnunet plans")
+
+            properties = properties_res.properties
+
+            # Set attributes of server that are dependent on client properties.
+            # NnUNetClient has serialized nnunet_plans as a property
+            self.nnunet_plans_bytes = narrow_config_type(properties, "nnunet_plans", bytes)
+            self.num_segmentation_heads = narrow_config_type(properties, "num_segmentation_heads", int)
+            self.num_input_channels = narrow_config_type(properties, "num_input_channels", int)
+            self.enable_deep_supervision = narrow_config_type(properties, "enable_deep_supervision", bool)
+
+            self.nnunet_config = NnunetConfig(config["nnunet_config"])
+
+            self.initialize_server_model()
         else:
-            raise Exception("Failed to receive properties from client to initialize nnunet plans")
-
-        properties = properties_res.properties
-
-        # NnUNetClient has serialized nnunet_plans as a property
-        plans_bytes = properties["nnunet_plans"]
-
-        # Load server model with plan provided from client
-        properties["nnunet_config"] = config["nnunet_config"]
-        self.load_server_model(properties)
+            # If a checkpoint exists, we load in previously checkpointed values for required properties
+            self.load_server_state()
 
         # Wrap config functions so that nnunet_plans is included
-        new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": plans_bytes})
-        new_eval_cfg_fn = add_items_to_config_fn(self.strategy.configure_evaluate, {"nnunet_plans": plans_bytes})
+        new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
+        new_eval_cfg_fn = add_items_to_config_fn(
+            self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
+        )
         setattr(self.strategy, "configure_fit", new_fit_cfg_fn)
         setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
 
         # Finish
         self.initialized = True
         log(INFO, "")
+
+    def save_server_state(self) -> None:
+        """
+        Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
+            This method overrides parent to also checkpoint nnunet_plans, num_input_channels, num_segmentation_heads and enable_deep_supervision.
+        """
+
+        assert self.per_round_checkpointer is not None
+
+        assert (
+            self.nnunet_plans_bytes is not None
+            and self.num_input_channels is not None
+            and self.num_segmentation_heads is not None
+            and self.enable_deep_supervision is not None
+            and self.nnunet_config is not None
+        )
+
+        ckpt = {
+            "model": self.server_model,
+            "history": self.history,
+            "current_round": self.current_round,
+            "metrics_reporter": self.metrics_reporter,
+            "server_name": self.server_name,
+            "nnunet_plans_bytes": self.nnunet_plans_bytes,
+            "num_input_channels": self.num_input_channels,
+            "num_segmentation_heads": self.num_segmentation_heads,
+            "enable_deep_supervision": self.enable_deep_supervision,
+            "nnunet_config": self.nnunet_config,
+        }
+
+        self.per_round_checkpointer.save_checkpoint(ckpt)
+
+        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+    def load_server_state(self) -> None:
+        """
+        Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
+            The method overrides parent to add any necessary state when loading the checkpoint.
+        """
+        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
+
+        ckpt = self.per_round_checkpointer.load_checkpoint()
+
+        assert "model" in ckpt and isinstance(ckpt["model"], nn.Module)
+        assert "server_name" in ckpt and isinstance(ckpt["server_name"], str)
+        assert "current_round" in ckpt and isinstance(ckpt["current_round"], int)
+        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+        assert "history" in ckpt and isinstance(ckpt["history"], History)
+
+        assert "nnunet_plans_bytes" in ckpt and isinstance(ckpt["nnunet_plans_bytes"], bytes)
+        assert "num_segmentation_heads" in ckpt and isinstance(ckpt["num_segmentation_heads"], int)
+        assert "num_input_channels" in ckpt and isinstance(ckpt["num_input_channels"], int)
+        assert "enable_deep_supervision" in ckpt and isinstance(ckpt["enable_deep_supervision"], bool)
+        assert "nnunet_config" in ckpt and isinstance(ckpt["nnunet_config"], NnunetConfig)
+
+        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+
+        self.current_round = ckpt["current_round"]
+        self.server_name = ckpt["server_name"]
+        self.metrics_reporter = ckpt["metrics_reporter"]
+        self.history = ckpt["history"]
+        self.parameters = get_all_model_parameters(ckpt["model"])
+
+        self.server_model = ckpt["model"]
+        self.nnunet_plans_bytes = ckpt["nnunet_plans_bytes"]
+        self.num_segmentation_heads = ckpt["num_segmentation_heads"]
+        self.num_input_channels = ckpt["num_input_channels"]
+        self.enable_deep_supervision = ckpt["enable_deep_supervision"]
+        self.nnunet_config = ckpt["nnunet_config"]

@@ -151,6 +151,8 @@ settings.json
 **/datasets/skin_cancer/ISIC_2019/**
 **/datasets/skin_cancer/Derm7pt/**
 **/datasets/nnunet/**
+**/datasets/nnunet_raw/**
+**/datasets/nnunet_preprocessed/**
 
 # logs
 
