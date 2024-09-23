@@ -78,8 +78,8 @@ class DirichletLabelBasedAllocation(Generic[T]):
             if self.min_label_examples > 0:
                 log(
                     WARN,
-                    """A prior distribution has been provided for the partitioner,
-                    so min_label_examples will be ignored""",
+                    "A prior distribution has been provided for the partitioner",
+                    "so min_label_examples will be ignored.",
                 )
 
     def partition_label_indices(
@@ -100,20 +100,21 @@ class DirichletLabelBasedAllocation(Generic[T]):
             np.ndarray: The Dirichlet distribution used to partition the data points.
         """
         if self.prior_distribution is not None:
+            label_prior_distribution = self.prior_distribution[label]
             assert (
-                len(self.prior_distribution[label]) == self.number_of_partitions
+                len(label_prior_distribution) == self.number_of_partitions
             ), f"The length of the prior distribution for label ({str(label)}) must match the number of partitions"
-            if sum(self.prior_distribution[label]) != 1:
+            if sum(label_prior_distribution) != 1:
                 log(
                     WARN,
                     f"The provided prior distribution for label ({str(label)}) does not sum to 1. "
                     "It will be normalized to sum to 1.",
                 )
-            partition_allocations = self.prior_distribution[label] / sum(self.prior_distribution[label])
+            partition_allocations = label_prior_distribution / sum(label_prior_distribution)
             log(
                 INFO,
                 f"The allocation distribution for label ({str(label)}) is {partition_allocations} "
-                f"using the provided prior distribution",
+                "using the provided prior distribution",
             )
         elif self.beta is not None:
             # These are the percentages of the label indices to be distributed for each partition
