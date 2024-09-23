@@ -1,8 +1,0 @@
-# Parameters that describe the server
-n_server_rounds: 2
-
-# Parameters that describe the clients
-n_clients: 1
-local_steps: 10
-
-nnunet_config: 2d
