@@ -115,6 +115,20 @@ if __name__ == "__main__":
         help="""[OPTIONAL] The address to use for the server. Defaults to
         0.0.0.0:8080""",
     )
+    parser.add_argument(
+        "--intermediate-server-state-dir",
+        type=str,
+        required=False,
+        default="./",
+        help="""[OPTIONAL] Directory to checkpoint server state. Defaults to current directory""",
+    )
+    parser.add_argument(
+        "--server-name",
+        type=str,
+        required=False,
+        default="server",
+        help="""[OPTIONAL] Name of the server. Defaults to server""",
+    )
 
     args = parser.parse_args()
 
