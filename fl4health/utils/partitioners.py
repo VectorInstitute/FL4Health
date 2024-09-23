@@ -1,5 +1,5 @@
 import math
-from logging import INFO
+from logging import INFO, WARN
 from typing import Dict, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
@@ -56,20 +56,31 @@ class DirichletLabelBasedAllocation:
                 Otherwise the partitioner "gives up". Defaults to None.
             beta (Optional[float]): This controls the heterogeneity of the partition allocations. The smaller the beta,
               the more skewed the label assignments will be to different clients. It is mutually exclusive with given
-              prior distribution..
+              prior distribution.
             prior_distribution (Optional[Dict[T, np.ndarray]], optional): This is an optional input if you want to
               provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
               the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
               is mutually exclusive with the beta parameter and min_label_examples.
         """
-        assert beta is not None or prior_distribution is not None, "Either beta or prior must be provided"
-        assert beta is None or prior_distribution is None, "Either beta or prior must be provided, not both"
+        assert (beta is not None) ^ (
+            prior_distribution is not None
+        ), "Either beta or a prior distribution must be provided, but not both."
         self.number_of_partitions = number_of_partitions
         self.unique_labels = unique_labels
         self.n_unique_labels = len(unique_labels)
-        self.prior_distribution = prior_distribution
         self.beta = beta
         self.min_label_examples = min_label_examples if min_label_examples else 0
+        self.prior_distribution = prior_distribution
+        if self.prior_distribution is not None:
+            assert (
+                len(self.prior_distribution) == self.n_unique_labels
+            ), "The length of the prior must match the number of labels"
+            if self.min_label_examples > 0:
+                log(
+                    WARN,
+                    """A prior distribution has been provided for the partitioner,
+                    so min_label_examples will be ignored""",
+                )
 
     def partition_label_indices(
         self, label: T, label_indices: torch.Tensor
@@ -89,16 +100,13 @@ class DirichletLabelBasedAllocation:
             np.ndarray: The Dirichlet distribution used to partition the data points.
         """
         if self.prior_distribution is not None:
-            assert (
-                len(self.prior_distribution) == self.n_unique_labels
-            ), "The length of the prior must match the number of labels"
             partition_allocations = self.prior_distribution[label]
             log(
                 INFO,
-                f"Using a prior distribution of {self.prior_distribution[label]} to allocate the label ({str(label)})",
+                f"The allocation distribution for label ({str(label)}) is {partition_allocations} "
+                f"using the provided prior distribution",
             )
-        if self.beta is not None:
-            total_data_points_with_label = len(label_indices)
+        elif self.beta is not None:
             # These are the percentages of the label indices to be distributed for each partition
             partition_allocations = np.random.dirichlet(np.repeat(self.beta, self.number_of_partitions))
             log(
@@ -108,7 +116,9 @@ class DirichletLabelBasedAllocation:
                     f"using a beta of {self.beta}",
                 ),
             )
-
+        else:
+            raise ValueError("Either beta or a prior distribution must be provided.")
+        total_data_points_with_label = len(label_indices)
         num_samples_per_partition = [
             math.floor(probability * total_data_points_with_label) for probability in partition_allocations
         ]
@@ -145,7 +155,7 @@ class DirichletLabelBasedAllocation:
 
         Returns:
             List[D]: The partitioned datasets, length should correspond to self.number_of_partitions
-
+            Dict[T, np.ndarray]: The Dirichlet distribution used to partition the data points for each label.
         """
         targets = original_dataset.targets
         assert targets is not None, "A label-based partitioner requires targets but this dataset has no targets"
@@ -161,6 +171,7 @@ class DirichletLabelBasedAllocation:
                     self.partition_label_indices(label, label_indices)
                 )
                 # If the minimum number of labels is satisfied or if there is a prior distribution, we accept the
+                # partition. Otherwise, we retry.
                 if self.prior_distribution is not None or min_selected_labels >= self.min_label_examples:
                     partitioned_probabilities[label] = partitioned_probability
                     for i, indices_for_label_partition in enumerate(partitioned_indices_for_label):
