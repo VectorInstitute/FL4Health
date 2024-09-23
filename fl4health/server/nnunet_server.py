@@ -19,7 +19,6 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
 from fl4health.utils.config import narrow_config_type
-from fl4health.utils.nnunet_utils import NnunetConfig
 
 with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
@@ -90,8 +89,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
     def load_server_model(self, config: Config) -> None:
         plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
         plans_manager = PlansManager(plans)
-        nnunet_config = NnunetConfig(config["nnunet_config"])
-        configuration_manager = plans_manager.get_configuration(nnunet_config.value)
+        configuration_manager = plans_manager.get_configuration(config["nnunet_config"])
         model = nnUNetTrainer.build_network_architecture(
             configuration_manager.network_arch_class_name,
             configuration_manager.network_arch_init_kwargs,
@@ -140,6 +138,10 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
 
         # NnUNetClient has serialized nnunet_plans as a property
         plans_bytes = properties["nnunet_plans"]
+
+        # Load server model with plan provided from client
+        properties["nnunet_config"] = config["nnunet_config"]
+        self.load_server_model(properties)
 
         # Wrap config functions so that nnunet_plans is included
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": plans_bytes})

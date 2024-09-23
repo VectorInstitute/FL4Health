@@ -4,7 +4,7 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -33,6 +33,8 @@ def main(
     always_preprocess: bool = False,
     verbose: bool = True,
     compile: bool = True,
+    intermediate_client_state_dir: Optional[str] = None,
+    client_name: Optional[str] = None,
 ) -> None:
     # Log device and server address
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,6 +80,10 @@ def main(
         device=DEVICE,
         metrics=[dice],
         progress_bar=verbose,
+        intermediate_client_state_dir=(
+            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
+        ),
+        client_name=client_name,
     )
 
     start_client(server_address=server_address, client=client.to_client())
@@ -161,6 +167,23 @@ if __name__ == "__main__":
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
 
+    parser.add_argument(
+        "--intermediate-client-state-dir",
+        type=str,
+        required=False,
+        default=None,
+        help="""[OPTIONAL] Directory to store client state during training. Defaults to
+        None""",
+    )
+    parser.add_argument(
+        "--client-name",
+        type=str,
+        required=False,
+        default=None,
+        help="""[OPTIONAL] Name of the client used to name client state checkpoint.
+        Defaults to None, in which case a random name is generated for the client""",
+    )
+
     args = parser.parse_args()
 
     # Set the log level
@@ -187,4 +210,6 @@ if __name__ == "__main__":
         always_preprocess=args.always_preprocess,
         verbose=args.verbose,
         compile=not args.skip_compile,
+        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        client_name=args.client_name,
     )
