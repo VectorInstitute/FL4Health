@@ -184,7 +184,8 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
     def save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
-            This method overrides parent to also checkpoint nnunet_plans, num_input_channels, num_segmentation_heads and enable_deep_supervision.
+            This method overrides parent to also checkpoint nnunet_plans, num_input_channels,
+            num_segmentation_heads and enable_deep_supervision.
         """
 
         assert self.per_round_checkpointer is not None
