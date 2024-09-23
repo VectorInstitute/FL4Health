@@ -173,7 +173,7 @@ def test_dirichlet_allocation_partitioner_with_prior_distribution() -> None:
     assert len(partition_6_targets_2) == len(partition_6_targets_1)
     assert len(partition_7_targets_2) == len(partition_7_targets_1)
     assert len(partition_9_targets_2) == len(partition_9_targets_1)
-    
+
     for i in range(10):
         assert len(torch.where(partition_0_targets_2 == i)[0]) == len(torch.where(partition_0_targets_1 == i)[0])
         assert len(torch.where(partition_2_targets_2 == i)[0]) == len(torch.where(partition_2_targets_1 == i)[0])
