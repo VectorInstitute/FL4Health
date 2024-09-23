@@ -169,23 +169,17 @@ def test_dirichlet_allocation_partitioner_with_prior_distribution() -> None:
     assert partition_9_targets_2 is not None
 
     assert len(partition_0_targets_2) == len(partition_0_targets_1)
+    assert len(partition_2_targets_2) == len(partition_2_targets_1)
     assert len(partition_6_targets_2) == len(partition_6_targets_1)
+    assert len(partition_7_targets_2) == len(partition_7_targets_1)
     assert len(partition_9_targets_2) == len(partition_9_targets_1)
-
-    assert len(torch.where(partition_0_targets_2 == 0)[0]) == len(torch.where(partition_0_targets_1 == 0)[0])
-    assert len(torch.where(partition_0_targets_2 == 1)[0]) == len(torch.where(partition_0_targets_1 == 1)[0])
-    assert len(torch.where(partition_0_targets_2 == 5)[0]) == len(torch.where(partition_0_targets_1 == 5)[0])
-    assert len(torch.where(partition_0_targets_2 == 9)[0]) == len(torch.where(partition_0_targets_1 == 9)[0])
-
-    assert len(torch.where(partition_2_targets_2 == 0)[0]) == len(torch.where(partition_2_targets_1 == 0)[0])
-    assert len(torch.where(partition_2_targets_2 == 1)[0]) == len(torch.where(partition_2_targets_1 == 1)[0])
-    assert len(torch.where(partition_2_targets_2 == 5)[0]) == len(torch.where(partition_2_targets_1 == 5)[0])
-    assert len(torch.where(partition_2_targets_2 == 9)[0]) == len(torch.where(partition_2_targets_1 == 9)[0])
-
-    assert len(torch.where(partition_7_targets_2 == 0)[0]) == len(torch.where(partition_7_targets_1 == 0)[0])
-    assert len(torch.where(partition_7_targets_2 == 1)[0]) == len(torch.where(partition_7_targets_1 == 1)[0])
-    assert len(torch.where(partition_7_targets_2 == 5)[0]) == len(torch.where(partition_7_targets_1 == 5)[0])
-    assert len(torch.where(partition_7_targets_2 == 8)[0]) == len(torch.where(partition_7_targets_1 == 8)[0])
+    
+    for i in range(10):
+        assert len(torch.where(partition_0_targets_2 == i)[0]) == len(torch.where(partition_0_targets_1 == i)[0])
+        assert len(torch.where(partition_2_targets_2 == i)[0]) == len(torch.where(partition_2_targets_1 == i)[0])
+        assert len(torch.where(partition_6_targets_2 == i)[0]) == len(torch.where(partition_6_targets_1 == i)[0])
+        assert len(torch.where(partition_7_targets_2 == i)[0]) == len(torch.where(partition_7_targets_1 == i)[0])
+        assert len(torch.where(partition_9_targets_2 == i)[0]) == len(torch.where(partition_9_targets_1 == i)[0])
 
     # unset seed for safety
     np.random.seed()
