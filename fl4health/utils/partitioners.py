@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARN
-from typing import Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 import torch
@@ -12,7 +12,7 @@ T = TypeVar("T")
 D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
 
 
-class DirichletLabelBasedAllocation:
+class DirichletLabelBasedAllocation(Generic[T]):
     def __init__(
         self,
         number_of_partitions: int,
@@ -100,7 +100,16 @@ class DirichletLabelBasedAllocation:
             np.ndarray: The Dirichlet distribution used to partition the data points.
         """
         if self.prior_distribution is not None:
-            partition_allocations = self.prior_distribution[label]
+            assert (
+                len(self.prior_distribution[label]) == self.number_of_partitions
+            ), f"The length of the prior distribution for label ({str(label)}) must match the number of partitions"
+            if sum(self.prior_distribution[label]) != 1:
+                log(
+                    WARN,
+                    f"The provided prior distribution for label ({str(label)}) does not sum to 1. "
+                    "It will be normalized to sum to 1.",
+                )
+            partition_allocations = self.prior_distribution[label] / sum(self.prior_distribution[label])
             log(
                 INFO,
                 f"The allocation distribution for label ({str(label)}) is {partition_allocations} "
@@ -162,7 +171,7 @@ class DirichletLabelBasedAllocation:
         partitioned_indices = [torch.Tensor([]).int() for _ in range(self.number_of_partitions)]
 
         partition_attempts = 0
-        partitioned_probabilities: Dict = {}
+        partitioned_probabilities: Dict[T, np.ndarray] = {}
         for label in self.unique_labels:
             label_indices = torch.where(targets == label)[0].int()
             min_selected_labels = -1
