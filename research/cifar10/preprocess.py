@@ -1,18 +1,21 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Tuple, Dict, List
 
 import numpy as np
 import torchvision.transforms as transforms
-from flwr.common.logger import log
 from torch.utils.data import DataLoader
 
+from flwr.common.logger import log
 from fl4health.utils.dataset import TensorDataset
-from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tensors, split_data_and_targets
+from fl4health.utils.load_data import (
+    ToNumpy,
+    get_cifar10_data_and_target_tensors,
+    split_data_and_targets,
+)
 from fl4health.utils.partitioners import DirichletLabelBasedAllocation
 from fl4health.utils.random import set_all_random_seeds
-
 
 def get_preprocessed_data(
     dataset_dir: Path, client_num: int, batch_size: int
