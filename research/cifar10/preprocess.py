@@ -20,7 +20,6 @@ def get_preprocessed_data(
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     transform = transforms.Compose(
         [
-            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
@@ -56,7 +55,6 @@ def get_test_preprocessed_data(
 ) -> Tuple[DataLoader, Dict[str, int]]:
     transform = transforms.Compose(
         [
-            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
@@ -161,7 +159,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--num_clients",
         action="store",
-        type=float,
+        type=int,
         help="Number of clients to partition the dataset into",
         default=5,
     )
