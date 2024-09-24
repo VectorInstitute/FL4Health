@@ -87,7 +87,7 @@ class FeatureExtractorBuffer:
 
         Args:
             prefix (str): The prefix of the layer name for registering the hook.
-            layers_name (List[str]): The list of named modules of the model. The assumption is that list of  
+            layers_name (List[str]): The list of named modules of the model. The assumption is that list of
             named modules is sorted in the order of the model's forward pass with depth-first traversal. This
             will allow the user to specify the generic name of the layer instead of the full hierarchical name.
 
