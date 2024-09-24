@@ -47,7 +47,7 @@ class DittoMkMmdClient(DittoClient):
                 None.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers  from which to extract
+            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers from which to extract
                 and flatten features. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
