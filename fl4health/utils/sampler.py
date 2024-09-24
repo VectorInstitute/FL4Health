@@ -1,11 +1,9 @@
 import math
 from abc import ABC, abstractmethod
-from logging import INFO
-from typing import Any, List, Optional, Set, TypeVar, Union
+from typing import Any, List, Set, TypeVar, Union
 
 import numpy as np
 import torch
-from flwr.common.logger import log
 
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
@@ -97,13 +95,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 
 
 class DirichletLabelBasedSampler(LabelBasedSampler):
-    def __init__(
-        self,
-        unique_labels: List[Any],
-        hash_key: Optional[int] = None,
-        sample_percentage: float = 0.5,
-        beta: float = 100,
-    ) -> None:
+    def __init__(self, unique_labels: List[Any], sample_percentage: float = 0.5, beta: float = 100) -> None:
         """
         class used to subsample a dataset so the classes of samples are distributed in a non-IID way.
         In particular, the DirichletLabelBasedSampler uses a dirichlet distribution to determine the number
@@ -124,21 +116,9 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
                 value is 0.5 and the dataset is of size 100, we will end up with 50 total data points. Defaults to 0.5.
             beta (float, optional): This controls the heterogeneity of the label sampling. The smaller the beta, the
                 more skewed the label assignments will be for the dataset. Defaults to 100.
-            hash_key (Optional[int], optional): Seed for the random number generators and samplers. Defaults to None.
         """
         super().__init__(unique_labels)
-
-        self.hash_key = hash_key
-
-        self.torch_generator = None
-        if self.hash_key is not None:
-            log(INFO, f"Setting seed to {self.hash_key} for Numpy and Torch Generators")
-            self.torch_generator = torch.Generator().manual_seed(self.hash_key)
-
-        self.np_generator = np.random.default_rng(self.hash_key)
-        self.probabilities = self.np_generator.dirichlet(np.repeat(beta, self.num_classes))
-        log(INFO, f"Setting probabilities to {self.probabilities}")
-
+        self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
         self.sample_percentage = sample_percentage
 
     def subsample(self, dataset: D) -> D:
@@ -164,13 +144,10 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         # For each class sample the given number of samples from the class specific indices
         # torch.multinomial is used to uniformly sample indices the size of given number of samples
         sampled_class_idx_list = [
-            class_idx[
-                torch.multinomial(
-                    torch.ones(class_idx.size(0)), num_samples, replacement=True, generator=self.torch_generator
-                )
-            ]
+            class_idx[torch.multinomial(torch.ones(class_idx.size(0)), num_samples, replacement=True)]
             for class_idx, num_samples in zip(class_idx_list, num_samples_per_class)
         ]
+
         selected_indices = torch.cat(sampled_class_idx_list, dim=0).long()
 
         # Due to precision errors with previous rounding, sum of sample counts
