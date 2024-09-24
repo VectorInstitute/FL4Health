@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
+import torch
 import torchvision.transforms as transforms
 from flwr.common.logger import log
 from torch.utils.data import DataLoader
@@ -20,21 +21,26 @@ def get_preprocessed_data(
 ) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
     transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
     try:
-        train_data = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_data.npy")
-        train_targets = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_targets.npy")
+        train_data = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_data.npy"))
+        train_targets = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_train_targets.npy"))
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned train data")
 
     training_set = TensorDataset(train_data, train_targets, transform=transform, target_transform=None)
 
     try:
-        validation_data = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_validation_data.npy")
-        validation_targets = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_validation_targets.npy")
+        validation_data = torch.from_numpy(
+            np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_validation_data.npy")
+        )
+        validation_targets = torch.from_numpy(
+            np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_validation_targets.npy")
+        )
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned validation data")
 
@@ -55,13 +61,14 @@ def get_test_preprocessed_data(
 ) -> Tuple[DataLoader, Dict[str, int]]:
     transform = transforms.Compose(
         [
+            ToNumpy(),
             transforms.ToTensor(),
             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
         ]
     )
     try:
-        data = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_data.npy")
-        targets = np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_targets.npy")
+        data = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_data.npy"))
+        targets = torch.from_numpy(np.load(f"{dataset_dir}/beta_{beta}/client_{client_num}_test_targets.npy"))
     except FileNotFoundError:
         raise FileNotFoundError(f"Client {client_num} does not have partitioned test data")
 

@@ -71,7 +71,7 @@ def main(
         for client_number in range(NUM_CLIENTS):
             if use_partitioned_data:
                 test_loader, num_examples = get_test_preprocessed_data(
-                    Path(dataset_dir), BATCH_SIZE, client_number, heterogeneity_level
+                    Path(dataset_dir), client_number, BATCH_SIZE, heterogeneity_level
                 )
             else:
                 sampler = DirichletLabelBasedSampler(
@@ -97,7 +97,7 @@ def main(
     for client_number in range(NUM_CLIENTS):
         if use_partitioned_data:
             test_loader, num_examples = get_test_preprocessed_data(
-                Path(dataset_dir), BATCH_SIZE, client_number, heterogeneity_level
+                Path(dataset_dir), client_number, BATCH_SIZE, heterogeneity_level
             )
         else:
             sampler = DirichletLabelBasedSampler(
