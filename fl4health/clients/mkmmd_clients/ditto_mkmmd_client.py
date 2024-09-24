@@ -47,8 +47,8 @@ class DittoMkMmdClient(DittoClient):
                 None.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers to extract
-                flatten features from them. Defaults to None.
+            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers  from which to extract
+                and flatten features. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
             beta_global_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. If
@@ -107,7 +107,8 @@ class DittoMkMmdClient(DittoClient):
     def update_before_train(self, current_server_round: int) -> None:
         super().update_before_train(current_server_round)
         assert isinstance(self.global_model, nn.Module)
-        # Register hooks to extract features from the local model if not already registered
+        # Register hooks to extract features from the local model if not already registered. As hooks have
+        #  to be removed to checkpoint the model, so we check if they need to be re-registered each time.
         self.local_feature_extractor._maybe_register_hooks()
         # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
@@ -122,14 +123,12 @@ class DittoMkMmdClient(DittoClient):
     def _should_optimize_betas(self, step: int) -> bool:
         step_at_interval = (step - 1) % self.beta_global_update_interval == 0
         valid_components_present = self.initial_global_model is not None
-        return step_at_interval and valid_components_present
+        # If the mkmmd loss doesn't matter, we don't bother optimizing betas
+        weighted_mkmmd_loss = self.mkmmd_loss_weight != 0
+        return step_at_interval and valid_components_present and weighted_mkmmd_loss
 
     def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
-            # If the mkmmd loss doesn't matter, we don't bother optimizing betas
-            if self.mkmmd_loss_weight != 0:
-                return super().update_after_step(step)
-
             # Get the feature distribution of the local and initial global features with evaluation
             # mode
             local_distributions, initial_global_distributions = self.update_buffers(
@@ -140,8 +139,7 @@ class DittoMkMmdClient(DittoClient):
                 layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
                     X=local_distributions[layer], Y=initial_global_distributions[layer], lambda_m=1e-5
                 )
-
-        return super().update_after_step(step)
+        super().update_after_step(step)
 
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
