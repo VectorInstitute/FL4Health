@@ -168,7 +168,8 @@ class MrMtlMkMmdClient(MrMtlClient):
                 input = input.to(self.device)
                 # Pass the input through the local model to populate the local_feature_extractor buffer
                 local_model(input)
-                # Pass the input through the initial global model to populate the local_feature_extractor buffer
+                # Pass the input through the initial global model to populate the initial_global_feature_extractor
+                # buffer
                 initial_global_model(input)
         local_distributions = self.local_feature_extractor.get_extracted_features()
         initial_global_distributions = self.initial_global_feature_extractor.get_extracted_features()
@@ -204,7 +205,7 @@ class MrMtlMkMmdClient(MrMtlClient):
                  indexed by name. By passing features, we can compute losses
                  such as the model contrasting loss in MOON. All predictions
                  included in dictionary will by default be used to compute
-                 metrics seperately.
+                 metrics separately.
 
         Raises:
              TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -240,7 +241,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            Tuple[torch.Tensor, Dict[str, torch.Tensor]]: A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
