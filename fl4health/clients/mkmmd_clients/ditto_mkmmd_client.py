@@ -83,7 +83,7 @@ class DittoMkMmdClient(DittoClient):
         else:
             raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         if feature_extraction_layers:
-            # By default, all of the fetures should be flattened for the MK-MMD loss
+            # By default, all of the features should be flattened for the MK-MMD loss
             self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
         else:
             self.flatten_feature_extraction_layers = {}
