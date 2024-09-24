@@ -11,6 +11,7 @@ from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
+from research.cifar10.preprocess import get_test_preprocessed_data
 from research.cifar10.utils import (
     evaluate_cifar10_model,
     get_all_run_folders,
@@ -24,13 +25,14 @@ from research.cifar10.utils import (
     write_measurement_results,
 )
 
-NUM_CLIENTS = 10
+NUM_CLIENTS = 5
 BATCH_SIZE = 32
 
 
 def main(
     artifact_dir: str,
     dataset_dir: str,
+    use_partitioned_data: bool,
     eval_write_path: str,
     eval_best_pre_aggregation_local_models: bool,
     eval_last_pre_aggregation_local_models: bool,
@@ -67,13 +69,18 @@ def main(
     # First we test each client's best model on local test data and the best server model on that same data
     if eval_over_aggregated_test_data:
         for client_number in range(NUM_CLIENTS):
-            sampler = DirichletLabelBasedSampler(
-                list(range(10)),
-                sample_percentage=1.0 / NUM_CLIENTS,
-                beta=heterogeneity_level,
-                hash_key=client_number,
-            )
-            test_loader, _ = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
+            if use_partitioned_data:
+                test_loader, num_examples = get_test_preprocessed_data(
+                    Path(dataset_dir), BATCH_SIZE, client_number, heterogeneity_level
+                )
+            else:
+                sampler = DirichletLabelBasedSampler(
+                    list(range(10)),
+                    sample_percentage=1.0 / NUM_CLIENTS,
+                    beta=heterogeneity_level,
+                    hash_key=client_number,
+                )
+                test_loader, _ = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
             assert isinstance(test_loader.dataset, TensorDataset), "Expected TensorDataset."
 
             if client_number == 0:
@@ -88,13 +95,18 @@ def main(
         aggregated_num_examples = len(aggregated_dataset)
 
     for client_number in range(NUM_CLIENTS):
-        sampler = DirichletLabelBasedSampler(
-            list(range(10)),
-            sample_percentage=1.0 / NUM_CLIENTS,
-            beta=heterogeneity_level,
-            hash_key=client_number,
-        )
-        test_loader, num_examples = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
+        if use_partitioned_data:
+            test_loader, num_examples = get_test_preprocessed_data(
+                Path(dataset_dir), BATCH_SIZE, client_number, heterogeneity_level
+            )
+        else:
+            sampler = DirichletLabelBasedSampler(
+                list(range(10)),
+                sample_percentage=1.0 / NUM_CLIENTS,
+                beta=heterogeneity_level,
+                hash_key=client_number,
+            )
+            test_loader, num_examples = load_cifar10_test_data(Path(dataset_dir), BATCH_SIZE, sampler=sampler)
 
         pre_best_local_test_metrics = []
         pre_last_local_test_metrics = []
@@ -628,6 +640,12 @@ if __name__ == "__main__":
         required=True,
     )
     parser.add_argument(
+        "--use_partitioned_data",
+        action="store_true",
+        help="Use preprocessed partitioned data for training, validation and testing",
+        default=True,
+    )
+    parser.add_argument(
         "--eval_write_path",
         action="store",
         type=str,
@@ -716,6 +734,7 @@ if __name__ == "__main__":
     main(
         args.artifact_dir,
         args.dataset_dir,
+        args.use_partitioned_data,
         args.eval_write_path,
         args.eval_best_pre_aggregation_local_models,
         args.eval_last_pre_aggregation_local_models,

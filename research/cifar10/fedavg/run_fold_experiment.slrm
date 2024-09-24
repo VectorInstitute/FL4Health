@@ -150,6 +150,7 @@ do
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --beta ${CLIENT_BETA} \
+            --use_partitioned_data \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

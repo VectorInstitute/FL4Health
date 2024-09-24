@@ -23,8 +23,9 @@ from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.model import ConvNet
+from research.cifar10.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
-NUM_CLIENTS = 10
+NUM_CLIENTS = 5
 
 
 class CifarFedAvgClient(BasicClient):
@@ -38,6 +39,7 @@ class CifarFedAvgClient(BasicClient):
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        use_patitioned_data: bool = False,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -46,6 +48,7 @@ class CifarFedAvgClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
+        self.use_patitioned_data = use_patitioned_data
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
@@ -55,38 +58,48 @@ class CifarFedAvgClient(BasicClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
-        n_clients = narrow_config_type(config, "n_clients", int)
-        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
-        sampler = DirichletLabelBasedSampler(
-            list(range(10)),
-            sample_percentage=1.0 / n_clients,
-            beta=self.heterogeneity_level,
-            hash_key=self.client_number,
-        )
-        # Set the same hash_key for the train_loader and val_loader to ensure the same data split
-        # of train and validation for all clients
-        train_loader, val_loader, _ = load_cifar10_data(
-            self.data_path,
-            batch_size,
-            validation_proportion=0.2,
-            sampler=sampler,
-            hash_key=100,
-        )
+        if self.use_patitioned_data:
+            train_loader, val_loader, _ = get_preprocessed_data(
+                self.data_path, self.client_number, batch_size, self.heterogeneity_level
+            )
+        else:
+            n_clients = narrow_config_type(config, "n_clients", int)
+            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            sampler = DirichletLabelBasedSampler(
+                list(range(10)),
+                sample_percentage=1.0 / n_clients,
+                beta=self.heterogeneity_level,
+                hash_key=self.client_number,
+            )
+            # Set the same hash_key for the train_loader and val_loader to ensure the same data split
+            # of train and validation for all clients
+            train_loader, val_loader, _ = load_cifar10_data(
+                self.data_path,
+                batch_size,
+                validation_proportion=0.2,
+                sampler=sampler,
+                hash_key=100,
+            )
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
-        n_clients = narrow_config_type(config, "n_clients", int)
-        # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
-        # Also as hash_key is same between train and test sampler, the test data distribution will be same
-        # as the train data distribution
-        sampler = DirichletLabelBasedSampler(
-            list(range(10)),
-            sample_percentage=1.0 / n_clients,
-            beta=self.heterogeneity_level,
-            hash_key=self.client_number,
-        )
-        test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
+        if self.use_patitioned_data:
+            test_loader, _ = get_test_preprocessed_data(
+                self.data_path, self.client_number, batch_size, self.heterogeneity_level
+            )
+        else:
+            n_clients = narrow_config_type(config, "n_clients", int)
+            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            # Also as hash_key is same between train and test sampler, the test data distribution will be same
+            # as the train data distribution
+            sampler = DirichletLabelBasedSampler(
+                list(range(10)),
+                sample_percentage=1.0 / n_clients,
+                beta=self.heterogeneity_level,
+                hash_key=self.client_number,
+            )
+            test_loader, _ = load_cifar10_test_data(self.data_path, batch_size, sampler=sampler)
         return test_loader
 
     def get_criterion(self, config: Config) -> _Loss:
@@ -116,6 +129,12 @@ if __name__ == "__main__":
         type=str,
         help="Path to the preprocessed Cifar 10 Dataset",
         required=True,
+    )
+    parser.add_argument(
+        "--use_partitioned_data",
+        action="store_true",
+        help="Use preprocessed partitioned data for training, validation and testing",
+        default=False,
     )
     parser.add_argument(
         "--run_name",
@@ -155,6 +174,8 @@ if __name__ == "__main__":
         required=True,
     )
     args = parser.parse_args()
+    if args.use_partitioned_data:
+        log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
@@ -190,6 +211,7 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
         checkpointer=checkpointer,
+        use_patitioned_data=args.use_partitioned_data,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
