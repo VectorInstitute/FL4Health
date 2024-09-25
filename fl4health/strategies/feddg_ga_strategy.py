@@ -252,9 +252,19 @@ class FedDgGaStrategy(FedAvg):
             (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics.
         """
-        # The original aggregated parameters is done by the super class (which we want to
-        # override its behaviour here), so we are discarding it to recalculate them in the lines below
-        _, metrics_aggregated = super().aggregate_fit(server_round, results, failures)
+        if not results:
+            return None, {}
+        # Do not aggregate if there are failures and failures are not accepted
+        if not self.accept_failures and failures:
+            return None, {}
+
+        # Aggregate custom metrics if aggregation fn was provided
+        metrics_aggregated = {}
+        if self.fit_metrics_aggregation_fn:
+            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+        elif server_round == 1:  # Only log this warning once
+            log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         self.train_metrics = {}
         for client_proxy, fit_res in results:
