@@ -8,7 +8,7 @@ from flwr.common.typing import Config, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -102,6 +102,6 @@ class FlashClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
         if "gamma" in config:
-            self.gamma = narrow_dict_type(config, "gamma", float)
+            self.gamma = narrow_config_type(config, "gamma", float)
         else:
             log(INFO, "Gamma not present in config. Early stopping is disabled.")

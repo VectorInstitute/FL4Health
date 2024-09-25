@@ -22,7 +22,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
 from research.ag_news.client_data import construct_dataloaders
@@ -54,14 +54,14 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
         self.learning_rate: float = learning_rate
 
     def get_model(self, config: Config) -> nn.Module:
-        num_classes = narrow_dict_type(config, "num_classes", int)
+        num_classes = narrow_config_type(config, "num_classes", int)
         model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=num_classes)
         return model.to(self.device)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_dict_type(config, "batch_size", int)
-        sample_percentage = narrow_dict_type(config, "sample_percentage", float)
-        beta = narrow_dict_type(config, "beta", float)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        sample_percentage = narrow_config_type(config, "sample_percentage", float)
+        beta = narrow_config_type(config, "beta", float)
         train_loader, val_loader = construct_dataloaders(batch_size, sample_percentage, beta)
         return train_loader, val_loader
 

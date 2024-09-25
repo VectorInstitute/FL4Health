@@ -21,7 +21,6 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
-from fl4health.utils.config import narrow_dict_type_and_set_attribute
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
@@ -371,11 +370,6 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
         if intermediate_server_state_dir is not None:
-            log(
-                WARNING,
-                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. \
-                This functionality still experimental and only supported for BasicClient and NnunetClient currently.",
-            )
             self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
             )
@@ -542,14 +536,18 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
+        assert "model" in ckpt and isinstance(ckpt["model"], nn.Module)
+        assert "server_name" in ckpt and isinstance(ckpt["server_name"], str)
+        assert "current_round" in ckpt and isinstance(ckpt["current_round"], int)
+        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
+        assert "history" in ckpt and isinstance(ckpt["history"], History)
+
         log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
-        narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
-        narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
-        narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
-
+        self.current_round = ckpt["current_round"]
+        self.server_name = ckpt["server_name"]
+        self.metrics_reporter = ckpt["metrics_reporter"]
+        self.history = ckpt["history"]
         self.parameters = get_all_model_parameters(ckpt["model"])
 
 

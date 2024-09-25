@@ -1,6 +1,7 @@
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Type, TypeVar
 
 import yaml
+from flwr.common.typing import Config
 
 REQUIRED_CONFIG = {
     "n_server_rounds": int,
@@ -44,56 +45,27 @@ def check_config(config: Dict[str, Any]) -> None:
             raise InvalidConfigError(f"{key} must be greater than 0")
 
 
-def narrow_dict_type(dictionary: Dict[str, Any], key: str, narrow_type_to: Type[T]) -> T:
+def narrow_config_type(config: Config, config_key: str, narrow_type_to: Type[T]) -> T:
     """
-    Checks if a key exists in dictionary and if so, verify it is of type narrow_type_to.
+    Checks if a config_key exists in config and if so, verify it is of type narrow_type_to.
 
     Args:
-        dictionary (Dict[str, Any]): A dictionary with string keys.
-        key (str): The key to check dictionary for.
-        narrow_type_to (Type[T]): The expected type of dictionary[key]
+        config (Config): The config object from the server.
+        config_key (str): The key to check config for.
+        narrow_type_to (Type[T]): The expected type of config[config_key]
 
     Returns:
-        T: The type-checked value at dictionary[key]
+        T: The type-checked value at config[config_key]
 
     Raises:
-        ValueError: If dictionary[key] is not of type narrow_type_to or
-            if the key is not present in dictionary.
+        ValueError: If config[config_key] is not of type narrow_type_to or
+            if the config_key is not present in config.
     """
-    if key not in dictionary:
-        raise ValueError(f"{key} is not present in the Dictionary.")
+    if config_key not in config:
+        raise ValueError(f"{config_key} is not present in the Config.")
 
-    value = dictionary[key]
-    if isinstance(value, narrow_type_to):
-        return value
+    config_value = config[config_key]
+    if isinstance(config_value, narrow_type_to):
+        return config_value
     else:
-        raise ValueError(f"Provided key ({key}) value does not have correct type")
-
-
-def narrow_dict_type_and_set_attribute(
-    self: object,
-    dictionary: dict,
-    dictionary_key: str,
-    attribute_name: str,
-    narrow_type_to: Type[T],
-    func: Optional[Callable[[Any], Any]] = None,
-) -> None:
-    """
-    Checks a key exists in dictionary, verify its type and sets the corresponding attribute.
-    Optionally, passes narrowed value to function prior to setting attribute.
-    If key is not present in dictionary or dictionary[dictionary_key] has the wrong type,
-    a ValueError is thrown.
-
-    Args:
-        self (object): The object to set attribute to dictionary[dictionary_key].
-        dictionary (Dict[str, Any]): A dictionary with string keys.
-        dictionary_key (str): The key to check dictionary for.
-        narrow_type_to (Type[T]): The expected type of dictionary[key].
-
-    Raises:
-        ValueError: If dictionary[key] is not of type narrow_type_to or
-            if the key is not present in dictionary.
-    """
-    val = narrow_dict_type(dictionary, dictionary_key, narrow_type_to)
-    val = func(val) if func is not None else val
-    setattr(self, attribute_name, val)
+        raise ValueError(f"Provided configuration key ({config_key}) value does not have correct type")
