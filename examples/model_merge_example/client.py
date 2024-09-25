@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.model_merge_client import ModelMergeClient
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_mnist_test_data
 from fl4health.utils.metrics import Accuracy
 
@@ -22,7 +22,7 @@ class MnistModelMergeClient(ModelMergeClient):
         return model.to(self.device)
 
     def get_test_data_loader(self, config: Config) -> DataLoader:
-        batch_size = narrow_dict_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         return load_mnist_test_data(self.data_path, batch_size)[0]
 
 

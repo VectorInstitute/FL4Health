@@ -12,7 +12,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.feature_alignment.constants import FEATURE_INFO, INPUT_DIMENSION, OUTPUT_DIMENSION, SOURCE_SPECIFIED
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.feature_alignment.tab_features_preprocessor import TabularFeaturesPreprocessor
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.metrics import Metric
 
 
@@ -50,14 +50,14 @@ class TabularDataClient(BasicClient):
         So the client will encode that information and use it instead
         to perform feature preprocessing.
         """
-        source_specified = narrow_dict_type(config, SOURCE_SPECIFIED, bool)
+        source_specified = narrow_config_type(config, SOURCE_SPECIFIED, bool)
         self.df = self.get_data_frame(config)
 
         if source_specified:
             # Since the server has obtained its source of information,
             # the client will encode that instead.
             self.tabular_features_info_encoder = TabularFeaturesInfoEncoder.from_json(
-                narrow_dict_type(config, FEATURE_INFO, str)
+                narrow_config_type(config, FEATURE_INFO, str)
             )
             self.tabular_features_preprocessor = TabularFeaturesPreprocessor(self.tabular_features_info_encoder)
 
@@ -111,7 +111,7 @@ class TabularDataClient(BasicClient):
         """
         if not self.initialized:
             self.setup_client(config)
-        source_specified = narrow_dict_type(config, SOURCE_SPECIFIED, bool)
+        source_specified = narrow_config_type(config, SOURCE_SPECIFIED, bool)
         if not source_specified:
             return {
                 FEATURE_INFO: self.tabular_features_info_encoder.to_json(),

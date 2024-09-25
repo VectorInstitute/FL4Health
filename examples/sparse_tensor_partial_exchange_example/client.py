@@ -15,14 +15,14 @@ from fl4health.clients.partial_weight_exchange_client import PartialWeightExchan
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import largest_final_magnitude_scores
 from fl4health.parameter_exchange.sparse_coo_parameter_exchanger import SparseCooParameterExchanger
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 
 
 class CifarSparseCooTensorClient(PartialWeightExchangeClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_dict_type(config, "batch_size", int)
+        batch_size = narrow_config_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
@@ -36,7 +36,7 @@ class CifarSparseCooTensorClient(PartialWeightExchangeClient):
         return Net().to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        sparsity_level = narrow_dict_type(config, "sparsity_level", float)
+        sparsity_level = narrow_config_type(config, "sparsity_level", float)
         # The user may pass in a different score_gen_function to allow for alternative
         # selection criterion.
         parameter_exchanger = SparseCooParameterExchanger(

@@ -152,13 +152,6 @@ if __name__ == "__main__":
         required=False,
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
-    parser.add_argument(
-        "--intermediate-client-state-dir",
-        default="./",
-        required=False,
-        help="[OPTIONAL] Directory to checkpoint client state. Defaults to current directory.",
-    )
-    parser.add_argument("--client-name", required=False, help="[OPTIONAL] Name of client.")
 
     args = parser.parse_args()
 

@@ -7,7 +7,7 @@ from opacus import PrivacyEngine
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 from fl4health.utils.privacy_utilities import privacy_validate_and_fix_modules
@@ -39,8 +39,8 @@ class InstanceLevelDpClient(BasicClient):
     def setup_client(self, config: Config) -> None:
         # Ensure that clipping bound and noise multiplier is present in config
         # Set attributes to be used when setting DP training
-        self.clipping_bound = narrow_dict_type(config, "clipping_bound", float)
-        self.noise_multiplier = narrow_dict_type(config, "noise_multiplier", float)
+        self.clipping_bound = narrow_config_type(config, "clipping_bound", float)
+        self.noise_multiplier = narrow_config_type(config, "noise_multiplier", float)
 
         # Do basic client setup
         super().setup_client(config)

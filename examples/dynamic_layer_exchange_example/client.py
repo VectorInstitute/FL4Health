@@ -15,7 +15,7 @@ from fl4health.clients.partial_weight_exchange_client import PartialWeightExchan
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
-from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.config import narrow_config_type
 from fl4health.utils.load_data import load_cifar10_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -23,9 +23,9 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class CifarDynamicLayerClient(PartialWeightExchangeClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_dict_type(config, "batch_size", int)
-        sample_percentage = narrow_dict_type(config, "sample_percentage", float)
-        beta = narrow_dict_type(config, "beta", float)
+        batch_size = narrow_config_type(config, "batch_size", int)
+        sample_percentage = narrow_config_type(config, "sample_percentage", float)
+        beta = narrow_config_type(config, "beta", float)
         assert beta > 0 and 0 < sample_percentage < 1
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=sample_percentage, beta=beta)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size, sampler=sampler)
@@ -41,11 +41,11 @@ class CifarDynamicLayerClient(PartialWeightExchangeClient):
         return Net().to(self.device)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        norm_threshold = narrow_dict_type(config, "norm_threshold", float)
-        exchange_percentage = narrow_dict_type(config, "exchange_percentage", float)
-        normalize = narrow_dict_type(config, "normalize", bool)
-        select_drift_more = narrow_dict_type(config, "select_drift_more", bool)
-        filter_by_percentage = narrow_dict_type(config, "filter_by_percentage", bool)
+        norm_threshold = narrow_config_type(config, "norm_threshold", float)
+        exchange_percentage = narrow_config_type(config, "exchange_percentage", float)
+        normalize = narrow_config_type(config, "normalize", bool)
+        select_drift_more = narrow_config_type(config, "select_drift_more", bool)
+        filter_by_percentage = narrow_config_type(config, "filter_by_percentage", bool)
 
         layer_selection_function_constructor = LayerSelectionFunctionConstructor(
             norm_threshold, exchange_percentage, normalize, select_drift_more

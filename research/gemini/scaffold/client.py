@@ -81,7 +81,7 @@ class GeminiScaffoldclient(ScaffoldClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
 
         self.set_parameters(parameters, config)
-        local_steps = self.narrow_dict_type(config, "local_steps", int)
+        local_steps = self.narrow_config_type(config, "local_steps", int)
 
         metric_values = self.train_by_rounds(local_steps, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -97,7 +97,7 @@ class GeminiScaffoldclient(ScaffoldClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        # current_server_round = self.narrow_dict_type(config, "current_server_round", int)
+        # current_server_round = self.narrow_config_type(config, "current_server_round", int)
         meter = AccumulationMeter(self.metrics, "val_meter")
         loss, metric_values = self.validate(meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
