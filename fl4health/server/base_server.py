@@ -328,8 +328,8 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
         parameter_exchanger: ExchangerType,
+        model: Optional[nn.Module] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
@@ -347,21 +347,19 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
             parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
+            model (Optional[nn.Module]): This is the torch model to be hydrated
+                by the _hydrate_model_for_checkpointing function. Defaults to None.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a
-                sequence to checkpoint based on multiple criteria. Defaults to
-                None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional):
+                To be provided if the server should perform server side checkpointing
+                based on some criteria. If none, then no server-side checkpointing is performed. Multiple checkpointers
+                can also be passed in a sequence to checkpoint based on multiple criteria. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
             intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
@@ -392,6 +390,10 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         self.history: History
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        assert (
+            self.server_model is not None
+        ), "Model hydration has been called but no server_model is defined to hydrate"
+
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model
