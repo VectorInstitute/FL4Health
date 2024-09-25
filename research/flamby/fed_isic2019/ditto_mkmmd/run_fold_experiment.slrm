@@ -134,6 +134,7 @@ do
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
+        --lam ${L2_VALUES}
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
@@ -154,7 +155,6 @@ do
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
-            --lam ${LAM_VALUE} \
             --mu ${MU_VALUE} \
             --l2 ${L2_VALUE} \
             --mkmmd_loss_depth ${MKMMD_LOSS_DEPTH} \

@@ -23,7 +23,6 @@ class MrMtlMkMmdClient(MrMtlClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
         feature_extraction_layers: Optional[Sequence[str]] = None,
         feature_l2_norm_weight: float = 0.0,
@@ -45,7 +44,6 @@ class MrMtlMkMmdClient(MrMtlClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            lam (float, optional): weight applied to the MR-MTL drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
             feature_extraction_layers (Optional[Sequence[str]], optional): List of layers from which to extract
                 and flatten features. Defaults to None.
@@ -62,7 +60,6 @@ class MrMtlMkMmdClient(MrMtlClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
         )
         self.mkmmd_loss_weight = mkmmd_loss_weight
         if self.mkmmd_loss_weight == 0:
@@ -87,7 +84,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
         else:
             self.flatten_feature_extraction_layers = {}
-        self.mkmmd_losses = {}
+        self.mkmmd_losses: Dict[str, MkMmdLoss] = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
                 device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
