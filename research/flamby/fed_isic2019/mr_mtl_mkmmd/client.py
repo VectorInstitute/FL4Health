@@ -2,28 +2,33 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
 import torch.nn as nn
-from flamby.datasets.fed_heart_disease import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
+from flamby.datasets.fed_isic2019 import BATCH_SIZE, LR, NUM_CLIENTS, Baseline, BaselineLoss
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.ditto_client import DittoClient
+from fl4health.clients.mkmmd_clients.mr_mtl_mkmmd_client import MrMtlMkMmdClient
 from fl4health.utils.losses import LossMeterType
-from fl4health.utils.metrics import Accuracy, Metric
+from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.flamby.flamby_data_utils import construct_fed_heard_disease_train_val_datasets
+from research.flamby.flamby_data_utils import construct_fedisic_train_val_datasets
+
+FED_ISIC2019_BASELINE_LAYERS = []
+for i in range(16):
+    FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
+FED_ISIC2019_BASELINE_LAYERS += ["base_model._avg_pooling"]
 
 
-class FedHeartDiseaseDittoClient(DittoClient):
+class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
     def __init__(
         self,
         data_path: Path,
@@ -31,7 +36,12 @@ class FedHeartDiseaseDittoClient(DittoClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
+        lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
+        mkmmd_loss_weight: float = 10,
+        feature_l2_norm_weight: float = 1,
+        mkmmd_loss_depth: int = 1,
+        beta_global_update_interval: int = 20,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
         super().__init__(
@@ -40,6 +50,11 @@ class FedHeartDiseaseDittoClient(DittoClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            lam=lam,
+            mkmmd_loss_weight=mkmmd_loss_weight,
+            feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
+            feature_l2_norm_weight=feature_l2_norm_weight,
+            beta_global_update_interval=beta_global_update_interval,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -48,7 +63,7 @@ class FedHeartDiseaseDittoClient(DittoClient):
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        train_dataset, validation_dataset = construct_fed_heard_disease_train_val_datasets(
+        train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
         train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
@@ -59,12 +74,8 @@ class FedHeartDiseaseDittoClient(DittoClient):
         model: nn.Module = Baseline().to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
-        # self.model.parameters().
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_criterion(self, config: Config) -> _Loss:
         return BaselineLoss()
@@ -83,7 +94,7 @@ if __name__ == "__main__":
         "--dataset_dir",
         action="store",
         type=str,
-        help="Path to the preprocessed Fed Heart Disease Dataset (ex. path/to/fed_heart_disease)",
+        help="Path to the preprocessed FedIsic2019 Dataset (ex. path/to/fedisic2019)",
         required=True,
     )
     parser.add_argument(
@@ -103,11 +114,14 @@ if __name__ == "__main__":
         "--client_number",
         action="store",
         type=int,
-        help="Number of the client for dataset loading (should be 0-3 for Fed Heart Disease)",
+        help="Number of the client for dataset loading (should be 0-5 for FedIsic2019)",
         required=True,
     )
     parser.add_argument(
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
+    )
+    parser.add_argument(
+        "--lam", action="store", type=float, help="MR-MTL loss weight for local model training", default=0.01
     )
     parser.add_argument(
         "--seed",
@@ -117,9 +131,34 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--no_federated_checkpointing",
-        action="store_true",
-        help="boolean to disable client-side federated checkpointing in the personal FL experiment",
+        "--mu",
+        action="store",
+        type=float,
+        help="Weight for the mkmmd losses",
+        required=False,
+    )
+    parser.add_argument(
+        "--l2",
+        action="store",
+        type=float,
+        help="Weight for the feature l2 norm loss as a regularizer",
+        required=False,
+    )
+    parser.add_argument(
+        "--mkmmd_loss_depth",
+        action="store",
+        type=int,
+        help="Depth of applying the mkmmd loss",
+        required=False,
+        default=1,
+    )
+    parser.add_argument(
+        "--beta_update_interval",
+        action="store",
+        type=int,
+        help="Interval for updating the beta values",
+        required=False,
+        default=20,
     )
     args = parser.parse_args()
 
@@ -127,29 +166,31 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Performing Federated Checkpointing: {not args.no_federated_checkpointing}")
+    log(INFO, f"Lambda: {args.lam}")
+    log(INFO, f"Mu: {args.mu}")
+    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
+    log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
+    log(INFO, f"Beta Update Interval: {args.beta_update_interval}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    federated_checkpointing = not args.no_federated_checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    post_aggregation_checkpointer = (
-        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
-        if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
-    )
+    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
 
-    checkpointer = ClientCheckpointModule(post_aggregation=post_aggregation_checkpointer)
-
-    client = FedHeartDiseaseDittoClient(
+    client = FedIsic2019MrMtlClient(
         data_path=Path(args.dataset_dir),
-        metrics=[Accuracy("FedHeartDisease_accuracy")],
+        metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
+        lam=args.lam,
         checkpointer=checkpointer,
+        feature_l2_norm_weight=args.l2,
+        mkmmd_loss_depth=args.mkmmd_loss_depth,
+        mkmmd_loss_weight=args.mu,
+        beta_global_update_interval=args.beta_update_interval,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

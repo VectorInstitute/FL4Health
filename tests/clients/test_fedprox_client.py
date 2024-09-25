@@ -158,7 +158,11 @@ def test_compute_loss(get_client: FedProxClient) -> None:  # noqa
 
     preds = {"prediction": torch.tensor([[1.0, 0.0], [0.0, 1.0]])}
     target = torch.tensor([[1.0, 0.0], [1.0, 0.0]])
+    # Make sure the model is set to train
+    fed_prox_client.model.train()
     training_loss = fed_prox_client.compute_training_loss(preds, {}, target)
+    # Make sure the model is set to eval
+    fed_prox_client.model.eval()
     evaluation_loss = fed_prox_client.compute_evaluation_loss(preds, {}, target)
     assert isinstance(training_loss.backward, dict)
     assert pytest.approx(54.7938, abs=0.01) == training_loss.backward["backward"].item()
