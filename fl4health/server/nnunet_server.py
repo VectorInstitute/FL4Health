@@ -18,7 +18,7 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.nnunet_utils import NnunetConfig
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
@@ -178,12 +178,12 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             # If config contains nnunet_plans, server side initialization of plans
             # Else client side initialization with nnunet_plans from client
             if config.get("nnunet_plans") is not None:
-                self.nnunet_plans_bytes = narrow_config_type(config, "nnunet_plans", bytes)
+                self.nnunet_plans_bytes = narrow_dict_type(config, "nnunet_plans", bytes)
             else:
-                self.nnunet_plans_bytes = narrow_config_type(properties, "nnunet_plans", bytes)
-            self.num_segmentation_heads = narrow_config_type(properties, "num_segmentation_heads", int)
-            self.num_input_channels = narrow_config_type(properties, "num_input_channels", int)
-            self.enable_deep_supervision = narrow_config_type(properties, "enable_deep_supervision", bool)
+                self.nnunet_plans_bytes = narrow_dict_type(properties, "nnunet_plans", bytes)
+            self.num_segmentation_heads = narrow_dict_type(properties, "num_segmentation_heads", int)
+            self.num_input_channels = narrow_dict_type(properties, "num_input_channels", int)
+            self.enable_deep_supervision = narrow_dict_type(properties, "enable_deep_supervision", bool)
 
             self.nnunet_config = NnunetConfig(config["nnunet_config"])
 
@@ -247,29 +247,18 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        assert "model" in ckpt and isinstance(ckpt["model"], nn.Module)
-        assert "server_name" in ckpt and isinstance(ckpt["server_name"], str)
-        assert "current_round" in ckpt and isinstance(ckpt["current_round"], int)
-        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
-        assert "history" in ckpt and isinstance(ckpt["history"], History)
-
-        assert "nnunet_plans_bytes" in ckpt and isinstance(ckpt["nnunet_plans_bytes"], bytes)
-        assert "num_segmentation_heads" in ckpt and isinstance(ckpt["num_segmentation_heads"], int)
-        assert "num_input_channels" in ckpt and isinstance(ckpt["num_input_channels"], int)
-        assert "enable_deep_supervision" in ckpt and isinstance(ckpt["enable_deep_supervision"], bool)
-        assert "nnunet_config" in ckpt and isinstance(ckpt["nnunet_config"], NnunetConfig)
-
         log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
-        self.current_round = ckpt["current_round"]
-        self.server_name = ckpt["server_name"]
-        self.metrics_reporter = ckpt["metrics_reporter"]
-        self.history = ckpt["history"]
-        self.parameters = get_all_model_parameters(ckpt["model"])
+        # Standard attributes to load
+        narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
+        narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
+        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
+        narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
+        narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
 
-        self.server_model = ckpt["model"]
-        self.nnunet_plans_bytes = ckpt["nnunet_plans_bytes"]
-        self.num_segmentation_heads = ckpt["num_segmentation_heads"]
-        self.num_input_channels = ckpt["num_input_channels"]
-        self.enable_deep_supervision = ckpt["enable_deep_supervision"]
-        self.nnunet_config = ckpt["nnunet_config"]
+        # NnunetServer specific attributes to load
+        narrow_dict_type_and_set_attribute(self, ckpt, "nnunet_plans_bytes", "nnunet_plans_bytes", bytes)
+        narrow_dict_type_and_set_attribute(self, ckpt, "num_segmentation_heads", "num_segmentation_heads", int)
+        narrow_dict_type_and_set_attribute(self, ckpt, "num_input_channels", "num_input_channels", int)
+        narrow_dict_type_and_set_attribute(self, ckpt, "enable_deep_supervision", "enable_deep_supervision", bool)
+        narrow_dict_type_and_set_attribute(self, ckpt, "nnunet_config", "nnunet_config", NnunetConfig)
