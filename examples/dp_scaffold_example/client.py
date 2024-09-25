@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import MnistNet
 from fl4health.clients.scaffold_client import DPScaffoldClient
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
@@ -20,7 +20,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class MnistDPScaffoldClient(DPScaffoldClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=1.0)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
