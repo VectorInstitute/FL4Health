@@ -20,6 +20,7 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
@@ -85,8 +86,12 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    # server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
-    server = NnunetServer(client_manager=SimpleClientManager(), strategy=strategy)
+    server = NnunetServer(
+        parameter_exchanger=FullParameterExchanger(),
+        model=None,
+        client_manager=SimpleClientManager(),
+        strategy=strategy,
+    )
 
     fl.server.start_server(
         server=server,
@@ -109,6 +114,20 @@ if __name__ == "__main__":
         default="0.0.0.0:8080",
         help="""[OPTIONAL] The address to use for the server. Defaults to
         0.0.0.0:8080""",
+    )
+    parser.add_argument(
+        "--intermediate-server-state-dir",
+        type=str,
+        required=False,
+        default="./",
+        help="""[OPTIONAL] Directory to checkpoint server state. Defaults to current directory""",
+    )
+    parser.add_argument(
+        "--server-name",
+        type=str,
+        required=False,
+        default="server",
+        help="""[OPTIONAL] Name of the server. Defaults to server""",
     )
 
     args = parser.parse_args()

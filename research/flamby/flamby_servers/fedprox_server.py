@@ -15,10 +15,11 @@ class FedProxServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
+        model: Optional[nn.Module] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+        assert model is not None
         # To help with model rehydration
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
         super().__init__(
@@ -30,6 +31,9 @@ class FedProxServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
         )
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        assert (
+            self.server_model is not None
+        ), "Model hydration has been called but no server_model is defined to hydrate"
         # Overriding the standard hydration method to account for the unpacking
         packed_parameters = parameters_to_ndarrays(self.parameters)
         # Don't need the extra fedprox variable for checkpointing.

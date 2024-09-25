@@ -15,7 +15,7 @@ from examples.ae_examples.cvae_examples.mlp_cvae_example.models import MnistCond
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.autoencoders_base import ConditionalVae
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Metric
@@ -45,7 +45,7 @@ class CondAutoEncoderClient(BasicClient):
         self.model.unpack_input_condition = self.autoencoder_converter.get_unpacking_function()
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # ToTensor transform is used to make sure pixels stay in the range [0.0, 1.0].
         # Flattening the image data to match the input shape of the model.
@@ -65,14 +65,14 @@ class CondAutoEncoderClient(BasicClient):
         # The base_loss is the loss function used for comparing the original and generated image pixels.
         # We are using MSE loss to calculate the difference between the reconstructed and original images.
         base_loss = torch.nn.MSELoss(reduction="sum")
-        latent_dim = narrow_config_type(config, "latent_dim", int)
+        latent_dim = narrow_dict_type(config, "latent_dim", int)
         return VaeLoss(latent_dim, base_loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        latent_dim = narrow_config_type(config, "latent_dim", int)
+        latent_dim = narrow_dict_type(config, "latent_dim", int)
         # The input/output size is the flattened MNIST image size.
         encoder = MnistConditionalEncoder(input_size=784, latent_dim=latent_dim)
         decoder = MnistConditionalDecoder(latent_dim=latent_dim, output_size=784)

@@ -67,7 +67,14 @@ def main(config: Dict[str, Any]) -> None:
         initial_parameters=get_all_model_parameters(model),
     )
 
-    server = FlServerWithCheckpointing(SimpleClientManager(), model, parameter_exchanger, None, strategy, checkpointer)
+    server = FlServerWithCheckpointing(
+        client_manager=SimpleClientManager(),
+        model=model,
+        parameter_exchanger=parameter_exchanger,
+        wandb_reporter=None,
+        strategy=strategy,
+        checkpointer=checkpointer,
+    )
 
     fl.server.start_server(
         server=server,

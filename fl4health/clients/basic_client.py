@@ -1,7 +1,7 @@
 import copy
 import datetime
 from enum import Enum
-from logging import INFO
+from logging import INFO, WARNING
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
@@ -22,7 +22,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 from fl4health.utils.random import generate_hash
@@ -84,6 +84,12 @@ class BasicClient(NumPyClient):
         self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
         if intermediate_client_state_dir is not None:
+            log(
+                WARNING,
+                "intermediate_client_state_dir is not None. Creating PerRoundCheckpointer. \
+                This functionality still experimental and only supported for \
+                FlServerWithCheckpointing and NnunetServer currently.",
+            )
             self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_client_state_dir, Path(f"client_{self.client_name}.pt")
             )
@@ -179,7 +185,7 @@ class BasicClient(NumPyClient):
                 first fitting round.
         """
         assert self.model is not None
-        current_server_round = narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
             self.initialize_all_model_weights(parameters, config)
         else:
@@ -223,21 +229,21 @@ class BasicClient(NumPyClient):
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
                 current_server_round is of the wrong type (int).
         """
-        current_server_round = narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
 
         if ("local_epochs" in config) and ("local_steps" in config):
             raise ValueError("Config cannot contain both local_epochs and local_steps. Please specify only one.")
         elif "local_epochs" in config:
-            local_epochs = narrow_config_type(config, "local_epochs", int)
+            local_epochs = narrow_dict_type(config, "local_epochs", int)
             local_steps = None
         elif "local_steps" in config:
-            local_steps = narrow_config_type(config, "local_steps", int)
+            local_steps = narrow_dict_type(config, "local_steps", int)
             local_epochs = None
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
         try:
-            evaluate_after_fit = narrow_config_type(config, "evaluate_after_fit", bool)
+            evaluate_after_fit = narrow_dict_type(config, "evaluate_after_fit", bool)
         except ValueError:
             evaluate_after_fit = False
 
@@ -350,7 +356,7 @@ class BasicClient(NumPyClient):
         if not self.initialized:
             self.setup_client(config)
 
-        current_server_round = narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={"evaluate_start": datetime.datetime.now()},
@@ -1307,15 +1313,12 @@ class BasicClient(NumPyClient):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
-        assert "client_name" in ckpt and isinstance(ckpt["client_name"], str)
-        assert "total_steps" in ckpt and isinstance(ckpt["total_steps"], int)
-        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
-        assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
+        narrow_dict_type_and_set_attribute(self, ckpt, "client_name", "client_name", str)
+        narrow_dict_type_and_set_attribute(self, ckpt, "total_steps", "total_steps", int)
+        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
 
-        self.client_name = ckpt["client_name"]
-        self.total_steps = ckpt["total_steps"]
-        self.metrics_reporter = ckpt["metrics_reporter"]
+        assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
+        assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)
 
         # Optimizer is updated in setup_client to reference model weights from server
         # Thus, only optimizer state (per parameter values such as momentum)
