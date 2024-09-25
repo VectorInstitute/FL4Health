@@ -129,14 +129,32 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         return FlServerWithCheckpointing.fit(self, num_rounds, timeout)
 
     def initialize(self, server_round: int, timeout: Optional[float] = None) -> None:
+        """
+        Hook method to allow the server to do some additional initialization
+        prior to training. NunetServer uses this method to sample a
+        client for properties which are required to initialize the server.
+
+        In particular, if a nnunet_plans file is not provided in the config,
+        this method will sample a client which passes the nnunet_plans back to
+        the sever through get_properties RPC. The server then distributes the nnunet_plans
+        to the other clients by including it in the config for subsequent FL rounds.
+
+        Even if the nnunet_plans are included in the config, the server will
+        still poll a client in order to have the required properties to instantiate the
+        model architecture on the server side which is required for checkpointing.
+        These properties include num_segmentation_heads, num_input_channels and
+        enable_deep_supervision.
+
+        Args:
+            server_round (int): The current server round. This hook method is
+                only called with a server_round=0 at the beginning of self.fit
+            timeout (Optional[float], optional): The server's timeout
+                parameter. Useful if one is requesting information from a
+                client Defaults to None.
+        """
         # Get fit config
         dummy_params = Parameters([], "None")
         config = self.strategy.configure_fit(server_round, dummy_params, self._client_manager)[0][1].config
-
-        # Check if plans need to be initialized
-        if config.get("nnunet_plans") is not None:
-            self.initialized = True
-            return
 
         # If no prior checkpoints exist, initialize server by sampling clients to get required properties to set
         if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
@@ -156,8 +174,13 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             properties = properties_res.properties
 
             # Set attributes of server that are dependent on client properties.
-            # NnUNetClient has serialized nnunet_plans as a property
-            self.nnunet_plans_bytes = narrow_config_type(properties, "nnunet_plans", bytes)
+
+            # If config contains nnunet_plans, server side initialization of plans
+            # Else client side initialization with nnunet_plans from client
+            if config.get("nnunet_plans") is not None:
+                self.nnunet_plans_bytes = narrow_config_type(config, "nnunet_plans", bytes)
+            else:
+                self.nnunet_plans_bytes = narrow_config_type(properties, "nnunet_plans", bytes)
             self.num_segmentation_heads = narrow_config_type(properties, "num_segmentation_heads", int)
             self.num_input_channels = narrow_config_type(properties, "num_input_channels", int)
             self.enable_deep_supervision = narrow_config_type(properties, "enable_deep_supervision", bool)
