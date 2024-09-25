@@ -139,7 +139,17 @@ class MrMtlMkMmdClient(MrMtlClient):
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        """Update the feature buffer of the local and global features."""
+        """
+        Update the feature buffer of the local and global features.
+
+        Args:
+            local_model (torch.nn.Module): Local model to extract features from.
+            initial_global_model (torch.nn.Module): Initial global model to extract features from.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple containing the extracted
+            features using the local and initial global models.
+        """
 
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -202,10 +212,9 @@ class MrMtlMkMmdClient(MrMtlClient):
              Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                  first element contains a dictionary of predictions indexed by
                  name and the second element contains intermediate activations
-                 indexed by name. By passing features, we can compute losses
-                 such as the model contrasting loss in MOON. All predictions
-                 included in dictionary will by default be used to compute
-                 metrics separately.
+                 indexed by name. By passing features, we can compute all the
+                 losses. All predictions included in dictionary will by default
+                 be used to compute metrics separately.
 
         Raises:
              TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's

@@ -25,7 +25,7 @@ from research.flamby.flamby_data_utils import construct_fedisic_train_val_datase
 FED_ISIC2019_BASELINE_LAYERS = []
 for i in range(16):
     FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
-FED_ISIC2019_BASELINE_LAYERS += ["base_model._dropout"]
+FED_ISIC2019_BASELINE_LAYERS += ["base_model._avg_pooling"]
 
 
 class FedIsic2019DittoClient(DittoMkMmdClient):

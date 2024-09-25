@@ -142,7 +142,6 @@ class FeatureExtractorBuffer:
 
         Returns:
             Callable: The hook function that takes in a module, input, and output tensors.
-
         """
 
         def hook(module: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
