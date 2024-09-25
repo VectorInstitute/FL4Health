@@ -239,9 +239,6 @@ class DittoClient(BasicClient):
         target = self.transform_target(target)  # Apply transformation (Defaults to identity)
 
         # Compute all relevant losses
-        # NOTE: features here should be a blank dictionary, as we're not using them
-        assert len(features) == 0
-
         losses = self.compute_training_loss(preds, features, target)
 
         # Take a step with the global model vanilla loss
