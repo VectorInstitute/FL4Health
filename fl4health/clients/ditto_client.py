@@ -144,7 +144,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
         Assumes that the parameters being passed contain model parameters concatenated with a penalty weight. They are
-        unpacked for the clients to use in training. The parameters being pass are to be routed to the global model.
+        unpacked for the clients to use in training. The parameters being passed are to be routed to the global model.
         In the first fitting round, we assume the both the global and local models are being initialized and use
         the FullParameterExchanger() to initialize both sets of model weights to the same parameters.
         Args:
@@ -184,7 +184,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         self.parameter_exchanger.pull_parameters(parameters, self.model, config)
         self.parameter_exchanger.pull_parameters(parameters, self.global_model, config)
 
-    def save_initial_global_tensors(self) -> None:
+    def set_initial_global_tensors(self) -> None:
         # Saving the initial GLOBAL MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         self.drift_penalty_tensors = [
@@ -199,7 +199,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         Args:
             current_server_round (int): Indicates which server round we are currently executing.
         """
-        self.save_initial_global_tensors()
+        self.set_initial_global_tensors()
 
         # Need to also set the global model to train mode before any training begins.
         self.global_model.train()
@@ -346,11 +346,12 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
         # less weight is used to constrain it to the global model (as in FedProx)
-        additional_losses["adaptation_loss"] = additional_losses["local_loss"].clone()
+        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
 
         # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
         # by drift_penalty_weight (or lambda in the original paper)
-        penalty_loss = self.compute_penalty_loss_and_store(additional_losses)
+        penalty_loss = self.compute_penalty_loss()
+        additional_losses["penalty_loss"] = penalty_loss.clone()
 
         return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 

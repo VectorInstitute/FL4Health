@@ -81,7 +81,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
-        The parameters being pass are to be routed to the initial global model to be used in a penalty term in
+        The parameters being passed are to be routed to the initial global model to be used in a penalty term in
         training the local model. Despite the usual FL setup, we actually never pass the aggregated model to the
         LOCAL model. Instead, we use the aggregated model to form the MR-MTL penalty term.
 
