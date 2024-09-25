@@ -125,8 +125,8 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default="0.0.0.0:8080",
-        help="""[OPTIONAL] The address to use for the server. Defaults to
-        0.0.0.0:8080""",
+        help="[OPTIONAL] The address to use for the server. Defaults to \
+        0.0.0.0:8080",
     )
 
     parser.add_argument(
@@ -134,18 +134,17 @@ if __name__ == "__main__":
         type=str,
         required=False,
         default=None,
-        help="""[OPTIONAL] Directory to store server state. Defaults to
-        None""",
+        help="[OPTIONAL] Directory to store server state. Defaults to None",
     )
     parser.add_argument(
         "--server-name",
         type=str,
         required=False,
         default=None,
-        help="""[OPTIONAL] Name of the server used as file name when
-            checkpointing server state. Defaults to
-            None, in which case the server will generate random name
-            """,
+        help="[OPTIONAL] Name of the server used as file name when \
+            checkpointing server state. Defaults to \
+            None, in which case the server will generate random name \
+            ",
     )
     args = parser.parse_args()
 

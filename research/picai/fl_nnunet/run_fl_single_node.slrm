@@ -13,6 +13,22 @@
 ###############################################
 # Usage:
 #
+# sbatch research/picai/fl_nnunet/run_fl_single_node.slrm \
+#   path_to_config.yaml \
+#   path_to_venv \
+#   number_of_clients \
+#   fold \
+#   dataset_id \
+#
+# Example:
+# sbatch research/picai/fl_nnunet/run_fl_single_node.slrm \
+#   research/picai/fl_nnunet/config.yaml \
+#   ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.10/ \
+#   1 \
+#   0 \
+#   ~/picai_experiments/ \
+#   006 \
+#
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
 # 2) The logging directories need to ALREADY EXIST. The script does not create them.
@@ -33,13 +49,11 @@ fi
 # Process Inputs
 
 CONFIG_PATH=$1
-SERVER_LOG_DIR=$2
-CLIENT_LOG_DIR=$3
-VENV_PATH=$4
-N_CLIENTS=$5
-FOLD=$6
-ARTIFACTS_DIR=$7
-DATASET_ID=$8
+VENV_PATH=$2
+N_CLIENTS=$3
+FOLD=$4
+ARTIFACTS_DIR=$5
+DATASET_ID=$6
 
 
 echo "Python Venv Path: ${VENV_PATH}"
@@ -53,7 +67,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-SERVER_OUTPUT_FILE="${SERVER_LOG_DIR}server.out"
+SERVER_OUTPUT_FILE="${ARTIFCATS_DIR}server.out"
 
 # Start the server, divert the outputs to a server file
 
@@ -84,7 +98,7 @@ train()
 	CLIENT_NAME="client_${i}"
 	echo "Launching ${CLIENT_NAME}"
 
-	CLIENT_LOG_PATH="${CLIENT_LOG_DIR}client_${i}.out"
+	CLIENT_LOG_PATH="${ARTIFACTS_DIR}client_${i}.out"
 	echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
 	nohup python -m research.picai.fl_nnunet.start_client --dataset-id ${DATASET_ID} --intermediate-client-state-dir ${ARTIFACTS_DIR} --fold ${FOLD} --client-name {i} > ${CLIENT_LOG_PATH} 2>&1 &
     done
