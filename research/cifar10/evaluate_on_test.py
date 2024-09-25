@@ -66,11 +66,10 @@ def main(
         all_best_server_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
         all_last_server_agg_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
 
-    # First we test each client's best model on local test data and the best server model on that same data
     if eval_over_aggregated_test_data:
         for client_number in range(NUM_CLIENTS):
             if use_partitioned_data:
-                test_loader, num_examples = get_test_preprocessed_data(
+                test_loader, _ = get_test_preprocessed_data(
                     Path(dataset_dir), client_number, BATCH_SIZE, heterogeneity_level
                 )
             else:
@@ -300,13 +299,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(pre_best_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Pre-aggregation Best Model Average Test
-                        Performance on own Data: {avg_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Best Model Average Test
+                        Performance on Aggregated Data: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Pre-aggregation Best Model St. Dev. Test
-                    Performance on own Data: {std_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Best Model St. Dev. Test
+                    Performance on Aggregated Data: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_pre_best_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_pre_best_model_local_std"] = std_test_metric
@@ -329,13 +328,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(pre_last_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Pre-aggregation Last Model Average Test
-                    Performance on own Data: {avg_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Last Model Average Test
+                    Performance on Aggregated Data: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Pre-aggregation Last Model St. Dev. Test
-                    Performance on own Data: {std_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Last Model St. Dev. Test
+                    Performance on Aggregated Data: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_pre_last_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_pre_last_model_local_std"] = std_test_metric
@@ -359,13 +358,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(post_best_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Post-aggregation Best Model Average Test
-                    Performance on own Data: {avg_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Best Model Average Test
+                    Performance on Aggregated Data: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Post-aggregation Best Model St. Dev. Test
-                    Performance on own Data: {std_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Best Model St. Dev. Test
+                    Performance on Aggregated Data: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_post_best_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_post_best_model_local_std"] = std_test_metric
@@ -389,13 +388,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(post_last_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Post-aggregation Last Model Average Test
-                    Performance on own Data: {avg_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Last Model Average Test
+                    Performance on Aggregated Data: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Aggregated Client {client_number} Post-aggregation Last Model St. Dev. Test
-                    Performance on own Data: {std_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Last Model St. Dev. Test
+                    Performance on Aggregated Data: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_post_last_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_post_last_model_local_std"] = std_test_metric
@@ -415,23 +414,6 @@ def main(
             test_results[f"server_best_model_client_{client_number}_avg"] = avg_server_test_global_metric
             test_results[f"server_best_model_client_{client_number}_std"] = std_server_test_global_metric
 
-            if eval_over_aggregated_test_data:
-                avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
-                    best_server_agg_test_metrics
-                )
-                log(
-                    INFO,
-                    f"Aggregated Server Best model Average Test Performance on Client {client_number} "
-                    f"Data: {avg_server_test_global_metric}",
-                )
-                log(
-                    INFO,
-                    f"Aggregated Server Best model St. Dev. Test Performance on Client {client_number} "
-                    f"Data: {std_server_test_global_metric}",
-                )
-                test_results[f"agg_server_best_model_client_{client_number}_avg"] = avg_server_test_global_metric
-                test_results[f"agg_server_best_model_client_{client_number}_std"] = std_server_test_global_metric
-
         if eval_last_global_model:
             avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(last_server_test_metrics)
             log(
@@ -447,22 +429,40 @@ def main(
             test_results[f"server_last_model_client_{client_number}_avg"] = avg_server_test_global_metric
             test_results[f"server_last_model_client_{client_number}_std"] = std_server_test_global_metric
 
-            if eval_over_aggregated_test_data:
-                avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
-                    last_server_agg_test_metrics
-                )
-                log(
-                    INFO,
-                    f"Aggregated Server Last model Average Test Performance on Client {client_number} "
-                    f"Data: {avg_server_test_global_metric}",
-                )
-                log(
-                    INFO,
-                    f"Aggregated Server Last model St. Dev. Test Performance on Client {client_number} "
-                    f"Data: {std_server_test_global_metric}",
-                )
-                test_results[f"agg_server_last_model_client_{client_number}_avg"] = avg_server_test_global_metric
-                test_results[f"agg_server_last_model_client_{client_number}_std"] = std_server_test_global_metric
+    if eval_over_aggregated_test_data:
+        if eval_best_global_model:
+            avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
+                best_server_agg_test_metrics
+            )
+            log(
+                INFO,
+                f"Server Best model Average Test Performance on Aggregated Client Data"
+                f"Data: {avg_server_test_global_metric}",
+            )
+            log(
+                INFO,
+                f"Server Best model St. Dev. Test Performance on Aggregated Client Data"
+                f"Data: {std_server_test_global_metric}",
+            )
+            test_results["agg_server_best_model_client_avg"] = avg_server_test_global_metric
+            test_results["agg_server_best_model_client_std"] = std_server_test_global_metric
+
+        if eval_last_global_model:
+            avg_server_test_global_metric, std_server_test_global_metric = get_metric_avg_std(
+                last_server_agg_test_metrics
+            )
+            log(
+                INFO,
+                f"Server Last model Average Test Performance on Aggregated Client Data"
+                f"Data: {avg_server_test_global_metric}",
+            )
+            log(
+                INFO,
+                f"Server Last model St. Dev. Test Performance on Aggregated Client Data"
+                f"Data: {std_server_test_global_metric}",
+            )
+            test_results["agg_server_last_model_client_avg"] = avg_server_test_global_metric
+            test_results["agg_server_last_model_client_std"] = std_server_test_global_metric
 
     if eval_best_pre_aggregation_local_models:
         all_avg_test_metric, all_std_test_metric = get_metric_avg_std(list(all_pre_best_local_test_metrics.values()))
@@ -481,13 +481,13 @@ def main(
             test_results["agg_std_pre_best_local_model_avg_across_clients"] = all_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg Pre-aggregation Best Local Model Test
-                  Performance Over all clients: {all_avg_test_metric}""",
+                f"""Avg Pre-aggregation Best Local Model Test
+                  Performance Over Aggregated clients: {all_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Pre-aggregation Best Local Model Test
-                  Performance Over all clients: {all_std_test_metric}""",
+                f"""Std. Dev. Pre-aggregation Best Local Model Test
+                  Performance Over Aggregated clients: {all_std_test_metric}""",
             )
 
     if eval_last_pre_aggregation_local_models:
@@ -507,13 +507,13 @@ def main(
             test_results["agg_std_pre_last_local_model_avg_across_clients"] = all_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg Pre-aggregation Last Local Model Test
-                  Performance Over all clients: {all_avg_test_metric}""",
+                f"""Avg Pre-aggregation Last Local Model Test
+                  Performance Over Aggregated clients: {all_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Pre-aggregation Last Local Model Test
-                  Performance Over all clients: {all_std_test_metric}""",
+                f"""Std. Dev. Pre-aggregation Last Local Model Test
+                  Performance Over Aggregated clients: {all_std_test_metric}""",
             )
 
     if eval_best_post_aggregation_local_models:
@@ -533,13 +533,13 @@ def main(
             test_results["agg_std_post_best_local_model_avg_across_clients"] = all_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg Post-aggregation Best Local Model Test
-                  Performance Over all clients: {all_avg_test_metric}""",
+                f"""Avg Post-aggregation Best Local Model Test
+                  Performance Over Aggregated clients: {all_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Post-aggregation Best Local Model Test
-                  Performance Over all clients: {all_std_test_metric}""",
+                f"""Std. Dev. Post-aggregation Best Local Model Test
+                  Performance Over Aggregated clients: {all_std_test_metric}""",
             )
 
     if eval_last_post_aggregation_local_models:
@@ -559,13 +559,13 @@ def main(
             test_results["agg_std_post_last_local_model_avg_across_clients"] = all_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg Post-aggregation Last Local Model Test
-                  Performance Over all clients: {all_avg_test_metric}""",
+                f"""Avg Post-aggregation Last Local Model Test
+                  Performance Over Aggregated clients: {all_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Post-aggregation Last Local Model Test
-                  Performance Over all clients: {all_std_test_metric}""",
+                f"""Std. Dev. Post-aggregation Last Local Model Test
+                  Performance Over Aggregated clients: {all_std_test_metric}""",
             )
 
     if eval_best_global_model:
@@ -585,12 +585,12 @@ def main(
             test_results["agg_std_best_server_model_avg_across_clients"] = all_server_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg. Best Server Model Test Performance Over all
+                f"""Avg. Best Server Model Test Performance Over Aggregated
                  clients: {all_server_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Best Server Model Test Performance Over all
+                f"""Std. Dev. Best Server Model Test Performance Over Aggregated
                   clients: {all_server_std_test_metric}""",
             )
 
@@ -611,12 +611,12 @@ def main(
             test_results["agg_std_last_server_model_avg_across_clients"] = all_server_std_test_metric
             log(
                 INFO,
-                f"""Aggregated Avg. Last Server Model Test Performance Over all
+                f"""Avg. Last Server Model Test Performance Over Aggregated
                   clients: {all_server_avg_test_metric}""",
             )
             log(
                 INFO,
-                f"""Aggregated Std. Dev. Last Server Model Test Performance Over all
+                f"""Std. Dev. Last Server Model Test Performance Over Aggregated
                   clients: {all_server_std_test_metric}""",
             )
 

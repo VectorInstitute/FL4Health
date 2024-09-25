@@ -40,7 +40,7 @@ class CifarDittoClient(DittoClient):
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        use_patitioned_data: bool = False,
+        use_partitioned_data: bool = False,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -50,7 +50,7 @@ class CifarDittoClient(DittoClient):
             checkpointer=checkpointer,
             lam=lam,
         )
-        self.use_patitioned_data = use_patitioned_data
+        self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
@@ -60,7 +60,7 @@ class CifarDittoClient(DittoClient):
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
-        if self.use_patitioned_data:
+        if self.use_partitioned_data:
             train_loader, val_loader, _ = get_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
@@ -86,7 +86,7 @@ class CifarDittoClient(DittoClient):
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_config_type(config, "batch_size", int)
-        if self.use_patitioned_data:
+        if self.use_partitioned_data:
             test_loader, _ = get_test_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
@@ -207,7 +207,7 @@ if __name__ == "__main__":
         ],
         post_aggregation=[
             BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
+            LatestTorchCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         heterogeneity_level=args.beta,
         lam=args.lam,
         checkpointer=checkpointer,
-        use_patitioned_data=args.use_partitioned_data,
+        use_partitioned_data=args.use_partitioned_data,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

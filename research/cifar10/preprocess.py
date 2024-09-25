@@ -95,8 +95,8 @@ def preprocess_data(
     training_set = TensorDataset(train_data, train_targets, transform=None, target_transform=None)
     validation_set = TensorDataset(val_data, val_targets, transform=None, target_transform=None)
 
-    tdata, ttargets = get_cifar10_data_and_target_tensors(dataset_dir, False)
-    test_set = TensorDataset(tdata, ttargets, transform=None, target_transform=None)
+    test_data, test_targets = get_cifar10_data_and_target_tensors(dataset_dir, False)
+    test_set = TensorDataset(test_data, test_targets, transform=None, target_transform=None)
 
     # Partition train data
     heterogeneous_partitioner = DirichletLabelBasedAllocation(
