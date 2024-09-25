@@ -109,7 +109,7 @@ class FeatureExtractorBuffer:
             named_layers = list(dict(self.model.named_modules()).keys())
             for layer in self.flatten_feature_extraction_layers.keys():
                 log(INFO, f"Registering hook for layer: {layer}")
-                # Find the the last specific layer under a given generic name
+                # Find the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
                 # Split the specific layer name by '.' to get the hierarchical attribute
                 layer_hierarchicy_list = specific_layer.split(".")
@@ -142,7 +142,6 @@ class FeatureExtractorBuffer:
 
         Returns:
             Callable: The hook function that takes in a module, input, and output tensors.
-
         """
 
         def hook(module: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
@@ -156,7 +155,7 @@ class FeatureExtractorBuffer:
     def flatten(self, features: torch.Tensor) -> torch.Tensor:
         """
         Flattens the input tensor along the batch dimension. The features are of shape (batch_size, *).
-        We flatten them across the batch dimension  to get a 2D tensor of shape (batch_size, feature_size).
+        We flatten them across the batch dimension to get a 2D tensor of shape (batch_size, feature_size).
 
         Args:
             features (torch.Tensor): The input tensor of shape (batch_size, *).

@@ -922,7 +922,7 @@ class BasicClient(NumPyClient):
                 first element contains a dictionary of predictions indexed by
                 name and the second element contains intermediate activations
                 indexed by name. By passing features, we can compute losses
-                such as the model contrasting loss in MOON. All predictions
+                such as the contrastive loss in MOON. All predictions
                 included in dictionary will by default be used to compute
                 metrics seperately.
 

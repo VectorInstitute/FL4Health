@@ -47,7 +47,7 @@ class MrMtlMkMmdClient(MrMtlClient):
                 None.
             lam (float, optional): weight applied to the MR-MTL drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers  from which to extract
+            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers from which to extract
                 and flatten features. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
@@ -83,7 +83,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         else:
             raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         if feature_extraction_layers:
-            # By default, all of the fetures should be flattened for the MK-MMD loss
+            # By default, all of the features should be flattened for the MK-MMD loss
             self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
         else:
             self.flatten_feature_extraction_layers = {}
@@ -139,7 +139,17 @@ class MrMtlMkMmdClient(MrMtlClient):
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        """Update the feature buffer of the local and global features."""
+        """
+        Update the feature buffer of the local and global features.
+
+        Args:
+            local_model (torch.nn.Module): Local model to extract features from.
+            initial_global_model (torch.nn.Module): Initial global model to extract features from.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple containing the extracted
+            features using the local and initial global models.
+        """
 
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -168,7 +178,8 @@ class MrMtlMkMmdClient(MrMtlClient):
                 input = input.to(self.device)
                 # Pass the input through the local model to populate the local_feature_extractor buffer
                 local_model(input)
-                # Pass the input through the initial global model to populate the local_feature_extractor buffer
+                # Pass the input through the initial global model to populate the initial_global_feature_extractor
+                # buffer
                 initial_global_model(input)
         local_distributions = self.local_feature_extractor.get_extracted_features()
         initial_global_distributions = self.initial_global_feature_extractor.get_extracted_features()
@@ -201,10 +212,9 @@ class MrMtlMkMmdClient(MrMtlClient):
              Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                  first element contains a dictionary of predictions indexed by
                  name and the second element contains intermediate activations
-                 indexed by name. By passing features, we can compute losses
-                 such as the model contrasting loss in MOON. All predictions
-                 included in dictionary will by default be used to compute
-                 metrics seperately.
+                 indexed by name. By passing features, we can compute all the
+                 losses. All predictions included in dictionary will by default
+                 be used to compute metrics separately.
 
         Raises:
              TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -240,7 +250,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            Tuple[torch.Tensor, Dict[str, torch.Tensor]]: A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
