@@ -4,7 +4,7 @@ import warnings
 from logging import DEBUG, INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 with warnings.catch_warnings():
     # Silence deprecation warnings from sentry sdk due to flwr and wandb
@@ -33,6 +33,8 @@ def main(
     always_preprocess: bool = False,
     verbose: bool = True,
     compile: bool = True,
+    intermediate_client_state_dir: Optional[str] = None,
+    client_name: Optional[str] = None,
 ) -> None:
     # Log device and server address
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,6 +80,10 @@ def main(
         device=DEVICE,
         metrics=[dice],
         progress_bar=verbose,
+        intermediate_client_state_dir=(
+            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
+        ),
+        client_name=client_name,
     )
 
     start_client(server_address=server_address, client=client.to_client())
@@ -89,9 +95,9 @@ def main(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog="nnunet_example/client.py",
-        description="""An exampled of nnUNetClient on any of the Medical
-            Segmentation Decathlon (MSD) datasets. Automatically generates a
-            nnunet segmentation model and trains it in a federated setting""",
+        description="An exampled of nnUNetClient on any of the Medical \
+            Segmentation Decathlon (MSD) datasets. Automatically generates a \
+            nnunet segmentation model and trains it in a federated setting",
     )
 
     # I have to use underscores instead of dashes because thats how they
@@ -100,45 +106,45 @@ if __name__ == "__main__":
         "--dataset_path",
         type=str,
         required=True,
-        help="""Path to the folder in which data should be stored. This script
-            will automatically create nnunet_raw, and nnunet_preprocessed
-            subfolders if they don't already exist. This script will also
-            attempt to download and prepare the MSD Dataset into the
-            nnunet_raw folder if it does not already exist.""",
+        help="Path to the folder in which data should be stored. This script \
+            will automatically create nnunet_raw, and nnunet_preprocessed \
+            subfolders if they don't already exist. This script will also \
+            attempt to download and prepare the MSD Dataset into the \
+            nnunet_raw folder if it does not already exist.",
     )
     parser.add_argument(
         "--fold",
         type=str,
         required=False,
         default="0",
-        help="""[OPTIONAL] Which fold of the local client dataset to use for
-            validation. nnunet defaults to 5 folds (0 to 4). Can also be set
-            to 'all' to use all the data for both training and validation.
-            Defaults to fold 0""",
+        help="[OPTIONAL] Which fold of the local client dataset to use for \
+            validation. nnunet defaults to 5 folds (0 to 4). Can also be set \
+            to 'all' to use all the data for both training and validation. \
+            Defaults to fold 0",
     )
     parser.add_argument(
         "--msd_dataset_name",
         type=str,
         required=False,
         default="Task04_Hippocampus",  # The smallest dataset
-        help="""[OPTIONAL] Name of the MSD dataset to use. The options are
-            defined by the values of the MsdDataset enum as returned by the
-            get_msd_dataset_enum function""",
+        help="[OPTIONAL] Name of the MSD dataset to use. The options are \
+            defined by the values of the MsdDataset enum as returned by the \
+            get_msd_dataset_enum function",
     )
     parser.add_argument(
         "--always-preprocess",
         action="store_true",
         required=False,
-        help="""[OPTIONAL] Use this to force preprocessing the nnunet data
-            even if the preprocessed data is found to already exist""",
+        help="[OPTIONAL] Use this to force preprocessing the nnunet data \
+            even if the preprocessed data is found to already exist",
     )
     parser.add_argument(
         "--server_address",
         type=str,
         required=False,
         default="0.0.0.0:8080",
-        help="""[OPTIONAL] The server address for the clients to communicate
-            to the server through. Defaults to 0.0.0.0:8080""",
+        help="[OPTIONAL] The server address for the clients to communicate \
+            to the server through. Defaults to 0.0.0.0:8080",
     )
     parser.add_argument(
         "--verbose",
@@ -159,6 +165,22 @@ if __name__ == "__main__":
         action="store_true",
         required=False,
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
+    )
+
+    parser.add_argument(
+        "--intermediate-client-state-dir",
+        type=str,
+        required=False,
+        default=None,
+        help="[OPTIONAL] Directory to store client state during training. Defaults to None",
+    )
+    parser.add_argument(
+        "--client-name",
+        type=str,
+        required=False,
+        default=None,
+        help="[OPTIONAL] Name of the client used to name client state checkpoint. \
+        Defaults to None, in which case a random name is generated for the client",
     )
 
     args = parser.parse_args()
@@ -187,4 +209,6 @@ if __name__ == "__main__":
         always_preprocess=args.always_preprocess,
         verbose=args.verbose,
         compile=not args.skip_compile,
+        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        client_name=args.client_name,
     )

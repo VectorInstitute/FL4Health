@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from examples.models.masked_model import Masked4Cnn
 from fl4health.clients.fedpm_client import FedPmClient
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.sampler import MinorityLabelBasedSampler
@@ -30,8 +30,8 @@ class MnistFedPmClient(FedPmClient):
         self.minority_numbers = minority_numbers
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
-        downsample_percentage = narrow_config_type(config, "downsampling_ratio", float)
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        downsample_percentage = narrow_dict_type(config, "downsampling_ratio", float)
         sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader

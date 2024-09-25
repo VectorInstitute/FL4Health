@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.nnunet_utils import (
@@ -75,6 +75,7 @@ class NnunetClient(BasicClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         metrics_reporter: Optional[MetricsReporter] = None,
+        client_name: Optional[str] = None,
     ) -> None:
         """
         A client for training nnunet models. Requires the nnunet environment variables
@@ -151,6 +152,7 @@ class NnunetClient(BasicClient):
             metrics_reporter=metrics_reporter,  # self.metrics_reporter
             progress_bar=progress_bar,
             intermediate_client_state_dir=intermediate_client_state_dir,
+            client_name=client_name,
         )
 
         # Some nnunet client specific attributes
@@ -296,7 +298,7 @@ class NnunetClient(BasicClient):
             Dict[str, Any]: The modified nnunet plans for the client
         """
         # Get the nnunet plans specified by the server
-        plans = pickle.loads(narrow_config_type(config, "nnunet_plans", bytes))
+        plans = pickle.loads(narrow_dict_type(config, "nnunet_plans", bytes))
 
         # Change plans name.
         if self.plans_name is None:
@@ -668,6 +670,9 @@ class NnunetClient(BasicClient):
         if "nnunet_plans" in config.keys():
             properties = super().get_properties(config)
             properties["nnunet_plans"] = config["nnunet_plans"]
+            properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
+            properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
+            properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
             return properties
 
         # Check if local nnunet dataset fingerprint needs to be extracted
@@ -696,6 +701,9 @@ class NnunetClient(BasicClient):
         config["nnunet_plans"] = plans_bytes
         properties = super().get_properties(config)
         properties["nnunet_plans"] = plans_bytes
+        properties["num_input_channels"] = self.nnunet_trainer.num_input_channels
+        properties["num_segmentation_heads"] = self.nnunet_trainer.label_manager.num_segmentation_heads
+        properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
         return properties
 
     def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
