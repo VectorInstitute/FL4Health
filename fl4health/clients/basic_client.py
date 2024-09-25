@@ -922,7 +922,7 @@ class BasicClient(NumPyClient):
                 first element contains a dictionary of predictions indexed by
                 name and the second element contains intermediate activations
                 indexed by name. By passing features, we can compute losses
-                such as the model contrasting loss in MOON. All predictions
+                such as the contrastive loss in MOON. All predictions
                 included in dictionary will by default be used to compute
                 metrics seperately.
 
@@ -1217,7 +1217,8 @@ class BasicClient(NumPyClient):
         """
         Hook method called after local train step on client. step is an integer that represents
         the local training step that was most recently completed. For example, used by the APFL
-        method to update the alpha value after a training a step.
+        method to update the alpha value after a training a step. Also used by the MOON, FENDA
+        and Ditto to update optimized beta value for MK-MMD loss after n steps.
 
         Args:
             step (int): The step number in local training that was most recently

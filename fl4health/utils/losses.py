@@ -221,15 +221,16 @@ class LossMeter(Generic[LossesType]):
             Dict[str, torch.Tensor]: A single dictionary with the aggregated losses according to the given loss
                 meter type
         """
-        # We don't know the keys of the dict (backward or additional losses) beforehand. We obtain them
-        # from the first entry because we know all of the losses will have the same keys
-        loss_keys = loss_list[0].keys()
-        num_losses = len(loss_list)
+        # We don't know the keys of the dict (backward or additional losses) beforehand. We don't obtain them
+        # from the first entry because losses can have different keys. We get list of all the keys from
+        # all the losses.
+        loss_keys = set(key for loss_dict_ in loss_list for key in loss_dict_.keys())
         loss_dict: Dict[str, torch.Tensor] = {}
         for key in loss_keys:
-            loss = torch.sum(torch.FloatTensor([loss[key] for loss in loss_list]))
             if loss_meter_type == LossMeterType.AVERAGE:
-                loss = loss / num_losses
+                loss = torch.mean(torch.FloatTensor([loss[key] for loss in loss_list if key in loss]))
+            else:
+                loss = torch.sum(torch.FloatTensor([loss[key] for loss in loss_list if key in loss]))
             loss_dict[key] = loss
 
         return loss_dict
