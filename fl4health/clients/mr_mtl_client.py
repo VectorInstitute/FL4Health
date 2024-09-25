@@ -34,7 +34,9 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         training of a local model. The constraint for this local model is identical to the FedProx loss. The key
         difference is that the local model is never replaced with aggregated weights. It is always local.
 
-        NOTE: lambda, the drift loss weight, is initially set and potentially adapted by the server.
+        NOTE: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
+        heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
+        corresponding strategy used by the server
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training

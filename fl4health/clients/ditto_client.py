@@ -36,7 +36,8 @@ class DittoClient(AdaptiveDriftConstraintClient):
         constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
 
         NOTE: lambda, the drift loss weight, is initially set and potentially adapted by the server akin to the
-        heuristic suggested in the original FedProx paper.
+        heuristic suggested in the original FedProx paper. Adaptation is optional and can be disabled in the
+        corresponding strategy used by the server
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
