@@ -92,6 +92,9 @@ class SyntheticFedProxDataset(ABC):
             List[TensorDataset]: Synthetic datasets for each client.
         """
         client_tensors = self.generate_client_tensors()
+        assert (
+            len(client_tensors) == self.num_clients
+        ), "The tensors returned by generate_client_tensors should have the same length as self.num_clients"
         client_datasets = [TensorDataset(X, Y) for X, Y in client_tensors]
         return client_datasets
 
@@ -258,25 +261,24 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         # of W and b are sampled from standard normal distributions.
         self.W = torch.normal(0, torch.ones((self.output_dim, self.input_dim)))
         self.b = torch.normal(0, torch.ones(self.output_dim, 1))
+        # Similarly, all input features across clients are all sampled from a centered multidimensional normal
+        # distribution with diagonal covariance matrix sigma (see base class for definition).
+        self.input_multivariate_normal = MultivariateNormal(
+            loc=torch.zeros(self.input_dim), covariance_matrix=self.input_covariance
+        )
 
-    def get_input_output_tensors(self, sigma: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_input_output_tensors(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         As described in the original FedProx paper (Appendix C.1), the features are all sampled from a centered
-        multidimensional normal distribution with diagonal covariance matrix sigma (see base class for definition).
-        Because all clients share the same transformation, these are not resampled.
-
-        Args:
-            sigma (torch.Tensor): This is assumed to be a 2D tensor of shape (input_dim, input_dim) and represents the
-                covariance matrix Sigma of the multivariate normal from which to draw the input x. It should be a
-                diagonal matrix as well.
+        multidimensional normal distribution with diagonal covariance matrix shared across clients.
 
         Returns:
             Tuple[torch.Tensor, torch.Tensor]: X and Y for the clients synthetic dataset. Shape of X is
                 n_samples x input dimension. Shape of Y is n_samples x output_dim and is one-hot encoded
         """
-        multivariate_normal = MultivariateNormal(loc=torch.zeros(self.input_dim), covariance_matrix=sigma)
         # size of x should be samples_per_client x input_dim
-        x = multivariate_normal.sample(torch.Size((self.samples_per_client,)))
+        x = self.input_multivariate_normal.sample(torch.Size((self.samples_per_client,)))
+        assert x.shape == (self.samples_per_client, self.input_dim)
 
         return x, self.map_inputs_to_outputs(x, self.W, self.b)
 
@@ -290,6 +292,6 @@ class SyntheticIidFedProxDataset(SyntheticFedProxDataset):
         """
         tensors_per_client: List[Tuple[torch.Tensor, torch.Tensor]] = []
         for _ in range(self.num_clients):
-            client_X, client_Y = self.get_input_output_tensors(self.input_covariance)
+            client_X, client_Y = self.get_input_output_tensors()
             tensors_per_client.append((client_X, client_Y))
         return tensors_per_client

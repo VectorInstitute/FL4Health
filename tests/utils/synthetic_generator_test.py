@@ -110,14 +110,13 @@ def test_iid_dataset_generation() -> None:
     assert targets is not None
     assert targets.shape == (10, 10)
 
-    sigma = data_generator.construct_covariance_matrix()
     torch.manual_seed(100)
-    input_reference, output_reference = data_generator.get_input_output_tensors(sigma)
+    input_reference, output_reference = data_generator.get_input_output_tensors()
     for _ in range(3):
         # resetting the seed for generation consistency. Each set of tensors use the same affine map and the input
         # should be generated in the same way.
         torch.manual_seed(100)
-        input, output = data_generator.get_input_output_tensors(sigma)
+        input, output = data_generator.get_input_output_tensors()
         assert torch.allclose(input_reference, input, rtol=0.0, atol=1e-7)
         assert torch.allclose(output_reference, output, rtol=0.0, atol=1e-7)
 
