@@ -48,7 +48,7 @@ class GeminiFedOptClient(NumpyFlClient):
         self.checkpointer = BestMetricTorchCheckpointer(checkpoint_dir, checkpoint_name, maximize=False)
 
     def setup_client(self, config: Config) -> None:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = self.narrow_dict_type(config, "batch_size", int)
 
         if self.learning_task == "mortality":
             self.model: nn.Module = mortality_model(input_dim=35, output_dim=1).to(self.device)
@@ -77,8 +77,8 @@ class GeminiFedOptClient(NumpyFlClient):
         meter = AccumulationMeter(self.metrics, "train_meter")
 
         self.set_parameters(parameters, config)
-        local_epochs = self.narrow_config_type(config, "local_epochs", int)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        local_epochs = self.narrow_dict_type(config, "local_epochs", int)
+        current_server_round = self.narrow_dict_type(config, "current_server_round", int)
 
         metric_values = self.train_by_epochs(current_server_round, local_epochs, meter)
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -94,7 +94,7 @@ class GeminiFedOptClient(NumpyFlClient):
             self.setup_client(config)
 
         self.set_parameters(parameters, config)
-        current_server_round = self.narrow_config_type(config, "current_server_round", int)
+        current_server_round = self.narrow_dict_type(config, "current_server_round", int)
         meter = AccumulationMeter(self.metrics, "val_meter")
         loss, metric_values = self.validate(current_server_round, meter)
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics

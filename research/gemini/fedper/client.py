@@ -67,7 +67,7 @@ class GeminiFedPerClient(MoonClient):
         log(INFO, f"Client Name: {self.client_name} Client hospitals {self.hospitals}")
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = self.narrow_config_type(config, "batch_size", int)
+        batch_size = self.narrow_dict_type(config, "batch_size", int)
         if self.learning_task == "mortality":
             (
                 train_loader,
