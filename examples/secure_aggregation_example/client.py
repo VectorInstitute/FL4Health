@@ -7,7 +7,7 @@ from flwr.client import start_numpy_client as RunClient
 from flwr.common.typing import Config
 from torch.nn import CrossEntropyLoss, Module
 from torch.nn.modules.loss import _Loss
-from torch.optim import SGD, Optimizer
+from torch.optim import SGD, Optimizer, AdamW
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
@@ -35,6 +35,7 @@ class SecAggClient(SecureAggregationClient):
         return CrossEntropyLoss()
 
     def get_optimizer(self, config: Config) -> Optimizer | Dict[str, Optimizer]:
+        # return AdamW(self.model.parameters(), lr=1e-5)
         return SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
     """
@@ -44,9 +45,10 @@ class SecAggClient(SecureAggregationClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = self.narrow_config_type(config, "batch_size", int)
         # sample_size is currently unused
-        training_loader, training_loader = poisson_subsampler_cifar10(self.data_path, batch_size)
+        # training_loader, val_loader = poisson_subsampler_cifar10(self.data_path, batch_size)
 
-        return training_loader, training_loader
+        training_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
+        return training_loader, val_loader
 
 
 if __name__ == "__main__":

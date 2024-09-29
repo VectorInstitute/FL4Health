@@ -1,12 +1,19 @@
 import pickle
 from logging import DEBUG, INFO, WARN
 from pathlib import Path
-from random import random
+import random
+import copy
 from typing import Dict, Optional, Sequence, Tuple
 import time
 import torch
+import numpy
+from opacus.data_loader import DPDataLoader
+import torch.utils
+import gc
+from torch.utils.data import Subset, DataLoader
 from flwr.common.logger import log
 from flwr.common.typing import Config, List, NDArrays, Scalar
+import torch.utils.data
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.clients.basic_client import BasicClient
@@ -23,6 +30,9 @@ from fl4health.privacy_mechanisms.slow_discrete_gaussian_mechanism import (
     generate_walsh_hadamard_matrix,
     pad_zeros,
     randomized_rounding,
+    calculate_delta_squared,
+    calculate_tau,
+    single_fl_round_concentrated_dp,
     clip_vector,
     get_exponent
 )
@@ -67,6 +77,8 @@ class SecureAggregationClient(BasicClient):
         self.task_name = task_name
 
         self.num_mini_clients = num_mini_clients
+        self.mini_clients_data_loaders: List[DataLoader]
+        self.start_time:float
 
         temporary_dir = os.path.join(
             os.path.dirname(checkpointer.best_checkpoint_path),
@@ -88,6 +100,10 @@ class SecureAggregationClient(BasicClient):
         self.temporary_model_state_path = os.path.join(
             temporary_dir,
             f'client_{self.client_id}_initial_model_state.pth'
+        )
+        self.temporary_optimizer_state_path = os.path.join(
+            temporary_dir,
+            f'client_{self.client_id}_optimizer_state.pth'
         )
 
         metrics_dir = os.path.join(
@@ -280,16 +296,52 @@ class SecureAggregationClient(BasicClient):
         self.noise_multiplier = 1e-16
         self.clipping_bound = 1e16
 
-        self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
-            module=self.model,
-            optimizer=self.optimizer,
-            data_loader=self.train_loader,
-            noise_multiplier=self.noise_multiplier,
-            max_grad_norm=self.clipping_bound,
-            clipping="flat",
-            poisson_sampling=False
-        )
+        # Apply PrivacyEngine to model, optimizer, and train_loader
+        # self.model, self.optimizer, self.train_loader = privacy_engine.make_private(
+        #     module=self.model,
+        #     optimizer=self.optimizer,
+        #     data_loader=self.train_loader,
+        #     noise_multiplier=self.noise_multiplier,
+        #     max_grad_norm=self.clipping_bound,
+        #     clipping="flat",
+        #     poisson_sampling=False,
+        # )
+        log(DEBUG, f'train_loader length in `setup_opacus`: {len(self.train_loader.dataset)}')
 
+        # Get the total size of the dataset
+        total_size = len(self.train_loader.dataset)
+        client_size = total_size // self.num_mini_clients   # Determine size per client
+
+        # Split the dataset indices for mini-clients
+        indices = list(range(total_size))
+        mini_clients_data_loaders = []
+
+        # Create DPDataLoaders for each mini-client
+        for i in range(self.num_mini_clients):
+            start_idx = i * client_size
+            end_idx = (i + 1) * client_size if i != self.num_mini_clients - 1 else total_size
+            client_indices = indices[start_idx:end_idx]
+
+            # Create a Subset for each client and corresponding DataLoader
+            client_subset = Subset(self.train_loader.dataset, client_indices)
+
+            # Here we use DPDataLoader without batch_size and shuffle, as these conflict with batch_sampler
+            # client_data_loader = DPDataLoader(client_subset, sample_rate= 40 / client_size)
+            generator = torch.Generator(device='cuda')  # Set the generator to use 'cuda'
+
+            # Create the DataLoader with the specified generator
+            client_data_loader = DataLoader(
+                client_subset,
+                batch_size=self.train_loader.batch_size,
+                shuffle=True,
+                num_workers=self.train_loader.num_workers,
+                generator=generator  # Pass the generator here
+            )
+            mini_clients_data_loaders.append(client_data_loader)
+        
+        # Store the list of DataLoaders for clients
+        self.mini_clients_data_loaders = mini_clients_data_loaders
+    
 
     # Orchestrates training
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
@@ -354,14 +406,25 @@ class SecureAggregationClient(BasicClient):
         # miniclients metrics and losses
         collective_metrics = {}
         collective_losses = {}
+        cumulative_delta = None  # To hold cumulative delta of mini-clients
+        initial_state_dict = copy.deepcopy(self.model.state_dict())
+        torch.save(self.model.state_dict(), self.temporary_model_state_path)
+        torch.save(self.optimizer.state_dict(), self.temporary_optimizer_state_path)
 
         if local_epochs is not None:
-            # initial model
+            # initial model and optimizer
             torch.save(self.model.state_dict(), self.temporary_model_state_path)
+            torch.save(self.optimizer.state_dict(), self.temporary_optimizer_state_path)
 
             for id in range(1, 1+ self.num_mini_clients):
                 log(INFO, f'Training by epochs: {local_epochs} local epochs')
                 self.model.load_state_dict(torch.load(self.temporary_model_state_path))
+                self.optimizer = self.get_optimizer(config)
+                self.optimizer.load_state_dict(torch.load(self.temporary_optimizer_state_path))
+                
+                self.train_loader = self.mini_clients_data_loaders[id - 1]
+                log(DEBUG, f'train_loader length: {len(self.train_loader.dataset)}')
+
                 loss_dict, metrics, training_set_size = self.train_by_epochs(local_epochs, current_server_round)
 
                 for k, v in metrics.items():
@@ -376,42 +439,67 @@ class SecureAggregationClient(BasicClient):
                     else:
                         collective_losses[k].append(v)
 
-                local_steps = len(self.train_loader) * local_epochs  # total steps over training round
+                # for name, param in current_state_dict.items():
+                #     initial_param = initial_state_dict[name]
+                #     param_change = torch.norm(param - initial_param).item()
+                #     log(INFO, f'Parameter change for {name} after mini-client {id}: {param_change}')
+                # del current_state_dict
 
-            # assumes no sampling: train size is constant for each miniclient
-            self.num_train_samples = self.num_mini_clients * training_set_size
-
-        elif local_steps is not None:
-
-            # initial model
-            torch.save(self.model.state_dict(), self.temporary_model_state_path)
-            for id in range(1, 1+ self.num_mini_clients):
-                log(INFO, f'Mini-client {id} training by steps: {local_steps} local steps')
-                self.model.load_state_dict(torch.load(self.temporary_model_state_path))
-
-                # appropriately aggregate these metrics and losses
-                loss_dict, metrics, training_set_size = self.train_by_steps(local_steps, current_server_round)
-
-                for k, v in metrics.items():
-                    if k not in collective_metrics:
-                        collective_metrics[k] = [v]
-                    else:
-                        collective_metrics[k].append(v)
-
-                for k, v in loss_dict.items():
-                    if k not in collective_losses:
-                        collective_losses[k] = [v]
-                    else:
-                        collective_losses[k].append(v)
+                # for name, param in self.model.named_parameters():
+                #     if param.grad is not None:
+                #         log(INFO, f'Mini-client {id}, {local_steps} local steps with gradient mean: {param.grad.mean().item()}')
 
                 trained_mini_model_vector = vectorize_model(self.model)
                 path = os.path.join(self.temporary_dir,f'client_{self.client_id}_mini_client_{id}.pth')
                 torch.save(trained_mini_model_vector, path)
                 del trained_mini_model_vector
 
-
             # assumes no sampling: train size is constant for each miniclient
             self.num_train_samples = self.num_mini_clients * training_set_size
+
+        # elif local_steps is not None:
+        #     # initial model
+        #     torch.save(self.model.state_dict(), self.temporary_model_state_path)
+        #     torch.save(self.optimizer.state_dict(), self.temporary_optimizer_state_path)
+        #     for id in range(1, 1+ self.num_mini_clients):
+        #         log(INFO, f'Mini-client {id} training by steps: {local_steps} local steps')
+        #         self.model.load_state_dict(torch.load(self.temporary_model_state_path))
+        #         self.optimizer = self.get_optimizer(config)
+        #         self.optimizer.load_state_dict(torch.load(self.temporary_optimizer_state_path))
+
+        #         # del self.train_loader  # Delete reference to the previous loader
+        #         # torch.cuda.empty_cache()  # Clear any memory allocated by CUDA
+        #         # gc.collect()  # Trigger Python garbage collection
+                
+        #         self.train_loader = self.mini_clients_data_loaders[id - 1]
+        #         log(DEBUG, f'train_loader length: {len(self.train_loader.dataset)}')
+
+        #         # appropriately aggregate these metrics and losses
+        #         loss_dict, metrics, training_set_size = self.train_by_steps(local_steps, current_server_round)
+
+        #         for k, v in metrics.items():
+        #             if k not in collective_metrics:
+        #                 collective_metrics[k] = [v]
+        #             else:
+        #                 collective_metrics[k].append(v)
+
+        #         for k, v in loss_dict.items():
+        #             if k not in collective_losses:
+        #                 collective_losses[k] = [v]
+        #             else:
+        #                 collective_losses[k].append(v)
+
+        #         # for name, param in self.model.named_parameters():
+        #         #     if param.grad is not None:
+        #         #         log(INFO, f'Mini-client {id}, {local_steps} local steps with gradient mean: {param.grad.mean().item()}')
+
+        #         trained_mini_model_vector = vectorize_model(self.model)
+        #         path = os.path.join(self.temporary_dir,f'client_{self.client_id}_mini_client_{id}.pth')
+        #         torch.save(trained_mini_model_vector, path)
+        #         del trained_mini_model_vector
+
+        #     # assumes no sampling: train size is constant for each miniclient
+        #     self.num_train_samples = self.num_mini_clients * training_set_size
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
@@ -562,6 +650,8 @@ class SecureAggregationClient(BasicClient):
 
         # NOTE the vector should already be clipped by opacus 
         vector = clip_vector(vector=vector, clip=c, granularity=g)
+        mini_client_size = len(self.train_loader.dataset)
+        vector = vector / self.num_mini_clients
 
         # log(DEBUG, 'weighted')
         # log(DEBUG, vector[:100])
@@ -592,21 +682,28 @@ class SecureAggregationClient(BasicClient):
 
 
         # discrete Gaussian noise 
-        # vector = torch.round(vector).to(torch.int64)
+        # vector = torch.round(vector)
         b = self.privacy_settings['bias']
         # self.echo('before rounding, after fwht', vector)
-        vector = randomized_rounding(vector, c, g, self.model_dim, b)
+        delta_squared = calculate_delta_squared(c, g, self.model_dim, b, mini_client_size)
+        vector = randomized_rounding(vector, delta_squared, g)
         # self.echo('raw model server', vector)
         # log(DEBUG, f'casted type: {vector.dtype}')
         v = (self.privacy_settings['noise_scale'] / g) ** 2
         # log(INFO, f'Adding noise')
-        noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
-        self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
-        vector += noise
+
+        # noise = torch.from_numpy(generate_discrete_gaussian_vector(dim=self.padded_model_dim, variance=v)).to(device='cuda' if torch.cuda.is_available() else 'cpu')
+        # self.echo('noise l_infinity_norm', torch.linalg.vector_norm(noise.to(torch.float64), ord=float('inf')))
+        # vector += noise
+
         # log(INFO, f'Adding mask')
         # log(DEBUG,'after noising')
         # log(INFO, vector)
         # TODO if dropout is turned on, then add selfmask below
+        if mini_client_id == self.num_mini_clients:
+            tau = calculate_tau(g, self.privacy_settings['noise_scale'], mini_client_size * 3)
+            single_fl_round_concentrated_dp(delta_squared, self.model_dim, self.privacy_settings['noise_scale'], tau, mini_client_size * 3)
+            
         return vector
 
     def generate_mask(self):

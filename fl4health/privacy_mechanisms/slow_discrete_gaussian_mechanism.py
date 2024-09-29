@@ -3,6 +3,7 @@ from logging import WARNING, INFO, DEBUG
 from typing import List
 
 import numpy as np
+import time
 import torch
 from flwr.common.logger import log
 from torch.linalg import vector_norm
@@ -184,24 +185,16 @@ def generate_walsh_hadamard_matrix(exponent: int) -> torch.Tensor:
     return torch.from_numpy(sylvester(exponent) / np.sqrt(2**exponent))
 
 
-def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, unpadded_model_dim: int, bias: float) -> torch.Tensor:
-    """Random rounding for SecAgg client procedure.
+def randomized_rounding(vector: torch.Tensor, delta_squared: float, granularity: float) -> torch.Tensor:
+    """Random rounding for SecAgg client procedure using delta_squared.
 
     Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
     """
-    assert 0 <= bias < 1
     device = vector.device
     log(INFO, f'randomized rounding using device: {device}')
+    t0 = time.perf_counter()
 
-    r = clip / granularity
-    padded_dim = 2**get_exponent(unpadded_model_dim)
-    s = math.sqrt(padded_dim)
-
-    upper_bound_1 = r + s
-    upper_bound_2 = r**2 + padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * (r + s/2)
-    upper_bound_2 = math.sqrt(upper_bound_2)
-
-    upper_bound = min(upper_bound_1, upper_bound_2)
+    upper_bound = math.sqrt(delta_squared)/granularity
 
     # def round(vector, round_down_probabilities, dim) -> torch.Tensor:
     #     rounding_instructions = torch.bernoulli(round_down_probabilities)
@@ -230,9 +223,110 @@ def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, u
         i+=1
         purse = torch.bernoulli(down_probs)
         rounded_vector = rounder(vector, purse)
-    log(DEBUG, f'Done rounding')
+    log(DEBUG, f'Done rounding at iteration {i}')
+    # rounded_vector = torch.round(vector)
+    t1 = time.perf_counter()
+    log(DEBUG, f'Randomized Rounding finished in {t1-t0} sec')
     return rounded_vector
 
+def calculate_delta_squared(clip: float, granularity: float, unpadded_model_dim: int, bias: float, mini_client_size: int)-> float:
+    """Calculate the delta_squared value."""
+    assert 0 <= bias < 1
+    
+    clip_new = clip/mini_client_size
+    padded_dim = 2**get_exponent(unpadded_model_dim)
+    s = math.sqrt(padded_dim)
+
+    delta_squared_1 = (clip_new + granularity * s)**2
+    delta_squared_2 = clip_new**2 + granularity**2 * padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * granularity * (clip_new + s/2)
+
+    delta_squared = min(delta_squared_1, delta_squared_2)
+    return delta_squared
+
+def calculate_tau(granularity: float, sigma: float, n: float) -> float:
+        """[DDG-J] Theorem 5"""
+
+        common = -2 * (math.pi * sigma / granularity)**2
+
+        tau = 0
+        for k in range(1, n):
+            tau += math.exp(common * k/(k+1))
+
+        return 10 * tau
+
+def single_fl_round_concentrated_dp(delta_squared: float, unpadded_model_dim: int, sigma: float, tau: float, n: float) -> float:
+        """[DDG-J] Theorem 5"""
+
+        common = delta_squared / (n * sigma**2)
+        d = 2**get_exponent(unpadded_model_dim)
+
+        arg1 = math.sqrt(common + 2 * tau * d)
+        arg2 = math.sqrt(common) + tau * math.sqrt(d)
+
+        epsilon = min(arg1, arg2)
+
+        log(INFO, f'1 FL round satisfies ({epsilon}^2)/2 - concentrated differential privacy')
+        return epsilon
+    
+# def single_fl_round_renyi_dp(self, rdp_order: float) -> float:
+
+#         assert rdp_order > 1
+
+#         # See [DDG-J] comment above Lemma 4
+#         cdp_epsilon = self.single_fl_round_concentrated_dp()
+#         rdp_epsilon = rdp_order/2 * cdp_epsilon **2 
+
+#         # 1 FL round satisfies (rdp_order, rdp_epsilon) - Renyi differential privacy
+#         return rdp_epsilon
+
+# def randomized_rounding(vector: torch.Tensor, clip: float, granularity: float, unpadded_model_dim: int, bias: float) -> torch.Tensor:
+#     """Random rounding for SecAgg client procedure.
+
+#     Ref http://proceedings.mlr.press/v139/kairouz21a/kairouz21a.pdf
+#     """
+#     assert 0 <= bias < 1
+#     device = vector.device
+#     log(INFO, f'randomized rounding using device: {device}')
+
+#     r = clip / granularity
+#     padded_dim = 2**get_exponent(unpadded_model_dim)
+#     s = math.sqrt(padded_dim)
+
+#     upper_bound_1 = r + s
+#     upper_bound_2 = r**2 + padded_dim/4 + math.sqrt(2 * math.log(1/bias)) * (r + s/2)
+#     upper_bound_2 = math.sqrt(upper_bound_2)
+
+#     upper_bound = min(upper_bound_1, upper_bound_2)
+
+#     # def round(vector, round_down_probabilities, dim) -> torch.Tensor:
+#     #     rounding_instructions = torch.bernoulli(round_down_probabilities)
+
+#     #     for i in range(dim):
+#     #         if rounding_instructions[i] == 1:
+#     #             # if true round down
+#     #             vector[i] = torch.floor(vector[i])
+#     #             continue
+#     #         vector[i] = torch.ceil(vector[i])
+#     #     return vector
+
+#     rounder = torch.vmap(lambda x, coin: torch.where(coin==1, torch.floor(x), torch.ceil(x)))
+
+#     down_probs = torch.ceil(vector) - vector
+#     purse = torch.bernoulli(down_probs)
+
+#     rounded_vector = rounder(vector, purse)
+#     i = 0
+#     while torch.linalg.vector_norm(rounded_vector, ord=2) > upper_bound:
+#         if i == 100:
+#             log(DEBUG, f'Rounding not converging after 100 rounds.')
+#             exit()
+#         n  = torch.linalg.vector_norm(rounded_vector, ord=2)
+#         log(INFO, f'round: {i} {n}>{upper_bound}')
+#         i+=1
+#         purse = torch.bernoulli(down_probs)
+#         rounded_vector = rounder(vector, purse)
+#     log(DEBUG, f'Done rounding')
+#     return rounded_vector
 
 def clip_vector(vector: torch.Tensor, granularity: float, clip: float) -> torch.Tensor:
     assert vector.dim() == 1  

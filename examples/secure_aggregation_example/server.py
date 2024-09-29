@@ -48,7 +48,7 @@ if __name__ == "__main__":
     model = Net()
 
     # consumed by strategy below
-    config_parial = partial(generate_config, config["local_steps"], config["batch_size"])
+    config_parial = partial(generate_config, config["local_epochs"], config["batch_size"])
 
     strategy = SecureAggregationStrategy(
         min_fit_clients=config["n_clients"],
