@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from examples.dp_fed_examples.client_level_dp_weighted.data import load_data
 from examples.models.logistic_regression import LogisticRegression
 from fl4health.clients.clipping_client import NumpyClippingClient
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.metrics import Accuracy
 
 
@@ -22,8 +22,8 @@ class HospitalClient(NumpyClippingClient):
         return LogisticRegression(input_dim=31, output_dim=1).to(self.device)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
-        scaler_bytes = narrow_config_type(config, "scaler", bytes)
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        scaler_bytes = narrow_dict_type(config, "scaler", bytes)
         train_loader, val_loader, _ = load_data(self.data_path, batch_size, scaler_bytes)
         return train_loader, val_loader
 

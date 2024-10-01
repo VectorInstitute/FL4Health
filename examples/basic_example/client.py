@@ -12,19 +12,19 @@ from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.metrics import Accuracy
 
 
 class CifarClient(BasicClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return test_loader
 

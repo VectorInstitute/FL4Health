@@ -12,7 +12,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.metrics import MetricsReporter
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -164,7 +164,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         server_model_state, self.drift_penalty_weight = self.parameter_exchanger.unpack_parameters(parameters)
         log(INFO, f"Lambda weight received from the server: {self.drift_penalty_weight}")
 
-        current_server_round = narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
             log(INFO, "Initializing the global and local models weights for the first time")
             self.initialize_all_model_weights(server_model_state, config)
