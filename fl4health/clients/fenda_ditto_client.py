@@ -32,12 +32,26 @@ class FendaDittoClient(DittoClient):
     ) -> None:
         """
         This client implements a combination of the Ditto algorithm from Ditto: Fair and Robust Federated Learning
-        Through Personalization with FENDA-FL models. The idea is that we want to train a local FENDA model
-        along with the global model for each client. We simultaneously train a global model that is
+        Through Personalization with FENDA-FL models. In this implementation, the global Ditto model consists of a
+        feature extractor and classification head, where the feature extractor architecture is identical to that of
+        the global and local feature extractors of the FENDA model being trained. The idea is that we want to train a
+        local FENDA model along with the global model for each client. We simultaneously train a global model that is
         aggregated on the server-side and use those weights to also constrain the training of a local
-        FENDA model. The feature extractor from globally aggregated model is, at each server round,
-        injected into the global feature extractor of the FENDA model. The constraint for this local
-        FENDA model uses a weight drift loss on its feature extraction modules.
+        FENDA model. At the beginning of each server round, the feature extractor from globally aggregated model is
+        injected into the global feature extractor of the FENDA model.
+
+        There are two distinct modes of operation:
+            If freeze_global_feature_extractor is True. The global Ditto model feature extractor SETS AND FREEZES
+            weights of global FENDA feature extractor. The local components of the FENDA model are trained and an
+            additional drift loss is computed between the local and global feature extractors of the FENDA model.
+
+            If freeze_global_feature_extractor is False. The global Ditto model feature extractor INITIALIZES weights
+            of the FENDA model's global feature extractor, both local and global components of FENDA are trained and
+            a drift loss is calculated between Ditto global feature extractor and FENDA global feature extractor.
+
+
+        The constraint for the FENDA model feature extractors discussed above uses a weight drift loss on its
+        feature extraction modules.
 
         NOTE: Unlike FENDA, the global feature extractor of the FENDA model is NOT exchanged with the server. Rather,
         the global Ditto model is exchanged and injected at each round into the global feature extractor. If the
@@ -201,7 +215,7 @@ class FendaDittoClient(DittoClient):
         # GLOBAL MODEL feature extractor is given to local FENDA model
         self.model.second_feature_extractor.load_state_dict(self.global_model.base_module.state_dict())
 
-    def save_initial_global_tensors(self) -> None:
+    def set_initial_global_tensors(self) -> None:
         # Saving the initial GLOBAL (DITTO) MODEL weights and detaching them so that we don't compute gradients with
         # respect to the tensors. These are used to form the Ditto local update penalty term.
         # NOTE: We are only saving the base model parameters, as these will be used to constraint a feature extractor
@@ -291,7 +305,7 @@ class FendaDittoClient(DittoClient):
             additional_losses = {}
 
         # adding the vanilla loss to the additional losses to be used by update_after_train for potential adaptation
-        additional_losses["adaptation_loss"] = loss.clone()
+        additional_losses["loss_for_adaptation"] = loss.clone()
 
         # Compute the appropriate Ditto drift loss
         if self.freeze_global_feature_extractor:

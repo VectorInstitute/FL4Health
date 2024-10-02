@@ -60,7 +60,8 @@ class FedIsic2019DittoClient(DittoClient):
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
+        # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
+        # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         return {"global": global_optimizer, "local": local_optimizer}

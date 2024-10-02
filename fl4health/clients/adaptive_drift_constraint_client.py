@@ -34,8 +34,9 @@ class AdaptiveDriftConstraintClient(BasicClient):
         This client serves as a base for FL methods implementing an auxiliary loss penalty with a weight coefficient
         that might be adapted via loss trajectories on the server-side. An example of such a method is FedProx, which
         uses an auxiliary loss penalizing weight drift with a coefficient mu. This client is a simple extension of the
-        BasicClient that packs the criterion loss (i.e. loss without the penalty) for exchange with the server and
-        expects to receive an updated (or constant if non-adaptive) parameter for the loss weight.
+        BasicClient that packs the self.loss_for_adaptation for exchange with the server and expects to receive an
+        updated (or constant if non-adaptive) parameter for the loss weight. In many cases, such as FedProx, the
+        loss_for_adaptation being packaged is the criterion loss (i.e. loss without the penalty)
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training
@@ -77,7 +78,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         """
         Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation. If
         the client has not been initialized, this means the server is requesting parameters for initialization and
-        just the model parameters are sent. When using the FedAvgWithAdaptiveConstraint strategy. This should not
+        just the model parameters are sent. When using the FedAvgWithAdaptiveConstraint strategy, this should not
         happen, as that strategy requires server-side initialization parameters. However, other strategies may handle
         this case.
 
@@ -159,10 +160,11 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
         additional_losses["loss"] = loss.clone()
         # adding the vanilla loss to the additional losses to be used by update_after_train for potential adaptation
-        additional_losses["adaptation_loss"] = loss.clone()
+        additional_losses["loss_for_adaptation"] = loss.clone()
 
         # Compute the drift penalty loss and store it in the additional losses dictionary.
-        penalty_loss = self.compute_penalty_loss_and_store(additional_losses)
+        penalty_loss = self.compute_penalty_loss()
+        additional_losses["penalty_loss"] = penalty_loss.clone()
 
         return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 
@@ -190,18 +192,14 @@ class AdaptiveDriftConstraintClient(BasicClient):
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
             config (Config): The config from the server
         """
-        assert "adaptation_loss" in loss_dict
+        assert "loss_for_adaptation" in loss_dict
         # Store current loss which is the vanilla loss without the penalty term added in
-        self.loss_for_adaptation = loss_dict["adaptation_loss"]
+        self.loss_for_adaptation = loss_dict["loss_for_adaptation"]
         super().update_after_train(local_steps, loss_dict, config)
 
-    def compute_penalty_loss_and_store(self, additional_losses: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def compute_penalty_loss(self) -> torch.Tensor:
         """
-        Computes the drift loss for the client model and drift tensors, stores the loss in the additional losses
-        dictionary, and returns the loss tensor.
-
-        Args:
-            additional_losses (Dict[str, torch.Tensor]): Dictionary to which a clone of the penalty loss is added.
+        Computes the drift loss for the client model and drift tensors
 
         Returns:
             torch.Tensor: Computed penalty loss tensor
@@ -209,6 +207,4 @@ class AdaptiveDriftConstraintClient(BasicClient):
         # Penalty tensors must have been set for these clients.
         assert self.drift_penalty_tensors is not None
 
-        penalty_loss = self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)
-        additional_losses["penalty_loss"] = penalty_loss.clone()
-        return penalty_loss
+        return self.penalty_loss_function(self.model, self.drift_penalty_tensors, self.drift_penalty_weight)

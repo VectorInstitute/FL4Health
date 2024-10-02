@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.model_bases.pca import PcaModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 
 
 class FedPCAClient(NumPyClient):
@@ -70,9 +70,9 @@ class FedPCAClient(NumPyClient):
         """
         Returns an instance of the PCAModule.
         """
-        low_rank = narrow_config_type(config, "low_rank", bool)
-        full_svd = narrow_config_type(config, "full_svd", bool)
-        rank_estimation = narrow_config_type(config, "rank_estimation", int)
+        low_rank = narrow_dict_type(config, "low_rank", bool)
+        full_svd = narrow_dict_type(config, "full_svd", bool)
+        rank_estimation = narrow_dict_type(config, "rank_estimation", int)
         return PcaModule(low_rank, full_svd, rank_estimation).to(self.device)
 
     def setup_client(self, config: Config) -> None:
@@ -97,7 +97,7 @@ class FedPCAClient(NumPyClient):
         """Perform PCA using the locally held dataset."""
         if not self.initialized:
             self.setup_client(config)
-        center_data = narrow_config_type(config, "center_data", bool)
+        center_data = narrow_dict_type(config, "center_data", bool)
 
         principal_components, singular_values = self.model(self.train_data_tensor, center_data)
         self.model.set_principal_components(principal_components, singular_values)
@@ -123,7 +123,7 @@ class FedPCAClient(NumPyClient):
             self.model.set_data_mean(self.model.maybe_reshape(self.train_data_tensor))
         self.set_parameters(parameters, config)
         num_components_eval = (
-            narrow_config_type(config, "num_components_eval", int) if "num_components_eval" in config.keys() else None
+            narrow_dict_type(config, "num_components_eval", int) if "num_components_eval" in config.keys() else None
         )
         val_data_tensor_prepared = self.model.center_data(self.model.maybe_reshape(self.val_data_tensor)).to(
             self.device
