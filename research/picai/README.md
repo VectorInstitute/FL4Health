@@ -42,7 +42,7 @@ post-processing. They are ordered sequentially from least to most processed
   - The [report guided annotation](https://github.com/DIAGNijmegen/Report-Guided-Annotation) is a common api used for deriving detection maps from model output probabilities
 
 <p align="center">
-  <img src="/examples/nnunet_example/assets/detmaps.png" width="300">
+  <img src="/examples/nnunet_example/assets/detmap.png" width="300">
 </p>
 
 - **Predicted Annotations/Segmentations**: Model predictions that have been thresholded to contain only class labels. If one hot encoded they must be binary {0, 1} or boolean {False, True} tensors. If not one hot encoded they must be be tensors containing only integers that represent the class labels (eg. constrained to {0, 1, 2, ...}). An example of a binary or one-hot-encoded predicted annotation is shown below
