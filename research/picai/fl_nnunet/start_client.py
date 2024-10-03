@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import warnings
 from functools import partial
 from logging import INFO
@@ -19,7 +20,7 @@ from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
-from research.picai.fl_nnunet.transforms import collapse_one_hot_tensor, get_annotations_from_probs
+from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_probs, set_nnunet_env
 
 
 def main(
@@ -44,7 +45,7 @@ def main(
             name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-        pred_transforms=[torch.sigmoid, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
@@ -164,6 +165,12 @@ if __name__ == "__main__":
 
     # Set log level
     update_console_handler(level=args.logLevel)
+
+    set_nnunet_env(
+        nnUNet_raw=os.environ["nnUNet_raw"],
+        nnUNet_preprocessed=os.environ["nnUNet_preprocessed"],
+        nnUNet_results=os.environ["nnUNet_results"],
+    )
 
     # Convert fold to an integer if it is not 'all'
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)

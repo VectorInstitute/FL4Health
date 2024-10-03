@@ -118,18 +118,14 @@ if __name__ == "__main__":
         "--artifact_dir", action="store", type=str, help="Path to dir to store run artifacts", required=True
     )
     parser.add_argument(
-        "--base_dir",
-        action="store",
-        type=str,
-        help="Path to base directory containing PICAI dataset",
-        default="/ssd003/projects/aieng/public/PICAI/",
+        "--base_dir", action="store", type=str, help="Path to base directory containing PICAI dataset", required=True
     )
     parser.add_argument(
         "--overviews_dir",
         action="store",
         type=str,
         help="Path to the directory containing the cross validation fold sheets",
-        default="/ssd003/projects/aieng/public/PICAI/workdir/results/UNet/overviews/Task2203_picai_baseline/",
+        required=True,
     )
     parser.add_argument(
         "--server_address",

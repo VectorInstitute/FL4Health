@@ -7,7 +7,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import SimpleITK as sitk
 
-from research.picai.preprocessing import (
+from research.picai.preprocessing.preprocessing import (
     AlignOriginAndDirection,
     BinarizeAnnotation,
     Case,
