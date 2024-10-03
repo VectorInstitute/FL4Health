@@ -126,4 +126,3 @@ Similarly, the validation dataset file for a specific fold is available at:
 ```
 
 To learn about the details of the preprocessing, please refer to the [General Setup Documentation](https://github.com/DIAGNijmegen/picai_baseline?tab=readme-ov-file#general-setup) and subsequently the [U-Net Baseline Data Preparation](https://github.com/DIAGNijmegen/picai_baseline/blob/main/unet_baseline.md#u-net---data-preparation).
-
