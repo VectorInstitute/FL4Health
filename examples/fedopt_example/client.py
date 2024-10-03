@@ -15,7 +15,7 @@ from examples.fedopt_example.metrics import CompoundMetric
 from examples.models.lstm_model import LSTM
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, TorchInputType
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -36,8 +36,8 @@ class NewsClassifierClient(BasicClient):
         self.batch_size: int
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        sequence_length = narrow_config_type(config, "sequence_length", int)
-        self.batch_size = narrow_config_type(config, "batch_size", int)
+        sequence_length = narrow_dict_type(config, "sequence_length", int)
+        self.batch_size = narrow_dict_type(config, "batch_size", int)
         # NOTE: self.vocabulary and self.label_encoder are initialized in setup_client before the call to
         # super().setup_client() to ensure their availability
         train_loader, validation_loader, _, weight_matrix = construct_dataloaders(
@@ -54,13 +54,13 @@ class NewsClassifierClient(BasicClient):
         return torch.optim.AdamW(self.model.parameters(), lr=0.01, weight_decay=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        vocab_dimension = narrow_config_type(config, "vocab_dimension", int)
-        hidden_size = narrow_config_type(config, "hidden_size", int)
+        vocab_dimension = narrow_dict_type(config, "vocab_dimension", int)
+        hidden_size = narrow_dict_type(config, "hidden_size", int)
         return LSTM(self.vocabulary.vocabulary_size, vocab_dimension, hidden_size)
 
     def setup_client(self, config: Config) -> None:
-        self.vocabulary = Vocabulary.from_json(narrow_config_type(config, "vocabulary", str))
-        self.label_encoder = LabelEncoder.from_json(narrow_config_type(config, "label_encoder", str))
+        self.vocabulary = Vocabulary.from_json(narrow_dict_type(config, "vocabulary", str))
+        self.label_encoder = LabelEncoder.from_json(narrow_dict_type(config, "label_encoder", str))
         # Since the label_encoder is required for CompundMetric but it is not available until after we receive
         # it from the Server, we pass it to the CompoundMetric through the CompoundMetric._setup method once its
         # available

@@ -13,7 +13,7 @@ class FullExchangeServer(FlServerWithCheckpointing):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
+        model: Optional[nn.Module] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
@@ -21,8 +21,8 @@ class FullExchangeServer(FlServerWithCheckpointing):
         parameter_exchanger = FullParameterExchanger()
         super().__init__(
             client_manager=client_manager,
-            model=model,
             parameter_exchanger=parameter_exchanger,
+            model=model,
             strategy=strategy,
             checkpointer=checkpointer,
         )

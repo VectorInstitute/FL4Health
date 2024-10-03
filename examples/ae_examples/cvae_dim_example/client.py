@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from examples.models.mnist_model import MnistNet
 from fl4health.clients.basic_client import BasicClient
 from fl4health.preprocessing.autoencoders.dim_reduction import CvaeFixedConditionProcessor
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -27,8 +27,8 @@ class CvaeDimClient(BasicClient):
         self.condition = condition
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
-        cvae_model_path = Path(narrow_config_type(config, "cvae_model_path", str))
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        cvae_model_path = Path(narrow_dict_type(config, "cvae_model_path", str))
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
         # CvaeFixedConditionProcessor is added to the data transform pipeline to encode the data samples
@@ -47,7 +47,7 @@ class CvaeDimClient(BasicClient):
         return torch.optim.Adam(self.model.parameters(), lr=0.001)
 
     def get_model(self, config: Config) -> nn.Module:
-        latent_dim = narrow_config_type(config, "latent_dim", int)
+        latent_dim = narrow_dict_type(config, "latent_dim", int)
         # Dimensionality reduction reduces the size of inputs to the size of cat(mu, logvar).
         return MnistNet(latent_dim * 2).to(self.device)
 

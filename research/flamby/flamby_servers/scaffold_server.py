@@ -15,22 +15,26 @@ class ScaffoldServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
+        model: Optional[nn.Module] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
     ) -> None:
+        assert model is not None
         # To help with model rehydration
         model_size = len(model.state_dict())
         parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         super().__init__(
             client_manager=client_manager,
-            model=model,
             parameter_exchanger=parameter_exchanger,
+            model=model,
             strategy=strategy,
             checkpointer=checkpointer,
         )
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        assert (
+            self.server_model is not None
+        ), "Model hydration has been called but no server_model is defined to hydrate"
         packed_parameters = parameters_to_ndarrays(self.parameters)
         # Don't need the control variates for checkpointing.
         model_ndarrays, _ = self.parameter_exchanger.unpack_parameters(packed_parameters)
