@@ -26,7 +26,7 @@ do
   CLIENT_ERROR_LOGS="cifar_preprocess_log_${SEEDS}_${BETAS}_${NUM_PARTITIONS}.err"
 
   SBATCH_COMMAND="--job-name=cifar_preprocess_${BETA} --output=${CLIENT_OUT_LOGS} --error=${CLIENT_ERROR_LOGS} \
-    research/cifar10/adaptive_pfl/data_preprocess_scripts/preprocess.slrm \
+    research/cifar10/pfl_preprocess_scripts/preprocess.slrm \
     ${VENV_PATH} ${ORIGINAL_DATA_DIR} ${DESTINATION_DIRS[index]} ${SEEDS[index]} ${BETAS[index]} \
     ${NUM_PARTITIONS[index]} ${DESTINATION_DIRS[index]}" \
 

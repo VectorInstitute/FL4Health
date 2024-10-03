@@ -336,7 +336,7 @@ class F1(SimpleMetric):
         average: Optional[str] = "weighted",
     ):
         """
-        Computes the F1 score using the sklearn f1_score function. As such, the values of average are correspond to
+        Computes the F1 score using the sklearn f1_score function. As such, the values of average correspond to
         those of that function.
 
         Args:
