@@ -25,8 +25,6 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.model import ConvNet
 from research.cifar10.preprocess import get_preprocessed_data, get_test_preprocessed_data
 
-NUM_CLIENTS = 5
-
 
 class CifarFedAvgClient(BasicClient):
     def __init__(
