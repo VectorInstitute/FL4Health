@@ -65,11 +65,8 @@ def test_generate_client_tensors() -> None:
 
     client_0_label_counts = torch.sum(client_tensors[0][1], dim=0)
     client_2_label_counts = torch.sum(client_tensors[2][1], dim=0)
-    # Former values for this test [2, 7, 4939, 2, 29, 16, 1, 4, 0, 0]
-    # Local test values [2, 10, 4932, 2, 24, 16, 1, 13, 0, 0]
+
     assert torch.equal(client_0_label_counts, torch.Tensor([2, 7, 4939, 2, 29, 16, 1, 4, 0, 0]))
-    # Former values for this test [282, 0, 0, 5, 0, 4, 313, 0, 0, 4396]
-    # Local test values [21, 547, 575, 192, 0, 1951, 3, 346, 1359, 6]
     assert torch.equal(client_2_label_counts, torch.Tensor([282, 0, 0, 5, 0, 4, 313, 0, 0, 4396]))
 
     data_generator = SyntheticNonIidFedProxDataset(5, 0.5, 0.5, temperature=2.0, samples_per_client=5000)
@@ -83,11 +80,7 @@ def test_generate_client_tensors() -> None:
     client_1_label_counts = torch.sum(client_tensors[1][1], dim=0)
     client_4_label_counts = torch.sum(client_tensors[4][1], dim=0)
 
-    # Former values for this test [1, 5, 680, 103, 4, 3560, 559, 88, 0, 0]
-    # Local test values [3644, 2, 194, 5, 0, 3, 0, 1115, 32, 5]
     assert torch.equal(client_1_label_counts, torch.Tensor([1, 5, 680, 103, 4, 3560, 559, 88, 0, 0]))
-    # Former values for this test [79, 228, 0, 1, 26, 6, 3344, 720, 1, 595]
-    # Local test values [57, 3871, 0, 0, 62, 0, 5, 81, 923, 1]
     assert torch.equal(client_4_label_counts, torch.Tensor([79, 228, 0, 1, 26, 6, 3344, 720, 1, 595]))
 
     torch.seed()
