@@ -16,7 +16,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -53,17 +53,24 @@ class CifarFedAvgClient(BasicClient):
         self.heterogeneity_level = heterogeneity_level
         self.learning_rate: float = learning_rate
 
-        assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
+    def setup_client(self, config: Config) -> None:
+        # Check if the client number is within the range of the total number of clients
+        num_clients = narrow_dict_type(config, "n_clients", int)
+        assert 0 <= self.client_number < num_clients
+        super().setup_client(config)
+
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/cifar10/preprocess.py file
         if self.use_partitioned_data:
             train_loader, val_loader, _ = get_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
         else:
-            n_clients = narrow_config_type(config, "n_clients", int)
+            n_clients = narrow_dict_type(config, "n_clients", int)
             # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
             sampler = DirichletLabelBasedSampler(
                 list(range(10)),
@@ -83,13 +90,15 @@ class CifarFedAvgClient(BasicClient):
         return train_loader, val_loader
 
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
-        batch_size = narrow_config_type(config, "batch_size", int)
+        batch_size = narrow_dict_type(config, "batch_size", int)
+        # The partitioned data should be generated prior to running the clients via preprocess_data function
+        # in the research/cifar10/preprocess.py file
         if self.use_partitioned_data:
             test_loader, _ = get_test_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
         else:
-            n_clients = narrow_config_type(config, "n_clients", int)
+            n_clients = narrow_dict_type(config, "n_clients", int)
             # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
             # Also as hash_key is same between train and test sampler, the test data distribution will be same
             # as the train data distribution

@@ -69,8 +69,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
     )
-
-    server = FlServerWithCheckpointing(client_manager, model, parameter_exchanger, None, strategy, checkpointer)
+    server = FlServerWithCheckpointing(client_manager, parameter_exchanger, model, None, strategy, checkpointer)
 
     fl.server.start_server(
         server=server,

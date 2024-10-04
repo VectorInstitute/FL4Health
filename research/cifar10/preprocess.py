@@ -122,8 +122,7 @@ def save_preprocessed_data(
     save_dataset_dir: Path, partitioned_datasets: List[TensorDataset], beta: float, mode: str
 ) -> None:
     save_dir_path = f"{save_dataset_dir}/beta_{beta}"
-    if not os.path.exists(save_dir_path):
-        os.makedirs(save_dir_path)
+    os.makedirs(save_dir_path, exist_ok=True)
 
     for client in range(len(partitioned_datasets)):
         save_data = partitioned_datasets[client].data

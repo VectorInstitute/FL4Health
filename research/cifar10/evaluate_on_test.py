@@ -131,8 +131,9 @@ def main(
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
                     f"Best Pre-aggregation Local Model Test Performance: {local_run_metric}",
                 )
-
                 pre_best_local_test_metrics.append(local_run_metric)
+                # Perform weighted average of the local model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_pre_best_local_test_metrics[run_folder_dir] += (
                     local_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -144,7 +145,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Best Pre-aggregation Local Model Test Performance: {agg_local_run_metric}",
+                        f"Best Pre-aggregation Local Model Aggregated Test Performance: {agg_local_run_metric}",
                     )
                     pre_best_local_agg_test_metrics.append(agg_local_run_metric)
                     all_pre_best_local_agg_test_metrics[run_folder_dir] += agg_local_run_metric / NUM_CLIENTS
@@ -158,6 +159,8 @@ def main(
                     f"Last Pre-aggregation Local Model Test Performance: {local_run_metric}",
                 )
                 pre_last_local_test_metrics.append(local_run_metric)
+                # Perform weighted average of the local model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_pre_last_local_test_metrics[run_folder_dir] += (
                     local_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -170,7 +173,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Last Pre-aggregation Local Model Test Performance: {agg_local_run_metric}",
+                        f"Last Pre-aggregation Local Model Aggregated Test Performance: {agg_local_run_metric}",
                     )
                     pre_last_local_agg_test_metrics.append(agg_local_run_metric)
                     all_pre_last_local_agg_test_metrics[run_folder_dir] += agg_local_run_metric / NUM_CLIENTS
@@ -184,6 +187,8 @@ def main(
                     f"Best Post-aggregation Local Model Test Performance: {local_run_metric}",
                 )
                 post_best_local_test_metrics.append(local_run_metric)
+                # Perform weighted average of the local model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_post_best_local_test_metrics[run_folder_dir] += (
                     local_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -196,7 +201,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Best Post-aggregation Local Model Test Performance: {agg_local_run_metric}",
+                        f"Best Post-aggregation Local Model Aggregated Test Performance: {agg_local_run_metric}",
                     )
                     post_best_local_agg_test_metrics.append(agg_local_run_metric)
                     all_post_best_local_agg_test_metrics[run_folder_dir] += agg_local_run_metric / NUM_CLIENTS
@@ -210,6 +215,8 @@ def main(
                     f"Last Post-aggregation Local Model Test Performance: {local_run_metric}",
                 )
                 post_last_local_test_metrics.append(local_run_metric)
+                # Perform weighted average of the local model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_post_last_local_test_metrics[run_folder_dir] += (
                     local_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -222,7 +229,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Last Post-aggregation Local Model Test Performance: {agg_local_run_metric}",
+                        f"Last Post-aggregation Local Model Aggregated Test Performance: {agg_local_run_metric}",
                     )
                     post_last_local_agg_test_metrics.append(agg_local_run_metric)
                     all_post_last_local_agg_test_metrics[run_folder_dir] += agg_local_run_metric / NUM_CLIENTS
@@ -236,6 +243,8 @@ def main(
                     f"Server Best Model Test Performance: {server_run_metric}",
                 )
                 best_server_test_metrics.append(server_run_metric)
+                # Perform weighted average of the server model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_best_server_test_metrics[run_folder_dir] += (
                     server_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -248,7 +257,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Server Best Model Test Performance: {agg_server_run_metric}",
+                        f"Server Best Model Aggregated Test Performance: {agg_server_run_metric}",
                     )
                     best_server_agg_test_metrics.append(agg_server_run_metric)
                     all_best_server_agg_test_metrics[run_folder_dir] += agg_server_run_metric / NUM_CLIENTS
@@ -262,6 +271,8 @@ def main(
                     f"Server Last Model Test Performance: {server_run_metric}",
                 )
                 last_server_test_metrics.append(server_run_metric)
+                # Perform weighted average of the server model performance across all clients based on the number
+                # of examples in the evaluation set
                 all_last_server_test_metrics[run_folder_dir] += (
                     server_run_metric * num_examples["eval_set"] / aggregated_num_examples
                 )
@@ -274,7 +285,7 @@ def main(
                     log(
                         INFO,
                         f"Client Number {client_number}, Run folder: {run_folder_dir}: "
-                        f"Aggregated Server Last Model Test Performance: {agg_server_run_metric}",
+                        f"Server Last Model Aggregated Test Performance: {agg_server_run_metric}",
                     )
                     last_server_agg_test_metrics.append(agg_server_run_metric)
                     all_last_server_agg_test_metrics[run_folder_dir] += agg_server_run_metric / NUM_CLIENTS
@@ -299,13 +310,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(pre_best_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Client {client_number} Pre-aggregation Best Model Average Test
-                        Performance on Aggregated Data: {avg_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Best Model Average Aggregated Test
+                        Performance: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Client {client_number} Pre-aggregation Best Model St. Dev. Test
-                    Performance on Aggregated Data: {std_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Best Model St. Dev. Aggregated Test
+                    Performance: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_pre_best_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_pre_best_model_local_std"] = std_test_metric
@@ -328,13 +339,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(pre_last_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Client {client_number} Pre-aggregation Last Model Average Test
-                    Performance on Aggregated Data: {avg_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Last Model Average Aggregated Test
+                    Performance: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Client {client_number} Pre-aggregation Last Model St. Dev. Test
-                    Performance on Aggregated Data: {std_test_metric}""",
+                    f"""Client {client_number} Pre-aggregation Last Model St. Dev. Aggregated Test
+                    Performance: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_pre_last_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_pre_last_model_local_std"] = std_test_metric
@@ -358,13 +369,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(post_best_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Client {client_number} Post-aggregation Best Model Average Test
-                    Performance on Aggregated Data: {avg_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Best Model Average Aggregated Test
+                    Performance: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Client {client_number} Post-aggregation Best Model St. Dev. Test
-                    Performance on Aggregated Data: {std_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Best Model St. Dev. Aggregated Test
+                    Performance: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_post_best_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_post_best_model_local_std"] = std_test_metric
@@ -388,13 +399,13 @@ def main(
                 avg_test_metric, std_test_metric = get_metric_avg_std(post_last_local_agg_test_metrics)
                 log(
                     INFO,
-                    f"""Client {client_number} Post-aggregation Last Model Average Test
-                    Performance on Aggregated Data: {avg_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Last Model Average Aggregated Test
+                    Performance: {avg_test_metric}""",
                 )
                 log(
                     INFO,
-                    f"""Client {client_number} Post-aggregation Last Model St. Dev. Test
-                    Performance on Aggregated Data: {std_test_metric}""",
+                    f"""Client {client_number} Post-aggregation Last Model St. Dev. Aggregated Test
+                    Performance: {std_test_metric}""",
                 )
                 test_results[f"agg_client_{client_number}_post_last_model_local_avg"] = avg_test_metric
                 test_results[f"agg_client_{client_number}_post_last_model_local_std"] = std_test_metric

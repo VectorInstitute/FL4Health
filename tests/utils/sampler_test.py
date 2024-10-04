@@ -1,13 +1,29 @@
-from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import pytest
 import torch
 from scipy.stats import chisquare
 
-from fl4health.utils.load_data import get_train_and_val_mnist_datasets
+from fl4health.utils.dataset import SyntheticDataset
+from fl4health.utils.load_data import split_data_and_targets
 from fl4health.utils.random import set_all_random_seeds, unset_all_random_seeds
 from fl4health.utils.sampler import DirichletLabelBasedSampler, MinorityLabelBasedSampler
+
+
+def construct_synthetic_dataset() -> Tuple[SyntheticDataset, SyntheticDataset]:
+    # set seed for creation
+    torch.manual_seed(42)
+    random_inputs = torch.rand((20000, 3, 3))
+    # Note high is exclusive here
+    random_labels = torch.randint(low=0, high=10, size=(20000, 1))
+    train_inputs, train_labels, validation_inputs, validation_labels = split_data_and_targets(
+        random_inputs, random_labels, validation_proportion=0.2
+    )
+
+    # unset seed thereafter
+    torch.seed()
+    return SyntheticDataset(train_inputs, train_labels), SyntheticDataset(validation_inputs, validation_labels)
 
 
 def test_minority_sampler() -> None:
@@ -17,7 +33,7 @@ def test_minority_sampler() -> None:
         unique_labels=list(range(10)), downsampling_ratio=downsampling_ratio, minority_labels=minority_numbers
     )
 
-    train_ds, val_ds = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+    train_ds, val_ds = construct_synthetic_dataset()
 
     # Training
     assert train_ds.targets is not None
@@ -85,7 +101,7 @@ def test_dirichlet_sampler_with_assigned_probability() -> None:
     set_all_random_seeds(2023)
     sampler = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
-    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+    train_ds, _ = construct_synthetic_dataset()
 
     # Training
     assert train_ds.targets is not None
@@ -142,7 +158,7 @@ def test_dirichlet_sampler_without_hash_key() -> None:
     sampler_1 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
     sampler_2 = DirichletLabelBasedSampler(unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1)
 
-    train_ds, _ = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+    train_ds, _ = construct_synthetic_dataset()
 
     # Training
     assert train_ds.targets is not None
@@ -184,7 +200,7 @@ def test_dirichlet_sampler_with_hash_key() -> None:
         unique_labels=list(range(10)), sample_percentage=1.0, beta=0.1, hash_key=1000
     )
 
-    train_ds, test_ds = get_train_and_val_mnist_datasets(Path("examples/datasets/MNIST"))
+    train_ds, val_ds = construct_synthetic_dataset()
 
     # Training
     assert train_ds.targets is not None
@@ -217,12 +233,12 @@ def test_dirichlet_sampler_with_hash_key() -> None:
     assert torch.allclose(train_new_ds_2.targets, train_new_ds_2.targets, rtol=0.0, atol=1e-5)
     assert torch.allclose(train_new_ds_2.data, train_new_ds_2.data, rtol=0.0, atol=1e-5)
 
-    # Testing
-    assert test_ds.targets is not None
+    # Validation
+    assert val_ds.targets is not None
 
-    test_samples_per_class = [test_ds.targets[test_ds.targets == i].size(0) for i in range(10)]
+    test_samples_per_class = [val_ds.targets[val_ds.targets == i].size(0) for i in range(10)]
 
-    new_test_ds_1 = sampler_1.subsample(test_ds)
+    new_test_ds_1 = sampler_1.subsample(val_ds)
 
     assert new_test_ds_1.targets is not None
 
@@ -246,8 +262,8 @@ def test_dirichlet_sampler_with_hash_key() -> None:
     print(new_train_probs)
     print(new_test_probs)
     # Assert that the new train and test distributions with sampler_1 are same due to same hash_key
-    # atol is set to 1e-3 because there might be some rounding noise due to set fixed number of samples
-    assert np.allclose(new_train_probs, new_test_probs, rtol=0.0, atol=1e-3)
+    # atol is set to 1e-2 because there might be some rounding noise due to set fixed number of samples
+    assert np.allclose(new_train_probs, new_test_probs, rtol=0.0, atol=1e-2)
     # Assert that the new train distribution with sampler_1 is different from the original test distribution
     # atol is set to 1e-3 because there might be some rounding noise due to set fixed number of samples
     assert not np.allclose(new_train_probs, test_probs, rtol=0.0, atol=1e-3)

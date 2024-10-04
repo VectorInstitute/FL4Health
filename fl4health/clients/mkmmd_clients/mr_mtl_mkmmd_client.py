@@ -28,6 +28,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         feature_extraction_layers: Optional[Sequence[str]] = None,
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: int = 20,
+        num_accumulating_batches: Optional[int] = None,
     ) -> None:
         """
         This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
@@ -55,6 +56,9 @@ class MrMtlMkMmdClient(MrMtlClient):
                 set to above 0, the betas will be updated based on whole distribution of latent features of data with
                 the given update interval. If set to 0, the betas will not be updated. If set to -1, the betas will be
                 updated after each individual batch based on only that individual batch. Defaults to 20.
+            num_accumulating_batches (int, optional): Number of batches to accumulate features to approximate the whole
+                distribution of the latent features for updating beta of the MK-MMD loss. This parameter is only used
+                if beta_global_update_interval is set to larger than 0. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
@@ -95,6 +99,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer
+        self.num_accumulating_batches = num_accumulating_batches
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
@@ -102,12 +107,11 @@ class MrMtlMkMmdClient(MrMtlClient):
             model=self.model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
         )
+        # Register hooks to extract features from the local model if not already registered
+        self.local_feature_extractor._maybe_register_hooks()
 
     def update_before_train(self, current_server_round: int) -> None:
         super().update_before_train(current_server_round)
-        # Register hooks to extract features from the local model if not already registered. As hooks have
-        #  to be removed to checkpoint the model, so we check if they need to be re-registered each time.
-        self.local_feature_extractor._maybe_register_hooks()
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
@@ -174,13 +178,16 @@ class MrMtlMkMmdClient(MrMtlClient):
         assert not initial_global_model.training
 
         with torch.no_grad():
-            for input, _ in self.train_loader:
+            for i, (input, _) in enumerate(self.train_loader):
                 input = input.to(self.device)
                 # Pass the input through the local model to populate the local_feature_extractor buffer
                 local_model(input)
                 # Pass the input through the initial global model to populate the initial_global_feature_extractor
                 # buffer
                 initial_global_model(input)
+                # Break if the number of accumulating batches is reached to avoid memory issues
+                if i == self.num_accumulating_batches:
+                    break
         local_distributions = self.local_feature_extractor.get_extracted_features()
         initial_global_distributions = self.initial_global_feature_extractor.get_extracted_features()
         # Restore the initial state of the local model
@@ -237,6 +244,9 @@ class MrMtlMkMmdClient(MrMtlClient):
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
+        # As hooks have to be removed to checkpoint the model, so we check if they need to be re-registered
+        # each time.
+        self.local_feature_extractor._maybe_register_hooks()
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
