@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:a40:1
+#SBATCH --gres=gpu:rtx6000:1
 #SBATCH --qos=normal
 #SBATCH --mem=64GB
 #SBATCH -c 16
@@ -26,8 +26,7 @@
 #   ~/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.10/ \
 #   1 \
 #   0 \
-#   ~/picai_experiments/ \
-#   006 \
+#   005 \
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
@@ -52,9 +51,9 @@ CONFIG_PATH=$1
 VENV_PATH=$2
 N_CLIENTS=$3
 FOLD=$4
-ARTIFACTS_DIR=$5
-DATASET_ID=$6
+DATASET_ID=$5
 
+ARTIFACTS_DIR="/checkpoint/${USER}/${SLURM_JOB_ID}/"
 
 echo "Python Venv Path: ${VENV_PATH}"
 echo "World size: ${SLURM_NTASKS}"
@@ -67,7 +66,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-SERVER_OUTPUT_FILE="${ARTIFCATS_DIR}server.out"
+SERVER_OUTPUT_FILE="${ARTIFACTS_DIR}server.out"
 
 # Start the server, divert the outputs to a server file
 
@@ -85,7 +84,7 @@ handler()
 # and runs training
 train()
 {
-    nohup python -m research.picai.fl_nnunet.start_server --config-path ${CONFIG_PATH} --intermediate-server-state-dir ${SERVER_STATE_DIR} > ${SERVER_OUTPUT_FILE} 2>&1 &
+    nohup python -m research.picai.fl_nnunet.start_server --config-path ${CONFIG_PATH} --intermediate-server-state-dir ${ARTIFACTS_DIR} > ${SERVER_OUTPUT_FILE} 2>&1 &
 
 
     # Sleep for 20 seconds to allow the server to come up.

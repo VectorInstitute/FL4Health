@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import SimpleITK as sitk
 
-from research.picai.preprocessing import PicaiCase, PreprocessingSettings
+from research.picai.data.preprocessing import PicaiCase, PreprocessingSettings
 
 
 def test_read_and_write_picai_case(tmp_path: Path) -> None:
