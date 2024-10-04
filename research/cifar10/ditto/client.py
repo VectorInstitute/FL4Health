@@ -62,12 +62,14 @@ class CifarDittoClient(DittoClient):
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         if self.use_partitioned_data:
+            # The partitioned data should be generated prior to running the clients via preprocess_data function
+            # in the research/cifar10/preprocess.py file
             train_loader, val_loader, _ = get_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
         else:
             n_clients = narrow_dict_type(config, "n_clients", int)
-            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
             sampler = DirichletLabelBasedSampler(
                 list(range(10)),
                 sample_percentage=1.0 / n_clients,
@@ -88,12 +90,14 @@ class CifarDittoClient(DittoClient):
     def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         if self.use_partitioned_data:
+            # The partitioned data should be generated prior to running the clients via preprocess_data function
+            # in the research/cifar10/preprocess.py file
             test_loader, _ = get_test_preprocessed_data(
                 self.data_path, self.client_number, batch_size, self.heterogeneity_level
             )
         else:
             n_clients = narrow_dict_type(config, "n_clients", int)
-            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
             # Also as hash_key is same between train and test sampler, the test data distribution will be same
             # as the train data distribution
             sampler = DirichletLabelBasedSampler(

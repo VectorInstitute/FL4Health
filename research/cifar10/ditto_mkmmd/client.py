@@ -81,7 +81,7 @@ class CifarDittoClient(DittoMkMmdClient):
             )
         else:
             n_clients = narrow_dict_type(config, "n_clients", int)
-            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
             sampler = DirichletLabelBasedSampler(
                 list(range(10)),
                 sample_percentage=1.0 / n_clients,
@@ -109,7 +109,7 @@ class CifarDittoClient(DittoMkMmdClient):
             )
         else:
             n_clients = narrow_dict_type(config, "n_clients", int)
-            # Set client-specific hash_key for sampler to ensure heterogneous data distribution among clients
+            # Set client-specific hash_key for sampler to ensure heterogeneous data distribution among clients
             # Also as hash_key is same between train and test sampler, the test data distribution will be same
             # as the train data distribution
             sampler = DirichletLabelBasedSampler(
