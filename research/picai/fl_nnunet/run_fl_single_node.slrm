@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:a40:1
+#SBATCH --gres=gpu:rtx6000:1
 #SBATCH --qos=normal
 #SBATCH --mem=64GB
 #SBATCH -c 16
@@ -66,7 +66,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment:"
 which python
 
-SERVER_OUTPUT_FILE="${ARTIFCATS_DIR}server.out"
+SERVER_OUTPUT_FILE="${ARTIFACTS_DIR}server.out"
 
 # Start the server, divert the outputs to a server file
 

@@ -18,7 +18,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, TorchMetric
-from research.picai.data_utils import (
+from research.picai.data.data_utils import (
     get_dataloader,
     get_img_and_seg_paths,
     get_img_transform,

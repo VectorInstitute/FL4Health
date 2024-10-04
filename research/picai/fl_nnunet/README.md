@@ -4,15 +4,16 @@
 To train nnunet models using federated learning first set up a config yaml file that has the following keys. Note that either local_epochs or local_steps can be used but not both.
 
 ```yaml
-n_clients: 1
-nnunet_config: 2d
-nnunet_plans: /path/to/nnunet/plans/file.json
-fold: 0 # Which fold of the data to use for validation
-n_server_rounds: 1 # number of server rounds
-local_epochs: 1 # number of epochs per server round
-server_address: '0.0.0.0:8080' # Default is server is the same machine
-starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth # This is currently required due to a 'bug' in flwr. I have raised an issue: https://github.com/adap/flower/issues/3770
+n_clients: 1 # Number of FL clients
+nnunet_config: 2d # Architecture configuration
+n_server_rounds: 1 # Number of FL rounds
+local_epochs: 1 # Number of local epochs per FL round
+server_address: '0.0.0.0:8080' # Optional
+nnunet_plans: /path/to/nnunet/plans/file.json # Optional
+starting_checkpoint: /home/shawn/Code/nnunet_storage/nnUNet_results/Dataset012_PICAI-debug/nnUNetTrainer_1epoch__nnUNetPlans__2d/fold_0/checkpoint_best.pth # Optional
 ```
+
+The required keys in the config are `n_server_rounds`, `nnunet_config`, `n_clients` and `local_steps` or `local_epochs`. `server_address` is optional and defaults to `localhost:8080`. If `nnunet_plans` is not specified, a client is selected at random to initialize it.
 
 After creating a config file start a server using the following command. Ensure your virtual environment has been properly set up using poetry and that you have included the 'picai' group in ```poetry install```
 
