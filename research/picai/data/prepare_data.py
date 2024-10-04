@@ -129,10 +129,8 @@ def generate_dataset_json(
         for i, split in enumerate(splits):
             # Add image (scan) and label (annotation) paths that include any subject ids from split
             # For both train and val
-            train_labeled_data = filter_split_on_subject_id(
-                scan_annotation_label_list, split, train=True)
-            val_labeled_data = filter_split_on_subject_id(
-                scan_annotation_label_list, split, train=False)
+            train_labeled_data = filter_split_on_subject_id(scan_annotation_label_list, split, train=True)
+            val_labeled_data = filter_split_on_subject_id(scan_annotation_label_list, split, train=False)
 
             # Create path of json files and write to disk
             train_write_path = os.path.join(write_dir, f"train-fold-{i}.json")
@@ -191,15 +189,13 @@ def preprare_data(
         physical_size,
         spacing,
     )
-    valid_annotation_filenames = [f for f in os.listdir(
-        annotation_read_dir) if f.endswith(annotation_extension)]
+    valid_annotation_filenames = [f for f in os.listdir(annotation_read_dir) if f.endswith(annotation_extension)]
 
     samples: List[Case] = []
     for annotation_filename in valid_annotation_filenames:
         # Annotation filename is subject id (ie patient_id study_id)
         # We use it to get the corresponding scan paths
-        annotation_path = Path(os.path.join(
-            annotation_read_dir, annotation_filename))
+        annotation_path = Path(os.path.join(annotation_read_dir, annotation_filename))
         # split on filename instead of stem on path since extension can have multiple "." in it.
         annotation_base_filename = annotation_filename.split(".")[0]
 
@@ -214,40 +210,28 @@ def preprare_data(
         ]
 
         # Extract the scans that we care about (t2w, adc, hbv) and store in a list ordered as we expect.
-        t2w_scan_filename = [
-            scan_filename for scan_filename in scan_filenames if "t2w" in scan_filename]
-        adc_scan_path_filename = [
-            scan_filename for scan_filename in scan_filenames if "adc" in scan_filename]
-        hbv_scan_path_filename = [
-            scan_filename for scan_filename in scan_filenames if "hbv" in scan_filename]
-        assert len(t2w_scan_filename) == 1 and len(
-            adc_scan_path_filename) == 1 and len(hbv_scan_path_filename) == 1
-        ordered_scan_filenames = t2w_scan_filename + \
-            adc_scan_path_filename + hbv_scan_path_filename
-        scan_paths = [Path(os.path.join(scans_path, f))
-                      for f in ordered_scan_filenames]
+        t2w_scan_filename = [scan_filename for scan_filename in scan_filenames if "t2w" in scan_filename]
+        adc_scan_path_filename = [scan_filename for scan_filename in scan_filenames if "adc" in scan_filename]
+        hbv_scan_path_filename = [scan_filename for scan_filename in scan_filenames if "hbv" in scan_filename]
+        assert len(t2w_scan_filename) == 1 and len(adc_scan_path_filename) == 1 and len(hbv_scan_path_filename) == 1
+        ordered_scan_filenames = t2w_scan_filename + adc_scan_path_filename + hbv_scan_path_filename
+        scan_paths = [Path(os.path.join(scans_path, f)) for f in ordered_scan_filenames]
 
         # Create sample and add to list of cases to be processed.
         sample = PicaiCase(scan_paths, annotation_path, settings)
         samples.append(sample)
 
     # Preprocess list of samples, generate dataset overviews and write them to disk
-    paths_for_each_sample = preprocess(
-        samples, DEFAULT_TRANSFORMS, num_threads=num_threads)
-    generate_dataset_json(paths_for_each_sample,
-                          overview_write_dir, splits_path)
+    paths_for_each_sample = preprocess(samples, DEFAULT_TRANSFORMS, num_threads=num_threads)
+    generate_dataset_json(paths_for_each_sample, overview_write_dir, splits_path)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scans_read_dir", type=str,
-                        required=True, help="Directory to read scans from.")
-    parser.add_argument("--annotation_read_dir", type=str,
-                        required=True, help="Directory to read annotation from.")
-    parser.add_argument("--scans_write_dir", type=str,
-                        required=True, help="Directory to write scans to.")
-    parser.add_argument("--annotation_write_dir", type=str,
-                        required=True, help="Directory to write annotation to.")
+    parser.add_argument("--scans_read_dir", type=str, required=True, help="Directory to read scans from.")
+    parser.add_argument("--annotation_read_dir", type=str, required=True, help="Directory to read annotation from.")
+    parser.add_argument("--scans_write_dir", type=str, required=True, help="Directory to write scans to.")
+    parser.add_argument("--annotation_write_dir", type=str, required=True, help="Directory to write annotation to.")
     parser.add_argument(
         "--overview_write_dir", type=str, required=True, help="Directory to write dataset overviews to."
     )
@@ -284,8 +268,7 @@ def main() -> None:
         default="nii.gz",
         help="The expected extension of annotation files.",
     )
-    parser.add_argument("--num_threads", type=int, default=4,
-                        help="Number of threads to use during preprocessing.")
+    parser.add_argument("--num_threads", type=int, default=4, help="Number of threads to use during preprocessing.")
     parser.add_argument(
         "--splits_path", type=str, default=None, help="The path to the json file containing the splits."
     )
@@ -294,23 +277,20 @@ def main() -> None:
 
     if args.size is not None and len(args.size) != 3:
         raise ValueError("Argument size must have length 3")
-    size = (int(args.size[0]), int(args.size[1]),
-            int(args.size[2])) if args.size else None
+    size = (int(args.size[0]), int(args.size[1]), int(args.size[2])) if args.size else None
 
     if args.physical_size is not None:
         if len(args.physical_size) != 3:
             raise ValueError("Argument physical_size must have length 3")
     physical_size = (
-        (float(args.physical_size[0]), float(
-            args.physical_size[1]), float(args.physical_size[2]))
+        (float(args.physical_size[0]), float(args.physical_size[1]), float(args.physical_size[2]))
         if args.physical_size
         else None
     )
 
     if args.spacing is not None and len(args.spacing) != 3:
         raise ValueError("Argument spacing must have length 3")
-    spacing = (float(args.spacing[0]), float(args.spacing[1]), float(
-        args.spacing[2])) if args.spacing else None
+    spacing = (float(args.spacing[0]), float(args.spacing[1]), float(args.spacing[2])) if args.spacing else None
 
     preprare_data(
         args.scans_read_dir,
