@@ -163,18 +163,14 @@ class PicaiCase(Case):
             scan_filename = Path(os.path.basename(path))
             scan_filename_without_extension = scan_filename.stem
             suffix = modality_suffix_map[scan_filename_without_extension[-3:]]
-            preprocessed_scan_filename = scan_filename_without_extension[:
-                                                                         - 3] + suffix + ".nii.gz"
-            preprocessed_scan_path = Path(os.path.join(
-                self.settings.scans_write_dir, preprocessed_scan_filename))
+            preprocessed_scan_filename = scan_filename_without_extension[:-3] + suffix + ".nii.gz"
+            preprocessed_scan_path = Path(os.path.join(self.settings.scans_write_dir, preprocessed_scan_filename))
             sitk.WriteImage(scan, preprocessed_scan_path, useCompression=True)
             preprocessed_scan_paths.append(preprocessed_scan_path)
 
         annotation_filename = os.path.basename(self.annotations_path)
-        preprocessed_annotation_path = Path(os.path.join(
-            self.settings.annotation_write_dir, annotation_filename))
-        sitk.WriteImage(self.annotation,
-                        preprocessed_annotation_path, useCompression=True)
+        preprocessed_annotation_path = Path(os.path.join(self.settings.annotation_write_dir, annotation_filename))
+        sitk.WriteImage(self.annotation, preprocessed_annotation_path, useCompression=True)
 
         return preprocessed_scan_paths, preprocessed_annotation_path
 
@@ -244,12 +240,10 @@ class ResampleSpacing(PreprocessingTransform):
         """
         assert case.settings.spacing is not None
         # resample scans to target resolution
-        case.scans = [resample_img(
-            scan, case.settings.spacing, is_label=False) for scan in case.scans]
+        case.scans = [resample_img(scan, case.settings.spacing, is_label=False) for scan in case.scans]
 
         # resample annotation to target resolution
-        case.annotation = resample_img(
-            case.annotation, case.settings.spacing, is_label=True)
+        case.annotation = resample_img(case.annotation, case.settings.spacing, is_label=True)
 
         return case
 
@@ -266,8 +260,7 @@ class CentreCropAndOrPad(PreprocessingTransform):
             Case: The Case after centre crop and/or padding.
         """
         assert case.settings.size is not None
-        case.annotation = crop_or_pad(
-            case.annotation, case.settings.size, case.settings.physical_size)
+        case.annotation = crop_or_pad(case.annotation, case.settings.size, case.settings.physical_size)
         case.scans = [
             crop_or_pad(
                 scan,
@@ -363,10 +356,8 @@ def apply_transform(case: Case, transforms: Sequence[PreprocessingTransform]) ->
         processed_case = reduce(lambda acc, f: f(acc), transforms, case)
         return processed_case.write()
     except Exception as e:
-        error_path_string = ", ".join(
-            [str(path) for path in case.scan_paths] + [str(case.annotations_path)])
-        raise PreprocessingException(
-            f"Error preprocessing case with following paths: {error_path_string}") from e
+        error_path_string = ", ".join([str(path) for path in case.scan_paths] + [str(case.annotations_path)])
+        raise PreprocessingException(f"Error preprocessing case with following paths: {error_path_string}") from e
 
 
 def preprocess(
