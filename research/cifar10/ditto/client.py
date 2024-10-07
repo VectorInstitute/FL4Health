@@ -34,7 +34,6 @@ class CifarDittoClient(DittoClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
@@ -46,7 +45,6 @@ class CifarDittoClient(DittoClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
         )
         self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
@@ -169,9 +167,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=0.1
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -193,7 +188,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Lambda: {args.lam}")
     log(INFO, f"Beta: {args.beta}")
 
     # Set the random seed for reproducibility
@@ -224,7 +218,6 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
-        lam=args.lam,
         checkpointer=checkpointer,
         use_partitioned_data=args.use_partitioned_data,
     )

@@ -66,8 +66,8 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
 
     server = FlServerWithCheckpointing(
         client_manager=SimpleClientManager(),
-        parameter_exchanger=parameter_exchanger,
         model=model,
+        parameter_exchanger=parameter_exchanger,
         wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointers,

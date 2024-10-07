@@ -273,7 +273,7 @@ class BasicClient(NumPyClient):
             self.setup_client(config)
 
             # If per_round_checkpointer not None and checkpoint exists load it and set attributes.
-            # Model not updated because FL restarted from most recent FL round (redo pre-empted round)
+            # Model not updated because FL restarted from most recent FL round (redo preempted round)
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
                 self.load_client_state()
 
@@ -294,7 +294,7 @@ class BasicClient(NumPyClient):
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
 
-        # Update after train round (Used by Scaffold and DP-Scaffold Client to update control variates)
+        # Perform necessary updates after training has completed for the current FL round
         self.update_after_train(local_steps, loss_dict, config)
 
         # Check if we should run an evaluation with validation data after fit
@@ -528,7 +528,7 @@ class BasicClient(NumPyClient):
 
     def get_client_specific_reports(self) -> Dict[str, Any]:
         """
-        This function can be overriden by an inheriting client to report
+        This function can be overridden by an inheriting client to report
         additional client specific information to the wandb_reporter
 
         Returns:
@@ -604,7 +604,7 @@ class BasicClient(NumPyClient):
     ) -> None:
         """
         Updates a metric manager with the provided model predictions and
-        targets. Can be overriden to modify pred and target inputs to the
+        targets. Can be overridden to modify pred and target inputs to the
         metric manager. This is useful in cases where the preds and targets
         needed to compute the loss are different than what is needed to compute
         metrics.
@@ -930,7 +930,7 @@ class BasicClient(NumPyClient):
                 indexed by name. By passing features, we can compute losses
                 such as the contrastive loss in MOON. All predictions
                 included in dictionary will by default be used to compute
-                metrics seperately.
+                metrics separately.
 
         Raises:
             TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -945,8 +945,6 @@ class BasicClient(NumPyClient):
             # Note that this assumes the keys of the input match (exactly) the keyword args
             # of self.model.forward().
             output = self.model(**input)
-        else:
-            raise TypeError('"input" must be of type torch.Tensor or Dict[str, torch.Tensor].')
 
         if isinstance(output, dict):
             return output, {}
@@ -1201,8 +1199,7 @@ class BasicClient(NumPyClient):
         aggregation.
 
         Args:
-            local_steps (int): The number of steps so far in the round in the local
-                training.
+            local_steps (int): The number of steps so far in the round in the local training.
             loss_dict (Dict[str, float]): A dictionary of losses from local training.
             config (Config): The config from the server
         """
@@ -1248,7 +1245,7 @@ class BasicClient(NumPyClient):
         """
         Used to print progress bars during client training and validation. If
         self.progress_bar is false, just returns the original input iterable
-        wihout modifying it.
+        without modifying it.
 
         Args:
             iterable (Iterable): The iterable to wrap

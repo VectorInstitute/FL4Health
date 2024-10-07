@@ -35,8 +35,11 @@ from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger, LayerExchangerWithExclusions
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx, ParameterPackerWithControlVariates
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import (
+    ParameterPackerAdaptiveConstraint,
+    ParameterPackerWithControlVariates,
+)
 from fl4health.utils.metrics import Accuracy
 from tests.test_utils.models_for_test import CompositeConvNet
 
@@ -49,20 +52,20 @@ def get_client(type: type, model: nn.Module) -> BasicClient:
         client = ScaffoldClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.learning_rate = 0.01
         model_size = len(model.state_dict()) if model else 0
-        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
     elif type == FedProxClient:
         client = FedProxClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
-        client.parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerFedProx())
+        client.parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
     elif type == DittoClient:
-        client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
+        client = DittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == FedRepClient:
         client = FedRepClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == FedPerClient:
         client = FedPerClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == FendaDittoClient:
-        client = FendaDittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
+        client = FendaDittoClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == MrMtlClient:
-        client = MrMtlClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"), lam=10.0)
+        client = MrMtlClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
     elif type == MoonClient:
         client = MoonClient(data_path=Path(""), metrics=[Accuracy()], device=torch.device("cpu"))
         client.parameter_exchanger = FullParameterExchanger()

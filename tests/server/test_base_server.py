@@ -81,8 +81,8 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
 
     server = FlServerWithCheckpointing(
         client_manager=PoissonSamplingClientManager(),
-        model=initial_model,
         parameter_exchanger=parameter_exchanger,
+        model=initial_model,
         wandb_reporter=None,
         strategy=None,
         checkpointer=checkpointer,

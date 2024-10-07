@@ -6,12 +6,12 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.server.base_server import FlServerWithCheckpointing
 
 
-class ScaffoldServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
+class ScaffoldServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]):
     def __init__(
         self,
         client_manager: ClientManager,
@@ -22,7 +22,7 @@ class ScaffoldServer(FlServerWithCheckpointing[ParameterExchangerWithPacking]):
         assert model is not None
         # To help with model rehydration
         model_size = len(model.state_dict())
-        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         super().__init__(
             client_manager=client_manager,
             parameter_exchanger=parameter_exchanger,
