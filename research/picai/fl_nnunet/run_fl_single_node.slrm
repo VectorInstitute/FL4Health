@@ -99,7 +99,7 @@ train()
 
 	CLIENT_LOG_PATH="${ARTIFACTS_DIR}client_${i}.out"
 	echo "${CLIENT_NAME} logging at: ${CLIENT_LOG_PATH}"
-	nohup python -m research.picai.fl_nnunet.start_client --dataset-id ${DATASET_ID} --intermediate-client-state-dir ${ARTIFACTS_DIR} --fold ${FOLD} --client-name {i} > ${CLIENT_LOG_PATH} 2>&1 &
+	nohup python -m research.picai.fl_nnunet.start_client --dataset-id ${DATASET_ID} --intermediate-client-state-dir ${ARTIFACTS_DIR} --fold ${FOLD} --client-name ${i} > ${CLIENT_LOG_PATH} 2>&1 &
     done
 
     echo "FL Processes Running"
