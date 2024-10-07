@@ -3,6 +3,7 @@ import logging
 import warnings
 from functools import partial
 from logging import INFO
+from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
@@ -31,6 +32,8 @@ def main(
     fold: Union[str, int],
     verbose: bool,
     compile: bool,
+    intermediate_client_state_dir: Optional[str] = None,
+    client_name: Optional[str] = None,
 ) -> None:
 
     # Log device and server address
@@ -69,6 +72,10 @@ def main(
         device=DEVICE,
         metrics=metrics,
         progress_bar=verbose,
+        intermediate_client_state_dir=(
+            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
+        ),
+        client_name=client_name,
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
@@ -177,4 +184,6 @@ if __name__ == "__main__":
         fold=fold,
         verbose=args.verbose,
         compile=not args.skip_compile,
+        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        client_name=args.client_name,
     )
