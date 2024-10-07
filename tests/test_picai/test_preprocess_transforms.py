@@ -5,7 +5,7 @@ from typing import Sequence, Tuple
 import numpy as np
 import SimpleITK as sitk
 
-from research.picai.preprocessing import (
+from research.picai.data.preprocessing import (
     AlignOriginAndDirection,
     BinarizeAnnotation,
     Case,

@@ -3,6 +3,7 @@ import json
 import pickle
 import warnings
 from functools import partial
+from pathlib import Path
 from typing import Optional
 
 with warnings.catch_warnings():
@@ -53,7 +54,12 @@ def get_config(
     return config
 
 
-def main(config: dict, server_address: str) -> None:
+def main(
+    config: dict,
+    server_address: str,
+    intermediate_server_state_dir: Optional[str] = None,
+    server_name: Optional[str] = None,
+) -> None:
     # Partial function with everything set except current server round
     fit_config_fn = partial(
         get_config,
@@ -91,6 +97,10 @@ def main(config: dict, server_address: str) -> None:
         model=None,
         client_manager=SimpleClientManager(),
         strategy=strategy,
+        intermediate_server_state_dir=(
+            Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
+        ),
+        server_name=server_name,
     )
 
     fl.server.start_server(
@@ -135,4 +145,9 @@ if __name__ == "__main__":
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    main(config, args.server_address)
+    main(
+        config,
+        args.server_address,
+        intermediate_server_state_dir=args.intermediate_server_state_dir,
+        server_name=args.server_name,
+    )
