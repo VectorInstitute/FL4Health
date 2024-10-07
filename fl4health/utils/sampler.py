@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from logging import INFO
+from logging import INFO, WARN
 from typing import Any, List, Optional, Set, TypeVar, Union
 
 import numpy as np
@@ -132,11 +132,13 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
 
         self.torch_generator = None
         if self.hash_key is not None:
-            log(INFO, f"Setting seed to {self.hash_key} for Numpy and Torch Generators")
+            log(INFO, f"Setting seed to {self.hash_key} for the Torch and Numpy Generators")
+            log(WARN, "Note that setting a hash key here will override any torch and numpy seeds that you have set")
             self.torch_generator = torch.Generator().manual_seed(self.hash_key)
-
-        self.np_generator = np.random.default_rng(self.hash_key)
-        self.probabilities = self.np_generator.dirichlet(np.repeat(beta, self.num_classes))
+            np_generator = np.random.default_rng(self.hash_key)
+            self.probabilities = np_generator.dirichlet(np.repeat(beta, self.num_classes))
+        else:
+            self.probabilities = np.random.dirichlet(np.repeat(beta, self.num_classes))
         log(INFO, f"Setting probabilities to {self.probabilities}")
 
         self.sample_percentage = sample_percentage

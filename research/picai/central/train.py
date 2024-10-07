@@ -4,7 +4,7 @@ import torch
 from torchmetrics.classification import MultilabelAveragePrecision
 
 from fl4health.utils.metrics import MetricManager, TorchMetric
-from research.picai.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
+from research.picai.data.data_utils import get_dataloader, get_img_and_seg_paths, get_img_transform, get_seg_transform
 from research.picai.losses import FocalLoss
 from research.picai.model_utils import get_model
 from research.picai.single_node_trainer import SingleNodeTrainer
@@ -16,10 +16,7 @@ def main() -> None:
 
     # Data related arguments
     parser.add_argument(
-        "--overviews_dir",
-        type=str,
-        default="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw/Dataset003_PICAI/overviews/",
-        help="Base path to training/validation data overviews",
+        "--overviews_dir", type=str, help="Base path to training/validation data overviews", required=True
     )
     parser.add_argument("--fold", type=int, required=True, help="Which fold to perform experiment")
     parser.add_argument("--run_name", type=str, required=True, help="String used to name run")
