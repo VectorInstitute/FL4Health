@@ -269,7 +269,7 @@ class NnunetClient(BasicClient):
             )
 
         # Determine total number of steps throughout all FL rounds
-        local_epochs, local_steps, _, _ = self.process_config(config)
+        local_epochs, local_steps, _, _, _ = self.process_config(config)
         if local_steps is not None:
             steps_per_round = local_steps
         elif local_epochs is not None:

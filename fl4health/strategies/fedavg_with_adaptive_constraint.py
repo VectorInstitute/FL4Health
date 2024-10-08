@@ -55,9 +55,6 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         Implementation based on https://arxiv.org/abs/1602.05629.
 
         Args:
-            initial_parameters (Parameters): Initial global model parameters.
-            init_loss_weight (float): Initial loss weight (mu in FedProx). If adaptivity is false, then this is the
-                constant weight used for all clients.
             fraction_fit (float, optional): Fraction of clients used during training. Defaults to 1.0.
             fraction_evaluate (float, optional): Fraction of clients used during validation. Defaults to 1.0.
             min_fit_clients (int, optional): _description_. Defaults to 2.
@@ -74,10 +71,13 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
                 Function used to configure server-side central validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            initial_parameters (Parameters): Initial global model parameters.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
+            init_loss_weight (float): Initial loss weight (mu in FedProx). If adaptivity is false, then this is the
+                constant weight used for all clients.
             adapt_loss_weight (bool, optional): Determines whether the value of mu is adaptively modified by
                 the server based on aggregated train loss. Defaults to False.
             loss_weight_delta (float, optional): This is the amount by which the server changes the value of mu

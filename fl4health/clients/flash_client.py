@@ -47,14 +47,16 @@ class FlashClient(BasicClient):
         # gamma: Threshold for early stopping based on the change in validation loss.
         self.gamma: Optional[float] = None
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
-        local_epochs, local_steps, current_server_round, evaluate_after_fit = super().process_config(config)
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool, bool]:
+        local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
+            super().process_config(config)
+        )
         if local_steps is not None:
             raise ValueError(
                 "Training by steps is not applicable for FLASH clients.\
                   Please define 'local_epochs' in your config instead"
             )
-        return local_epochs, local_steps, current_server_round, evaluate_after_fit
+        return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
     def train_by_epochs(
         self, epochs: int, current_round: Optional[int] = None

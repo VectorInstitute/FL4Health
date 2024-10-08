@@ -168,7 +168,7 @@ class EvaluateClient(BasicClient):
         self._handle_logging(losses, metrics, is_global)
         return losses, metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_loss_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         local_loss: Optional[EvaluationLosses] = None
         local_metrics: Optional[Dict[str, Scalar]] = None
 

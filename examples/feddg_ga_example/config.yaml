@@ -7,3 +7,5 @@ local_steps: 5 # The number of local steps (one per batch) to complete for clien
 batch_size: 128 # The batch size for client training
 # Evaluates model immediately after local training on the validation set (in addition to the training set)
 evaluate_after_fit: True
+# Packs the measured validation losses with the metrics (required for fed-dgga)
+pack_losses_with_val_metrics: True

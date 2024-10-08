@@ -24,7 +24,7 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
+from fl4health.utils.metrics import TEST_NUM_EXAMPLES_KEY, Metric, MetricManager, MetricPrefix
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
@@ -213,7 +213,7 @@ class BasicClient(NumPyClient):
 
         self.metrics_reporter.add_to_metrics({"shutdown": datetime.datetime.now()})
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
 
@@ -247,8 +247,13 @@ class BasicClient(NumPyClient):
         except ValueError:
             evaluate_after_fit = False
 
+        try:
+            pack_losses_with_val_metrics = narrow_dict_type(config, "pack_losses_with_val_metrics", bool)
+        except ValueError:
+            pack_losses_with_val_metrics = False
+
         # Either local epochs or local steps is none based on what key is passed in the config
-        return local_epochs, local_steps, current_server_round, evaluate_after_fit
+        return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
@@ -267,7 +272,9 @@ class BasicClient(NumPyClient):
         Raises:
             ValueError: If local_steps or local_epochs is not specified in config.
         """
-        local_epochs, local_steps, current_server_round, evaluate_after_fit = self.process_config(config)
+        local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
+            self.process_config(config)
+        )
 
         if not self.initialized:
             self.setup_client(config)
@@ -300,7 +307,7 @@ class BasicClient(NumPyClient):
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
         if self._should_evaluate_after_fit(evaluate_after_fit):
-            validation_loss, validation_metrics = self.evaluate_after_fit()
+            validation_loss, validation_metrics = self.validate(pack_losses_with_val_metrics)
             metrics.update(validation_metrics)
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
@@ -326,21 +333,6 @@ class BasicClient(NumPyClient):
             metrics,
         )
 
-    def evaluate_after_fit(self) -> Tuple[float, Dict[str, Scalar]]:
-        """
-        Run self.validate right after fit to collect metrics on the local model against validation data.
-
-        Returns: (Dict[str, Scalar]) a dictionary with the metrics.
-
-        """
-        loss, metric_values = self.validate()
-        # The computed loss value is packed into the metrics dictionary, perhaps for use on the server-side
-        metrics_after_fit = {
-            **metric_values,  # type: ignore
-            "val - loss": loss,
-        }
-        return loss, metrics_after_fit
-
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
         Evaluates the model on the validation set, and test set (if defined).
@@ -357,13 +349,19 @@ class BasicClient(NumPyClient):
             self.setup_client(config)
 
         current_server_round = narrow_dict_type(config, "current_server_round", int)
+
+        try:
+            pack_losses_with_val_metrics = narrow_dict_type(config, "pack_losses_with_val_metrics", bool)
+        except ValueError:
+            pack_losses_with_val_metrics = False
+
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={"evaluate_start": datetime.datetime.now()},
         )
 
         self.set_parameters(parameters, config, fitting_round=False)
-        loss, metrics = self.validate()
+        loss, metrics = self.validate(pack_losses_with_val_metrics)
 
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
         # NOTE: This assumes that the loss returned in the checkpointing loss
@@ -787,6 +785,7 @@ class BasicClient(NumPyClient):
         loss_meter: LossMeter,
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
+        include_losses_in_metrics: bool = False,
     ) -> Tuple[float, Dict[str, Scalar]]:
         """
         Evaluate the model on the given validation or test dataset.
@@ -795,8 +794,10 @@ class BasicClient(NumPyClient):
             loader (DataLoader): The data loader for the dataset (validation or test).
             loss_meter (LossMeter): The meter to track the losses.
             metric_manager (MetricManager): The manager to track the metrics.
-            logging_mode (LoggingMode): The LoggingMode for whether this evaluation is for validation or test.
-              Default is for validation.
+            logging_mode (LoggingMode, optional): The LoggingMode for whether this evaluation is for validation or
+                test. Defaults to LoggingMode.VALIDATION.
+            include_losses_in_metrics (bool, optional): Whether or not to pack the additional losses into the metrics
+                dictionary. Defaults to False.
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
@@ -818,9 +819,23 @@ class BasicClient(NumPyClient):
         metrics = metric_manager.compute()
         self._log_results(loss_dict, metrics, logging_mode=logging_mode)
 
+        if include_losses_in_metrics:
+            self._fold_loss_dict_into_metrics(metrics, loss_dict, logging_mode)
+
         return loss_dict["checkpoint"], metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def _fold_loss_dict_into_metrics(
+        self, metrics: Dict[str, Scalar], loss_dict: Dict[str, float], logging_mode: LoggingMode
+    ) -> None:
+        # Prefixing the loss value keys with the mode from which they are generated
+        if logging_mode is LoggingMode.VALIDATION:
+            metrics.update({f"{MetricPrefix.VAL_PREFIX.value} {key}": loss_val for key, loss_val in loss_dict.items()})
+        else:
+            metrics.update(
+                {f"{MetricPrefix.TEST_PREFIX.value} {key}": loss_val for key, loss_val in loss_dict.items()}
+            )
+
+    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation
             and potentially an entire test dataset if it has been defined.
@@ -829,15 +844,23 @@ class BasicClient(NumPyClient):
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
                 from validation (and test if present).
         """
-        val_loss, val_metrics = self._validate_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
+        val_loss, val_metrics = self._validate_or_test(
+            self.val_loader,
+            self.val_loss_meter,
+            self.val_metric_manager,
+            include_losses_in_metrics=include_losses_in_metrics,
+        )
         if self.test_loader:
-            test_loss, test_metrics = self._validate_or_test(
-                self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
+            _, test_metrics = self._validate_or_test(
+                self.test_loader,
+                self.test_loss_meter,
+                self.test_metric_manager,
+                LoggingMode.TEST,
+                include_losses_in_metrics=include_losses_in_metrics,
             )
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
                 val_metrics[TEST_NUM_EXAMPLES_KEY] = self.num_test_samples
-            val_metrics[TEST_LOSS_KEY] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics
