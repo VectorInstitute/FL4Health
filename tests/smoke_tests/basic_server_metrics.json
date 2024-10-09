@@ -4,7 +4,7 @@
             "metrics_aggregated": {
                 "val - prediction - accuracy": 0.1031,
                 "test - prediction - accuracy": 0.1039,
-                "test - loss - aggregated": 2.3613
+                "test - checkpoint - aggregated": 2.3613
             },
             "loss_aggregated": 2.3567
         },
@@ -12,7 +12,7 @@
             "metrics_aggregated": {
                 "val - prediction - accuracy": 0.0942,
                 "test - prediction - accuracy": 0.0966,
-                "test - loss - aggregated": 2.3061
+                "test - checkpoint - aggregated": 2.3061
             },
             "loss_aggregated": 2.3042
         },
@@ -20,7 +20,7 @@
             "metrics_aggregated": {
                 "val - prediction - accuracy": 0.0936,
                 "test - prediction - accuracy": 0.0972,
-                "test - loss - aggregated": 2.3010
+                "test - checkpoint - aggregated": 2.3010
             },
             "loss_aggregated": 2.2999
         }
