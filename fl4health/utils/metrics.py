@@ -18,7 +18,7 @@ class MetricPrefix(Enum):
 
 
 TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
-TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} loss"
+TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
 
 class Metric(ABC):

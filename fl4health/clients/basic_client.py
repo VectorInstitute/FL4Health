@@ -24,7 +24,7 @@ from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
-from fl4health.utils.metrics import TEST_NUM_EXAMPLES_KEY, Metric, MetricManager, MetricPrefix
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager, MetricPrefix
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
@@ -851,7 +851,7 @@ class BasicClient(NumPyClient):
             include_losses_in_metrics=include_losses_in_metrics,
         )
         if self.test_loader:
-            _, test_metrics = self._validate_or_test(
+            test_loss, test_metrics = self._validate_or_test(
                 self.test_loader,
                 self.test_loss_meter,
                 self.test_metric_manager,
@@ -861,6 +861,7 @@ class BasicClient(NumPyClient):
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
                 val_metrics[TEST_NUM_EXAMPLES_KEY] = self.num_test_samples
+            val_metrics[TEST_LOSS_KEY] = test_loss
             val_metrics.update(test_metrics)
 
         return val_loss, val_metrics
