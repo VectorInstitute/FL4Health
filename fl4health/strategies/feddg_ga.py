@@ -91,7 +91,7 @@ class FairnessMetric:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
 
 
-class FedDgGaStrategy(FedAvg):
+class FedDgGa(FedAvg):
     def __init__(
         self,
         *,

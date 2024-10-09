@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
-from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGaStrategy
+from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGa
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -61,7 +61,7 @@ def main(config: Dict[str, Any], server_address: str, step_size: float) -> None:
     fenda_fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedDgGaStrategy(
+    strategy = FedDgGa(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds

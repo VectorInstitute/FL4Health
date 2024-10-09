@@ -9,10 +9,10 @@ from flwr.server.client_proxy import ClientProxy
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.strategies.aggregate_utils import aggregate_losses
-from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGaStrategy
+from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGa
 
 
-class FedDgGaAdaptiveConstraint(FedDgGaStrategy):
+class FedDgGaAdaptiveConstraint(FedDgGa):
     def __init__(
         self,
         *,
