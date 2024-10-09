@@ -1,44 +1,20 @@
 import argparse
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
-from flwr.server.client_manager import ClientManager, SimpleClientManager
-from flwr.server.strategy import Strategy
+from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-from research.cifar10.model import ConvNet
+from research.cifar10.model import ConvNetFendaDittoGlobalModel
 from research.cifar10.personal_server import PersonalServer
-
-
-class PersonalFendaDittoServer(PersonalServer):
-    """
-    The PersonalServer class is used for FL approaches that only have a sense of a PERSONAL model that is checkpointed
-    and valid only on the client size of the FL training framework. FL approaches like APFL and FENDA fall under this
-    category. Each client will have its own model that is specific to its own training. Personal models may have
-    shared components but the full model is specific to each client. This is distinct from the
-    FlServerWithCheckpointing class which has a sense of a GLOBAL model checkpointed on the server-side that is
-    shared by all clients.
-    """
-
-    def __init__(
-        self,
-        client_manager: ClientManager,
-        strategy: Optional[Strategy] = None,
-    ) -> None:
-        assert isinstance(
-            strategy, FedAvgWithAdaptiveConstraint
-        ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
-        # Personal approaches don't train a "server" model. Rather, each client trains a client specific model with
-        # some globally shared weights. So we don't checkpoint a global model
-        super().__init__(client_manager, strategy)
 
 
 def fit_config(
@@ -69,7 +45,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False)
+    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -86,7 +62,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
         adapt_loss_weight=adapt_loss_weight,
     )
 
-    server = PersonalFendaDittoServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalServer(client_manager=client_manager, strategy=strategy)
 
     fl.server.start_server(
         server=server,

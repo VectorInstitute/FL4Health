@@ -63,7 +63,7 @@ class CifarFedProxClient(FedProxClient):
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_model(self, config: Config) -> nn.Module:
-        return ConvNet(in_channels=3, use_bn=False).to(self.device)
+        return ConvNet(in_channels=3, use_bn=False, dropout=0.1).to(self.device)
 
 
 if __name__ == "__main__":

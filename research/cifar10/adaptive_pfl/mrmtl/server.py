@@ -69,7 +69,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False)
+    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],

@@ -2,11 +2,10 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Optional, Sequence, Tuple
 
 import flwr as fl
 import torch
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
@@ -15,16 +14,17 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.ditto_client import DittoClient
+from fl4health.clients.fenda_client import FendaClient
+from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import F1, Accuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
-from research.cifar10.model import ConvNet
+from research.cifar10.model import ConvNetFendaModel
 from research.cifar10.preprocess import get_preprocessed_data
 
 
-class CifarDittoClient(DittoClient):
+class CifarFendaClient(FendaClient):
     def __init__(
         self,
         data_path: Path,
@@ -59,13 +59,11 @@ class CifarDittoClient(DittoClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
-        local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
-        return {"global": global_optimizer, "local": local_optimizer}
+    def get_optimizer(self, config: Config) -> Optimizer:
+        return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
-    def get_model(self, config: Config) -> nn.Module:
-        return ConvNet(in_channels=3, use_bn=False, dropout=0.1).to(self.device)
+    def get_model(self, config: Config) -> FendaModel:
+        return ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1).to(self.device)
 
 
 if __name__ == "__main__":
@@ -150,7 +148,7 @@ if __name__ == "__main__":
     )
 
     data_path = Path(args.dataset_dir)
-    client = CifarDittoClient(
+    client = CifarFendaClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy"), F1("F1_Score", average="macro")],
         device=DEVICE,

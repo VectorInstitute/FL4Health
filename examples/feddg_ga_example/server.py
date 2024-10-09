@@ -24,6 +24,7 @@ def fit_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
     evaluate_after_fit: bool = False,
+    pack_losses_with_val_metrics: bool = False,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -31,6 +32,7 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "evaluate_after_fit": evaluate_after_fit,
+        "pack_losses_with_val_metrics": pack_losses_with_val_metrics,
     }
 
 
@@ -43,6 +45,7 @@ def main(config: Dict[str, Any]) -> None:
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
         evaluate_after_fit=config.get("evaluate_after_fit", False),
+        pack_losses_with_val_metrics=config.get("pack_losses_with_val_metrics", False),
     )
 
     initial_model = ApflModule(MnistNetWithBnAndFrozen())

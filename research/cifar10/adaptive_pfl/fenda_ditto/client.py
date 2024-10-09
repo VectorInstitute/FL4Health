@@ -71,7 +71,7 @@ class CifarFendaDittoClient(FendaDittoClient):
         return ConvNetFendaModel(in_channels=3, use_bn=False).to(self.device)
 
     def get_global_model(self, config: Config) -> SequentiallySplitModel:
-        return ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False).to(self.device)
+        return ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1).to(self.device)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 import argparse
-import os
 from functools import partial
 from logging import INFO
 from typing import Any, Dict
@@ -7,16 +6,15 @@ from typing import Any, Dict
 import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
-from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.server.adaptive_constraint_servers.fedprox_server import FedProxServer
-from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
+from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
+from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGaStrategy
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import set_all_random_seeds
-from research.cifar10.model import ConvNet
+from research.cifar10.model import ConvNetFendaModel
+from research.cifar10.personal_server import PersonalServer
 
 
 def fit_config(
@@ -25,6 +23,8 @@ def fit_config(
     n_server_rounds: int,
     n_clients: int,
     current_server_round: int,
+    evaluate_after_fit: bool = False,
+    pack_losses_with_val_metrics: bool = False,
 ) -> Config:
     return {
         "batch_size": batch_size,
@@ -32,17 +32,12 @@ def fit_config(
         "n_server_rounds": n_server_rounds,
         "n_clients": n_clients,
         "current_server_round": current_server_round,
+        "evaluate_after_fit": evaluate_after_fit,
+        "pack_losses_with_val_metrics": pack_losses_with_val_metrics,
     }
 
 
-def main(
-    config: Dict[str, Any],
-    server_address: str,
-    checkpoint_stub: str,
-    run_name: str,
-    lam: float,
-    adapt_loss_weight: bool,
-) -> None:
+def main(config: Dict[str, Any], server_address: str, step_size: float) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -50,20 +45,23 @@ def main(
         config["local_epochs"],
         config["n_server_rounds"],
         config["n_clients"],
+        evaluate_after_fit=config.get("evaluate_after_fit", False),
+        pack_losses_with_val_metrics=config.get("pack_losses_with_val_metrics", False),
     )
-    checkpoint_dir = os.path.join(checkpoint_stub, run_name)
-    best_checkpoint_name = "server_best_model.pkl"
-    last_checkpoint_name = "server_last_model.pkl"
-    checkpointer = [
-        BestLossTorchCheckpointer(checkpoint_dir, best_checkpoint_name),
-        LatestTorchCheckpointer(checkpoint_dir, last_checkpoint_name),
-    ]
 
-    client_manager = SimpleClientManager()
+    # FixedSamplingClientManager is a requirement here because the sampling cannot
+    # be different between validation and evaluation for FedDG-GA to work. FixedSamplingClientManager
+    # will return the same sampling until it is told to reset, which in FedDgGaStrategy
+    # is done right before fit_round.
+    client_manager = FixedSamplingClientManager()
     # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1)
+    model = ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1)
+
+    # Define a fairness metric based on the loss associated with the whole FENDA model
+    fenda_fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
+
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvgWithAdaptiveConstraint(
+    strategy = FedDgGaStrategy(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -74,17 +72,11 @@ def main(
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        initial_loss_weight=lam,
-        adapt_loss_weight=adapt_loss_weight,
+        weight_step_size=step_size,
+        fairness_metric=fenda_fairness_metric,
     )
 
-    server = FedProxServer(
-        client_manager=client_manager,
-        model=model,
-        wandb_reporter=None,
-        strategy=strategy,
-        checkpointer=checkpointer,
-    )
+    server = PersonalServer(client_manager=client_manager, strategy=strategy)
 
     fl.server.start_server(
         server=server,
@@ -93,8 +85,7 @@ def main(
     )
 
     log(INFO, "Training Complete")
-    assert isinstance(checkpointer[0], BestLossTorchCheckpointer)
-    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer[0].best_score}")
+    log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{server.best_aggregated_loss}")
 
     # Shutdown the server gracefully
     server.shutdown()
@@ -102,19 +93,6 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")
-    parser.add_argument(
-        "--artifact_dir",
-        action="store",
-        type=str,
-        help="Path to save server artifacts such as logs and model checkpoints",
-        required=True,
-    )
-    parser.add_argument(
-        "--run_name",
-        action="store",
-        help="Name of the run, model checkpoints will be saved under a subfolder with this name",
-        required=True,
-    )
     parser.add_argument(
         "--config_path",
         action="store",
@@ -137,23 +115,19 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="FedProx loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
-        "--use_adaptation",
-        action="store_true",
-        help="Whether or not the loss weight for model drift is adapted or remains fixed.",
-        default=False,
+        "--step_size",
+        action="store",
+        type=float,
+        help="Step size for Fed-DGGA Aggregation. Must be between 0.0 and 1.0. Corresponds to d in the original paper",
+        required=True,
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    log(INFO, f"Lambda: {args.lam}")
-    if args.use_adaptation:
-        log(INFO, "Adapting the loss weight for model drift via model loss")
+    log(INFO, f"Step Size: {args.step_size}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.server_address, args.artifact_dir, args.run_name, args.lam, args.use_adaptation)
+    main(config, args.server_address, args.step_size)
