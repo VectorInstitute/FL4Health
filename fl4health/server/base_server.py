@@ -21,6 +21,7 @@ from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+from fl4health.utils.config import narrow_dict_type_and_set_attribute
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
@@ -48,14 +49,11 @@ class FlServer(Server):
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a
-                sequence to checkpointer based on multiple criteria. Ensure
-                checkpoint names are different for each checkpoint or they
-                will overwrite on another. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence [TorchCheckpointer]]], optional): To be provided
+                if the server should perform server side checkpointing based on some criteria. If none, then no
+                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
+                checkpointer based on multiple criteria. Ensure checkpoint names are different for each checkpoint
+                or they will overwrite on another. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
             server_name (Optional[str]): An optional string name to uniquely identify server.
@@ -327,8 +325,8 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def __init__(
         self,
         client_manager: ClientManager,
-        model: nn.Module,
         parameter_exchanger: ExchangerType,
+        model: Optional[nn.Module] = None,
         wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
@@ -346,21 +344,19 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
             parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
+            model (Optional[nn.Module]): This is the torch model to be hydrated
+                by the _hydrate_model_for_checkpointing function. Defaults to None.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a
-                sequence to checkpoint based on multiple criteria. Defaults to
-                None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
+                if the server should perform server side checkpointing based on some criteria. If none, then no
+                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
+                checkpoint based on multiple criteria. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
             intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
@@ -376,6 +372,11 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         self.per_round_checkpointer: Union[None, PerRoundCheckpointer]
 
         if intermediate_server_state_dir is not None:
+            log(
+                WARNING,
+                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. \
+                This functionality still experimental and only supported for BasicClient and NnunetClient currently.",
+            )
             self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
             )
@@ -386,6 +387,9 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         self.history: History
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
+        assert (
+            self.server_model is not None
+        ), "Model hydration has been called but no server_model is defined to hydrate"
         model_ndarrays = parameters_to_ndarrays(self.parameters)
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
         return self.server_model
@@ -421,8 +425,8 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
     def fit_with_per_epoch_checkpointing(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
-        server provided by flower (flwr.server.server.Server) except that it is resilient to pre-emptions.
-        It accomplishes this by checkpointing the server state each round. In the case of pre-emption,
+        server provided by flower (flwr.server.server.Server) except that it is resilient to preemptions.
+        It accomplishes this by checkpointing the server state each round. In the case of preemption,
         when the server is restarted it will load from the most recent checkpoint.
 
         Args:
@@ -539,18 +543,14 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        assert "model" in ckpt and isinstance(ckpt["model"], nn.Module)
-        assert "server_name" in ckpt and isinstance(ckpt["server_name"], str)
-        assert "current_round" in ckpt and isinstance(ckpt["current_round"], int)
-        assert "metrics_reporter" in ckpt and isinstance(ckpt["metrics_reporter"], MetricsReporter)
-        assert "history" in ckpt and isinstance(ckpt["history"], History)
-
         log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
 
-        self.current_round = ckpt["current_round"]
-        self.server_name = ckpt["server_name"]
-        self.metrics_reporter = ckpt["metrics_reporter"]
-        self.history = ckpt["history"]
+        narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
+        narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
+        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
+        narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
+        narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
+
         self.parameters = get_all_model_parameters(ckpt["model"])
 
 
@@ -564,12 +564,10 @@ class FlServerWithInitializer(FlServer):
         metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
-        Server with an initialize hook method that is called prior to fit.
-        Override the self.initialize method to do server initialization prior
-        to training but after the clients have been created. Can be useful if
-        the state of the server depends on the properties of the clients. Eg.
-        The nnunet server requests an nnunet plans dict to be generated by a
-        client if one was not provided.
+        Server with an initialize hook method that is called prior to fit. Override the self.initialize method to do
+        server initialization prior to training but after the clients have been created. Can be useful if the state of
+        the server depends on the properties of the clients. Eg. The nnunet server requests an nnunet plans dict to be
+        generated by a client if one was not provided.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -580,11 +578,9 @@ class FlServerWithInitializer(FlServer):
             wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
                 information and results to a Weights and Biases account. If None is provided, no logging occurs.
                 Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
+                if the server should perform server side checkpointing based on some criteria. If none, then no
+                server-side checkpointing is performed. Defaults to None.
             metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
                 during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """

@@ -25,7 +25,7 @@ from research.flamby.flamby_data_utils import construct_fedisic_train_val_datase
 FED_ISIC2019_BASELINE_LAYERS = []
 for i in range(16):
     FED_ISIC2019_BASELINE_LAYERS.append(f"base_model._blocks.{i}")
-FED_ISIC2019_BASELINE_LAYERS += ["base_model._dropout"]
+FED_ISIC2019_BASELINE_LAYERS += ["base_model._avg_pooling"]
 
 
 class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
@@ -36,7 +36,6 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         mkmmd_loss_weight: float = 10,
         feature_l2_norm_weight: float = 1,
@@ -50,7 +49,6 @@ class FedIsic2019MrMtlClient(MrMtlMkMmdClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
             mkmmd_loss_weight=mkmmd_loss_weight,
             feature_extraction_layers=FED_ISIC2019_BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
@@ -121,9 +119,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="MR-MTL loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -166,7 +161,6 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Lambda: {args.lam}")
     log(INFO, f"Mu: {args.mu}")
     log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"MKMMD Loss Depth: {args.mkmmd_loss_depth}")
@@ -185,7 +179,6 @@ if __name__ == "__main__":
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        lam=args.lam,
         checkpointer=checkpointer,
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,

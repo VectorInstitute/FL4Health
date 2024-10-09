@@ -11,10 +11,10 @@ from numpy import linalg
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithClippingBit
-from fl4health.utils.config import narrow_config_type
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -40,7 +40,7 @@ class NumpyClippingClient(BasicClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
         )
-        self.parameter_exchanger: ParameterExchangerWithPacking[float]
+        self.parameter_exchanger: FullParameterExchangerWithPacking[float]
         self.clipping_bound: Optional[float] = None
         self.adaptive_clipping: Optional[bool] = None
 
@@ -116,7 +116,7 @@ class NumpyClippingClient(BasicClient):
         # The last entry in the parameters list is assumed to be a clipping bound (even if we're evaluating)
         server_model_parameters, clipping_bound = self.parameter_exchanger.unpack_parameters(parameters)
         self.clipping_bound = clipping_bound
-        current_server_round = narrow_config_type(config, "current_server_round", int)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
 
         if current_server_round == 1 and fitting_round:
             # Initialize all model weights as this is the first time things have been set
@@ -130,9 +130,9 @@ class NumpyClippingClient(BasicClient):
             self.parameter_exchanger.pull_parameters(server_model_parameters, self.model, config)
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
-        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithClippingBit())
+        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
         return parameter_exchanger
 
     def setup_client(self, config: Config) -> None:
-        self.adaptive_clipping = narrow_config_type(config, "adaptive_clipping", bool)
+        self.adaptive_clipping = narrow_dict_type(config, "adaptive_clipping", bool)
         super().setup_client(config)

@@ -11,7 +11,7 @@ from typing import List, Optional, Sequence, Tuple
 import numpy as np
 import SimpleITK as sitk
 
-from research.picai.preprocessing_transforms import crop_or_pad, resample_img
+from research.picai.data.preprocessing_transforms import crop_or_pad, resample_img
 
 
 @dataclass

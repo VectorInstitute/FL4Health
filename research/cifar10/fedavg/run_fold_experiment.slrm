@@ -133,7 +133,7 @@ do
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=10
+    n_clients=5
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -150,6 +150,7 @@ do
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --beta ${CLIENT_BETA} \
+            --use_partitioned_data \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

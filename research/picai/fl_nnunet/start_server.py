@@ -3,6 +3,7 @@ import json
 import pickle
 import warnings
 from functools import partial
+from pathlib import Path
 from typing import Optional
 
 with warnings.catch_warnings():
@@ -20,6 +21,7 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
@@ -52,7 +54,12 @@ def get_config(
     return config
 
 
-def main(config: dict, server_address: str) -> None:
+def main(
+    config: dict,
+    server_address: str,
+    intermediate_server_state_dir: Optional[str] = None,
+    server_name: Optional[str] = None,
+) -> None:
     # Partial function with everything set except current server round
     fit_config_fn = partial(
         get_config,
@@ -85,8 +92,16 @@ def main(config: dict, server_address: str) -> None:
         initial_parameters=params,
     )
 
-    # server = FlServer(client_manager=SimpleClientManager(), strategy=strategy)
-    server = NnunetServer(client_manager=SimpleClientManager(), strategy=strategy)
+    server = NnunetServer(
+        parameter_exchanger=FullParameterExchanger(),
+        model=None,
+        client_manager=SimpleClientManager(),
+        strategy=strategy,
+        intermediate_server_state_dir=(
+            Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
+        ),
+        server_name=server_name,
+    )
 
     fl.server.start_server(
         server=server,
@@ -110,10 +125,29 @@ if __name__ == "__main__":
         help="""[OPTIONAL] The address to use for the server. Defaults to
         0.0.0.0:8080""",
     )
+    parser.add_argument(
+        "--intermediate-server-state-dir",
+        type=str,
+        required=False,
+        default="./",
+        help="""[OPTIONAL] Directory to checkpoint server state. Defaults to current directory""",
+    )
+    parser.add_argument(
+        "--server-name",
+        type=str,
+        required=False,
+        default="server",
+        help="""[OPTIONAL] Name of the server. Defaults to server""",
+    )
 
     args = parser.parse_args()
 
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
-    main(config, args.server_address)
+    main(
+        config,
+        args.server_address,
+        intermediate_server_state_dir=args.intermediate_server_state_dir,
+        server_name=args.server_name,
+    )

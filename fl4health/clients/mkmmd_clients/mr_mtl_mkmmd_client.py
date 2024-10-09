@@ -23,11 +23,11 @@ class MrMtlMkMmdClient(MrMtlClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        lam: float = 1.0,
         mkmmd_loss_weight: float = 10.0,
         feature_extraction_layers: Optional[Sequence[str]] = None,
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: int = 20,
+        num_accumulating_batches: Optional[int] = None,
     ) -> None:
         """
         This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
@@ -45,16 +45,18 @@ class MrMtlMkMmdClient(MrMtlClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            lam (float, optional): weight applied to the MR-MTL drift loss. Defaults to 1.0.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers to extract
-                flatten features from them. Defaults to None.
+            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers from which to extract
+                and flatten features. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
             beta_global_update_interval (int, optional): interval at which to update the betas for the MK-MMD loss. If
                 set to above 0, the betas will be updated based on whole distribution of latent features of data with
                 the given update interval. If set to 0, the betas will not be updated. If set to -1, the betas will be
                 updated after each individual batch based on only that individual batch. Defaults to 20.
+            num_accumulating_batches (int, optional): Number of batches to accumulate features to approximate the whole
+                distribution of the latent features for updating beta of the MK-MMD loss. This parameter is only used
+                if beta_global_update_interval is set to larger than 0. Defaults to None.
         """
         super().__init__(
             data_path=data_path,
@@ -62,7 +64,6 @@ class MrMtlMkMmdClient(MrMtlClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
         )
         self.mkmmd_loss_weight = mkmmd_loss_weight
         if self.mkmmd_loss_weight == 0:
@@ -83,11 +84,11 @@ class MrMtlMkMmdClient(MrMtlClient):
         else:
             raise ValueError("Invalid beta_global_update_interval. It should be either -1, 0 or a positive integer.")
         if feature_extraction_layers:
-            # By default, all of the fetures should be flattened for the MK-MMD loss
+            # By default, all of the features should be flattened for the MK-MMD loss
             self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
         else:
             self.flatten_feature_extraction_layers = {}
-        self.mkmmd_losses = {}
+        self.mkmmd_losses: Dict[str, MkMmdLoss] = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
                 device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
@@ -95,6 +96,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer
+        self.num_accumulating_batches = num_accumulating_batches
 
     def setup_client(self, config: Config) -> None:
         super().setup_client(config)
@@ -102,11 +104,11 @@ class MrMtlMkMmdClient(MrMtlClient):
             model=self.model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
         )
+        # Register hooks to extract features from the local model if not already registered
+        self.local_feature_extractor._maybe_register_hooks()
 
     def update_before_train(self, current_server_round: int) -> None:
         super().update_before_train(current_server_round)
-        # Register hooks to extract features from the local model if not already registered
-        self.local_feature_extractor._maybe_register_hooks()
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
@@ -117,14 +119,12 @@ class MrMtlMkMmdClient(MrMtlClient):
     def _should_optimize_betas(self, step: int) -> bool:
         step_at_interval = (step - 1) % self.beta_global_update_interval == 0
         valid_components_present = self.initial_global_model is not None
-        return step_at_interval and valid_components_present
+        # If the mkmmd loss doesn't matter, we don't bother optimizing betas
+        weighted_mkmmd_loss = self.mkmmd_loss_weight != 0
+        return step_at_interval and valid_components_present and weighted_mkmmd_loss
 
     def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
         if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
-            # If the mkmmd loss doesn't matter, we don't bother optimizing betas
-            if self.mkmmd_loss_weight != 0:
-                return super().update_after_step(step)
-
             # Get the feature distribution of the local and initial global features with evaluation
             # mode
             local_distributions, initial_global_distributions = self.update_buffers(
@@ -135,13 +135,22 @@ class MrMtlMkMmdClient(MrMtlClient):
                 layer_mkmmd_loss.betas = layer_mkmmd_loss.optimize_betas(
                     X=local_distributions[layer], Y=initial_global_distributions[layer], lambda_m=1e-5
                 )
-
-        return super().update_after_step(step)
+        super().update_after_step(step)
 
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
     ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
-        """Update the feature buffer of the local and global features."""
+        """
+        Update the feature buffer of the local and global features.
+
+        Args:
+            local_model (torch.nn.Module): Local model to extract features from.
+            initial_global_model (torch.nn.Module): Initial global model to extract features from.
+
+        Returns:
+            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple containing the extracted
+            features using the local and initial global models.
+        """
 
         self.local_feature_extractor.clear_buffers()
         self.initial_global_feature_extractor.clear_buffers()
@@ -166,12 +175,16 @@ class MrMtlMkMmdClient(MrMtlClient):
         assert not initial_global_model.training
 
         with torch.no_grad():
-            for input, _ in self.train_loader:
+            for i, (input, _) in enumerate(self.train_loader):
                 input = input.to(self.device)
                 # Pass the input through the local model to populate the local_feature_extractor buffer
                 local_model(input)
-                # Pass the input through the initial global model to populate the local_feature_extractor buffer
+                # Pass the input through the initial global model to populate the initial_global_feature_extractor
+                # buffer
                 initial_global_model(input)
+                # Break if the number of accumulating batches is reached to avoid memory issues
+                if i == self.num_accumulating_batches:
+                    break
         local_distributions = self.local_feature_extractor.get_extracted_features()
         initial_global_distributions = self.initial_global_feature_extractor.get_extracted_features()
         # Restore the initial state of the local model
@@ -203,10 +216,9 @@ class MrMtlMkMmdClient(MrMtlClient):
              Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                  first element contains a dictionary of predictions indexed by
                  name and the second element contains intermediate activations
-                 indexed by name. By passing features, we can compute losses
-                 such as the model contrasting loss in MOON. All predictions
-                 included in dictionary will by default be used to compute
-                 metrics seperately.
+                 indexed by name. By passing features, we can compute all the
+                 losses. All predictions included in dictionary will by default
+                 be used to compute metrics separately.
 
         Raises:
              TypeError: Occurs when something other than a tensor or dict of tensors is passed in to the model's
@@ -229,6 +241,9 @@ class MrMtlMkMmdClient(MrMtlClient):
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
+        # As hooks have to be removed to checkpoint the model, so we check if they need to be re-registered
+        # each time.
+        self.local_feature_extractor._maybe_register_hooks()
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
@@ -242,7 +257,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            Tuple[torch.Tensor, Dict[str, torch.Tensor]]: A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.

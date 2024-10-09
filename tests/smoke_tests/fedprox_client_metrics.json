@@ -5,7 +5,7 @@
             "loss_dict": {
                 "loss": 2.1261,
                 "backward": 2.1525,
-                "proximal_loss": 0.0263
+                "penalty_loss": 0.0263
             },
             "evaluate_metrics": {"val - prediction - accuracy": 0.4627},
             "loss": 2.0268
@@ -15,7 +15,7 @@
             "loss_dict": {
                 "loss": 1.8922,
                 "backward": 1.8922,
-                "proximal_loss": 0.0
+                "penalty_loss": 0.0
             },
             "evaluate_metrics": {"val - prediction - accuracy": 0.4323},
             "loss": 1.7356
@@ -25,7 +25,7 @@
             "loss_dict": {
                 "loss": 1.5627,
                 "backward": 1.5627,
-                "proximal_loss": 0.0
+                "penalty_loss": 0.0
             },
             "evaluate_metrics": {"val - prediction - accuracy": 0.5362},
             "loss": 1.4518

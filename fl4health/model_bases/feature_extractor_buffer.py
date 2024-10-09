@@ -53,7 +53,7 @@ class FeatureExtractorBuffer:
         Disables the accumulation of features in the buffers.
 
         This method sets the `accumulate_features` attribute to False, which prevents the buffers from accumulating
-        features and overwrits them for each forward pass.
+        features and overwrites them for each forward pass.
         """
         self.accumulate_features = False
 
@@ -70,7 +70,7 @@ class FeatureExtractorBuffer:
 
         Args:
             module (nn.Module): The nn.Module object to traverse.
-            layer_hierarchy (List[str]): The hirearchical list of name of desired layer.
+            layer_hierarchy (List[str]): The hierarchical list of name of desired layer.
 
         Returns:
             nn.Module: The desired layer of the model.
@@ -85,9 +85,14 @@ class FeatureExtractorBuffer:
         Check the model's list of named modules to filter any layer that starts with the given prefix and
         return the last one.
 
-        Here we assume the list of named modules is sorted in the order of the model's forward pass with
-        depth-first traversal. This will allow the user to specify the generic name of the layer instead of
-        the full hierarchical name.
+        Args:
+            prefix (str): The prefix of the layer name for registering the hook.
+            layers_name (List[str]): The list of named modules of the model. The assumption is that list of
+            named modules is sorted in the order of the model's forward pass with depth-first traversal. This
+            will allow the user to specify the generic name of the layer instead of the full hierarchical name.
+
+        Returns:
+            str: The complete name of last named layer that matches the prefix.
         """
         filtered_layers = [layer for layer in layers_name if layer.startswith(prefix)]
 
@@ -104,7 +109,7 @@ class FeatureExtractorBuffer:
             named_layers = list(dict(self.model.named_modules()).keys())
             for layer in self.flatten_feature_extraction_layers.keys():
                 log(INFO, f"Registering hook for layer: {layer}")
-                # Find the the last specific layer under a given generic name
+                # Find the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
                 # Split the specific layer name by '.' to get the hierarchical attribute
                 layer_hierarchicy_list = specific_layer.split(".")
@@ -121,9 +126,6 @@ class FeatureExtractorBuffer:
         Removes the hooks from the model for checkpointing and clears the hook list. This method is used to remove
         any hooks that have been added to the feature extractor buffer. It is typically called prior to checkpointing
         the model.
-
-        Returns:
-            None
         """
 
         log(INFO, "Removing hooks.")
@@ -140,7 +142,6 @@ class FeatureExtractorBuffer:
 
         Returns:
             Callable: The hook function that takes in a module, input, and output tensors.
-
         """
 
         def hook(module: nn.Module, input: torch.Tensor, output: torch.Tensor) -> None:
@@ -154,7 +155,7 @@ class FeatureExtractorBuffer:
     def flatten(self, features: torch.Tensor) -> torch.Tensor:
         """
         Flattens the input tensor along the batch dimension. The features are of shape (batch_size, *).
-        We flatten them across the batch dimension  to get a 2D tensor of shape (batch_size, feature_size).
+        We flatten them across the batch dimension to get a 2D tensor of shape (batch_size, feature_size).
 
         Args:
             features (torch.Tensor): The input tensor of shape (batch_size, *).

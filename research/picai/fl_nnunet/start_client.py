@@ -3,6 +3,7 @@ import logging
 import warnings
 from functools import partial
 from logging import INFO
+from pathlib import Path
 from typing import Optional, Union
 
 with warnings.catch_warnings():
@@ -19,7 +20,7 @@ from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
-from research.picai.fl_nnunet.transforms import collapse_one_hot_tensor, get_annotations_from_probs
+from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_probs
 
 
 def main(
@@ -31,6 +32,8 @@ def main(
     fold: Union[str, int],
     verbose: bool,
     compile: bool,
+    intermediate_client_state_dir: Optional[str] = None,
+    client_name: Optional[str] = None,
 ) -> None:
 
     # Log device and server address
@@ -44,7 +47,7 @@ def main(
             name="dice1",
             metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
         ),
-        pred_transforms=[torch.sigmoid, get_annotations_from_probs],
+        pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
@@ -69,6 +72,10 @@ def main(
         device=DEVICE,
         metrics=metrics,
         progress_bar=verbose,
+        intermediate_client_state_dir=(
+            Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
+        ),
+        client_name=client_name,
     )
 
     fl.client.start_client(server_address=server_address, client=client.to_client())
@@ -152,6 +159,13 @@ if __name__ == "__main__":
         required=False,
         help="[OPTIONAL] Include flag to train without jit compiling the pytorch model first",
     )
+    parser.add_argument(
+        "--intermediate-client-state-dir",
+        default="./",
+        required=False,
+        help="[OPTIONAL] Directory to checkpoint client state. Defaults to current directory.",
+    )
+    parser.add_argument("--client-name", required=False, help="[OPTIONAL] Name of client.")
 
     args = parser.parse_args()
 
@@ -170,4 +184,6 @@ if __name__ == "__main__":
         fold=fold,
         verbose=args.verbose,
         compile=not args.skip_compile,
+        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        client_name=args.client_name,
     )

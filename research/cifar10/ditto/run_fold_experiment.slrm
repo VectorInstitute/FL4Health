@@ -128,13 +128,14 @@ do
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
+        --lam ${LAM_VALUE} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=10
+    n_clients=5
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -148,10 +149,10 @@ do
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
-            --lam ${LAM_VALUE} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --beta ${CLIENT_BETA} \
+            --use_partitioned_data \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

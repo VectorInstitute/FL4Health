@@ -92,7 +92,7 @@ def load_mnist_data(
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
         hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
-            dataset.
+            datasets.
 
     Returns:
         Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
@@ -213,7 +213,7 @@ def load_cifar10_data(
         validation_proportion (float): A float between 0 and 1 specifying the proportion of samples
             to allocate to the validation dataset. Defaults to 0.2.
         hash_key (Optional[int]): Optional hash key to create a reproducible split for train and validation
-            dataset.
+            datasets.
 
     Returns:
         Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
