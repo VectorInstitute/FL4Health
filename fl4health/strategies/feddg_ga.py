@@ -115,11 +115,12 @@ class FedDgGa(FedAvg):
         fairness_metric: Optional[FairnessMetric] = None,
         weight_step_size: float = 0.2,
     ):
-        """Strategy for the FedDG-GA algorithm (Federated Domain Generalization with
-        Generalization Adjustment, Zhang et al. 2023). This strategy assumes (and checks) that the configuration
-        sent by the server to the clients has the key "evaluate_after_fit" and it is set to True. It also ensures
-        that the key "pack_losses_with_val_metrics" is present and its value is set to True. These are to facilitate
-        the exchange of evaluation information needed fro the strategy to work correctly.
+        """
+        Strategy for the FedDG-GA algorithm (Federated Domain Generalization with Generalization Adjustment, Zhang et
+        al. 2023). This strategy assumes (and checks) that the configuration sent by the server to the clients has the
+        key "evaluate_after_fit" and it is set to True. It also ensures that the key "pack_losses_with_val_metrics" is
+        present and its value is set to True. These are to facilitate the exchange of evaluation information needed
+        for the strategy to work correctly.
 
         Args:
             fraction_fit : float, optional

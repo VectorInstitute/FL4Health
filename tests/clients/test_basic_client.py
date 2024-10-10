@@ -8,7 +8,9 @@ import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
 
-from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.client import fold_loss_dict_into_metrics
+from fl4health.utils.logging import LoggingMode
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
@@ -169,7 +171,7 @@ class MockBasicClient(BasicClient):
     ):
         if include_losses_in_metrics:
             assert self.mock_loss_dict is not None and self.mock_metrics is not None
-            self._fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
+            fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
         else:

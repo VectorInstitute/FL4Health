@@ -21,9 +21,10 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.nnunet_utils import (
