@@ -373,16 +373,16 @@ def test_form_kernel_samples_minus_expectation() -> None:
     kernel_samples_minus_expectation_2_0_1 = all_h_us_all[2, 0, 1] - hat_d_per_kernel_all[2, 0]
 
     assert (
-        pytest.approx(kernel_samples_minus_expectation_0_3_5.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[0, 3, 5].cpu()
+        pytest.approx(kernel_samples_minus_expectation_0_3_5.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[0, 3, 5].cpu()
     )
     assert (
-        pytest.approx(kernel_samples_minus_expectation_1_3_5.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[1, 3, 5].cpu()
+        pytest.approx(kernel_samples_minus_expectation_1_3_5.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[1, 3, 5].cpu()
     )
     assert (
-        pytest.approx(kernel_samples_minus_expectation_2_0_1.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[2, 0, 1].cpu()
+        pytest.approx(kernel_samples_minus_expectation_2_0_1.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[2, 0, 1].cpu()
     )
 
     kernel_samples_minus_expectation_0_7_2 = all_h_us_all[0, 7, 2] - hat_d_per_kernel_all[0, 0]
@@ -390,16 +390,16 @@ def test_form_kernel_samples_minus_expectation() -> None:
     kernel_samples_minus_expectation_2_1_1 = all_h_us_all[2, 1, 1] - hat_d_per_kernel_all[2, 0]
 
     assert (
-        pytest.approx(kernel_samples_minus_expectation_0_7_2.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[0, 7, 2].cpu()
+        pytest.approx(kernel_samples_minus_expectation_0_7_2.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[0, 7, 2].cpu()
     )
     assert (
-        pytest.approx(kernel_samples_minus_expectation_1_9_1.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[1, 9, 1].cpu()
+        pytest.approx(kernel_samples_minus_expectation_1_9_1.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[1, 9, 1].cpu()
     )
     assert (
-        pytest.approx(kernel_samples_minus_expectation_2_1_1.cpu(), abs=0.00001) 
-            == kernel_samples_minus_expectation[2, 1, 1].cpu()
+        pytest.approx(kernel_samples_minus_expectation_2_1_1.cpu(), abs=0.00001)
+        == kernel_samples_minus_expectation[2, 1, 1].cpu()
     )
 
 
@@ -540,7 +540,7 @@ def test_optimizer_betas_in_non_degenerate_case_linear() -> None:
     assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd.cpu()
 
     hat_Q_k = default_mkmmd.compute_hat_Q_k_linear(all_h_u_per_vi_local)
-    regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE))
+    regularized_hat_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE)
     raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
     raw_betas = torch.clamp(raw_betas, min=0)
     assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local).cpu(), abs=0.0001) == 1.0000
@@ -601,7 +601,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd.cpu()
 
     hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_sample, hat_d_per_kernel_local)
-    regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE))
+    regularized_hat_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE)
     raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
     raw_betas = torch.clamp(raw_betas, min=0)
     assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local).cpu(), abs=0.0001) == 1.0000
