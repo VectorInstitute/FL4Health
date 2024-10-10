@@ -310,6 +310,7 @@ class BasicClient(NumPyClient):
             data={
                 "fit_metrics": metrics,
                 "loss_dict": loss_dict,
+                "fit_end": datetime.datetime.now(),
             },
         )
 
@@ -374,6 +375,7 @@ class BasicClient(NumPyClient):
             data={
                 "evaluate_metrics": metrics,
                 "loss": loss,
+                "evaluate_end": datetime.datetime.now(),
             },
         )
 
