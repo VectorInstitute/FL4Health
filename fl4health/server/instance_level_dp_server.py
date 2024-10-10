@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from logging import INFO
 from math import ceil
 from typing import List, Optional, Tuple
@@ -9,7 +10,7 @@ from flwr.server.history import History
 from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
@@ -25,8 +26,8 @@ class InstanceLevelDpServer(FlServer):
         strategy: BasicFedAvg,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[OpacusCheckpointer] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[float] = None,
     ) -> None:
         """
@@ -49,20 +50,19 @@ class InstanceLevelDpServer(FlServer):
             strategy (OpacusBasicFedAvg): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. this must be an
                 OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
             checkpointer (Optional[OpacusCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
         """
         super().__init__(
             client_manager=client_manager,
             strategy=strategy,
-            wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
 
         # Ensure that one of local_epochs and local_steps is passed (and not both)
@@ -133,4 +133,7 @@ class InstanceLevelDpServer(FlServer):
 
         target_delta = 1.0 / total_samples if self.delta is None else self.delta
         epsilon = self.accountant.get_epsilon(self.num_server_rounds, target_delta)
-        log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
+        log(
+            INFO,
+            f"Model privacy after full training will be ({epsilon}, {target_delta})",
+        )

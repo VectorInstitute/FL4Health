@@ -7,6 +7,7 @@ from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
+from fl4health.reporting import JsonReporter
 from fl4health.server.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
@@ -51,14 +52,17 @@ def main(config: Dict[str, Any]) -> None:
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
 
-    server = ScaffoldServer(client_manager=client_manager, strategy=strategy, warm_start=True)
+    server = ScaffoldServer(
+        client_manager=client_manager,
+        strategy=strategy,
+        warm_start=True,
+        reporters=[JsonReporter()],
+    )
     fl.server.start_server(
         server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
-    server.metrics_reporter.dump()
 
 
 if __name__ == "__main__":

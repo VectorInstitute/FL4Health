@@ -1,4 +1,5 @@
 import datetime
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Dict, Optional
 from unittest.mock import MagicMock
@@ -9,29 +10,38 @@ from flwr.common import Scalar
 from freezegun import freeze_time
 
 from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.reporting import JsonReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
 
 @freeze_time("2012-12-12 12:12:12")
-def test_metrics_reporter_setup_client() -> None:
-    fl_client = MockBasicClient()
+def test_json_reporter_setup_client() -> None:
+    reporter = JsonReporter()
+    fl_client = MockBasicClient(reporters=[reporter])
     fl_client.setup_client({})
 
-    assert fl_client.metrics_reporter.metrics == {
-        "type": "client",
-        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    metric_dict = {
+        "host_type": "client",
+        "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
     }
+    errors = assert_metrics_dict(metric_dict, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 @freeze_time("2012-12-12 12:12:12")
-def test_metrics_reporter_shutdown() -> None:
-    fl_client = MockBasicClient()
+def test_json_reporter_shutdown() -> None:
+    reporter = JsonReporter()
+    fl_client = MockBasicClient(reporters=[reporter])
     fl_client.shutdown()
 
-    assert fl_client.metrics_reporter.metrics == {
-        "shutdown": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    metric_dict = {
+        "shutdown": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
     }
+    errors = assert_metrics_dict(metric_dict, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -39,21 +49,25 @@ def test_metrics_reporter_fit() -> None:
     test_current_server_round = 2
     test_loss_dict = {"test_loss": 123.123}
     test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
+    reporter = JsonReporter()
 
-    fl_client = MockBasicClient(loss_dict=test_loss_dict, metrics=test_metrics)
+    fl_client = MockBasicClient(loss_dict=test_loss_dict, metrics=test_metrics, reporters=[reporter])
     fl_client.fit([], {"current_server_round": test_current_server_round, "local_epochs": 0})
-
-    assert fl_client.metrics_reporter.metrics == {
-        "type": "client",
-        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    metric_dict = {
+        "host_type": "client",
+        "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
         "rounds": {
             test_current_server_round: {
-                "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-                "loss_dict": test_loss_dict,
+                "round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "fit_losses": test_loss_dict,
                 "fit_metrics": test_metrics,
+                "round": test_current_server_round,
             },
         },
     }
+
+    errors = assert_metrics_dict(metric_dict, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -68,21 +82,28 @@ def test_metrics_reporter_evaluate() -> None:
         "test - loss": 123.123,
         "test - num_examples": 0,
     }
-
-    fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics, test_set_metrics=test_metrics_testing)
+    reporter = JsonReporter()
+    fl_client = MockBasicClient(
+        loss=test_loss,
+        metrics=test_metrics,
+        test_set_metrics=test_metrics_testing,
+        reporters=[reporter],
+    )
     fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
 
-    assert fl_client.metrics_reporter.metrics == {
-        "type": "client",
-        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    metric_dict = {
+        "host_type": "client",
+        "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
         "rounds": {
             test_current_server_round: {
-                "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-                "loss": test_loss,
-                "evaluate_metrics": test_metrics_final,
+                "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "eval_loss": test_loss,
+                "eval_metrics": test_metrics_final,
             },
         },
     }
+    errors = assert_metrics_dict(metric_dict, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 def test_evaluate_after_fit_enabled() -> None:
@@ -114,8 +135,9 @@ class MockBasicClient(BasicClient):
         metrics: Optional[Dict[str, Scalar]] = None,
         test_set_metrics: Optional[Dict[str, Scalar]] = None,
         loss: Optional[float] = 0,
+        reporters: Sequence[BaseReporter] | None = None,
     ):
-        super().__init__(Path(""), [], torch.device(0))
+        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
 
         self.mock_loss_dict = loss_dict
         if self.mock_loss_dict is None:

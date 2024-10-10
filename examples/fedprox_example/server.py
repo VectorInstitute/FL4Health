@@ -10,7 +10,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.fedprox import FedProx
 from fl4health.utils.config import load_config
@@ -77,9 +77,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         proximal_weight_patience=config["proximal_weight_patience"],
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
+    wandb_reporter = WandBReporter("round", **config["reporting_config"])
+    json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    server = FlServer(client_manager, strategy, reporters=[wandb_reporter, json_reporter])
 
     fl.server.start_server(
         server=server,
@@ -88,8 +89,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
     # Shutdown the server gracefully
     server.shutdown()
-
-    server.metrics_reporter.dump()
 
 
 if __name__ == "__main__":

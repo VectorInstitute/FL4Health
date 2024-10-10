@@ -12,6 +12,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -26,6 +27,7 @@ class DittoClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         lam: float = 1.0,
     ) -> None:
         """
@@ -35,18 +37,22 @@ class DittoClient(BasicClient):
         constrain the training of a local model. The constraint for this local model is identical to the FedProx loss.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
-            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
-            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
-                each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
-            lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
+            data_path (Path): path to the data to be used to load the data for
+                client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and
+                predictions of the client model
+            device (torch.device): Device indicator for where to send the model,
+                batches, labels etc. Often 'cpu' or 'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and
+                compute the losses over each batch. Defaults to LossMeterType.AVERAGE.
+            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer
+                module defining when and how to do checkpointing during client-side
+                training. No checkpointing is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
+            lam (float, optional): weight applied to the Ditto drift loss. Defaults to
+                1.0.
+
         """
         super().__init__(
             data_path=data_path,
@@ -54,6 +60,7 @@ class DittoClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.initial_global_tensors: List[torch.Tensor]
         self.lam = lam
@@ -112,7 +119,10 @@ class DittoClient(BasicClient):
             NDArrays: GLOBAL model weights to be sent to the server for aggregation
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
             # If initialized==False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
@@ -146,7 +156,10 @@ class DittoClient(BasicClient):
 
         current_server_round = narrow_dict_type(config, "current_server_round", int)
         if current_server_round == 1 and fitting_round:
-            log(INFO, "Initializing the global and local models weights for the first time")
+            log(
+                INFO,
+                "Initializing the global and local models weights for the first time",
+            )
             self.initialize_all_model_weights(parameters, config)
         else:
             # Route the parameters to the GLOBAL model in Ditto

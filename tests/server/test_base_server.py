@@ -16,10 +16,12 @@ from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
 
@@ -83,7 +85,6 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
         client_manager=PoissonSamplingClientManager(),
         model=initial_model,
         parameter_exchanger=parameter_exchanger,
-        wandb_reporter=None,
         strategy=None,
         checkpointer=checkpointer,
     )
@@ -101,20 +102,29 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     test_history = History()
-    test_history.metrics_centralized = {"test metrics centralized": [(123, "loss")]}
-    test_history.losses_centralized = [(123, 123.123)]
+    test_history.metrics_centralized = {"test_metric1": [(1, 123.123), (2, 123)]}
+    test_history.losses_centralized = [(1, 123.123), (2, 123)]
     mock_fit.return_value = (test_history, 1)
-
-    fl_server = FlServer(SimpleClientManager())
-    fl_server.fit(3, None)
-
-    assert fl_server.metrics_reporter.metrics == {
-        "type": "server",
-        "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-        "fit_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
-        "metrics_centralized": test_history.metrics_centralized,
-        "losses_centralized": test_history.losses_centralized,
+    reporter = JsonReporter()
+    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
+    fl_server.fit(2, None)
+    metrics_to_assert = {
+        "host_type": "server",
+        "fit_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+        "fit_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+        "rounds": {
+            1: {
+                "eval_metrics_centralized": {"test_metric1": 123.123},
+                "val - loss - centralized": 123.123,
+            },
+            2: {
+                "eval_metrics_centralized": {"test_metric1": 123},
+                "val - loss - centralized": 123,
+            },
+        },
     }
+    errors = assert_metrics_dict(metrics_to_assert, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}, {reporter.metrics}"
 
 
 @patch("fl4health.server.base_server.Server.fit_round")
@@ -124,18 +134,22 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     test_metrics_aggregated = "test metrics aggregated"
     mock_fit_round.return_value = (None, test_metrics_aggregated, None)
 
-    fl_server = FlServer(SimpleClientManager())
+    reporter = JsonReporter()
+    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
     fl_server.fit_round(test_round, None)
 
-    assert fl_server.metrics_reporter.metrics == {
+    metrics_to_assert = {
         "rounds": {
             test_round: {
-                "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-                "metrics_aggregated": test_metrics_aggregated,
-                "fit_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+                "fit_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "fit_metrics": test_metrics_aggregated,
+                "fit_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
     }
+    print(reporter.metrics)
+    errors = assert_metrics_dict(metrics_to_assert, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}. {reporter.metrics}"
 
 
 def test_unpack_metrics() -> None:
@@ -201,7 +215,10 @@ def test_handle_result_aggregation() -> None:
         },
     )
 
-    results: List[Tuple[ClientProxy, EvaluateRes]] = [(client_proxy1, eval_res1), (client_proxy2, eval_res2)]
+    results: List[Tuple[ClientProxy, EvaluateRes]] = [
+        (client_proxy1, eval_res1),
+        (client_proxy2, eval_res2),
+    ]
     failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
     server_round = 1
@@ -226,18 +243,25 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     test_round = 2
     test_loss_aggregated = "test loss aggregated"
     test_metrics_aggregated = "test metrics aggregated"
-    mock_evaluate_round.return_value = (test_loss_aggregated, test_metrics_aggregated, (None, None))
+    mock_evaluate_round.return_value = (
+        test_loss_aggregated,
+        test_metrics_aggregated,
+        (None, None),
+    )
 
-    fl_server = FlServer(SimpleClientManager())
+    reporter = JsonReporter()
+    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
     fl_server.evaluate_round(test_round, None)
 
-    assert fl_server.metrics_reporter.metrics == {
+    metrics_to_assert = {
         "rounds": {
             test_round: {
-                "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-                "loss_aggregated": test_loss_aggregated,
-                "metrics_aggregated": test_metrics_aggregated,
-                "evaluate_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+                "eval_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "val - loss - aggregated": test_loss_aggregated,
+                "eval_metrics_aggregated": test_metrics_aggregated,
+                "eval_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
     }
+    errors = assert_metrics_dict(metrics_to_assert, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"

@@ -11,6 +11,7 @@ from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.parameter_extraction import check_shape_match
@@ -27,6 +28,7 @@ class FendaDittoClient(DittoClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         lam: float = 1.0,
         freeze_global_feature_extractor: bool = False,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
         This client implements the Ditto algorithm from Ditto: Fair and Robust Federated Learning Through
@@ -47,8 +49,8 @@ class FendaDittoClient(DittoClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             lam (float, optional): weight applied to the Ditto drift loss. Defaults to 1.0.
             freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature
                 extractor during training. If freeze_global_feature_extractor is False, both the global and the local
@@ -64,6 +66,7 @@ class FendaDittoClient(DittoClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             lam=lam,
+            reporters=reporters,
         )
         self.global_model: SequentiallySplitExchangeBaseModel
         self.model: FendaModel
@@ -260,11 +263,15 @@ class FendaDittoClient(DittoClient):
         # Compute Ditto drift loss
         if self.freeze_global_feature_extractor:
             ditto_local_loss = self.ditto_drift_loss_function(
-                self.model.first_feature_extractor, self.initial_global_tensors, self.lam
+                self.model.first_feature_extractor,
+                self.initial_global_tensors,
+                self.lam,
             )
         else:
             ditto_local_loss = self.ditto_drift_loss_function(
-                self.model.second_feature_extractor, self.initial_global_tensors, self.lam
+                self.model.second_feature_extractor,
+                self.initial_global_tensors,
+                self.lam,
             )
         additional_losses = additional_losses or {}
         additional_losses["ditto_loss"] = ditto_local_loss.clone()

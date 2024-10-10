@@ -70,7 +70,6 @@ def main(config: Dict[str, Any]) -> None:
         client_manager=SimpleClientManager(),
         model=model,
         parameter_exchanger=parameter_exchanger,
-        wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointer,
     )

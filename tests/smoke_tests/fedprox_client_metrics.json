@@ -2,33 +2,33 @@
     "rounds": {
         "1": {
             "fit_metrics": {"train - prediction - accuracy": 0.2234},
-            "loss_dict": {
+            "fit_losses": {
                 "loss": 2.1261,
                 "backward": 2.1525,
                 "proximal_loss": 0.0263
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.4627},
-            "loss": 2.0268
+            "eval_metrics": {"val - prediction - accuracy": 0.4627},
+            "eval_loss": 2.0268
         },
         "2": {
             "fit_metrics": {"train - prediction - accuracy": 0.43125},
-            "loss_dict": {
+            "fit_losses": {
                 "loss": 1.8922,
                 "backward": 1.8922,
                 "proximal_loss": 0.0
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.4323},
-            "loss": 1.7356
+            "eval_metrics": {"val - prediction - accuracy": 0.4323},
+            "eval_loss": 1.7356
         },
         "3": {
             "fit_metrics": {"train - prediction - accuracy": 0.5359},
-            "loss_dict": {
+            "fit_losses": {
                 "loss": 1.5627,
                 "backward": 1.5627,
                 "proximal_loss": 0.0
             },
-            "evaluate_metrics": {"val - prediction - accuracy": 0.5362},
-            "loss": 1.4518
+            "eval_metrics": {"val - prediction - accuracy": 0.5362},
+            "eval_loss": 1.4518
         }
     }
 }

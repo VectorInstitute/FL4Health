@@ -77,7 +77,13 @@ class MkMmdLoss(torch.nn.Module):
         if n_samples % 2 == 1:
             X = X[:-1, :]
             Y = Y[:-1, :]
-        v_i = torch.cat((X.reshape(n_samples // 2, 2, n_features), Y.reshape(n_samples // 2, 2, n_features)), dim=1)
+        v_i = torch.cat(
+            (
+                X.reshape(n_samples // 2, 2, n_features),
+                Y.reshape(n_samples // 2, 2, n_features),
+            ),
+            dim=1,
+        )
         return v_i
 
     def compute_euclidean_inner_products(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
@@ -116,7 +122,12 @@ class MkMmdLoss(torch.nn.Module):
         # each inner product is a tensor of dimension n_samples x n_samples, we return a
         # tensor of shape 4 x len(X) x len(Y)
         return torch.cat(
-            [x_x_prime.unsqueeze(0), y_y_prime.unsqueeze(0), x_y_prime.unsqueeze(0), x_prime_y.unsqueeze(0)]
+            [
+                x_x_prime.unsqueeze(0),
+                y_y_prime.unsqueeze(0),
+                x_y_prime.unsqueeze(0),
+                x_prime_y.unsqueeze(0),
+            ]
         )
 
     def compute_euclidean_inner_products_linear(self, v_i_quadruples: torch.Tensor) -> torch.Tensor:
@@ -127,10 +138,26 @@ class MkMmdLoss(torch.nn.Module):
         # x and y. That is the inner product. Note that ||x - y||^2 = <x - y, x - y> = (x-y)^T(x-y)
         # For the quadruples of the form (x,  x', y, y') we need distances for pairings (x, x'), (y, y'), (x, y'),
         # (x, y')
-        x_x_prime = torch.sum((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 1, :]) ** 2, dim=1, keepdim=True)
-        y_y_prime = torch.sum((v_i_quadruples[:, 2, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_y_prime = torch.sum((v_i_quadruples[:, 0, :] - v_i_quadruples[:, 3, :]) ** 2, dim=1, keepdim=True)
-        x_prime_y = torch.sum((v_i_quadruples[:, 1, :] - v_i_quadruples[:, 2, :]) ** 2, dim=1, keepdim=True)
+        x_x_prime = torch.sum(
+            (v_i_quadruples[:, 0, :] - v_i_quadruples[:, 1, :]) ** 2,
+            dim=1,
+            keepdim=True,
+        )
+        y_y_prime = torch.sum(
+            (v_i_quadruples[:, 2, :] - v_i_quadruples[:, 3, :]) ** 2,
+            dim=1,
+            keepdim=True,
+        )
+        x_y_prime = torch.sum(
+            (v_i_quadruples[:, 0, :] - v_i_quadruples[:, 3, :]) ** 2,
+            dim=1,
+            keepdim=True,
+        )
+        x_prime_y = torch.sum(
+            (v_i_quadruples[:, 1, :] - v_i_quadruples[:, 2, :]) ** 2,
+            dim=1,
+            keepdim=True,
+        )
 
         # each inner product is a tensor of dimension len(v_i_quadruples), we return a tensor of shape
         # len(v_i_quadruples) x 4
@@ -173,7 +200,7 @@ class MkMmdLoss(torch.nn.Module):
         ]
         # Matrix should be of shape number of kernels x n_samples x n_samples, since we compute the kernel value on all
         # possible combinations of pairs (x_j, y_j) (x_k, y_k) for every kernel.
-        return torch.cat(k_list)
+        return torch.cat(k_list).to(self.device)
 
     def compute_all_h_u_from_inner_products_linear(self, inner_product_quadruples: torch.Tensor) -> torch.Tensor:
         # For the linear approximation version the shape of inner_product_quadruples is len(v_i_quadruples) x 4
@@ -293,7 +320,10 @@ class MkMmdLoss(torch.nn.Module):
         return Q_k_matrix
 
     def beta_with_extreme_kernel_base_values(
-        self, hat_d_per_kernel: torch.Tensor, hat_Q_k: torch.Tensor, minimize_type_two_error: bool = True
+        self,
+        hat_d_per_kernel: torch.Tensor,
+        hat_Q_k: torch.Tensor,
+        minimize_type_two_error: bool = True,
     ) -> torch.Tensor:
         kernel_base_values = torch.tensor(
             [hat_d_per_kernel[i] / hat_Q_k[i][i] for i in range(len(hat_d_per_kernel))]
@@ -402,7 +432,10 @@ class MkMmdLoss(torch.nn.Module):
         # single kernel with largest hat_d, similar to the suggestion of Gretton et al. in "Optimal Kernel Choice for
         # Large-Scale Two-Sample Tests", 2012
         if not torch.any(hat_d_per_kernel > 0):
-            log(INFO, f"None of the estimates for hat_d are positive: {hat_d_per_kernel.squeeze()}.")
+            log(
+                INFO,
+                f"None of the estimates for hat_d are positive: {hat_d_per_kernel.squeeze()}.",
+            )
             return self.beta_with_extreme_kernel_base_values(
                 hat_d_per_kernel, regularized_Q_k, minimize_type_two_error=True
             )

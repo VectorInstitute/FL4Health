@@ -35,7 +35,13 @@ Y = torch.Tensor(
     ]
 )
 
-DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# Basically all the tests failed if DEVICE was "cuda:0"
+# Likely the only reason these passed were because the github actions server does not
+# have a gpu so DEVICE would default to cpu
+# I started th debugging, but this is outside the scope of my PR and the tests run
+# super quickly on cpu anyways
+# DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")
 
 mkmmd_loss_linear = MkMmdLoss(DEVICE, gammas=torch.Tensor([2, 1, 1 / 2]), perform_linear_approximation=True)
 mkmmd_loss_linear.betas = torch.Tensor([1.5, 2.0, -1.0]).reshape(-1, 1).to(DEVICE)
@@ -469,7 +475,23 @@ def test_optimize_betas_for_X_Y() -> None:
 
 def test_gamma_defaults() -> None:
     default_mkmmd = MkMmdLoss(DEVICE)
-    neg_gamma_powers = [-3.5, -3.25, -3, -2.75, -2.5, -2.25, -2, -1.75, -1.5, -1.25, -1, -0.75, -0.5, -0.25, 0]
+    neg_gamma_powers = [
+        -3.5,
+        -3.25,
+        -3,
+        -2.75,
+        -2.5,
+        -2.25,
+        -2,
+        -1.75,
+        -1.5,
+        -1.25,
+        -1,
+        -0.75,
+        -0.5,
+        -0.25,
+        0,
+    ]
     pos_gamma_powers = [0.25, 0.5, 0.75, 1]
     gamma_powers = neg_gamma_powers + pos_gamma_powers
     default_gammas = torch.Tensor([2**power for power in gamma_powers])
@@ -561,40 +583,43 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
                 100,
             ]
         )
-    )
+    ).to(DEVICE)
 
     # Second sample is a mixture of two gaussian with zero mean except the first has mean 1.0 in the first coordinate
     # and the second has mean 1.0 in the second coordinate
     q_1 = MultivariateNormal(torch.tensor([1.0, 0, 0, 0, 0]), torch.eye(5))
     q_2 = MultivariateNormal(torch.tensor([0, 1.0, 0, 0, 0]), torch.eye(5))
     Y = (
-        q_1.sample(
-            torch.Size(
-                [
-                    100,
-                ]
+        (
+            q_1.sample(
+                torch.Size(
+                    [
+                        100,
+                    ]
+                )
+            )
+            + q_2.sample(
+                torch.Size(
+                    [
+                        100,
+                    ]
+                )
             )
         )
-        + q_2.sample(
-            torch.Size(
-                [
-                    100,
-                ]
-            )
-        )
-    ) / 2.0
+        / 2.0
+    ).to(DEVICE)
 
     all_h_u_per_sample = default_mkmmd.compute_all_h_u_all_samples(X, Y)
     hat_d_per_kernel_local = default_mkmmd.compute_hat_d_per_kernel(all_h_u_per_sample)
     mkmmd_before_opt = default_mkmmd(X, Y)
     target_mkmmd = torch.mm(default_mkmmd.betas.t(), hat_d_per_kernel_local)[0][0]
-    assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd
+    assert pytest.approx(mkmmd_before_opt.item(), abs=0.000001) == target_mkmmd.cpu()
 
     hat_Q_k = default_mkmmd.compute_hat_Q_k(all_h_u_per_sample, hat_d_per_kernel_local)
-    regularized_hat_Q_k = (2 * hat_Q_k + lambda_m * torch.eye(19)).to(DEVICE)
+    regularized_hat_Q_k = 2 * hat_Q_k + lambda_m * torch.eye(19).to(DEVICE)
     raw_betas = default_mkmmd.form_and_solve_qp(hat_d_per_kernel_local, regularized_hat_Q_k)
     raw_betas = torch.clamp(raw_betas, min=0)
-    assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local), abs=0.0001) == 1.0000
+    assert pytest.approx(torch.mm(raw_betas.t(), hat_d_per_kernel_local).cpu(), abs=0.0001) == 1.0000
 
     betas_local = default_mkmmd.optimize_betas(X, Y, lambda_m)
     assert torch.all(betas_local.eq((1 / torch.sum(raw_betas)) * raw_betas))

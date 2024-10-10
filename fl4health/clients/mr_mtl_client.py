@@ -11,6 +11,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
@@ -24,6 +25,7 @@ class MrMtlClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         lam: float = 1.0,
     ) -> None:
         """
@@ -43,9 +45,10 @@ class MrMtlClient(BasicClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             lam (float, optional): weight applied to the MR-MTL drift loss. Defaults to 1.0.
+
         """
         super().__init__(
             data_path=data_path,
@@ -53,6 +56,7 @@ class MrMtlClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.lam = lam
         self.initial_global_model: nn.Module

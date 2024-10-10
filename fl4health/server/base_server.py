@@ -1,5 +1,4 @@
 import datetime
-import timeit
 from logging import DEBUG, INFO, WARN, WARNING
 from pathlib import Path
 from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
@@ -17,8 +16,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wandb import ServerWandBReporter
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
@@ -32,45 +30,56 @@ class FlServer(Server):
         self,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
         server_name: Optional[str] = None,
     ) -> None:
         """
         Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
 
         Args:
-            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
-                they are to be sampled at all.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
-                client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+            client_manager (ClientManager): Determines the mechanism by which clients
+                are sampled by the server, if they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be
+                used by the server to handle. client updates and other information
+                potentially sent by the participating clients. If None the strategy is
+                FedAvg as set by the flwr Server.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
+            checkpointer (TorchCheckpointer | Sequence [TorchCheckpointer], optional):
+                To be provided if the server should perform server side checkpointing
+                based on some criteria. If none, then no server-side checkpointing is
+                performed. Multiple checkpointers can also be passed in a sequence to
+                checkpointer based on multiple criteria. Ensure checkpoint names are
+                different for each checkpoint or they will overwrite on another.
                 Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a
-                sequence to checkpointer based on multiple criteria. Ensure
-                checkpoint names are different for each checkpoint or they
-                will overwrite on another. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
-            server_name (Optional[str]): An optional string name to uniquely identify server.
+            server_name (Optional[str]): An optional string name to uniquely identify
+                server.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
-        self.wandb_reporter = wandb_reporter
         self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
         self.server_name = server_name if server_name is not None else generate_hash()
 
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter()
+        self.reporters = [] if reporters is None else list(reporters)
+        for r in self.reporters:
+            r.initialize(id=self.server_name)
+
+    def report_centralized_eval(self, history: History, num_rounds: int) -> None:
+        if len(history.losses_centralized) == 0:
+            return
+
+        # Parse and report history for loss and metrics on centralized validation set.
+        for round in range(num_rounds):
+            for r in self.reporters:
+                r.report(
+                    {"val - loss - centralized": history.losses_centralized[round][1]},
+                    round + 1,
+                )
+                round_metrics = {}
+                for metric, vals in history.metrics_centralized.items():
+                    round_metrics.update({metric: vals[round][1]})
+                r.report({"eval_metrics_centralized": round_metrics}, round + 1)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
@@ -86,20 +95,21 @@ class FlServer(Server):
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also contains the elapsed time in seconds for the round.
         """
-        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
-
+        start_time = datetime.datetime.now()
         history, elapsed_time = super().fit(num_rounds, timeout)
-        if self.wandb_reporter:
-            # report history to W and B
-            self.wandb_reporter.report_metrics(num_rounds, history)
+        end_time = datetime.datetime.now()
+        for r in self.reporters:
+            r.report(
+                {
+                    "fit_elapsed_time": str(start_time - end_time),
+                    "fit_start": str(start_time),
+                    "fit_end": str(end_time),
+                    "num_rounds": num_rounds,
+                    "host_type": "server",
+                }
+            )
 
-        self.metrics_reporter.add_to_metrics(
-            data={
-                "fit_end": datetime.datetime.now(),
-                "metrics_centralized": history.metrics_centralized,
-                "losses_centralized": history.losses_centralized,
-            }
-        )
+        self.report_centralized_eval(history, num_rounds)
 
         return history, elapsed_time
 
@@ -108,25 +118,24 @@ class FlServer(Server):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
-        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"fit_start": datetime.datetime.now()})
-
+        round_start = datetime.datetime.now()
         fit_round_results = super().fit_round(server_round, timeout)
+        round_end = datetime.datetime.now()
 
-        if fit_round_results is not None:
-            _, metrics_aggregated, _ = fit_round_results
-            self.metrics_reporter.add_to_metrics_at_round(
+        for r in self.reporters:
+            r.report(
+                {"fit_round_start": str(round_start), "fit_round_end": str(round_end)},
                 server_round,
-                data={
-                    "metrics_aggregated": metrics_aggregated,
-                    "fit_end": datetime.datetime.now(),
-                },
             )
+            if fit_round_results is not None:
+                _, metrics, _ = fit_round_results
+                r.report({"fit_metrics": metrics}, server_round)
 
         return fit_round_results
 
     def shutdown(self) -> None:
-        if self.wandb_reporter:
-            self.wandb_reporter.shutdown_reporter()
+        for r in self.reporters:
+            r.shutdown()
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         """
@@ -143,7 +152,10 @@ class FlServer(Server):
         raise NotImplementedError()
 
     def _maybe_checkpoint(
-        self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
+        self,
+        loss_aggregated: float,
+        metrics_aggregated: Dict[str, Scalar],
+        server_round: int,
     ) -> None:
         if self.checkpointer:
             try:
@@ -162,7 +174,10 @@ class FlServer(Server):
                     )
         elif server_round == 1:
             # No checkpointer, just log message on the first round
-            log(INFO, "No checkpointer present. Models will not be checkpointed on server-side.")
+            log(
+                INFO,
+                "No checkpointer present. Models will not be checkpointed on server-side.",
+            )
 
     def poll_clients_for_sample_counts(self, timeout: Optional[float]) -> List[int]:
         """
@@ -182,7 +197,9 @@ class FlServer(Server):
         assert isinstance(self.strategy, StrategyWithPolling)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)
         results, _ = poll_clients(
-            client_instructions=client_instructions, max_workers=self.max_workers, timeout=timeout
+            client_instructions=client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
         )
 
         sample_counts: List[int] = [
@@ -279,7 +296,10 @@ class FlServer(Server):
         # Collect `evaluate` results from all clients participating in this round
         # flwr sets group_id to server_round by default, so we follow that convention
         results, failures = evaluate_clients(
-            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=server_round
+            client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
+            group_id=server_round,
         )
         log(
             DEBUG,
@@ -298,25 +318,32 @@ class FlServer(Server):
         server_round: int,
         timeout: Optional[float],
     ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
-        self.metrics_reporter.add_to_metrics_at_round(server_round, data={"evaluate_start": datetime.datetime.now()})
-
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
+        start_time = datetime.datetime.now()
         eval_round_results = self._evaluate_round(server_round, timeout)
+        end_time = datetime.datetime.now()
         if eval_round_results:
             loss_aggregated, metrics_aggregated, _ = eval_round_results
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
-
-            self.metrics_reporter.add_to_metrics_at_round(
-                server_round,
-                data={
-                    "metrics_aggregated": metrics_aggregated,
-                    "loss_aggregated": loss_aggregated,
-                    "evaluate_end": datetime.datetime.now(),
-                },
-            )
+                # Report evaluation results
+                for r in self.reporters:
+                    r.report(
+                        {
+                            "val - loss - aggregated": loss_aggregated,
+                            "round": server_round,
+                            "eval_round_start": str(start_time),
+                            "eval_round_end": str(end_time),
+                        },
+                        server_round,
+                    )
+                    if len(metrics_aggregated) > 0:
+                        r.report(
+                            {"eval_metrics_aggregated": metrics_aggregated},
+                            server_round,
+                        )
 
         return eval_round_results
 
@@ -330,10 +357,9 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         client_manager: ClientManager,
         parameter_exchanger: ExchangerType,
         model: Optional[nn.Module] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         strategy: Optional[Strategy] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
         intermediate_server_state_dir: Optional[Path] = None,
         server_name: Optional[str] = None,
     ) -> None:
@@ -353,20 +379,22 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
             checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional):
                 To be provided if the server should perform server side checkpointing
                 based on some criteria. If none, then no server-side checkpointing is performed. Multiple checkpointers
                 can also be passed in a sequence to checkpoint based on multiple criteria. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
             intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
             server_name (Optional[str]): An optional string name to uniquely identify server.
         """
         super().__init__(
-            client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter, server_name=server_name
+            client_manager,
+            strategy,
+            reporters,
+            checkpointer,
+            server_name=server_name,
         )
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
@@ -412,14 +440,20 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                 metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
-        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
-
         if self.per_round_checkpointer is not None:
+            start_time = datetime.datetime.now()
             history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
-
-            if self.wandb_reporter:
-                # report history to W and B
-                self.wandb_reporter.report_metrics(num_rounds, history)
+            end_time = datetime.datetime.now()
+            for r in self.reporters:
+                r.report(
+                    {
+                        "fit_elapsed_time": str(start_time - end_time),
+                        "fit_start": str(start_time),
+                        "fit_end": str(end_time),
+                        "num_rounds": num_rounds,
+                        "host_type": "server",
+                    }
+                )
         else:
             # parent method includes call to report metrics to wandb if specified
             history, elapsed_time = super().fit(num_rounds, timeout)
@@ -472,7 +506,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             # Run federated learning for num_rounds
             log(INFO, "FL starting")
 
-        start_time = timeit.default_timer()
+        start_time = datetime.datetime.now()
 
         while self.current_round < (num_rounds + 1):
             # Train model and replace previous global model
@@ -493,7 +527,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
                     self.current_round,
                     loss_cen,
                     metrics_cen,
-                    timeit.default_timer() - start_time,
+                    (datetime.datetime.now() - start_time).total_seconds(),
                 )
                 self.history.add_loss_centralized(server_round=self.current_round, loss=loss_cen)
                 self.history.add_metrics_centralized(server_round=self.current_round, metrics=metrics_cen)
@@ -513,10 +547,10 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             self.save_server_state()
 
         # Bookkeeping
-        end_time = timeit.default_timer()
+        end_time = datetime.datetime.now()
         elapsed_time = end_time - start_time
-        log(INFO, "FL finished in %s", elapsed_time)
-        return self.history, elapsed_time
+        log(INFO, "FL finished in %s", str(elapsed_time))
+        return self.history, elapsed_time.total_seconds()
 
     def save_server_state(self) -> None:
         """
@@ -530,13 +564,16 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             "model": self.server_model,
             "history": self.history,
             "current_round": self.current_round,
-            "metrics_reporter": self.metrics_reporter,
+            "reporters": self.reporters,
             "server_name": self.server_name,
         }
 
         self.per_round_checkpointer.save_checkpoint(ckpt)
 
-        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        log(
+            INFO,
+            f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}",
+        )
 
     def load_server_state(self) -> None:
         """
@@ -547,11 +584,14 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        log(
+            INFO,
+            f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}",
+        )
 
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list[BaseReporter])
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
 
@@ -563,9 +603,8 @@ class FlServerWithInitializer(FlServer):
         self,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
     ) -> None:
         """
         Server with an initialize hook method that is called prior to fit.
@@ -581,18 +620,15 @@ class FlServerWithInitializer(FlServer):
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
             checkpointer (Optional[Union[TorchCheckpointer, Sequence
                 [TorchCheckpointer]]], optional): To be provided if the server
                 should perform server side checkpointing based on some
                 criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
         """
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer, metrics_reporter)
+        super().__init__(client_manager, strategy, reporters, checkpointer)
         self.initialized = False
 
     def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:

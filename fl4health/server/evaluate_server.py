@@ -1,5 +1,5 @@
 import datetime
-import timeit
+from collections.abc import Sequence
 from logging import INFO, WARNING
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -14,7 +14,8 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, Server, evaluate_clients
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.utils.random import generate_hash
 
 
 class EvaluateServer(Server):
@@ -27,7 +28,7 @@ class EvaluateServer(Server):
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         accept_failures: bool = True,
         min_available_clients: int = 1,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
         Args:
@@ -43,8 +44,8 @@ class EvaluateServer(Server):
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
                 Defaults to 1.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
         """
         # We aren't aggregating model weights, so setting the strategy to be none.
         super().__init__(client_manager=client_manager, strategy=None)
@@ -63,11 +64,10 @@ class EvaluateServer(Server):
                 f"Fraction Evaluate is {self.fraction_evaluate}. "
                 "Thus, some clients may not participate in evaluation",
             )
-
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter()
+        self.server_name = generate_hash()
+        self.reporters = [] if reporters is None else list(reporters)
+        for r in self.reporters:
+            r.initialize(id=self.server_name)
 
     def load_model_checkpoint_to_parameters(self) -> Parameters:
         assert self.model_checkpoint_path
@@ -92,33 +92,39 @@ class EvaluateServer(Server):
             Tuple[History, float]: The first element of the tuple is a History object containing the aggregated
                 metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
-        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
-
         history = History()
 
         # Run Federated Evaluation
         log(INFO, "Federated Evaluation Starting")
-        start_time = timeit.default_timer()
-
+        start_time = datetime.datetime.now()
         # We're only performing federated evaluation. So we make use of the evaluate round function, but simply
         # perform such evaluation once.
         res_fed = self.federated_evaluate(timeout=timeout)
+        end_time = datetime.datetime.now()
+
+        for r in self.reporters:
+            r.report(
+                {
+                    "fit_elapsed_time": str(start_time - end_time),
+                    "fit_start": str(start_time),
+                    "fit_end": str(end_time),
+                    "num_rounds": num_rounds,
+                    "host_type": "server",
+                }
+            )
+            print("REPORTED")
         if res_fed:
             _, evaluate_metrics_fed, _ = res_fed
             if evaluate_metrics_fed:
                 history.add_metrics_distributed(server_round=0, metrics=evaluate_metrics_fed)
-                self.metrics_reporter.add_to_metrics(
-                    {
-                        "metrics": evaluate_metrics_fed,
-                        "fit_end": datetime.datetime.now(),
-                    }
-                )
+                if evaluate_metrics_fed:
+                    for r in self.reporters:
+                        r.report({"fit_metrics": evaluate_metrics_fed})
 
         # Bookkeeping
-        end_time = timeit.default_timer()
         elapsed = end_time - start_time
-        log(INFO, "Federated Evaluation Finished in %s", elapsed)
-        return history, elapsed
+        log(INFO, "Federated Evaluation Finished in %s", str(elapsed))
+        return history, elapsed.total_seconds()
 
     def federated_evaluate(
         self,
@@ -152,9 +158,15 @@ class EvaluateServer(Server):
 
         # Collect `evaluate` results from all clients participating in this round
         results, failures = evaluate_clients(
-            client_instructions, max_workers=self.max_workers, timeout=timeout, group_id=0
+            client_instructions,
+            max_workers=self.max_workers,
+            timeout=timeout,
+            group_id=0,
         )
-        log(INFO, f"Federated Evaluation received {len(results)} results and {len(failures)} failures")
+        log(
+            INFO,
+            f"Federated Evaluation received {len(results)} results and {len(failures)} failures",
+        )
 
         # Aggregate the evaluation results, note that we assume that the losses have been packed and aggregated with
         # the metrics. A dummy loss is returned by each of the clients. We therefore return none for the aggregated

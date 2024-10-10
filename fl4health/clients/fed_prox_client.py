@@ -13,6 +13,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerFedProx
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
@@ -32,6 +33,7 @@ class FedProxClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -39,6 +41,7 @@ class FedProxClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.initial_tensors: List[torch.Tensor]
         self.parameter_exchanger: ParameterExchangerWithPacking
@@ -51,7 +54,10 @@ class FedProxClient(BasicClient):
         Packs the parameters and training loss into a single NDArrays to be sent to the server for aggregation
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
             # If initialized==False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
@@ -61,7 +67,6 @@ class FedProxClient(BasicClient):
             # Need all parameters even if normally exchanging partial
             return FullParameterExchanger().push_parameters(self.model, config=config)
         else:
-
             assert self.model is not None and self.parameter_exchanger is not None and self.current_loss is not None
             model_weights = self.parameter_exchanger.push_parameters(self.model, config=config)
 
