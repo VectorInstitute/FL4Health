@@ -3,7 +3,14 @@ from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
+from flwr.common import (
+    EvaluateIns,
+    MetricsAggregationFn,
+    NDArrays,
+    Parameters,
+    ndarrays_to_parameters,
+    parameters_to_ndarrays,
+)
 from flwr.common.logger import log
 from flwr.common.typing import EvaluateRes, FitIns, FitRes, Scalar
 from flwr.server.client_manager import ClientManager
@@ -23,7 +30,7 @@ class FairnessMetricType(Enum):
     """Defines the basic types for fairness metrics, their default names and their default signals"""
 
     ACCURACY = "val - prediction - accuracy"
-    LOSS = "val - loss"
+    LOSS = "val - checkpoint"
     CUSTOM = "custom"
 
     @classmethod
@@ -84,7 +91,7 @@ class FairnessMetric:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
 
 
-class FedDgGaStrategy(FedAvg):
+class FedDgGa(FedAvg):
     def __init__(
         self,
         *,
@@ -108,8 +115,12 @@ class FedDgGaStrategy(FedAvg):
         fairness_metric: Optional[FairnessMetric] = None,
         weight_step_size: float = 0.2,
     ):
-        """Strategy for the FedDG-GA algorithm (Federated Domain Generalization with
-        Generalization Adjustment, Zhang et al. 2023).
+        """
+        Strategy for the FedDG-GA algorithm (Federated Domain Generalization with Generalization Adjustment, Zhang et
+        al. 2023). This strategy assumes (and checks) that the configuration sent by the server to the clients has the
+        key "evaluate_after_fit" and it is set to True. It also ensures that the key "pack_losses_with_val_metrics" is
+        present and its value is set to True. These are to facilitate the exchange of evaluation information needed
+        for the strategy to work correctly.
 
         Args:
             fraction_fit : float, optional
@@ -133,9 +144,9 @@ class FedDgGaStrategy(FedAvg):
                 ]
                 Optional function used for validation. Defaults to None.
             on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
-                Function used to configure training. Defaults to None.
+                Function used to configure training. Must be specified for this strategy. Defaults to None.
             on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
-                Function used to configure validation. Defaults to None.
+                Function used to configure validation. Must be specified for this strategy. Defaults to None.
             accept_failures : bool, optional
                 Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters : Parameters, optional
@@ -220,17 +231,40 @@ class FedDgGaStrategy(FedAvg):
 
         self.initial_adjustment_weight = 1.0 / len(client_fit_ins)
 
-        # Setting self.num_rounds
+        # Setting self.num_rounds once and doing some sanity checks
+        assert self.on_fit_config_fn is not None, "on_fit_config_fn must be specified"
+        config = self.on_fit_config_fn(server_round)
+        assert "evaluate_after_fit" in config, "evaluate_after_fit must be present in config"
+        assert config["evaluate_after_fit"] is True, "evaluate_after_fit must be set to True"
+
+        assert "pack_losses_with_val_metrics" in config, "pack_losses_with_val_metrics must be present in config"
+        assert config["pack_losses_with_val_metrics"] is True, "pack_losses_with_val_metrics must be set to True"
+
+        assert "n_server_rounds" in config, "n_server_rounds must be specified"
+        assert isinstance(config["n_server_rounds"], int), "n_server_rounds is not an integer"
+
         if self.num_rounds is None:
-            assert self.on_fit_config_fn is not None, "on_fit_config_fn must be specified"
-            config = self.on_fit_config_fn(server_round)
-            assert "evaluate_after_fit" in config, "evaluate_after_fit must be present in config and set to True"
-            assert config["evaluate_after_fit"] is True, "evaluate_after_fit must be set to True"
-            assert "n_server_rounds" in config, "n_server_rounds must be specified"
-            assert isinstance(config["n_server_rounds"], int), "n_server_rounds is not an integer"
             self.num_rounds = config["n_server_rounds"]
+        else:
+            assert config["n_server_rounds"] == self.num_rounds, "n_server_rounds has changed from the original value"
 
         return client_fit_ins
+
+    def configure_evaluate(
+        self, server_round: int, parameters: Parameters, client_manager: ClientManager
+    ) -> List[Tuple[ClientProxy, EvaluateIns]]:
+        assert isinstance(
+            client_manager, FixedSamplingClientManager
+        ), f"Client manager is not of type FixedSamplingClientManager: {type(client_manager)}"
+
+        client_evaluate_ins = super().configure_evaluate(server_round, parameters, client_manager)
+
+        assert self.on_evaluate_config_fn is not None, "on_fit_config_fn must be specified"
+        config = self.on_evaluate_config_fn(server_round)
+        assert "pack_losses_with_val_metrics" in config, "pack_losses_with_val_metrics must be present in config"
+        assert config["pack_losses_with_val_metrics"] is True, "pack_losses_with_val_metrics must be set to True"
+
+        return client_evaluate_ins
 
     def aggregate_fit(
         self,
@@ -252,9 +286,19 @@ class FedDgGaStrategy(FedAvg):
             (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics.
         """
-        # The original aggregated parameters is done by the super class (which we want to
-        # override its behaviour here), so we are discarding it to recalculate them in the lines below
-        _, metrics_aggregated = super().aggregate_fit(server_round, results, failures)
+        if not results:
+            return None, {}
+        # Do not aggregate if there are failures and failures are not accepted
+        if not self.accept_failures and failures:
+            return None, {}
+
+        # Aggregate custom metrics if aggregation fn was provided
+        metrics_aggregated = {}
+        if self.fit_metrics_aggregation_fn:
+            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
+            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
+        elif server_round == 1:  # Only log this warning once
+            log(WARNING, "No fit_metrics_aggregation_fn provided")
 
         self.train_metrics = {}
         for client_proxy, fit_res in results:
@@ -290,10 +334,9 @@ class FedDgGaStrategy(FedAvg):
         self.evaluation_metrics = {}
         for client_proxy, eval_res in results:
             cid = client_proxy.cid
+            # make sure that the metrics has the desired loss key
+            assert FairnessMetricType.LOSS.value in eval_res.metrics
             self.evaluation_metrics[cid] = eval_res.metrics
-            # adding the loss to the metrics
-            val_loss_key = FairnessMetricType.LOSS.value
-            self.evaluation_metrics[cid][val_loss_key] = eval_res.loss
 
         # Updating the weights at the end of the training round
         cids = [client_proxy.cid for client_proxy, _ in results]

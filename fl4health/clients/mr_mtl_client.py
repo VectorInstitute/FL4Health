@@ -149,7 +149,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         # Use the rest of the training loss computation from the AdaptiveDriftConstraintClient parent
         return super().compute_training_loss(preds, features, target)
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
@@ -158,4 +158,4 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         """
         # ensure that the initial global model is in eval mode
         assert not self.initial_global_model.training
-        return super().validate()
+        return super().validate(include_losses_in_metrics=include_losses_in_metrics)

@@ -9,6 +9,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, Config
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
+from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -112,7 +113,7 @@ class MoonClient(BasicClient):
         """
         assert isinstance(self.model, SequentiallySplitModel)
         # Save the parameters of the old LOCAL model
-        old_model = self.clone_and_freeze_model(self.model)
+        old_model = clone_and_freeze_model(self.model)
         # Current model is appended to the back of the list
         self.old_models_list.append(old_model)
         # If the list is longer than desired, the element at the front of the list is removed.
@@ -131,7 +132,7 @@ class MoonClient(BasicClient):
             current_server_round (int): Current federated training round being executed.
         """
         # Save the parameters of the global model
-        self.global_model = self.clone_and_freeze_model(self.model)
+        self.global_model = clone_and_freeze_model(self.model)
 
         super().update_before_train(current_server_round)
 
