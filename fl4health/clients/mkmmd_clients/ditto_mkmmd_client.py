@@ -11,6 +11,7 @@ from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpoi
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
+from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -113,7 +114,7 @@ class DittoMkMmdClient(DittoClient):
         assert isinstance(self.global_model, nn.Module)
         # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
-        self.initial_global_model = self.clone_and_freeze_model(self.global_model)
+        self.initial_global_model = clone_and_freeze_model(self.global_model)
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,

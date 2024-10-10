@@ -10,6 +10,7 @@ from fl4health.losses.perfcl_loss import PerFclLoss
 from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -160,9 +161,9 @@ class PerFclClient(BasicClient):
         """
         assert isinstance(self.model, PerFclModel)
         # First module is the local feature extractor for PerFcl Models
-        self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
+        self.old_local_module = clone_and_freeze_model(self.model.first_feature_extractor)
         # Second module is the global feature extractor for PerFcl Models
-        self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
+        self.old_global_module = clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_after_train(local_steps, loss_dict, config)
 
@@ -178,7 +179,7 @@ class PerFclClient(BasicClient):
         """
         # Save the parameters of the aggregated global model
         assert isinstance(self.model, PerFclModel)
-        self.initial_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
+        self.initial_global_module = clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_before_train(current_server_round)
 

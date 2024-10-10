@@ -8,7 +8,9 @@ import torch
 from flwr.common import Scalar
 from freezegun import freeze_time
 
-from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.clients.basic_client import BasicClient
+from fl4health.utils.client import fold_loss_dict_into_metrics
+from fl4health.utils.logging import LoggingMode
 
 freezegun.configure(extend_ignore_list=["transformers"])  # type: ignore
 
@@ -65,12 +67,21 @@ def test_metrics_reporter_evaluate() -> None:
     test_metrics_final = {
         "test_metric": 1234,
         "testing_metric": 1234,
-        "test - loss": 123.123,
+        "val - checkpoint": 123.123,
+        "test - checkpoint": 123.123,
         "test - num_examples": 0,
     }
 
-    fl_client = MockBasicClient(loss=test_loss, metrics=test_metrics, test_set_metrics=test_metrics_testing)
-    fl_client.evaluate([], {"current_server_round": test_current_server_round, "local_epochs": 0})
+    fl_client = MockBasicClient(
+        loss=test_loss,
+        loss_dict={"checkpoint": test_loss},
+        metrics=test_metrics,
+        test_set_metrics=test_metrics_testing,
+    )
+    fl_client.evaluate(
+        [],
+        {"current_server_round": test_current_server_round, "local_epochs": 0, "pack_losses_with_val_metrics": True},
+    )
 
     assert fl_client.metrics_reporter.metrics == {
         "type": "client",
@@ -156,12 +167,11 @@ class MockBasicClient(BasicClient):
         self._validate_or_test.side_effect = self.mock_validate_or_test
 
     def mock_validate_or_test(  # type: ignore
-        self,
-        loader,
-        loss_meter,
-        metric_manager,
-        logging_mode=LoggingMode.VALIDATION,
+        self, loader, loss_meter, metric_manager, logging_mode=LoggingMode.VALIDATION, include_losses_in_metrics=False
     ):
+        if include_losses_in_metrics:
+            assert self.mock_loss_dict is not None and self.mock_metrics is not None
+            fold_loss_dict_into_metrics(self.mock_metrics, self.mock_loss_dict, logging_mode)
         if logging_mode == LoggingMode.VALIDATION:
             return self.mock_loss, self.mock_metrics
         else:

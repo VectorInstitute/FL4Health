@@ -1,20 +1,17 @@
-import copy
 import datetime
-from enum import Enum
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
 from flwr.client import NumPyClient
-from flwr.common.logger import LOG_COLORS, log
+from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
@@ -22,17 +19,13 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.fl_wandb import ClientWandBReporter
 from fl4health.reporting.metrics import MetricsReporter
+from fl4health.utils.client import fold_loss_dict_into_metrics, is_empty_batch, maybe_progress_bar, move_data_to_device
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
+from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import LogLevel, TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
-
-
-class LoggingMode(Enum):
-    TRAIN = "Training"
-    VALIDATION = "Validation"
-    TEST = "Testing"
 
 
 class BasicClient(NumPyClient):
@@ -213,7 +206,7 @@ class BasicClient(NumPyClient):
 
         self.metrics_reporter.add_to_metrics({"shutdown": datetime.datetime.now()})
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
+    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
 
@@ -247,8 +240,13 @@ class BasicClient(NumPyClient):
         except ValueError:
             evaluate_after_fit = False
 
+        try:
+            pack_losses_with_val_metrics = narrow_dict_type(config, "pack_losses_with_val_metrics", bool)
+        except ValueError:
+            pack_losses_with_val_metrics = False
+
         # Either local epochs or local steps is none based on what key is passed in the config
-        return local_epochs, local_steps, current_server_round, evaluate_after_fit
+        return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
     def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
         """
@@ -267,7 +265,9 @@ class BasicClient(NumPyClient):
         Raises:
             ValueError: If local_steps or local_epochs is not specified in config.
         """
-        local_epochs, local_steps, current_server_round, evaluate_after_fit = self.process_config(config)
+        local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
+            self.process_config(config)
+        )
 
         if not self.initialized:
             self.setup_client(config)
@@ -300,7 +300,7 @@ class BasicClient(NumPyClient):
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
         if self._should_evaluate_after_fit(evaluate_after_fit):
-            validation_loss, validation_metrics = self.evaluate_after_fit()
+            validation_loss, validation_metrics = self.validate(pack_losses_with_val_metrics)
             metrics.update(validation_metrics)
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
@@ -326,21 +326,6 @@ class BasicClient(NumPyClient):
             metrics,
         )
 
-    def evaluate_after_fit(self) -> Tuple[float, Dict[str, Scalar]]:
-        """
-        Run self.validate right after fit to collect metrics on the local model against validation data.
-
-        Returns: (Dict[str, Scalar]) a dictionary with the metrics.
-
-        """
-        loss, metric_values = self.validate()
-        # The computed loss value is packed into the metrics dictionary, perhaps for use on the server-side
-        metrics_after_fit = {
-            **metric_values,  # type: ignore
-            "val - loss": loss,
-        }
-        return loss, metrics_after_fit
-
     def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
         """
         Evaluates the model on the validation set, and test set (if defined).
@@ -357,13 +342,19 @@ class BasicClient(NumPyClient):
             self.setup_client(config)
 
         current_server_round = narrow_dict_type(config, "current_server_round", int)
+
+        try:
+            pack_losses_with_val_metrics = narrow_dict_type(config, "pack_losses_with_val_metrics", bool)
+        except ValueError:
+            pack_losses_with_val_metrics = False
+
         self.metrics_reporter.add_to_metrics_at_round(
             current_server_round,
             data={"evaluate_start": datetime.datetime.now()},
         )
 
         self.set_parameters(parameters, config, fitting_round=False)
-        loss, metrics = self.validate()
+        loss, metrics = self.validate(pack_losses_with_val_metrics)
 
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
         # NOTE: This assumes that the loss returned in the checkpointing loss
@@ -536,69 +527,6 @@ class BasicClient(NumPyClient):
         """
         return {}
 
-    def _move_data_to_device(
-        self, data: Union[TorchInputType, TorchTargetType]
-    ) -> Union[TorchTargetType, TorchInputType]:
-        """
-        Moving data to self.device where data is intended to be either input to
-        the model or the targets that the model is trying to achieve
-
-        Args:
-            data (TorchInputType | TorchTargetType): The data to move to
-                self.device. Can be a TorchInputType or a TorchTargetType
-
-        Raises:
-            TypeError: Raised if data is not one of the types specified by
-                TorchInputType or TorchTargetType
-
-        Returns:
-            Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
-        """
-        # Currently we expect both inputs and targets to be either tensors
-        # or dictionaries of tensors
-        if isinstance(data, torch.Tensor):
-            return data.to(self.device)
-        elif isinstance(data, dict):
-            return {key: value.to(self.device) for key, value in data.items()}
-        else:
-            raise TypeError(
-                "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
-                    If definition of TorchInputType or TorchTargetType has \
-                    changed this method might need to be updated or split into \
-                    two"
-            )
-
-    def is_empty_batch(self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> bool:
-        """
-        Check whether input, which represents a batch of inputs to a model, is empty.
-
-        Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): input batch.
-            input can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
-            latter case, the batch is considered to be empty if all tensors in the dictionary
-            have length zero.
-
-        Raises:
-            TypeError: raised if input is not of type torch.Tensor or Dict[str, torch.Tensor].
-            ValueError: raised if input has type Dict[str, torch.Tensor] and not all tensors
-            within the dictionary have the same size.
-
-        Returns:
-            bool: True if input is an empty batch.
-        """
-        if isinstance(input, torch.Tensor):
-            return len(input) == 0
-        elif isinstance(input, dict):
-            input_iter = iter(input.items())
-            _, first_val = next(input_iter)
-            first_val_len = len(first_val)
-            if not all(len(val) == first_val_len for _, val in input_iter):
-                raise ValueError("Not all tensors in the dictionary have the same size.")
-            else:
-                return first_val_len == 0
-        else:
-            raise TypeError("Input must be of type torch.Tensor or Dict[str, torch.Tensor].")
-
     def update_metric_manager(
         self, preds: TorchPredType, target: TorchTargetType, metric_manager: MetricManager
     ) -> None:
@@ -694,16 +622,16 @@ class BasicClient(NumPyClient):
             self._log_header_str(current_round, local_epoch)
             # update before epoch hook
             self.update_before_epoch(epoch=local_epoch)
-            for input, target in self.maybe_progress_bar(self.train_loader):
+            for input, target in maybe_progress_bar(self.train_loader, self.progress_bar):
                 self.update_before_step(steps_this_round, current_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
                 # construct empty batches. We skip the iteration if this occurs.
-                if self.is_empty_batch(input):
+                if is_empty_batch(input):
                     log(INFO, "Empty batch generated by data loader. Skipping step.")
                     continue
 
-                input = self._move_data_to_device(input)
-                target = self._move_data_to_device(target)
+                input = move_data_to_device(input, self.device)
+                target = move_data_to_device(target, self.device)
                 losses, preds = self.train_step(input, target)
                 self.train_loss_meter.update(losses)
                 self.update_metric_manager(preds, target, self.train_metric_manager)
@@ -745,7 +673,7 @@ class BasicClient(NumPyClient):
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
         self._log_header_str(current_round)
-        for step in self.maybe_progress_bar(range(steps)):
+        for step in maybe_progress_bar(range(steps), self.progress_bar):
 
             self.update_before_step(step, current_round)
 
@@ -759,12 +687,12 @@ class BasicClient(NumPyClient):
 
             # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
             # construct empty batches. We skip the iteration if this occurs.
-            if self.is_empty_batch(input):
+            if is_empty_batch(input):
                 log(INFO, "Empty batch generated by data loader. Skipping step.")
                 continue
 
-            input = self._move_data_to_device(input)
-            target = self._move_data_to_device(target)
+            input = move_data_to_device(input, self.device)
+            target = move_data_to_device(target, self.device)
             losses, preds = self.train_step(input, target)
             self.train_loss_meter.update(losses)
             self.update_metric_manager(preds, target, self.train_metric_manager)
@@ -787,6 +715,7 @@ class BasicClient(NumPyClient):
         loss_meter: LossMeter,
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
+        include_losses_in_metrics: bool = False,
     ) -> Tuple[float, Dict[str, Scalar]]:
         """
         Evaluate the model on the given validation or test dataset.
@@ -795,8 +724,10 @@ class BasicClient(NumPyClient):
             loader (DataLoader): The data loader for the dataset (validation or test).
             loss_meter (LossMeter): The meter to track the losses.
             metric_manager (MetricManager): The manager to track the metrics.
-            logging_mode (LoggingMode): The LoggingMode for whether this evaluation is for validation or test.
-              Default is for validation.
+            logging_mode (LoggingMode, optional): The LoggingMode for whether this evaluation is for validation or
+                test. Defaults to LoggingMode.VALIDATION.
+            include_losses_in_metrics (bool, optional): Whether or not to pack the additional losses into the metrics
+                dictionary. Defaults to False.
 
         Returns:
             Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
@@ -806,9 +737,9 @@ class BasicClient(NumPyClient):
         metric_manager.clear()
         loss_meter.clear()
         with torch.no_grad():
-            for input, target in self.maybe_progress_bar(loader):
-                input = self._move_data_to_device(input)
-                target = self._move_data_to_device(target)
+            for input, target in maybe_progress_bar(loader, self.progress_bar):
+                input = move_data_to_device(input, self.device)
+                target = move_data_to_device(target, self.device)
                 losses, preds = self.val_step(input, target)
                 loss_meter.update(losses)
                 self.update_metric_manager(preds, target, metric_manager)
@@ -818,9 +749,12 @@ class BasicClient(NumPyClient):
         metrics = metric_manager.compute()
         self._log_results(loss_dict, metrics, logging_mode=logging_mode)
 
+        if include_losses_in_metrics:
+            fold_loss_dict_into_metrics(metrics, loss_dict, logging_mode)
+
         return loss_dict["checkpoint"], metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation
             and potentially an entire test dataset if it has been defined.
@@ -829,10 +763,19 @@ class BasicClient(NumPyClient):
             Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
                 from validation (and test if present).
         """
-        val_loss, val_metrics = self._validate_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
+        val_loss, val_metrics = self._validate_or_test(
+            self.val_loader,
+            self.val_loss_meter,
+            self.val_metric_manager,
+            include_losses_in_metrics=include_losses_in_metrics,
+        )
         if self.test_loader:
             test_loss, test_metrics = self._validate_or_test(
-                self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
+                self.test_loader,
+                self.test_loss_meter,
+                self.test_metric_manager,
+                LoggingMode.TEST,
+                include_losses_in_metrics=include_losses_in_metrics,
             )
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
@@ -1034,24 +977,6 @@ class BasicClient(NumPyClient):
         assert not isinstance(optimizer, dict)
         self.optimizers = {"global": optimizer}
 
-    def clone_and_freeze_model(self, model: nn.Module) -> nn.Module:
-        """
-        Creates a clone of the model with frozen weights to be used in loss calculations so the original model is
-        preserved in its current state.
-
-        Args:
-            model (nn.Module): Model to clone and freeze
-        Returns:
-            nn.Module: Cloned and frozen model
-        """
-
-        cloned_model = copy.deepcopy(model)
-        for param in cloned_model.parameters():
-            param.requires_grad = False
-        cloned_model.eval()
-
-        return cloned_model
-
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, ...]:
         """
         User defined method that returns a PyTorch Train DataLoader
@@ -1240,35 +1165,6 @@ class BasicClient(NumPyClient):
             epoch (int): Integer representing the epoch about to begin
         """
         pass
-
-    def maybe_progress_bar(self, iterable: Iterable) -> Iterable:
-        """
-        Used to print progress bars during client training and validation. If
-        self.progress_bar is false, just returns the original input iterable
-        without modifying it.
-
-        Args:
-            iterable (Iterable): The iterable to wrap
-
-        Returns:
-            Iterable: an iterator which acts exactly like the original
-                iterable, but prints a dynamically updating progress bar every
-                time a value is requested. Or the original iterable if
-                self.progress_bar is False
-        """
-        if not self.progress_bar:
-            return iterable
-        else:
-            # Create a clean looking tqdm instance that matches the flwr logging
-            kwargs = {
-                "leave": True,
-                "ascii": " >=",
-                # "desc": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']} ",
-                "unit": "steps",
-                "dynamic_ncols": True,
-                "bar_format": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']}" + " :        {l_bar}{bar}{r_bar}",
-            }
-            return tqdm(iterable, **kwargs)
 
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """

@@ -9,8 +9,11 @@ from flwr.server.client_manager import ClientManager, ClientProxy, SimpleClientM
 from pytest import approx, raises
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
-from fl4health.strategies.feddg_ga import FairnessMetricType, FedDgGa
+from fl4health.strategies.feddg_ga import FairnessMetricType
+from fl4health.strategies.feddg_ga_with_adaptive_constraint import FedDgGaAdaptiveConstraint
 from tests.test_utils.custom_client_proxy import CustomClientProxy
+
+INITIAL_PARAMETERS = ndarrays_to_parameters([np.array([0.0, 0.0])])
 
 
 def test_configure_fit_and_evaluate_success() -> None:
@@ -30,7 +33,11 @@ def test_configure_fit_and_evaluate_success() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn, on_evaluate_config_fn=on_evaluate_config_fn)
+    strategy = FedDgGaAdaptiveConstraint(
+        initial_parameters=INITIAL_PARAMETERS,
+        on_fit_config_fn=on_fit_config_fn,
+        on_evaluate_config_fn=on_evaluate_config_fn,
+    )
     assert strategy.num_rounds is None
 
     try:
@@ -48,7 +55,7 @@ def test_configure_fit_fail() -> None:
     simple_client_manager = _apply_mocks_to_client_manager(SimpleClientManager())
 
     # Fails with no configure fit
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -60,7 +67,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), simple_client_manager)
 
@@ -72,7 +79,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_1)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_1)
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
@@ -86,7 +93,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_2)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_2)
     assert strategy.num_rounds is None
 
     with raises(AssertionError):
@@ -99,7 +106,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_3)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_3)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -111,7 +118,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_4)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_4)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -122,7 +129,7 @@ def test_configure_fit_fail() -> None:
             "evaluate_after_fit": True,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_5)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_5)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -134,7 +141,7 @@ def test_configure_fit_fail() -> None:
             "pack_losses_with_val_metrics": False,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_6)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_6)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -144,7 +151,7 @@ def test_configure_evaluate_fail() -> None:
     simple_client_manager = _apply_mocks_to_client_manager(SimpleClientManager())
 
     # Fails with no evaluate fit
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     with raises(AssertionError):
         strategy.configure_evaluate(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -155,7 +162,9 @@ def test_configure_evaluate_fail() -> None:
             "pack_losses_with_val_metrics": True,
         }
 
-    strategy = FedDgGa(on_evaluate_config_fn=on_evaluate_config_fn)
+    strategy = FedDgGaAdaptiveConstraint(
+        initial_parameters=INITIAL_PARAMETERS, on_evaluate_config_fn=on_evaluate_config_fn
+    )
     with raises(AssertionError):
         strategy.configure_evaluate(1, Parameters([], ""), simple_client_manager)
 
@@ -165,7 +174,9 @@ def test_configure_evaluate_fail() -> None:
             "foo": 123,
         }
 
-    strategy = FedDgGa(on_evaluate_config_fn=on_evaluate_config_fn_1)
+    strategy = FedDgGaAdaptiveConstraint(
+        initial_parameters=INITIAL_PARAMETERS, on_evaluate_config_fn=on_evaluate_config_fn_1
+    )
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -176,7 +187,7 @@ def test_configure_evaluate_fail() -> None:
             "pack_losses_with_val_metrics": False,
         }
 
-    strategy = FedDgGa(on_fit_config_fn=on_fit_config_fn_2)
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS, on_fit_config_fn=on_fit_config_fn_2)
     with raises(AssertionError):
         strategy.configure_fit(1, Parameters([], ""), fixed_sampling_client_manager)
 
@@ -191,12 +202,18 @@ def test_aggregate_fit_and_aggregate_evaluate() -> None:
     test_eval_metrics_2 = test_eval_results[1][1].metrics
     test_initial_adjustment_weight = 1.0 / 3.0
 
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(
+        initial_parameters=INITIAL_PARAMETERS, initial_loss_weight=1.0, adapt_loss_weight=True, loss_weight_patience=1
+    )
     strategy.num_rounds = 3
     strategy.initial_adjustment_weight = test_initial_adjustment_weight
 
     # test aggregate fit
     parameters_aggregated, _ = strategy.aggregate_fit(2, deepcopy(test_fit_results), [])
+
+    # make sure the the loss has been aggregated and stored and the loss weight adjusted
+    assert strategy.previous_loss == 2.0
+    assert strategy.loss_weight == 0.9
 
     assert strategy.train_metrics == {
         test_cid_1: test_fit_metrics_1,
@@ -230,8 +247,9 @@ def test_weight_and_aggregate_results_with_default_weights() -> None:
     test_cid_2 = test_fit_results[1][0].cid
     test_initial_adjustment_weight = 1.0 / 3.0
 
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     strategy.initial_adjustment_weight = test_initial_adjustment_weight
+    strategy._unpack_weights_and_losses(test_fit_results)
     aggregated_results = strategy.weight_and_aggregate_results(test_fit_results)
 
     assert strategy.adjustment_weights == {
@@ -247,8 +265,9 @@ def test_weight_and_aggregate_results_with_existing_weights() -> None:
     test_cid_2 = test_fit_results[1][0].cid
     test_adjustment_weights = {test_cid_1: 0.21, test_cid_2: 0.76}
 
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     strategy.adjustment_weights = deepcopy(test_adjustment_weights)
+    strategy._unpack_weights_and_losses(test_fit_results)
     aggregated_results = strategy.weight_and_aggregate_results(test_fit_results)
 
     assert strategy.adjustment_weights == test_adjustment_weights
@@ -260,7 +279,7 @@ def test_update_weights_by_ga() -> None:
     test_val_loss_key = FairnessMetricType.LOSS.value
     test_initial_adjustment_weight = 1.0 / 3.0
 
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     strategy.num_rounds = 3
     strategy.initial_adjustment_weight = test_initial_adjustment_weight
     strategy.train_metrics = {
@@ -289,7 +308,7 @@ def test_update_weights_by_ga_with_same_metrics() -> None:
     test_val_loss_key = FairnessMetricType.LOSS.value
     test_initial_adjustment_weight = 1.0 / 3.0
 
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
     strategy.num_rounds = 3
     strategy.initial_adjustment_weight = test_initial_adjustment_weight
     strategy.train_metrics = {
@@ -311,7 +330,7 @@ def test_update_weights_by_ga_with_same_metrics() -> None:
 
 
 def test_get_current_weight_step_size() -> None:
-    strategy = FedDgGa()
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
 
     with raises(AssertionError):
         strategy.get_current_weight_step_size(2)
@@ -334,6 +353,33 @@ def test_get_current_weight_step_size() -> None:
     assert result_step_size == approx(0.2500, abs=0.0005)
 
 
+def test_unpack_weights_and_losses() -> None:
+    test_fit_results, _ = _make_test_data()
+    # make sure the results are of length 2 (one for the weights, one for the loss)
+    assert len(test_fit_results[0][1].parameters.tensors) == 2
+    assert len(test_fit_results[1][1].parameters.tensors) == 2
+
+    strategy = FedDgGaAdaptiveConstraint(initial_parameters=INITIAL_PARAMETERS)
+    train_losses_and_counts = strategy._unpack_weights_and_losses(test_fit_results)
+
+    # Assert that the fit results have been modified in place and properly
+    assert len(test_fit_results) == 2
+    test_ndarrays_1 = parameters_to_ndarrays(test_fit_results[0][1].parameters)
+    test_ndarrays_2 = parameters_to_ndarrays(test_fit_results[1][1].parameters)
+    target_ndarray_1 = np.array([1.0, 1.1])
+    target_ndarray_2 = np.array([2.0, 2.1])
+    # length should be 1, since we've unpacked the loss arrays
+    assert len(test_ndarrays_1) == 1
+    assert len(test_ndarrays_2) == 1
+
+    assert np.allclose(test_ndarrays_1[0], target_ndarray_1, rtol=0.0, atol=1e-6)
+    assert np.allclose(test_ndarrays_2[0], target_ndarray_2, rtol=0.0, atol=1e-6)
+
+    # Make sure that the losses have properly been extracted and stored.
+    assert train_losses_and_counts[0][1] == 1.5
+    assert train_losses_and_counts[1][1] == 2.5
+
+
 def _apply_mocks_to_client_manager(client_manager: ClientManager) -> ClientManager:
     client_proxy_1 = CustomClientProxy("1")
     client_proxy_2 = CustomClientProxy("2")
@@ -351,8 +397,8 @@ def _make_test_data() -> Tuple[List[Tuple[ClientProxy, FitRes]], List[Tuple[Clie
     test_fit_metrics_2: Dict[str, Scalar] = {test_val_loss_key: 2.0}
     test_eval_metrics_1: Dict[str, Scalar] = {"metric-1": 1.0, test_val_loss_key: 1.2}
     test_eval_metrics_2: Dict[str, Scalar] = {"metric-2": 2.0, test_val_loss_key: 2.2}
-    test_parameters_1 = ndarrays_to_parameters([np.array([1.0, 1.1])])
-    test_parameters_2 = ndarrays_to_parameters([np.array([2.0, 2.1])])
+    test_parameters_1 = ndarrays_to_parameters([np.array([1.0, 1.1]), np.array(1.5)])
+    test_parameters_2 = ndarrays_to_parameters([np.array([2.0, 2.1]), np.array(2.5)])
     test_fit_results = [
         (CustomClientProxy("1"), FitRes(Status(Code.OK, ""), test_parameters_1, 1, test_fit_metrics_1)),
         (CustomClientProxy("2"), FitRes(Status(Code.OK, ""), test_parameters_2, 1, test_fit_metrics_2)),
