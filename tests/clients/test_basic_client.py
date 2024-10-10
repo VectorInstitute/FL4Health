@@ -51,6 +51,7 @@ def test_metrics_reporter_fit() -> None:
                 "fit_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
                 "loss_dict": test_loss_dict,
                 "fit_metrics": test_metrics,
+                "fit_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
             },
         },
     }
@@ -80,6 +81,7 @@ def test_metrics_reporter_evaluate() -> None:
                 "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
                 "loss": test_loss,
                 "evaluate_metrics": test_metrics_final,
+                "evaluate_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
             },
         },
     }
