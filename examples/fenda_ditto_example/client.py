@@ -124,7 +124,6 @@ if __name__ == "__main__":
         DEVICE,
         args.checkpoint_path,
         checkpointer=checkpointer,
-        lam=0.1,
         reporters=[JsonReporter()],
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

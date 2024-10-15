@@ -8,7 +8,7 @@ from fl4health.parameter_exchange.parameter_packer import ParameterPacker
 T = TypeVar("T")
 
 
-class ParameterExchangerWithPacking(FullParameterExchanger, Generic[T]):
+class FullParameterExchangerWithPacking(FullParameterExchanger, Generic[T]):
     def __init__(self, parameter_packer: ParameterPacker[T]) -> None:
         super().__init__()
         self.parameter_packer = parameter_packer

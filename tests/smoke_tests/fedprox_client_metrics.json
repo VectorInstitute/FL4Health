@@ -5,7 +5,7 @@
             "fit_losses": {
                 "loss": 2.1261,
                 "backward": 2.1525,
-                "proximal_loss": 0.0263
+                "penalty_loss": 0.0263
             },
             "eval_metrics": {"val - prediction - accuracy": 0.4627},
             "eval_loss": 2.0268
@@ -15,7 +15,7 @@
             "fit_losses": {
                 "loss": 1.8922,
                 "backward": 1.8922,
-                "proximal_loss": 0.0
+                "penalty_loss": 0.0
             },
             "eval_metrics": {"val - prediction - accuracy": 0.4323},
             "eval_loss": 1.7356
@@ -25,7 +25,7 @@
             "fit_losses": {
                 "loss": 1.5627,
                 "backward": 1.5627,
-                "proximal_loss": 0.0
+                "penalty_loss": 0.0
             },
             "eval_metrics": {"val - prediction - accuracy": 0.5362},
             "eval_loss": 1.4518

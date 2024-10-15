@@ -12,7 +12,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.parameter_exchange.packing_exchanger import ParameterExchangerWithPacking
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.reporting.base_reporter import BaseReporter
@@ -54,7 +54,7 @@ class ScaffoldClient(BasicClient):
         self.optimizers: Dict[str, torch.optim.Optimizer]
 
         self.server_model_weights: Optional[NDArrays] = None  # x in paper
-        self.parameter_exchanger: ParameterExchangerWithPacking[NDArrays]
+        self.parameter_exchanger: FullParameterExchangerWithPacking[NDArrays]
 
     def get_parameters(self, config: Config) -> NDArrays:
         """
@@ -217,7 +217,7 @@ class ScaffoldClient(BasicClient):
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert self.model is not None
         model_size = len(self.model.state_dict())
-        parameter_exchanger = ParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
+        parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
     def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
