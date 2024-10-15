@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
-from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.reporting.metrics import MetricsReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
@@ -89,7 +89,7 @@ class FendaDittoClient(DittoClient):
             metrics_reporter=metrics_reporter,
             progress_bar=progress_bar,
         )
-        self.global_model: SequentiallySplitExchangeBaseModel
+        self.global_model: SequentiallySplitModel
         self.model: FendaModel
         self.freeze_global_feature_extractor = freeze_global_feature_extractor
 
@@ -108,7 +108,7 @@ class FendaDittoClient(DittoClient):
         """
         raise NotImplementedError("This function must be defined in the inheriting class to use this client")
 
-    def get_global_model(self, config: Config) -> SequentiallySplitExchangeBaseModel:
+    def get_global_model(self, config: Config) -> SequentiallySplitModel:
         """
         User defined method that returns a Global Sequential Model that is compatible with the local FENDA model.
 
@@ -116,7 +116,7 @@ class FendaDittoClient(DittoClient):
             config (Config): The config from the server.
 
         Returns:
-            SequentiallySplitExchangeBaseModel: The global (Ditto) model.
+            SequentiallySplitModel: The global (Ditto) model.
 
         Raises:
             NotImplementedError: To be defined in child class.

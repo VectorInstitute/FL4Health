@@ -29,6 +29,7 @@ from the FL4Health directory. The following arguments must be present in the spe
 * `batch_size`: size of the batches each client will train on
 * `n_server_rounds`: The number of rounds to run FL
 * `evaluate_after_fit`: Should be set to `True`. Performs an evaluation at the end of each client's fit round.
+* `pack_losses_with_val_metrics`: Should be set to `True`. Includes validation losses with metrics calculations
 
 ## Starting Clients
 
