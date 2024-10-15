@@ -1328,7 +1328,7 @@ class BasicClient(NumPyClient):
 
         narrow_dict_type_and_set_attribute(self, ckpt, "client_name", "client_name", str)
         narrow_dict_type_and_set_attribute(self, ckpt, "total_steps", "total_steps", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list[BaseReporter])
+        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list)
 
         assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
         assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)

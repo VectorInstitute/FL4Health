@@ -283,7 +283,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         # Standard attributes to load
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list[BaseReporter])
+        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
 
