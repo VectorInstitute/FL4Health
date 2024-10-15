@@ -5,7 +5,7 @@ import torch
 
 
 class ModelLatentF(torch.nn.Module):
-    """Deep network for learning the deep kernel over features.""" 
+    """Deep network for learning the deep kernel over features."""
 
     def __init__(self, x_in_dim: int, hidden_dim: int, x_out_dim: int):
         super().__init__()
