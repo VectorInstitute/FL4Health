@@ -248,17 +248,16 @@ class FedRepClient(BasicClient):
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
         # Report data at end of round
-        for r in self.reporters:
-            r.report(
-                {
-                    "fit_metrics": metrics,
-                    "fit_losses": loss_dict,
-                    "round": current_server_round,
-                    "round_start": str(round_start_time),
-                    "fit_time_elapsed": str(fit_time),
-                },
-                current_server_round,
-            )
+        self.reports_manager.report(
+            {
+                "fit_metrics": metrics,
+                "fit_losses": loss_dict,
+                "round": current_server_round,
+                "round_start": str(round_start_time),
+                "fit_time_elapsed": str(fit_time),
+            },
+            current_server_round,
+        )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
         # calculation results.

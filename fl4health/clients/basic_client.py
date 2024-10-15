@@ -22,6 +22,7 @@ from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpoi
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.report_manager import ReportsManager
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -97,9 +98,8 @@ class BasicClient(NumPyClient):
             self.per_round_checkpointer = None
 
         # Initialize reporters with client information.
-        self.reporters = [] if reporters is None else list(reporters)
-        for r in self.reporters:
-            r.initialize(id=self.client_name)
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
 
@@ -210,9 +210,8 @@ class BasicClient(NumPyClient):
         """
         Shuts down the client. Involves shutting down W&B reporter if one exists.
         """
-        for r in self.reporters:
-            r.report({"shutdown": str(datetime.datetime.now())})
-            r.shutdown()
+        # Shutdown reporters
+        self.reports_manager.shutdown()
 
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
         """
@@ -304,20 +303,18 @@ class BasicClient(NumPyClient):
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
-        # Report data at end of round
-        for r in self.reporters:
-            r.report(
-                {
-                    "fit_metrics": metrics,
-                    "fit_losses": loss_dict,
-                    "round": current_server_round,
-                    "round_start": str(round_start_time),
-                    "round_end": str(datetime.datetime.now()),
-                    "fit_start": str(fit_start_time),
-                    "fit_end": str(fit_end_time),
-                },
-                current_server_round,
-            )
+        self.reports_manager.report(
+            {
+                "fit_metrics": metrics,
+                "fit_losses": loss_dict,
+                "round": current_server_round,
+                "round_start": str(round_start_time),
+                "round_end": str(datetime.datetime.now()),
+                "fit_start": str(fit_start_time),
+                "fit_end": str(fit_end_time),
+            },
+            current_server_round,
+        )
 
         # After local client training has finished, checkpoint client state
         # if per_round_checkpointer is not None
@@ -374,17 +371,16 @@ class BasicClient(NumPyClient):
         # NOTE: This assumes that the loss returned in the checkpointing loss
         self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
 
-        for r in self.reporters:
-            r.report(
-                {
-                    "eval_metrics": metrics,
-                    "eval_loss": loss,
-                    "eval_start": str(start_time),
-                    "eval_time_elapsed": str(elapsed),
-                    "eval_end": str(end_time),
-                },
-                current_server_round,
-            )
+        self.reports_manager.report(
+            {
+                "eval_metrics": metrics,
+                "eval_loss": loss,
+                "eval_start": str(start_time),
+                "eval_time_elapsed": str(elapsed),
+                "eval_end": str(end_time),
+            },
+            current_server_round,
+        )
 
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.
@@ -701,8 +697,7 @@ class BasicClient(NumPyClient):
                 self.update_lr_schedulers(epoch=local_epoch)
                 report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
                 report_data.update(self.get_client_specific_reports())
-                for r in self.reporters:  # Batch level reporting
-                    r.report(report_data, current_round, local_epoch, self.total_steps)
+                self.reports_manager.report(report_data, current_round, local_epoch, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
 
@@ -713,8 +708,7 @@ class BasicClient(NumPyClient):
             self._log_results(loss_dict, metrics, current_round, local_epoch)
             report_data.update({"fit_metrics": metrics})
             report_data.update(self.get_client_specific_reports())
-            for r in self.reporters:  # Epoch level reporting
-                r.report(report_data, current_round, local_epoch)
+            self.reports_manager.report(report_data, current_round, local_epoch)
 
         # Return final training metrics
         return loss_dict, metrics
@@ -770,8 +764,7 @@ class BasicClient(NumPyClient):
             self.update_lr_schedulers(step=step)
             report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
             report_data.update(self.get_client_specific_reports())
-            for r in self.reporters:  # Batch level reporting
-                r.report(report_data, current_round, None, self.total_steps)
+            self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
@@ -906,8 +899,7 @@ class BasicClient(NumPyClient):
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        for r in self.reporters:
-            r.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
+        self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
 
         self.initialized = True
 
@@ -1306,7 +1298,7 @@ class BasicClient(NumPyClient):
             "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
             "total_steps": self.total_steps,
             "client_name": self.client_name,
-            "reporters": self.reporters,
+            "reports_manager": self.reports_manager,
             "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
         }
 
@@ -1328,7 +1320,7 @@ class BasicClient(NumPyClient):
 
         narrow_dict_type_and_set_attribute(self, ckpt, "client_name", "client_name", str)
         narrow_dict_type_and_set_attribute(self, ckpt, "total_steps", "total_steps", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list[BaseReporter])
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
 
         assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
         assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)

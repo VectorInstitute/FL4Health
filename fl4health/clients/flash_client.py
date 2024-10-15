@@ -81,8 +81,7 @@ class FlashClient(BasicClient):
                 self.update_after_step(local_step, current_round)
                 report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
                 report_data.update(self.get_client_specific_reports())
-                for r in self.reporters:  # Batch level reporting
-                    r.report(report_data, current_round, local_epoch, self.total_steps)
+                self.reports_manager.report(report_data, current_round, local_epoch, self.total_steps)
                 self.total_steps += 1
                 local_step += 1
 

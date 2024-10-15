@@ -19,11 +19,11 @@ class StepType(Enum):
 
 
 class WandBReporter(BaseReporter):
-    def __init__(self, step_type: StepType | str = StepType.ROUND, **kwargs: Any) -> None:
+    def __init__(self, timestep: StepType | str = StepType.ROUND, **kwargs: Any) -> None:
         """Reporter that logs data to a wandb server.
 
         Args:
-            step_type (StepType | str, optional): How frequently to log data. Either
+            timestep (StepType | str, optional): How frequently to log data. Either
                 every 'round', 'epoch' or 'step'. Defaults to StepType.ROUND.
             **kwargs (Any):
                 Keyword arguments to wandb.init
@@ -35,7 +35,7 @@ class WandBReporter(BaseReporter):
 
         # Create run and set attrbutes
         self.wandb_init_kwargs = kwargs
-        self.step_type = StepType(step_type) if isinstance(step_type, str) else step_type
+        self.timestep_type = StepType(timestep) if isinstance(timestep, str) else timestep
         self.run_started = False
         self.initialized = False
         # To maybe be initialized later
@@ -65,31 +65,31 @@ class WandBReporter(BaseReporter):
         self.run_id = self.run._run_id  # If run_id was None, we need to reset run id
         self.run_started = True
 
-    def get_step(
+    def get_wandb_timestep(
         self,
         round: int | None,
         epoch: int | None,
-        batch: int | None,
+        step: int | None,
     ) -> int | None:
-        """Determines the current step based on the step stype.
+        """Determines the current step based on the timestep type.
 
         Args:
             round (int | None): The current round or None if called outside of a round.
             epoch (int | None): The current epoch or None if called outside of a epoch.
-            batch (int | None): The current batch step or None if called outside of a
-                batch step.
+            step (int | None): The current step (total) or None if called outside of
+                step.
 
         Returns:
             int | None: Returns None if the reporter should not report metrics on this
-            call. If an integer is returned then it is what the reporter should use as
-            the current wandb step.
+                call. If an integer is returned then it is what the reporter should use
+                as the current wandb step.
         """
-        if self.step_type == StepType.ROUND and epoch is None and batch is None:
+        if self.timestep_type == StepType.ROUND and epoch is None and step is None:
             return round
-        elif self.step_type == StepType.EPOCH and batch is None:
+        elif self.timestep_type == StepType.EPOCH and step is None:
             return epoch
-        elif self.step_type == StepType.BATCH:
-            return batch
+        elif self.timestep_type == StepType.BATCH:
+            return step
         return None
 
     def report(
@@ -105,11 +105,11 @@ class WandBReporter(BaseReporter):
                 self.start_run(**self.wandb_init_kwargs)
             self.run.summary.update(data)
 
-        # Get wandb step based on step_type
-        step = self.get_step(round, epoch, batch)
+        # Get wandb step based on timestep_type
+        timestep = self.get_wandb_timestep(round, epoch, batch)
 
-        # If step is None, then we should not report on this call
-        if step is None:
+        # If timestep is None, then we should not report on this call
+        if timestep is None:
             return
 
         # Check if wandb run has been initialized
@@ -117,7 +117,7 @@ class WandBReporter(BaseReporter):
             self.start_run(**self.wandb_init_kwargs)
 
         # Log data
-        self.run.log(data, step=step)
+        self.run.log(data, step=timestep)
 
     def shutdown(self) -> None:
         self.run.finish()

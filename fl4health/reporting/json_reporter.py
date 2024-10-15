@@ -59,12 +59,12 @@ class FileReporter(BaseReporter):
         data: dict[str, Any],
         round: int | None = None,
         epoch: int | None = None,
-        batch: int | None = None,
+        step: int | None = None,
     ) -> None:
         if round is None:  # Reports outside of a fit round
             self.metrics.update(data)
         # Ensure we don't report for each epoch or step
-        elif epoch is None and batch is None:
+        elif epoch is None and step is None:
             if "rounds" not in self.metrics:
                 self.metrics["rounds"] = {}
             if round not in self.metrics["rounds"]:

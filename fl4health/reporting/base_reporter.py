@@ -12,7 +12,7 @@ class BaseReporter:
         data: dict,
         round: int | None = None,
         epoch: int | None = None,
-        batch: int | None = None,
+        step: int | None = None,
     ) -> None:
         """A method called by clients or servers to send data to the reporter.
 
@@ -27,9 +27,9 @@ class BaseReporter:
                 information). Defaults to None.
             epoch (int | None, optional): The current epoch. If None then this method
                 was not called within the scope of an epoch. Defaults to None.
-            batch (int | None, optional): The current batch. If None then this method
-                was called outside the scope of a training or evaluation step (eg. at
-                the end of an epoch or round) Defaults to None.
+            step (int | None, optional): The current step (total). If None then this
+                method was called outside the scope of a training or evaluation step
+                (eg. at the end of an epoch or round) Defaults to None.
         """
         raise NotImplementedError
 
