@@ -34,13 +34,12 @@ class DeepMmdLoss(torch.nn.Module):
         lr: float = 0.001,
         hidden_size: int = 10,
         output_size: int = 50,
-        layer_name: Optional[str] = None,
         training: bool = True,
+        is_unbiased: bool = True,
     ) -> None:
         super().__init__()
         self.device = device
         self.lr = lr
-        self.layer_name = layer_name
         self.training = training
 
         # Initialize the model
@@ -49,111 +48,108 @@ class DeepMmdLoss(torch.nn.Module):
         # Initialize parameters
         self.epsilon_opt: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
         self.epsilon_opt.requires_grad = self.training
-        self.sigma_opt: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
-        self.sigma_opt.requires_grad = self.training
-        self.sigma0_opt: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
-        self.sigma0_opt.requires_grad = self.training
+        self.sigma_q_opt: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
+        self.sigma_q_opt.requires_grad = self.training
+        self.sigma_phi_opt: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
+        self.sigma_phi_opt.requires_grad = self.training
 
         # Initialize optimizers
-        self.optimizer_F = torch.optim.Adam(
-            list(self.featurizer.parameters()) + [self.epsilon_opt] + [self.sigma_opt] + [self.sigma0_opt], lr=self.lr
+        self.optimizer_F = torch.optim.AdamW(
+            list(self.featurizer.parameters()) + [self.epsilon_opt] + [self._q_opt] + [self.sigma_phi_opt], lr=self.lr
         )
 
-    def Pdist2(self, x: torch.Tensor, y: Optional[torch.Tensor]) -> torch.Tensor:
+        self.is_unbiased = is_unbiased
+        self.L = 1  # generalized Gaussian (if L>1)
+
+    def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """compute the paired distance between x and y."""
-        x_norm = (x**2).sum(1).view(-1, 1)
-        if y is not None:
-            y_norm = (y**2).sum(1).view(1, -1)
-        else:
-            y = x
-            y_norm = x_norm.view(1, -1)
-        Pdist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
-        Pdist[Pdist < 0] = 0
-        return Pdist
+        x_norm = (X**2).sum(1).view(-1, 1)
+        y_norm = (Y**2).sum(1).view(1, -1)
+        paired_distance = x_norm + y_norm - 2.0 * torch.mm(X, torch.transpose(Y, 0, 1))
+        paired_distance[paired_distance < 0] = 0
+        return paired_distance
 
     def h1_mean_var_gram(
-        self, Kx: torch.Tensor, Ky: torch.Tensor, Kxy: torch.Tensor, is_var_computed: bool, use_1sample_U: bool = True
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], torch.Tensor]:
+        self,
+        k_x: torch.Tensor,
+        k_y: torch.Tensor,
+        k_xy: torch.Tensor,
+        is_var_computed: bool,
+        use_1sample_U: bool = True,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """compute value of MMD and std of MMD using kernel matrix."""
-        Kxxy = torch.cat((Kx, Kxy), 1)
-        Kyxy = torch.cat((Kxy.transpose(0, 1), Ky), 1)
-        Kxyxy = torch.cat((Kxxy, Kyxy), 0)
-        nx = Kx.shape[0]
-        ny = Ky.shape[0]
-        is_unbiased = True
-        if is_unbiased:
-            xx = torch.div((torch.sum(Kx) - torch.sum(torch.diag(Kx))), (nx * (nx - 1)))
-            yy = torch.div((torch.sum(Ky) - torch.sum(torch.diag(Ky))), (ny * (ny - 1)))
+        nx = k_x.shape[0]
+        ny = k_y.shape[0]
+
+        if self.is_unbiased:
+            xx = torch.div((torch.sum(k_x) - torch.sum(torch.diag(k_x))), (nx * (nx - 1)))
+            yy = torch.div((torch.sum(k_y) - torch.sum(torch.diag(k_y))), (ny * (ny - 1)))
             # one-sample U-statistic.
             if use_1sample_U:
-                xy = torch.div((torch.sum(Kxy) - torch.sum(torch.diag(Kxy))), (nx * (ny - 1)))
+                xy = torch.div((torch.sum(k_xy) - torch.sum(torch.diag(k_xy))), (nx * (ny - 1)))
             else:
-                xy = torch.div(torch.sum(Kxy), (nx * ny))
-            mmd2 = xx - 2 * xy + yy
+                xy = torch.div(torch.sum(k_xy), (nx * ny))
         else:
-            xx = torch.div((torch.sum(Kx)), (nx * nx))
-            yy = torch.div((torch.sum(Ky)), (ny * ny))
-            # one-sample U-statistic.
-            if use_1sample_U:
-                xy = torch.div((torch.sum(Kxy)), (nx * ny))
-            else:
-                xy = torch.div(torch.sum(Kxy), (nx * ny))
-            mmd2 = xx - 2 * xy + yy
+            xx = torch.div((torch.sum(k_x)), (nx * nx))
+            yy = torch.div((torch.sum(k_y)), (ny * ny))
+            xy = torch.div((torch.sum(k_xy)), (nx * ny))
+
+        mmd2 = xx - 2 * xy + yy
         if not is_var_computed:
-            return mmd2, None, Kxyxy
-        hh = Kx + Ky - Kxy - Kxy.transpose(0, 1)
-        V1 = torch.dot(hh.sum(1) / ny, hh.sum(1) / ny) / ny
-        V2 = (hh).sum() / (nx) / nx
-        varEst = 4 * (V1 - V2**2)
-        return mmd2, varEst, Kxyxy
+            return mmd2, None
+        h_ij = k_x + k_y - k_xy - k_xy.transpose(0, 1)
+
+        v1 = (4.0 / ny**3) * (torch.dot(h_ij.sum(1), h_ij.sum(1)))
+        v2 = (4.0 / nx**4) * (h_ij.sum() ** 2)
+        variance_estimate = v1 - v2 + (10 ** (-8))
+        return mmd2, variance_estimate
 
     def MMDu(
         self,
-        Fea: torch.Tensor,
+        features: torch.Tensor,
         len_s: int,
-        Fea_org: torch.Tensor,
-        sigma: torch.Tensor,
-        sigma0: torch.Tensor,
+        features_org: torch.Tensor,
+        sigma_q: torch.Tensor,
+        sigma_phi: torch.Tensor,
         epsilon: torch.Tensor,
         is_smooth: bool = True,
         is_var_computed: bool = True,
         use_1sample_U: bool = True,
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor], torch.Tensor]:
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """compute value of deep-kernel MMD and std of deep-kernel MMD using merged data."""
-        X = Fea[0:len_s, :]  # fetch the sample 1 (features of deep networks)
-        Y = Fea[len_s:, :]  # fetch the sample 2 (features of deep networks)
-        X_org = Fea_org[0:len_s, :]  # fetch the original sample 1
-        Y_org = Fea_org[len_s:, :]  # fetch the original sample 2
-        L = 1  # generalized Gaussian (if L>1)
-        Dxx = self.Pdist2(X, X)
-        Dyy = self.Pdist2(Y, Y)
-        Dxy = self.Pdist2(X, Y)
-        Dxx_org = self.Pdist2(X_org, X_org)
-        Dyy_org = self.Pdist2(Y_org, Y_org)
-        Dxy_org = self.Pdist2(X_org, Y_org)
+        x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
+        y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)
+        d_xx = self.pairwise_distiance_squared(x, x)
+        d_yy = self.pairwise_distiance_squared(y, y)
+        d_xy = self.pairwise_distiance_squared(x, y)
         if is_smooth:
-            Kx = (1 - epsilon) * torch.exp(-((Dxx / sigma0) ** L) - Dxx_org / sigma) + epsilon * torch.exp(
-                -Dxx_org / sigma
-            )
-            Ky = (1 - epsilon) * torch.exp(-((Dyy / sigma0) ** L) - Dyy_org / sigma) + epsilon * torch.exp(
-                -Dyy_org / sigma
-            )
-            Kxy = (1 - epsilon) * torch.exp(-((Dxy / sigma0) ** L) - Dxy_org / sigma) + epsilon * torch.exp(
-                -Dxy_org / sigma
-            )
+            x_original = features_org[0:len_s, :]  # fetch the original sample 1
+            y_original = features_org[len_s:, :]  # fetch the original sample 2
+            d_xx_original = self.pairwise_distiance_squared(x_original, x_original)
+            d_yy_original = self.pairwise_distiance_squared(y_original, y_original)
+            d_xy_original = self.pairwise_distiance_squared(x_original, y_original)
+            k_x = (1 - epsilon) * torch.exp(
+                -((d_xx / sigma_phi) ** self.L) - d_xx_original / sigma_q
+            ) + epsilon * torch.exp(-d_xx_original / sigma_q)
+            k_y = (1 - epsilon) * torch.exp(
+                -((d_yy / sigma_phi) ** self.L) - d_yy_original / sigma_q
+            ) + epsilon * torch.exp(-d_yy_original / sigma_q)
+            k_xy = (1 - epsilon) * torch.exp(
+                -((d_xy / sigma_phi) ** self.L) - d_xy_original / sigma_q
+            ) + epsilon * torch.exp(-d_xy_original / sigma_q)
         else:
-            Kx = torch.exp(-Dxx / sigma0)
-            Ky = torch.exp(-Dyy / sigma0)
-            Kxy = torch.exp(-Dxy / sigma0)
+            k_x = torch.exp(-d_xx / sigma_phi)
+            k_y = torch.exp(-d_yy / sigma_phi)
+            k_xy = torch.exp(-d_xy / sigma_phi)
 
-        return self.h1_mean_var_gram(Kx, Ky, Kxy, is_var_computed, use_1sample_U)
+        return self.h1_mean_var_gram(k_x, k_y, k_xy, is_var_computed, use_1sample_U)
 
     def train_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> None:
-        """Train the kernel."""
+        """Train the Deep MMD kernel."""
 
         self.featurizer.train()
-        self.sigma_opt.requires_grad = True
-        self.sigma0_opt.requires_grad = True
+        self.sigma_q_opt.requires_grad = True
+        self.sigma_phi_opt.requires_grad = True
         self.epsilon_opt.requires_grad = True
 
         features = torch.cat([X, Y], 0)
@@ -165,57 +161,57 @@ class DeepMmdLoss(torch.nn.Module):
         self.optimizer_F.zero_grad()
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma and sigma_0
+        # Compute epsilon, sigma_q and sigma_phi
         ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
-        sigma = self.sigma_opt**2
-        sigma0_u = self.sigma0_opt**2
+        sigma_q = self.sigma_q_opt**2
+        sigma_phi = self.sigma_phi_opt**2
         # Compute Compute J (STAT_u)
-        mmd_value_temp, mmd_var_temp, _ = self.MMDu(
-            Fea=model_output,
+        mmd_value_estimate, mmd_var_estimate = self.MMDu(
+            features=model_output,
             len_s=X.shape[0],
-            Fea_org=features.view(features.shape[0], -1),
-            sigma=sigma,
-            sigma0=sigma0_u,
+            features_org=features.view(features.shape[0], -1),
+            sigma_q=sigma_q,
+            sigma_phi=sigma_phi,
             epsilon=ep,
+            is_var_computed=True,
         )
-        if mmd_var_temp is None:
+        if mmd_var_estimate is None:
             raise AssertionError("Error: Variance of MMD is not computed. Please set is_var_computed=True.")
-        mmd_std_temp = torch.sqrt(mmd_var_temp + 10 ** (-8))
-        STAT_u = torch.div(-1 * mmd_value_temp, mmd_std_temp)
+        mmd_std_estimate = torch.sqrt(mmd_var_estimate)
+        stat_u = torch.div(-1 * mmd_value_estimate, mmd_std_estimate)
         # Compute gradient
-        STAT_u.backward()
+        stat_u.backward()
         # Update weights using gradient descent
         self.optimizer_F.step()
-        return
 
     def compute_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
-        """Train the kernel."""
+        """Compute the Deep MMD Loss."""
 
         self.featurizer.eval()
-        self.sigma_opt.requires_grad = False
-        self.sigma0_opt.requires_grad = False
+        self.sigma_q_opt.requires_grad = False
+        self.sigma_phi_opt.requires_grad = False
         self.epsilon_opt.requires_grad = False
 
         features = torch.cat([X, Y], 0)
 
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma and sigma_0
+        # Compute epsilon, sigma_q and sigma_phi
         ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
-        sigma = self.sigma_opt**2
-        sigma0_u = self.sigma0_opt**2
+        sigma_q = self.sigma_opt**2
+        sigma_phi = self.sigma_phi_opt**2
         # Compute Compute J (STAT_u)
-        mmd_value_temp, _, _ = self.MMDu(
-            Fea=model_output,
+        mmd_value_estimate, _ = self.MMDu(
+            features=model_output,
             len_s=X.shape[0],
-            Fea_org=features.view(features.shape[0], -1),
-            sigma=sigma,
-            sigma0=sigma0_u,
+            features_org=features.view(features.shape[0], -1),
+            sigma_q=sigma_q,
+            sigma_phi=sigma_phi,
             epsilon=ep,
             is_var_computed=False,
         )
 
-        return mmd_value_temp
+        return mmd_value_estimate
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
         if self.training:

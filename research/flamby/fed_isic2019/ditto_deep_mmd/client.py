@@ -37,7 +37,6 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         device: torch.device,
         client_number: int,
         learning_rate: float,
-        lam: float = 0,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         deep_mmd_loss_weight: float = 10,
         deep_mmd_loss_depth: int = 1,
@@ -52,9 +51,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            lam=lam,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
-            flatten_feature_extraction_layers={key: True for key in size_feature_extraction_layers},
             size_feature_extraction_layers=size_feature_extraction_layers,
         )
         self.client_number = client_number
@@ -125,9 +122,6 @@ if __name__ == "__main__":
         "--learning_rate", action="store", type=float, help="Learning rate for local optimization", default=LR
     )
     parser.add_argument(
-        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
-    )
-    parser.add_argument(
         "--seed",
         action="store",
         type=int,
@@ -139,13 +133,6 @@ if __name__ == "__main__":
         action="store",
         type=float,
         help="Weight for the mkmmd losses",
-        required=False,
-    )
-    parser.add_argument(
-        "--l2",
-        action="store",
-        type=float,
-        help="Weight for the feature l2 norm loss as a regularizer",
         required=False,
     )
     parser.add_argument(
@@ -170,9 +157,7 @@ if __name__ == "__main__":
     log(INFO, f"Device to be used: {DEVICE}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
-    log(INFO, f"Lambda: {args.lam}")
     log(INFO, f"Mu: {args.mu}")
-    log(INFO, f"Feature L2 Norm Weight: {args.l2}")
     log(INFO, f"DEEP MMD Loss Depth: {args.deep_mmd_loss_depth}")
 
     # Set the random seed for reproducibility
@@ -188,7 +173,6 @@ if __name__ == "__main__":
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        lam=args.lam,
         checkpointer=checkpointer,
         deep_mmd_loss_depth=args.deep_mmd_loss_depth,
         deep_mmd_loss_weight=args.mu,
