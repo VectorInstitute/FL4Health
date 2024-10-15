@@ -25,7 +25,7 @@ class DittoDeepMmdClient(DittoClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
         deep_mmd_loss_weight: float = 10.0,
-        size_feature_extraction_layers: Optional[Dict[str, int]] = None,
+        feature_extraction_layers_with_size: Optional[Dict[str, int]] = None,
     ) -> None:
         """
         This client implements the Deep MMD loss function in the Ditto framework. The Deep MMD loss is a measure of
@@ -34,17 +34,17 @@ class DittoDeepMmdClient(DittoClient):
         global model.
 
         Args:
-            data_path (Path): path to the data to be used to load the data for client-side training
-            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            data_path (Path): path to the data to be used to load the data for client-side training.
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model.
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
-                'cuda'
+                'cuda'.
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
             deep_mmd_loss_weight (float, optional): weight applied to the Deep MMD loss. Defaults to 10.0.
-            size_feature_extraction_layers (Optional[Dict[str, int]], optional): Dictionary of layers to extract
+            feature_extraction_layers_with_size (Optional[Dict[str, int]], optional): Dictionary of layers to extract
                 features from them and their respective feature size. Defaults to None.
         """
         super().__init__(
@@ -61,13 +61,15 @@ class DittoDeepMmdClient(DittoClient):
                 "Deep MMD loss weight is set to 0. As Deep MMD loss will not be computed, ",
                 "please use vanilla DittoClient instead.",
             )
-        if size_feature_extraction_layers:
-            self.flatten_feature_extraction_layers = {layer: True for layer in size_feature_extraction_layers.keys()}
+        if feature_extraction_layers_with_size:
+            self.flatten_feature_extraction_layers = {
+                layer: True for layer in feature_extraction_layers_with_size.keys()
+            }
         else:
             self.flatten_feature_extraction_layers = {}
         self.deep_mmd_losses: Dict[str, DeepMmdLoss] = {}
-        if size_feature_extraction_layers is not None:
-            for layer, feature_size in size_feature_extraction_layers.items():
+        if feature_extraction_layers_with_size is not None:
+            for layer, feature_size in feature_extraction_layers_with_size.items():
                 self.deep_mmd_losses[layer] = DeepMmdLoss(
                     device=self.device,
                     input_size=feature_size,

@@ -24,7 +24,7 @@
 #   client_side_learning_rate_value \
 #   lambda value \
 #   mu value \
-#   depp_mmd_loss_depth value \
+#   deep_mmd_loss_depth value \
 #   server_address
 #
 # Example:
@@ -36,6 +36,7 @@
 #   0.0001 \
 #   0.01 \
 #   0.1 \
+#   1 \
 #   0.0.0.0:8080
 #
 # Notes:

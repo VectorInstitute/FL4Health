@@ -47,7 +47,7 @@ class CifarDittoClient(DittoDeepMmdClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         use_partitioned_data: bool = False,
     ) -> None:
-        size_feature_extraction_layers = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
+        feature_extraction_layers_with_size = OrderedDict(list(BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :])
         super().__init__(
             data_path=data_path,
             metrics=metrics,
@@ -55,7 +55,7 @@ class CifarDittoClient(DittoDeepMmdClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
-            size_feature_extraction_layers=size_feature_extraction_layers,
+            feature_extraction_layers_with_size=feature_extraction_layers_with_size,
         )
         self.use_partitioned_data = use_partitioned_data
         self.client_number = client_number
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         "--deep_mmd_loss_depth",
         action="store",
         type=int,
-        help="Depth of applying the deep mmd loss",
+        help="Depth of applying the Deep MMD loss",
         required=False,
         default=1,
     )

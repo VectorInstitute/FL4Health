@@ -42,7 +42,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         deep_mmd_loss_depth: int = 1,
         checkpointer: Optional[ClientCheckpointModule] = None,
     ) -> None:
-        size_feature_extraction_layers = OrderedDict(
+        feature_extraction_layers_with_size = OrderedDict(
             list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]
         )
         super().__init__(
@@ -52,7 +52,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
             deep_mmd_loss_weight=deep_mmd_loss_weight,
-            size_feature_extraction_layers=size_feature_extraction_layers,
+            feature_extraction_layers_with_size=feature_extraction_layers_with_size,
         )
         self.client_number = client_number
         self.learning_rate: float = learning_rate
@@ -132,24 +132,16 @@ if __name__ == "__main__":
         "--mu",
         action="store",
         type=float,
-        help="Weight for the mkmmd losses",
+        help="Weight for the Deep MMD losses",
         required=False,
     )
     parser.add_argument(
         "--deep_mmd_loss_depth",
         action="store",
         type=int,
-        help="Depth of applying the deep mmd loss",
+        help="Depth of applying the Deep MMD loss",
         required=False,
         default=1,
-    )
-    parser.add_argument(
-        "--beta_update_interval",
-        action="store",
-        type=int,
-        help="Interval for updating the beta values",
-        required=False,
-        default=20,
     )
     args = parser.parse_args()
 

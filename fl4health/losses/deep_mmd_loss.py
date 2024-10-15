@@ -53,7 +53,7 @@ class DeepMmdLoss(torch.nn.Module):
             output_size (int, optional): The output size of the deep network as the deep kernel used to compute
                 the MMD loss. Defaults to 50.
             lr (float, optional): Learning rate for training the Deep Kernel. Defaults to 0.001.
-            training (bool, optional): Whether the model is in training mode. Defaults to True.
+            training (bool, optional): Whether the Deep Kernel is in training mode. Defaults to True.
             is_unbiased (bool, optional): Whether to use the unbiased estimator for the MMD loss. Defaults to True.
             gaussian_degree (int, optional): The degree of the generalized Gaussian kernel. Defaults to 1.
         """
@@ -63,7 +63,7 @@ class DeepMmdLoss(torch.nn.Module):
         self.lr = lr
         self.training = training
         self.is_unbiased = is_unbiased
-        self.gaussian_degree = 1  # generalized Gaussian (if L>1)
+        self.gaussian_degree = gaussian_degree  # generalized Gaussian (if L>1)
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
