@@ -35,7 +35,7 @@ class DeepMmdLoss(torch.nn.Module):
         training: bool = True,
         is_unbiased: bool = True,
         gaussian_degree: int = 1,
-        optimization_steps: int = 1,
+        optimization_steps: int = 5,
     ) -> None:
         """
         Compute the Deep MMD (Maximum Mean Discrepancy) loss, as proposed in the paper Learning Deep Kernels for
@@ -58,7 +58,7 @@ class DeepMmdLoss(torch.nn.Module):
             is_unbiased (bool, optional): Whether to use the unbiased estimator for the MMD loss. Defaults to True.
             gaussian_degree (int, optional): The degree of the generalized Gaussian kernel. Defaults to 1.
             optimization_steps (int, optional): The number of optimization steps to train the Deep Kernel in each
-                forward pass. Defaults to 1.
+                forward pass. Defaults to 5.
         """
 
         super().__init__()
