@@ -35,6 +35,7 @@ class DeepMmdLoss(torch.nn.Module):
         training: bool = True,
         is_unbiased: bool = True,
         gaussian_degree: int = 1,
+        optimization_steps: int = 1,
     ) -> None:
         """
         Compute the Deep MMD (Maximum Mean Discrepancy) loss, as proposed in the paper Learning Deep Kernels for
@@ -56,6 +57,8 @@ class DeepMmdLoss(torch.nn.Module):
             training (bool, optional): Whether the Deep Kernel is in training mode. Defaults to True.
             is_unbiased (bool, optional): Whether to use the unbiased estimator for the MMD loss. Defaults to True.
             gaussian_degree (int, optional): The degree of the generalized Gaussian kernel. Defaults to 1.
+            optimization_steps (int, optional): The number of optimization steps to train the Deep Kernel in each
+                forward pass. Defaults to 1.
         """
 
         super().__init__()
@@ -64,6 +67,7 @@ class DeepMmdLoss(torch.nn.Module):
         self.training = training
         self.is_unbiased = is_unbiased
         self.gaussian_degree = gaussian_degree  # generalized Gaussian (if L>1)
+        self.optimization_steps = optimization_steps
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
@@ -78,7 +82,8 @@ class DeepMmdLoss(torch.nn.Module):
 
         # Initialize optimizers
         self.optimizer_F = torch.optim.AdamW(
-            list(self.featurizer.parameters()) + [self.epsilon_opt] + [self._q_opt] + [self.sigma_phi_opt], lr=self.lr
+            list(self.featurizer.parameters()) + [self.epsilon_opt] + [self.sigma_q_opt] + [self.sigma_phi_opt],
+            lr=self.lr,
         )
 
     def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
@@ -222,7 +227,7 @@ class DeepMmdLoss(torch.nn.Module):
         model_output = self.featurizer(features)
         # Compute epsilon, sigma_q and sigma_phi
         ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
-        sigma_q = self.sigma_opt**2
+        sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
         # Compute Deep MMD value estimates
         mmd_value_estimate, _ = self.MMDu(
@@ -239,6 +244,7 @@ class DeepMmdLoss(torch.nn.Module):
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
         if self.training:
-            self.train_kernel(Xs.clone().detach(), Xt.clone().detach())
+            for _ in range(self.optimization_steps):
+                self.train_kernel(Xs.clone().detach(), Xt.clone().detach())
 
         return self.compute_kernel(Xs, Xt)
