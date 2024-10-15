@@ -5,10 +5,9 @@ import torch
 
 
 class ModelLatentF(torch.nn.Module):
-    """Latent space for both domains."""
+    """Deep network for learning the deep kernel over features.""" 
 
     def __init__(self, x_in_dim: int, hidden_dim: int, x_out_dim: int):
-        """Init latent features."""
         super().__init__()
         self.latent = torch.nn.Sequential(
             torch.nn.Linear(x_in_dim, hidden_dim, bias=True),
@@ -21,7 +20,6 @@ class ModelLatentF(torch.nn.Module):
         )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
-        """Forward the LeNet."""
         feature_latent_map = self.latent(input)
         return feature_latent_map
 
