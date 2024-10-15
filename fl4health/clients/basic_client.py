@@ -291,7 +291,7 @@ class BasicClient(NumPyClient):
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
-        fit_time = datetime.datetime.now() - fit_start_time
+        fit_end_time = datetime.datetime.now()
 
         # Perform necessary updates after training has completed for the current FL round
         self.update_after_train(local_steps, loss_dict, config)
@@ -313,7 +313,8 @@ class BasicClient(NumPyClient):
                     "round": current_server_round,
                     "round_start": str(round_start_time),
                     "round_end": str(datetime.datetime.now()),
-                    "fit_time_elapsed": str(fit_time),
+                    "fit_start": str(fit_start_time),
+                    "fit_end": str(fit_end_time),
                 },
                 current_server_round,
             )
@@ -366,7 +367,7 @@ class BasicClient(NumPyClient):
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
-        end_time = datetime.datetime.now(
+        end_time = datetime.datetime.now()
         elapsed = end_time - start_time
 
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
@@ -380,11 +381,10 @@ class BasicClient(NumPyClient):
                     "eval_loss": loss,
                     "eval_start": str(start_time),
                     "eval_time_elapsed": str(elapsed),
-                    "eval_end": str(end_time)
+                    "eval_end": str(end_time),
                 },
                 current_server_round,
             )
-
 
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.

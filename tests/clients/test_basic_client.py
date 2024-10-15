@@ -99,7 +99,7 @@ def test_metrics_reporter_evaluate() -> None:
                 "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
                 "eval_loss": test_loss,
                 "eval_metrics": test_metrics_final,
-                "eval_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+                "eval_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
     }

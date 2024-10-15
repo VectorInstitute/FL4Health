@@ -29,7 +29,6 @@ class FendaDittoClient(DittoClient):
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         freeze_global_feature_extractor: bool = False,
-        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
         This client implements a combination of the Ditto algorithm from Ditto: Fair and Robust Federated Learning
