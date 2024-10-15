@@ -43,7 +43,7 @@
 #
 # Notes:
 # 1) The sbatch command above should be run from the top level directory of the repository.
-# 2) This example runs ditto. As such the data paths and python launch commands are hardcoded. If you want to change
+# 2) This example runs ditto Deep MMD. As such the data paths and python launch commands are hardcoded. If you want to change
 # the example you run, you need to explicitly modify the code below.
 # 3) The logging directories need to ALREADY EXIST. The script does not create them.
 ###############################################
@@ -74,7 +74,7 @@ CLIENT_LR=$5
 LAM_VALUE=$6
 MU_VALUE=$7
 DEEP_MMD_LOSS_DEPTH=$8
-SERVER_ADDRESS=${9}
+SERVER_ADDRESS=$9
 CLIENT_BETA=${10}
 
 # Create the artifact directory
@@ -134,13 +134,14 @@ do
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
+        --lam ${LAM_VALUE} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
     # Sleep for 20 seconds to allow the server to come up.
     sleep 20
 
     # Start n number of clients and divert the outputs to their own files
-    n_clients=10
+    n_clients=5
     for (( c=0; c<${n_clients}; c++ ))
     do
         CLIENT_NAME="client_${c}"
@@ -154,12 +155,12 @@ do
             --run_name ${RUN_NAME} \
             --client_number ${c} \
             --learning_rate ${CLIENT_LR} \
-            --lam ${LAM_VALUE} \
             --mu ${MU_VALUE} \
             --deep_mmd_loss_depth ${DEEP_MMD_LOSS_DEPTH} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
             --beta ${CLIENT_BETA} \
+            --use_partitioned_data \
             > ${CLIENT_LOG_PATH} 2>&1 &
     done
 

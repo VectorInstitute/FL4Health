@@ -7,8 +7,8 @@ import flwr as fl
 from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
-from flwr.server.strategy import FedAvg
 
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -33,7 +33,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str) -> None:
+def main(config: Dict[str, Any], server_address: str, lam: float) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -47,7 +47,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     # Initializing the model on the server side
     model = ConvNet(in_channels=3)
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedAvg(
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -58,6 +58,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
+        initial_loss_weight=lam,
     )
 
     server = PersonalServer(client_manager, strategy)
@@ -98,12 +99,16 @@ if __name__ == "__main__":
         help="Seed for the random number generators across python, torch, and numpy",
         required=False,
     )
+    parser.add_argument(
+        "--lam", action="store", type=float, help="Ditto loss weight for local model training", default=0.01
+    )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
+    log(INFO, f"Lambda: {args.lam}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    main(config, args.server_address)
+    main(config, args.server_address, args.lam)

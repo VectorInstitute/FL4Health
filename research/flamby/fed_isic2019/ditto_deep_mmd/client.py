@@ -26,7 +26,7 @@ from research.flamby.flamby_data_utils import construct_fedisic_train_val_datase
 FED_ISIC2019_BASELINE_LAYERS: OrderedDict[str, int] = OrderedDict()
 for i in range(16):
     FED_ISIC2019_BASELINE_LAYERS[f"base_model._blocks.{i}"] = 64
-FED_ISIC2019_BASELINE_LAYERS["base_model._dropout"] = 1280
+FED_ISIC2019_BASELINE_LAYERS["base_model._avg_pooling"] = 1280
 
 
 class FedIsic2019DittoClient(DittoDeepMmdClient):
@@ -73,7 +73,8 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         return model
 
     def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
-        # Note that the global optimizer operates on self.global_model.parameters() and
+        # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
+        # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         return {"global": global_optimizer, "local": local_optimizer}

@@ -207,6 +207,8 @@ if __name__ == "__main__":
         default=1,
     )
     args = parser.parse_args()
+    if args.use_partitioned_data:
+        log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     log(INFO, f"Device to be used: {DEVICE}")
@@ -246,6 +248,7 @@ if __name__ == "__main__":
         checkpointer=checkpointer,
         deep_mmd_loss_depth=args.deep_mmd_loss_depth,
         deep_mmd_loss_weight=args.mu,
+        use_partitioned_data=args.use_partitioned_data,
     )
 
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
