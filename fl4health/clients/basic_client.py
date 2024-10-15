@@ -317,7 +317,7 @@ class BasicClient(NumPyClient):
                 },
                 current_server_round,
             )
-        
+
         # After local client training has finished, checkpoint client state
         # if per_round_checkpointer is not None
         if self.per_round_checkpointer is not None:
