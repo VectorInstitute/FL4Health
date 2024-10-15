@@ -46,7 +46,7 @@ class MkMmdLoss(torch.nn.Module):
             default_gamma_powers = torch.arange(-3.5, 1.25, 0.25, device=device)
             self.gammas = torch.pow(2.0, default_gamma_powers)
         else:
-            self.gammas = gammas
+            self.gammas = gammas.to(self.device)
         self.kernel_num = len(self.gammas)
 
         if betas is None:
