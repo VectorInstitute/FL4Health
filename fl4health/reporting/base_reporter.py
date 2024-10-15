@@ -1,6 +1,6 @@
 """Base Class for Reporters.
 
-Super simple for now but keeping it in a seperate file in case we ass more base methods.
+Super simple for now but keeping it in a seperate file in case we add more base methods.
 """
 
 from typing import Any
@@ -16,8 +16,8 @@ class BaseReporter:
     ) -> None:
         """A method called by clients or servers to send data to the reporter.
 
-        The report method is called reduncantly by the clients every step, every epoch,
-        every round and sometimes outside of a FL round (for high level summary data).
+        The report method is called by the client/server at frequent intervals (ie step,
+        epoch, round) and sometimes outside of a FL round (for high level summary data).
         It is up to the reporter to determine when and what to report.
 
         Args:

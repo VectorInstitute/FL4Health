@@ -147,7 +147,6 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
             },
         },
     }
-    print(reporter.metrics)
     errors = assert_metrics_dict(metrics_to_assert, reporter.metrics)
     assert len(errors) == 0, f"Metrics check failed. Errors: {errors}. {reporter.metrics}"
 

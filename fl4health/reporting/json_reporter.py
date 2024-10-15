@@ -56,7 +56,7 @@ class FileReporter(BaseReporter):
 
     def report(
         self,
-        data: dict,
+        data: dict[str, Any],
         round: int | None = None,
         epoch: int | None = None,
         batch: int | None = None,

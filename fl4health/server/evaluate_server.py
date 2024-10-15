@@ -112,7 +112,6 @@ class EvaluateServer(Server):
                     "host_type": "server",
                 }
             )
-            print("REPORTED")
         if res_fed:
             _, evaluate_metrics_fed, _ = res_fed
             if evaluate_metrics_fed:
