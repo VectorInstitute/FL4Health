@@ -31,16 +31,41 @@ class DeepMmdLoss(torch.nn.Module):
         self,
         device: torch.device,
         input_size: int,
-        lr: float = 0.001,
         hidden_size: int = 10,
         output_size: int = 50,
+        lr: float = 0.001,
         training: bool = True,
         is_unbiased: bool = True,
+        gaussian_degree: int = 1,
     ) -> None:
+        """
+        Compute the Deep MMD (Maximum Mean Discrepancy) loss, as proposed in the paper Learning Deep Kernels for
+        Non-Parametric Two-Sample Tests. This loss function uses a kernel-based approach to assess whether two
+        samples are drawn from the same distribution. By minimizing this loss, we can learn a deep kernel that
+        reduces the MMD distance between two distributions, ensuring that the input feature representations are
+        aligned. This implementation is inspired by the original code from the paper:
+        https://github.com/fengliu90/DK-for-TST.
+
+        Args:
+            device (torch.device): Device onto which tensors should be moved
+            input_size (int): The length of the input feature representations of the deep network as the deep
+                kernel used to compute the MMD loss.
+            hidden_size (int, optional): The hidden size of the deep network as the deep kernel used to compute
+                the MMD loss. Defaults to 10.
+            output_size (int, optional): The output size of the deep network as the deep kernel used to compute
+                the MMD loss. Defaults to 50.
+            lr (float, optional): Learning rate for training the Deep Kernel. Defaults to 0.001.
+            training (bool, optional): Whether the model is in training mode. Defaults to True.
+            is_unbiased (bool, optional): Whether to use the unbiased estimator for the MMD loss. Defaults to True.
+            gaussian_degree (int, optional): The degree of the generalized Gaussian kernel. Defaults to 1.
+        """
+
         super().__init__()
         self.device = device
         self.lr = lr
         self.training = training
+        self.is_unbiased = is_unbiased
+        self.gaussian_degree = 1  # generalized Gaussian (if L>1)
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
@@ -58,9 +83,6 @@ class DeepMmdLoss(torch.nn.Module):
             list(self.featurizer.parameters()) + [self.epsilon_opt] + [self._q_opt] + [self.sigma_phi_opt], lr=self.lr
         )
 
-        self.is_unbiased = is_unbiased
-        self.L = 1  # generalized Gaussian (if L>1)
-
     def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """compute the paired distance between x and y."""
         x_norm = (X**2).sum(1).view(-1, 1)
@@ -75,21 +97,19 @@ class DeepMmdLoss(torch.nn.Module):
         k_y: torch.Tensor,
         k_xy: torch.Tensor,
         is_var_computed: bool,
-        use_1sample_U: bool = True,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """compute value of MMD and std of MMD using kernel matrix."""
         nx = k_x.shape[0]
         ny = k_y.shape[0]
 
         if self.is_unbiased:
+            # compute the unbiased MMD estimator (MMD_u^2) defined in Eq. (2) of the paper
             xx = torch.div((torch.sum(k_x) - torch.sum(torch.diag(k_x))), (nx * (nx - 1)))
             yy = torch.div((torch.sum(k_y) - torch.sum(torch.diag(k_y))), (ny * (ny - 1)))
-            # one-sample U-statistic.
-            if use_1sample_U:
-                xy = torch.div((torch.sum(k_xy) - torch.sum(torch.diag(k_xy))), (nx * (ny - 1)))
-            else:
-                xy = torch.div(torch.sum(k_xy), (nx * ny))
+            xy = torch.div((torch.sum(k_xy) - torch.sum(torch.diag(k_xy))), (nx * (ny - 1)))
+
         else:
+            # compute the biased MMD estimator (MMD_u^2) defined below Equation (2) of the paper
             xx = torch.div((torch.sum(k_x)), (nx * nx))
             yy = torch.div((torch.sum(k_y)), (ny * ny))
             xy = torch.div((torch.sum(k_xy)), (nx * ny))
@@ -99,6 +119,7 @@ class DeepMmdLoss(torch.nn.Module):
             return mmd2, None
         h_ij = k_x + k_y - k_xy - k_xy.transpose(0, 1)
 
+        # Compute the variance estimate of MMD defined in Equation (5) of the paper
         v1 = (4.0 / ny**3) * (torch.dot(h_ij.sum(1), h_ij.sum(1)))
         v2 = (4.0 / nx**4) * (h_ij.sum() ** 2)
         variance_estimate = v1 - v2 + (10 ** (-8))
@@ -114,35 +135,39 @@ class DeepMmdLoss(torch.nn.Module):
         epsilon: torch.Tensor,
         is_smooth: bool = True,
         is_var_computed: bool = True,
-        use_1sample_U: bool = True,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """compute value of deep-kernel MMD and std of deep-kernel MMD using merged data."""
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
         y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)
-        d_xx = self.pairwise_distiance_squared(x, x)
-        d_yy = self.pairwise_distiance_squared(y, y)
-        d_xy = self.pairwise_distiance_squared(x, y)
+        distance_xx = self.pairwise_distiance_squared(x, x)
+        distance_yy = self.pairwise_distiance_squared(y, y)
+        distance_xy = self.pairwise_distiance_squared(x, y)
+
         if is_smooth:
             x_original = features_org[0:len_s, :]  # fetch the original sample 1
             y_original = features_org[len_s:, :]  # fetch the original sample 2
-            d_xx_original = self.pairwise_distiance_squared(x_original, x_original)
-            d_yy_original = self.pairwise_distiance_squared(y_original, y_original)
-            d_xy_original = self.pairwise_distiance_squared(x_original, y_original)
-            k_x = (1 - epsilon) * torch.exp(
-                -((d_xx / sigma_phi) ** self.L) - d_xx_original / sigma_q
-            ) + epsilon * torch.exp(-d_xx_original / sigma_q)
-            k_y = (1 - epsilon) * torch.exp(
-                -((d_yy / sigma_phi) ** self.L) - d_yy_original / sigma_q
-            ) + epsilon * torch.exp(-d_yy_original / sigma_q)
-            k_xy = (1 - epsilon) * torch.exp(
-                -((d_xy / sigma_phi) ** self.L) - d_xy_original / sigma_q
-            ) + epsilon * torch.exp(-d_xy_original / sigma_q)
-        else:
-            k_x = torch.exp(-d_xx / sigma_phi)
-            k_y = torch.exp(-d_yy / sigma_phi)
-            k_xy = torch.exp(-d_xy / sigma_phi)
+            distance_xx_original = self.pairwise_distiance_squared(x_original, x_original)
+            distance_yy_original = self.pairwise_distiance_squared(y_original, y_original)
+            distance_xy_original = self.pairwise_distiance_squared(x_original, y_original)
 
-        return self.h1_mean_var_gram(k_x, k_y, k_xy, is_var_computed, use_1sample_U)
+            kernel_x = (1 - epsilon) * torch.exp(
+                -((distance_xx / sigma_phi) ** self.gaussian_degree) - distance_xx_original / sigma_q
+            ) + epsilon * torch.exp(-distance_xx_original / sigma_q)
+            kernel_y = (1 - epsilon) * torch.exp(
+                -((distance_yy / sigma_phi) ** self.gaussian_degree) - distance_yy_original / sigma_q
+            ) + epsilon * torch.exp(-distance_yy_original / sigma_q)
+            kernel_xy = (1 - epsilon) * torch.exp(
+                -((distance_xy / sigma_phi) ** self.gaussian_degree) - distance_xy_original / sigma_q
+            ) + epsilon * torch.exp(-distance_xy_original / sigma_q)
+
+        else:
+            kernel_x = torch.exp(-distance_xx / sigma_phi)
+            kernel_y = torch.exp(-distance_yy / sigma_phi)
+            kernel_xy = torch.exp(-distance_xy / sigma_phi)
+
+        # kernel_x reprsents k_w(x_i, x_j), kernel_y represents k_w(y_i, y_j), kernel_xy represents
+        # k_w(x_i, y_j) for all i, j in the sample X and sample Y defined in Equation (1) of the paper
+        return self.h1_mean_var_gram(kernel_x, kernel_y, kernel_xy, is_var_computed)
 
     def train_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> None:
         """Train the Deep MMD kernel."""
@@ -157,7 +182,7 @@ class DeepMmdLoss(torch.nn.Module):
         # ------------------------------
         #  Train deep network for MMD-D
         # ------------------------------
-        # Initialize optimizer
+        # Zero gradients
         self.optimizer_F.zero_grad()
         # Compute output of deep network
         model_output = self.featurizer(features)
@@ -165,7 +190,7 @@ class DeepMmdLoss(torch.nn.Module):
         ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
-        # Compute Compute J (STAT_u)
+        # Compute Deep MMD value and variance estimates
         mmd_value_estimate, mmd_var_estimate = self.MMDu(
             features=model_output,
             len_s=X.shape[0],
@@ -178,6 +203,7 @@ class DeepMmdLoss(torch.nn.Module):
         if mmd_var_estimate is None:
             raise AssertionError("Error: Variance of MMD is not computed. Please set is_var_computed=True.")
         mmd_std_estimate = torch.sqrt(mmd_var_estimate)
+        # Forming J_lambda defined in Equation (4) of the paper (STAT_u)
         stat_u = torch.div(-1 * mmd_value_estimate, mmd_std_estimate)
         # Compute gradient
         stat_u.backward()
@@ -200,7 +226,7 @@ class DeepMmdLoss(torch.nn.Module):
         ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_opt**2
         sigma_phi = self.sigma_phi_opt**2
-        # Compute Compute J (STAT_u)
+        # Compute Deep MMD value estimates
         mmd_value_estimate, _ = self.MMDu(
             features=model_output,
             len_s=X.shape[0],
