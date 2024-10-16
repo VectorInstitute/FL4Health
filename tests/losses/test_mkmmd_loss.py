@@ -475,23 +475,7 @@ def test_optimize_betas_for_X_Y() -> None:
 
 def test_gamma_defaults() -> None:
     default_mkmmd = MkMmdLoss(DEVICE)
-    neg_gamma_powers = [
-        -3.5,
-        -3.25,
-        -3,
-        -2.75,
-        -2.5,
-        -2.25,
-        -2,
-        -1.75,
-        -1.5,
-        -1.25,
-        -1,
-        -0.75,
-        -0.5,
-        -0.25,
-        0,
-    ]
+    neg_gamma_powers = [-3.5, -3.25, -3, -2.75, -2.5, -2.25, -2, -1.75, -1.5, -1.25, -1, -0.75, -0.5, -0.25, 0]
     pos_gamma_powers = [0.25, 0.5, 0.75, 1]
     gamma_powers = neg_gamma_powers + pos_gamma_powers
     default_gammas = torch.Tensor([2**power for power in gamma_powers]).to(DEVICE)
@@ -585,7 +569,7 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
                 100,
             ]
         )
-    ).to(DEVICE)
+    )
 
     # Second sample is a mixture of two gaussian with zero mean except the first has mean 1.0 in the first coordinate
     # and the second has mean 1.0 in the second coordinate
@@ -598,12 +582,12 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
                     100,
                 ]
             )
-            + q_2.sample(
-                torch.Size(
-                    [
-                        100,
-                    ]
-                )
+        )
+        + q_2.sample(
+            torch.Size(
+                [
+                    100,
+                ]
             )
         )
     ) / 2.0
@@ -634,4 +618,4 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     one_hot_betas = torch.zeros_like(betas_local)
 
     one_hot_betas[1, 0] = 1
-    assert torch.all(betas_local.eq(one_hot_betas))
+    assert torch.allclose(one_hot_betas, betas_local, rtol=0.0, atol=1e-6)

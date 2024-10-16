@@ -211,6 +211,7 @@ class BasicClient(NumPyClient):
         Shuts down the client. Involves shutting down W&B reporter if one exists.
         """
         # Shutdown reporters
+        self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
