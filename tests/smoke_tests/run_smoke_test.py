@@ -677,28 +677,28 @@ if __name__ == "__main__":
     #         client_metrics=load_metrics_from_file("tests/smoke_tests/scaffold_client_metrics.json"),
     #     )
     # )
-    loop.run_until_complete(
-        run_smoke_test(
-            server_python_path="examples.apfl_example.server",
-            client_python_path="examples.apfl_example.client",
-            config_path="tests/smoke_tests/apfl_config.yaml",
-            dataset_path="examples/datasets/mnist_data/",
-            seed=42,
-            server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
-            client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
-        )
-    )
     # loop.run_until_complete(
     #     run_smoke_test(
-    #         server_python_path="examples.feddg_ga_example.server",
-    #         client_python_path="examples.feddg_ga_example.client",
-    #         config_path="tests/smoke_tests/feddg_ga_config.yaml",
+    #         server_python_path="examples.apfl_example.server",
+    #         client_python_path="examples.apfl_example.client",
+    #         config_path="tests/smoke_tests/apfl_config.yaml",
     #         dataset_path="examples/datasets/mnist_data/",
     #         seed=42,
-    #         server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
-    #         client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
+    #         server_metrics=load_metrics_from_file("tests/smoke_tests/apfl_server_metrics.json"),
+    #         client_metrics=load_metrics_from_file("tests/smoke_tests/apfl_client_metrics.json"),
     #     )
     # )
+    loop.run_until_complete(
+        run_smoke_test(
+            server_python_path="examples.feddg_ga_example.server",
+            client_python_path="examples.feddg_ga_example.client",
+            config_path="tests/smoke_tests/feddg_ga_config.yaml",
+            dataset_path="examples/datasets/mnist_data/",
+            seed=42,
+            server_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_server_metrics.json"),
+            client_metrics=load_metrics_from_file("tests/smoke_tests/feddg_ga_client_metrics.json"),
+        )
+    )
     # loop.run_until_complete(
     #     run_smoke_test(
     #         server_python_path="examples.basic_example.server",
