@@ -117,12 +117,17 @@ def test_metrics_reporter_evaluate() -> None:
     reporter = JsonReporter()
     evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics, reporters=[reporter])
     evaluate_client.evaluate([], {})
+    print(reporter.metrics)
     metric_dict = {
         "host_type": "client",
         "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-        "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-        "eval_loss": test_loss,
-        "eval_metrics": test_metrics,
+        "rounds": {
+            0: {
+                "eval_metrics": test_metrics,
+                "eval_loss": test_loss,
+                "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+            }
+        },
     }
     errors = assert_metrics_dict(metric_dict, reporter.metrics)
     assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
