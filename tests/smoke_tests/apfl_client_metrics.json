@@ -2,57 +2,57 @@
     "rounds": {
         "1": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.6078,
-                "train - global - accuracy": 0.6265,
-                "train - local - accuracy": 0.4890
+                "train - personal - accuracy": 0.6063,
+                "train - global - accuracy": 0.6078,
+                "train - local - accuracy": 0.4797
             },
             "fit_losses": {
-                "backward": 1.4258,
-                "global": 1.2897,
-                "local": 1.6243
+                "backward": 1.4428,
+                "global": 1.3272,
+                "local": 1.6362
             },
             "eval_metrics": {
-                "val - personal - accuracy": 0.6254,
-                "val - global - accuracy": 0.6757,
-                "val - local - accuracy": 0.5723
+                "val - personal - accuracy": 0.5269,
+                "val - global - accuracy": 0.5331,
+                "val - local - accuracy": 0.4984
             },
-            "eval_loss": 1.4845
+            "eval_loss": 1.5862
         },
         "2": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.7845,
-                "train - global - accuracy": 0.7921,
-                "train - local - accuracy": 0.775
+                "train - personal - accuracy": 0.8063,
+                "train - global - accuracy": 0.8266,
+                "train - local - accuracy": 0.7688
             },
             "fit_losses": {
-                "backward": 0.6868,
-                "global": 0.6557,
-                "local": 0.7524
+                "backward": 0.6089,
+                "global": 0.6306,
+                "local": 0.7349
             },
             "eval_metrics": {
-                "val - personal - accuracy": 0.6237,
-                "val - global - accuracy": 0.6583,
-                "val - local - accuracy": 0.5203
+                "val - personal - accuracy": 0.7117,
+                "val - global - accuracy": 0.7162,
+                "val - local - accuracy": 0.6274
             },
-            "eval_loss": 1.1075
+            "eval_loss": 0.9102
         },
         "3": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.8015,
-                "train - global - accuracy": 0.8078,
-                "train - local - accuracy": 0.78125
+                "train - personal - accuracy": 0.85,
+                "train - global - accuracy": 0.8703,
+                "train - local - accuracy": 0.8422
             },
             "fit_losses": {
-                "backward": 0.5872,
-                "global": 0.5809,
-                "local": 0.6471
+                "backward": 0.4666,
+                "global": 0.4760,
+                "local": 0.6050
             },
             "eval_metrics": {
-                "val - personal - accuracy": 0.7182,
-                "val - global - accuracy": 0.7571,
-                "val - local - accuracy": 0.5864
+                "val - personal - accuracy": 0.7681,
+                "val - global - accuracy": 0.7943,
+                "val - local - accuracy": 0.7094
             },
-            "eval_loss": 0.8714
+            "eval_loss": 0.7815
         }
     }
 }
