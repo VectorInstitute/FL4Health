@@ -61,19 +61,18 @@ class DittoDeepMmdClient(DittoClient):
                 "Deep MMD loss weight is set to 0. As Deep MMD loss will not be computed, ",
                 "please use vanilla DittoClient instead.",
             )
-        if feature_extraction_layers_with_size:
-            self.flatten_feature_extraction_layers = {
-                layer: True for layer in feature_extraction_layers_with_size.keys()
-            }
-        else:
-            self.flatten_feature_extraction_layers = {}
+
+        if feature_extraction_layers_with_size is None:
+            feature_extraction_layers_with_size = {}
+        self.flatten_feature_extraction_layers = {
+            layer: True for layer in feature_extraction_layers_with_size.keys()
+        }
         self.deep_mmd_losses: Dict[str, DeepMmdLoss] = {}
-        if feature_extraction_layers_with_size is not None:
-            for layer, feature_size in feature_extraction_layers_with_size.items():
-                self.deep_mmd_losses[layer] = DeepMmdLoss(
-                    device=self.device,
-                    input_size=feature_size,
-                ).to(self.device)
+        for layer, feature_size in feature_extraction_layers_with_size.items():
+            self.deep_mmd_losses[layer] = DeepMmdLoss(
+                device=self.device,
+                input_size=feature_size,
+            ).to(self.device)
         self.initial_global_model: nn.Module
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer
@@ -182,8 +181,8 @@ class DittoDeepMmdClient(DittoClient):
             TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
                 indexed by name.
         """
-        for layer in self.flatten_feature_extraction_layers.keys():
-            assert self.deep_mmd_losses[layer].training
+        for layer_loss_module in self.deep_mmd_losses.values():
+            assert layer_loss_module.training
         return super().compute_training_loss(preds, features, target)
 
     def compute_evaluation_loss(
@@ -205,8 +204,8 @@ class DittoDeepMmdClient(DittoClient):
             EvaluationLosses: an instance of EvaluationLosses containing checkpoint loss and additional losses
                 indexed by name.
         """
-        for layer in self.flatten_feature_extraction_layers.keys():
-            assert not self.deep_mmd_losses[layer].training
+        for layer_loss_module in self.deep_mmd_losses.values():
+            assert not layer_loss_module.training
         return super().compute_evaluation_loss(preds, features, target)
 
     def compute_loss_and_additional_losses(
@@ -236,7 +235,7 @@ class DittoDeepMmdClient(DittoClient):
                 additional_losses["_".join(["deep_mmd_loss", layer])] = deep_mmd_loss
                 total_deep_mmd_loss += deep_mmd_loss
             total_loss += self.deep_mmd_loss_weight * total_deep_mmd_loss
-            additional_losses["deep_mmd_loss_total"] = total_deep_mmd_loss
+            additional_losses["deep_mmd_loss_total"] = total_deep_mmd_loss.clone()
         additional_losses["total_loss"] = total_loss
 
         return total_loss, additional_losses

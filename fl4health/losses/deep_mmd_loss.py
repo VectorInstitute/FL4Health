@@ -5,9 +5,15 @@ import torch
 
 
 class ModelLatentF(torch.nn.Module):
-    """Deep network for learning the deep kernel over features."""
-
     def __init__(self, x_in_dim: int, hidden_dim: int, x_out_dim: int):
+        """
+        Deep network for learning the deep kernel over features. 
+
+        Args:
+            x_in_dim (int): The input dimension of the deep network.
+            hidden_dim (int): The hidden dimension of the deep network.
+            x_out_dim (int): The output dimension of the deep network.
+        """
         super().__init__()
         self.latent = torch.nn.Sequential(
             torch.nn.Linear(x_in_dim, hidden_dim, bias=True),
@@ -20,6 +26,15 @@ class ModelLatentF(torch.nn.Module):
         )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the deep network.
+
+        Args:
+            input (torch.Tensor): The input tensor to the deep network.
+
+        Returns:
+            torch.Tensor: The output tensor of the deep network.
+        """
         feature_latent_map = self.latent(input)
         return feature_latent_map
 
@@ -87,7 +102,16 @@ class DeepMmdLoss(torch.nn.Module):
         )
 
     def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
-        """compute the paired distance between x and y."""
+        """
+        Compute the paired distance between x and y.
+        
+        Args:
+            X (torch.Tensor): The input tensor X.
+            Y (torch.Tensor): The input tensor Y.
+        
+        Returns:
+            torch.Tensor: The paired distance between X and Y.
+        """
         x_norm = (X**2).sum(1).view(-1, 1)
         y_norm = (Y**2).sum(1).view(1, -1)
         paired_distance = x_norm + y_norm - 2.0 * torch.mm(X, torch.transpose(Y, 0, 1))
@@ -101,18 +125,30 @@ class DeepMmdLoss(torch.nn.Module):
         k_xy: torch.Tensor,
         is_var_computed: bool,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """compute value of MMD and std of MMD using kernel matrix."""
+        """
+        Compute value of MMD and std of MMD using kernel matrix.
+        
+        Args:
+            k_x (torch.Tensor): The kernel matrix of x.
+            k_y (torch.Tensor): The kernel matrix of y.
+            k_xy (torch.Tensor): The kernel matrix of x and y.
+            is_var_computed (bool): Whether to compute the variance of the MMD.
+            
+        Returns:
+            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD 
+                if required to compute.
+        """
         nx = k_x.shape[0]
         ny = k_y.shape[0]
 
         if self.is_unbiased:
-            # compute the unbiased MMD estimator (MMD_u^2) defined in Eq. (2) of the paper
+            # compute the unbiased MMD estimator (\hat{\text{MMD}}_u^2) defined in Eq. (2) of the paper
             xx = torch.div((torch.sum(k_x) - torch.sum(torch.diag(k_x))), (nx * (nx - 1)))
             yy = torch.div((torch.sum(k_y) - torch.sum(torch.diag(k_y))), (ny * (ny - 1)))
             xy = torch.div((torch.sum(k_xy) - torch.sum(torch.diag(k_xy))), (nx * (ny - 1)))
 
         else:
-            # compute the biased MMD estimator (MMD_u^2) defined below Equation (2) of the paper
+            # compute the biased MMD estimator (\hat{\text{MMD}}_b^2) defined below Equation (2) of the paper
             xx = torch.div((torch.sum(k_x)), (nx * nx))
             yy = torch.div((torch.sum(k_y)), (ny * ny))
             xy = torch.div((torch.sum(k_xy)), (nx * ny))
@@ -139,7 +175,25 @@ class DeepMmdLoss(torch.nn.Module):
         is_smooth: bool = True,
         is_var_computed: bool = True,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
-        """compute value of deep-kernel MMD and std of deep-kernel MMD using merged data."""
+        """
+        Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.
+        
+        Args:
+            features (torch.Tensor): The output features of the deep network.
+            len_s (int): The length of the sample.
+            features_org (torch.Tensor): The original input features of the deep network.
+            sigma_q (torch.Tensor): The sigma_q parameter.
+            sigma_phi (torch.Tensor): The sigma_phi parameter.
+            epsilon (torch.Tensor): The epsilon parameter.
+            is_smooth (bool, optional): Whether to use the smooth version of the MMD. 
+                Defaults to True.
+            is_var_computed (bool, optional): Whether to compute the variance of the MMD.
+                Defaults to True.
+
+        Returns:
+            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD
+                if required to compute.
+        """
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)
         y = features[len_s:, :]  # fetch the sample 2 (features of deep networks)
         distance_xx = self.pairwise_distiance_squared(x, x)
@@ -173,7 +227,13 @@ class DeepMmdLoss(torch.nn.Module):
         return self.h1_mean_var_gram(kernel_x, kernel_y, kernel_xy, is_var_computed)
 
     def train_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> None:
-        """Train the Deep MMD kernel."""
+        """
+        Train the Deep MMD kernel.
+        
+        Args:
+            X (torch.Tensor): The input tensor X.
+            Y (torch.Tensor): The input tensor Y.
+        """
 
         self.featurizer.train()
         self.sigma_q_opt.requires_grad = True
@@ -189,8 +249,8 @@ class DeepMmdLoss(torch.nn.Module):
         self.optimizer_F.zero_grad()
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma_q and sigma_phi
-        ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
+        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper 
+        epsilon = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
         # Compute Deep MMD value and variance estimates
@@ -200,13 +260,13 @@ class DeepMmdLoss(torch.nn.Module):
             features_org=features.view(features.shape[0], -1),
             sigma_q=sigma_q,
             sigma_phi=sigma_phi,
-            epsilon=ep,
+            epsilon=epsilon,
             is_var_computed=True,
         )
         if mmd_var_estimate is None:
             raise AssertionError("Error: Variance of MMD is not computed. Please set is_var_computed=True.")
         mmd_std_estimate = torch.sqrt(mmd_var_estimate)
-        # Forming J_lambda defined in Equation (4) of the paper (STAT_u)
+        # Forming \hat{J}_{\lambda} defined in Equation (4) of the paper (STAT_u)
         stat_u = torch.div(-1 * mmd_value_estimate, mmd_std_estimate)
         # Compute gradient
         stat_u.backward()
@@ -214,7 +274,16 @@ class DeepMmdLoss(torch.nn.Module):
         self.optimizer_F.step()
 
     def compute_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
-        """Compute the Deep MMD Loss."""
+        """
+        Compute the Deep MMD Loss.
+        
+        Args:
+            X (torch.Tensor): The input tensor X.
+            Y (torch.Tensor): The input tensor Y.
+        
+        Returns:
+            torch.Tensor: The value of Deep MMD Loss.
+        """
 
         self.featurizer.eval()
         self.sigma_q_opt.requires_grad = False
@@ -225,8 +294,8 @@ class DeepMmdLoss(torch.nn.Module):
 
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma_q and sigma_phi
-        ep = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
+        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper 
+        epsilon = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
         # Compute Deep MMD value estimates
@@ -236,13 +305,25 @@ class DeepMmdLoss(torch.nn.Module):
             features_org=features.view(features.shape[0], -1),
             sigma_q=sigma_q,
             sigma_phi=sigma_phi,
-            epsilon=ep,
+            epsilon=epsilon,
             is_var_computed=False,
         )
 
         return mmd_value_estimate
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
+        """ 
+        Forward pass of the Deep MMD Loss where it first trains the deep kernel for number of optimization
+        steps and then computes the MMD loss.
+
+        Args:
+            Xs (torch.Tensor): The source input tensor.
+            Xt (torch.Tensor): The target input tensor.
+        
+        Returns:
+            torch.Tensor: The value of Deep MMD Loss.
+        """
+
         if self.training:
             for _ in range(self.optimization_steps):
                 self.train_kernel(Xs.clone().detach(), Xt.clone().detach())
