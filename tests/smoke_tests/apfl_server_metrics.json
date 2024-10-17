@@ -12,17 +12,17 @@
             "eval_metrics_aggregated": {
                 "val - personal - accuracy": 0.7117,
                 "val - global - accuracy": 0.7162,
-                "val - local - accuracy": 0.5203
+                "val - local - accuracy": 0.6274
             },
-            "val - loss - aggregated": 1.1076
+            "val - loss - aggregated": 0.9102
         },
         "3": {
             "eval_metrics_aggregated": {
-                "val - personal - accuracy": 0.7182,
-                "val - global - accuracy": 0.7571,
-                "val - local - accuracy": 0.5864
+                "val - personal - accuracy": 0.7681,
+                "val - global - accuracy": 0.7943,
+                "val - local - accuracy": 0.7094
             },
-            "val - loss - aggregated": 0.87143
+            "val - loss - aggregated": 0.7814
         }
     }
 }
