@@ -7,7 +7,7 @@ import torch
 class ModelLatentF(torch.nn.Module):
     def __init__(self, x_in_dim: int, hidden_dim: int, x_out_dim: int):
         """
-        Deep network for learning the deep kernel over features. 
+        Deep network for learning the deep kernel over features.
 
         Args:
             x_in_dim (int): The input dimension of the deep network.
@@ -104,11 +104,11 @@ class DeepMmdLoss(torch.nn.Module):
     def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
         Compute the paired distance between x and y.
-        
+
         Args:
             X (torch.Tensor): The input tensor X.
             Y (torch.Tensor): The input tensor Y.
-        
+
         Returns:
             torch.Tensor: The paired distance between X and Y.
         """
@@ -127,15 +127,15 @@ class DeepMmdLoss(torch.nn.Module):
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
         Compute value of MMD and std of MMD using kernel matrix.
-        
+
         Args:
             k_x (torch.Tensor): The kernel matrix of x.
             k_y (torch.Tensor): The kernel matrix of y.
             k_xy (torch.Tensor): The kernel matrix of x and y.
             is_var_computed (bool): Whether to compute the variance of the MMD.
-            
+
         Returns:
-            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD 
+            Tuple[torch.Tensor, Optional[torch.Tensor]]: The value of MMD and the variance of MMD
                 if required to compute.
         """
         nx = k_x.shape[0]
@@ -177,7 +177,7 @@ class DeepMmdLoss(torch.nn.Module):
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
         Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.
-        
+
         Args:
             features (torch.Tensor): The output features of the deep network.
             len_s (int): The length of the sample.
@@ -185,7 +185,7 @@ class DeepMmdLoss(torch.nn.Module):
             sigma_q (torch.Tensor): The sigma_q parameter.
             sigma_phi (torch.Tensor): The sigma_phi parameter.
             epsilon (torch.Tensor): The epsilon parameter.
-            is_smooth (bool, optional): Whether to use the smooth version of the MMD. 
+            is_smooth (bool, optional): Whether to use the smooth version of the MMD.
                 Defaults to True.
             is_var_computed (bool, optional): Whether to compute the variance of the MMD.
                 Defaults to True.
@@ -229,7 +229,7 @@ class DeepMmdLoss(torch.nn.Module):
     def train_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> None:
         """
         Train the Deep MMD kernel.
-        
+
         Args:
             X (torch.Tensor): The input tensor X.
             Y (torch.Tensor): The input tensor Y.
@@ -249,7 +249,7 @@ class DeepMmdLoss(torch.nn.Module):
         self.optimizer_F.zero_grad()
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper 
+        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper
         epsilon = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
@@ -276,11 +276,11 @@ class DeepMmdLoss(torch.nn.Module):
     def compute_kernel(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
         Compute the Deep MMD Loss.
-        
+
         Args:
             X (torch.Tensor): The input tensor X.
             Y (torch.Tensor): The input tensor Y.
-        
+
         Returns:
             torch.Tensor: The value of Deep MMD Loss.
         """
@@ -294,7 +294,7 @@ class DeepMmdLoss(torch.nn.Module):
 
         # Compute output of deep network
         model_output = self.featurizer(features)
-        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper 
+        # Compute epsilon, sigma_q and sigma_phi in \kappa_w(x, y) in Equation (1) of the paper
         epsilon = torch.exp(self.epsilon_opt) / (1 + torch.exp(self.epsilon_opt))
         sigma_q = self.sigma_q_opt**2
         sigma_phi = self.sigma_phi_opt**2
@@ -312,14 +312,14 @@ class DeepMmdLoss(torch.nn.Module):
         return mmd_value_estimate
 
     def forward(self, Xs: torch.Tensor, Xt: torch.Tensor) -> torch.Tensor:
-        """ 
+        """
         Forward pass of the Deep MMD Loss where it first trains the deep kernel for number of optimization
         steps and then computes the MMD loss.
 
         Args:
             Xs (torch.Tensor): The source input tensor.
             Xt (torch.Tensor): The target input tensor.
-        
+
         Returns:
             torch.Tensor: The value of Deep MMD Loss.
         """

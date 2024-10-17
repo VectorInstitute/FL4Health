@@ -64,9 +64,7 @@ class DittoDeepMmdClient(DittoClient):
 
         if feature_extraction_layers_with_size is None:
             feature_extraction_layers_with_size = {}
-        self.flatten_feature_extraction_layers = {
-            layer: True for layer in feature_extraction_layers_with_size.keys()
-        }
+        self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers_with_size.keys()}
         self.deep_mmd_losses: Dict[str, DeepMmdLoss] = {}
         for layer, feature_size in feature_extraction_layers_with_size.items():
             self.deep_mmd_losses[layer] = DeepMmdLoss(
