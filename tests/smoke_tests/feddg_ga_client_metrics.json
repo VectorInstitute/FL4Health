@@ -39,7 +39,7 @@
             },
             "eval_metrics": {
                 "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
-                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005},
+                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005}
             },
             "eval_loss": {"target_value": 1.0008, "custom_tolerance": 0.005}
         },
