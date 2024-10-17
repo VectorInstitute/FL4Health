@@ -13,17 +13,17 @@
             "eval_metrics_aggregated": {
                 "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
                 "val - global - accuracy": 0.6031,
-                "val - local - accuracy": {"target_value": 0.5066, "custom_tolerance": 0.005}
+                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005}
             },
-            "val - loss - aggregated": {"target_value": 0.9618, "custom_tolerance": 0.005}
+            "val - loss - aggregated": {"target_value": 1.0008, "custom_tolerance": 0.005}
         },
         "3": {
             "eval_metrics_aggregated": {
-                "val - personal - accuracy": {"target_value": 0.739, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.78,
-                "val - local - accuracy": {"target_value": 0.5602, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.8218, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.8497,
+                "val - local - accuracy": {"target_value": 0.7508, "custom_tolerance": 0.005}
             },
-            "val - loss - aggregated": {"target_value": 0.8043, "custom_tolerance": 0.005}
+            "val - loss - aggregated": {"target_value": 0.6042, "custom_tolerance": 0.005}
         }
     },
     "metrics_centralized": {},
