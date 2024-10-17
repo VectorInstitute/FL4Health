@@ -64,6 +64,8 @@ def main(config: Dict[str, Any]) -> None:
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
+    server.shutdown()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Server Main")

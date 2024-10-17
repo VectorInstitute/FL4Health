@@ -14,7 +14,7 @@
                 "val - global - accuracy": 0.6583,
                 "val - local - accuracy": 0.5203
             },
-            "loss_aggregated": 1.1076
+            "val - loss - aggregated": 1.1076
         },
         "3": {
             "eval_metrics_aggregated": {

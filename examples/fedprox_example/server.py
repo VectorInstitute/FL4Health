@@ -22,24 +22,24 @@ from fl4health.utils.random import set_all_random_seeds
 def fit_config(
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
+    reporting_config: Optional[Dict[str, str]] = None,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    return {
+    base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
+    if reporting_config is not None:
+        # NOTE: that name is not included, it will be set in the clients
+        base_config["project"] = reporting_config.get("project", "")
+        base_config["group"] = reporting_config.get("group", "")
+        base_config["entity"] = reporting_config.get("entity", "")
+
+    return base_config
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:
@@ -48,11 +48,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        config.get("enable_wandb_reporting", False),
-        # Note that run name is not included, it will be set in the clients
-        config["wandb_reporting_config"].get("project_name", ""),
-        config["wandb_reporting_config"].get("group_name", ""),
-        config["wandb_reporting_config"].get("entity", ""),
+        reporting_config=config.get("reporting_config"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -78,12 +74,15 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         loss_weight_patience=config["proximal_weight_patience"],
     )
 
-    reporters = [JsonReporter()]
-    if config.get("enable_wandb_reporting", False) is True:
-        reporters.append(WandBReporter("round", **config["wandb_reporting_config"]))
-
+    json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=reporters)
+    if "reporting_config" in config:
+        wandb_reporter = WandBReporter("round", **config["reporting_config"])
+        server = FedProxServer(
+            client_manager=client_manager, strategy=strategy, model=None, reporters=[wandb_reporter, json_reporter]
+        )
+    else:
+        server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=[json_reporter])
 
     fl.server.start_server(
         server=server,
