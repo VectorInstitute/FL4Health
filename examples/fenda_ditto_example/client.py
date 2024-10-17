@@ -22,6 +22,7 @@ from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -114,7 +115,8 @@ if __name__ == "__main__":
         )
 
     checkpointer = ClientCheckpointModule(
-        pre_aggregation=pre_aggregation_checkpointer, post_aggregation=post_aggregation_checkpointer
+        pre_aggregation=pre_aggregation_checkpointer,
+        post_aggregation=post_aggregation_checkpointer,
     )
     client = MnistFendaDittoClient(
         data_path,
@@ -122,10 +124,9 @@ if __name__ == "__main__":
         DEVICE,
         args.checkpoint_path,
         checkpointer=checkpointer,
+        reporters=[JsonReporter()],
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully
     client.shutdown()
-
-    client.metrics_reporter.dump()

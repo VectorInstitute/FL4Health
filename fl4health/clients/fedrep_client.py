@@ -15,7 +15,7 @@ from fl4health.model_bases.fedrep_base import FedRepModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
@@ -37,9 +37,9 @@ class FedRepClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
-        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, metrics_reporter)
+        super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, reporters)
         self.fedrep_train_mode = FedRepTrainMode.HEAD
 
     def _prepare_train_representations(self) -> None:
@@ -109,7 +109,10 @@ class FedRepClient(BasicClient):
         epochs_specified = ("local_head_epochs" in config) and ("local_rep_epochs" in config)
         steps_specified = ("local_head_steps" in config) and ("local_rep_steps" in config)
         if epochs_specified and not steps_specified:
-            log(INFO, "Epochs for head and representation module specified. Proceeding with epoch-based training")
+            log(
+                INFO,
+                "Epochs for head and representation module specified. Proceeding with epoch-based training",
+            )
             return (
                 narrow_dict_type(config, "local_head_epochs", int),
                 narrow_dict_type(config, "local_rep_epochs", int),
@@ -117,7 +120,10 @@ class FedRepClient(BasicClient):
                 None,
             )
         elif steps_specified and not epochs_specified:
-            log(INFO, "Steps for head and representation module specified. Proceeding with step-based training")
+            log(
+                INFO,
+                "Steps for head and representation module specified. Proceeding with step-based training",
+            )
             return (
                 None,
                 None,
@@ -207,6 +213,7 @@ class FedRepClient(BasicClient):
             ValueError: If the steps or epochs for the representation and head module training processes are are
                 correctly specified.
         """
+        round_start_time = datetime.datetime.now()
         (
             (local_head_epochs, local_rep_epochs, local_head_steps, local_rep_steps),
             current_server_round,
@@ -216,15 +223,11 @@ class FedRepClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={"fit_start": datetime.datetime.now()},
-        )
-
         self.set_parameters(parameters, config, fitting_round=True)
 
         self.update_before_train(current_server_round)
 
+        fit_start_time = datetime.datetime.now()
         if local_head_epochs and local_rep_epochs:
             loss_dict, metrics = self.train_fedrep_by_epochs(local_head_epochs, local_rep_epochs, current_server_round)
         elif local_head_steps and local_rep_steps:
@@ -234,6 +237,7 @@ class FedRepClient(BasicClient):
                 "Local epochs or local steps have not been correctly specified. They have values "
                 f"{local_head_epochs}, {local_rep_epochs}, {local_head_steps}, {local_rep_steps}"
             )
+        fit_time = datetime.datetime.now() - fit_start_time
 
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
@@ -243,12 +247,16 @@ class FedRepClient(BasicClient):
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={
+        # Report data at end of round
+        self.reports_manager.report(
+            {
                 "fit_metrics": metrics,
-                "loss_dict": loss_dict,
+                "fit_losses": loss_dict,
+                "round": current_server_round,
+                "round_start": str(round_start_time),
+                "fit_time_elapsed": str(fit_time),
             },
+            current_server_round,
         )
 
         # FitRes should contain local parameters, number of examples on client, and a dictionary holding metrics
@@ -284,7 +292,10 @@ class FedRepClient(BasicClient):
 
         # Second we train the representation module for rep_epochs with the head module frozen in place
         self._prepare_train_representations()
-        log(INFO, f"Beginning FedRep Representation Training Phase for {rep_epochs} Epochs")
+        log(
+            INFO,
+            f"Beginning FedRep Representation Training Phase for {rep_epochs} Epochs",
+        )
         loss_dict_rep, metrics_dict_rep = self.train_by_epochs(rep_epochs, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for Rep training")
         # The loss and metrics coming from train_by_epochs are generically keyed, for example "backward." To avoid
@@ -320,7 +331,10 @@ class FedRepClient(BasicClient):
 
         # Second we train the representation module for rep_steps with the head module frozen in place
         self._prepare_train_representations()
-        log(INFO, f"Beginning FedRep Representation Training Phase for {rep_steps} Steps")
+        log(
+            INFO,
+            f"Beginning FedRep Representation Training Phase for {rep_steps} Steps",
+        )
         loss_dict_rep, metrics_dict_rep = self.train_by_steps(rep_steps, current_round)
         log(INFO, "Converting the loss and metrics dictionary keys for Rep training")
         # The loss and metrics coming from train_by_steps are generically keyed, for example "backward." To avoid

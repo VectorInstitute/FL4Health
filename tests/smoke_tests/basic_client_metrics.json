@@ -4,7 +4,7 @@
             "fit_metrics": {
                 "train - prediction - accuracy": 0.084375
             },
-            "loss_dict": {
+            "fit_losses": {
                 "backward": 3.4583
             }
         },
@@ -12,31 +12,31 @@
             "fit_metrics": {
                 "train - prediction - accuracy": 0.1
             },
-            "loss_dict": {
+            "fit_losses": {
                 "backward": 2.32976
             },
-            "evaluate_metrics": {
+            "eval_metrics": {
                 "val - prediction - accuracy": 0.0942,
                 "test - num_examples": 10000,
                 "test - loss": 2.30616,
                 "test - prediction - accuracy": 0.0966
             },
-            "loss": 2.3042
+            "eval_loss": 2.3042
         },
         "3": {
             "fit_metrics": {
                 "train - prediction - accuracy": 0.096875
             },
-            "loss_dict": {
+            "fit_losses": {
                 "backward": 2.31093
             },
-            "evaluate_metrics": {
+            "eval_metrics": {
                 "val - prediction - accuracy": 0.0936,
                 "test - num_examples": 10000,
                 "test - loss": 2.30109,
                 "test - prediction - accuracy": 0.0972
             },
-            "loss": 2.2999
+            "eval_loss": 2.2999
         }
     }
 }

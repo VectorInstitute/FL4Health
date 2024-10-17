@@ -15,6 +15,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
@@ -35,6 +36,7 @@ class ScaffoldClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -42,6 +44,7 @@ class ScaffoldClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.learning_rate: float  # eta_l in paper
         self.client_control_variates: Optional[NDArrays] = None  # c_i in paper
@@ -58,7 +61,10 @@ class ScaffoldClient(BasicClient):
         Packs the parameters and control variates into a single NDArrays to be sent to the server for aggregation
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
             # If initialized==False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
@@ -161,7 +167,9 @@ class ScaffoldClient(BasicClient):
         ]
 
         for param, client_cv, server_cv in zip(
-            model_params_with_grad, self.client_control_variates, self.server_control_variates
+            model_params_with_grad,
+            self.client_control_variates,
+            self.server_control_variates,
         ):
             assert param.grad is not None
             tensor_type = param.grad.dtype
@@ -187,7 +195,10 @@ class ScaffoldClient(BasicClient):
         self.modify_grad()
 
     def compute_updated_control_variates(
-        self, local_steps: int, delta_model_weights: NDArrays, delta_control_variates: NDArrays
+        self,
+        local_steps: int,
+        delta_model_weights: NDArrays,
+        delta_control_variates: NDArrays,
     ) -> NDArrays:
         """
         Computes the updated local control variates according to option 2 in Equation 4 of paper

@@ -1,5 +1,6 @@
 import argparse
 import string
+from collections.abc import Sequence
 from functools import partial
 from random import choices
 from typing import Any, Dict, Optional
@@ -15,7 +16,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer, OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
 from fl4health.strategies.basic_fedavg import OpacusBasicFedAvg
 from fl4health.utils.config import load_config
@@ -71,8 +72,8 @@ class CifarInstanceLevelDPServerWithCheckpointing(InstanceLevelDpServer):
         strategy: OpacusBasicFedAvg,
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[OpacusCheckpointer] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[float] = None,
     ) -> None:
         super().__init__(
@@ -83,8 +84,8 @@ class CifarInstanceLevelDPServerWithCheckpointing(InstanceLevelDpServer):
             strategy,
             local_epochs,
             local_steps,
-            wandb_reporter,
             checkpointer,
+            reporters,
             delta,
         )
         self.parameter_exchanger = FullParameterExchanger()

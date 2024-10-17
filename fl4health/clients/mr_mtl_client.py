@@ -9,7 +9,7 @@ from flwr.common.typing import Config, NDArrays, Scalar
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchPredType, TorchTargetType
@@ -23,7 +23,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
     ) -> None:
         """
@@ -48,8 +48,8 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             progress_bar (bool): Whether or not to display a progress bar during client training and validation.
                 Uses tqdm. Defaults to False
         """
@@ -59,7 +59,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
             progress_bar=progress_bar,
         )
         # NOTE: The initial global model is used to house the aggregate weight updates at the beginning of a round,

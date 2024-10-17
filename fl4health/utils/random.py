@@ -1,5 +1,5 @@
 import random
-import string
+import uuid
 from logging import INFO
 from typing import Optional
 
@@ -39,11 +39,12 @@ def unset_all_random_seeds() -> None:
 def generate_hash(length: int = 8) -> str:
     """
     Generates unique hash used as id for client.
+    NOTE: This generation is unaffected by setting of random seeds.
 
     Args:
-       length (int): The length of the hash.
+       length (int): The length of the hash generated. Maximum length is 32
 
     Returns:
-        str: client id
+        str: hash
     """
-    return "".join(random.choice(string.ascii_lowercase) for _ in range(length))
+    return str(uuid.uuid4()).replace("-", "")[:length]

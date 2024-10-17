@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
 from fl4health.utils.metrics import Accuracy
@@ -58,7 +59,6 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistApflClient(data_path, [Accuracy()], DEVICE)
+    client = MnistApflClient(data_path, [Accuracy()], DEVICE, reporters=[JsonReporter()])
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
-
-    client.metrics_reporter.dump()
+    client.shutdown()

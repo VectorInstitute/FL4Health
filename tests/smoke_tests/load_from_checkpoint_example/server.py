@@ -12,6 +12,7 @@ from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -68,9 +69,9 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
         client_manager=SimpleClientManager(),
         model=model,
         parameter_exchanger=parameter_exchanger,
-        wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointers,
+        reporters=[JsonReporter()],
         intermediate_server_state_dir=Path(intermediate_server_state_dir),
         server_name=server_name,
     )
@@ -81,7 +82,6 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    server.metrics_reporter.dump()
     server.shutdown()
 
 

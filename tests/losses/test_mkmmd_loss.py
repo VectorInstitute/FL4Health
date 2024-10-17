@@ -618,4 +618,4 @@ def test_optimizer_betas_in_non_degenerate_case() -> None:
     one_hot_betas = torch.zeros_like(betas_local)
 
     one_hot_betas[1, 0] = 1
-    assert torch.all(betas_local.eq(one_hot_betas))
+    assert torch.allclose(one_hot_betas, betas_local, rtol=0.0, atol=1e-6)

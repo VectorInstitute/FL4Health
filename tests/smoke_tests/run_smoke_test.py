@@ -13,7 +13,11 @@ from six.moves import urllib
 
 from fl4health.utils.load_data import load_cifar10_data, load_mnist_data
 
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 logger = logging.getLogger()
 
 
@@ -547,7 +551,7 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: Optional[Dict[st
         with open(file) as f:
             metrics = json.load(f)
 
-        if metrics["type"] != metric_type.value:
+        if metrics["host_type"] != metric_type.value:
             continue
 
         metrics_found = True

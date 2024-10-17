@@ -1,7 +1,7 @@
 import random
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Sequence, Tuple
 
 from flwr.common import Parameters
 from flwr.common.logger import log
@@ -18,7 +18,7 @@ from fl4health.feature_alignment.constants import (
     SOURCE_SPECIFIED,
 )
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.basic_fedavg import BasicFedAvg
@@ -52,16 +52,18 @@ class TabularFeatureAlignmentServer(FlServer):
         config: Config,
         initialize_parameters: Callable[..., Parameters],
         strategy: BasicFedAvg,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         if strategy.on_fit_config_fn is not None:
             log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
             log(WARNING, "strategy.initial_parameters will be overwritten.")
 
-        super().__init__(client_manager, strategy, wandb_reporter, checkpointer)
+        super().__init__(
+            client_manager=client_manager, strategy=strategy, checkpointer=checkpointer, reporters=reporters
+        )
         # The server performs one or two rounds of polls before the normal federated training.
         # The first one gathers feature information if the server does not already have it,
         # and the second one gathers the input/output dimensions of the model.

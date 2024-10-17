@@ -15,7 +15,7 @@ from torchmetrics.classification import MultilabelAveragePrecision
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric, TorchMetric
 from research.picai.data.data_utils import (
@@ -39,7 +39,7 @@ class PicaiFedAvgClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         overviews_dir: Path = Path("./"),
@@ -51,7 +51,7 @@ class PicaiFedAvgClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
             progress_bar=progress_bar,
             intermediate_client_state_dir=intermediate_client_state_dir,
         )
@@ -115,10 +115,18 @@ class PicaiFedAvgClient(BasicClient):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FL Client Main")
     parser.add_argument(
-        "--artifact_dir", action="store", type=str, help="Path to dir to store run artifacts", required=True
+        "--artifact_dir",
+        action="store",
+        type=str,
+        help="Path to dir to store run artifacts",
+        required=True,
     )
     parser.add_argument(
-        "--base_dir", action="store", type=str, help="Path to base directory containing PICAI dataset", required=True
+        "--base_dir",
+        action="store",
+        type=str,
+        help="Path to base directory containing PICAI dataset",
+        required=True,
     )
     parser.add_argument(
         "--overviews_dir",
@@ -134,7 +142,12 @@ if __name__ == "__main__":
         help="Server Address for the clients to communicate with the server through",
         default="0.0.0.0:8080",
     )
-    parser.add_argument("--data_partition", type=int, help="The data partition to train the client on", default=0)
+    parser.add_argument(
+        "--data_partition",
+        type=int,
+        help="The data partition to train the client on",
+        default=0,
+    )
     args = parser.parse_args()
 
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -143,7 +156,8 @@ if __name__ == "__main__":
 
     metrics = [
         TorchMetric(
-            name="MLAP", metric=MultilabelAveragePrecision(average="macro", num_labels=2, thresholds=3).to(DEVICE)
+            name="MLAP",
+            metric=MultilabelAveragePrecision(average="macro", num_labels=2, thresholds=3).to(DEVICE),
         )
     ]
 

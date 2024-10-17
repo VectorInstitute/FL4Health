@@ -1,17 +1,17 @@
 import logging
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 from flwr.common.typing import NDArrays
 
-TorchInputType = Union[torch.Tensor, Dict[str, torch.Tensor]]
-TorchTargetType = Union[torch.Tensor, Dict[str, torch.Tensor]]
-TorchPredType = Dict[str, torch.Tensor]
-TorchFeatureType = Dict[str, torch.Tensor]
+TorchInputType = torch.Tensor | dict[str, torch.Tensor]
+TorchTargetType = torch.Tensor | dict[str, torch.Tensor]
+TorchPredType = dict[str, torch.Tensor]
+TorchFeatureType = dict[str, torch.Tensor]
 TorchTransformFunction = Callable[[torch.Tensor], torch.Tensor]
-LayerSelectionFunction = Callable[[nn.Module, Optional[nn.Module]], Tuple[NDArrays, List[str]]]
+LayerSelectionFunction = Callable[[nn.Module, nn.Module | None], tuple[NDArrays, list[str]]]
 
 
 class LogLevel(Enum):

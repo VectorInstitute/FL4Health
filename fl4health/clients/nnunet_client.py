@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient, LoggingMode
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
@@ -74,7 +74,7 @@ class NnunetClient(BasicClient):
         intermediate_client_state_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         client_name: Optional[str] = None,
     ) -> None:
         """
@@ -137,9 +137,8 @@ class NnunetClient(BasicClient):
                 Checkpointer module defining when and how to do checkpointing
                 during client-side training. No checkpointing is done if not
                 provided. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics
-                reporter instance to record the metrics during the execution.
-                Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -149,7 +148,7 @@ class NnunetClient(BasicClient):
             device=device,  # self.device
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,  # self.checkpointer
-            metrics_reporter=metrics_reporter,  # self.metrics_reporter
+            reporters=reporters,
             progress_bar=progress_bar,
             intermediate_client_state_dir=intermediate_client_state_dir,
             client_name=client_name,
@@ -283,7 +282,9 @@ class NnunetClient(BasicClient):
         # compatible with Torch LRScheduler
         # Create and return LR Scheduler. This is nnunet default for version 2.5.1
         return PolyLRSchedulerWrapper(
-            self.optimizers[optimizer_key], initial_lr=self.nnunet_trainer.initial_lr, max_steps=total_steps
+            self.optimizers[optimizer_key],
+            initial_lr=self.nnunet_trainer.initial_lr,
+            max_steps=total_steps,
         )
 
     def create_plans(self, config: Config) -> Dict[str, Any]:
@@ -337,7 +338,10 @@ class NnunetClient(BasicClient):
                 new_bs = max(min(old_bs, bs_5percent), 2)
                 plans["configurations"][c]["batch_size"] = new_bs
             else:
-                log(WARNING, ("Did not find a 'batch_size' key in the nnunet plans " f"dict for nnunet config: {c}"))
+                log(
+                    WARNING,
+                    ("Did not find a 'batch_size' key in the nnunet plans " f"dict for nnunet config: {c}"),
+                )
 
         # Can't run nnunet preprocessing without saving plans file
         os.makedirs(join(nnUNet_preprocessed, self.dataset_name), exist_ok=True)
@@ -375,7 +379,10 @@ class NnunetClient(BasicClient):
                     configurations=[nnunet_config.value],
                 )
         elif self.verbose:
-            log(INFO, "\tnnunet preprocessed data seems to already exist. Skipping preprocessing")
+            log(
+                INFO,
+                "\tnnunet preprocessed data seems to already exist. Skipping preprocessing",
+            )
 
     @use_default_signal_handlers  # Fingerprint extraction spawns subprocess
     def maybe_extract_fingerprint(self) -> None:
@@ -393,11 +400,20 @@ class NnunetClient(BasicClient):
                 with redirect_stdout(self.stream2debug):
                     extract_fingerprints(dataset_ids=[self.dataset_id])
                 if self.verbose:
-                    log(INFO, f"\tExtracted dataset fingerprint in {time.time()-start:.1f}s")
+                    log(
+                        INFO,
+                        f"\tExtracted dataset fingerprint in {time.time()-start:.1f}s",
+                    )
             elif self.verbose:
-                log(INFO, "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction")
+                log(
+                    INFO,
+                    "\tnnunet dataset fingerprint already exists. Skipping fingerprint extraction",
+                )
         elif self.verbose:
-            log(INFO, "\tThis client instance has already extracted the dataset fingerprint. Skipping.")
+            log(
+                INFO,
+                "\tThis client instance has already extracted the dataset fingerprint. Skipping.",
+            )
 
         # Avoid extracting fingerprint multiple times when always_preprocess is true
         self.fingerprint_extracted = True
@@ -499,7 +515,10 @@ class NnunetClient(BasicClient):
             )
 
     def compute_loss_and_additional_losses(
-        self, preds: TorchPredType, features: Dict[str, torch.Tensor], target: TorchTargetType
+        self,
+        preds: TorchPredType,
+        features: Dict[str, torch.Tensor],
+        target: TorchTargetType,
     ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
         """
         Checks the pred and target types and computes the loss
@@ -570,10 +589,16 @@ class NnunetClient(BasicClient):
         # Tile the mask to be one hot encoded
         mask_here = torch.tile(mask, (1, pred.shape[1], *[1 for _ in range(2, pred.ndim)]))
 
-        return pred * mask_here, new_target  # Mask the input tensor and return the modified target
+        return (
+            pred * mask_here,
+            new_target,
+        )  # Mask the input tensor and return the modified target
 
     def update_metric_manager(
-        self, preds: TorchPredType, target: TorchTargetType, metric_manager: MetricManager
+        self,
+        preds: TorchPredType,
+        target: TorchTargetType,
+        metric_manager: MetricManager,
     ) -> None:
         """
         Update the metrics with preds and target. Overridden because we might
@@ -637,7 +662,10 @@ class NnunetClient(BasicClient):
             torch.mps.empty_cache()
 
     def get_client_specific_logs(
-        self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
+        self,
+        current_round: Optional[int],
+        current_epoch: Optional[int],
+        logging_mode: LoggingMode,
     ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
             lr = float(self.optimizers["global"].param_groups[0]["lr"])

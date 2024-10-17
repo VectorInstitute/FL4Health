@@ -7,8 +7,7 @@ from flwr.server.client_manager import ClientManager
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
-from fl4health.reporting.fl_wandb import ServerWandBReporter
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 
@@ -19,9 +18,8 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
         client_manager: ClientManager,
         strategy: FedAvgWithAdaptiveConstraint,
         model: Optional[nn.Module] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
         This is a wrapper class around FlServerWithCheckpointing for using the FedProx method that enforces that the
@@ -32,20 +30,20 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
-            strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.
-                client updates and other information potentially sent by the participating clients. For FedProx, the
-                strategy must be a derivative of the FedAvgWithAdaptiveConstraint class.
-            model (Optional[nn.Module], optional): This is the torch model to be hydrated by the
-                _hydrate_model_for_checkpointing function, Defaults to None
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
+            strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used
+                by the server to handle. client updates and other information
+                potentially sent by the participating clients. For FedProx, the strategy
+                must be a derivative of the FedAvgWithAdaptiveConstraint class.
+            model (Optional[nn.Module], optional): This is the torch model to be
+                hydrated by the _hydrate_model_for_checkpointing function, Defaults to
+                None
             checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
-                if the server should perform server side checkpointing based on some criteria. If none, then no
-                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
-                checkpoint based on multiple criteria. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+                if the server should perform server side checkpointing based on some
+                criteria. If none, then no server-side checkpointing is performed.
+                Multiple checkpointers can also be passed in a sequence to checkpoint
+                based on multiple criteria. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
         """
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint
@@ -55,10 +53,9 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
             client_manager=client_manager,
             parameter_exchanger=parameter_exchanger,
             model=model,
-            wandb_reporter=wandb_reporter,
             strategy=strategy,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
         )
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
