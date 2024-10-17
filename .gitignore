@@ -170,6 +170,7 @@ settings.json
 **/*.pkl
 **/*.png
 **/*.pt
+**/*.ckpt
 /metrics/
 
 # dev

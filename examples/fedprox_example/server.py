@@ -48,11 +48,11 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
+        config.get('enable_wandb_reporting', False),
         # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
+        config["wandb_reporting_config"].get("project_name", ""),
+        config["wandb_reporting_config"].get("group_name", ""),
+        config["wandb_reporting_config"].get("entity", ""),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -78,11 +78,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         loss_weight_patience=config["proximal_weight_patience"],
     )
 
-    wandb_reporter = WandBReporter("round", **config["reporting_config"])
-    json_reporter = JsonReporter()
+    reporters = [JsonReporter()]
+    if config.get('enable_wandb_reporting', False) is True:
+        reporters.append(WandBReporter("round", **config["wandb_reporting_config"]))
+        
     client_manager = SimpleClientManager()
     server = FedProxServer(
-        client_manager=client_manager, strategy=strategy, model=None, reporters=[wandb_reporter, json_reporter]
+        client_manager=client_manager, strategy=strategy, model=None, reporters=reporters
     )
 
     fl.server.start_server(
