@@ -181,7 +181,44 @@ class DittoDeepMmdClient(DittoClient):
         """
         for layer_loss_module in self.deep_mmd_losses.values():
             assert layer_loss_module.training
-        return super().compute_training_loss(preds, features, target)
+        """
+        Computes training losses given predictions of the global and local models and ground truth data.
+        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
+        product between the initial global model weights and weights of the local model. This is stored in backward
+        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+
+        Args:
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+
+        Returns:
+            TrainingLosses: an instance of TrainingLosses containing backward loss and
+                additional losses indexed by name. Additional losses includes each loss component and the global model
+                loss tensor.
+        """
+        # Check that both models are in training mode
+        assert self.global_model.training and self.model.training
+
+        # local loss is stored in loss, global model loss is stored in additional losses.
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+
+        # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
+        # less weight is used to constrain it to the global model (as in FedProx)
+        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
+
+        # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
+        # by drift_penalty_weight (or lambda in the original paper)
+        penalty_loss = self.compute_penalty_loss()
+        additional_losses["penalty_loss"] = penalty_loss.clone()
+
+        # Add Deep MMD loss based on computed features during training
+        deep_mmd_loss = additional_losses["deep_mmd_loss_total"]
+
+        additional_losses["total_loss"] = loss.clone() + penalty_loss.clone() + deep_mmd_loss.clone()
+
+        return TrainingLosses(backward=loss + penalty_loss + deep_mmd_loss, additional_losses=additional_losses)
 
     def compute_evaluation_loss(
         self,
@@ -223,17 +260,15 @@ class DittoDeepMmdClient(DittoClient):
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
         """
-        total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
         if self.deep_mmd_loss_weight != 0:
             # Compute Deep MMD loss based on computed features during training
             total_deep_mmd_loss = torch.tensor(0.0, device=self.device)
             for layer, layer_deep_mmd_loss in self.deep_mmd_losses.items():
                 deep_mmd_loss = layer_deep_mmd_loss(features[layer], features[" ".join(["init_global", layer])])
-                additional_losses["_".join(["deep_mmd_loss", layer])] = deep_mmd_loss
+                additional_losses["_".join(["deep_mmd_loss", layer])] = deep_mmd_loss.clone()
                 total_deep_mmd_loss += deep_mmd_loss
-            total_loss += self.deep_mmd_loss_weight * total_deep_mmd_loss
-            additional_losses["deep_mmd_loss_total"] = total_deep_mmd_loss.clone()
-        additional_losses["total_loss"] = total_loss
+            additional_losses["deep_mmd_loss_total"] = self.deep_mmd_loss_weight * total_deep_mmd_loss
 
-        return total_loss, additional_losses
+        return loss, additional_losses
