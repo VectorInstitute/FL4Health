@@ -416,7 +416,7 @@ class MkMmdLoss(torch.nn.Module):
                     log(INFO, f"{e} We keep previous betas for layer {self.layer_name}.")
                 else:
                     log(INFO, f"{e} We keep previous betas.")
-                raw_betas = self.betas
+                raw_betas = self.betas.clone()
         else:
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
