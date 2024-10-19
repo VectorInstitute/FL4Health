@@ -167,21 +167,6 @@ class DittoDeepMmdClient(DittoClient):
         target: TorchTargetType,
     ) -> TrainingLosses:
         """
-        Computes training loss given predictions (and potentially features) of the model and ground truth data.
-
-        Args:
-            preds (TorchPredType): Prediction(s) of the model(s) indexed by name. Anything stored
-                in preds will be used to compute metrics.
-            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
-            target: (TorchTargetType): Ground truth data to evaluate predictions against.
-
-        Returns:
-            TrainingLosses: an instance of TrainingLosses containing backward loss and additional losses
-                indexed by name.
-        """
-        for layer_loss_module in self.deep_mmd_losses.values():
-            assert layer_loss_module.training
-        """
         Computes training losses given predictions of the global and local models and ground truth data.
         For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
         product between the initial global model weights and weights of the local model. This is stored in backward
@@ -198,6 +183,8 @@ class DittoDeepMmdClient(DittoClient):
                 additional losses indexed by name. Additional losses includes each loss component and the global model
                 loss tensor.
         """
+        for layer_loss_module in self.deep_mmd_losses.values():
+            assert layer_loss_module.training
         # Check that both models are in training mode
         assert self.global_model.training and self.model.training
 
@@ -212,13 +199,15 @@ class DittoDeepMmdClient(DittoClient):
         # by drift_penalty_weight (or lambda in the original paper)
         penalty_loss = self.compute_penalty_loss()
         additional_losses["penalty_loss"] = penalty_loss.clone()
+        total_loss = loss + penalty_loss
 
         # Add Deep MMD loss based on computed features during training
-        deep_mmd_loss = additional_losses["deep_mmd_loss_total"]
+        if self.deep_mmd_loss_weight != 0:
+            total_loss += additional_losses["deep_mmd_loss_total"]
 
-        additional_losses["total_loss"] = loss.clone() + penalty_loss.clone() + deep_mmd_loss.clone()
+        additional_losses["total_loss"] = total_loss.clone()
 
-        return TrainingLosses(backward=loss + penalty_loss + deep_mmd_loss, additional_losses=additional_losses)
+        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
 
     def compute_evaluation_loss(
         self,
