@@ -22,7 +22,7 @@ from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpoi
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.reporting.report_manager import ReportsManager
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -671,7 +671,7 @@ class BasicClient(NumPyClient):
         """
         self.model.train()
         steps_this_round = 0  # Reset number of steps this round
-        report_data: dict = {"round": current_round}
+        report_data: dict[str, Any] = {"round": current_round}
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
@@ -738,7 +738,7 @@ class BasicClient(NumPyClient):
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
         self._log_header_str(current_round)
-        report_data: dict = {"round": current_round}
+        report_data: dict[str, Any] = {"round": current_round}
         for step in self.maybe_progress_bar(range(steps)):
             self.update_before_step(step, current_round)
 
@@ -773,7 +773,6 @@ class BasicClient(NumPyClient):
 
         # Log and report results
         self._log_results(loss_dict, metrics, current_round)
-        report_data = {}
 
         return loss_dict, metrics
 
@@ -949,7 +948,7 @@ class BasicClient(NumPyClient):
             # of self.model.forward().
             output = self.model(**input)
         else:
-            raise TypeError('"input" must be of type torch.Tensor or dict[str, torch.Tensor].')
+            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
 
         if isinstance(output, dict):
             return output, {}

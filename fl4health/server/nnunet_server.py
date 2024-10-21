@@ -229,6 +229,8 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         self.initialized = True
         log(INFO, "")
 
+    # TODO: We should have a get server state method
+    # subclass could call parent method and not have to copy entire state.
     def save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
@@ -250,7 +252,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             "model": self.server_model,
             "history": self.history,
             "current_round": self.current_round,
-            "reporters": self.reporters,
+            "reports_manager": self.reports_manager,
             "server_name": self.server_name,
             "nnunet_plans_bytes": self.nnunet_plans_bytes,
             "num_input_channels": self.num_input_channels,
@@ -283,7 +285,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         # Standard attributes to load
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", list)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
 

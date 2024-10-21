@@ -64,7 +64,7 @@ def main(config: Dict[str, Any]) -> None:
     )
     config.update({"strategy": "FedAvg"})
     reporter = WandBReporter(
-        "round",
+        wandb_step_type="round",
         project="test",
         entity="haider-vector-collab",
         tags=["debug"],

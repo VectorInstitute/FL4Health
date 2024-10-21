@@ -14,7 +14,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.reporting.report_manager import ReportsManager
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.random import generate_hash
@@ -264,7 +264,7 @@ class EvaluateClient(BasicClient):
         if self.model_checkpoint_path:
             log(
                 INFO,
-                f"Loading model checkpoint at: {self.model_checkpoint_path.__str__()}",
+                f"Loading model checkpoint at: {str(self.model_checkpoint_path)}",
             )
             return torch.load(self.model_checkpoint_path)
         else:

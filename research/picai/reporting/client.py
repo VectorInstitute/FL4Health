@@ -47,7 +47,7 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     reporter = WandBReporter(
-        "batch",
+        wandb_step_type="step",
         project="test",
         entity="haider-vector-collab",
         name="CIFAR Client",

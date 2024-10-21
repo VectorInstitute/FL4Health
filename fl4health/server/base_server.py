@@ -17,6 +17,7 @@ from flwr.server.strategy import Strategy
 from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
@@ -61,9 +62,9 @@ class FlServer(Server):
         self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
         self.server_name = server_name if server_name is not None else generate_hash()
 
-        self.reporters = [] if reporters is None else list(reporters)
-        for r in self.reporters:
-            r.initialize(id=self.server_name)
+        # Initialize reporters with server name information.
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.server_name)
 
     def report_centralized_eval(self, history: History, num_rounds: int) -> None:
         if len(history.losses_centralized) == 0:
@@ -71,15 +72,14 @@ class FlServer(Server):
 
         # Parse and report history for loss and metrics on centralized validation set.
         for round in range(num_rounds):
-            for r in self.reporters:
-                r.report(
-                    {"val - loss - centralized": history.losses_centralized[round][1]},
-                    round + 1,
-                )
-                round_metrics = {}
-                for metric, vals in history.metrics_centralized.items():
-                    round_metrics.update({metric: vals[round][1]})
-                r.report({"eval_metrics_centralized": round_metrics}, round + 1)
+            self.reports_manager.report(
+                {"val - loss - centralized": history.losses_centralized[round][1]},
+                round + 1,
+            )
+            round_metrics = {}
+            for metric, vals in history.metrics_centralized.items():
+                round_metrics.update({metric: vals[round][1]})
+            self.reports_manager.report({"eval_metrics_centralized": round_metrics}, round + 1)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
@@ -98,16 +98,15 @@ class FlServer(Server):
         start_time = datetime.datetime.now()
         history, elapsed_time = super().fit(num_rounds, timeout)
         end_time = datetime.datetime.now()
-        for r in self.reporters:
-            r.report(
-                {
-                    "fit_elapsed_time": str(start_time - end_time),
-                    "fit_start": str(start_time),
-                    "fit_end": str(end_time),
-                    "num_rounds": num_rounds,
-                    "host_type": "server",
-                }
-            )
+        self.reports_manager.report(
+            {
+                "fit_elapsed_time": str(start_time - end_time),
+                "fit_start": str(start_time),
+                "fit_end": str(end_time),
+                "num_rounds": num_rounds,
+                "host_type": "server",
+            }
+        )
 
         self.report_centralized_eval(history, num_rounds)
 
@@ -122,20 +121,19 @@ class FlServer(Server):
         fit_round_results = super().fit_round(server_round, timeout)
         round_end = datetime.datetime.now()
 
-        for r in self.reporters:
-            r.report(
-                {"fit_round_start": str(round_start), "fit_round_end": str(round_end)},
-                server_round,
-            )
-            if fit_round_results is not None:
-                _, metrics, _ = fit_round_results
-                r.report({"fit_metrics": metrics}, server_round)
+        self.reports_manager.report(
+            {"fit_round_start": str(round_start), "fit_round_end": str(round_end)},
+            server_round,
+        )
+        if fit_round_results is not None:
+            _, metrics, _ = fit_round_results
+            self.reports_manager.report({"fit_metrics": metrics}, server_round)
 
         return fit_round_results
 
     def shutdown(self) -> None:
-        for r in self.reporters:
-            r.shutdown()
+        self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
+        self.reports_manager.shutdown()
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:
         """
@@ -329,21 +327,20 @@ class FlServer(Server):
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
                 # Report evaluation results
-                for r in self.reporters:
-                    r.report(
-                        {
-                            "val - loss - aggregated": loss_aggregated,
-                            "round": server_round,
-                            "eval_round_start": str(start_time),
-                            "eval_round_end": str(end_time),
-                        },
+                self.reports_manager.report(
+                    {
+                        "val - loss - aggregated": loss_aggregated,
+                        "round": server_round,
+                        "eval_round_start": str(start_time),
+                        "eval_round_end": str(end_time),
+                    },
+                    server_round,
+                )
+                if len(metrics_aggregated) > 0:
+                    self.reports_manager.report(
+                        {"eval_metrics_aggregated": metrics_aggregated},
                         server_round,
                     )
-                    if len(metrics_aggregated) > 0:
-                        r.report(
-                            {"eval_metrics_aggregated": metrics_aggregated},
-                            server_round,
-                        )
 
         return eval_round_results
 
@@ -443,16 +440,15 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             start_time = datetime.datetime.now()
             history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
             end_time = datetime.datetime.now()
-            for r in self.reporters:
-                r.report(
-                    {
-                        "fit_elapsed_time": str(start_time - end_time),
-                        "fit_start": str(start_time),
-                        "fit_end": str(end_time),
-                        "num_rounds": num_rounds,
-                        "host_type": "server",
-                    }
-                )
+            self.reports_manager.report(
+                {
+                    "fit_elapsed_time": str(start_time - end_time),
+                    "fit_start": str(start_time),
+                    "fit_end": str(end_time),
+                    "num_rounds": num_rounds,
+                    "host_type": "server",
+                }
+            )
         else:
             # parent method includes call to report metrics to wandb if specified
             history, elapsed_time = super().fit(num_rounds, timeout)
@@ -563,7 +559,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             "model": self.server_model,
             "history": self.history,
             "current_round": self.current_round,
-            "reporters": self.reporters,
+            "reports_manager": self.reports_manager,
             "server_name": self.server_name,
         }
 
@@ -590,7 +586,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
 
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reporters", "reporters", list)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
 
