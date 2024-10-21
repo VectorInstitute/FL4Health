@@ -78,11 +78,10 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     client_manager = SimpleClientManager()
     if "reporting_config" in config:
         wandb_reporter = WandBReporter("round", **config["reporting_config"])
-        server = FedProxServer(
-            client_manager=client_manager, strategy=strategy, model=None, reporters=[wandb_reporter, json_reporter]
-        )
+        reporters = [wandb_reporter, json_reporter]
     else:
-        server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=[json_reporter])
+        reporters = [json_reporter]
+    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=reporters)
 
     fl.server.start_server(
         server=server,

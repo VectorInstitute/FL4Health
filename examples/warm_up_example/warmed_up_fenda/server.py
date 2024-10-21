@@ -74,10 +74,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
 
+    client_manager = SimpleClientManager()
     if "reporting_config" in config:
         wandb_reporter = WandBReporter("round", **config["reporting_config"])
-    client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, reporters=[wandb_reporter])
+        reporters = [wandb_reporter]
+    else:
+        reporters = []
+    server = FlServer(client_manager, strategy, reporters=reporters)
 
     fl.server.start_server(
         server=server,
