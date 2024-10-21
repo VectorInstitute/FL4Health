@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.random import generate_hash
@@ -34,7 +35,7 @@ class EvaluateClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         model_checkpoint_path: Optional[Path] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         # EvaluateClient does not call BasicClient constructor and sets attributes
         # in a custom way to account for the fact it does not involve any training
@@ -45,10 +46,9 @@ class EvaluateClient(BasicClient):
         self.metrics = metrics
         self.initialized = False
 
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
+        # Initialize reporters with client information.
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.client_name)
 
         # This data loader should be instantiated as the one on which to run evaluation
         self.global_loss_meter = LossMeter[EvaluationLosses](loss_meter_type, EvaluationLosses)
@@ -63,7 +63,6 @@ class EvaluateClient(BasicClient):
         self.criterion: _Loss
         self.local_model: Optional[nn.Module] = None
         self.global_model: Optional[nn.Module] = None
-        self.wandb_reporter = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
@@ -88,7 +87,7 @@ class EvaluateClient(BasicClient):
         self.criterion = self.get_criterion(config)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
+        self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
 
         self.initialized = True
 
@@ -110,20 +109,24 @@ class EvaluateClient(BasicClient):
         if not self.initialized:
             self.setup_client(config)
 
-        self.metrics_reporter.add_to_metrics({"evaluate_start": datetime.datetime.now()})
-
+        start_time = datetime.datetime.now()
         self.set_parameters(parameters, config, fitting_round=False)
         # Make sure at least one of local or global model is not none (i.e. there is something to evaluate)
         assert self.local_model or self.global_model
 
         loss, metric_values = self.validate()
+        end_time = datetime.datetime.now()
+        elapsed = end_time - start_time
 
-        self.metrics_reporter.add_to_metrics(
+        self.reports_manager.report(
             {
-                "metrics": metric_values,
-                "loss": loss,
-                "evaluate_end": datetime.datetime.now(),
-            }
+                "eval_metrics": metric_values,
+                "eval_loss": loss,
+                "eval_start": str(start_time),
+                "eval_time_elapsed": str(elapsed),
+                "eval_end": str(end_time),
+            },
+            0,
         )
 
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
@@ -147,7 +150,11 @@ class EvaluateClient(BasicClient):
         )
 
     def validate_on_model(
-        self, model: nn.Module, metric_meter: MetricManager, loss_meter: LossMeter, is_global: bool
+        self,
+        model: nn.Module,
+        metric_meter: MetricManager,
+        loss_meter: LossMeter,
+        is_global: bool,
     ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
@@ -178,13 +185,19 @@ class EvaluateClient(BasicClient):
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
             local_loss, local_metrics = self.validate_on_model(
-                self.local_model, self.local_metric_manager, self.local_loss_meter, is_global=False
+                self.local_model,
+                self.local_metric_manager,
+                self.local_loss_meter,
+                is_global=False,
             )
 
         if self.global_model:
             log(INFO, "Performing evaluation on global model")
             global_loss, global_metrics = self.validate_on_model(
-                self.global_model, self.global_metric_manager, self.global_loss_meter, is_global=True
+                self.global_model,
+                self.global_metric_manager,
+                self.global_loss_meter,
+                is_global=True,
             )
 
         # Store the losses in the metrics, since we can't return more than one loss.
@@ -199,7 +212,8 @@ class EvaluateClient(BasicClient):
 
     @staticmethod
     def merge_metrics(
-        global_metrics: Optional[Dict[str, Scalar]], local_metrics: Optional[Dict[str, Scalar]]
+        global_metrics: Optional[Dict[str, Scalar]],
+        local_metrics: Optional[Dict[str, Scalar]],
     ) -> Dict[str, Scalar]:
         # Merge metrics if necessary
         if global_metrics:
@@ -248,7 +262,10 @@ class EvaluateClient(BasicClient):
         """
         # If a model checkpoint is provided, we load the checkpoint into the local model to be evaluated.
         if self.model_checkpoint_path:
-            log(INFO, f"Loading model checkpoint at: {self.model_checkpoint_path.__str__()}")
+            log(
+                INFO,
+                f"Loading model checkpoint at: {str(self.model_checkpoint_path)}",
+            )
             return torch.load(self.model_checkpoint_path)
         else:
             return None

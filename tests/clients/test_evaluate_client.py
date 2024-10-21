@@ -1,5 +1,6 @@
 import datetime
 import math
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Dict, Optional, Union
 from unittest.mock import MagicMock
@@ -10,16 +11,26 @@ from flwr.common.typing import Scalar
 from freezegun import freeze_time
 
 from fl4health.clients.evaluate_client import EvaluateClient
+from fl4health.reporting import JsonReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from tests.clients.fixtures import get_basic_client, get_evaluation_client  # noqa
+from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
 def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
-    global_metrics: Dict[str, Scalar] = {"global_metric_1": 0.22, "local_metric_2": 0.11}
+    global_metrics: Dict[str, Scalar] = {
+        "global_metric_1": 0.22,
+        "local_metric_2": 0.11,
+    }
     local_metrics: Dict[str, Scalar] = {"local_metric_1": 0.1, "local_metric_2": 0.99}
     merged_metrics = EvaluateClient.merge_metrics(global_metrics, local_metrics)
     # Test merge is good, local metrics are folded in last, so they take precedence when overlap exists
-    assert merged_metrics == {"global_metric_1": 0.22, "local_metric_1": 0.1, "local_metric_2": 0.99}
+    assert merged_metrics == {
+        "global_metric_1": 0.22,
+        "local_metric_1": 0.1,
+        "local_metric_2": 0.99,
+    }
     # Test that we are warned about duplicate metric keys
     assert "metric_name: local_metric_2 already exists in dictionary." in caplog.text
 
@@ -31,11 +42,12 @@ def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
 
 
 @pytest.mark.parametrize("model", [SingleLayerWithSeed()])
-def test_evaluating_identical_global_and_local_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
+def test_evaluating_identical_global_and_local_models(
+    get_evaluation_client: EvaluateClient,  # noqa
+) -> None:
     evaluate_client = get_evaluation_client
 
     loss, metrics = evaluate_client.validate()
-    print(metrics.keys())
     assert math.isnan(loss)
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.43826544285
     assert pytest.approx(metrics["local_loss_checkpoint"], abs=0.0001) == 1.43826544285
@@ -44,7 +56,9 @@ def test_evaluating_identical_global_and_local_models(get_evaluation_client: Eva
 
 
 @pytest.mark.parametrize("model", [SingleLayerWithSeed()])
-def test_evaluating_different_global_and_local_models(get_evaluation_client: EvaluateClient) -> None:  # noqa
+def test_evaluating_different_global_and_local_models(
+    get_evaluation_client: EvaluateClient,  # noqa
+) -> None:
     evaluate_client = get_evaluation_client
     evaluate_client.global_model = SingleLayerWithSeed(seed=37)
 
@@ -82,13 +96,16 @@ def test_evaluating_only_global_models(get_evaluation_client: EvaluateClient) ->
 
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_setup_client() -> None:
-    evaluate_client = MockEvaluateClient()
+    reporter = JsonReporter()
+    evaluate_client = MockEvaluateClient(reporters=[reporter])
     evaluate_client.setup_client({})
 
-    assert evaluate_client.metrics_reporter.metrics == {
-        "type": "client",
-        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    metrics_to_assert = {
+        "host_type": "client",
+        "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
     }
+    errors = assert_metrics_dict(metrics_to_assert, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 @freeze_time("2012-12-12 12:12:12")
@@ -96,22 +113,33 @@ def test_metrics_reporter_evaluate() -> None:
     test_loss = 123.123
     test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
 
-    evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics)
+    reporter = JsonReporter()
+    evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics, reporters=[reporter])
     evaluate_client.evaluate([], {})
-
-    assert evaluate_client.metrics_reporter.metrics == {
-        "type": "client",
-        "initialized": datetime.datetime(2012, 12, 12, 12, 12, 12),
-        "evaluate_start": datetime.datetime(2012, 12, 12, 12, 12, 12),
-        "loss": test_loss,
-        "metrics": test_metrics,
-        "evaluate_end": datetime.datetime(2012, 12, 12, 12, 12, 12),
+    print(reporter.metrics)
+    metric_dict = {
+        "host_type": "client",
+        "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+        "rounds": {
+            0: {
+                "eval_metrics": test_metrics,
+                "eval_loss": test_loss,
+                "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+            }
+        },
     }
+    errors = assert_metrics_dict(metric_dict, reporter.metrics)
+    assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
 
 class MockEvaluateClient(EvaluateClient):
-    def __init__(self, loss: Optional[float] = None, metrics: Optional[Dict[str, Scalar]] = None):
-        super().__init__(Path(""), [], torch.device(0))
+    def __init__(
+        self,
+        loss: Optional[float] = None,
+        metrics: Optional[Dict[str, Scalar]] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+    ):
+        super().__init__(Path(""), [], torch.device(0), reporters=reporters)
 
         # Mocking methods
         self.get_data_loader = MagicMock()  # type: ignore

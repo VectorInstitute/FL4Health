@@ -43,7 +43,10 @@ def main(config: Dict[str, Any]) -> None:
 
     # Initializing the model on the server side
     model: nn.Module = FedSimClrModel(
-        CifarSslEncoder(), CifarSslProjectionHead(), CifarSslPredictionHead(), pretrain=True
+        CifarSslEncoder(),
+        CifarSslProjectionHead(),
+        CifarSslPredictionHead(),
+        pretrain=True,
     )
     # To facilitate checkpointing
     parameter_exchanger = FullParameterExchanger()
@@ -67,7 +70,6 @@ def main(config: Dict[str, Any]) -> None:
         client_manager=SimpleClientManager(),
         parameter_exchanger=parameter_exchanger,
         model=model,
-        wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointer,
     )
