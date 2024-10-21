@@ -75,10 +75,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         loss_weight_patience=config["proximal_weight_patience"],
     )
 
+    client_manager = SimpleClientManager()
     if "reporting_config" in config:
         wandb_reporter = WandBReporter("round", **config["reporting_config"])
-    client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, reporters=[wandb_reporter])
+        reporters = [wandb_reporter]
+    else:
+        reporters = []
+    server = FlServer(client_manager, strategy, reporters=reporters)
 
     fl.server.start_server(
         server=server,
