@@ -48,7 +48,6 @@ def test_evaluating_identical_global_and_local_models(
     evaluate_client = get_evaluation_client
 
     loss, metrics = evaluate_client.validate()
-    print(metrics.keys())
     assert math.isnan(loss)
     assert pytest.approx(metrics["global_loss_checkpoint"], abs=0.0001) == 1.43826544285
     assert pytest.approx(metrics["local_loss_checkpoint"], abs=0.0001) == 1.43826544285
