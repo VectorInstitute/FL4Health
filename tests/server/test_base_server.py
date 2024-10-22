@@ -20,7 +20,7 @@ from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
@@ -165,7 +165,7 @@ def test_unpack_metrics() -> None:
             "val - prediction - accuracy": 0.9,
             TEST_LOSS_KEY: 0.8,
             TEST_NUM_EXAMPLES_KEY: 5,
-            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
+            f"{MetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
         },
     )
 
@@ -180,7 +180,7 @@ def test_unpack_metrics() -> None:
 
     # Check the test results
     assert len(test_results) == 1
-    assert test_results[0][1].metrics[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
+    assert test_results[0][1].metrics[f"{MetricPrefix.TEST_PREFIX.value} accuracy"] == 0.85
     assert test_results[0][1].loss == 0.8
 
 
@@ -198,7 +198,7 @@ def test_handle_result_aggregation() -> None:
             "val - prediction - accuracy": 0.9,
             TEST_LOSS_KEY: 0.8,
             TEST_NUM_EXAMPLES_KEY: 5,
-            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
+            f"{MetricPrefix.TEST_PREFIX.value} accuracy": 0.85,
         },
     )
     client_proxy2 = CustomClientProxy("2")
@@ -210,7 +210,7 @@ def test_handle_result_aggregation() -> None:
             "val - prediction - accuracy": 0.8,
             TEST_LOSS_KEY: 1.6,
             TEST_NUM_EXAMPLES_KEY: 10,
-            f"{TestMetricPrefix.TEST_PREFIX.value} accuracy": 0.75,
+            f"{MetricPrefix.TEST_PREFIX.value} accuracy": 0.75,
         },
     )
 
@@ -221,17 +221,17 @@ def test_handle_result_aggregation() -> None:
     failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]] = []
 
     server_round = 1
-    val_loss_aggregated, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)
+    _, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)
 
     # Check the aggregated validation metrics
     assert "val - prediction - accuracy" in val_metrics_aggregated
     assert val_metrics_aggregated["val - prediction - accuracy"] == pytest.approx(0.8333, rel=1e-3)
 
     # Check the aggregated test metrics
-    assert f"{TestMetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3)
-    assert f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
-    assert val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(
+    assert f"{MetricPrefix.TEST_PREFIX.value} accuracy" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{MetricPrefix.TEST_PREFIX.value} accuracy"] == pytest.approx(0.7833, rel=1e-3)
+    assert f"{MetricPrefix.TEST_PREFIX.value} loss - aggregated" in val_metrics_aggregated
+    assert val_metrics_aggregated[f"{MetricPrefix.TEST_PREFIX.value} loss - aggregated"] == pytest.approx(
         1.333, rel=1e-3
     )
 

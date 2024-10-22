@@ -12,13 +12,13 @@ from torchmetrics import Metric as TMetric
 from fl4health.utils.typing import TorchPredType, TorchTargetType, TorchTransformFunction
 
 
-class TestMetricPrefix(Enum):
-    __test__ = False
+class MetricPrefix(Enum):
     TEST_PREFIX = "test -"
+    VAL_PREFIX = "val -"
 
 
-TEST_NUM_EXAMPLES_KEY = f"{TestMetricPrefix.TEST_PREFIX.value} num_examples"
-TEST_LOSS_KEY = f"{TestMetricPrefix.TEST_PREFIX.value} loss"
+TEST_NUM_EXAMPLES_KEY = f"{MetricPrefix.TEST_PREFIX.value} num_examples"
+TEST_LOSS_KEY = f"{MetricPrefix.TEST_PREFIX.value} checkpoint"
 
 
 class Metric(ABC):
@@ -336,7 +336,7 @@ class F1(SimpleMetric):
         average: Optional[str] = "weighted",
     ):
         """
-        Computes the F1 score using the sklearn f1_score function. As such, the values of average are correspond to
+        Computes the F1 score using the sklearn f1_score function. As such, the values of average correspond to
         those of that function.
 
         Args:

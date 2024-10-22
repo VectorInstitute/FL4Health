@@ -358,7 +358,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
 
         return TrainingLosses(backward=loss + penalty_loss, additional_losses=additional_losses)
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
@@ -367,7 +367,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
         """
         # Set the global model to evaluate mode
         self.global_model.eval()
-        return super().validate()
+        return super().validate(include_losses_in_metrics=include_losses_in_metrics)
 
     def compute_evaluation_loss(
         self,
