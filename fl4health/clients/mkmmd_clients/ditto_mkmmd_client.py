@@ -12,7 +12,7 @@ from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
 from fl4health.utils.client import clone_and_freeze_model
-from fl4health.utils.losses import LossMeterType
+from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
@@ -254,6 +254,58 @@ class DittoMkMmdClient(DittoClient):
         # each time.
         self.local_feature_extractor._maybe_register_hooks()
 
+    def compute_training_loss(
+        self,
+        preds: TorchPredType,
+        features: TorchFeatureType,
+        target: TorchTargetType,
+    ) -> TrainingLosses:
+        """
+        Computes training losses given predictions of the global and local models and ground truth data.
+        For the local model we add to the vanilla loss function by including Ditto penalty loss which is the l2 inner
+        product between the initial global model weights and weights of the local model. This is stored in backward
+        The loss to optimize the global model is stored in the additional losses dictionary under "global_loss"
+
+        Args:
+            preds (TorchPredType): Prediction(s) of the model(s) indexed by name.
+                All predictions included in dictionary will be used to compute metrics.
+            features: (TorchFeatureType): Feature(s) of the model(s) indexed by name.
+            target: (TorchTargetType): Ground truth data to evaluate predictions against.
+
+        Returns:
+            TrainingLosses: an instance of TrainingLosses containing backward loss and
+                additional losses indexed by name. Additional losses includes each loss component and the global model
+                loss tensor.
+        """
+        for layer_loss_module in self.mkmmd_losses.values():
+            assert layer_loss_module.training
+        # Check that both models are in training mode
+        assert self.global_model.training and self.model.training
+
+        # local loss is stored in loss, global model loss is stored in additional losses.
+        loss, additional_losses = self.compute_loss_and_additional_losses(preds, features, target)
+
+        # Setting the adaptation loss to that of the local model, as its performance should dictate whether more or
+        # less weight is used to constrain it to the global model (as in FedProx)
+        additional_losses["loss_for_adaptation"] = additional_losses["local_loss"].clone()
+
+        # This is the Ditto penalty loss of the local model compared with the original Global model weights, scaled
+        # by drift_penalty_weight (or lambda in the original paper)
+        penalty_loss = self.compute_penalty_loss()
+        additional_losses["penalty_loss"] = penalty_loss.clone()
+        total_loss = loss + penalty_loss
+
+        # Add MK-MMD loss based on computed features during training
+        if self.mkmmd_loss_weight != 0:
+            total_loss += additional_losses["mkmmd_loss_total"]
+
+        if self.feature_l2_norm_weight != 0:
+            total_loss += additional_losses["feature_l2_norm_loss"]
+
+        additional_losses["total_loss"] = total_loss.clone()
+
+        return TrainingLosses(backward=total_loss, additional_losses=additional_losses)
+
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
@@ -271,7 +323,7 @@ class DittoMkMmdClient(DittoClient):
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
         """
-        total_loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
+        loss, additional_losses = super().compute_loss_and_additional_losses(preds, features, target)
 
         if self.mkmmd_loss_weight != 0:
             if self.beta_global_update_interval == -1:
@@ -284,16 +336,12 @@ class DittoMkMmdClient(DittoClient):
             total_mkmmd_loss = torch.tensor(0.0, device=self.device)
             for layer, layer_mkmmd_loss in self.mkmmd_losses.items():
                 mkmmd_loss = layer_mkmmd_loss(features[layer], features[" ".join(["init_global", layer])])
-                additional_losses["_".join(["mkmmd_loss", layer])] = mkmmd_loss
+                additional_losses["_".join(["mkmmd_loss", layer])] = mkmmd_loss.clone()
                 total_mkmmd_loss += mkmmd_loss
-            total_loss += self.mkmmd_loss_weight * total_mkmmd_loss
-            additional_losses["mkmmd_loss_total"] = total_mkmmd_loss
-        if self.feature_l2_norm_weight:
+            additional_losses["mkmmd_loss_total"] = self.mkmmd_loss_weight * total_mkmmd_loss
+        if self.feature_l2_norm_weight != 0:
             # Compute the average L2 norm of the features over the batch
             feature_l2_norm_loss = torch.linalg.norm(features["features"]) / len(features["features"])
-            total_loss += self.feature_l2_norm_weight * feature_l2_norm_loss
-            additional_losses["feature_l2_norm_loss"] = feature_l2_norm_loss
+            additional_losses["feature_l2_norm_loss"] = self.feature_l2_norm_weight * feature_l2_norm_loss
 
-        additional_losses["total_loss"] = total_loss
-
-        return total_loss, additional_losses
+        return loss, additional_losses

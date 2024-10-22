@@ -88,6 +88,7 @@ def test_metrics_reporter_evaluate() -> None:
     reporter = JsonReporter()
     fl_client = MockBasicClient(
         loss=test_loss,
+        loss_dict={"checkpoint": test_loss},
         metrics=test_metrics,
         test_set_metrics=test_metrics_testing,
         reporters=[reporter],
@@ -109,6 +110,7 @@ def test_metrics_reporter_evaluate() -> None:
             },
         },
     }
+
     errors = assert_metrics_dict(metric_dict, reporter.metrics)
     assert len(errors) == 0, f"Metrics check failed. Errors: {errors}"
 
