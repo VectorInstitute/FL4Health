@@ -1,0 +1,72 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --gres=gpu:0
+#SBATCH --mem=32G
+#SBATCH --partition=cpu
+#SBATCH --qos=normal
+#SBATCH --job-name=cifar_dirichlet_allocation
+#SBATCH --output=%j_%x.out
+#SBATCH --error=%j_%x.err
+
+# Note:
+#	  ntasks: Total number of processes to use across world
+#	  ntasks-per-node: How many processes each node should create
+
+# Set NCCL options
+# export NCCL_DEBUG=INFO
+# NCCL backend to communicate between GPU workers is not provided in vector's cluster.
+# Disable this option in slurm.
+export NCCL_IB_DISABLE=1
+
+if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
+    [[ "${SLURM_JOB_PARTITION}" == "rtx6000" ]]; then
+    echo export NCCL_SOCKET_IFNAME=bond0 on "${SLURM_JOB_PARTITION}"
+    export NCCL_SOCKET_IFNAME=bond0
+fi
+
+# Process inputs
+VENV_PATH=$1
+DATASET_DIR=$2
+OUTPUT_DIR=$3
+SEED=$4
+BETA=$5
+NUM_PARTITIONS=$6
+LOG_DIR=$7
+
+echo "Python Venv Path: ${VENV_PATH}"
+echo "CIFAR Dataset Path: ${DATASET_DIR}"
+echo "Output for Partitions: ${OUTPUT_DIR}"
+echo "Reproducibility Seed: ${SEED}"
+echo "Dirichlet Beta: ${BETA}"
+echo "Number of partitions to produce: ${NUM_PARTITIONS}"
+echo "Logs being placed in: ${LOG_DIR}"
+
+SERVER_ADDRESS="${SLURMD_NODENAME}:${SERVER_PORT}"
+
+echo "Server Address: ${SERVER_ADDRESS}"
+
+LOG_PATH="${LOG_DIR}preprocess_${BETA}_${NUM_PARTITIONS}_${SEED}.log"
+
+echo "World size: ${SLURM_NTASKS}"
+echo "Number of nodes: ${SLURM_NNODES}"
+NUM_GPUs=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+echo "GPUs per node: ${NUM_GPUs}"
+
+# Source the environment
+source ${VENV_PATH}bin/activate
+echo "Active Environment"
+which python
+
+nohup python -m research.cifar10.preprocess.py \
+    --dataset_dir ${DATASET_DIR} \
+    --save_dataset_dir ${OUTPUT_DIR} \
+    --seed ${SEED} \
+    --beta ${BETA} \
+    --num_clients ${NUM_PARTITIONS} \
+    > ${LOG_PATH} 2>&1
+
+echo "Done"
