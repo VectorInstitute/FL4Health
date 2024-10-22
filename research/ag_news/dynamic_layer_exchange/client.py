@@ -21,7 +21,7 @@ from fl4health.clients.partial_weight_exchange_client import PartialWeightExchan
 from fl4health.parameter_exchange.layer_exchanger import DynamicLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.parameter_selection_criteria import LayerSelectionFunctionConstructor
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Accuracy, Metric
@@ -39,7 +39,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         norm_threshold: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -48,7 +48,7 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
             store_initial_model=store_initial_model,
         )
         assert 0 < exchange_percentage <= 1.0 and norm_threshold > 0
@@ -195,7 +195,9 @@ if __name__ == "__main__":
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication
     # of larger messages would still be blocked.
     fl.client.start_client(
-        server_address=args.server_address, client=client.to_client(), grpc_max_message_length=1600000000
+        server_address=args.server_address,
+        client=client.to_client(),
+        grpc_max_message_length=1600000000,
     )
 
     client.shutdown()

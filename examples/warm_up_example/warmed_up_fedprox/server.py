@@ -10,9 +10,9 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting import WandBReporter
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.fedprox import FedProx
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -22,9 +22,8 @@ from fl4health.utils.random import set_all_random_seeds
 def fit_config(
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
+    project: str,
+    group: str,
     entity: str,
     current_round: int,
     local_epochs: Optional[int] = None,
@@ -35,9 +34,9 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
+        "project": project,
+        "group": group,
+        "entity": entity,
         "entity": entity,
     }
 
@@ -48,10 +47,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
+        # NOTE: that name is not included, it will be set in the clients
+        config["reporting_config"].get("project", ""),
+        config["reporting_config"].get("group", ""),
         config["reporting_config"].get("entity", ""),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
@@ -60,7 +58,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     initial_model = MnistNet()
 
     # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -71,15 +69,19 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(initial_model),
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
-        proximal_weight_delta=config["proximal_weight_delta"],
-        proximal_weight_patience=config["proximal_weight_patience"],
+        adapt_loss_weight=config["adaptive_proximal_weight"],
+        initial_loss_weight=config["proximal_weight"],
+        loss_weight_delta=config["proximal_weight_delta"],
+        loss_weight_patience=config["proximal_weight_patience"],
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    if "reporting_config" in config:
+        wandb_reporter = WandBReporter("round", **config["reporting_config"])
+        reporters = [wandb_reporter]
+    else:
+        reporters = []
+    server = FlServer(client_manager, strategy, reporters=reporters)
 
     fl.server.start_server(
         server=server,

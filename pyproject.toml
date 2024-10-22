@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fl4health"
-version = "0.1.17"
+version = "0.2.0"
 description = "Federated Learning for Health"
 authors = ["Vector AI Engineering <fl4health@vectorinstitute.ai>"]
 license = "Apache-2.0"
@@ -39,7 +39,8 @@ torchvision = "^0.18.0"
 torchinfo = "^1.8.0"
 ipykernel = "^6.25.1"
 scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
-wandb = "^0.16.1"
+wandb = "^0.18.0"
+poetry = "^1.8.3"
 
 [tool.poetry.group.dev-local.dependencies]
 torchtext = "^0.14.1"
