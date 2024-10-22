@@ -409,14 +409,14 @@ class MkMmdLoss(torch.nn.Module):
 
         if self.minimize_type_two_error:
             try:
-                raw_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k)
+                raw_betas = self.form_and_solve_qp(hat_d_per_kernel, regularized_Q_k).detach()
             except Exception as e:
                 # If we can't solve the QP due to infeasibility, then we keep the previous betas
                 if self.layer_name is not None:
                     log(INFO, f"{e} We keep previous betas for layer {self.layer_name}.")
                 else:
                     log(INFO, f"{e} We keep previous betas.")
-                raw_betas = self.betas.clone()
+                raw_betas = self.betas.detach()
         else:
             # If we're trying to maximize the type II error, then we are trying to maximize a convex function over a
             # convex polygon of beta values. So the maximum is found at one of the vertices
