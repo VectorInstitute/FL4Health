@@ -71,7 +71,6 @@ def main(config: Dict[str, Any]) -> None:
         client_manager=SimpleClientManager(),
         parameter_exchanger=parameter_exchanger,
         model=model,
-        wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointer,
     )

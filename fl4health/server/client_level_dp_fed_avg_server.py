@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from logging import INFO
 from math import ceil
 from typing import List, Optional, Tuple
@@ -14,7 +15,7 @@ from fl4health.privacy.fl_accountants import (
     FlClientLevelAccountantFixedSamplingNoReplacement,
     FlClientLevelAccountantPoissonSampling,
 )
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
@@ -26,8 +27,8 @@ class ClientLevelDPFedAvgServer(FlServer):
         strategy: ClientLevelDPFedAvgM,
         server_noise_multiplier: float,
         num_server_rounds: int,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[int] = None,
     ) -> None:
         """
@@ -40,20 +41,19 @@ class ClientLevelDPFedAvgServer(FlServer):
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
             num_server_rounds (int): Number of rounds of FL training carried out by the server.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
         """
         super().__init__(
             client_manager=client_manager,
             strategy=strategy,
-            wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier
@@ -102,7 +102,8 @@ class ClientLevelDPFedAvgServer(FlServer):
 
         if isinstance(self._client_manager, PoissonSamplingClientManager):
             self.accountant = FlClientLevelAccountantPoissonSampling(
-                client_sampling_rate=self.strategy.fraction_fit, noise_multiplier=self.server_noise_multiplier
+                client_sampling_rate=self.strategy.fraction_fit,
+                noise_multiplier=self.server_noise_multiplier,
             )
         else:
             assert isinstance(self._client_manager, FixedSamplingByFractionClientManager)
@@ -115,4 +116,7 @@ class ClientLevelDPFedAvgServer(FlServer):
 
         # Note that this assumes that the FL round has exactly n_clients participating.
         epsilon = self.accountant.get_epsilon(self.num_server_rounds, target_delta)
-        log(INFO, f"Model privacy after full training will be ({epsilon}, {target_delta})")
+        log(
+            INFO,
+            f"Model privacy after full training will be ({epsilon}, {target_delta})",
+        )

@@ -67,7 +67,7 @@ def scan_folder_for_cases(
     case_list = []
     for file in file_list:
         for end in file_endings:
-            if end in file:
+            if file.endswith(end):
                 case_id = file.replace(end, "")
                 if case_id in case_list:
                     log(INFO, f"Found multiple files for {case_id}")
@@ -439,12 +439,12 @@ def main() -> None:
 
     # Generate the detection maps
     t = time.time()
-    case_ids = generate_detection_maps(args.probs_path, det_maps_path)
+    case_ids = generate_detection_maps(args.probs_path, det_maps_path, extensions=[".npz"])
     elapsed = time.time() - t
     log(INFO, f"Extracted {len(case_ids)} detection maps in {elapsed:.2f}s (~{elapsed/len(case_ids):.3f}s/case)")
 
     metrics = get_picai_metrics(det_maps_path, args.gt_path)
-    metrics.save_minimal(join(args.output_path, "metrics.json"))
+    metrics.save(join(args.output_path, "metrics.json"))
     print(metrics)
     print(metrics.score)
 

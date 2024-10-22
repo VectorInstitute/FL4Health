@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import Net
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting import JsonReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
@@ -29,7 +30,7 @@ class CifarClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
@@ -41,7 +42,7 @@ class CifarClient(BasicClient):
             device,
             loss_meter_type,
             checkpointer,
-            metrics_reporter,
+            reporters,
             progress_bar,
             intermediate_client_state_dir,
             client_name,
@@ -110,7 +111,8 @@ if __name__ == "__main__":
         intermediate_client_state_dir=args.intermediate_client_state_dir,
         client_name=args.client_name,
         seed=args.seed,
+        reporters=[JsonReporter()],
     )
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
-    client.metrics_reporter.dump()
+
     client.shutdown()
