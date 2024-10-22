@@ -1,71 +1,69 @@
 {
-    "type": "client",
     "rounds": {
         "1": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.6078,
-                "train - global - accuracy": 0.6265,
-                "train - local - accuracy": 0.4890,
-                "val - personal - accuracy": 0.6254,
-                "val - global - accuracy": 0.6757,
-                "val - local - accuracy": 0.5723,
-                "val - checkpoint": 1.4845
+                "train - personal - accuracy": 0.6063,
+                "train - global - accuracy": 0.6078,
+                "train - local - accuracy": 0.4797,
+                "val - personal - accuracy": 0.5269,
+                "val - global - accuracy": 0.5331,
+                "val - local - accuracy": 0.4984,
+                "val - checkpoint": 1.5862
             },
-            "loss_dict": {
-                "global": 1.2897,
-                "local": 1.6243,
-                "backward": 1.4258
+            "fit_losses": {
+                "backward": 1.4428,
+                "global": 1.3272,
+                "local": 1.6362
             },
-            "evaluate_metrics": {
-                "val - personal - accuracy": 0.6254,
-                "val - global - accuracy": 0.6757,
-                "val - local - accuracy": 0.5723
+            "eval_metrics": {
+                "val - personal - accuracy": 0.5269,
+                "val - global - accuracy": 0.5331,
+                "val - local - accuracy": 0.4984
             },
-            "loss": 1.4845
+            "eval_loss": 1.5862
         },
         "2": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.7656,
-                "train - global - accuracy": {"target_value": 0.7609, "custom_tolerance": 0.005},
+                "train - personal - accuracy": 0.7906,
+                "train - global - accuracy": {"target_value": 0.8109, "custom_tolerance": 0.005},
                 "train - local - accuracy": {"target_value": 0.7453, "custom_tolerance": 0.005},
-                "val - personal - accuracy": {"target_value": 0.6778, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.76,
-                "val - local - accuracy": {"target_value": 0.5066, "custom_tolerance": 0.005},
-                "val - checkpoint": {"target_value": 0.9618, "custom_tolerance": 0.005}
+                "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.6031,
+                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005},
+                "val - checkpoint": {"target_value": 1.0008, "custom_tolerance": 0.005}
             },
-            "loss_dict": {
-                "global": 0.7053,
-                "local": 0.8164,
-                "backward": 0.7433
+            "fit_losses": {
+                "global": 0.6785,
+                "local": 0.7770,
+                "backward": 0.6460
             },
-            "evaluate_metrics": {
-                "val - personal - accuracy": {"target_value": 0.6778, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.76,
-                "val - local - accuracy": {"target_value": 0.5066, "custom_tolerance": 0.005}
+            "eval_metrics": {
+                "val - personal - accuracy": {"target_value": 0.6584, "custom_tolerance": 0.005},
+                "val - local - accuracy": {"target_value": 0.614, "custom_tolerance": 0.005}
             },
-            "loss": {"target_value": 0.9618, "custom_tolerance": 0.005}
+            "eval_loss": {"target_value": 1.0008, "custom_tolerance": 0.005}
         },
         "3": {
             "fit_metrics": {
-                "train - personal - accuracy": 0.8218,
-                "train - global - accuracy": 0.8468,
-                "train - local - accuracy": {"target_value": 0.8, "custom_tolerance": 0.005},
-                "val - personal - accuracy": {"target_value": 0.739, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.78,
-                "val - local - accuracy": {"target_value": 0.5602, "custom_tolerance": 0.005},
-                "val - checkpoint": {"target_value": 0.8043, "custom_tolerance": 0.005}
+                "train - personal - accuracy": 0.8359,
+                "train - global - accuracy": 0.8656,
+                "train - local - accuracy": {"target_value": 0.8078, "custom_tolerance": 0.005},
+                "val - personal - accuracy": {"target_value": 0.8218, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.8497,
+                "val - local - accuracy": {"target_value": 0.7508, "custom_tolerance": 0.005},
+                "val - checkpoint": {"target_value": 0.6042, "custom_tolerance": 0.005}
             },
-            "loss_dict": {
-                "global": 0.4757,
-                "local": {"target_value": 0.5995, "custom_tolerance": 0.005},
-                "backward": {"target_value": 0.5091, "custom_tolerance": 0.005}
+            "fit_losses": {
+                "global": 0.5084,
+                "local": {"target_value": 0.6561, "custom_tolerance": 0.005},
+                "backward": {"target_value": 0.5327, "custom_tolerance": 0.005}
             },
-            "evaluate_metrics": {
-                "val - personal - accuracy": {"target_value": 0.739, "custom_tolerance": 0.005},
-                "val - global - accuracy": 0.78,
-                "val - local - accuracy": {"target_value": 0.5602, "custom_tolerance": 0.005}
+            "eval_metrics": {
+                "val - personal - accuracy": {"target_value": 0.8218, "custom_tolerance": 0.005},
+                "val - global - accuracy": 0.8497,
+                "val - local - accuracy": {"target_value": 0.7508, "custom_tolerance": 0.005}
             },
-            "loss": {"target_value": 0.8043, "custom_tolerance": 0.005}
+            "eval_loss": {"target_value": 0.6042, "custom_tolerance": 0.005}
         }
     }
 }

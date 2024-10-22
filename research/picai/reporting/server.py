@@ -7,29 +7,27 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from examples.models.cnn_model import MnistNetWithBnAndFrozen
+from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.model_bases.apfl_base import ApflModule
-from fl4health.reporting import JsonReporter
-from fl4health.server.base_server import FlServer
+from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting import WandBReporter
+from fl4health.server.base_server import FlServerWithCheckpointing
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
-from fl4health.utils.random import set_all_random_seeds
 
 
 def fit_config(
     batch_size: int,
-    n_server_rounds: int,
-    current_round: int,
+    current_server_round: int,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
-        "current_server_round": current_round,
         "batch_size": batch_size,
-        "n_server_rounds": n_server_rounds,
+        "current_server_round": current_server_round,
     }
 
 
@@ -38,12 +36,18 @@ def main(config: Dict[str, Any]) -> None:
     fit_config_fn = partial(
         fit_config,
         config["batch_size"],
-        config["n_server_rounds"],
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = ApflModule(MnistNetWithBnAndFrozen())
+    # Initializing the model on the server side
+    model = Net()
+    # To facilitate checkpointing
+    parameter_exchanger = FullParameterExchanger()
+    checkpointers = [
+        BestLossTorchCheckpointer(config["checkpoint_path"], "best_model.pkl"),
+        LatestTorchCheckpointer(config["checkpoint_path"], "latest_model.pkl"),
+    ]
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -56,18 +60,34 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-        initial_parameters=get_all_model_parameters(initial_model),
+        initial_parameters=get_all_model_parameters(model),
     )
-
-    client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, reporters=[JsonReporter()])
+    config.update({"strategy": "FedAvg"})
+    reporter = WandBReporter(
+        wandb_step_type="round",
+        project="test",
+        entity="haider-vector-collab",
+        tags=["debug"],
+        name="FedAvgServer",
+        config=config,
+        group="experiment1",
+        job_type="server",
+    )
+    # reporter = JsonReporter()
+    server = FlServerWithCheckpointing(
+        client_manager=SimpleClientManager(),
+        parameter_exchanger=parameter_exchanger,
+        model=model,
+        reporters=[reporter],
+        strategy=strategy,
+        checkpointer=checkpointers,
+    )
 
     fl.server.start_server(
         server=server,
         server_address="0.0.0.0:8080",
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
-
     server.shutdown()
 
 
@@ -78,20 +98,10 @@ if __name__ == "__main__":
         action="store",
         type=str,
         help="Path to configuration file.",
-        default="examples/apfl_example/config.yaml",
-    )
-    parser.add_argument(
-        "--seed",
-        action="store",
-        type=int,
-        help="Seed for the random number generators across python, torch, and numpy",
-        required=False,
+        default="examples/basic_example/config.yaml",
     )
     args = parser.parse_args()
 
     config = load_config(args.config_path)
-
-    # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
 
     main(config)

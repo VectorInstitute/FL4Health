@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from logging import DEBUG, ERROR, INFO
 from typing import Optional, Tuple
 
@@ -8,7 +9,7 @@ from flwr.server.history import History
 from flwr.server.server import fit_clients
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServer
 from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
 from fl4health.strategies.scaffold import OpacusScaffold, Scaffold
@@ -19,8 +20,8 @@ class ScaffoldServer(FlServer):
         self,
         client_manager: ClientManager,
         strategy: Scaffold,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
     ) -> None:
         """
@@ -33,23 +34,25 @@ class ScaffoldServer(FlServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
-            warm_start (bool, optional): Whether or not to initialize control variates of each client as
-            local gradients. The clients will perform a training pass (without updating the weights) in order to
-                provide a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
-                Defaults to False.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the
+                server should perform server side checkpointing based on some criteria.
+                If none, then no server-side checkpointing is performed. Defaults to
+                None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each
+                round.
+            warm_start (bool, optional): Whether or not to initialize control variates
+                of each client as local gradients. The clients will perform a training
+                pass (without updating the weights) in order to provide a "warm"
+                estimate of the SCAFFOLD control variates. If false, variates are
+                initialized to 0. Defaults to False.
         """
         FlServer.__init__(
             self,
             client_manager=client_manager,
             strategy=strategy,
-            wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.warm_start = warm_start
 
@@ -78,9 +81,14 @@ class ScaffoldServer(FlServer):
         # control variates are initialized as average local gradient over training steps
         # while the model weights remain unchanged (until the FL rounds start)
         if self.warm_start:
-            log(INFO, "Using Warm Start Strategy. Waiting for clients to be available for polling")
+            log(
+                INFO,
+                "Using Warm Start Strategy. Waiting for clients to be available for polling",
+            )
             client_instructions = self.strategy.configure_fit_all(
-                server_round=0, parameters=initial_parameters, client_manager=self._client_manager
+                server_round=0,
+                parameters=initial_parameters,
+                client_manager=self._client_manager,
             )
             if not client_instructions:
                 log(ERROR, "Warm Start initialization failed: no clients selected", 1)
@@ -91,7 +99,12 @@ class ScaffoldServer(FlServer):
                     clients (out of {self._client_manager.num_available()})",
                 )
 
-                results, failures = fit_clients(client_instructions, self.max_workers, timeout, group_id=server_round)
+                results, failures = fit_clients(
+                    client_instructions,
+                    self.max_workers,
+                    timeout,
+                    group_id=server_round,
+                )
 
                 log(
                     DEBUG,
@@ -149,9 +162,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
         checkpointer: Optional[TorchCheckpointer] = None,
         warm_start: bool = False,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """
         Custom FL Server for Instance Level Differentially Private Scaffold algorithm as specified in
@@ -173,9 +186,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
                 server side checkpointing based on some criteria. If none, then no server-side checkpointing is
                 performed. Defaults to None.
@@ -185,6 +195,8 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 Defaults to False.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
         """
         # Require the strategy to be an  OpacusStrategy to handle the Opacus model conversion etc.
         assert isinstance(
@@ -194,9 +206,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             self,
             client_manager=client_manager,
             strategy=strategy,
-            wandb_reporter=wandb_reporter,
             checkpointer=checkpointer,
             warm_start=warm_start,
+            reporters=reporters,
         )
         InstanceLevelDpServer.__init__(
             self,

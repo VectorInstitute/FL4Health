@@ -13,7 +13,7 @@ from examples.models.parallel_split_cnn import GlobalCnn, LocalCnn, ParallelSpli
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting import WandBReporter
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -24,9 +24,8 @@ from fl4health.utils.random import set_all_random_seeds
 def fit_config(
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
+    project: str,
+    group: str,
     entity: str,
     current_round: int,
     local_epochs: Optional[int] = None,
@@ -37,9 +36,8 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
+        "project": project,
+        "group": group,
         "entity": entity,
     }
 
@@ -50,10 +48,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
+        # NOTE: that name is not included, it will be set in the clients
+        config["reporting_config"].get("project", ""),
+        config["reporting_config"].get("group", ""),
         config["reporting_config"].get("entity", ""),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
@@ -77,9 +74,13 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         initial_parameters=get_all_model_parameters(initial_model),
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy, wandb_reporter)
+    if "reporting_config" in config:
+        wandb_reporter = WandBReporter("round", **config["reporting_config"])
+        reporters = [wandb_reporter]
+    else:
+        reporters = []
+    server = FlServer(client_manager, strategy, reporters=reporters)
 
     fl.server.start_server(
         server=server,

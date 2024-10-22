@@ -7,6 +7,7 @@ from opacus import PrivacyEngine
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.basic_client import BasicClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
@@ -25,6 +26,7 @@ class InstanceLevelDpClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -32,6 +34,7 @@ class InstanceLevelDpClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
+            reporters=reporters,
         )
         self.clipping_bound: float
         self.noise_multiplier: float

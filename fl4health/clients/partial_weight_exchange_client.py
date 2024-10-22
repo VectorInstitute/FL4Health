@@ -13,7 +13,7 @@ from fl4health.clients.basic_client import BasicClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import Metric
 
@@ -26,7 +26,7 @@ class PartialWeightExchangeClient(BasicClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         store_initial_model: bool = False,
     ) -> None:
         """
@@ -45,6 +45,8 @@ class PartialWeightExchangeClient(BasicClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             store_initial_model (bool): Indicates whether the client should store a copy of the model weights
                 at the beginning of each training round. The model copy might be required to select the subset
                 of model parameters to be exchanged with the server, depending on the selection criterion used.
@@ -56,7 +58,7 @@ class PartialWeightExchangeClient(BasicClient):
             device=device,
             loss_meter_type=loss_meter_type,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
         )
         # Initial model parameters to be used in selecting parameters to be exchanged during training.
         self.initial_model: Optional[nn.Module]
@@ -108,7 +110,10 @@ class PartialWeightExchangeClient(BasicClient):
             NDArrays: The list of weights to be sent to the server from the client
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
             # If initialized==False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
