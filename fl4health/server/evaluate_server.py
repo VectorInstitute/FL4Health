@@ -97,6 +97,14 @@ class EvaluateServer(Server):
         # Run Federated Evaluation
         log(INFO, "Federated Evaluation Starting")
         start_time = datetime.datetime.now()
+
+        for reporter in self.reporters:
+            reporter.report(
+                {
+                    "fit_start": str(start_time),
+                    "host_type": "server",
+                }
+            )
         # We're only performing federated evaluation. So we make use of the evaluate round function, but simply
         # perform such evaluation once.
         res_fed = self.federated_evaluate(timeout=timeout)
@@ -106,7 +114,6 @@ class EvaluateServer(Server):
             r.report(
                 {
                     "fit_elapsed_time": str(start_time - end_time),
-                    "fit_start": str(start_time),
                     "fit_end": str(end_time),
                     "num_rounds": num_rounds,
                     "host_type": "server",
