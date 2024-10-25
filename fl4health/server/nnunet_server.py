@@ -1,8 +1,9 @@
 import pickle
 import warnings
+from collections.abc import Callable, Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -15,8 +16,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wandb import ServerWandBReporter
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.nnunet_utils import NnunetConfig
@@ -26,8 +26,8 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 
-FIT_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, FitIns]]]
-EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], List[Tuple[ClientProxy, EvaluateIns]]]
+FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, FitIns]]]
+EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, EvaluateIns]]]
 CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
 
 
@@ -61,13 +61,12 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         self,
         client_manager: ClientManager,
         parameter_exchanger: ParameterExchanger,
-        model: Optional[nn.Module] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
-        strategy: Optional[Strategy] = None,
-        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
-        intermediate_server_state_dir: Optional[Path] = None,
-        server_name: Optional[str] = None,
+        model: nn.Module | None = None,
+        strategy: Strategy | None = None,
+        checkpointer: TorchCheckpointer | Sequence[TorchCheckpointer] | None = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        intermediate_server_state_dir: Path | None = None,
+        server_name: str | None = None,
     ) -> None:
         """
         A Basic FlServer with added functionality to ask a client to initialize
@@ -75,34 +74,36 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         for use with NnUNetClient.
 
         Args:
-            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
-                they are to be sampled at all.
-            model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
-            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
-                client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server.
-            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
-                information and results to a Weights and Biases account. If None is provided, no logging occurs.
-                Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
-                if the server should perform server side checkpointing based on some criteria. If none, then no
-                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
+            client_manager (ClientManager): Determines the mechanism by which clients
+                are sampled by the server, if they are to be sampled at all.
+            model (nn.Module): This is the torch model to be hydrated by the
+                _hydrate_model_for_checkpointing function
+            parameter_exchanger (ExchangerType): This is the parameter exchanger to be
+                used to hydrate the model.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be
+                used by the server to handle client updates and other information
+                potentially sent by the participating clients. If None the strategy is
+                FedAvg as set by the flwr Server.
+            checkpointer (TorchCheckpointer | Sequence[TorchCheckpointer], optional):
+                To be provided if the server should perform server side checkpointing
+                based on some criteria. If none, then no server-side checkpointing is
+                performed. Multiple checkpointers can also be passed in a sequence to
                 checkpoint based on multiple criteria. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-            intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
-                during an FL experiment.
-            server_name (Optional[str]): An optional string name to uniquely identify server.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
+            intermediate_server_state_dir (Path): A directory to store and load
+                checkpoints from for the server during an FL experiment.
+            server_name (Optional[str]): An optional string name to uniquely identify
+                server.
         """
         FlServerWithCheckpointing.__init__(
             self,
             client_manager=client_manager,
             model=model,
             parameter_exchanger=parameter_exchanger,
-            wandb_reporter=wandb_reporter,
             strategy=strategy,
             checkpointer=checkpointer,
-            metrics_reporter=metrics_reporter,
+            reporters=reporters,
             intermediate_server_state_dir=intermediate_server_state_dir,
             server_name=server_name,
         )
@@ -182,7 +183,10 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             # Sample properties from a random client to initialize plans
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
-            log(INFO, "Requesting initialization of global nnunet plans from one random client via get_properties")
+            log(
+                INFO,
+                "Requesting initialization of global nnunet plans from one random client via get_properties",
+            )
             random_client = self._client_manager.sample(1)[0]
             ins = GetPropertiesIns(config=config)
             properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=server_round)
@@ -225,6 +229,8 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         self.initialized = True
         log(INFO, "")
 
+    # TODO: We should have a get server state method
+    # subclass could call parent method and not have to copy entire state.
     def save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
@@ -246,7 +252,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             "model": self.server_model,
             "history": self.history,
             "current_round": self.current_round,
-            "metrics_reporter": self.metrics_reporter,
+            "reports_manager": self.reports_manager,
             "server_name": self.server_name,
             "nnunet_plans_bytes": self.nnunet_plans_bytes,
             "num_input_channels": self.num_input_channels,
@@ -257,7 +263,10 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
 
         self.per_round_checkpointer.save_checkpoint(ckpt)
 
-        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        log(
+            INFO,
+            f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}",
+        )
 
     def load_server_state(self) -> None:
         """
@@ -268,12 +277,15 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
 
         ckpt = self.per_round_checkpointer.load_checkpoint()
 
-        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        log(
+            INFO,
+            f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}",
+        )
 
         # Standard attributes to load
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", list)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
         # Needed for when _hydrate_model_for_checkpointing is called

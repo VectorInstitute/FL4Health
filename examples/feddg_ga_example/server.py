@@ -9,6 +9,7 @@ from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServer
 from fl4health.strategies.feddg_ga_strategy import FedDgGaStrategy
 from fl4health.utils.config import load_config
@@ -66,7 +67,7 @@ def main(config: Dict[str, Any]) -> None:
     # will return the same sampling until it is told to reset, which in FedDgGaStrategy
     # is done right before fit_round.
     client_manager = FixedSamplingClientManager()
-    server = FlServer(strategy=strategy, client_manager=client_manager)
+    server = FlServer(strategy=strategy, client_manager=client_manager, reporters=[JsonReporter()])
 
     fl.server.start_server(
         server=server,
@@ -74,7 +75,7 @@ def main(config: Dict[str, Any]) -> None:
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    server.metrics_reporter.dump()
+    server.shutdown()
 
 
 if __name__ == "__main__":

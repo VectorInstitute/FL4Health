@@ -10,7 +10,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.reporting.fl_wandb import ServerWandBReporter
+from fl4health.reporting import JsonReporter, WandBReporter
 from fl4health.server.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -22,24 +22,24 @@ from fl4health.utils.random import set_all_random_seeds
 def fit_config(
     batch_size: int,
     n_server_rounds: int,
-    reporting_enabled: bool,
-    project_name: str,
-    group_name: str,
-    entity: str,
     current_round: int,
+    reporting_config: Optional[Dict[str, str]] = None,
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
 ) -> Config:
-    return {
+    base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "current_server_round": current_round,
-        "reporting_enabled": reporting_enabled,
-        "project_name": project_name,
-        "group_name": group_name,
-        "entity": entity,
     }
+    if reporting_config is not None:
+        # NOTE: that name is not included, it will be set in the clients
+        base_config["project"] = reporting_config.get("project", "")
+        base_config["group"] = reporting_config.get("group", "")
+        base_config["entity"] = reporting_config.get("entity", "")
+
+    return base_config
 
 
 def main(config: Dict[str, Any], server_address: str) -> None:
@@ -48,11 +48,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         fit_config,
         config["batch_size"],
         config["n_server_rounds"],
-        config["reporting_config"].get("enabled", False),
-        # Note that run name is not included, it will be set in the clients
-        config["reporting_config"].get("project_name", ""),
-        config["reporting_config"].get("group_name", ""),
-        config["reporting_config"].get("entity", ""),
+        reporting_config=config.get("reporting_config"),
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
     )
@@ -78,9 +74,14 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         loss_weight_patience=config["proximal_weight_patience"],
     )
 
-    wandb_reporter = ServerWandBReporter.from_config(config)
+    json_reporter = JsonReporter()
     client_manager = SimpleClientManager()
-    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, wandb_reporter=wandb_reporter)
+    if "reporting_config" in config:
+        wandb_reporter = WandBReporter("round", **config["reporting_config"])
+        reporters = [wandb_reporter, json_reporter]
+    else:
+        reporters = [json_reporter]
+    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=reporters)
 
     fl.server.start_server(
         server=server,
@@ -89,7 +90,6 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
     # Shutdown the server gracefully
     server.shutdown()
-    server.metrics_reporter.dump()
 
 
 if __name__ == "__main__":

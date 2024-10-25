@@ -1,9 +1,10 @@
 import copy
 import datetime
+from collections.abc import Iterable, Sequence
 from enum import Enum
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -20,8 +21,8 @@ from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.fl_wandb import ClientWandBReporter
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.losses import EvaluationLosses, LossMeter, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric, MetricManager
@@ -43,7 +44,7 @@ class BasicClient(NumPyClient):
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpointer: Optional[ClientCheckpointModule] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
@@ -63,8 +64,8 @@ class BasicClient(NumPyClient):
             checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
                 do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
                 None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
             progress_bar (bool): Whether or not to display a progress bar
                 during client training and validation. Uses tqdm. Defaults to
                 False
@@ -96,10 +97,9 @@ class BasicClient(NumPyClient):
         else:
             self.per_round_checkpointer = None
 
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
+        # Initialize reporters with client information.
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.client_name)
 
         self.initialized = False  # Whether or not the client has been setup
 
@@ -114,13 +114,12 @@ class BasicClient(NumPyClient):
         # Optional variable to store the weights that the client was initialized with during each round of training
         self.initial_weights: Optional[NDArrays] = None
 
-        self.wandb_reporter: Optional[ClientWandBReporter] = None
         self.total_steps: int = 0  # Need to track total_steps across rounds for WANDB reporting
 
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
         self.model: nn.Module
-        self.optimizers: Dict[str, torch.optim.Optimizer]
+        self.optimizers: dict[str, torch.optim.Optimizer]
         self.train_loader: DataLoader
         self.val_loader: DataLoader
         self.test_loader: Optional[DataLoader]
@@ -129,13 +128,13 @@ class BasicClient(NumPyClient):
         self.num_test_samples: Optional[int] = None
         self.learning_rate: Optional[float] = None
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         """
         If checkpointer exists, maybe checkpoint model based on the provided metric values.
 
         Args:
             loss (float): validation loss to potentially be used for checkpointing
-            metrics (Dict[str, float]): validation metrics to potentially be used for checkpointing
+            metrics (dict[str, float]): validation metrics to potentially be used for checkpointing
         """
         if self.checkpointer:
             self.checkpointer.maybe_checkpoint(self.model, loss, metrics, checkpoint_mode)
@@ -153,7 +152,10 @@ class BasicClient(NumPyClient):
                 parameters to be aggregated, but can contain more information.
         """
         if not self.initialized:
-            log(INFO, "Setting up client and providing full model parameters to the server for initialization")
+            log(
+                INFO,
+                "Setting up client and providing full model parameters to the server for initialization",
+            )
 
             # If initialized==False, the server is requesting model parameters from which to initialize all other
             # clients. As such get_parameters is being called before fit or evaluate, so we must call
@@ -208,10 +210,9 @@ class BasicClient(NumPyClient):
         """
         Shuts down the client. Involves shutting down W&B reporter if one exists.
         """
-        if self.wandb_reporter:
-            self.wandb_reporter.shutdown_reporter()
-
-        self.metrics_reporter.add_to_metrics({"shutdown": datetime.datetime.now()})
+        # Shutdown reporters
+        self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
+        self.reports_manager.shutdown()
 
     def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool]:
         """
@@ -250,7 +251,7 @@ class BasicClient(NumPyClient):
         # Either local epochs or local steps is none based on what key is passed in the config
         return local_epochs, local_steps, current_server_round, evaluate_after_fit
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
         If per_round_checkpointer is not None, on initialization the client checks if a checkpointed client state
@@ -261,12 +262,13 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            Tuple[NDArrays, int, Dict[str, Scalar]]: The parameters following the local training along with the
+            Tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
             ValueError: If local_steps or local_epochs is not specified in config.
         """
+        round_start_time = datetime.datetime.now()
         local_epochs, local_steps, current_server_round, evaluate_after_fit = self.process_config(config)
 
         if not self.initialized:
@@ -277,15 +279,11 @@ class BasicClient(NumPyClient):
             if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
                 self.load_client_state()
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={"fit_start": datetime.datetime.now()},
-        )
-
         self.set_parameters(parameters, config, fitting_round=True)
 
         self.update_before_train(current_server_round)
 
+        fit_start_time = datetime.datetime.now()
         if local_epochs is not None:
             loss_dict, metrics = self.train_by_epochs(local_epochs, current_server_round)
             local_steps = len(self.train_loader) * local_epochs  # total steps over training round
@@ -293,6 +291,7 @@ class BasicClient(NumPyClient):
             loss_dict, metrics = self.train_by_steps(local_steps, current_server_round)
         else:
             raise ValueError("Must specify either local_epochs or local_steps in the Config.")
+        fit_end_time = datetime.datetime.now()
 
         # Perform necessary updates after training has completed for the current FL round
         self.update_after_train(local_steps, loss_dict, config)
@@ -305,12 +304,17 @@ class BasicClient(NumPyClient):
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={
+        self.reports_manager.report(
+            {
                 "fit_metrics": metrics,
-                "loss_dict": loss_dict,
+                "fit_losses": loss_dict,
+                "round": current_server_round,
+                "round_start": str(round_start_time),
+                "round_end": str(datetime.datetime.now()),
+                "fit_start": str(fit_start_time),
+                "fit_end": str(fit_end_time),
             },
+            current_server_round,
         )
 
         # After local client training has finished, checkpoint client state
@@ -326,11 +330,11 @@ class BasicClient(NumPyClient):
             metrics,
         )
 
-    def evaluate_after_fit(self) -> Tuple[float, Dict[str, Scalar]]:
+    def evaluate_after_fit(self) -> Tuple[float, dict[str, Scalar]]:
         """
         Run self.validate right after fit to collect metrics on the local model against validation data.
 
-        Returns: (Dict[str, Scalar]) a dictionary with the metrics.
+        Returns: (dict[str, Scalar]) a dictionary with the metrics.
 
         """
         loss, metric_values = self.validate()
@@ -341,7 +345,7 @@ class BasicClient(NumPyClient):
         }
         return loss, metrics_after_fit
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, dict[str, Scalar]]:
         """
         Evaluates the model on the validation set, and test set (if defined).
 
@@ -350,31 +354,33 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config object from the server.
 
         Returns:
-            Tuple[float, int, Dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
+            Tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
                 validation/test set and the metric_values associated with evaluation.
         """
         if not self.initialized:
             self.setup_client(config)
 
+        start_time = datetime.datetime.now()
         current_server_round = narrow_dict_type(config, "current_server_round", int)
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={"evaluate_start": datetime.datetime.now()},
-        )
 
         self.set_parameters(parameters, config, fitting_round=False)
         loss, metrics = self.validate()
+        end_time = datetime.datetime.now()
+        elapsed = end_time - start_time
 
         # Checkpoint based on the loss and metrics produced during validation AFTER server-side aggregation
         # NOTE: This assumes that the loss returned in the checkpointing loss
         self._maybe_checkpoint(loss, metrics, CheckpointMode.POST_AGGREGATION)
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            current_server_round,
-            data={
-                "evaluate_metrics": metrics,
-                "loss": loss,
+        self.reports_manager.report(
+            {
+                "eval_metrics": metrics,
+                "eval_loss": loss,
+                "eval_start": str(start_time),
+                "eval_time_elapsed": str(elapsed),
+                "eval_end": str(end_time),
             },
+            current_server_round,
         )
 
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
@@ -433,8 +439,8 @@ class BasicClient(NumPyClient):
 
     def _log_results(
         self,
-        loss_dict: Dict[str, float],
-        metrics_dict: Dict[str, Scalar],
+        loss_dict: dict[str, float],
+        metrics_dict: dict[str, Scalar],
         current_round: Optional[int] = None,
         current_epoch: Optional[int] = None,
         logging_mode: LoggingMode = LoggingMode.TRAIN,
@@ -444,8 +450,8 @@ class BasicClient(NumPyClient):
         output file. Called only at the end of an epoch or server round
 
         Args:
-            loss_dict (Dict[str, float]): A dictionary of losses to log.
-            metrics_dict (Dict[str, Scalar]): A dictionary of the metric to log.
+            loss_dict (dict[str, float]): A dictionary of losses to log.
+            metrics_dict (dict[str, Scalar]): A dictionary of the metric to log.
             current_round (Optional[int]): The current FL round (i.e., current server round).
             current_epoch (Optional[int]): The current epoch of local training.
             logging_mode (LoggingMode): The logging mode (Training, Validation, or Testing).
@@ -470,8 +476,11 @@ class BasicClient(NumPyClient):
             [log(level.value, msg) for level, msg in client_logs]
 
     def get_client_specific_logs(
-        self, current_round: Optional[int], current_epoch: Optional[int], logging_mode: LoggingMode
-    ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+        self,
+        current_round: Optional[int],
+        current_epoch: Optional[int],
+        logging_mode: LoggingMode,
+    ) -> Tuple[str, list[Tuple[LogLevel, str]]]:
         """
         This function can be overridden to provide any client specific
         information to the basic client logging. For example, perhaps a client
@@ -490,7 +499,7 @@ class BasicClient(NumPyClient):
             Optional[str]: A string to append to the header log string that
                 typically announces the current server round and current epoch at the
                 beginning of each round or local epoch.
-            Optional[List[Tuple[LogLevel, str]]]]: A list of tuples where the
+            Optional[list[Tuple[LogLevel, str]]]]: A list of tuples where the
                 first element is a LogLevel as defined in fl4health.utils.
                 typing and the second element is a string message. Each item
                 in the list will be logged at the end of each server round or epoch.
@@ -498,41 +507,13 @@ class BasicClient(NumPyClient):
         """
         return "", []
 
-    def _handle_reporting(
-        self,
-        loss_dict: Dict[str, float],
-        metric_dict: Dict[str, Scalar],
-        current_round: Optional[int] = None,
-    ) -> None:
-        """
-        Handles reporting of losses and metrics to W&B.
-        Args:
-            loss_dict (Dict[str, float]): A dictionary of losses to log.
-            metrics_dict (Dict[str, Scalar]): A dictionary of metrics to log.
-            current_round (Optional[int]): The current FL round.
-        """
-        # If reporter is None we do not report to wandb and return
-        if self.wandb_reporter is None:
-            return
-
-        # If no current_round is passed or current_round is None, set current_round to 0
-        # This situation only arises when we do local fine-tuning and call train_by_epochs or train_by_steps explicitly
-        current_round = current_round if current_round is not None else 0
-
-        reporting_dict: Dict[str, Any] = {"server_round": current_round}
-        reporting_dict.update({"step": self.total_steps})
-        reporting_dict.update(loss_dict)
-        reporting_dict.update(metric_dict)
-        reporting_dict.update(self.get_client_specific_reports())
-        self.wandb_reporter.report_metrics(reporting_dict)
-
-    def get_client_specific_reports(self) -> Dict[str, Any]:
+    def get_client_specific_reports(self) -> dict[str, Any]:
         """
         This function can be overridden by an inheriting client to report
         additional client specific information to the wandb_reporter
 
         Returns:
-            Dict[str, Any]: A dictionary of things to report
+            dict[str, Any]: A dictionary of things to report
         """
         return {}
 
@@ -562,25 +543,25 @@ class BasicClient(NumPyClient):
             return {key: value.to(self.device) for key, value in data.items()}
         else:
             raise TypeError(
-                "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
+                "data must be of type torch.Tensor or dict[str, torch.Tensor]. \
                     If definition of TorchInputType or TorchTargetType has \
                     changed this method might need to be updated or split into \
                     two"
             )
 
-    def is_empty_batch(self, input: Union[torch.Tensor, Dict[str, torch.Tensor]]) -> bool:
+    def is_empty_batch(self, input: Union[torch.Tensor, dict[str, torch.Tensor]]) -> bool:
         """
         Check whether input, which represents a batch of inputs to a model, is empty.
 
         Args:
-            input (Union[torch.Tensor, Dict[str, torch.Tensor]]): input batch.
-            input can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
+            input (Union[torch.Tensor, dict[str, torch.Tensor]]): input batch.
+            input can be of type torch.Tensor or dict[str, torch.Tensor], and in the
             latter case, the batch is considered to be empty if all tensors in the dictionary
             have length zero.
 
         Raises:
-            TypeError: raised if input is not of type torch.Tensor or Dict[str, torch.Tensor].
-            ValueError: raised if input has type Dict[str, torch.Tensor] and not all tensors
+            TypeError: raised if input is not of type torch.Tensor or dict[str, torch.Tensor].
+            ValueError: raised if input has type dict[str, torch.Tensor] and not all tensors
             within the dictionary have the same size.
 
         Returns:
@@ -597,10 +578,13 @@ class BasicClient(NumPyClient):
             else:
                 return first_val_len == 0
         else:
-            raise TypeError("Input must be of type torch.Tensor or Dict[str, torch.Tensor].")
+            raise TypeError("Input must be of type torch.Tensor or dict[str, torch.Tensor].")
 
     def update_metric_manager(
-        self, preds: TorchPredType, target: TorchTargetType, metric_manager: MetricManager
+        self,
+        preds: TorchPredType,
+        target: TorchTargetType,
+        metric_manager: MetricManager,
     ) -> None:
         """
         Updates a metric manager with the provided model predictions and
@@ -673,7 +657,7 @@ class BasicClient(NumPyClient):
         self,
         epochs: int,
         current_round: Optional[int] = None,
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+    ) -> Tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of epochs.
 
@@ -682,11 +666,12 @@ class BasicClient(NumPyClient):
             current_round (Optional[int], optional): The current FL round.
 
         Returns:
-            Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            Tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
         steps_this_round = 0  # Reset number of steps this round
+        report_data: dict[str, Any] = {"round": current_round}
         for local_epoch in range(epochs):
             self.train_metric_manager.clear()
             self.train_loss_meter.clear()
@@ -694,6 +679,8 @@ class BasicClient(NumPyClient):
             self._log_header_str(current_round, local_epoch)
             # update before epoch hook
             self.update_before_epoch(epoch=local_epoch)
+            # Update report data dict
+            report_data.update({"fit_epoch": local_epoch})
             for input, target in self.maybe_progress_bar(self.train_loader):
                 self.update_before_step(steps_this_round, current_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
@@ -709,14 +696,20 @@ class BasicClient(NumPyClient):
                 self.update_metric_manager(preds, target, self.train_metric_manager)
                 self.update_after_step(steps_this_round, current_round)
                 self.update_lr_schedulers(epoch=local_epoch)
+                report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
+                report_data.update(self.get_client_specific_reports())
+                self.reports_manager.report(report_data, current_round, local_epoch, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
+
             metrics = self.train_metric_manager.compute()
             loss_dict = self.train_loss_meter.compute().as_dict()
 
-            # Log results and maybe report via WANDB
+            # Log and report results
             self._log_results(loss_dict, metrics, current_round, local_epoch)
-            self._handle_reporting(loss_dict, metrics, current_round=current_round)
+            report_data.update({"fit_metrics": metrics})
+            report_data.update(self.get_client_specific_reports())
+            self.reports_manager.report(report_data, current_round, local_epoch)
 
         # Return final training metrics
         return loss_dict, metrics
@@ -725,7 +718,7 @@ class BasicClient(NumPyClient):
         self,
         steps: int,
         current_round: Optional[int] = None,
-    ) -> Tuple[Dict[str, float], Dict[str, Scalar]]:
+    ) -> Tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of steps.
 
@@ -734,7 +727,7 @@ class BasicClient(NumPyClient):
             current_round (Optional[int], optional): The current FL round
 
         Returns:
-            Tuple[Dict[str, float], Dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            Tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
@@ -745,8 +738,8 @@ class BasicClient(NumPyClient):
         self.train_loss_meter.clear()
         self.train_metric_manager.clear()
         self._log_header_str(current_round)
+        report_data: dict[str, Any] = {"round": current_round}
         for step in self.maybe_progress_bar(range(steps)):
-
             self.update_before_step(step, current_round)
 
             try:
@@ -770,14 +763,16 @@ class BasicClient(NumPyClient):
             self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step, current_round)
             self.update_lr_schedulers(step=step)
+            report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
+            report_data.update(self.get_client_specific_reports())
+            self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1
 
         loss_dict = self.train_loss_meter.compute().as_dict()
         metrics = self.train_metric_manager.compute()
 
-        # Log results and maybe report via WANDB
+        # Log and report results
         self._log_results(loss_dict, metrics, current_round)
-        self._handle_reporting(loss_dict, metrics, current_round=current_round)
 
         return loss_dict, metrics
 
@@ -787,7 +782,7 @@ class BasicClient(NumPyClient):
         loss_meter: LossMeter,
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
-    ) -> Tuple[float, Dict[str, Scalar]]:
+    ) -> Tuple[float, dict[str, Scalar]]:
         """
         Evaluate the model on the given validation or test dataset.
 
@@ -799,9 +794,12 @@ class BasicClient(NumPyClient):
               Default is for validation.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            Tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
-        assert logging_mode in [LoggingMode.VALIDATION, LoggingMode.TEST], "logging_mode must be VALIDATION or TEST"
+        assert logging_mode in [
+            LoggingMode.VALIDATION,
+            LoggingMode.TEST,
+        ], "logging_mode must be VALIDATION or TEST"
         self.model.eval()
         metric_manager.clear()
         loss_meter.clear()
@@ -820,19 +818,22 @@ class BasicClient(NumPyClient):
 
         return loss_dict["checkpoint"], metrics
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self) -> Tuple[float, dict[str, Scalar]]:
         """
         Validate the current model on the entire validation
             and potentially an entire test dataset if it has been defined.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics
+            Tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
                 from validation (and test if present).
         """
         val_loss, val_metrics = self._validate_or_test(self.val_loader, self.val_loss_meter, self.val_metric_manager)
         if self.test_loader:
             test_loss, test_metrics = self._validate_or_test(
-                self.test_loader, self.test_loss_meter, self.test_metric_manager, LoggingMode.TEST
+                self.test_loader,
+                self.test_loss_meter,
+                self.test_metric_manager,
+                LoggingMode.TEST,
             )
             # There will be no clashes due to the naming convention associated with the metric managers
             if self.num_test_samples is not None:
@@ -842,7 +843,7 @@ class BasicClient(NumPyClient):
 
         return val_loss, val_metrics
 
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
         Return properties (train and validation dataset sample counts) of client.
 
@@ -850,13 +851,16 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
+            dict[str, Scalar]: A dictionary with two entries corresponding to the sample counts in
                 the train and validation set.
         """
         if not self.initialized:
             self.setup_client(config)
 
-        return {"num_train_samples": self.num_train_samples, "num_val_samples": self.num_val_samples}
+        return {
+            "num_train_samples": self.num_train_samples,
+            "num_val_samples": self.num_val_samples,
+        }
 
     def setup_client(self, config: Config) -> None:
         """
@@ -895,9 +899,7 @@ class BasicClient(NumPyClient):
         self.criterion = self.get_criterion(config).to(self.device)
         self.parameter_exchanger = self.get_parameter_exchanger(config)
 
-        self.wandb_reporter = ClientWandBReporter.from_config(self.client_name, config)
-
-        self.metrics_reporter.add_to_metrics({"type": "client", "initialized": datetime.datetime.now()})
+        self.reports_manager.report({"host_type": "client", "initialized": str(datetime.datetime.now())})
 
         self.initialized = True
 
@@ -919,7 +921,7 @@ class BasicClient(NumPyClient):
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. If input is
-                of type Dict[str, torch.Tensor], it is assumed that the keys of
+                of type dict[str, torch.Tensor], it is assumed that the keys of
                 input match the names of the keyword arguments of self.model.
                 forward().
 
@@ -945,6 +947,8 @@ class BasicClient(NumPyClient):
             # Note that this assumes the keys of the input match (exactly) the keyword args
             # of self.model.forward().
             output = self.model(**input)
+        else:
+            raise TypeError("'input' must be of type torch.Tensor or dict[str, torch.Tensor].")
 
         if isinstance(output, dict):
             return output, {}
@@ -960,7 +964,7 @@ class BasicClient(NumPyClient):
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+    ) -> Tuple[torch.Tensor, Optional[dict[str, torch.Tensor]]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -970,7 +974,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            Tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
@@ -1114,7 +1118,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_optimizer(self, config: Config) -> Union[Optimizer, Dict[str, Optimizer]]:
+    def get_optimizer(self, config: Config) -> Union[Optimizer, dict[str, Optimizer]]:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
         Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
@@ -1125,7 +1129,7 @@ class BasicClient(NumPyClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Union[Optimizer, Dict[str, Optimizer]]: An optimizer or dictionary of optimizers to
+            Union[Optimizer, dict[str, Optimizer]]: An optimizer or dictionary of optimizers to
             train model.
 
         Raises:
@@ -1190,7 +1194,7 @@ class BasicClient(NumPyClient):
         """
         pass
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         Hook method called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary. For example, used by Scaffold to update the control variates
@@ -1199,8 +1203,9 @@ class BasicClient(NumPyClient):
         aggregation.
 
         Args:
-            local_steps (int): The number of steps so far in the round in the local training.
-            loss_dict (Dict[str, float]): A dictionary of losses from local training.
+            local_steps (int): The number of steps so far in the round in the local
+                training.
+            loss_dict (dict[str, float]): A dictionary of losses from local training.
             config (Config): The config from the server
         """
         pass
@@ -1293,13 +1298,16 @@ class BasicClient(NumPyClient):
             "lr_schedulers_state": {key: scheduler.state_dict() for key, scheduler in self.lr_schedulers.items()},
             "total_steps": self.total_steps,
             "client_name": self.client_name,
-            "metrics_reporter": self.metrics_reporter,
+            "reports_manager": self.reports_manager,
             "optimizers_state": {key: optimizer.state_dict()["state"] for key, optimizer in self.optimizers.items()},
         }
 
         self.per_round_checkpointer.save_checkpoint(ckpt)
 
-        log(INFO, f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        log(
+            INFO,
+            f"Saving client state to checkpoint at {self.per_round_checkpointer.checkpoint_path}",
+        )
 
     def load_client_state(self) -> None:
         """
@@ -1312,7 +1320,7 @@ class BasicClient(NumPyClient):
 
         narrow_dict_type_and_set_attribute(self, ckpt, "client_name", "client_name", str)
         narrow_dict_type_and_set_attribute(self, ckpt, "total_steps", "total_steps", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
 
         assert "lr_schedulers_state" in ckpt and isinstance(ckpt["lr_schedulers_state"], dict)
         assert "optimizers_state" in ckpt and isinstance(ckpt["optimizers_state"], dict)

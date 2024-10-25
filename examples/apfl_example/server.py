@@ -10,6 +10,7 @@ from flwr.server.strategy import FedAvg
 from examples.models.cnn_model import MnistNetWithBnAndFrozen
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -59,7 +60,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy)
+    server = FlServer(client_manager, strategy, reporters=[JsonReporter()])
 
     fl.server.start_server(
         server=server,
@@ -67,7 +68,6 @@ def main(config: Dict[str, Any]) -> None:
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    server.metrics_reporter.dump()
     server.shutdown()
 
 
