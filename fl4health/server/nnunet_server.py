@@ -276,6 +276,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         narrow_dict_type_and_set_attribute(self, ckpt, "metrics_reporter", "metrics_reporter", MetricsReporter)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
+        narrow_dict_type_and_set_attribute(self, ckpt, "model", "server_model", nn.Module)
 
         # NnunetServer specific attributes to load
         narrow_dict_type_and_set_attribute(self, ckpt, "nnunet_plans_bytes", "nnunet_plans_bytes", bytes)
