@@ -50,7 +50,6 @@ class ModelMergeClient(NumPyClient):
         self.client_name = client_name if client_name is not None else generate_hash()
 
         self.initialized = False
-        self.client_name = generate_hash()
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
         # Initialize reporters with client information.
