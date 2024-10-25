@@ -46,11 +46,10 @@ class ModelMergeServer(Server):
             server_model (Optional[nn.Module]): Optional model to be hydrated with parameters from model merge if doing
                 server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
             parameter_exchanger (Optional[ExchangerType]): Optional parameter exchanger to be used to hydrate the
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each round.
                 model. Only used if checkpointer and model are also not None. Defaults to None.
-            server_name (Optional[str]): An optional string name to uniquely identify
-                server.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
+            server_name (Optional[str]): An optional string name to uniquely identify server.
         """
         assert isinstance(strategy, ModelMergeStrategy)
         assert (server_model is None and checkpointer is None and parameter_exchanger is None) or (
