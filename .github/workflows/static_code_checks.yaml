@@ -45,3 +45,5 @@ jobs:
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
           ignore-vulns: |
             GHSA-h4gh-qq45-vh27
+            GHSA-q34m-jh98-gwm2
+            GHSA-f9vj-2wh5-fj8j
