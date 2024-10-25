@@ -1265,7 +1265,7 @@ class BasicClient(NumPyClient):
             return iterable
         else:
             # Create a clean looking tqdm instance that matches the flwr logging
-            kwargs = {
+            kwargs: Any = {
                 "leave": True,
                 "ascii": " >=",
                 # "desc": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']} ",

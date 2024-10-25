@@ -1,7 +1,7 @@
 import datetime
 import timeit
 from logging import INFO, WARNING
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -14,8 +14,10 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
+from fl4health.utils.random import generate_hash
 
 
 class ModelMergeServer(Server):
@@ -27,7 +29,8 @@ class ModelMergeServer(Server):
         checkpointer: Optional[LatestTorchCheckpointer] = None,
         server_model: Optional[nn.Module] = None,
         parameter_exchanger: Optional[ParameterExchanger] = None,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        server_name: Optional[str] = None,
     ) -> None:
         """
         ModelMergeServer provides functionality to fetch client weights, perform a simple average,
@@ -44,8 +47,11 @@ class ModelMergeServer(Server):
                 server side checkpointing. Must only be provided if checkpointer is also provided. Defaults to None.
             parameter_exchanger (Optional[ExchangerType]): Optional parameter exchanger to be used to hydrate the
                 model. Only used if checkpointer and model are also not None. Defaults to None.
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the server should send data to before and after each round.
+                model. Only used if checkpointer and model are also not None. Defaults to None.
+            server_name (Optional[str]): An optional string name to uniquely identify
+                server.
         """
         assert isinstance(strategy, ModelMergeStrategy)
         assert (server_model is None and checkpointer is None and parameter_exchanger is None) or (
@@ -57,10 +63,11 @@ class ModelMergeServer(Server):
         self.server_model = server_model
         self.parameter_exchanger = parameter_exchanger
 
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter()
+        self.server_name = server_name if server_name is not None else generate_hash()
+
+        # Initialize reporters with server name information.
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.server_name)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
@@ -77,7 +84,7 @@ class ModelMergeServer(Server):
             Tuple[History, float]: The first element of the tuple is a History object containing the aggregated
                 metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
-        self.metrics_reporter.add_to_metrics({"type": "server", "fit_start": datetime.datetime.now()})
+        self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})
 
         history = History()
 
@@ -117,11 +124,12 @@ class ModelMergeServer(Server):
         # server_model, parameter_exchanger and checkpointer are not None
         self._maybe_checkpoint(loss_aggregated=0.0, metrics_aggregated={}, server_round=1)
 
-        self.metrics_reporter.add_to_metrics(
+        self.reports_manager.report(
             data={
                 "fit_end": datetime.datetime.now(),
                 "metrics_centralized": history.metrics_centralized,
                 "losses_centralized": history.losses_centralized,
+                "host_type": "server",
             }
         )
 

@@ -11,7 +11,7 @@ from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.server.base_server import FlServerWithCheckpointing
-from fl4health.strategies.fedprox import FedProx
+from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -50,8 +50,9 @@ def main(config: Dict[str, Any]) -> None:
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestLossTorchCheckpointer(config["checkpoint_path"], model_checkpoint_name)
 
-    # Server performs simple FedAveraging as its server-side optimization strategy
-    strategy = FedProx(
+    # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
+    # FedProx proximal weight mu
+    strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds
@@ -62,8 +63,8 @@ def main(config: Dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        adaptive_proximal_weight=config["adaptive_proximal_weight"],
-        proximal_weight=config["proximal_weight"],
+        adapt_loss_weight=config["adapt_proximal_weight"],
+        initial_loss_weight=config["initial_proximal_weight"],
     )
 
     server = FlServerWithCheckpointing(
