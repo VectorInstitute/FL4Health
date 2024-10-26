@@ -11,7 +11,8 @@ from torch.utils.data import DataLoader
 
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
-from fl4health.reporting.metrics import MetricsReporter
+from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.utils.client import move_data_to_device
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.random import generate_hash
@@ -25,7 +26,8 @@ class ModelMergeClient(NumPyClient):
         model_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        metrics_reporter: Optional[MetricsReporter] = None,
+        reporters: Optional[Sequence[BaseReporter]] = None,
+        client_name: Optional[str] = None,
     ) -> None:
         """
         ModelMergeClient to support functionality to simply perform model merging across client
@@ -37,23 +39,23 @@ class ModelMergeClient(NumPyClient):
             metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
                 'cuda'
-            metrics_reporter (Optional[MetricsReporter], optional): A metrics reporter instance to record the metrics
-                during the execution. Defaults to an instance of MetricsReporter with default init parameters.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
+                reporters which the client should send data to.
+            client_name (str): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated.
         """
         self.data_path = data_path
         self.model_path = model_path
         self.metrics = metrics
         self.device = device
-        self.metrics_reporter = metrics_reporter
+        self.client_name = client_name if client_name is not None else generate_hash()
 
         self.initialized = False
-        self.client_name = generate_hash()
         self.test_metric_manager = MetricManager(metrics=self.metrics, metric_manager_name="test")
 
-        if metrics_reporter is not None:
-            self.metrics_reporter = metrics_reporter
-        else:
-            self.metrics_reporter = MetricsReporter(run_id=self.client_name)
+        # Initialize reporters with client information.
+        self.reports_manager = ReportsManager(reporters)
+        self.reports_manager.initialize(id=self.client_name)
 
         self.model: nn.Module
         self.test_loader: DataLoader
@@ -134,19 +136,15 @@ class ModelMergeClient(NumPyClient):
         """
         assert not self.initialized
         self.setup_client(config)
-        assert self.metrics_reporter is not None
-        self.metrics_reporter.add_to_metrics_at_round(
-            1,
-            data={"fit_start": datetime.datetime.now()},
+
+        self.reports_manager.report(
+            data={"host_type": "client", "fit_start": datetime.datetime.now()},
         )
 
         val_metrics = self.validate()
 
-        self.metrics_reporter.add_to_metrics_at_round(
-            1,
-            data={
-                "fit_metrics": val_metrics,
-            },
+        self.reports_manager.report(
+            data={"fit_metrics": val_metrics, "host_type": "client", "fit_end": datetime.datetime.now()},
         )
 
         return self.get_parameters(config), self.num_test_samples, val_metrics

@@ -96,12 +96,17 @@ class FlServer(Server):
                 Tuple also contains the elapsed time in seconds for the round.
         """
         start_time = datetime.datetime.now()
+        self.reports_manager.report(
+            {
+                "fit_start": str(start_time),
+                "host_type": "server",
+            }
+        )
         history, elapsed_time = super().fit(num_rounds, timeout)
         end_time = datetime.datetime.now()
         self.reports_manager.report(
             {
                 "fit_elapsed_time": str(start_time - end_time),
-                "fit_start": str(start_time),
                 "fit_end": str(end_time),
                 "num_rounds": num_rounds,
                 "host_type": "server",
@@ -434,12 +439,17 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         """
         if self.per_round_checkpointer is not None:
             start_time = datetime.datetime.now()
+            self.reports_manager.report(
+                {
+                    "fit_start": str(start_time),
+                    "host_type": "server",
+                }
+            )
             history, elapsed_time = self.fit_with_per_epoch_checkpointing(num_rounds, timeout)
             end_time = datetime.datetime.now()
             self.reports_manager.report(
                 {
                     "fit_elapsed_time": str(start_time - end_time),
-                    "fit_start": str(start_time),
                     "fit_end": str(end_time),
                     "num_rounds": num_rounds,
                     "host_type": "server",
@@ -585,6 +595,8 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
+        # Needed for when _hydrate_model_for_checkpointing is called
+        narrow_dict_type_and_set_attribute(self, ckpt, "model", "server_model", nn.Module)
 
         self.parameters = get_all_model_parameters(ckpt["model"])
 
