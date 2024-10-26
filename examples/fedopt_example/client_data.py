@@ -10,7 +10,7 @@ from nltk.tokenize import word_tokenize
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-nltk.download("punkt")
+nltk.download("punkt_tab")
 
 
 class LabelEncoder:
@@ -22,7 +22,8 @@ class LabelEncoder:
     @staticmethod
     def encoder_from_dataframe(df: pd.DataFrame, class_column: str) -> "LabelEncoder":
         categories = df[class_column].astype("category")
-        label_to_class = dict(set(zip(categories.cat.codes, categories)))
+        categories_str = [str(category) for category in categories.to_list()]
+        label_to_class = dict(set(zip(categories.cat.codes, categories_str)))
         class_to_label = {category: label for label, category in label_to_class.items()}
         classes = categories.unique().tolist()
         return LabelEncoder(classes, label_to_class, class_to_label)
