@@ -4,7 +4,7 @@ from typing import Dict, Iterable, TypeVar
 import torch
 import torch.nn as nn
 from flwr.common.logger import LOG_COLORS
-from flwr.common.typing import Scalar
+from flwr.common.typing import Any, Scalar
 from tqdm import tqdm
 
 from fl4health.utils.logging import LoggingMode
@@ -119,7 +119,7 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
         return iterable
     else:
         # Create a clean looking tqdm instance that matches the flwr logging
-        kwargs = {
+        kwargs: Any = {
             "leave": True,
             "ascii": " >=",
             # "desc": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']} ",
