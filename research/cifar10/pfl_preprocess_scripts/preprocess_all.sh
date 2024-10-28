@@ -6,11 +6,11 @@ SEEDS=( 2024 2025 2026 )
 BETAS=( 0.1 0.5 5.0 )
 NUM_PARTITIONS=( 7 7 7 )
 
-ORIGINAL_DATA_DIR="PLACEHOLDER"
+ORIGINAL_DATA_DIR="research/cifar10/datasets/cifar10/"
 DESTINATION_DIRS=( \
-    "DEST1" \
-    "DEST2" \
-    "DEST3" \
+    "research/cifar10/datasets/cifar10/" \
+    "research/cifar10/datasets/cifar10/" \
+    "research/cifar10/datasets/cifar10/" \
     )
 
 echo "Python Venv Path: ${VENV_PATH}"

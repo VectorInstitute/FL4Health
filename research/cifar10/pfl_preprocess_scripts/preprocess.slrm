@@ -45,10 +45,6 @@ echo "Dirichlet Beta: ${BETA}"
 echo "Number of partitions to produce: ${NUM_PARTITIONS}"
 echo "Logs being placed in: ${LOG_DIR}"
 
-SERVER_ADDRESS="${SLURMD_NODENAME}:${SERVER_PORT}"
-
-echo "Server Address: ${SERVER_ADDRESS}"
-
 LOG_PATH="${LOG_DIR}preprocess_${BETA}_${NUM_PARTITIONS}_${SEED}.log"
 
 echo "World size: ${SLURM_NTASKS}"
@@ -61,7 +57,7 @@ source ${VENV_PATH}bin/activate
 echo "Active Environment"
 which python
 
-nohup python -m research.cifar10.preprocess.py \
+nohup python -m research.cifar10.preprocess \
     --dataset_dir ${DATASET_DIR} \
     --save_dataset_dir ${OUTPUT_DIR} \
     --seed ${SEED} \
