@@ -80,7 +80,33 @@ class ConvNetFeatureExtractor(Module):
         return x
 
 
-class ConvNetClassifier(ParallelSplitHeadModule):
+class ConvNetClassifier(Module):
+    def __init__(
+        self,
+        h: int = 32,
+        w: int = 32,
+        hidden: int = 2048,
+        class_num: int = 10,
+        dropout: float = 0.0,
+    ) -> None:
+        super().__init__()
+
+        self.fc1 = Linear((h // 2 // 2) * (w // 2 // 2) * 64, hidden)
+        self.fc2 = Linear(hidden, class_num)
+
+        self.relu = ReLU(inplace=True)
+        self.dropout_layer = nn.Dropout(p=dropout)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.dropout_layer(x)
+        x = self.relu(self.fc1(x))
+        x = self.dropout_layer(x)
+        x = self.fc2(x)
+
+        return x
+
+
+class ConvNetFendaClassifier(ParallelSplitHeadModule):
     def __init__(
         self,
         join_mode: ParallelFeatureJoinMode,
@@ -127,7 +153,7 @@ class ConvNetFendaModel(FendaModel):
         # is also set to 0 by default for FedIXI
         local_module = ConvNetFeatureExtractor(in_channels, use_bn)
         global_module = ConvNetFeatureExtractor(in_channels, use_bn)
-        model_head = ConvNetClassifier(
+        model_head = ConvNetFendaClassifier(
             ParallelFeatureJoinMode.CONCATENATE, h=h, w=w, hidden=hidden, class_num=class_num, dropout=dropout
         )
         super().__init__(local_module=local_module, global_module=global_module, model_head=model_head)
@@ -145,7 +171,5 @@ class ConvNetFendaDittoGlobalModel(SequentiallySplitModel):
         dropout: float = 0.0,
     ) -> None:
         base_module = ConvNetFeatureExtractor(in_channels, use_bn)
-        head_module = ConvNetClassifier(
-            ParallelFeatureJoinMode.CONCATENATE, h=h, w=w, hidden=hidden, class_num=class_num, dropout=dropout
-        )
+        head_module = ConvNetClassifier(h=h, w=w, hidden=hidden, class_num=class_num, dropout=dropout)
         super().__init__(base_module, head_module, flatten_features=False)

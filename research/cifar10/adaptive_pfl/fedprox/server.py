@@ -81,7 +81,6 @@ def main(
     server = FedProxServer(
         client_manager=client_manager,
         model=model,
-        wandb_reporter=None,
         strategy=strategy,
         checkpointer=checkpointer,
     )
