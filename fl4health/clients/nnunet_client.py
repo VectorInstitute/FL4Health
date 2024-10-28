@@ -5,7 +5,7 @@ import pickle
 import time
 import warnings
 from contextlib import redirect_stdout
-from logging import DEBUG, INFO, WARNING
+from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
@@ -157,7 +157,20 @@ class NnunetClient(BasicClient):
         # Some nnunet client specific attributes
         self.dataset_id: int = dataset_id
         self.dataset_name = convert_id_to_dataset_name(self.dataset_id)
-        self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
+        try:
+            self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
+        except Exception as e:
+            self.dataset_json = load_json(join(nnUNet_preprocessed, self.dataset_name, "dataset.json"))
+            e1 = e
+        except Exception as e2:
+            log(
+                ERROR,
+                (
+                    "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed."
+                    f" The following exceptions were raised:\n {e1, e2}"
+                ),
+            )
+
         self.fold = fold
         self.data_identifier = data_identifier
         self.always_preprocess = always_preprocess
