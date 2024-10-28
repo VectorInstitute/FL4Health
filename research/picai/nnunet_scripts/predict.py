@@ -80,7 +80,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 
     # Get parameters for each model and maybe some predictor init parameters
     trainer_name: str = "nnUNetTrainer"  # Default trainer class
-    mirror_axes = False
+    mirror_axes = None
     parameters = []
     for ckpt in ckpt_list:
         if isdir(ckpt):  # Assume this is an nnunet results directory
