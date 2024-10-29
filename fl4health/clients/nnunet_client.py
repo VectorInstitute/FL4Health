@@ -170,13 +170,8 @@ class NnunetClient(BasicClient):
             try:
                 self.dataset_json = load_json(join(nnUNet_preprocessed, self.dataset_name, "dataset.json"))
             except Exception as e:
-                log(  # Raising e will raise both exceptions since it is nested.
-                    ERROR,
-                    (
-                        "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed."
-                        f" The following exceptions were raised:\n {e}"
-                    ),
-                )
+                log(ERROR, "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed.")
+                raise e  # Raising e will raise both exceptions since it is nested.
 
         # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
