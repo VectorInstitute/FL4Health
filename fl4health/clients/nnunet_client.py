@@ -40,28 +40,15 @@ from fl4health.utils.nnunet_utils import (
     prepare_loss_arg,
     use_default_signal_handlers,
 )
-from fl4health.utils.typing import (
-    LogLevel,
-    TorchInputType,
-    TorchPredType,
-    TorchTargetType,
-)
+from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from batchgenerators.utilities.file_and_folder_operations import (
-        load_json,
-        save_json,
-    )
-    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import (
-        ExperimentPlanner,
-    )
-    from nnunetv2.experiment_planning.plan_and_preprocess_api import (
-        extract_fingerprints,
-        preprocess_dataset,
-    )
+    from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
+    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
+    from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
