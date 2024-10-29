@@ -6,6 +6,7 @@ import warnings
 from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
+from math import ceil
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, no_type_check
 
 import numpy as np
@@ -438,7 +439,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         self.exponent = exponent
         self.steps_per_lr = steps_per_lr
         # Number of windows with constant LR across training
-        self.num_windows = round(max_steps / self.steps_per_lr)
+        self.num_windows = ceil(max_steps / self.steps_per_lr)
         self._step_count: int
         super().__init__(optimizer, -1, False)
 
