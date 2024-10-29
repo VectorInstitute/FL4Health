@@ -40,15 +40,28 @@ from fl4health.utils.nnunet_utils import (
     prepare_loss_arg,
     use_default_signal_handlers,
 )
-from fl4health.utils.typing import LogLevel, TorchInputType, TorchPredType, TorchTargetType
+from fl4health.utils.typing import (
+    LogLevel,
+    TorchInputType,
+    TorchPredType,
+    TorchTargetType,
+)
 
 with warnings.catch_warnings():
     # silences a bunch of deprecation warnings related to scipy.ndimage
     # Raised an issue with nnunet. https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from batchgenerators.utilities.file_and_folder_operations import load_json, save_json
-    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import ExperimentPlanner
-    from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
+    from batchgenerators.utilities.file_and_folder_operations import (
+        load_json,
+        save_json,
+    )
+    from nnunetv2.experiment_planning.experiment_planners.default_experiment_planner import (
+        ExperimentPlanner,
+    )
+    from nnunetv2.experiment_planning.plan_and_preprocess_api import (
+        extract_fingerprints,
+        preprocess_dataset,
+    )
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.training.dataloading.utils import unpack_dataset
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
@@ -157,20 +170,6 @@ class NnunetClient(BasicClient):
         # Some nnunet client specific attributes
         self.dataset_id: int = dataset_id
         self.dataset_name = convert_id_to_dataset_name(self.dataset_id)
-        try:
-            self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
-        except Exception as e:
-            self.dataset_json = load_json(join(nnUNet_preprocessed, self.dataset_name, "dataset.json"))
-            e1 = e
-        except Exception as e2:
-            log(
-                ERROR,
-                (
-                    "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed."
-                    f" The following exceptions were raised:\n {e1, e2}"
-                ),
-            )
-
         self.fold = fold
         self.data_identifier = data_identifier
         self.always_preprocess = always_preprocess
@@ -178,6 +177,19 @@ class NnunetClient(BasicClient):
         self.fingerprint_extracted = False
         self.max_grad_norm = max_grad_norm
         self.n_dataload_proc = n_dataload_processes
+        try:
+            self.dataset_json = load_json(join(nnUNet_raw, self.dataset_name, "dataset.json"))
+        except Exception:
+            try:
+                self.dataset_json = load_json(join(nnUNet_preprocessed, self.dataset_name, "dataset.json"))
+            except Exception as e:
+                log(  # Raising e will raise both exceptions since it is nested.
+                    ERROR,
+                    (
+                        "Could not load the nnunet dataset json from nnUNet_raw or nnUNet_preprocessed."
+                        f" The following exceptions were raised:\n {e}"
+                    ),
+                )
 
         # Auto set verbose to True if console handler is on DEBUG mode
         self.verbose = verbose if console_handler.level >= INFO else True
