@@ -453,8 +453,11 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         Returns:
             Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.
         """
-        if self._step_count > self.max_steps:
-            log(WARN, f"Current LR step of {self._step_count} exceeds Max Steps of {self.max_steps}")
+        if self._step_count == self.max_steps + 1:
+            log(
+                WARN,
+                f"Current LR step of {self._step_count} reached Max Steps of {self.max_steps}. LR will remain fixed.",
+            )
 
         curr_step = min(self._step_count, self.max_steps)
         curr_window = int(curr_step / self.steps_per_lr)
