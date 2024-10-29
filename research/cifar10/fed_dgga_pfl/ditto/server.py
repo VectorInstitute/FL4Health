@@ -46,7 +46,6 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
         config["local_epochs"],
         config["n_server_rounds"],
         config["n_clients"],
-        config["evaluate_after_fit"],
         evaluate_after_fit=config.get("evaluate_after_fit", False),
         pack_losses_with_val_metrics=config.get("pack_losses_with_val_metrics", False),
     )
