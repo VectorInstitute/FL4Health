@@ -1,10 +1,11 @@
-import pytest
-import re
 import logging
+import re
+
+import pytest
 from torch.optim import SGD
 
-from tests.test_utils.models_for_test import MnistNetWithBnAndFrozen
 from fl4health.utils.nnunet_utils import PolyLRSchedulerWrapper
+from tests.test_utils.models_for_test import MnistNetWithBnAndFrozen
 
 
 def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
@@ -16,11 +17,7 @@ def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
     model = MnistNetWithBnAndFrozen()
     opt = SGD(model.parameters(), lr=initial_lr)
     lr_scheduler = PolyLRSchedulerWrapper(
-        optimizer=opt,
-        max_steps=max_steps,
-        initial_lr=initial_lr,
-        exponent=exponent,
-        steps_per_lr=steps_per_lr
+        optimizer=opt, max_steps=max_steps, initial_lr=initial_lr, exponent=exponent, steps_per_lr=steps_per_lr
     )
 
     assert lr_scheduler.num_windows == round(max_steps / steps_per_lr)
