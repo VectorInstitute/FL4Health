@@ -106,7 +106,7 @@ class FlServer(Server):
         end_time = datetime.datetime.now()
         self.reports_manager.report(
             {
-                "fit_elapsed_time": str(start_time - end_time),
+                "fit_elapsed_time": str(end_time - start_time),
                 "fit_end": str(end_time),
                 "num_rounds": num_rounds,
                 "host_type": "server",
@@ -449,7 +449,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             end_time = datetime.datetime.now()
             self.reports_manager.report(
                 {
-                    "fit_elapsed_time": str(start_time - end_time),
+                    "fit_elapsed_time": str(end_time - start_time),
                     "fit_end": str(end_time),
                     "num_rounds": num_rounds,
                     "host_type": "server",
