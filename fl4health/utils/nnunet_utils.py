@@ -462,7 +462,7 @@ class PolyLRSchedulerWrapper(_LRScheduler):
                 f"Current LR step of {self._step_count} reached Max Steps of {self.max_steps}. LR will remain fixed.",
             )
 
-        # Subtract 1 from step count since it starts at 1
+        # Subtract 1 from step count since it starts at 1 (imposed by PyTorch)
         curr_step = min(self._step_count - 1, self.max_steps)
         curr_window = int(curr_step / self.steps_per_lr)
 
