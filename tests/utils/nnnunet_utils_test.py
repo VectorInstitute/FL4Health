@@ -34,8 +34,7 @@ def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
 
         prev_lr = curr_lr
 
-        if step < max_steps:
-            lr_scheduler.step()
+        lr_scheduler.step()
 
     caplog.set_level(logging.WARNING)
 
