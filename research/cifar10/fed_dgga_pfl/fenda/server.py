@@ -72,7 +72,7 @@ def main(config: Dict[str, Any], server_address: str, step_size: float) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        weight_step_size=step_size,
+        adjustment_weight_step_size=step_size,
         fairness_metric=fenda_fairness_metric,
     )
 
