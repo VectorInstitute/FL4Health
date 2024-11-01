@@ -9,15 +9,13 @@ from flwr.server.client_proxy import ClientProxy
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.strategies.aggregate_utils import aggregate_losses
-from fl4health.strategies.feddg_ga import FairnessMetric, FairnessMetricType, FedDgGa
+from fl4health.strategies.feddg_ga import FairnessMetric, FedDgGa
 
 
 class FedDgGaAdaptiveConstraint(FedDgGa):
     def __init__(
         self,
         *,
-        fraction_fit: float = 1.0,
-        fraction_evaluate: float = 1.0,
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
@@ -39,7 +37,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         loss_weight_patience: int = 5,
         weighted_train_losses: bool = False,
         fairness_metric: Optional[FairnessMetric] = None,
-        weight_step_size: float = 0.2,
+        adjustment_weight_step_size: float = 0.2,
     ):
         """
         Strategy for the FedDG-GA algorithm (Federated Domain Generalization with Generalization Adjustment,
@@ -49,62 +47,46 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         NOTE: Initial parameters are NOT optional. They must be passed for this strategy.
 
         Args:
-            fraction_fit : float, optional
-                Fraction of clients used during training. In case `min_fit_clients`
-                is larger than `fraction_fit * available_clients`, `min_fit_clients`
-                will still be sampled. Defaults to 1.0.
-            fraction_evaluate : float, optional
-                Fraction of clients used during validation. In case `min_evaluate_clients`
-                is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-                will still be sampled. Defaults to 1.0.
-            min_fit_clients : int, optional
-                Minimum number of clients used during training. Defaults to 2.
-            min_evaluate_clients : int, optional
-                Minimum number of clients used during validation. Defaults to 2.
-            min_available_clients : int, optional
-                Minimum number of total clients in the system. Defaults to 2.
+            min_fit_clients (int, optional): Minimum number of clients used during training. Defaults to 2.
+            min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
+            min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 2.
             evaluate_fn :
                 Optional[
                     Callable[[int, NDArrays, Dict[str, Scalar]],
                     Optional[Tuple[float, Dict[str, Scalar]]]]
                 ]
                 Optional function used for validation. Defaults to None.
-            on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
-                Function used to configure training. Defaults to None.
-            on_evaluate_config_fn : Callable[[int], Dict[str, Scalar]], optional
-                Function used to configure validation. Defaults to None.
-            accept_failures : bool, optional
-                Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters : Parameters, optional
-                Initial global model parameters.
-            fit_metrics_aggregation_fn : Optional[MetricsAggregationFn]
-                Metrics aggregation function, optional.
-            evaluate_metrics_aggregation_fn : Optional[MetricsAggregationFn]
-                Metrics aggregation function, optional.
-            adapt_loss_weight (bool, optional): Determines whether the value of mu is adaptively modified by
-                the server based on aggregated train loss. Defaults to False.
-            loss_weight_delta (float, optional): This is the amount by which the server changes the value of mu
-                based on the modification criteria. Only applicable if adaptivity is on. Defaults to 0.1.
+            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+                training. Defaults to None.
+            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+                validation. Defaults to None
+            initial_parameters (Parameters): Initial global model parameters.
+            accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
+            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+                Metrics aggregation function, Defaults to None.
+            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+                Metrics aggregation function. Defaults to None.
+            initial_loss_weight (float, optional): Initial penalty loss weight (mu in FedProx). If adaptivity is false,
+                then this is the constant weight used for all clients. Defaults to 1.0.
+            adapt_loss_weight (bool, optional): Determines whether the value of the penalty loss weight is adaptively
+                modified by the server based on aggregated train loss. Defaults to False.
+            loss_weight_delta (float, optional): This is the amount by which the server changes the value of the
+                penalty loss weight based on the modification criteria. Only applicable if adaptivity is on.
+                Defaults to 0.1.
             loss_weight_patience (int, optional): This is the number of rounds a server must see decreasing
-                aggregated train loss before reducing the value of mu. Only applicable if adaptivity is on.
-                Defaults to 5.
+                aggregated train loss before reducing the value of the penalty loss weight. Only applicable if
+                adaptivity is on. Defaults to 5.
             weighted_train_losses (bool, optional): Determines whether the training losses from the clients should be
                 aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the
                 proximal weight in the adaptive setting. Defaults to False.
-            fairness_metric : FairnessMetric, optional.
-                The metric to evaluate the local model of each client against the global model in order to
-                determine their adjustment weight for aggregation. Can be set to any default metric in
-                FairnessMetricType or set to use a custom metric. Optional, default is
-                FairnessMetric(FairnessMetricType.LOSS).
-            weight_step_size : float
-                The step size to determine the magnitude of change for the adjustment weight. It has to be
-                0 < weight_step_size < 1. Optional, default is 0.2.
+            fairness_metric (Optional[FairnessMetric], optional): he metric to evaluate the local model of each
+                client against the global model in order to determine their adjustment weight for aggregation.
+                Can be set to any default metric in FairnessMetricType or set to use a custom metric.
+                Optional, default is FairnessMetric(FairnessMetricType.LOSS) when specified as None.
+            adjustment_weight_step_size (float, optional): The step size to determine the magnitude of change for
+                the generalization adjustment weight. It has to be 0 < adjustment_weight_step_size < 1.
+                Optional, default is 0.2.
         """
-        if fraction_fit != 1.0 or fraction_evaluate != 1.0:
-            log(
-                WARNING,
-                "fraction_fit or fraction_evaluate are not 1.0. The behaviour of FedDG-GA is unknown in those cases.",
-            )
 
         self.loss_weight = initial_loss_weight
         self.adapt_loss_weight = adapt_loss_weight
@@ -120,8 +102,6 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         initial_parameters.tensors.extend(ndarrays_to_parameters([np.array(initial_loss_weight)]).tensors)
 
         super().__init__(
-            fraction_fit=fraction_fit,
-            fraction_evaluate=fraction_evaluate,
             min_fit_clients=min_fit_clients,
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
@@ -132,21 +112,10 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             initial_parameters=initial_parameters,
             fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
             evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+            fairness_metric=fairness_metric,
+            adjustment_weight_step_size=adjustment_weight_step_size,
         )
 
-        if fairness_metric is None:
-            self.fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
-        else:
-            self.fairness_metric = fairness_metric
-
-        self.weight_step_size = weight_step_size
-        assert 0 < self.weight_step_size < 1, f"weight_step_size has to be between 0 and 1 ({self.weight_step_size})"
-
-        self.train_metrics: Dict[str, Dict[str, Scalar]] = {}
-        self.evaluation_metrics: Dict[str, Dict[str, Scalar]] = {}
-        self.num_rounds: Optional[int] = None
-        self.initial_adjustment_weight: Optional[float] = None
-        self.adjustment_weights: Dict[str, float] = {}
         self.parameter_packer = ParameterPackerAdaptiveConstraint()
         self.weighted_train_losses = weighted_train_losses
 

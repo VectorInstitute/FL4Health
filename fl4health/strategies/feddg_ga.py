@@ -98,8 +98,6 @@ class FedDgGa(FedAvg):
     def __init__(
         self,
         *,
-        fraction_fit: float = 1.0,
-        fraction_evaluate: float = 1.0,
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
@@ -116,7 +114,7 @@ class FedDgGa(FedAvg):
         fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
         fairness_metric: Optional[FairnessMetric] = None,
-        weight_step_size: float = 0.2,
+        adjustment_weight_step_size: float = 0.2,
     ):
         """
         Strategy for the FedDG-GA algorithm (Federated Domain Generalization with Generalization Adjustment, Zhang et
@@ -126,14 +124,6 @@ class FedDgGa(FedAvg):
         for the strategy to work correctly.
 
         Args:
-            fraction_fit : float, optional
-                Fraction of clients used during training. In case `min_fit_clients`
-                is larger than `fraction_fit * available_clients`, `min_fit_clients`
-                will still be sampled. Defaults to 1.0.
-            fraction_evaluate : float, optional
-                Fraction of clients used during validation. In case `min_evaluate_clients`
-                is larger than `fraction_evaluate * available_clients`, `min_evaluate_clients`
-                will still be sampled. Defaults to 1.0.
             min_fit_clients : int, optional
                 Minimum number of clients used during training. Defaults to 2.
             min_evaluate_clients : int, optional
@@ -163,19 +153,18 @@ class FedDgGa(FedAvg):
                 determine their adjustment weight for aggregation. Can be set to any default metric in
                 FairnessMetricType or set to use a custom metric. Optional, default is
                 FairnessMetric(FairnessMetricType.LOSS).
-            weight_step_size : float
-                The step size to determine the magnitude of change for the adjustment weight. It has to be
-                0 < weight_step_size < 1. Optional, default is 0.2.
+            adjustment_weight_step_size : float
+                The step size to determine the magnitude of change for the generalization adjustment weights. It has
+                to be 0 < adjustment_weight_step_size < 1. Optional, default is 0.2.
         """
-        if fraction_fit != 1.0 or fraction_evaluate != 1.0:
-            log(
-                WARNING,
-                "fraction_fit or fraction_evaluate are not 1.0. The behaviour of FedDG-GA is unknown in those cases.",
-            )
+
+        # NOTE: For FedDG-GA, we require that fraction_fit and fraction_evaluate are 1.0, as behavior of the FedDG-GA
+        # algorithm is not well-defined when participation in each round of training and evaluation is partial. Thus,
+        # we force these values to be 1.0 in super and do not allow them to be set by the user.
 
         super().__init__(
-            fraction_fit=fraction_fit,
-            fraction_evaluate=fraction_evaluate,
+            fraction_fit=1.0,
+            fraction_evaluate=1.0,
             min_fit_clients=min_fit_clients,
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
@@ -193,10 +182,12 @@ class FedDgGa(FedAvg):
         else:
             self.fairness_metric = fairness_metric
 
-        self.weight_step_size = weight_step_size
-        assert 0 < self.weight_step_size < 1, f"weight_step_size has to be between 0 and 1 ({self.weight_step_size})"
+        self.adjustment_weight_step_size = adjustment_weight_step_size
+        assert (
+            0 < self.adjustment_weight_step_size < 1
+        ), f"adjustment_weight_step_size has to be between 0 and 1 ({self.adjustment_weight_step_size})"
 
-        log(INFO, f"FedDG-GA Strategy initialized with weight_step_size of {self.weight_step_size}")
+        log(INFO, f"FedDG-GA Strategy initialized with weight_step_size of {self.adjustment_weight_step_size}")
         log(INFO, f"FedDG-GA Strategy initialized with FairnessMetric {self.fairness_metric}")
 
         self.train_metrics: Dict[str, Dict[str, Scalar]] = {}
@@ -248,11 +239,14 @@ class FedDgGa(FedAvg):
 
         assert "n_server_rounds" in config, "n_server_rounds must be specified"
         assert isinstance(config["n_server_rounds"], int), "n_server_rounds is not an integer"
+        n_server_rounds = config["n_server_rounds"]
 
         if self.num_rounds is None:
-            self.num_rounds = config["n_server_rounds"]
+            self.num_rounds = n_server_rounds
         else:
-            assert config["n_server_rounds"] == self.num_rounds, "n_server_rounds has changed from the original value"
+            assert (
+                n_server_rounds == self.num_rounds
+            ), f"n_server_rounds has changed from the original value of {self.num_rounds} and is now {n_server_rounds}"
 
         return client_fit_ins
 
@@ -480,9 +474,11 @@ class FedDgGa(FedAvg):
         # The implementation of d^r here differs from the definition in the paper
         # because our server round starts at 1 instead of 0.
         assert self.num_rounds is not None
-        weight_step_size_decay = self.weight_step_size / self.num_rounds
-        weight_step_size_for_round = self.weight_step_size - ((server_round - 1) * weight_step_size_decay)
-        log(INFO, f"Step size for round: {weight_step_size_for_round}, original was {self.weight_step_size}")
+        weight_step_size_decay = self.adjustment_weight_step_size / self.num_rounds
+        weight_step_size_for_round = self.adjustment_weight_step_size - ((server_round - 1) * weight_step_size_decay)
+        log(
+            INFO, f"Step size for round: {weight_step_size_for_round}, original was {self.adjustment_weight_step_size}"
+        )
 
         # Omitting an additional scaler here that is present in the reference
         # implementation but not in the paper:
