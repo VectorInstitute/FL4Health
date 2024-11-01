@@ -36,7 +36,9 @@ fi
 
 # Setup before running training
 source ${VENV_PATH}bin/activate
-BASE_DIR="$nnUNet_results/${DATASET_NAME}/nnUNetTrainer__${PLANS_IDENTIFIER}__${UNET_CONFIG}/"
+BASE_DIR="$nnUNet_results/${DATASET_NAME}/nnUNetTrainer__${PLANS_IDENTIFIER}__${UNET_CONFIG}/fold_${FOLD}/"
+
+echo "Base Dir: ${BASE_DIR}"
 
 # Function returning array of args passed to nnUNetv2_train command
 get_nnunet_train_args() {
