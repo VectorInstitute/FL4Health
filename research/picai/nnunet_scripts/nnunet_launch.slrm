@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:a40:1
+#SBATCH --gres=gpu:1
 #SBATCH --qos=normal
 #SBATCH --mem=64GB
 #SBATCH -c 16
@@ -14,9 +14,9 @@
 DATASET_NAME=$1
 UNET_CONFIG=$2
 FOLD=$3
-VENV_PATH=$4
-PLANS_IDENTIFIER=${5:-'plans'} # Default value of plans string
-PRETAINED_WEIGHTS=${6:-''} # Default value of empty string
+VENV_PATH=${4:-'/h/jewtay/.cache/pypoetry/virtualenvs/fl4health-MVmwdY85-py3.10/'}
+PLANS_IDENTIFIER=${5:-'nnUNetPlans'} # Default value of plans string
+PRETRAINED_WEIGHTS=${6:-''} # Default value of empty string
 
 # Set environment paths that nnUNet expects
 export nnUNet_raw="/ssd003/projects/aieng/public/PICAI/nnUNet/nnUNet_raw"
@@ -40,18 +40,18 @@ BASE_DIR="$nnUNet_results/${DATASET_NAME}/nnUNetTrainer__${PLANS_IDENTIFIER}__${
 
 # Function returning array of args passed to nnUNetv2_train command
 get_nnunet_train_args() {
-	# $1 Refers to the first argument of this function and not first argument of script
-	local checkpoint_bool=$1
-	arg_list = ( $DATASET_NAME $UNET_CONFIG $FOLD $PLANS_IDENTIFIER )
+        # $1 Refers to the first argument of this function and not the first argument of the script
+        local checkpoint_bool=$1
+        arg_list=("$DATASET_NAME" "$UNET_CONFIG" "$FOLD") # No spaces around `=`
 
-	if [[ -z "${PRETRAINED_WEIGHTS}" ]]; then
-		arg_list += ${PRETRAINED_WEIGHTS}
-	fi
-	if [ "$checkpoint_bool" = true ]; then
-		arg_list += "--c"
-	fi
+        if [[ -n "${PRETRAINED_WEIGHTS}" ]]; then
+                arg_list+=("${PRETRAINED_WEIGHTS}")
+        fi
+        if [ "$checkpoint_bool" = true ]; then
+                arg_list+=("--c")
+        fi
+        echo "${arg_list[@]}"
 }
-
 # Function that is called to requeue current slurm job
 handler()
 {
@@ -60,18 +60,18 @@ handler()
 }
 
 # Function that checks whether to start or resume training, gets train_args
-# and runs  training
-nnunet_train()
-{
-	local arg_list = null
-	if [ -z "$(ls -A $BASE_DIR)" ]; then
-		echo "Start training from scratch as $(date)"
-		get_nnunet_train_args false # Sets arg_list
-	else
-		echo "Start training from checkpoint as $(date)"
-		get_nnunet_train_args true # Sets arg_list
-	fi
-	nnUNetv2_train "${arg_list[@]}"
+# and runs training
+nnunet_train() {
+        local arg_list=()
+        if [ -d "$BASE_DIR" ]; then
+                echo "Resume training from checkpoint at $(date)"
+                arg_list=($(get_nnunet_train_args true))  # Corrected assignment
+        else
+                echo "Start training from scratch at $(date)"
+                arg_list=($(get_nnunet_train_args false))  # Corrected assignment
+        fi
+        echo "${arg_list[@]}"
+        nnUNetv2_train "${arg_list[@]}"
 }
 
 # Trap is used to handle signals or errors that occur during execution

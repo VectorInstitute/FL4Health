@@ -2,7 +2,7 @@
 n_clients: 1
 n_server_rounds: 1000
 server_address: '0.0.0.0:8080'
-local_steps: 256
+local_steps: 250
 
 # nnunet Settings:
 nnunet_config: 2d
