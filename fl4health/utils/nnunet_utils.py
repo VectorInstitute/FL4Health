@@ -5,7 +5,8 @@ import sys
 import warnings
 from enum import Enum
 from importlib import reload
-from logging import DEBUG, INFO, Logger
+from logging import DEBUG, INFO, WARN, Logger
+from math import ceil
 from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, no_type_check
 
 import numpy as np
@@ -414,12 +415,33 @@ class StreamToLogger(io.StringIO):
 
 class PolyLRSchedulerWrapper(_LRScheduler):
     def __init__(
-        self, optimizer: torch.optim.Optimizer, initial_lr: float, max_steps: int, exponent: float = 0.9
+        self,
+        optimizer: torch.optim.Optimizer,
+        initial_lr: float,
+        max_steps: int,
+        exponent: float = 0.9,
+        steps_per_lr: int = 250,
     ) -> None:
+        """
+        Learning rate (LR) scheduler with polynomial decay across fixed windows of size steps_per_lr.
+
+        Args:
+            optimizer (Optimizer): The optimizer to apply LR scheduler to.
+            initial_lr (float): The initial learning rate of the optimizer.
+            max_steps (int): The maximum total number of steps across all FL rounds.
+            exponent (float): Controls how quickly LR descreases over time. Higher values
+                lead to more rapdid descent. Defaults to 0.9.
+            steps_per_lr (int): The number of steps per LR before decaying.
+                (ie 10 means the LR will be constant for 10 steps prior to being decreased to the subsequent value).
+                Defaults to 250 as that is the default for nnunet (decay LR once an epoch and epoch is 250 steps).
+        """
         self.optimizer = optimizer
         self.initial_lr = initial_lr
         self.max_steps = max_steps
         self.exponent = exponent
+        self.steps_per_lr = steps_per_lr
+        # Number of windows with constant LR across training
+        self.num_windows = ceil(max_steps / self.steps_per_lr)
         self._step_count: int
         super().__init__(optimizer, -1, False)
 
@@ -427,6 +449,26 @@ class PolyLRSchedulerWrapper(_LRScheduler):
     # Documented issue https://github.com/pytorch/pytorch/issues/100804
     @no_type_check
     def get_lr(self) -> Sequence[float]:
-        curr_step = min(self._step_count, self.max_steps)
-        new_lr = self.initial_lr * (1 - curr_step / self.max_steps) ** self.exponent
+        """
+        Get the current LR of the scheduler.
+
+        Returns:
+            Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.
+        """
+
+        if self._step_count - 1 == self.max_steps + 1:
+            log(
+                WARN,
+                f"Current LR step of {self._step_count} reached Max Steps of {self.max_steps}. LR will remain fixed.",
+            )
+
+        # Subtract 1 from step count since it starts at 1 (imposed by PyTorch)
+        curr_step = min(self._step_count - 1, self.max_steps)
+        curr_window = int(curr_step / self.steps_per_lr)
+
+        new_lr = self.initial_lr * (1 - curr_window / self.num_windows) ** self.exponent
+
+        if curr_step % self.steps_per_lr == 0 and curr_step != 0 and curr_step != self.max_steps:
+            log(INFO, f"Decaying LR of optimizer to {new_lr} at step {curr_step}")
+
         return [new_lr] * len(self.optimizer.param_groups)

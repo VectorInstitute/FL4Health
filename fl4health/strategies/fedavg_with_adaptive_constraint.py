@@ -76,7 +76,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
                 Defaults to None.
             evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
                 Defaults to None.
-            init_loss_weight (float): Initial loss weight (mu in FedProx). If adaptivity is false, then this is the
+            initial_loss_weight (float): Initial loss weight (mu in FedProx). If adaptivity is false, then this is the
                 constant weight used for all clients.
             adapt_loss_weight (bool, optional): Determines whether the value of mu is adaptively modified by
                 the server based on aggregated train loss. Defaults to False.

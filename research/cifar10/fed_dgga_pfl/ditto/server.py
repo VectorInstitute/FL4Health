@@ -46,7 +46,6 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
         config["local_epochs"],
         config["n_server_rounds"],
         config["n_clients"],
-        config["evaluate_after_fit"],
         evaluate_after_fit=config.get("evaluate_after_fit", False),
         pack_losses_with_val_metrics=config.get("pack_losses_with_val_metrics", False),
     )
@@ -76,7 +75,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
         initial_loss_weight=lam,
-        weight_step_size=step_size,
+        adjustment_weight_step_size=step_size,
         fairness_metric=ditto_fairness_metric,
     )
 

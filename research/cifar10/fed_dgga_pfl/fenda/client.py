@@ -150,7 +150,11 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_dir)
     client = CifarFendaClient(
         data_path=data_path,
-        metrics=[Accuracy("accuracy"), F1("F1_Score", average="macro")],
+        metrics=[
+            Accuracy("accuracy"),
+            F1("f1_score_macro", average="macro"),
+            F1("f1_score_weight", average="weighted"),
+        ],
         device=DEVICE,
         client_number=args.client_number,
         learning_rate=args.learning_rate,

@@ -329,7 +329,7 @@ def test_get_current_weight_step_size() -> None:
     assert result_step_size == approx(0.1000, abs=0.0005)
 
     strategy.num_rounds = 10
-    strategy.weight_step_size = 0.5
+    strategy.adjustment_weight_step_size = 0.5
     result_step_size = strategy.get_current_weight_step_size(6)
     assert result_step_size == approx(0.2500, abs=0.0005)
 
