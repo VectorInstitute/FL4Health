@@ -1,10 +1,13 @@
 import copy
-from typing import Dict, Iterable, TypeVar
+import os
+from inspect import currentframe, getframeinfo
+from logging import INFO, LogRecord
+from typing import Any, Dict, Iterable, TypeVar
 
 import torch
 import torch.nn as nn
-from flwr.common.logger import LOG_COLORS
-from flwr.common.typing import Any, Scalar
+from flwr.common.logger import LOGGER_NAME, console_handler
+from flwr.common.typing import Scalar
 from tqdm import tqdm
 
 from fl4health.utils.logging import LoggingMode
@@ -105,19 +108,33 @@ def clone_and_freeze_model(model: nn.Module) -> nn.Module:
 
 def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterable:
     """
-    Used to print progress bars during client training and validation. If self.progress_bar is false, just returns
-    the original input iterable without modifying it.
-
+    Used to print progress bars during client training and validation. If
+    self.progress_bar is false, just returns the original input iterable
+    without modifying it.
     Args:
         iterable (Iterable): The iterable to wrap
-        display_progress_bar (bool): Whether to actually wrap the iterable for progress bar display or not.
-
     Returns:
-        Iterable: _description_
+        Iterable: an iterator which acts exactly like the original
+            iterable, but prints a dynamically updating progress bar every
+            time a value is requested. Or the original iterable if
+            self.progress_bar is False
     """
     if not display_progress_bar:
         return iterable
     else:
+        # We can use the flwr console handler to format progress bar
+        frame = currentframe()
+        lineno = 0 if frame is None else getframeinfo(frame).lineno
+        record = LogRecord(
+            name=LOGGER_NAME,
+            pathname=os.path.abspath(os.getcwd()),
+            lineno=lineno,  #
+            args={},
+            exc_info=None,
+            level=INFO,
+            msg="{l_bar}{bar}{r_bar}",
+        )
+        format = console_handler.format(record)
         # Create a clean looking tqdm instance that matches the flwr logging
         kwargs: Any = {
             "leave": True,
@@ -125,6 +142,6 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
             # "desc": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']} ",
             "unit": "steps",
             "dynamic_ncols": True,
-            "bar_format": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']}" + " :        {l_bar}{bar}{r_bar}",
+            "bar_format": format,
         }
         return tqdm(iterable, **kwargs)

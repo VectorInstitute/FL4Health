@@ -455,18 +455,20 @@ class PolyLRSchedulerWrapper(_LRScheduler):
         Returns:
             Sequence[float]: A uniform sequence of LR for each of the parameter groups in the optimizer.
         """
-        if self._step_count == self.max_steps + 1:
+
+        if self._step_count - 1 == self.max_steps + 1:
             log(
                 WARN,
                 f"Current LR step of {self._step_count} reached Max Steps of {self.max_steps}. LR will remain fixed.",
             )
 
-        curr_step = min(self._step_count, self.max_steps)
+        # Subtract 1 from step count since it starts at 1 (imposed by PyTorch)
+        curr_step = min(self._step_count - 1, self.max_steps)
         curr_window = int(curr_step / self.steps_per_lr)
 
         new_lr = self.initial_lr * (1 - curr_window / self.num_windows) ** self.exponent
 
         if curr_step % self.steps_per_lr == 0 and curr_step != 0 and curr_step != self.max_steps:
-            log(INFO, f"Decaying LR of optimizer to {new_lr}")
+            log(INFO, f"Decaying LR of optimizer to {new_lr} at step {curr_step}")
 
         return [new_lr] * len(self.optimizer.param_groups)
