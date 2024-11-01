@@ -6,10 +6,11 @@ from typing import Any, Dict, Iterable, TypeVar
 
 import torch
 import torch.nn as nn
-from flwr.common.logger import LOGGER_NAME, console_handler
-from flwr.common.typing import Scalar
+from flwr.common.logger import LOGGER_NAME, console_handler, log
+from flwr.common.typing import Config, Scalar
 from tqdm import tqdm
 
+from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.logging import LoggingMode
 from fl4health.utils.metrics import MetricPrefix
 from fl4health.utils.typing import TorchInputType, TorchTargetType
@@ -25,6 +26,16 @@ def fold_loss_dict_into_metrics(
         metrics.update({f"{MetricPrefix.VAL_PREFIX.value} {key}": loss_val for key, loss_val in loss_dict.items()})
     else:
         metrics.update({f"{MetricPrefix.TEST_PREFIX.value} {key}": loss_val for key, loss_val in loss_dict.items()})
+
+
+def set_pack_losses_with_val_metrics(config: Config) -> bool:
+    try:
+        pack_losses_with_val_metrics = narrow_dict_type(config, "pack_losses_with_val_metrics", bool)
+    except ValueError:
+        pack_losses_with_val_metrics = False
+    if pack_losses_with_val_metrics:
+        log(INFO, "As specified in the config, all validation losses will be packed into validation metrics")
+    return pack_losses_with_val_metrics
 
 
 def move_data_to_device(data: T, device: torch.device) -> T:
@@ -50,16 +61,16 @@ def move_data_to_device(data: T, device: torch.device) -> T:
         return {key: value.to(device) for key, value in data.items()}
     else:
         raise TypeError(
-            "data must be of type torch.Tensor or Dict[str, torch.Tensor]. \
-                If definition of TorchInputType or TorchTargetType has \
-                changed this method might need to be updated or split into \
-                two"
+            "data must be of type torch.Tensor or Dict[str, torch.Tensor]. If definition of TorchInputType or "
+            "TorchTargetType has changed this method might need to be updated or split into two."
         )
 
 
-def is_empty_batch(input: TorchInputType) -> bool:
+def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     """
-    Check whether input, which represents a batch of inputs to a model, is empty.
+    This function checks whether the provided batch (input) is empty. If the input is a dictionary of inputs, it
+    first verifies that the length of all inputs is the same, then checks if they are non-empty.
+    NOTE: This function assumes the input is BATCH FIRST
 
     Args:
         input (TorchInputType): Input batch. input can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
@@ -139,7 +150,6 @@ def maybe_progress_bar(iterable: Iterable, display_progress_bar: bool) -> Iterab
         kwargs: Any = {
             "leave": True,
             "ascii": " >=",
-            # "desc": f"{LOG_COLORS['INFO']}INFO{LOG_COLORS['RESET']} ",
             "unit": "steps",
             "dynamic_ncols": True,
             "bar_format": format,
