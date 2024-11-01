@@ -9,6 +9,9 @@ from tests.test_utils.models_for_test import MnistNetWithBnAndFrozen
 
 
 def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.WARNING)
+    pattern = r"Current LR step of \d+ reached Max Steps of \d+. LR will remain fixed."
+
     max_steps = 100
     exponent = 1
     steps_per_lr = 10
@@ -23,8 +26,8 @@ def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
     assert lr_scheduler.num_windows == 10.0
     assert lr_scheduler.initial_lr == initial_lr
 
-    prev_lr = initial_lr
-    for step in range(1, max_steps + 1):
+    prev_lr = None
+    for step in range(max_steps):
         curr_lr = lr_scheduler.get_lr()[0]
 
         if step % steps_per_lr == 0:
@@ -34,12 +37,10 @@ def test_poly_lr_scheduler(caplog: pytest.LogCaptureFixture) -> None:
 
         prev_lr = curr_lr
 
-        if step < max_steps:
-            lr_scheduler.step()
+        lr_scheduler.step()
 
-    caplog.set_level(logging.WARNING)
+        assert not re.search(pattern, caplog.text)
 
     lr_scheduler.step()
 
-    pattern = r"Current LR step of \d+ reached Max Steps of \d+. LR will remain fixed."
     assert re.search(pattern, caplog.text)
