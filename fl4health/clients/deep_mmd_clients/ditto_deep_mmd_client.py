@@ -11,6 +11,7 @@ from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpoi
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.losses.deep_mmd_loss import DeepMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
+from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -89,7 +90,7 @@ class DittoDeepMmdClient(DittoClient):
         assert isinstance(self.global_model, nn.Module)
         # Clone and freeze the initial weights GLOBAL MODEL. These are used to form the Ditto local
         # update penalty term.
-        self.initial_global_model = self.clone_and_freeze_model(self.global_model)
+        self.initial_global_model = clone_and_freeze_model(self.global_model)
         self.initial_global_feature_extractor = FeatureExtractorBuffer(
             model=self.initial_global_model,
             flatten_feature_extraction_layers=self.flatten_feature_extraction_layers,
@@ -149,7 +150,7 @@ class DittoDeepMmdClient(DittoClient):
         # each time.
         self.local_feature_extractor._maybe_register_hooks()
 
-    def validate(self) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
@@ -158,7 +159,7 @@ class DittoDeepMmdClient(DittoClient):
         """
         for layer in self.flatten_feature_extraction_layers.keys():
             self.deep_mmd_losses[layer].training = False
-        return super().validate()
+        return super().validate(include_losses_in_metrics)
 
     def compute_training_loss(
         self,

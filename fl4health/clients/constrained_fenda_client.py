@@ -12,6 +12,7 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
@@ -140,8 +141,8 @@ class ConstrainedFendaClient(FendaClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
 
         if self.loss_container.has_contrastive_loss() or self.loss_container.has_perfcl_loss():
-            self.old_local_module = self.clone_and_freeze_model(self.model.first_feature_extractor)
-            self.old_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
+            self.old_local_module = clone_and_freeze_model(self.model.first_feature_extractor)
+            self.old_global_module = clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_after_train(local_steps, loss_dict, config)
 
@@ -159,7 +160,7 @@ class ConstrainedFendaClient(FendaClient):
         assert isinstance(self.model, FendaModelWithFeatureState)
 
         if self.loss_container.has_perfcl_loss():
-            self.initial_global_module = self.clone_and_freeze_model(self.model.second_feature_extractor)
+            self.initial_global_module = clone_and_freeze_model(self.model.second_feature_extractor)
 
         super().update_before_train(current_server_round)
 

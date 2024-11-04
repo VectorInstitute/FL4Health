@@ -21,9 +21,10 @@ from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
 from fl4health.checkpointing.client_module import ClientCheckpointModule
-from fl4health.clients.basic_client import BasicClient, LoggingMode
+from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
+from fl4health.utils.logging import LoggingMode
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.nnunet_utils import (
@@ -275,7 +276,7 @@ class NnunetClient(BasicClient):
             )
 
         # Determine total number of steps throughout all FL rounds
-        local_epochs, local_steps, _, _ = self.process_config(config)
+        local_epochs, local_steps, _, _, _ = self.process_config(config)
         if local_steps is not None:
             steps_per_round = local_steps
         elif local_epochs is not None:

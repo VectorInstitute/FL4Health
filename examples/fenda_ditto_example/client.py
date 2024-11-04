@@ -21,7 +21,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointModule
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
-from fl4health.model_bases.sequential_split_models import SequentiallySplitExchangeBaseModel
+from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 from fl4health.reporting import JsonReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_mnist_data
@@ -37,8 +37,8 @@ class MnistFendaDittoClient(FendaDittoClient):
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
         return train_loader, val_loader
 
-    def get_global_model(self, config: Config) -> SequentiallySplitExchangeBaseModel:
-        return SequentiallySplitExchangeBaseModel(
+    def get_global_model(self, config: Config) -> SequentiallySplitModel:
+        return SequentiallySplitModel(
             base_module=SequentialGlobalFeatureExtractorMnist(),
             head_module=SequentialLocalPredictionHeadMnist(),
         ).to(self.device)

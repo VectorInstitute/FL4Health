@@ -242,7 +242,7 @@ class FedRepClient(BasicClient):
         # Check if we should run an evaluation with validation data after fit
         # (for example, this is used by FedDGGA)
         if self._should_evaluate_after_fit(evaluate_after_fit):
-            validation_loss, validation_metrics = self.evaluate_after_fit()
+            validation_loss, validation_metrics = self.validate()
             metrics.update(validation_metrics)
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)

@@ -11,7 +11,7 @@ from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplin
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.reporting import JsonReporter
 from fl4health.server.base_server import FlServer
-from fl4health.strategies.feddg_ga_strategy import FedDgGaStrategy
+from fl4health.strategies.feddg_ga import FedDgGa
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -25,6 +25,7 @@ def fit_config(
     local_epochs: Optional[int] = None,
     local_steps: Optional[int] = None,
     evaluate_after_fit: bool = False,
+    pack_losses_with_val_metrics: bool = False,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),
@@ -32,6 +33,7 @@ def fit_config(
         "batch_size": batch_size,
         "n_server_rounds": n_server_rounds,
         "evaluate_after_fit": evaluate_after_fit,
+        "pack_losses_with_val_metrics": pack_losses_with_val_metrics,
     }
 
 
@@ -44,12 +46,13 @@ def main(config: Dict[str, Any]) -> None:
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
         evaluate_after_fit=config.get("evaluate_after_fit", False),
+        pack_losses_with_val_metrics=config.get("pack_losses_with_val_metrics", False),
     )
 
     initial_model = ApflModule(MnistNetWithBnAndFrozen())
 
     # Implementation of FedDG-GA as a server side strategy
-    strategy = FedDgGaStrategy(
+    strategy = FedDgGa(
         min_fit_clients=config["n_clients"],
         min_evaluate_clients=config["n_clients"],
         # Server waits for min_available_clients before starting FL rounds

@@ -21,7 +21,7 @@ from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.server.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
-from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, TestMetricPrefix
+from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
 
@@ -220,11 +220,9 @@ class FlServer(Server):
 
         for client_proxy, eval_res in results:
             val_metrics = {
-                k: v for k, v in eval_res.metrics.items() if not k.startswith(TestMetricPrefix.TEST_PREFIX.value)
+                k: v for k, v in eval_res.metrics.items() if not k.startswith(MetricPrefix.TEST_PREFIX.value)
             }
-            test_metrics = {
-                k: v for k, v in eval_res.metrics.items() if k.startswith(TestMetricPrefix.TEST_PREFIX.value)
-            }
+            test_metrics = {k: v for k, v in eval_res.metrics.items() if k.startswith(MetricPrefix.TEST_PREFIX.value)}
 
             if len(test_metrics) > 0:
                 assert TEST_LOSS_KEY in test_metrics and TEST_NUM_EXAMPLES_KEY in test_metrics, (
@@ -268,9 +266,7 @@ class FlServer(Server):
             for key, value in test_metrics_aggregated.items():
                 val_metrics_aggregated[key] = value
             if test_loss_aggregated is not None:
-                val_metrics_aggregated[f"{TestMetricPrefix.TEST_PREFIX.value} loss - aggregated"] = (
-                    test_loss_aggregated
-                )
+                val_metrics_aggregated[f"{MetricPrefix.TEST_PREFIX.value} loss - aggregated"] = test_loss_aggregated
 
         return val_loss_aggregated, val_metrics_aggregated
 

@@ -13,6 +13,7 @@ from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
+from fl4health.utils.client import move_data_to_device
 from fl4health.utils.metrics import Metric, MetricManager
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import TorchInputType, TorchTargetType
@@ -192,8 +193,8 @@ class ModelMergeClient(NumPyClient):
         self.test_metric_manager.clear()
         with torch.no_grad():
             for input, target in self.test_loader:
-                input = self._move_data_to_device(input)
-                target = self._move_data_to_device(target)
+                input = move_data_to_device(input, self.device)
+                target = move_data_to_device(target, self.device)
                 preds = {"predictions": self.model(input)}
                 self.test_metric_manager.update(preds, target)
 
