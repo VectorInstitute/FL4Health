@@ -17,6 +17,7 @@ from flwr.server.strategy import Strategy
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
+from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.nnunet_utils import NnunetConfig
@@ -285,7 +286,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         # Standard attributes to load
         narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
         narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", list)
+        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
         narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
         narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
         # Needed for when _hydrate_model_for_checkpointing is called
