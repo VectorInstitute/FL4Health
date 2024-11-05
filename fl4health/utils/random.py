@@ -19,10 +19,12 @@ def set_all_random_seeds(seed: Optional[int] = 42) -> None:
     if seed is None:
         log(INFO, "No seed provided. Using random seed.")
     else:
-        log(INFO, f"Setting seed to {seed}")
+        log(INFO, f"Setting seed to {seed} and fixing torch determinism")
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
+        torch.use_deterministic_algorithms(True)
+        torch.backends.cudnn.benchmark = False
 
 
 def unset_all_random_seeds() -> None:
@@ -30,10 +32,12 @@ def unset_all_random_seeds() -> None:
     Set random seeds for Python random, NumPy, and PyTorch to None. Running this function would undo
     the effects of set_all_random_seeds.
     """
-    log(INFO, "Setting all random seeds to None.")
+    log(INFO, "Setting all random seeds to None. Reverting torch determinism settings")
     random.seed(None)
     np.random.seed(None)
     torch.seed()
+    torch.use_deterministic_algorithms(False)
+    torch.backends.cudnn.benchmark = True
 
 
 def generate_hash(length: int = 8) -> str:
