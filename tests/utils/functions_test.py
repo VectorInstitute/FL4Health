@@ -53,6 +53,18 @@ def test_pseudo_sort_function() -> None:
     np.random.seed(None)
 
 
+def test_pseudo_sort_function_with_mixed_types() -> None:
+    np.random.seed(42)
+    array_list = (
+        [np.random.rand(10, 10) for _ in range(2)]
+        + [np.array(["Cat", "Dog"]), np.array([True, False])]
+        + [np.random.rand(5, 5) for _ in range(2)]
+    )
+    sort_value = pseudo_sort_function((CustomClientProxy("c0"), array_list, 13))
+    assert pytest.approx(sort_value, abs=1e-5) == 14.137901201887558
+    np.random.seed(None)
+
+
 def construct_fit_res(parameters: NDArrays, metric: float, num_examples: int) -> FitRes:
     return FitRes(
         status=Status(Code.OK, ""),

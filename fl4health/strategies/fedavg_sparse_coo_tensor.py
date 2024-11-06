@@ -141,6 +141,8 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
         # reducing numerical fluctuation.
+
+        # Convert client tensor weights and names into ndarrays
         decoded_and_sorted_results = [
             (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]

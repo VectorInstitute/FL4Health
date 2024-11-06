@@ -74,8 +74,10 @@ def pseudo_sort_function(client_result: Tuple[ClientProxy, NDArrays, int]) -> fl
         tuple
     """
     _, client_arrays, sample_count = client_result
-    random_param = [select_random_element(array) for array in client_arrays]
-    return np.sum(random_param) + sample_count
+    random_params = [
+        select_random_element(array) for array in client_arrays if np.issubdtype(array.dtype, np.floating)
+    ]
+    return np.sum(random_params) + sample_count
 
 
 def decode_and_pseudo_sort_results(
