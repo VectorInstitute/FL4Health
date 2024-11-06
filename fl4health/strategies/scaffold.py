@@ -180,7 +180,7 @@ class Scaffold(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
-        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in s
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
         # reducing numerical fluctuation.
         decoded_and_sorted_results = [weights for _, weights, _ in decode_and_pseudo_sort_results(results)]

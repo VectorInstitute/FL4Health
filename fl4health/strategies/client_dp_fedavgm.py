@@ -196,7 +196,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             Tuple[List[Tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
                 client. The second is a set of clipping bits, one for each client.
         """
-        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in s
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
         # reducing numerical fluctuation.
         decoded_and_sorted_results = [
