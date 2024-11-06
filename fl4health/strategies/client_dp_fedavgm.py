@@ -27,6 +27,7 @@ from fl4health.strategies.noisy_aggregate import (
     gaussian_noisy_unweighted_aggregate,
     gaussian_noisy_weighted_aggregate,
 )
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class ClientLevelDPFedAvgM(BasicFedAvg):
@@ -195,13 +196,17 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             Tuple[List[Tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
                 client. The second is a set of clipping bits, one for each client.
         """
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in s
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = [
+            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
+        ]
+
         weights_and_counts: List[Tuple[NDArrays, int]] = []
         clipping_bits: NDArrays = []
-        for _, fit_res in results:
-            sample_count = fit_res.num_examples
-            updated_weights, clipping_bit = self.parameter_packer.unpack_parameters(
-                parameters_to_ndarrays(fit_res.parameters)
-            )
+        for weights, sample_count in decoded_and_sorted_results:
+            updated_weights, clipping_bit = self.parameter_packer.unpack_parameters(weights)
             weights_and_counts.append((updated_weights, sample_count))
             clipping_bits.append(np.array(clipping_bit))
 
@@ -298,11 +303,6 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
-
-        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
-        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
-        # order, reducing numerical fluctuation.
-        results = sorted(results, key=lambda x: x[0].cid)
 
         # If first round compute total expected client weight
         if self.weighted_aggregation and server_round == 1:

@@ -3,14 +3,7 @@ from logging import WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import (
-    EvaluateIns,
-    MetricsAggregationFn,
-    NDArrays,
-    Parameters,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.common import EvaluateIns, MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
 from flwr.common.logger import log
 from flwr.common.typing import EvaluateRes, FitIns, FitRes, Scalar
 from flwr.server.client_manager import ClientManager
@@ -18,6 +11,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.strategy import FedAvg
 
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class SignalForTypeException(Exception):
@@ -328,10 +322,6 @@ class FedDgGa(FedAvg):
             (Tuple[Optional[float], Dict[str, Scalar]]) A tuple containing the aggregated evaluation loss
                 and the aggregated evaluation metrics.
         """
-        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
-        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
-        # order, reducing numerical fluctuation.
-        results = sorted(results, key=lambda x: x[0].cid)
 
         loss_aggregated, metrics_aggregated = super().aggregate_evaluate(server_round, results, failures)
 
@@ -359,8 +349,13 @@ class FedDgGa(FedAvg):
             (NDArrays) the weighted and aggregated results.
         """
 
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in s
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = decode_and_pseudo_sort_results(results)
+
         aggregated_results: Optional[NDArrays] = None
-        for client_proxy, fit_res in results:
+        for client_proxy, weights, _ in decoded_and_sorted_results:
             cid = client_proxy.cid
 
             # initializing adjustment weights for this client if they don't exist yet
@@ -369,7 +364,7 @@ class FedDgGa(FedAvg):
                 self.adjustment_weights[cid] = self.initial_adjustment_weight
 
             # apply adjustment weights
-            weighted_client_parameters = parameters_to_ndarrays(fit_res.parameters)
+            weighted_client_parameters = weights
             for i in range(len(weighted_client_parameters)):
                 weighted_client_parameters[i] = weighted_client_parameters[i] * self.adjustment_weights[cid]
 

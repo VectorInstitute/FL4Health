@@ -47,6 +47,8 @@ def aggregate_losses(results: List[Tuple[int, float]], weighted: bool = True) ->
     Returns:
         float: the weighted or unweighted average of the loss values in the results list.
     """
+    # Sorting the results by the loss values for numerical fluctuation determinism of the sum
+    results = sorted(results, key=lambda x: x[1])
     if weighted:
         # uses flwr implementation of weighted loss averaging
         return weighted_loss_avg(results)
