@@ -280,11 +280,6 @@ class FedDgGa(FedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
-        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
-        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
-        # order, reducing numerical fluctuation.
-        results = sorted(results, key=lambda x: x[0].cid)
-
         # Aggregate custom metrics if aggregation fn was provided
         metrics_aggregated = {}
         if self.fit_metrics_aggregation_fn:
