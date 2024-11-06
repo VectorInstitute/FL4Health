@@ -77,8 +77,8 @@ def construct_fit_res(parameters: NDArrays, metric: float, num_examples: int) ->
 def test_decode_and_pseudo_sort_results() -> None:
     np.random.seed(42)
     client0_res = construct_fit_res([np.ones((3, 3)), np.ones((4, 4))], 0.1, 100)
-    client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2)], 0.2, 75)
-    client2_res = construct_fit_res([np.full((3, 3), 3), np.full((4, 4), 3)], 0.3, 50)
+    client1_res = construct_fit_res([np.ones((3, 3)), np.full((4, 4), 2.0)], 0.2, 75)
+    client2_res = construct_fit_res([np.full((3, 3), 3.0), np.full((4, 4), 3.0)], 0.3, 50)
     clients_res: List[Tuple[ClientProxy, FitRes]] = [
         (CustomClientProxy("c0"), client0_res),
         (CustomClientProxy("c1"), client1_res),
