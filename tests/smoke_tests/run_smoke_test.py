@@ -217,6 +217,15 @@ async def run_smoke_test(
         )
         client_processes.append(client_process)
 
+    # Collecting the clients output when their processes finish
+    full_client_outputs = []
+    for i in range(len(client_processes)):
+        full_client_outputs.append(
+            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
+        )
+
+    logger.info("All clients finished execution")
+
     # Collecting the server output when its process finish
     full_server_output = await _wait_for_process_to_finish_and_retrieve_logs(server_process, "Server")
 
@@ -253,15 +262,6 @@ async def run_smoke_test(
 
     server_errors = _assert_metrics(MetricType.SERVER, server_metrics)
     assert len(server_errors) == 0, f"Server metrics check failed. Errors: {server_errors}"
-
-    # Collecting the clients output when their processes finish
-    full_client_outputs = []
-    for i in range(len(client_processes)):
-        full_client_outputs.append(
-            await _wait_for_process_to_finish_and_retrieve_logs(client_processes[i], f"Client {i}")
-        )
-
-    logger.info("All clients finished execution")
 
     # client assertions
     client_errors = []
