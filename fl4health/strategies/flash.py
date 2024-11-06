@@ -149,9 +149,16 @@ class Flash(BasicFedAvg):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """Aggregate fit results using the Flash method."""
+
+        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
+        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
+        # order, reducing numerical fluctuation.
+        results = sorted(results, key=lambda x: x[0].cid)
+
         fedavg_parameters_aggregated, metrics_aggregated = super().aggregate_fit(
             server_round=server_round, results=results, failures=failures
         )
+
         if fedavg_parameters_aggregated is None:
             return None, {}
 

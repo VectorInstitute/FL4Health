@@ -299,6 +299,11 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
+        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
+        # order, reducing numerical fluctuation.
+        results = sorted(results, key=lambda x: x[0].cid)
+
         # If first round compute total expected client weight
         if self.weighted_aggregation and server_round == 1:
             assert self.sample_counts is not None

@@ -248,6 +248,11 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
+        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
+        # order, reducing numerical fluctuation.
+        results = sorted(results, key=lambda x: x[0].cid)
+
         # Convert results
         weights_results = [
             (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
@@ -292,6 +297,11 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         # Do not aggregate if there are failures and failures are not accepted
         if not self.accept_failures and failures:
             return None, {}
+
+        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
+        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
+        # order, reducing numerical fluctuation.
+        results = sorted(results, key=lambda x: x[0].cid)
 
         # Get losses and number of examples from the evaluation results.
         loss_results = [(evaluate_res.num_examples, evaluate_res.loss) for _, evaluate_res in results]

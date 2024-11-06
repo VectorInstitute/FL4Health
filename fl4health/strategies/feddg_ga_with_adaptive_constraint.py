@@ -150,6 +150,11 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by Client IDs. This is primarily to reduce numerical fluctuations in summing the numpy
+        # arrays during aggregation. Client IDs should be unique. This ensures that addition will occur in the same
+        # order, reducing numerical fluctuation.
+        results = sorted(results, key=lambda x: x[0].cid)
+
         # Convert results with packed params of model weights and training loss. The results list is modified in-place
         # to only contain model parameters for use in the Fed-DGGA calculations and aggregation
         train_losses_and_counts = self._unpack_weights_and_losses(results)
