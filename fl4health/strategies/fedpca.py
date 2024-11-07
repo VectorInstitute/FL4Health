@@ -119,13 +119,11 @@ class FedPCA(BasicFedAvg):
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
         # reducing numerical fluctuation.
-        decoded_and_sorted_results = [
-            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
-        ]
+        decoded_and_sorted_results = [weights for _, weights, _ in decode_and_pseudo_sort_results(results)]
 
         client_singular_values = []
         client_singular_vectors = []
-        for A, _ in decoded_and_sorted_results:
+        for A in decoded_and_sorted_results:
             singular_vectors, singular_values = A[0], A[1]
             client_singular_vectors.append(singular_vectors)
             client_singular_values.append(singular_values)

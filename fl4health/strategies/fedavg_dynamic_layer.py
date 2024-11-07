@@ -127,7 +127,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
             (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]
 
-        # Aggregate them in a weighted or unweighted fashion based on settings.
+        # For each layer of the model, perform weighted average of all received weights from clients
         aggregated_params = self.aggregate(decoded_and_sorted_results)
 
         weights_names = []

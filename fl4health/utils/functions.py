@@ -63,14 +63,16 @@ def select_random_element(array: np.ndarray) -> float:
 
 def pseudo_sort_function(client_result: Tuple[ClientProxy, NDArrays, int]) -> float:
     """
-    This function provides the "score" that is used to sort a list of Tuple[NDArrays, int]. We take a random selection
-    of the array elements and add the integer to them to come up with a score for sorting.
+    This function provides the "score" that is used to sort a list of Tuple[ClientProxy, NDArrays, int]. We take a
+    random selection of the array elements and add the integer to them to come up with a score for sorting. Note that
+    the underlying numpy arrays in NDArrays may not all be of numerical type. So we limit to selecting elements from
+    arrays of floats.
 
     Args:
         client_result (Tuple[ClientProxy, NDArrays, int]]): Elements to use to determine the score.
 
     Returns:
-        float: Sum of a random selection of a single element of each array in the NDArrays list and the int of the
+        float: Sum of a random selection of a single element of each array in the NDArrays and the int of the
         tuple
     """
     _, client_arrays, sample_count = client_result
@@ -97,8 +99,8 @@ def decode_and_pseudo_sort_results(
         results (List[Tuple[ClientProxy, FitRes]]): Results from a federated training round.
 
     Returns:
-        List[Tuple[NDArrays, int]]: The ordered set of weights as NDarrays and the corresponding number of examples
-            NOTE: We have ditched the client proxies.
+        List[Tuple[ClientProxy, NDArrays, int]]: The ordered set of weights as NDarrays and the corresponding
+        number of examples
     """
     ndarrays_results = [
         (client_proxy, parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
