@@ -61,7 +61,7 @@ def select_random_element(array: np.ndarray) -> float:
     return array[indices]
 
 
-def pseudo_sort_function(client_result: Tuple[ClientProxy, NDArrays, int]) -> float:
+def pseudo_sort_scoring_function(client_result: Tuple[ClientProxy, NDArrays, int]) -> float:
     """
     This function provides the "score" that is used to sort a list of Tuple[ClientProxy, NDArrays, int]. We take a
     random selection of the array elements and add the integer to them to come up with a score for sorting. Note that
@@ -106,4 +106,4 @@ def decode_and_pseudo_sort_results(
         (client_proxy, parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
         for client_proxy, fit_res in results
     ]
-    return sorted(ndarrays_results, key=lambda x: pseudo_sort_function(x))
+    return sorted(ndarrays_results, key=lambda x: pseudo_sort_scoring_function(x))
