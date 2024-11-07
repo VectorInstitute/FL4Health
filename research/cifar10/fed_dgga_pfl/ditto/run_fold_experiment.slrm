@@ -61,6 +61,10 @@ if [[ "${SLURM_JOB_PARTITION}" == "t4v2" ]] || \
     export NCCL_SOCKET_IFNAME=bond0
 fi
 
+# This environment variable must be set in order to force torch to use determinsitic algorithms. See documentation
+# in fl4health/utils/random.py for more information
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
 # Process Inputs
 
 SERVER_CONFIG_PATH=$1
