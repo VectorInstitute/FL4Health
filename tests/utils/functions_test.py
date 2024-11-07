@@ -11,7 +11,7 @@ from fl4health.utils.functions import (
     bernoulli_sample,
     decode_and_pseudo_sort_results,
     pseudo_sort_scoring_function,
-    select_random_element,
+    select_zeroeth_element,
     sigmoid_inverse,
 )
 from tests.test_utils.custom_client_proxy import CustomClientProxy
@@ -37,11 +37,11 @@ def test_sigmoid_inverse() -> None:
     torch.seed()
 
 
-def test_select_random_element() -> None:
+def test_select_zeroeth_element() -> None:
     np.random.seed(42)
     array = np.random.rand(10, 10)
-    random_element = select_random_element(array)
-    assert pytest.approx(random_element, abs=1e-5) == 0.38867729
+    random_element = select_zeroeth_element(array)
+    assert pytest.approx(random_element, abs=1e-5) == 0.3745401188473625
     np.random.seed(None)
 
 
@@ -49,7 +49,7 @@ def test_pseudo_sort_scoring_function() -> None:
     np.random.seed(42)
     array_list = [np.random.rand(10, 10) for _ in range(2)] + [np.random.rand(5, 5) for _ in range(2)]
     sort_value = pseudo_sort_scoring_function((CustomClientProxy("c0"), array_list, 13))
-    assert pytest.approx(sort_value, abs=1e-5) == 14.137901201887558
+    assert pytest.approx(sort_value, abs=1e-5) == 14.291990594067467
     np.random.seed(None)
 
 
@@ -61,7 +61,7 @@ def test_pseudo_sort_scoring_function_with_mixed_types() -> None:
         + [np.random.rand(5, 5) for _ in range(2)]
     )
     sort_value = pseudo_sort_scoring_function((CustomClientProxy("c0"), array_list, 13))
-    assert pytest.approx(sort_value, abs=1e-5) == 14.137901201887558
+    assert pytest.approx(sort_value, abs=1e-5) == 14.291990594067467
     np.random.seed(None)
 
 

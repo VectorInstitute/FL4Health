@@ -47,24 +47,25 @@ def sigmoid_inverse(x: torch.Tensor) -> torch.Tensor:
     return -torch.log(1 / x - 1)
 
 
-def select_random_element(array: np.ndarray) -> float:
+def select_zeroeth_element(array: np.ndarray) -> float:
     """
-    Helper function that simply selects a random element from the provided array using np.random.choice.
+    Helper function that simply selects the first element of an array (index 0 across all dimensions).
 
     Args:
-        array (np.ndarray): Array from which a single element is randomly selected
+        array (np.ndarray): Array from which the very first element is selected
 
     Returns:
-        float: randomly selected element value.
+        float: zeroeth element value.
     """
-    indices = tuple(np.random.choice(size) for size in array.shape)
+    indices = tuple(0 for _ in array.shape)
     return array[indices]
 
 
 def pseudo_sort_scoring_function(client_result: Tuple[ClientProxy, NDArrays, int]) -> float:
     """
-    This function provides the "score" that is used to sort a list of Tuple[ClientProxy, NDArrays, int]. We take a
-    random selection of the array elements and add the integer to them to come up with a score for sorting. Note that
+    This function provides the "score" that is used to sort a list of Tuple[ClientProxy, NDArrays, int]. We select
+    the zeroeth (index 0 across all dimensions) element from each of the arrays in the NDArrays list, sum them, and
+    add the integer (client sample counts) to the sum to come up with a score for sorting. Note that
     the underlying numpy arrays in NDArrays may not all be of numerical type. So we limit to selecting elements from
     arrays of floats.
 
@@ -72,14 +73,13 @@ def pseudo_sort_scoring_function(client_result: Tuple[ClientProxy, NDArrays, int
         client_result (Tuple[ClientProxy, NDArrays, int]]): Elements to use to determine the score.
 
     Returns:
-        float: Sum of a random selection of a single element of each array in the NDArrays and the int of the
-        tuple
+        float: Sum of a the zeroeth elements of each array in the NDArrays and the int of the tuple
     """
     _, client_arrays, sample_count = client_result
-    random_params = [
-        select_random_element(array) for array in client_arrays if np.issubdtype(array.dtype, np.floating)
+    zeroeth_params = [
+        select_zeroeth_element(array) for array in client_arrays if np.issubdtype(array.dtype, np.floating)
     ]
-    return np.sum(random_params) + sample_count
+    return np.sum(zeroeth_params) + sample_count
 
 
 def decode_and_pseudo_sort_results(
@@ -87,10 +87,10 @@ def decode_and_pseudo_sort_results(
 ) -> List[Tuple[ClientProxy, NDArrays, int]]:
     """
     This function is used to convert the results of client training into NDArrays and to apply a pseudo sort
-    based on a random selection of the elements in the weights. As long as the numpy seed has been set on the server
-    this process should be deterministic when repeatedly running the same server code leading to deterministic sorting
-    (assuming the clients are deterministically training their weights as well). This allows, for example, for weights
-    from the clients to be summed in a deterministic order during aggregation.
+    based on the zeroeth elements in the weights and the sample counts. As long as the numpy seed has been set on the
+    server this process should be deterministic when repeatedly running the same server code leading to deterministic
+    sorting (assuming the clients are deterministically training their weights as well). This allows, for example,
+    for weights from the clients to be summed in a deterministic order during aggregation.
 
     NOTE: Client proxies would be nice to use for this task, but the CIDs are set by uuid deep in the flower library
     and are, therefore, not pinnable without a ton of work.
