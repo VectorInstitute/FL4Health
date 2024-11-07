@@ -134,7 +134,7 @@ do
         --config_path ${SERVER_CONFIG_PATH} \
         --server_address ${SERVER_ADDRESS} \
         --seed ${SEED} \
-        --lam ${LAM_VALUE} \
+        --lambda ${LAM_VALUE} \
         --step_size ${STEP_SIZE} \
         > ${SERVER_OUTPUT_FILE} 2>&1 &
 
