@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     # Load model and data
     data_path = Path(args.dataset_path)
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    client = CifarClient(data_path, [Accuracy("accuracy")], DEVICE)
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    client = CifarClient(data_path, [Accuracy("accuracy")], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

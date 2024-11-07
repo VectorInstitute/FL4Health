@@ -36,8 +36,8 @@ def binary_class_condition_data_converter(
 
 
 class CondConvAutoEncoderClient(BasicClient):
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device) -> None:
-        super().__init__(data_path, metrics, DEVICE)
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device) -> None:
+        super().__init__(data_path, metrics, device)
         # To train an autoencoder-based model we need to define a data converter that prepares the data
         # for self-supervised learning, concatenates the inputs and condition (packing) to let the data
         # fit into the training pipeline, and unpacks the input from condition for the model inference.
@@ -93,8 +93,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
     set_all_random_seeds(42)
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CondConvAutoEncoderClient(data_path=data_path, metrics=[], DEVICE=DEVICE)
+    client = CondConvAutoEncoderClient(data_path=data_path, metrics=[], device=device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()
