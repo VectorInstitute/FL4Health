@@ -132,14 +132,14 @@ class FlServer(Server):
             server_round,
         )
         if fit_round_results is not None:
-            _, metrics, (_, failures) = fit_round_results
+            _, metrics, fit_results_and_failures = fit_round_results
             self.reports_manager.report({"fit_metrics": metrics}, server_round)
+            failures = fit_results_and_failures[1] if fit_results_and_failures else None
 
-            num_failures = len(failures)
-            if num_failures > 0 and not self.accept_failures:
+            if failures and not self.accept_failures:
                 log(
                     ERROR,
-                    f"There were {num_failures} failures in the fitting process. This will result in termination of "
+                    f"There were {len(failures)} failures in the fitting process. This will result in termination of "
                     "the FL process",
                 )
                 self._terminate_after_unacceptable_failures(timeout)
@@ -335,11 +335,11 @@ class FlServer(Server):
         end_time = datetime.datetime.now()
         if eval_round_results:
             loss_aggregated, metrics_aggregated, (_, failures) = eval_round_results
-            num_failures = len(failures)
-            if num_failures > 0 and not self.accept_failures:
+
+            if failures and not self.accept_failures:
                 log(
                     ERROR,
-                    f"There were {num_failures} failures in the evaluation. This will result in termination of the "
+                    f"There were {len(failures)} failures in the evaluation. This will result in termination of the "
                     "FL process",
                 )
                 self._terminate_after_unacceptable_failures(timeout)
