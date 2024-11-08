@@ -24,6 +24,7 @@ from fl4health.utils.config import narrow_dict_type_and_set_attribute
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
+from fl4health.utils.typing import EvaluateFailures, FitFailures
 
 
 class FlServer(Server):
@@ -137,11 +138,7 @@ class FlServer(Server):
             failures = fit_results_and_failures[1] if fit_results_and_failures else None
 
             if failures and not self.accept_failures:
-                log(
-                    ERROR,
-                    f"There were {len(failures)} failures in the fitting process. This will result in termination of "
-                    "the FL process",
-                )
+                self._log_client_failures(failures)
                 self._terminate_after_unacceptable_failures(timeout)
 
         return fit_round_results
@@ -337,11 +334,7 @@ class FlServer(Server):
             loss_aggregated, metrics_aggregated, (_, failures) = eval_round_results
 
             if failures and not self.accept_failures:
-                log(
-                    ERROR,
-                    f"There were {len(failures)} failures in the evaluation. This will result in termination of the "
-                    "FL process",
-                )
+                self._log_client_failures(failures)
                 self._terminate_after_unacceptable_failures(timeout)
 
             if loss_aggregated:
@@ -369,9 +362,31 @@ class FlServer(Server):
         # First we shutdown all clients involved in the FL training/evaluation if they can be.
         self.disconnect_all_clients(timeout=timeout)
         # Throw an exception alerting the user to failures on the client-side causing termination
+        self.shutdown()
         raise ValueError(
             f"The server encountered failures from the clients and accept_failures is set to {self.accept_failures}"
         )
+
+    def _log_client_failures(self, failures: FitFailures | EvaluateFailures) -> None:
+        log(
+            ERROR,
+            f"There were {len(failures)} failures in the fitting process. This will result in termination of "
+            "the FL process",
+        )
+        for failure in failures:
+            if isinstance(failure, BaseException):
+                log(
+                    ERROR,
+                    "An exception was returned instead of any failed results. As such the client ID is unknown. "
+                    "Please check the client logs to determine which failed.\n"
+                    f"The exception thrown was {repr(failure)}",
+                )
+            else:
+                client_proxy, _ = failure
+                log(
+                    ERROR,
+                    f"Client {client_proxy.cid} failed but did not return an exception. Partial results were received",
+                )
 
 
 ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
