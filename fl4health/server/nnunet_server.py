@@ -68,34 +68,32 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         reporters: Sequence[BaseReporter] | None = None,
         intermediate_server_state_dir: Path | None = None,
         server_name: str | None = None,
+        accept_failures: bool = True,
     ) -> None:
         """
-        A Basic FlServer with added functionality to ask a client to initialize
-        the global nnunet plans if one was not provided in the config. Intended
-        for use with NnUNetClient.
+        A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
+        provided in the config. Intended for use with NnUNetClient.
 
         Args:
-            client_manager (ClientManager): Determines the mechanism by which clients
-                are sampled by the server, if they are to be sampled at all.
-            model (nn.Module): This is the torch model to be hydrated by the
-                _hydrate_model_for_checkpointing function
-            parameter_exchanger (ExchangerType): This is the parameter exchanger to be
-                used to hydrate the model.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be
-                used by the server to handle client updates and other information
-                potentially sent by the participating clients. If None the strategy is
-                FedAvg as set by the flwr Server.
-            checkpointer (TorchCheckpointer | Sequence[TorchCheckpointer], optional):
-                To be provided if the server should perform server side checkpointing
-                based on some criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a sequence to
-                checkpoint based on multiple criteria. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            intermediate_server_state_dir (Path): A directory to store and load
-                checkpoints from for the server during an FL experiment.
-            server_name (Optional[str]): An optional string name to uniquely identify
-                server.
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
+            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            checkpointer (TorchCheckpointer | Sequence[TorchCheckpointer], optional): To be provided if the server
+                should perform server side checkpointing based on some criteria. If none, then no server-side
+                checkpointing is performed. Multiple checkpointers can also be passed in a sequence to checkpoint
+                based on multiple criteria. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
+                send data to.
+            intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
+                during an FL experiment.
+            server_name (Optional[str]): An optional string name to uniquely identify server.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         FlServerWithCheckpointing.__init__(
             self,

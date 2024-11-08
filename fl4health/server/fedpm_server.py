@@ -20,26 +20,26 @@ class FedPmServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         reset_frequency: int = 1,
         reporters: Sequence[BaseReporter] | None = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Custom FL Server for the FedPM algorithm to allow for resetting the beta priors in Bayesian aggregation,
         as specified in http://arxiv.org/pdf/2209.15328.
 
         Args:
-            client_manager (ClientManager): Determines the mechanism by which clients
-                are sampled by the server, if they are to be sampled at all.
-            strategy (Scaffold): The aggregation strategy to be used by the server to
-                handle client updates and other information potentially sent by the
-                participating clients. This strategy must be of SCAFFOLD type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the
-                server should perform server side checkpointing based on some criteria.
-                If none, then no server-side checkpointing is performed. Defaults to
-                None.
-            reset_frequency (int): Determines the frequency with which the beta priors
-                are reset. Defaults to 1.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each
-                round.
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and other
+                information potentially sent by the participating clients. This strategy must be of SCAFFOLD type.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            reset_frequency (int): Determines the frequency with which the beta priors are reset. Defaults to 1.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         FlServer.__init__(
             self,
@@ -47,6 +47,7 @@ class FedPmServer(FlServer):
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
+            accept_failures=accept_failures,
         )
         self.reset_frequency = reset_frequency
 

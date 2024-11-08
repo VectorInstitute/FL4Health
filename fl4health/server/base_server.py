@@ -1,5 +1,5 @@
 import datetime
-from logging import DEBUG, INFO, WARN, WARNING
+from logging import DEBUG, ERROR, INFO, WARNING
 from pathlib import Path
 from typing import Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 
@@ -34,33 +34,34 @@ class FlServer(Server):
         reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         server_name: Optional[str] = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Base Server for the library to facilitate strapping additional/useful machinery to the base flwr server.
 
         Args:
-            client_manager (ClientManager): Determines the mechanism by which clients
-                are sampled by the server, if they are to be sampled at all.
-            strategy (Optional[Strategy], optional): The aggregation strategy to be
-                used by the server to handle. client updates and other information
-                potentially sent by the participating clients. If None the strategy is
-                FedAvg as set by the flwr Server.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each round.
-            checkpointer (TorchCheckpointer | Sequence [TorchCheckpointer], optional):
-                To be provided if the server should perform server side checkpointing
-                based on some criteria. If none, then no server-side checkpointing is
-                performed. Multiple checkpointers can also be passed in a sequence to
-                checkpointer based on multiple criteria. Ensure checkpoint names are
-                different for each checkpoint or they will overwrite on another.
-                Defaults to None.
-            server_name (Optional[str]): An optional string name to uniquely identify
-                server.
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server
+                should send data to before and after each round.
+            checkpointer (TorchCheckpointer | Sequence [TorchCheckpointer], optional): To be provided if the server
+                should perform server side checkpointing based on some criteria. If none, then no server-side
+                checkpointing is performed. Multiple checkpointers can also be passed in a sequence to checkpointer
+                based on multiple criteria. Ensure checkpoint names are different for each checkpoint or they will
+                overwrite on another. Defaults to None.
+            server_name (Optional[str]): An optional string name to uniquely identify server.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
         self.server_name = server_name if server_name is not None else generate_hash()
+        self.accept_failures = accept_failures
 
         # Initialize reporters with server name information.
         self.reports_manager = ReportsManager(reporters)
@@ -131,8 +132,17 @@ class FlServer(Server):
             server_round,
         )
         if fit_round_results is not None:
-            _, metrics, _ = fit_round_results
+            _, metrics, (_, failures) = fit_round_results
             self.reports_manager.report({"fit_metrics": metrics}, server_round)
+
+            num_failures = len(failures)
+            if num_failures > 0 and not self.accept_failures:
+                log(
+                    ERROR,
+                    f"There were {num_failures} failures in the fitting process. This will result in termination of "
+                    "the FL process",
+                )
+                self._terminate_after_unacceptable_failures(timeout)
 
         return fit_round_results
 
@@ -324,7 +334,16 @@ class FlServer(Server):
         eval_round_results = self._evaluate_round(server_round, timeout)
         end_time = datetime.datetime.now()
         if eval_round_results:
-            loss_aggregated, metrics_aggregated, _ = eval_round_results
+            loss_aggregated, metrics_aggregated, (_, failures) = eval_round_results
+            num_failures = len(failures)
+            if num_failures > 0 and not self.accept_failures:
+                log(
+                    ERROR,
+                    f"There were {num_failures} failures in the evaluation. This will result in termination of the "
+                    "FL process",
+                )
+                self._terminate_after_unacceptable_failures(timeout)
+
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
                 # Report evaluation results
@@ -345,6 +364,15 @@ class FlServer(Server):
 
         return eval_round_results
 
+    def _terminate_after_unacceptable_failures(self, timeout: Optional[float]) -> None:
+        assert not self.accept_failures
+        # First we shutdown all clients involved in the FL training/evaluation if they can be.
+        self.disconnect_all_clients(timeout=timeout)
+        # Throw an exception alerting the user to failures on the client-side causing termination
+        raise ValueError(
+            f"The server encountered failures from the clients and accept_failures is set to {self.accept_failures}"
+        )
+
 
 ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
 
@@ -360,6 +388,7 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         intermediate_server_state_dir: Optional[Path] = None,
         server_name: Optional[str] = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         This is a standard FL server but equipped with the assumption that the parameter exchanger is capable of
@@ -386,13 +415,12 @@ class FlServerWithCheckpointing(FlServer, Generic[ExchangerType]):
             intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
             server_name (Optional[str]): An optional string name to uniquely identify server.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         super().__init__(
-            client_manager,
-            strategy,
-            reporters,
-            checkpointer,
-            server_name=server_name,
+            client_manager, strategy, reporters, checkpointer, server_name=server_name, accept_failures=accept_failures
         )
         self.server_model = model
         # To facilitate model rehydration from server-side state for checkpointing
@@ -608,6 +636,7 @@ class FlServerWithInitializer(FlServer):
         strategy: Optional[Strategy] = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Server with an initialize hook method that is called prior to fit. Override the self.initialize method to do
@@ -623,13 +652,14 @@ class FlServerWithInitializer(FlServer):
                 strategy is FedAvg as set by the flwr Server.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the server should send data to before and after each round.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence
-                [TorchCheckpointer]]], optional): To be provided if the server
-                should perform server side checkpointing based on some
-                criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
+                if the server should perform server side checkpointing based on some criteria. If none, then no
+                server-side checkpointing is performed. Defaults to None.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
-        super().__init__(client_manager, strategy, reporters, checkpointer)
+        super().__init__(client_manager, strategy, reporters, checkpointer, accept_failures=accept_failures)
         self.initialized = False
 
     def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
@@ -663,7 +693,7 @@ class FlServerWithInitializer(FlServer):
             log(INFO, "Received initial parameters from one random client")
         else:
             log(
-                WARN,
+                WARNING,
                 "Failed to receive initial parameters from the client." " Empty initial parameters will be used.",
             )
         return get_parameters_res.parameters
