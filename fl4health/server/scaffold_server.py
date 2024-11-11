@@ -22,11 +22,12 @@ class ScaffoldServer(FlServer):
         strategy: Scaffold,
         checkpointer: Optional[TorchCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
-        warm_start: bool = False,  # Whether or not to initialize control variates of each client as local gradient
+        warm_start: bool = False,
+        accept_failures: bool = True,
     ) -> None:
         """
-        Custom FL Server for scaffold algorithm to handle warm initialization of control variates
-        as specified in https://arxiv.org/abs/1910.06378.
+        Custom FL Server for scaffold algorithm to handle warm initialization of control variates as specified in
+        https://arxiv.org/abs/1910.06378.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -34,18 +35,18 @@ class ScaffoldServer(FlServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the
-                server should perform server side checkpointing based on some criteria.
-                If none, then no server-side checkpointing is performed. Defaults to
-                None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each
-                round.
-            warm_start (bool, optional): Whether or not to initialize control variates
-                of each client as local gradients. The clients will perform a training
-                pass (without updating the weights) in order to provide a "warm"
-                estimate of the SCAFFOLD control variates. If false, variates are
-                initialized to 0. Defaults to False.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform server
+                side checkpointing based on some criteria. If none, then no server-side checkpointing is performed.
+                Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
+            warm_start (bool, optional): Whether or not to initialize control variates of each client as local
+                gradients. The clients will perform a training pass (without updating the weights) in order to provide
+                a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
+                Defaults to False.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         FlServer.__init__(
             self,
@@ -53,6 +54,7 @@ class ScaffoldServer(FlServer):
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
+            accept_failures=accept_failures,
         )
         self.warm_start = warm_start
 

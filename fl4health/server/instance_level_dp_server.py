@@ -29,6 +29,7 @@ class InstanceLevelDpServer(FlServer):
         checkpointer: Optional[OpacusCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[float] = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Server to be used in case of Instance Level Differential Privacy with Federated Averaging.
@@ -57,12 +58,16 @@ class InstanceLevelDpServer(FlServer):
                 reporters which the client should send data to.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         super().__init__(
             client_manager=client_manager,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
+            accept_failures=accept_failures,
         )
 
         # Ensure that one of local_epochs and local_steps is passed (and not both)

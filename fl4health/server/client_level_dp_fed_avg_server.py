@@ -30,6 +30,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[int] = None,
+        accept_failures: bool = True,
     ) -> None:
         """
         Server to be used in case of Client Level Differential Privacy with Federated Averaging.
@@ -48,12 +49,16 @@ class ClientLevelDPFedAvgServer(FlServer):
                 reporters which the server should send data to before and after each round.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
         super().__init__(
             client_manager=client_manager,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
+            accept_failures=accept_failures,
         )
         self.accountant: ClientLevelAccountant
         self.server_noise_multiplier = server_noise_multiplier

@@ -2,19 +2,13 @@ from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import (
-    MetricsAggregationFn,
-    NDArray,
-    NDArrays,
-    Parameters,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters, ndarrays_to_parameters
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class FedPCA(BasicFedAvg):
@@ -122,10 +116,14 @@ class FedPCA(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = [weights for _, weights, _ in decode_and_pseudo_sort_results(results)]
+
         client_singular_values = []
         client_singular_vectors = []
-        for _, fit_res in results:
-            A = parameters_to_ndarrays(fit_res.parameters)
+        for A in decoded_and_sorted_results:
             singular_vectors, singular_values = A[0], A[1]
             client_singular_vectors.append(singular_vectors)
             client_singular_values.append(singular_values)

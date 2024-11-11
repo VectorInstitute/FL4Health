@@ -149,9 +149,11 @@ class Flash(BasicFedAvg):
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
         """Aggregate fit results using the Flash method."""
+
         fedavg_parameters_aggregated, metrics_aggregated = super().aggregate_fit(
             server_round=server_round, results=results, failures=failures
         )
+
         if fedavg_parameters_aggregated is None:
             return None, {}
 

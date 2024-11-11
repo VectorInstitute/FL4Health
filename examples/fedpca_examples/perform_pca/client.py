@@ -36,7 +36,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", action="store", type=int, help="Random seed for this client.")
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     components_save_path = Path(args.components_save_path)
     seed = args.seed
@@ -45,5 +45,5 @@ if __name__ == "__main__":
     # the data used in the dim_reduction example, then both examples
     # should use the same random seed.
     set_all_random_seeds(seed)
-    client = MnistFedPCAClient(data_path=data_path, device=DEVICE, model_save_path=components_save_path)
+    client = MnistFedPCAClient(data_path=data_path, device=device, model_save_path=components_save_path)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
