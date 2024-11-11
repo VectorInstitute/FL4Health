@@ -25,26 +25,6 @@ from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 
 class TabularFeatureAlignmentServer(FlServer):
-    """
-    This server is used when the clients all have tabular data that needs to be
-    aligned.
-
-    Args:
-        client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
-                they are to be sampled at all.
-        strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
-            client updates and other information potentially sent by the participating clients. If None the
-            strategy is FedAvg as set by the flwr Server.
-        checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-            server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-            performed. Defaults to None.
-        tab_features_source_of_truth (Optional[TabularFeaturesInfoEncoder]): The information that is required
-            for aligning client features. If it is not specified, then the server will randomly poll a client
-            and gather this information from its data source.
-        reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
-                send data to before and after each round.
-    """
-
     def __init__(
         self,
         client_manager: ClientManager,
@@ -54,14 +34,42 @@ class TabularFeatureAlignmentServer(FlServer):
         checkpointer: Optional[TorchCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        accept_failures: bool = True,
     ) -> None:
+        """
+        This server is used when the clients all have tabular data that needs to be aligned.
+
+        Args:
+            client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
+                they are to be sampled at all.
+            strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
+                client updates and other information potentially sent by the participating clients. If None the
+                strategy is FedAvg as set by the flwr Server.
+            wandb_reporter (Optional[ServerWandBReporter], optional): To be provided if the server is to log
+                information and results to a Weights and Biases account. If None is provided, no logging occurs.
+                Defaults to None.
+            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
+                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
+                performed. Defaults to None.
+            tab_features_source_of_truth (Optional[TabularFeaturesInfoEncoder]): The information that is required
+                for aligning client features. If it is not specified, then the server will randomly poll a client
+                and gather this information from its data source.
+            accept_failures (bool, optional): Determines whether the server should accept failures during training or
+                    evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                    and throw an exception. Defaults to True.
+        """
+
         if strategy.on_fit_config_fn is not None:
             log(WARNING, "strategy.on_fit_config_fn will be overwritten.")
         if strategy.initial_parameters is not None:
             log(WARNING, "strategy.initial_parameters will be overwritten.")
 
         super().__init__(
-            client_manager=client_manager, strategy=strategy, checkpointer=checkpointer, reporters=reporters
+            client_manager=client_manager,
+            strategy=strategy,
+            checkpointer=checkpointer,
+            reporters=reporters,
+            accept_failures=accept_failures,
         )
         # The server performs one or two rounds of polls before the normal federated training.
         # The first one gathers feature information if the server does not already have it,
