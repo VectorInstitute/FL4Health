@@ -20,6 +20,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_results
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class ModelMergeStrategy(Strategy):
@@ -188,12 +189,15 @@ class ModelMergeStrategy(Strategy):
         if not self.accept_failures and failures:
             return None, {}
 
-        # Convert results
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = [
+            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]
+
         # Aggregate them in an weighted or unweighted fashion based on self.weighted_aggregation.
-        aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
+        aggregated_arrays = aggregate_results(decoded_and_sorted_results, self.weighted_aggregation)
         # Convert back to parameters
         parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
 
@@ -246,7 +250,7 @@ class ModelMergeStrategy(Strategy):
 
     def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
         """
-        Evaluate the model parameters after the merging has occured. This function can be used to perform centralized
+        Evaluate the model parameters after the merging has occurred. This function can be used to perform centralized
             (i.e., server-side) evaluation of model parameters.
 
         Args:
