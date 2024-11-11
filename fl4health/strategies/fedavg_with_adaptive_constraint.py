@@ -10,6 +10,7 @@ from flwr.server.client_proxy import ClientProxy
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
 from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class FedAvgWithAdaptiveConstraint(BasicFedAvg):
@@ -157,14 +158,18 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = [
+            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
+        ]
+
         # Convert results with packed params of model weights and training loss
         weights_and_counts: List[Tuple[NDArrays, int]] = []
         train_losses_and_counts: List[Tuple[int, float]] = []
-        for _, fit_res in results:
-            sample_count = fit_res.num_examples
-            updated_weights, train_loss = self.parameter_packer.unpack_parameters(
-                parameters_to_ndarrays(fit_res.parameters)
-            )
+        for weights, sample_count in decoded_and_sorted_results:
+            updated_weights, train_loss = self.parameter_packer.unpack_parameters(weights)
             weights_and_counts.append((updated_weights, sample_count))
             train_losses_and_counts.append((sample_count, train_loss))
 

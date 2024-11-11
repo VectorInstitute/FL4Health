@@ -55,8 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_dir = Path(args.dataset_path)
-    client = CifarFedRepClient(data_dir, [Accuracy("accuracy")], DEVICE)
+    client = CifarFedRepClient(data_dir, [Accuracy("accuracy")], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

@@ -95,7 +95,7 @@ class SingleNodeTrainer:
             for input, target in self.val_loader:
                 input, target = input.to(self.device), target.to(self.device)
 
-                preds = self.model(input)
+                preds = {"predictions": self.model(input)}
                 batch_loss = self.criterion(preds["predictions"], target)
                 running_loss += batch_loss.item()
                 val_metric_mngr.update(preds, target)

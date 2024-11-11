@@ -210,8 +210,8 @@ if __name__ == "__main__":
     if args.use_partitioned_data:
         log(INFO, "Using preprocessed partitioned data for training, validation and testing")
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Mu: {args.mu}")
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     client = CifarDittoClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
-        device=DEVICE,
+        device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,

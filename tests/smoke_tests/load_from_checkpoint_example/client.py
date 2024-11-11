@@ -98,7 +98,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
     # Set the random seed for reproducibility
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     client = CifarClient(
         data_path,
         [Accuracy("accuracy")],
-        DEVICE,
+        device,
         intermediate_client_state_dir=args.intermediate_client_state_dir,
         client_name=args.client_name,
         seed=args.seed,
