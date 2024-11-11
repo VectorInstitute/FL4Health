@@ -75,7 +75,7 @@ CLIENT_BETA=$8
 mkdir "${ARTIFACT_DIR}"
 
 RUN_NAMES=( "Run1" "Run2" "Run3" "Run4" "Run5" )
-SEEDS=(2021 2022 2023 2024 2025)
+SEEDS=( 2021 2022 2023 2024 2025 )
 
 echo "Python Venv Path: ${VENV_PATH}"
 

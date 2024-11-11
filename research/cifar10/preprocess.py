@@ -100,10 +100,10 @@ def preprocess_data(
 
     # Partition train data
     heterogeneous_partitioner = DirichletLabelBasedAllocation(
-        number_of_partitions=num_clients, unique_labels=list(range(10)), beta=beta, min_label_examples=2
+        number_of_partitions=num_clients, unique_labels=list(range(10)), beta=beta, min_label_examples=1
     )
     train_partitioned_datasets, train_partitioned_dist = heterogeneous_partitioner.partition_dataset(
-        training_set, max_retries=5
+        training_set, max_retries=None
     )
 
     # Partition validation and test data
@@ -111,9 +111,9 @@ def preprocess_data(
         number_of_partitions=num_clients, unique_labels=list(range(10)), prior_distribution=train_partitioned_dist
     )
     validation_partitioned_datasets, _ = heterogeneous_partitioner_with_prior.partition_dataset(
-        validation_set, max_retries=5
+        validation_set, max_retries=None
     )
-    test_partitioned_datasets, _ = heterogeneous_partitioner_with_prior.partition_dataset(test_set, max_retries=5)
+    test_partitioned_datasets, _ = heterogeneous_partitioner_with_prior.partition_dataset(test_set, max_retries=None)
 
     return train_partitioned_datasets, validation_partitioned_datasets, test_partitioned_datasets
 
