@@ -136,7 +136,7 @@ do
             --config_path ${SERVER_CONFIG_PATH} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --lambda ${LAM_VALUE} \
+            --lam ${LAM_VALUE} \
             --use_adaptation \
             > ${SERVER_OUTPUT_FILE} 2>&1 &
     else
@@ -144,7 +144,7 @@ do
             --config_path ${SERVER_CONFIG_PATH} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --lambda ${LAM_VALUE} \
+            --lam ${LAM_VALUE} \
             > ${SERVER_OUTPUT_FILE} 2>&1 &
     fi
 

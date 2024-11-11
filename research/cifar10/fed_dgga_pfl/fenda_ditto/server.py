@@ -118,7 +118,7 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
-        "--lambda", action="store", type=float, help="FENDA Ditto loss weight for local model training", default=0.01
+        "--lam", action="store", type=float, help="FENDA Ditto loss weight for local model training", default=0.01
     )
     parser.add_argument(
         "--step_size",

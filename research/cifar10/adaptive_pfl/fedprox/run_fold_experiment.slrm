@@ -138,7 +138,7 @@ do
             --run_name ${RUN_NAME} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --lambda ${LAM_VALUE} \
+            --lam ${LAM_VALUE} \
             --use_adaptation \
             > ${SERVER_OUTPUT_FILE} 2>&1 &
     else
@@ -148,7 +148,7 @@ do
             --run_name ${RUN_NAME} \
             --server_address ${SERVER_ADDRESS} \
             --seed ${SEED} \
-            --lambda ${LAM_VALUE} \
+            --lam ${LAM_VALUE} \
             > ${SERVER_OUTPUT_FILE} 2>&1 &
     fi
 
