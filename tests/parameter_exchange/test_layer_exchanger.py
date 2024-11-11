@@ -99,15 +99,30 @@ def test_fedpm_exchange() -> None:
     # Test that selection function works when the direct child modules are masked modules.
     masks, score_names = select_scores_and_sample_masks(masked_model, masked_model)
     assert len(masks) == len(score_names)
+    print(score_names)
     assert score_names == [
         "conv1d.weight_scores",
         "conv1d.bias_scores",
+        "bn1d.weight_scores",
+        "bn1d.bias_scores",
         "conv2d.weight_scores",
         "conv2d.bias_scores",
+        "bn2d.weight_scores",
+        "bn2d.bias_scores",
         "conv3d.weight_scores",
         "conv3d.bias_scores",
+        "bn3d.weight_scores",
+        "bn3d.bias_scores",
+        "conv_transpose1d.weight_scores",
+        "conv_transpose1d.bias_scores",
+        "conv_transpose2d.weight_scores",
+        "conv_transpose2d.bias_scores",
+        "conv_transpose3d.weight_scores",
+        "conv_transpose3d.bias_scores",
         "linear.weight_scores",
         "linear.bias_scores",
+        "layer_norm.weight_scores",
+        "layer_norm.bias_scores",
     ]
     for i in range(len(score_names)):
         mask = masks[i]
@@ -119,15 +134,30 @@ def test_fedpm_exchange() -> None:
     wrapped_model_states = masked_wrapped_model.state_dict()
     masks_wrapped, score_names_wrapped = select_scores_and_sample_masks(masked_wrapped_model, masked_wrapped_model)
     assert len(masks_wrapped) == len(score_names_wrapped)
+    print(score_names_wrapped)
     assert score_names_wrapped == [
         "model.conv1d.weight_scores",
         "model.conv1d.bias_scores",
+        "model.bn1d.weight_scores",
+        "model.bn1d.bias_scores",
         "model.conv2d.weight_scores",
         "model.conv2d.bias_scores",
+        "model.bn2d.weight_scores",
+        "model.bn2d.bias_scores",
         "model.conv3d.weight_scores",
         "model.conv3d.bias_scores",
+        "model.bn3d.weight_scores",
+        "model.bn3d.bias_scores",
+        "model.conv_transpose1d.weight_scores",
+        "model.conv_transpose1d.bias_scores",
+        "model.conv_transpose2d.weight_scores",
+        "model.conv_transpose2d.bias_scores",
+        "model.conv_transpose3d.weight_scores",
+        "model.conv_transpose3d.bias_scores",
         "model.linear.weight_scores",
         "model.linear.bias_scores",
+        "model.layer_norm.weight_scores",
+        "model.layer_norm.bias_scores",
     ]
     for j in range(len(score_names_wrapped)):
         mask = masks_wrapped[j]
