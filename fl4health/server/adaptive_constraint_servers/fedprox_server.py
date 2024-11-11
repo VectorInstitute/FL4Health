@@ -42,8 +42,8 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
                 criteria. If none, then no server-side checkpointing is performed.
                 Multiple checkpointers can also be passed in a sequence to checkpoint
                 based on multiple criteria. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the server should send data to before and after each round.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
         """
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint
