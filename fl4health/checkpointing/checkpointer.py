@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from logging import INFO
+from logging import ERROR, INFO
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -95,7 +95,12 @@ class FunctionTorchCheckpointer(TorchCheckpointer):
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
             self.best_score = comparison_score
-            torch.save(model, self.best_checkpoint_path)
+            try:
+                log(INFO, f"Saving checkpoint as {str(self.best_checkpoint_path)}")
+                torch.save(model, self.best_checkpoint_path)
+            except Exception as e:
+                log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+                raise e
         else:
             log(
                 INFO,
@@ -115,7 +120,12 @@ class LatestTorchCheckpointer(FunctionTorchCheckpointer):
     def maybe_checkpoint(self, model: nn.Module, loss: float, metrics: Dict[str, Scalar]) -> None:
         # Always checkpoint the latest model
         log(INFO, "Saving latest checkpoint with LatestTorchCheckpointer")
-        torch.save(model, self.best_checkpoint_path)
+        try:
+            log(INFO, f"Saving checkpoint as {str(self.best_checkpoint_path)}")
+            torch.save(model, self.best_checkpoint_path)
+        except Exception as e:
+            log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+            raise e
 
 
 class BestLossTorchCheckpointer(FunctionTorchCheckpointer):
@@ -149,7 +159,12 @@ class BestLossTorchCheckpointer(FunctionTorchCheckpointer):
                 f"{self.comparison_str} Best Loss ({self.best_score})",
             )
             self.best_score = comparison_score
-            torch.save(model, self.best_checkpoint_path)
+            try:
+                log(INFO, f"Saving checkpoint as {str(self.best_checkpoint_path)}")
+                torch.save(model, self.best_checkpoint_path)
+            except Exception as e:
+                log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+                raise e
         else:
             log(
                 INFO,
@@ -178,7 +193,12 @@ class PerRoundCheckpointer(ABC):
             checkpoint_dict (Dict[str, Any]): A dictionary with string keys and values of type
                 Any representing the state to checkpoint.
         """
-        torch.save(checkpoint_dict, self.checkpoint_path)
+        try:
+            log(INFO, f"Saving checkpoint as {self.checkpoint_path}")
+            torch.save(checkpoint_dict, self.checkpoint_path)
+        except Exception as e:
+            log(ERROR, f"Encountered the following error while saving the checkpoint: {e}")
+            raise e
 
     def load_checkpoint(self) -> Dict[str, Any]:
         """

@@ -177,7 +177,7 @@ def test_dirichlet_sampler_without_hash_key() -> None:
 
     _, p_val_1 = chisquare(f_obs=new_samples_per_class_1, f_exp=samples_per_class)
     _, p_val_2 = chisquare(f_obs=new_samples_per_class_2, f_exp=samples_per_class)
-    _, p_val_3 = chisquare(f_obs=new_samples_per_class_1, f_exp=new_samples_per_class_2)
+    _, p_val_3 = chisquare(f_obs=new_samples_per_class_2, f_exp=new_samples_per_class_1)
     # Assert that the new distribution with sampler_1 is different from the original distribution
     assert p_val_1 < 0.01
     # Assert that the new distribution with sampler_2 is different from the original distribution
