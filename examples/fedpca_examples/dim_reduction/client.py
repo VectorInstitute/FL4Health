@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", action="store", type=int, help="Random seed for this client.")
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     seed = args.seed
 
@@ -74,6 +74,6 @@ if __name__ == "__main__":
     # the data used in the perform_pca example, then both examples
     # should use the same random seed.
     set_all_random_seeds(seed)
-    client = MnistFedPcaClient(data_path, [Accuracy("accuracy")], DEVICE)
+    client = MnistFedPcaClient(data_path, [Accuracy("accuracy")], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

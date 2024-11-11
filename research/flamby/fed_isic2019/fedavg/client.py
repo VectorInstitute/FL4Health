@@ -106,8 +106,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     client = FedIsic2019FedAvgClient(
         data_path=Path(args.dataset_dir),
         metrics=[BalancedAccuracy("FedIsic2019_balanced_accuracy")],
-        device=DEVICE,
+        device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         checkpointer=checkpointer,

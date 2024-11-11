@@ -90,15 +90,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     data_path = Path(args.dataset_path)
 
-    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
     # ham_id is the id column and LOSgroupNum is the target column.
-    client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], DEVICE, "hadm_id", ["LOSgroupNum"])
+    client = Mimic3TabularDataClient(data_path, [Accuracy("accuracy")], device, "hadm_id", ["LOSgroupNum"])
     # This call demonstrates how the user may specify a particular sklearn pipeline for a specific feature.
     client.preset_specific_pipeline("NumNotes", MaxAbsScaler())
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

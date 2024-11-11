@@ -25,9 +25,9 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 class CondAutoEncoderClient(BasicClient):
     def __init__(
-        self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: torch.Tensor
+        self, data_path: Path, metrics: Sequence[Metric], device: torch.device, condition: torch.Tensor
     ) -> None:
-        super().__init__(data_path, metrics, DEVICE)
+        super().__init__(data_path, metrics, device)
         # In this example, condition is based on client ID.
         self.condition_vector = condition
         # To train an autoencoder-based model we need to define a data converter that prepares the data
@@ -96,13 +96,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     set_all_random_seeds(42)
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     # Create the condition vector. This creation needs to be "consistent" across clients.
     # In this example, condition is based on client ID.
     # Client should decide how they want to create their condition vector.
     # Here we use simple one_hot_encoding but it can be any vector.
     condition_vector = torch.nn.functional.one_hot(torch.tensor(args.condition), num_classes=args.num_conditions)
-    client = CondAutoEncoderClient(data_path, [], DEVICE, condition_vector)
+    client = CondAutoEncoderClient(data_path, [], device, condition_vector)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

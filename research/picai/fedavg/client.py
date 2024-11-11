@@ -150,21 +150,21 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
     metrics = [
         TorchMetric(
             name="MLAP",
-            metric=MultilabelAveragePrecision(average="macro", num_labels=2, thresholds=3).to(DEVICE),
+            metric=MultilabelAveragePrecision(average="macro", num_labels=2, thresholds=3).to(device),
         )
     ]
 
     client = PicaiFedAvgClient(
         data_path=Path(args.base_dir),
         metrics=metrics,
-        device=DEVICE,
+        device=device,
         intermediate_client_state_dir=args.artifact_dir,
         overviews_dir=args.overviews_dir,
         data_partition=args.data_partition,
