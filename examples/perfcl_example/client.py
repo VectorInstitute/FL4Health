@@ -65,9 +65,9 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     minority_numbers = {int(number) for number in args.minority_numbers}
-    client = MnistPerFclClient(data_path, [Accuracy("accuracy")], DEVICE, minority_numbers)
+    client = MnistPerFclClient(data_path, [Accuracy("accuracy")], device, minority_numbers)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

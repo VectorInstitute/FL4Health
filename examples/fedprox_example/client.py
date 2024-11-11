@@ -57,15 +57,15 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
-    client = MnistFedProxClient(data_path, [Accuracy()], DEVICE, reporters=[JsonReporter()])
+    client = MnistFedProxClient(data_path, [Accuracy()], device, reporters=[JsonReporter()])
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 
     # Shutdown the client gracefully

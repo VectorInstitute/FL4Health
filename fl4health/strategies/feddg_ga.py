@@ -1,5 +1,5 @@
 from enum import Enum
-from logging import WARNING
+from logging import INFO, WARNING
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -83,6 +83,9 @@ class FairnessMetric:
                 self.metric_name = metric_type.value
             if signal is None:
                 self.signal = FairnessMetricType.signal_for_type(metric_type)
+
+    def __str__(self) -> str:
+        return f"Metric Type: {self.metric_type}, Metric Name: '{self.metric_name}', Signal: {self.signal}"
 
 
 class FedDgGa(FedAvg):
@@ -177,6 +180,9 @@ class FedDgGa(FedAvg):
         assert (
             0 < self.adjustment_weight_step_size < 1
         ), f"adjustment_weight_step_size has to be between 0 and 1 ({self.adjustment_weight_step_size})"
+
+        log(INFO, f"FedDG-GA Strategy initialized with weight_step_size of {self.adjustment_weight_step_size}")
+        log(INFO, f"FedDG-GA Strategy initialized with FairnessMetric {self.fairness_metric}")
 
         self.train_metrics: Dict[str, Dict[str, Scalar]] = {}
         self.evaluation_metrics: Dict[str, Dict[str, Scalar]] = {}
@@ -329,6 +335,7 @@ class FedDgGa(FedAvg):
 
         # Updating the weights at the end of the training round
         cids = [client_proxy.cid for client_proxy, _ in results]
+        log(INFO, "Updating the Generalization Adjustment Weights")
         self.update_weights_by_ga(server_round, cids)
 
         return loss_aggregated, metrics_aggregated
@@ -343,6 +350,13 @@ class FedDgGa(FedAvg):
         Returns:
             (NDArrays) the weighted and aggregated results.
         """
+
+        if self.adjustment_weights:
+            log(INFO, f"Current adjustment weights by Client ID (CID) are {self.adjustment_weights}")
+        else:
+            # If the adjustment weights dictionary doesn't exist, it means that it hasn't been initialized
+            # and will be below.
+            log(INFO, f"Current adjustment weights are all initialized to {self.initial_adjustment_weight}")
 
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
         # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
@@ -365,6 +379,8 @@ class FedDgGa(FedAvg):
 
             # sum weighted parameters
             if aggregated_results is None:
+                # If this is the first client we're applying adjustment to, we set the results to those parameters.
+                # Remaining client parameters will be subsequently added to these.
                 aggregated_results = weighted_client_parameters
             else:
                 assert len(weighted_client_parameters) == len(aggregated_results)
@@ -398,11 +414,19 @@ class FedDgGa(FedAvg):
 
             generalization_gaps.append(global_model_metric_value - local_model_metric_value)
 
+        log(
+            INFO,
+            "Client ID (CID) and Generalization Gaps (G_{{hat{{D_i}}}}(theta^r)): "
+            f"{list(zip(cids, generalization_gaps))}",
+        )
+
         # Calculating the normalized generalization gaps
         generalization_gaps_ndarray = np.array(generalization_gaps)
         mean_generalization_gap = np.mean(generalization_gaps_ndarray)
         var_generalization_gaps = generalization_gaps_ndarray - mean_generalization_gap
         max_var_generalization_gap = np.max(np.abs(var_generalization_gaps))
+        log(INFO, f"Mean Generalization Gap (mu): {mean_generalization_gap}")
+        log(INFO, f"Max Absolute Deviation of Generalization Gaps: {max_var_generalization_gap}")
 
         if max_var_generalization_gap == 0:
             log(
@@ -435,6 +459,7 @@ class FedDgGa(FedAvg):
 
         for cid in cids:
             self.adjustment_weights[cid] /= new_total_weight
+        log(INFO, f"New Generalization Adjustment Weights by Client ID (CID) are {self.adjustment_weights}")
 
     def get_current_weight_step_size(self, server_round: int) -> float:
         """
@@ -451,6 +476,9 @@ class FedDgGa(FedAvg):
         assert self.num_rounds is not None
         weight_step_size_decay = self.adjustment_weight_step_size / self.num_rounds
         weight_step_size_for_round = self.adjustment_weight_step_size - ((server_round - 1) * weight_step_size_decay)
+        log(
+            INFO, f"Step size for round: {weight_step_size_for_round}, original was {self.adjustment_weight_step_size}"
+        )
 
         # Omitting an additional scaler here that is present in the reference
         # implementation but not in the paper:

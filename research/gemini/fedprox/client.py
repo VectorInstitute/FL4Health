@@ -144,15 +144,15 @@ if __name__ == "__main__":
     elif args.task == "delirium":
         data_path = Path("delirium_data")
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
     client = GeminiFedProxClient(
         data_path,
         [Binary_ROC_AUC(), Binary_F1(), Accuracy()],
         args.hospital_id,
-        DEVICE,
+        device,
         args.task,
         args.learning_rate,
         args.mu,

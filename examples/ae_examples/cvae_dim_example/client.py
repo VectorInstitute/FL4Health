@@ -22,8 +22,8 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class CvaeDimClient(BasicClient):
-    def __init__(self, data_path: Path, metrics: Sequence[Metric], DEVICE: torch.device, condition: torch.Tensor):
-        super().__init__(data_path, metrics, DEVICE)
+    def __init__(self, data_path: Path, metrics: Sequence[Metric], device: torch.device, condition: torch.Tensor):
+        super().__init__(data_path, metrics, device)
         self.condition = condition
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
@@ -64,11 +64,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     set_all_random_seeds(42)
     # Creating the condition vector used for training this CVAE.
     condition_vector = torch.nn.functional.one_hot(torch.tensor(args.condition), num_classes=args.num_conditions)
-    client = CvaeDimClient(data_path, [Accuracy("accuracy")], DEVICE, condition_vector)
+    client = CvaeDimClient(data_path, [Accuracy("accuracy")], device, condition_vector)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

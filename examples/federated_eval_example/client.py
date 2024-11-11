@@ -63,12 +63,12 @@ if __name__ == "__main__":
     data_path = Path(args.dataset_path)
     client_checkpoint_path = Path(args.checkpoint_path) if args.checkpoint_path else None
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     client = CifarClient(
         data_path=data_path,
         metrics=[Accuracy("accuracy")],
-        device=DEVICE,
+        device=device,
         model_checkpoint_path=client_checkpoint_path,
     )
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

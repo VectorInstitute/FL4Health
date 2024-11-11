@@ -37,8 +37,8 @@ def main(
     client_name: Optional[str] = None,
 ) -> None:
     # Log device and server address
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Using device: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Using device: {device}")
     log(INFO, f"Using server address: {server_address}")
 
     # Load the dataset if necessary
@@ -63,7 +63,7 @@ def main(
             name="Pseudo DICE",
             metric=GeneralizedDiceScore(
                 num_classes=msd_num_labels[msd_dataset_enum], weight_type="square", include_background=False
-            ).to(DEVICE),
+            ).to(device),
         ),
         pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
@@ -77,7 +77,7 @@ def main(
         verbose=verbose,
         compile=compile,
         # BaseClient Args
-        device=DEVICE,
+        device=device,
         metrics=[dice],
         progress_bar=verbose,
         intermediate_client_state_dir=(

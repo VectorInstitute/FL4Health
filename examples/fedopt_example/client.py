@@ -95,7 +95,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load model and data
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = NewsClassifierClient(data_path, [CompoundMetric("Compound Metric")], DEVICE)
+    client = NewsClassifierClient(data_path, [CompoundMetric("Compound Metric")], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
