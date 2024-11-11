@@ -137,11 +137,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     data_path = Path(args.dataset_dir)
 
-    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
     log(INFO, f"Learning Rate: {args.learning_rate}")
     log(INFO, f"Sparsity Level: {args.sparsity_level}")
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     client = BertSparseTensorExchangeClient(
         data_path,
         [Accuracy("accuracy")],
-        DEVICE,
+        device,
         learning_rate=args.learning_rate,
         sparsity_level=args.sparsity_level,
         checkpointer=checkpointer,

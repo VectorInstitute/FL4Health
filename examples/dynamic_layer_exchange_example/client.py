@@ -67,8 +67,8 @@ if __name__ == "__main__":
     parser.add_argument("--dataset_path", action="store", type=str, help="Path to the local dataset")
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
-    client = CifarDynamicLayerClient(data_path, [Accuracy("accuracy")], DEVICE, store_initial_model=True)
+    client = CifarDynamicLayerClient(data_path, [Accuracy("accuracy")], device, store_initial_model=True)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
     client.shutdown()

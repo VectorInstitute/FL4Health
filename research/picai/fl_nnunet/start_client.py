@@ -37,21 +37,21 @@ def main(
 ) -> None:
 
     # Log device and server address
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Using device: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Using device: {device}")
     log(INFO, f"Using server address: {server_address}")
 
     # Define metrics
     dice1 = TransformsMetric(
         metric=TorchMetric(
             name="dice1",
-            metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(DEVICE),
+            metric=GeneralizedDiceScore(num_classes=2, weight_type="square", include_background=False).to(device),
         ),
         pred_transforms=[torch.sigmoid, get_segs_from_probs],
     )
     # The Dice class requires preds to be ohe, but targets to not be ohe
     dice2 = TransformsMetric(
-        metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(DEVICE)),
+        metric=TorchMetric(name="dice2", metric=Dice(num_classes=2, ignore_index=0).to(device)),
         pred_transforms=[torch.sigmoid],
         target_transforms=[partial(collapse_one_hot_tensor, dim=1)],
     )
@@ -69,7 +69,7 @@ def main(
         verbose=verbose,
         compile=compile,
         # BaseClient Args
-        device=DEVICE,
+        device=device,
         metrics=metrics,
         progress_bar=verbose,
         intermediate_client_state_dir=(

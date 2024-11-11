@@ -4,20 +4,14 @@ from logging import WARNING
 from typing import Callable, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from flwr.common import (
-    MetricsAggregationFn,
-    NDArray,
-    NDArrays,
-    Parameters,
-    ndarrays_to_parameters,
-    parameters_to_ndarrays,
-)
+from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters, ndarrays_to_parameters
 from flwr.common.logger import log
 from flwr.common.typing import FitRes, Scalar
 from flwr.server.client_proxy import ClientProxy
 
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithLayerNames
 from fl4health.strategies.basic_fedavg import BasicFedAvg
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 
 
 class FedAvgDynamicLayer(BasicFedAvg):
@@ -124,13 +118,17 @@ class FedAvgDynamicLayer(BasicFedAvg):
         if not self.accept_failures and failures:
             return None, {}
 
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+
         # Convert client layer weights and names into ndarrays
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
+        decoded_and_sorted_results = [
+            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]
 
         # For each layer of the model, perform weighted average of all received weights from clients
-        aggregated_params = self.aggregate(weights_results)
+        aggregated_params = self.aggregate(decoded_and_sorted_results)
 
         weights_names = []
         weights = []

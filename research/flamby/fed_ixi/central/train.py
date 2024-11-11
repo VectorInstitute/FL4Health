@@ -64,11 +64,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
 
     trainer = FedIxiCentralizedTrainer(
-        DEVICE,
+        device,
         args.artifact_dir,
         args.dataset_dir,
         args.run_name,

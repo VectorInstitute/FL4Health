@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
 
-    client = MnistEnsembleClient(data_path, [Accuracy()], DEVICE)
+    client = MnistEnsembleClient(data_path, [Accuracy()], device)
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())

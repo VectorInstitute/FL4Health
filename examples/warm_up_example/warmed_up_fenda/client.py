@@ -103,11 +103,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     data_path = Path(args.dataset_path)
     pretrained_model_dir = Path(args.pretrained_model_dir)
     weights_mapping_path = Path(args.weights_mapping_path) if args.weights_mapping_path else None
-    log(INFO, f"Device to be used: {DEVICE}")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Server Address: {args.server_address}")
 
     # Set the random seed for reproducibility
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     client = MnistFendaClient(
         data_path,
         [Accuracy("accuracy")],
-        DEVICE,
+        device,
         pretrained_model_dir,
         weights_mapping_path,
     )

@@ -163,8 +163,8 @@ if __name__ == "__main__":
         # change based on the location of data
         data_path = Path("heterogeneous_data")
 
-    DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    log(INFO, f"Device to be used: {DEVICE}")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    log(INFO, f"Device to be used: {device}")
     log(INFO, f"Task: {args.task}")
     log(INFO, f"Server Address: {args.server_address}")
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
     client = GeminiPerFclClient(
         data_path=data_path,
         metrics=[Binary_ROC_AUC(), Binary_F1(), Accuracy()],
-        device=DEVICE,
+        device=device,
         hospital_id=args.hospital_id,
         learning_rate=args.learning_rate,
         learning_task=args.task,

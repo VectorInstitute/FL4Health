@@ -12,7 +12,6 @@ from flwr.common import (
     Parameters,
     Scalar,
     ndarrays_to_parameters,
-    parameters_to_ndarrays,
 )
 from flwr.common.logger import log
 from flwr.server.client_manager import ClientManager
@@ -23,6 +22,7 @@ from opacus import GradSampleModule
 from fl4health.client_managers.base_sampling_manager import BaseFractionSamplingManager
 from fl4health.strategies.aggregate_utils import aggregate_losses, aggregate_results
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
+from fl4health.utils.functions import decode_and_pseudo_sort_results
 from fl4health.utils.parameter_extraction import get_all_model_parameters
 
 
@@ -248,12 +248,15 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         if not self.accept_failures and failures:
             return None, {}
 
-        # Convert results
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples) for _, fit_res in results
+        # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
+        # summing the numpy arrays during aggregation. This ensures that addition will occur in the same order,
+        # reducing numerical fluctuation.
+        decoded_and_sorted_results = [
+            (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]
+
         # Aggregate them in a weighted or unweighted fashion based on settings.
-        aggregated_arrays = aggregate_results(weights_results, self.weighted_aggregation)
+        aggregated_arrays = aggregate_results(decoded_and_sorted_results, self.weighted_aggregation)
         # Convert back to parameters
         parameters_aggregated = ndarrays_to_parameters(aggregated_arrays)
 
