@@ -148,7 +148,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
         # Dropping the last partition as they are "excess" indices
         return partitioned_indices[:-1], min_samples, partition_allocations
 
-    def partition_dataset(self, original_dataset: D, max_retries: int = 5) -> Tuple[List[D], Dict[T, np.ndarray]]:
+    def partition_dataset(
+        self, original_dataset: D, max_retries: Optional[int] = 5
+    ) -> Tuple[List[D], Dict[T, np.ndarray]]:
         """
         Attempts partitioning of the original dataset up to max_retries times. Retries are potentially required if
         the user requests a minimum number of labels be assigned to each of the partitions. If the drawn Dirichlet
@@ -157,16 +159,19 @@ class DirichletLabelBasedAllocation(Generic[T]):
 
         Args:
             original_dataset (D): The dataset to be partitioned
-            max_retries (int, optional): Number of times to attempt to satisfy a user provided minimum
-                label-associated data points per partition. Defaults to 5.
+            max_retries (Optional[int], optional): Number of times to attempt to satisfy a user provided minimum
+                label-associated data points per partition. Set this value to None if you want to retry indefinitely.
+                Defaults to 5.
 
         Raises:
             ValueError: Throws this error if the retries have been exhausted and the user provided minimum is not met.
 
         Returns:
-            List[D]: The partitioned datasets, length should correspond to self.number_of_partitions
-            Dict[T, np.ndarray]: The Dirichlet distribution used to partition the data points for each label.
+            Tuple[List[D], Dict[T, np.ndarray]]: List[D] is the partitioned datasets, length should correspond to
+            self.number_of_partitions. Dict[T, np.ndarray] is the Dirichlet distribution used to partition the data
+            points for each label.
         """
+
         targets = original_dataset.targets
         assert targets is not None, "A label-based partitioner requires targets but this dataset has no targets"
         partitioned_indices = [torch.Tensor([]).int() for _ in range(self.number_of_partitions)]
@@ -195,7 +200,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
                             f"minimum requested was {self.min_label_examples}. Resampling the partition..."
                         ),
                     )
-                    if partition_attempts == max_retries:
+                    if max_retries is not None and partition_attempts >= max_retries:
                         raise ValueError(
                             (
                                 f"Max Retries: {max_retries} reached. Partitioning failed to "

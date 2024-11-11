@@ -55,7 +55,7 @@ def main(config: Dict[str, Any], server_address: str, step_size: float) -> None:
     # is done right before fit_round.
     client_manager = FixedSamplingClientManager()
     # Initializing the model on the server side
-    model = ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1)
+    model = ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
 
     # Define a fairness metric based on the loss associated with the whole FENDA model
     fenda_fairness_metric = FairnessMetric(FairnessMetricType.LOSS)
@@ -128,6 +128,6 @@ if __name__ == "__main__":
     log(INFO, f"Step Size: {args.step_size}")
 
     # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
+    set_all_random_seeds(args.seed, use_deterministic_torch_algos=True, disable_torch_benchmarking=True)
 
     main(config, args.server_address, args.step_size)
