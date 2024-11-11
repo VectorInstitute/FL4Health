@@ -65,7 +65,7 @@ class CifarDittoClient(DittoClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:
-        return ConvNet(in_channels=3, use_bn=False, dropout=0.1).to(self.device)
+        return ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512).to(self.device)
 
 
 if __name__ == "__main__":
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     log(INFO, f"Beta: {args.beta}")
 
     # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
+    set_all_random_seeds(args.seed, use_deterministic_torch_algos=True, disable_torch_benchmarking=True)
 
     # Adding extensive checkpointing for the client
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)

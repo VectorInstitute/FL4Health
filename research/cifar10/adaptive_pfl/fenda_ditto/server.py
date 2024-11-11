@@ -45,7 +45,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1)
+    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -118,6 +118,6 @@ if __name__ == "__main__":
         log(INFO, "Adapting the loss weight for model drift via global model loss")
 
     # Set the random seed for reproducibility
-    set_all_random_seeds(args.seed)
+    set_all_random_seeds(args.seed, use_deterministic_torch_algos=True, disable_torch_benchmarking=True)
 
     main(config, args.server_address, args.lam, args.use_adaptation)
