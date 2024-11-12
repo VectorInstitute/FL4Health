@@ -47,7 +47,7 @@ class DeepMmdLoss(torch.nn.Module):
         hidden_size: int = 10,
         output_size: int = 50,
         lr: float = 0.001,
-        training: bool = True,
+        training: bool = False,
         is_unbiased: bool = True,
         gaussian_degree: int = 1,
         optimization_steps: int = 5,
@@ -86,14 +86,16 @@ class DeepMmdLoss(torch.nn.Module):
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
+        # Set the model to evaluation mode as default
+        self.featurizer.eval()
 
         # Initialize parameters
         self.epsilon_opt: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
-        self.epsilon_opt.requires_grad = self.training
+        self.epsilon_opt.requires_grad = False
         self.sigma_q_opt: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
-        self.sigma_q_opt.requires_grad = self.training
+        self.sigma_q_opt.requires_grad = False
         self.sigma_phi_opt: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
-        self.sigma_phi_opt.requires_grad = self.training
+        self.sigma_phi_opt.requires_grad = False
 
         # Initialize optimizers
         self.optimizer_F = torch.optim.AdamW(
@@ -240,7 +242,10 @@ class DeepMmdLoss(torch.nn.Module):
         self.sigma_phi_opt.requires_grad = True
         self.epsilon_opt.requires_grad = True
 
-        features = torch.cat([X, Y], 0)
+        indices = torch.randperm(Y.size(0))
+        Y_shuffled = Y[indices]
+
+        features = torch.cat([X, Y_shuffled], 0)
 
         # ------------------------------
         #  Train deep network for MMD-D

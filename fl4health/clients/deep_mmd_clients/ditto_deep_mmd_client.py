@@ -14,6 +14,7 @@ from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffe
 from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
+from fl4health.utils.random import restore_random_state, save_random_state
 from fl4health.utils.typing import TorchFeatureType, TorchInputType, TorchPredType, TorchTargetType
 
 
@@ -67,11 +68,16 @@ class DittoDeepMmdClient(DittoClient):
             feature_extraction_layers_with_size = {}
         self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers_with_size.keys()}
         self.deep_mmd_losses: Dict[str, DeepMmdLoss] = {}
+        # Save the random state to be restored after initializing the Deep MMD loss layers.
+        random_state, numpy_state, torch_state = save_random_state()
         for layer, feature_size in feature_extraction_layers_with_size.items():
             self.deep_mmd_losses[layer] = DeepMmdLoss(
                 device=self.device,
                 input_size=feature_size,
             ).to(self.device)
+        # Restore the random state after initializing the Deep MMD loss layers. This is to ensure that the random state
+        # would not change after initializing the Deep MMD loss.
+        restore_random_state(random_state, numpy_state, torch_state)
         self.initial_global_model: nn.Module
         self.local_feature_extractor: FeatureExtractorBuffer
         self.initial_global_feature_extractor: FeatureExtractorBuffer

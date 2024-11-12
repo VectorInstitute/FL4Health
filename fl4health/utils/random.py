@@ -1,7 +1,7 @@
 import random
 import uuid
 from logging import INFO
-from typing import Optional
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import torch
@@ -58,6 +58,32 @@ def unset_all_random_seeds() -> None:
     np.random.seed(None)
     torch.seed()
     torch.use_deterministic_algorithms(False)
+
+
+def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
+    """
+    Save the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore the
+    state of the random number generators at a later time.
+    """
+    log(INFO, "Saving random state.")
+    random_state = random.getstate()
+    numpy_state = np.random.get_state()
+    torch_state = torch.get_rng_state()
+    return random_state, numpy_state, torch_state
+
+
+def restore_random_state(
+    random_state: Tuple[Any, ...], numpy_state: Dict[str, Any], torch_state: torch.Tensor
+) -> None:
+    """
+    Restore the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore
+    the state of the random number generators to a previously saved state.
+    """
+    log(INFO, "Restoring random state.")
+    random.setstate(random_state)
+    np.random.set_state(numpy_state)
+    torch.set_rng_state(torch_state)
+    return
 
 
 def generate_hash(length: int = 8) -> str:
