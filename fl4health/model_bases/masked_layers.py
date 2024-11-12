@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 from typing import Optional, Union
 
@@ -77,7 +79,7 @@ class MaskedLinear(nn.Linear):
         return F.linear(input, masked_weight, masked_bias)
 
     @classmethod
-    def from_pretrained(cls, linear_module: nn.Linear) -> "MaskedLinear":
+    def from_pretrained(cls, linear_module: nn.Linear) -> MaskedLinear:
         """
         Return an instance of MaskedLinear whose weight and bias have the same values as those of linear_module.
         """
@@ -182,7 +184,7 @@ class MaskedConv1d(nn.Conv1d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv1d) -> "MaskedConv1d":
+    def from_pretrained(cls, conv_module: nn.Conv1d) -> MaskedConv1d:
         """
         Return an instance of MaskedConv1d whose weight and bias have the same values as those of conv_module.
         """
@@ -299,7 +301,7 @@ class MaskedConv2d(nn.Conv2d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv2d) -> "MaskedConv2d":
+    def from_pretrained(cls, conv_module: nn.Conv2d) -> MaskedConv2d:
         """
         Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.
         """
@@ -412,7 +414,7 @@ class MaskedConv3d(nn.Conv3d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv3d) -> "MaskedConv3d":
+    def from_pretrained(cls, conv_module: nn.Conv3d) -> MaskedConv3d:
         """
         Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.
         """
