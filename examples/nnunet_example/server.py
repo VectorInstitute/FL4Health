@@ -23,8 +23,10 @@ from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.reporting.json_reporter import JsonReporter
 from fl4health.server.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
+from fl4health.utils.profiling import Profiler
 
 
 def get_config(
@@ -100,6 +102,7 @@ def main(
             Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
         ),
         server_name=server_name,
+        reporters=[JsonReporter()],
     )
 
     fl.server.start_server(
@@ -151,9 +154,12 @@ if __name__ == "__main__":
     with open(args.config_path, "r") as f:
         config = yaml.safe_load(f)
 
+    profiler = Profiler()
+    profiler.start()
     main(
         config,
         server_address=args.server_address,
         intermediate_server_state_dir=args.intermediate_server_state_dir,
         server_name=args.server_name,
     )
+    profiler.stop()

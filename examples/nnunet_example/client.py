@@ -19,10 +19,12 @@ from nnunetv2.dataset_conversion.convert_MSD_dataset import convert_msd_dataset
 from torchmetrics.segmentation import GeneralizedDiceScore
 
 from fl4health.clients.nnunet_client import NnunetClient
+from fl4health.reporting.json_reporter import JsonReporter
 from fl4health.utils.load_data import load_msd_dataset
 from fl4health.utils.metrics import TorchMetric, TransformsMetric
 from fl4health.utils.msd_dataset_sources import get_msd_dataset_enum, msd_num_labels
 from fl4health.utils.nnunet_utils import get_segs_from_probs, set_nnunet_env
+from fl4health.utils.profiling import Profiler
 
 
 def main(
@@ -84,6 +86,7 @@ def main(
             Path(intermediate_client_state_dir) if intermediate_client_state_dir is not None else None
         ),
         client_name=client_name,
+        reporters=[JsonReporter()],
     )
 
     start_client(server_address=server_address, client=client.to_client())
@@ -201,6 +204,9 @@ if __name__ == "__main__":
 
     # Check fold argument and start main method
     fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
+
+    profiler = Profiler()
+    profiler.start()
     main(
         dataset_path=Path(args.dataset_path),
         msd_dataset_name=args.msd_dataset_name,
@@ -212,3 +218,4 @@ if __name__ == "__main__":
         intermediate_client_state_dir=args.intermediate_client_state_dir,
         client_name=args.client_name,
     )
+    profiler.stop()
