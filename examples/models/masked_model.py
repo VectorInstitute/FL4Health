@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from fl4health.model_bases.masked_layers import MaskedConv2d, MaskedLinear
+from fl4health.model_bases.masked_layers.masked_conv import MaskedConv2d
+from fl4health.model_bases.masked_layers.masked_linear import MaskedLinear
 
 
 class Masked4Cnn(nn.Module):
