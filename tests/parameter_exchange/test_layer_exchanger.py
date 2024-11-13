@@ -134,7 +134,6 @@ def test_fedpm_exchange() -> None:
     wrapped_model_states = masked_wrapped_model.state_dict()
     masks_wrapped, score_names_wrapped = select_scores_and_sample_masks(masked_wrapped_model, masked_wrapped_model)
     assert len(masks_wrapped) == len(score_names_wrapped)
-    print(score_names_wrapped)
     assert score_names_wrapped == [
         "model.conv1d.weight_scores",
         "model.conv1d.bias_scores",

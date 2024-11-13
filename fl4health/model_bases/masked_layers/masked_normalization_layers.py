@@ -9,13 +9,13 @@ from torch.nn.parameter import Parameter
 
 from fl4health.utils.functions import bernoulli_sample
 
-_shape_t = Union[int, List[int], torch.Size]
+TorchShape = Union[int, List[int], torch.Size]
 
 
 class MaskedLayerNorm(nn.LayerNorm):
     def __init__(
         self,
-        normalized_shape: _shape_t,
+        normalized_shape: TorchShape,
         eps: float = 1e-5,
         elementwise_affine: bool = True,
         bias: bool = True,
@@ -38,7 +38,7 @@ class MaskedLayerNorm(nn.LayerNorm):
         Note: the scores are not assumed to be bounded between 0 and 1.
 
         Args:
-            normalized_shape (int or list or torch.Size): input shape from an expected input.
+            normalized_shape (TorchShape): input shape from an expected input.
 
                 If a single integer is used, it is treated as a singleton list, and this module will
                 normalize over the last dimension which is expected to be of that specific size.
@@ -180,8 +180,7 @@ class _MaskedBatchNorm(_BatchNorm):
                     effect. Thus, bias_score only influences training when MaskedLayerNorm is created
                     from some pretrained nn.LayerNorm module whose bias is not all zeros.
         """
-        factory_kwargs = {"device": device, "dtype": dtype}
-        super().__init__(num_features, eps, momentum, affine, track_running_stats, **factory_kwargs)
+        super().__init__(num_features, eps, momentum, affine, track_running_stats, device=device, dtype=dtype)
         if self.affine:
             assert (self.weight is not None) and (self.bias is not None)
             self.weight.requires_grad = False
@@ -268,6 +267,8 @@ class _MaskedBatchNorm(_BatchNorm):
 class MaskedBatchNorm1d(_MaskedBatchNorm):
     """
     Applies (masked) Batch Normalization over a 2D or 3D input.
+    Input shape should be (N, C) or (N, C, L), where N is the batch size,
+    C is the number of features/channels, and L is the sequence length.
     """
 
     def _check_input_dim(self, input: Tensor) -> None:

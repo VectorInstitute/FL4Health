@@ -53,9 +53,7 @@ class MaskedLinear(nn.Linear):
             self.bias.requires_grad = False
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
-            self.register_parameter("bias", None)
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
         # Produce probability scores and perform bernoulli sampling

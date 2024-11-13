@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import List, Optional, Union
 
 import torch
@@ -83,7 +85,6 @@ class MaskedConv1d(nn.Conv1d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -98,7 +99,7 @@ class MaskedConv1d(nn.Conv1d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv1d) -> "MaskedConv1d":
+    def from_pretrained(cls, conv_module: nn.Conv1d) -> MaskedConv1d:
         """
         Return an instance of MaskedConv1d whose weight and bias have the same values as those of conv_module.
         """
@@ -200,7 +201,6 @@ class MaskedConv2d(nn.Conv2d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -215,7 +215,7 @@ class MaskedConv2d(nn.Conv2d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv2d) -> "MaskedConv2d":
+    def from_pretrained(cls, conv_module: nn.Conv2d) -> MaskedConv2d:
         """
         Return an instance of MaskedConv2d whose weight and bias have the same values as those of conv_module.
         """
@@ -313,7 +313,6 @@ class MaskedConv3d(nn.Conv3d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor) -> Tensor:
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -328,7 +327,7 @@ class MaskedConv3d(nn.Conv3d):
         return self._conv_forward(input, weight=masked_weight, bias=masked_bias)
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.Conv3d) -> "MaskedConv3d":
+    def from_pretrained(cls, conv_module: nn.Conv3d) -> MaskedConv3d:
         """
         Return an instance of MaskedConv3d whose weight and bias have the same values as those of conv_module.
         """
@@ -374,7 +373,9 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         dtype: Optional[torch.dtype] = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose1d layers.
+        Implementation of masked ConvTranspose1d layers. For more information on transposed convolution,
+        please see the PyTorch implementation of nn.Conv1d.
+        (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose1d)
 
         Like regular ConvTranspose1d layers (i.e., nn.ConvTranspose1d module),
         a masked transpose convolutional layer has a weight (i.e., convolutional filter)
@@ -391,7 +392,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
 
         Args:
             in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
+            out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
@@ -431,7 +432,6 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
         # Note: the same check is already present in super().__init__
@@ -442,15 +442,14 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         # (The type ignore below is just used to resolve some small typing issue.)
         # One cannot replace List by Tuple or Sequence in "_output_padding"
         # because TorchScript does not support `Sequence[T]` or `Tuple[T, ...]`.
-        num_spatial_dims = 1
         output_padding = self._output_padding(
             input,
             output_size,
             self.stride,  # type: ignore[arg-type]
             self.padding,  # type: ignore[arg-type]
             self.kernel_size,  # type: ignore[arg-type]
-            num_spatial_dims,
-            self.dilation,  # type: ignore[arg-type]
+            num_spatial_dims=1,
+            dilation=self.dilation,  # type: ignore[arg-type]
         )
 
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -468,7 +467,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         )
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.ConvTranspose1d) -> "MaskedConvTranspose1d":
+    def from_pretrained(cls, conv_module: nn.ConvTranspose1d) -> MaskedConvTranspose1d:
         """
         Return an instance of MaskedConvTranspose1d whose weight and bias have the same values as those of conv_module.
         """
@@ -518,7 +517,9 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         dtype: Optional[torch.dtype] = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose2d layers.
+        Implementation of masked ConvTranspose2d layers. For more information on transposed convolution,
+        please see the PyTorch implementation of nn.Conv2d.
+        (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose2d)
 
         Like regular ConvTranspose2d layers (i.e., nn.ConvTranspose2d module),
         a masked transpose convolutional layer has a weight (i.e., convolutional filter)
@@ -535,7 +536,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
 
         Args:
             in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
+            out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
@@ -574,7 +575,6 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
         # Note: the same check is already present in super().__init__
@@ -582,15 +582,14 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
         assert isinstance(self.padding, tuple)
 
-        num_spatial_dims = 2
         output_padding = self._output_padding(
             input,
             output_size,
             self.stride,  # type: ignore[arg-type]
             self.padding,  # type: ignore[arg-type]
             self.kernel_size,  # type: ignore[arg-type]
-            num_spatial_dims,
-            self.dilation,  # type: ignore[arg-type]
+            num_spatial_dims=2,
+            dilation=self.dilation,  # type: ignore[arg-type]
         )
 
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -608,7 +607,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         )
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.ConvTranspose2d) -> "MaskedConvTranspose2d":
+    def from_pretrained(cls, conv_module: nn.ConvTranspose2d) -> MaskedConvTranspose2d:
         """
         Return an instance of MaskedConvTranspose2d whose weight and bias have the same values as those of conv_module.
         """
@@ -658,7 +657,9 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         dtype: Optional[torch.dtype] = None,
     ) -> None:
         """
-        Implementation of masked ConvTranspose3d layers.
+        Implementation of masked ConvTranspose3d layers. For more information on transposed convolution,
+        please see the PyTorch implementation of nn.Conv3d.
+        (https://pytorch.org/docs/stable/_modules/torch/nn/modules/conv.html#ConvTranspose3d)
 
         Like regular ConvTranspose3d layers (i.e., nn.ConvTranspose3d module),
         a masked transpose convolutional layer has a weight (i.e., convolutional filter)
@@ -675,7 +676,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
 
         Args:
             in_channels (int): Number of channels in the input image
-            out_channels (int): Number of channels produced by the convolution
+            out_channels (int): Number of channels produced by the transposed convolution
             kernel_size (int or tuple): Size of the convolving kernel
             stride (int or tuple, optional): Stride of the convolution. Default: 1
             padding (int or tuple, optional): ``dilation * (kernel_size - 1) - padding`` zero-padding
@@ -714,7 +715,6 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             self.bias_scores = Parameter(torch.randn_like(self.bias), requires_grad=True)
         else:
             self.register_parameter("bias_scores", None)
-        self.reset_parameters()
 
     def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
         # Note: the same check is already present in super().__init__
@@ -722,15 +722,14 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
         assert isinstance(self.padding, tuple)
 
-        num_spatial_dims = 3
         output_padding = self._output_padding(
             input,
             output_size,
             self.stride,  # type: ignore[arg-type]
             self.padding,  # type: ignore[arg-type]
             self.kernel_size,  # type: ignore[arg-type]
-            num_spatial_dims,
-            self.dilation,  # type: ignore[arg-type]
+            num_spatial_dims=3,
+            dilation=self.dilation,  # type: ignore[arg-type]
         )
 
         weight_prob_scores = torch.sigmoid(self.weight_scores)
@@ -748,7 +747,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         )
 
     @classmethod
-    def from_pretrained(cls, conv_module: nn.ConvTranspose3d) -> "MaskedConvTranspose3d":
+    def from_pretrained(cls, conv_module: nn.ConvTranspose3d) -> MaskedConvTranspose3d:
         """
         Return an instance of MaskedConvTranspose3d whose weight and bias have the same values as those of conv_module.
         """
