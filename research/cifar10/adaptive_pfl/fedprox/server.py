@@ -61,7 +61,7 @@ def main(
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=256)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -83,6 +83,7 @@ def main(
         model=model,
         strategy=strategy,
         checkpointer=checkpointer,
+        accept_failures=False,
     )
 
     fl.server.start_server(

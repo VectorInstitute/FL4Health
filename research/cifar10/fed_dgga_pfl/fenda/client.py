@@ -63,7 +63,7 @@ class CifarFendaClient(FendaClient):
         return torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
 
     def get_model(self, config: Config) -> FendaModel:
-        return ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512).to(self.device)
+        return ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1, hidden=256).to(self.device)
 
 
 if __name__ == "__main__":

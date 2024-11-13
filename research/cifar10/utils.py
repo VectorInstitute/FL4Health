@@ -50,6 +50,24 @@ def evaluate_cifar10_model(
     return accuracy
 
 
+def evaluate_cifar10_model_pfl(
+    model: nn.Module,
+    dataset: DataLoader,
+    metrics: Sequence[Metric],
+    device: torch.device,
+    is_apfl: bool,
+    metric_name: str = "accuracy",
+) -> float:
+    meter = evaluate_model_on_dataset(model, dataset, metrics, device, is_apfl)
+
+    computed_metrics = meter.compute()
+    assert f"test_meter - prediction - {metric_name}" in computed_metrics
+    metric = computed_metrics[f"test_meter - prediction - {metric_name}"]
+    assert isinstance(metric, float)
+
+    return metric
+
+
 def load_eval_best_pre_aggregation_local_model(run_folder_dir: str, client_number: int) -> nn.Module:
     model_checkpoint_path = os.path.join(run_folder_dir, f"pre_aggregation_client_{client_number}_best_model.pkl")
     model = torch.load(model_checkpoint_path)

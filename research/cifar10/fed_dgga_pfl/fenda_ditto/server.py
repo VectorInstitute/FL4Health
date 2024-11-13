@@ -56,7 +56,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
     # is done right before fit_round.
     client_manager = FixedSamplingClientManager()
     # Initializing the model on the server side
-    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=256)
 
     # Define a fairness metric based on the loss associated with the global Ditto model as that is the one being
     # aggregated by the server.
@@ -79,7 +79,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, step_size: flo
         fairness_metric=fenda_ditto_fairness_metric,
     )
 
-    server = PersonalServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalServer(client_manager=client_manager, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

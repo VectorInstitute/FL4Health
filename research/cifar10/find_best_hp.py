@@ -1,5 +1,6 @@
 import argparse
 import os
+import re
 from logging import INFO
 from typing import List, Optional
 
@@ -19,10 +20,21 @@ def get_run_folders(hp_dir: str) -> List[str]:
 
 def get_weighted_loss_from_server_log(run_folder_path: str) -> float:
     server_log_path = os.path.join(run_folder_path, "server.out")
+
     with open(server_log_path, "r") as handle:
-        files_lines = handle.readlines()
-        line_to_convert = files_lines[-1].strip()
-        return float(line_to_convert)
+        file_lines = handle.readlines()
+        index = 0
+        while index < len(file_lines) and not re.search(
+            r"Best Aggregated \(Weighted\) Loss seen by the Server: ", file_lines[index]
+        ):
+            index += 1
+        if index >= len(file_lines):
+            raise ValueError(
+                f"Loss Line not found in server logs for file at {server_log_path}. Something went wrong."
+            )
+        else:
+            line_to_convert = file_lines[index + 1].strip()
+            return float(line_to_convert)
 
 
 def main(hp_sweep_dir: str) -> None:

@@ -68,10 +68,10 @@ class CifarFendaDittoClient(FendaDittoClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> FendaModel:
-        return ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512).to(self.device)
+        return ConvNetFendaModel(in_channels=3, use_bn=False, dropout=0.1, hidden=256).to(self.device)
 
     def get_global_model(self, config: Config) -> SequentiallySplitModel:
-        return ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512).to(self.device)
+        return ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=256).to(self.device)
 
 
 if __name__ == "__main__":

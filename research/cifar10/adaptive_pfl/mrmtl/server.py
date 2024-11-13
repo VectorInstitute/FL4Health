@@ -32,13 +32,14 @@ class PersonalMrMtlServer(PersonalServer):
         self,
         client_manager: ClientManager,
         strategy: Optional[Strategy] = None,
+        accept_failures: bool = False,
     ) -> None:
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint
         ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
         # Personal approaches don't train a "server" model. Rather, each client trains a client specific model with
         # some globally shared weights. So we don't checkpoint a global model
-        super().__init__(client_manager, strategy)
+        super().__init__(client_manager, strategy, accept_failures=accept_failures)
 
 
 def fit_config(
@@ -69,7 +70,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=256)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -86,7 +87,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
         adapt_loss_weight=adapt_loss_weight,
     )
 
-    server = PersonalMrMtlServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalMrMtlServer(client_manager=client_manager, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

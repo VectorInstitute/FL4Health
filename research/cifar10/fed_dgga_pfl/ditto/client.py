@@ -65,7 +65,7 @@ class CifarDittoClient(DittoClient):
         return {"global": global_optimizer, "local": local_optimizer}
 
     def get_model(self, config: Config) -> nn.Module:
-        return ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512).to(self.device)
+        return ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=256).to(self.device)
 
 
 if __name__ == "__main__":

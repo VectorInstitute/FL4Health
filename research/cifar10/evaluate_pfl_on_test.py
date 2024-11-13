@@ -9,11 +9,11 @@ from flwr.common.logger import log
 
 from fl4health.utils.dataset import TensorDataset
 from fl4health.utils.load_data import load_cifar10_test_data
-from fl4health.utils.metrics import Accuracy
+from fl4health.utils.metrics import F1, Accuracy
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 from research.cifar10.preprocess import get_test_preprocessed_data
 from research.cifar10.utils import (
-    evaluate_cifar10_model,
+    evaluate_cifar10_model_pfl,
     get_all_run_folders,
     get_metric_avg_std,
     load_best_global_model,
@@ -25,7 +25,7 @@ from research.cifar10.utils import (
     write_measurement_results,
 )
 
-NUM_CLIENTS = 5
+NUM_CLIENTS = 7
 BATCH_SIZE = 32
 
 
@@ -42,12 +42,17 @@ def main(
     eval_last_global_model: bool,
     eval_over_aggregated_test_data: bool,
     heterogeneity_level: float,
+    metric_name: str,
     is_apfl: bool,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     all_run_folder_dir = get_all_run_folders(artifact_dir)
     test_results: Dict[str, float] = {}
-    metrics = [Accuracy("cifar10_accuracy")]
+    metrics = [
+        Accuracy("accuracy"),
+        F1("f1_macro", average="macro"),
+        F1("f1_weight", average="weighted"),
+    ]
 
     all_pre_best_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
     all_pre_last_local_test_metrics = {run_folder_dir: 0.0 for run_folder_dir in all_run_folder_dir}
@@ -124,7 +129,9 @@ def main(
         for run_folder_dir in all_run_folder_dir:
             if eval_best_pre_aggregation_local_models:
                 local_model = load_eval_best_pre_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_cifar10_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_cifar10_model_pfl(
+                    local_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -138,8 +145,8 @@ def main(
                 )
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_cifar10_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_local_run_metric = evaluate_cifar10_model_pfl(
+                        local_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -151,7 +158,9 @@ def main(
 
             if eval_last_pre_aggregation_local_models:
                 local_model = load_eval_last_pre_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_cifar10_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_cifar10_model_pfl(
+                    local_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -166,8 +175,8 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_cifar10_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_local_run_metric = evaluate_cifar10_model_pfl(
+                        local_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -179,7 +188,9 @@ def main(
 
             if eval_best_post_aggregation_local_models:
                 local_model = load_eval_best_post_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_cifar10_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_cifar10_model_pfl(
+                    local_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -194,8 +205,8 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_cifar10_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_local_run_metric = evaluate_cifar10_model_pfl(
+                        local_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -207,7 +218,9 @@ def main(
 
             if eval_last_post_aggregation_local_models:
                 local_model = load_eval_last_post_aggregation_local_model(run_folder_dir, client_number)
-                local_run_metric = evaluate_cifar10_model(local_model, test_loader, metrics, device, is_apfl)
+                local_run_metric = evaluate_cifar10_model_pfl(
+                    local_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -222,8 +235,8 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_local_run_metric = evaluate_cifar10_model(
-                        local_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_local_run_metric = evaluate_cifar10_model_pfl(
+                        local_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -235,7 +248,9 @@ def main(
 
             if eval_best_global_model:
                 server_model = load_best_global_model(run_folder_dir)
-                server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
+                server_run_metric = evaluate_cifar10_model_pfl(
+                    server_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -250,8 +265,8 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_server_run_metric = evaluate_cifar10_model(
-                        server_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_server_run_metric = evaluate_cifar10_model_pfl(
+                        server_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -263,7 +278,9 @@ def main(
 
             if eval_last_global_model:
                 server_model = load_last_global_model(run_folder_dir)
-                server_run_metric = evaluate_cifar10_model(server_model, test_loader, metrics, device, is_apfl)
+                server_run_metric = evaluate_cifar10_model_pfl(
+                    server_model, test_loader, metrics, device, is_apfl, metric_name
+                )
                 log(
                     INFO,
                     f"Client Number {client_number}, Run folder: {run_folder_dir}: "
@@ -278,8 +295,8 @@ def main(
 
                 if eval_over_aggregated_test_data:
 
-                    agg_server_run_metric = evaluate_cifar10_model(
-                        server_model, aggregated_test_loader, metrics, device, is_apfl
+                    agg_server_run_metric = evaluate_cifar10_model_pfl(
+                        server_model, aggregated_test_loader, metrics, device, is_apfl, metric_name
                     )
                     log(
                         INFO,
@@ -716,6 +733,13 @@ if __name__ == "__main__":
         required=False,
         default=0.1,
     )
+    parser.add_argument(
+        "--metric_name",
+        action="store",
+        type=str,
+        help="Name of the metric to be evaluated. Must correspond to a metric name in the metrics list evaluated",
+        required=True,
+    )
 
     args = parser.parse_args()
     log(INFO, f"Artifact Directory: {args.artifact_dir}")
@@ -754,5 +778,6 @@ if __name__ == "__main__":
         args.eval_last_global_model,
         args.eval_over_aggregated_test_data,
         args.beta,
+        args.metric_name,
         args.is_apfl,
     )

@@ -45,7 +45,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
 
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
-    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+    model = ConvNetFendaDittoGlobalModel(in_channels=3, use_bn=False, dropout=0.1, hidden=256)
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -62,7 +62,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float, adapt_loss_wei
         adapt_loss_weight=adapt_loss_weight,
     )
 
-    server = PersonalServer(client_manager=client_manager, strategy=strategy)
+    server = PersonalServer(client_manager=client_manager, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

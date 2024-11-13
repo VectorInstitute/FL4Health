@@ -20,6 +20,7 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
         model: Optional[nn.Module] = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        accept_failures: bool = False,
     ) -> None:
         """
         This is a wrapper class around FlServerWithCheckpointing for using the FedProx method that enforces that the
@@ -56,6 +57,7 @@ class FedProxServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
+            accept_failures=accept_failures,
         )
 
     def _hydrate_model_for_checkpointing(self) -> nn.Module:

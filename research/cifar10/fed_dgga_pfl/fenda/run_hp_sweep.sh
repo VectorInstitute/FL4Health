@@ -25,7 +25,7 @@ ARTIFACT_DIR=$2
 DATASET_DIR=$3
 VENV_PATH=$4
 
-LR_VALUES=( 0.0001 0.001 0.01 0.1 )
+LR_VALUES=( 0.0001 0.001 0.01 )
 # Note: These values must correspond to values for the preprocessed CIFAR datasets
 BETA_VALUES=( 0.1 0.5 5.0 )
 STEP_SIZES=( 0.1 0.2 0.5 )
