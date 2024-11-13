@@ -99,7 +99,7 @@ class WandBReporter(BaseReporter):
         if not self.initialized:
             self.initialize()
 
-        wandb_run = wandb.init(
+        self.run = wandb.init(
             project=self.project,
             entity=self.entity,
             config=self.config,
@@ -110,13 +110,6 @@ class WandBReporter(BaseReporter):
             id=self.id,
             **wandb_init_kwargs  # Other less commonly used kwargs
         )
-
-        if isinstance(wandb_run, wandb.wandb_run.Run):
-            self.run = wandb_run
-        else:
-            # Handle the case when wandb_run is None or RunDisabled
-            raise TypeError("wandb.init did not return the expected type `wandb.wandb_run.Run`")
-
         self.run_id = self.run._run_id  # If run_id was None, we need to reset run id
         self.run_started = True
 

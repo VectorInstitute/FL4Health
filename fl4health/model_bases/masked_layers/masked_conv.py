@@ -476,7 +476,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
-        padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _single(conv_module.padding)
+        padding_ = _single(conv_module.padding)
         dilation_ = _single(conv_module.dilation)
         output_padding_ = _single(conv_module.output_padding)
         masked_conv_module = cls(
@@ -616,7 +616,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
-        padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _pair(conv_module.padding)
+        padding_ = _pair(conv_module.padding)
         dilation_ = _pair(conv_module.dilation)
         output_padding_ = _pair(conv_module.output_padding)
         masked_conv_module = cls(
@@ -756,7 +756,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
         kernel_size_ = _triple(conv_module.kernel_size)
         stride_ = _triple(conv_module.stride)
-        padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _triple(conv_module.padding)
+        padding_ = _triple(conv_module.padding)
         dilation_ = _triple(conv_module.dilation)
         output_padding_ = _triple(conv_module.output_padding)
         masked_conv_module = cls(
