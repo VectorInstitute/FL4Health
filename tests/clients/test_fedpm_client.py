@@ -32,7 +32,7 @@ def test_getting_parameters(get_fedpm_client: FedPmClient) -> None:  # noqa
 
     assert isinstance(fedpm_client.parameter_exchanger, FedPmExchanger)
     masks, score_param_names = parameter_packer.unpack_parameters(masks_for_server)
-    assert len(score_param_names) == len(masks) == 8
+    assert len(score_param_names) == len(masks) == 22
 
     # Mimic server-side aggregation.
     aggregated_masks = []
