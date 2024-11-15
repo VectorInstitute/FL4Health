@@ -39,7 +39,8 @@ Y = torch.Tensor(
 
 def test_forward() -> None:
     torch.manual_seed(42)
-    deep_mmd_loss_1 = DeepMmdLoss(device=DEVICE, input_size=3, training=True, optimization_steps=1)
+    deep_mmd_loss_1 = DeepMmdLoss(device=DEVICE, input_size=3, optimization_steps=1)
+    deep_mmd_loss_1.training = True
     train_outputs_1 = []
     val_outputs_1 = []
     for i in range(5):
@@ -67,7 +68,8 @@ def test_forward() -> None:
 
     # Reset the seed for the second DeepMmdLoss
     torch.manual_seed(42)
-    deep_mmd_loss_2 = DeepMmdLoss(device=DEVICE, input_size=3, training=True, optimization_steps=5)
+    deep_mmd_loss_2 = DeepMmdLoss(device=DEVICE, input_size=3, optimization_steps=5)
+    deep_mmd_loss_2.training = True
     train_output = deep_mmd_loss_2(X, Y)
     deep_mmd_loss_2.training = False
     val_output = deep_mmd_loss_2(X, Y)

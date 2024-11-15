@@ -64,6 +64,10 @@ def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
     """
     Save the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore the
     state of the random number generators at a later time.
+
+    Returns:
+        Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
+            generators for Python, NumPy, and
     """
     log(INFO, "Saving random state.")
     random_state = random.getstate()
@@ -78,12 +82,16 @@ def restore_random_state(
     """
     Restore the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore
     the state of the random number generators to a previously saved state.
+
+    Args:
+        random_state (Tuple[Any, ...]): The state of the Python random number generator
+        numpy_state (Dict[str, Any]): The state of the NumPy random number generator
+        torch_state (torch.Tensor): The state of the PyTorch random number generator
     """
     log(INFO, "Restoring random state.")
     random.setstate(random_state)
     np.random.set_state(numpy_state)
     torch.set_rng_state(torch_state)
-    return
 
 
 def generate_hash(length: int = 8) -> str:
