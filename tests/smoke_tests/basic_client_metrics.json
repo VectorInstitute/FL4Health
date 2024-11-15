@@ -36,7 +36,7 @@
                 "test - checkpoint": 2.30109,
                 "test - prediction - accuracy": 0.0972
             },
-            "eval_loss": 2.2999
+            "eval_round_loss": 2.2999
         }
     }
 }
