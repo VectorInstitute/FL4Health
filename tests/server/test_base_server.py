@@ -114,11 +114,11 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
         "fit_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
         "rounds": {
             1: {
-                "eval_metrics_centralized": {"test_metric1": 123.123},
+                "eval_round_metrics_centralized": {"test_metric1": 123.123},
                 "val - loss - centralized": 123.123,
             },
             2: {
-                "eval_metrics_centralized": {"test_metric1": 123},
+                "eval_round_metrics_centralized": {"test_metric1": 123},
                 "val - loss - centralized": 123,
             },
         },
@@ -142,7 +142,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
         "rounds": {
             test_round: {
                 "fit_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-                "fit_metrics": test_metrics_aggregated,
+                "fit_round_metrics": test_metrics_aggregated,
                 "fit_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
@@ -257,7 +257,7 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
             test_round: {
                 "eval_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
                 "val - loss - aggregated": test_loss_aggregated,
-                "eval_metrics_aggregated": test_metrics_aggregated,
+                "eval_round_metrics_aggregated": test_metrics_aggregated,
                 "eval_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
