@@ -1,11 +1,20 @@
 import torch.nn as nn
 
-from fl4health.model_bases.masked_layers import (
+from fl4health.model_bases.masked_layers.masked_conv import (
     MaskedConv1d,
     MaskedConv2d,
     MaskedConv3d,
-    MaskedLinear,
-    convert_to_masked_model,
+    MaskedConvTranspose1d,
+    MaskedConvTranspose2d,
+    MaskedConvTranspose3d,
+)
+from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
+from fl4health.model_bases.masked_layers.masked_linear import MaskedLinear
+from fl4health.model_bases.masked_layers.masked_normalization_layers import (
+    MaskedBatchNorm1d,
+    MaskedBatchNorm2d,
+    MaskedBatchNorm3d,
+    MaskedLayerNorm,
 )
 from tests.test_utils.models_for_test import CompositeConvNet
 
@@ -95,6 +104,147 @@ def test_masked_conv3d_from_pretrained() -> None:
     assert (masked_conv_module.bias == conv_module.bias).all()
 
 
+def test_masked_conv_transposed_1d() -> None:
+    masked_conv_module = MaskedConvTranspose1d(
+        in_channels=16, out_channels=8, kernel_size=3, stride=2, padding=1, bias=True
+    )
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+
+def test_masked_conv_transposed_1d_from_pretrained() -> None:
+    conv_module = nn.ConvTranspose1d(in_channels=16, out_channels=8, kernel_size=3, stride=2, padding=1, bias=True)
+    masked_conv_module = MaskedConvTranspose1d.from_pretrained(conv_module=conv_module)
+
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+    assert (masked_conv_module.weight == conv_module.weight).all()
+    assert (masked_conv_module.bias == conv_module.bias).all()
+
+
+def test_masked_conv_transposed_2d() -> None:
+    masked_conv_module = MaskedConvTranspose2d(16, 33, (3, 5), stride=(2, 1), padding=(4, 2), bias=True)
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+
+def test_masked_conv_transposed_2d_from_pretrained() -> None:
+    conv_module = nn.ConvTranspose2d(16, 33, (3, 5), stride=(2, 1), padding=(4, 2), bias=True)
+    masked_conv_module = MaskedConvTranspose2d.from_pretrained(conv_module=conv_module)
+
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+    assert (masked_conv_module.weight == conv_module.weight).all()
+    assert (masked_conv_module.bias == conv_module.bias).all()
+
+
+def test_masked_conv_transposed_3d() -> None:
+    masked_conv_module = MaskedConvTranspose3d(16, 33, (3, 5, 2), stride=(2, 1, 1), padding=(0, 4, 2), bias=True)
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+
+def test_masked_conv_transposed_3d_from_pretrained() -> None:
+    conv_module = nn.ConvTranspose3d(16, 33, (3, 5, 2), stride=(2, 1, 1), padding=(0, 4, 2), bias=True)
+    masked_conv_module = MaskedConvTranspose3d.from_pretrained(conv_module=conv_module)
+
+    assert not masked_conv_module.weight.requires_grad
+    assert masked_conv_module.weight_scores.requires_grad
+    assert masked_conv_module.bias is not None and not masked_conv_module.bias.requires_grad
+    assert masked_conv_module.bias_scores.requires_grad
+
+    assert (masked_conv_module.weight == conv_module.weight).all()
+    assert (masked_conv_module.bias == conv_module.bias).all()
+
+
+def test_masked_layer_norm() -> None:
+    masked_layer_norm_module = MaskedLayerNorm(10, elementwise_affine=True, bias=True)
+    assert (masked_layer_norm_module.bias is not None) and (masked_layer_norm_module.weight is not None)
+    assert (not masked_layer_norm_module.weight.requires_grad) and masked_layer_norm_module.weight_scores.requires_grad
+    assert (not masked_layer_norm_module.bias.requires_grad) and masked_layer_norm_module.bias_scores.requires_grad
+
+
+def test_masked_layer_norm_from_pretrained() -> None:
+    layer_norm_module = nn.LayerNorm(10, elementwise_affine=True, bias=True)
+    masked_layer_norm_module = MaskedLayerNorm.from_pretrained(layer_norm_module=layer_norm_module)
+
+    assert (masked_layer_norm_module.bias is not None) and (masked_layer_norm_module.weight is not None)
+    assert (not masked_layer_norm_module.weight.requires_grad) and masked_layer_norm_module.weight_scores.requires_grad
+    assert (not masked_layer_norm_module.bias.requires_grad) and masked_layer_norm_module.bias_scores.requires_grad
+
+    assert (masked_layer_norm_module.weight == layer_norm_module.weight).all()
+    assert (masked_layer_norm_module.bias == layer_norm_module.bias).all()
+
+
+def test_masked_batch_norm_1d() -> None:
+    masked_batch_norm_module = MaskedBatchNorm1d(10, affine=True)
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+
+def test_masked_batch_norm_1d_from_pretrained() -> None:
+    batch_norm_module = nn.BatchNorm1d(10, affine=True)
+    masked_batch_norm_module = MaskedBatchNorm1d.from_pretrained(batch_norm_module=batch_norm_module)
+
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+    assert (masked_batch_norm_module.weight == batch_norm_module.weight).all()
+    assert (masked_batch_norm_module.bias == batch_norm_module.bias).all()
+
+
+def test_masked_batch_norm_2d() -> None:
+    masked_batch_norm_module = MaskedBatchNorm2d(10, affine=True)
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+
+def test_masked_batch_norm_2d_from_pretrained() -> None:
+    batch_norm_module = nn.BatchNorm2d(10, affine=True)
+    masked_batch_norm_module = MaskedBatchNorm2d.from_pretrained(batch_norm_module=batch_norm_module)
+
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+    assert (masked_batch_norm_module.weight == batch_norm_module.weight).all()
+    assert (masked_batch_norm_module.bias == batch_norm_module.bias).all()
+
+
+def test_masked_batch_norm_3d() -> None:
+    masked_batch_norm_module = MaskedBatchNorm3d(10, affine=True)
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+
+def test_masked_batch_norm_3d_from_pretrained() -> None:
+    batch_norm_module = nn.BatchNorm2d(10, affine=True)
+    masked_batch_norm_module = MaskedBatchNorm3d.from_pretrained(batch_norm_module=batch_norm_module)
+
+    assert (masked_batch_norm_module.bias is not None) and (masked_batch_norm_module.weight is not None)
+    assert (not masked_batch_norm_module.weight.requires_grad) and masked_batch_norm_module.weight_scores.requires_grad
+    assert (not masked_batch_norm_module.bias.requires_grad) and masked_batch_norm_module.bias_scores.requires_grad
+
+    assert (masked_batch_norm_module.weight == batch_norm_module.weight).all()
+    assert (masked_batch_norm_module.bias == batch_norm_module.bias).all()
+
+
 def test_convert_to_masked_model() -> None:
     model = CompositeConvNet()
     masked_model = convert_to_masked_model(original_model=model)
@@ -102,3 +252,10 @@ def test_convert_to_masked_model() -> None:
     assert isinstance(masked_model.conv2d, MaskedConv2d)
     assert isinstance(masked_model.conv3d, MaskedConv3d)
     assert isinstance(masked_model.linear, MaskedLinear)
+    assert isinstance(masked_model.conv_transpose1d, MaskedConvTranspose1d)
+    assert isinstance(masked_model.conv_transpose2d, MaskedConvTranspose2d)
+    assert isinstance(masked_model.conv_transpose3d, MaskedConvTranspose3d)
+    assert isinstance(masked_model.bn1d, MaskedBatchNorm1d)
+    assert isinstance(masked_model.bn2d, MaskedBatchNorm2d)
+    assert isinstance(masked_model.bn3d, MaskedBatchNorm3d)
+    assert isinstance(masked_model.layer_norm, MaskedLayerNorm)
