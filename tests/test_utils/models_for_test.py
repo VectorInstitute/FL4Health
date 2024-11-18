@@ -783,33 +783,43 @@ class CompositeConvNet(nn.Module):
     def __init__(self) -> None:
         super(CompositeConvNet, self).__init__()
 
-        # Convolutional layers
-        self.conv1d = nn.Conv1d(in_channels=1, out_channels=2, kernel_size=3, stride=1, padding=1)
-        self.conv2d = nn.Conv2d(in_channels=3, out_channels=4, kernel_size=3, stride=1, padding=1)
-        self.conv3d = nn.Conv3d(in_channels=3, out_channels=8, kernel_size=3, stride=1, padding=1)
+        self.conv1d = nn.Conv1d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn1d = nn.BatchNorm1d(16)
 
-        self.linear = nn.Linear(1812, 10)
+        self.conv2d = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn2d = nn.BatchNorm2d(16)
+
+        self.conv3d = nn.Conv3d(in_channels=3, out_channels=16, kernel_size=3)
+        self.bn3d = nn.BatchNorm3d(16)
+
+        self.conv_transpose1d = nn.ConvTranspose1d(in_channels=16, out_channels=8, kernel_size=3)
+        self.conv_transpose2d = nn.ConvTranspose2d(in_channels=16, out_channels=8, kernel_size=3)
+        self.conv_transpose3d = nn.ConvTranspose3d(in_channels=16, out_channels=8, kernel_size=3)
+
+        self.linear = nn.Linear(1880, 10)
+
+        # LayerNorm applied to 2D shape (batch_size, features)
+        self.layer_norm = nn.LayerNorm(10)
 
     def forward(self, x1d: torch.Tensor, x2d: torch.Tensor, x3d: torch.Tensor) -> torch.Tensor:
-        # Forward pass through each layer
-        x1d = self.conv1d(x1d)
-        x2d = self.conv2d(x2d)
-        x3d = self.conv3d(x3d)
+        x1d = F.relu(self.conv1d(x1d))
+        x1d = self.bn1d(x1d)
+        x1d = F.relu(self.conv_transpose1d(x1d))
 
-        # Flatten or reshape the tensors before concatenation
-        x1d = x1d.view(x1d.size(0), -1)  # Flatten x1d to 1D tensor
-        x2d = x2d.view(x2d.size(0), -1)  # Flatten x2d to 1D tensor
-        x3d = x3d.view(x3d.size(0), -1)  # Flatten x3d to 1D tensor
+        x2d = F.relu(self.conv2d(x2d))
+        x2d = self.bn2d(x2d)
+        x2d = F.relu(self.conv_transpose2d(x2d))
 
-        # Concatenate flattened tensors along dim=1
-        combined = torch.cat((x1d, x2d, x3d), dim=1)
+        x3d = F.relu(self.conv3d(x3d))
+        x3d = self.bn3d(x3d)
+        x3d = F.relu(self.conv_transpose3d(x3d))
 
-        print(combined.shape)
+        x_flat = torch.cat([x1d.flatten(1), x2d.flatten(1), x3d.flatten(1)], dim=1)
+        x_flat = self.linear(x_flat)
 
-        # Linear layer
-        output = self.linear(combined)
+        x_flat = self.layer_norm(x_flat)
 
-        return output
+        return x_flat
 
 
 class ModelWrapper(nn.Module):

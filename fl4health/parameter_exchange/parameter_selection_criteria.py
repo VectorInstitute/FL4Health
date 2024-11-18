@@ -8,7 +8,7 @@ from flwr.common.typing import NDArray, NDArrays
 from scipy.stats import bernoulli
 from torch import Tensor
 
-from fl4health.model_bases.masked_layers import is_masked_module
+from fl4health.model_bases.masked_layers.masked_layers_utils import is_masked_module
 from fl4health.utils.typing import LayerSelectionFunction
 
 
