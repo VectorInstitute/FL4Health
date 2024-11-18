@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Optional
 
 import pandas as pd
@@ -15,7 +17,7 @@ class TextMulticolumnTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformer: TextFeatureTransformer):
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: Optional[pd.DataFrame] = None) -> "TextMulticolumnTransformer":
+    def fit(self, X: pd.DataFrame, y: Optional[pd.DataFrame] = None) -> TextMulticolumnTransformer:
         joined_X = X.apply(lambda x: " ".join(x), axis=1)
         self.transformer.fit(joined_X)
         return self
@@ -34,7 +36,7 @@ class TextColumnTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, transformer: TextFeatureTransformer):
         self.transformer = transformer
 
-    def fit(self, X: pd.DataFrame, y: Optional[pd.DataFrame] = None) -> "TextColumnTransformer":
+    def fit(self, X: pd.DataFrame, y: Optional[pd.DataFrame] = None) -> TextColumnTransformer:
         assert isinstance(X, pd.DataFrame) and X.shape[1] == 1
         self.transformer.fit(X[X.columns[0]])
         return self
