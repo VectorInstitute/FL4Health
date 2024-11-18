@@ -114,7 +114,7 @@ class BasicClient(NumPyClient):
         self.initial_weights: Optional[NDArrays] = None
 
         self.total_steps: int = 0  # Need to track total_steps across rounds for WANDB reporting
-        self.total_epochs: int = 0
+        self.total_epochs: int = 0  # Will remain as 0 if training by steps
 
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
@@ -316,7 +316,7 @@ class BasicClient(NumPyClient):
         #       * (Hence likely higher than the final loss of the round.)
         self.reports_manager.report(
             {
-                "fit_round_metrics": metrics,  # Metrics computed
+                "fit_round_metrics": metrics,
                 "fit_round_losses": loss_dict,
                 "round": current_server_round,
                 "round_start": str(round_start_time),
@@ -359,7 +359,7 @@ class BasicClient(NumPyClient):
             self.setup_client(config)
 
         start_time = datetime.datetime.now()
-        local_epochs, local_steps, current_server_round, _, _ = self.process_config(config)
+        _, _, current_server_round, _, _ = self.process_config(config)
 
         pack_losses_with_val_metrics = set_pack_losses_with_val_metrics(config)
 
@@ -385,8 +385,6 @@ class BasicClient(NumPyClient):
             },
             current_server_round,
         )
-        # Have to report 3 times to make sure they get reported regardless of the reporting level
-        # This is admittidly cleugy and we should think of a better way to handle reporting levels
 
         # EvaluateRes should return the loss, number of examples on client, and a dictionary holding metrics
         # calculation results.

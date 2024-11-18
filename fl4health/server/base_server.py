@@ -27,6 +27,7 @@ from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
 
+# TODO: Have the server save the config as an attribute on init so that it has access to training hyperparams.
 class FlServer(Server):
     def __init__(
         self,

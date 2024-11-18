@@ -138,7 +138,7 @@ class WandBReporter(BaseReporter):
     def start_run(self, wandb_init_kwargs: dict[str, Any]) -> None:
         """Initializes the wandb run.
 
-        We avoid doing this in the self.init function so that when debugging, jobs that fail before training starts to
+        We avoid doing this in the self.init function so that when debugging, jobs that fail before training starts do
         not get uploaded to wandb.
 
         Args:
