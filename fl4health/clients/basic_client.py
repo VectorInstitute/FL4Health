@@ -114,6 +114,7 @@ class BasicClient(NumPyClient):
         self.initial_weights: Optional[NDArrays] = None
 
         self.total_steps: int = 0  # Need to track total_steps across rounds for WANDB reporting
+        self.total_epochs: int = 0  # Will remain as 0 if training by steps
 
         # Attributes to be initialized in setup_client
         self.parameter_exchanger: ParameterExchanger
@@ -221,9 +222,9 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[Union[int, None], Union[int, None], int, bool]: Returns the local_epochs, local_steps,
-                current_server_round and evaluate_after_fit. Ensures only one of local_epochs and local_steps
-                is defined in the config and sets the one that is not to None.
+            Tuple[Union[int, None], Union[int, None], int, bool, bool]: Returns the local_epochs, local_steps,
+                current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
+                local_epochs and local_steps is defined in the config and sets the one that is not to None.
 
         Raises:
             ValueError: If the config contains both local_steps and local epochs or if local_steps, local_epochs or
@@ -307,15 +308,24 @@ class BasicClient(NumPyClient):
             # We perform a pre-aggregation checkpoint if applicable
             self._maybe_checkpoint(validation_loss, validation_metrics, CheckpointMode.PRE_AGGREGATION)
 
+        # Notes on report values:
+        #   - Train by steps: round metrics/losses are computed using all samples from the round
+        #   - Train by epochs: round metrics/losses computed using only the samples from the final epoch of the round
+        #   - fit_round_metrics: Computed at the end of the round on the samples directly
+        #   - fit_round_losses: The average of the losses computed for each step.
+        #       * (Hence likely higher than the final loss of the round.)
         self.reports_manager.report(
             {
-                "fit_metrics": metrics,
-                "fit_losses": loss_dict,
+                "fit_round_metrics": metrics,
+                "fit_round_losses": loss_dict,
                 "round": current_server_round,
                 "round_start": str(round_start_time),
                 "round_end": str(datetime.datetime.now()),
-                "fit_start": str(fit_start_time),
-                "fit_end": str(fit_end_time),
+                "fit_round_start": str(fit_start_time),
+                "fit_round_time_elapsed": str(fit_end_time - fit_start_time),
+                "fit_round_end": str(fit_end_time),
+                "fit_step": self.total_steps,
+                "fit_epoch": self.total_epochs,
             },
             current_server_round,
         )
@@ -364,11 +374,14 @@ class BasicClient(NumPyClient):
 
         self.reports_manager.report(
             {
-                "eval_metrics": metrics,
-                "eval_loss": loss,
-                "eval_start": str(start_time),
-                "eval_time_elapsed": str(elapsed),
-                "eval_end": str(end_time),
+                "eval_round_metrics": metrics,
+                "eval_round_loss": loss,
+                "eval_round_start": str(start_time),
+                "eval_round_time_elapsed": str(elapsed),
+                "eval_round_end": str(end_time),
+                "fit_step": self.total_steps,
+                "fit_epoch": self.total_epochs,
+                "round": current_server_round,
             },
             current_server_round,
         )
@@ -607,7 +620,7 @@ class BasicClient(NumPyClient):
             # update before epoch hook
             self.update_before_epoch(epoch=local_epoch)
             # Update report data dict
-            report_data.update({"fit_epoch": local_epoch})
+            report_data.update({"fit_epoch": self.total_epochs})
             for input, target in maybe_progress_bar(self.train_loader, self.progress_bar):
                 self.update_before_step(steps_this_round, current_round)
                 # Assume first dimension is batch size. Sampling iterators (such as Poisson batch sampling), can
@@ -623,20 +636,22 @@ class BasicClient(NumPyClient):
                 self.update_metric_manager(preds, target, self.train_metric_manager)
                 self.update_after_step(steps_this_round, current_round)
                 self.update_lr_schedulers(epoch=local_epoch)
-                report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
+                report_data.update({"fit_step_losses": losses.as_dict(), "fit_step": self.total_steps})
                 report_data.update(self.get_client_specific_reports())
-                self.reports_manager.report(report_data, current_round, local_epoch, self.total_steps)
+                self.reports_manager.report(report_data, current_round, self.total_epochs, self.total_steps)
                 self.total_steps += 1
                 steps_this_round += 1
 
+            # Log and report results
             metrics = self.train_metric_manager.compute()
             loss_dict = self.train_loss_meter.compute().as_dict()
-
-            # Log and report results
-            self._log_results(loss_dict, metrics, current_round, local_epoch)
-            report_data.update({"fit_metrics": metrics})
+            report_data.update({"fit_epoch_metrics": metrics, "fit_epoch_losses": loss_dict})
             report_data.update(self.get_client_specific_reports())
-            self.reports_manager.report(report_data, current_round, local_epoch)
+            self.reports_manager.report(report_data, current_round, self.total_epochs)
+            self._log_results(loss_dict, metrics, current_round, local_epoch)
+
+            # Update internal epoch counter
+            self.total_epochs += 1
 
         # Return final training metrics
         return loss_dict, metrics
@@ -690,7 +705,7 @@ class BasicClient(NumPyClient):
             self.update_metric_manager(preds, target, self.train_metric_manager)
             self.update_after_step(step, current_round)
             self.update_lr_schedulers(step=step)
-            report_data.update({"fit_losses": losses.as_dict(), "fit_step": self.total_steps})
+            report_data.update({"fit_step_losses": losses.as_dict(), "fit_step": self.total_steps})
             report_data.update(self.get_client_specific_reports())
             self.reports_manager.report(report_data, current_round, None, self.total_steps)
             self.total_steps += 1

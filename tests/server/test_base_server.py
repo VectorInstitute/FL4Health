@@ -10,6 +10,7 @@ from flwr.common import Code, EvaluateRes, Status
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
+from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
@@ -114,11 +115,11 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
         "fit_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
         "rounds": {
             1: {
-                "eval_metrics_centralized": {"test_metric1": 123.123},
+                "eval_round_metrics_centralized": {"test_metric1": 123.123},
                 "val - loss - centralized": 123.123,
             },
             2: {
-                "eval_metrics_centralized": {"test_metric1": 123},
+                "eval_round_metrics_centralized": {"test_metric1": 123},
                 "val - loss - centralized": 123,
             },
         },
@@ -142,7 +143,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
         "rounds": {
             test_round: {
                 "fit_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-                "fit_metrics": test_metrics_aggregated,
+                "fit_round_metrics": test_metrics_aggregated,
                 "fit_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
@@ -247,9 +248,12 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
         test_metrics_aggregated,
         (None, None),
     )
-
+    client_manager = SimpleClientManager()
+    client_manager.register(CustomClientProxy("test_id", 1))
     reporter = JsonReporter()
-    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
+    fl_server = FlServer(
+        client_manager, reporters=[reporter], strategy=FedAvg(min_evaluate_clients=1, min_available_clients=1)
+    )
     fl_server.evaluate_round(test_round, None)
 
     metrics_to_assert = {
@@ -257,7 +261,7 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
             test_round: {
                 "eval_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
                 "val - loss - aggregated": test_loss_aggregated,
-                "eval_metrics_aggregated": test_metrics_aggregated,
+                "eval_round_metrics_aggregated": test_metrics_aggregated,
                 "eval_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
