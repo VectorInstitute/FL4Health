@@ -359,7 +359,7 @@ class BasicClient(NumPyClient):
             self.setup_client(config)
 
         start_time = datetime.datetime.now()
-        _, _, current_server_round, _, _ = self.process_config(config)
+        current_server_round = narrow_dict_type(config, "current_server_round", int)
 
         pack_losses_with_val_metrics = set_pack_losses_with_val_metrics(config)
 
