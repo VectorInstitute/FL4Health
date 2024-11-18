@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Tuple, Union
 from unittest.mock import Mock, patch
 
-import freezegun
 import pytest
 import torch
 import torch.nn as nn
@@ -26,8 +25,6 @@ from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
-
-freezegun.config.configure(extend_ignore_list=["transformers"])
 
 model = LinearTransform()
 
