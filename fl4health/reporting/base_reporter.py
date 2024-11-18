@@ -24,10 +24,12 @@ class BaseReporter:
             data (dict): The data to maybe report from the server or client.
             round (int | None, optional): The current FL round. If None, this indicates that the method was called
                 outside of a round (e.g. for summary information). Defaults to None.
-            epoch (int | None, optional): The current epoch. If None then this method was not called at or within the
-                scope of an epoch. Defaults to None.
-            step (int | None, optional): The current step (total). If None then this method was called outside the
-                scope of a training or evaluation step (eg. at the end of an epoch or round) Defaults to None.
+            epoch (int | None, optional): The current epoch (In total across all rounds). If None then this method was
+                not called at or within the scope of an epoch. Should always be None if training by steps. Defaults to
+                None.
+            step (int | None, optional): The current step (In total across all rounds and epochs). If None then this
+                method was called outside the scope of a training or evaluation step (eg. at the end of an epoch or
+                round) Defaults to None.
         """
         raise NotImplementedError
 
