@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from logging import INFO
 from typing import Dict, List, Optional
@@ -43,7 +45,7 @@ class Outcome:
         }
 
     @staticmethod
-    def from_results_dict(class_name: str, stats_string: str) -> "Outcome":
+    def from_results_dict(class_name: str, stats_string: str) -> Outcome:
         outcome = Outcome(class_name)
         stats = json.loads(stats_string)
         outcome.true_positive = stats[0]
@@ -52,7 +54,7 @@ class Outcome:
         return outcome
 
     @staticmethod
-    def merge_outcomes(outcome_1: "Outcome", outcome_2: "Outcome") -> "Outcome":
+    def merge_outcomes(outcome_1: "Outcome", outcome_2: "Outcome") -> Outcome:
         assert outcome_1.class_name == outcome_2.class_name
         outcome_1.true_positive += outcome_2.true_positive
         outcome_1.false_negative += outcome_2.false_negative

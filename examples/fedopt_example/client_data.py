@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -20,7 +22,7 @@ class LabelEncoder:
         self.class_to_label = class_to_label
 
     @staticmethod
-    def encoder_from_dataframe(df: pd.DataFrame, class_column: str) -> "LabelEncoder":
+    def encoder_from_dataframe(df: pd.DataFrame, class_column: str) -> LabelEncoder:
         categories = df[class_column].astype("category")
         categories_str = [str(category) for category in categories.to_list()]
         label_to_class = dict(set(zip(categories.cat.codes, categories_str)))
@@ -29,7 +31,7 @@ class LabelEncoder:
         return LabelEncoder(classes, label_to_class, class_to_label)
 
     @staticmethod
-    def from_json(json_str: str) -> "LabelEncoder":
+    def from_json(json_str: str) -> LabelEncoder:
         attributes = json.loads(json_str)
         # need to cast string keys to int
         label_to_class = {int(label): category for label, category in json.loads(attributes["label_to_class"]).items()}
@@ -59,7 +61,7 @@ class Vocabulary:
         elif train_set is not None:
             self._create_vocabulary(train_set)
         else:
-            raise ValueError("Must provide either precumputed dictionary or training set to create vocabulary")
+            raise ValueError("Must provide either precomputed dictionary or training set to create vocabulary")
         self.vocabulary_size = len(self.word2index)
 
     def _create_vocabulary(self, train_set: List[List[str]]) -> None:
@@ -95,7 +97,7 @@ class Vocabulary:
         return json.dumps(self.word2index)
 
     @staticmethod
-    def from_json(json_str: str) -> "Vocabulary":
+    def from_json(json_str: str) -> Vocabulary:
         return Vocabulary(json.loads(json_str), None)
 
 
