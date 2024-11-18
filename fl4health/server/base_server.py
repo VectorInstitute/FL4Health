@@ -349,7 +349,9 @@ class FlServer(Server):
                     "eval_round_end": str(end_time),
                 }
                 dummy_params = Parameters([], "None")
-                config = self.strategy.configure_fit(server_round, dummy_params, self._client_manager)[0][1].config
+                config = self.strategy.configure_evaluate(server_round, dummy_params, self._client_manager)[0][
+                    1
+                ].config
                 if config.get("local_epochs", None) is not None:
                     report_data["fit_epoch"] = server_round * config["local_epochs"]
                 elif config.get("local_steps", None) is not None:
