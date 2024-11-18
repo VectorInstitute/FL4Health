@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Tuple, Union
 from unittest.mock import Mock, patch
 
+import freezegun
 import pytest
 import torch
 import torch.nn as nn
@@ -10,6 +11,7 @@ from flwr.common import Code, EvaluateRes, Status
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
+from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
 
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
@@ -24,6 +26,8 @@ from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, Metric
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
+
+freezegun.config.configure(extend_ignore_list=["transformers"])
 
 model = LinearTransform()
 
@@ -247,9 +251,12 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
         test_metrics_aggregated,
         (None, None),
     )
-
+    client_manager = SimpleClientManager()
+    client_manager.register(CustomClientProxy("test_id", 1))
     reporter = JsonReporter()
-    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
+    fl_server = FlServer(
+        client_manager, reporters=[reporter], strategy=FedAvg(min_evaluate_clients=1, min_available_clients=1)
+    )
     fl_server.evaluate_round(test_round, None)
 
     metrics_to_assert = {
