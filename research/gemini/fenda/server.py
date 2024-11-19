@@ -14,7 +14,7 @@ from flwr.server.strategy import FedAvg, Strategy
 
 from fl4health.model_bases.fenda_base import FendaJoinMode, FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
-from fl4health.server.server import FlServer
+from fl4health.servers.server import FlServer
 from fl4health.utils.config import load_config
 
 # delirium model

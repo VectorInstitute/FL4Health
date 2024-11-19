@@ -3,7 +3,7 @@ from typing import List, Tuple
 from flwr.common.typing import Config, GetPropertiesIns
 from flwr.server.client_proxy import ClientProxy
 
-from fl4health.server.polling import poll_client, poll_clients
+from fl4health.servers.polling import poll_client, poll_clients
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 
 

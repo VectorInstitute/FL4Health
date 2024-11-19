@@ -8,7 +8,7 @@ from flwr.server.strategy import Strategy
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
-from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServerWithCheckpointing
 
 
 class ScaffoldServer(FlServerWithCheckpointing[FullParameterExchangerWithPacking]):

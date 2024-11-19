@@ -16,7 +16,7 @@ from fl4health.privacy.fl_accountants import (
     FlClientLevelAccountantPoissonSampling,
 )
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 
 

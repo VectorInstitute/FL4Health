@@ -17,7 +17,7 @@ from flwr.server.strategy import FedAdagrad, FedAdam, FedAvg, FedAvgM, FedYogi, 
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.server import FlServer
+from fl4health.servers.server import FlServer
 from fl4health.utils.config import load_config
 from research.gemini.delirium_models.NN import NN as delirium_model
 from research.gemini.mortality_models.NN import NN as mortality_model

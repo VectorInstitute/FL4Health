@@ -6,7 +6,7 @@ from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServerWithCheckpointing
 
 
 class FullExchangeServer(FlServerWithCheckpointing):

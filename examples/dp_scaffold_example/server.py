@@ -7,7 +7,7 @@ from flwr.common.typing import Config
 
 from examples.models.cnn_model import MnistNet
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.scaffold_server import DPScaffoldServer
+from fl4health.servers.scaffold_server import DPScaffoldServer
 from fl4health.strategies.scaffold import OpacusScaffold
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
