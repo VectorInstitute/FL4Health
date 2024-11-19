@@ -8,7 +8,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServerWithCheckpointing
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 
 

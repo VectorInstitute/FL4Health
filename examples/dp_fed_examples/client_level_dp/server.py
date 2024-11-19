@@ -8,7 +8,7 @@ from flwr.common.typing import Config
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
-from fl4health.server.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
+from fl4health.servers.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 from fl4health.strategies.client_dp_fedavgm import ClientLevelDPFedAvgM
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

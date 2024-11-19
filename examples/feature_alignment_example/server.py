@@ -10,7 +10,7 @@ from flwr.common.typing import Parameters
 from examples.models.mlp_classifier import MLP
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
-from fl4health.server.tabular_feature_alignment_server import TabularFeatureAlignmentServer
+from fl4health.servers.tabular_feature_alignment_server import TabularFeatureAlignmentServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

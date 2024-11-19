@@ -5,7 +5,7 @@ from freezegun import freeze_time
 
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.reporting import JsonReporter
-from fl4health.server.evaluate_server import EvaluateServer
+from fl4health.servers.evaluate_server import EvaluateServer
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 
 

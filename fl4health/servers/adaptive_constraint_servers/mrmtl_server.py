@@ -4,7 +4,7 @@ from flwr.server.client_manager import ClientManager
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 
 
