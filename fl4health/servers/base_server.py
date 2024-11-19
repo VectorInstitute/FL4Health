@@ -7,7 +7,7 @@ import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
-from flwr.common.typing import Code, GetParametersIns, Scalar
+from flwr.common.typing import Code, Config, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
@@ -27,11 +27,11 @@ from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
 
-# TODO: Have the server save the config as an attribute on init so that it has access to training hyperparams.
 class FlServer(Server):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         strategy: Optional[Strategy] = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
@@ -44,23 +44,27 @@ class FlServer(Server):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For 
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
-                strategy is FedAvg as set by the flwr Server.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server
-                should send data to before and after each round.
-            checkpointer (TorchCheckpointer | Sequence [TorchCheckpointer], optional): To be provided if the server
-                should perform server side checkpointing based on some criteria. If none, then no server-side
-                checkpointing is performed. Multiple checkpointers can also be passed in a sequence to checkpointer
-                based on multiple criteria. Ensure checkpoint names are different for each checkpoint or they will
-                overwrite on another. Defaults to None.
-            server_name (Optional[str]): An optional string name to uniquely identify server.
+                strategy is FedAvg as set by the flwr Server. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional):  sequence of FL4Health reporters which the server
+                should send data to before and after each round. Defaults to None.
+            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided 
+                if the server should perform server side checkpointing based on some criteria. If none, then no 
+                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to 
+                checkpointer based on multiple criterion. Ensure checkpoint names are different for each checkpoint or 
+                they will overwrite on another. Defaults to None.
+            server_name (Optional[str], optional): An optional string name to uniquely identify server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
 
         super().__init__(client_manager=client_manager, strategy=strategy)
+        self.fl_config = fl_config
         self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
         self.server_name = server_name if server_name is not None else generate_hash()
         self.accept_failures = accept_failures
