@@ -9,7 +9,7 @@ from fl4health.servers.evaluate_server import EvaluateServer
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 
 
-@patch("fl4health.server.evaluate_server.EvaluateServer.federated_evaluate")
+@patch("fl4health.servers.evaluate_server.EvaluateServer.federated_evaluate")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit(mock_federated_evaluate: Mock) -> None:
     pass
