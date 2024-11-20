@@ -154,6 +154,7 @@ settings.json
 **/datasets/nnunet/**
 **/datasets/nnunet_raw/**
 **/datasets/nnunet_preprocessed/**
+**/datasets/cifar_partitioned_data/**
 
 # logs
 

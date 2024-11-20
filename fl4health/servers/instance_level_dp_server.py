@@ -11,7 +11,7 @@ from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import FlInstanceLevelAccountant
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 

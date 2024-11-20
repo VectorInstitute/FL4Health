@@ -11,7 +11,7 @@ from flwr.server.client_manager import SimpleClientManager
 from examples.models.cnn_model import MnistNet
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.reporting import WandBReporter
-from fl4health.server.base_server import FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

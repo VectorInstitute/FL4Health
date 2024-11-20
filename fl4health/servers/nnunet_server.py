@@ -18,7 +18,7 @@ from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.server.base_server import FlServerWithCheckpointing, FlServerWithInitializer
+from fl4health.servers.base_server import FlServerWithCheckpointing, FlServerWithInitializer
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.nnunet_utils import NnunetConfig
 from fl4health.utils.parameter_extraction import get_all_model_parameters

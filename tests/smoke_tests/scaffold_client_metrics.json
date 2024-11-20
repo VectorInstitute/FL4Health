@@ -1,30 +1,30 @@
 {
     "rounds": {
         "0": {
-            "fit_metrics": {"train - prediction - accuracy": 0.2031},
-            "fit_losses": {"backward": 2.2655}
+            "fit_round_metrics": {"train - prediction - accuracy": 0.2031},
+            "fit_round_losses": {"backward": 2.2655}
         },
         "1": {
-            "fit_metrics": {"train - prediction - accuracy": 0.18125},
-            "fit_losses": {"backward": 2.2684},
-            "eval_metrics": {"val - prediction - accuracy": {"target_value": 0.1824, "custom_tolerance": 0.005}},
-            "eval_loss": 2.2785
+            "fit_round_metrics": {"train - prediction - accuracy": 0.18125},
+            "fit_round_losses": {"backward": 2.2684},
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.1824, "custom_tolerance": 0.005}},
+            "eval_round_loss": 2.2785
         },
         "2": {
-            "fit_metrics": {"train - prediction - accuracy": {"target_value": 0.3906, "custom_tolerance": 0.05}},
-            "fit_losses": {
+            "fit_round_metrics": {"train - prediction - accuracy": {"target_value": 0.3906, "custom_tolerance": 0.05}},
+            "fit_round_losses": {
               "backward": {"target_value": 2.1567, "custom_tolerance": 0.005}
             },
-            "eval_metrics": {"val - prediction - accuracy": {"target_value": 0.3332, "custom_tolerance": 0.05}},
-            "eval_loss": {"target_value": 2.2509, "custom_tolerance": 0.005}
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.3332, "custom_tolerance": 0.05}},
+            "eval_round_loss": {"target_value": 2.2509, "custom_tolerance": 0.005}
         },
         "3": {
-            "fit_metrics": {"train - prediction - accuracy": {"target_value": 0.4078, "custom_tolerance": 0.05}},
-            "fit_losses": {
+            "fit_round_metrics": {"train - prediction - accuracy": {"target_value": 0.4078, "custom_tolerance": 0.05}},
+            "fit_round_losses": {
                 "backward": {"target_value": 2.0964, "custom_tolerance": 0.005}
             },
-            "eval_metrics": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.005}},
-            "eval_loss": {"target_value": 2.2070, "custom_tolerance": 0.05}
+            "eval_round_metrics": {"val - prediction - accuracy": {"target_value": 0.4062, "custom_tolerance": 0.005}},
+            "eval_round_loss": {"target_value": 2.2070, "custom_tolerance": 0.05}
         }
     }
 }

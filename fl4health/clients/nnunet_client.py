@@ -52,6 +52,7 @@ with warnings.catch_warnings():
     from nnunetv2.experiment_planning.plan_and_preprocess_api import extract_fingerprints, preprocess_dataset
     from nnunetv2.paths import nnUNet_preprocessed, nnUNet_raw
     from nnunetv2.training.dataloading.utils import unpack_dataset
+    from nnunetv2.training.loss.deep_supervision import DeepSupervisionWrapper
     from nnunetv2.training.lr_scheduler.polylr import PolyLRScheduler
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.dataset_name_id_conversion import convert_id_to_dataset_name
@@ -246,9 +247,15 @@ class NnunetClient(BasicClient):
         return self.nnunet_trainer.network
 
     def get_criterion(self, config: Config) -> _Loss:
+        if isinstance(self.nnunet_trainer.loss, DeepSupervisionWrapper):
+            self.reports_manager.report({"Criterion": self.nnunet_trainer.loss.loss.__class__.__name__})
+        else:
+            self.reports_manager.report({"Criterion": self.nnunet_trainer.loss.__class__.__name__})
+
         return Module2LossWrapper(self.nnunet_trainer.loss)
 
     def get_optimizer(self, config: Config) -> Optimizer:
+        self.reports_manager.report({"Optimizer": self.nnunet_trainer.optimizer.__class__.__name__})
         return self.nnunet_trainer.optimizer
 
     def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler:
@@ -289,6 +296,7 @@ class NnunetClient(BasicClient):
         # Create and return LR Scheduler Wrapper for the PolyLRScheduler so that it is
         # compatible with Torch LRScheduler
         # Create and return LR Scheduler. This is nnunet default for version 2.5.1
+        self.reports_manager.report({"LR Scheduler": "PolyLRScheduler"})
         return PolyLRSchedulerWrapper(
             self.optimizers[optimizer_key],
             initial_lr=self.nnunet_trainer.initial_lr,
@@ -684,6 +692,9 @@ class NnunetClient(BasicClient):
                 return f" Current LR: {lr}", []
         else:
             return "", []
+
+    def get_client_specific_reports(self) -> Dict[str, Any]:
+        return {"learning_rate": float(self.optimizers["global"].param_groups[0]["lr"])}
 
     @use_default_signal_handlers  # Experiment planner spawns a process I think
     def get_properties(self, config: Config) -> Dict[str, Scalar]:

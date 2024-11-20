@@ -20,7 +20,7 @@ from fl4health.parameter_exchange.packing_exchanger import (
     FullParameterExchangerWithPacking,
     ParameterExchangerWithControlVariates,
 )
-from fl4health.server.server import FlServer
+from fl4health.servers.server import FlServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
 from research.gemini.delirium_models.NN import NN as delirium_model

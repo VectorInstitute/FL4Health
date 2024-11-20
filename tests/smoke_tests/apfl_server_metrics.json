@@ -1,7 +1,7 @@
 {
     "rounds": {
         "1": {
-            "eval_metrics_aggregated": {
+            "eval_round_metrics_aggregated": {
                 "val - personal - accuracy": 0.5269,
                 "val - global - accuracy": 0.5331,
                 "val - local - accuracy": 0.4984
@@ -9,7 +9,7 @@
             "val - loss - aggregated": 1.5862
         },
         "2": {
-            "eval_metrics_aggregated": {
+            "eval_round_metrics_aggregated": {
                 "val - personal - accuracy": 0.7117,
                 "val - global - accuracy": 0.7162,
                 "val - local - accuracy": 0.6274
@@ -17,7 +17,7 @@
             "val - loss - aggregated": 0.9102
         },
         "3": {
-            "eval_metrics_aggregated": {
+            "eval_round_metrics_aggregated": {
                 "val - personal - accuracy": 0.7681,
                 "val - global - accuracy": 0.7943,
                 "val - local - accuracy": 0.7094

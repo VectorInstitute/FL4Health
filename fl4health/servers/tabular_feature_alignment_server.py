@@ -19,8 +19,8 @@ from fl4health.feature_alignment.constants import (
 )
 from fl4health.feature_alignment.tab_features_info_encoder import TabularFeaturesInfoEncoder
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServer
-from fl4health.server.polling import poll_clients
+from fl4health.servers.base_server import FlServer
+from fl4health.servers.polling import poll_clients
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 
 

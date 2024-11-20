@@ -10,7 +10,7 @@ from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.client_managers.fixed_sampling_client_manager import FixedSamplingClientManager
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.reporting import JsonReporter
-from fl4health.server.base_server import FlServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.feddg_ga import FedDgGa
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

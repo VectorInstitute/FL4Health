@@ -18,7 +18,7 @@ from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchChec
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.server.polling import poll_clients
+from fl4health.servers.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
@@ -27,6 +27,7 @@ from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
 
+# TODO: Have the server save the config as an attribute on init so that it has access to training hyperparams.
 class FlServer(Server):
     def __init__(
         self,
@@ -81,7 +82,7 @@ class FlServer(Server):
             round_metrics = {}
             for metric, vals in history.metrics_centralized.items():
                 round_metrics.update({metric: vals[round][1]})
-            self.reports_manager.report({"eval_metrics_centralized": round_metrics}, round + 1)
+            self.reports_manager.report({"eval_round_metrics_centralized": round_metrics}, round + 1)
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
@@ -108,13 +109,14 @@ class FlServer(Server):
         end_time = datetime.datetime.now()
         self.reports_manager.report(
             {
-                "fit_elapsed_time": str(end_time - start_time),
+                "fit_elapsed_time": round((end_time - start_time).total_seconds()),
                 "fit_end": str(end_time),
                 "num_rounds": num_rounds,
                 "host_type": "server",
             }
         )
 
+        # WARNING: This will not work with wandb. Wandb reporting must be done live.
         self.report_centralized_eval(history, num_rounds)
 
         return history, elapsed_time
@@ -129,12 +131,16 @@ class FlServer(Server):
         round_end = datetime.datetime.now()
 
         self.reports_manager.report(
-            {"fit_round_start": str(round_start), "fit_round_end": str(round_end)},
+            {
+                "fit_round_start": str(round_start),
+                "fit_round_end": str(round_end),
+                "fit_round_time_elapsed": round((round_end - round_start).total_seconds()),
+            },
             server_round,
         )
         if fit_round_results is not None:
             _, metrics, fit_results_and_failures = fit_round_results
-            self.reports_manager.report({"fit_metrics": metrics}, server_round)
+            self.reports_manager.report({"fit_round_metrics": metrics}, server_round)
             failures = fit_results_and_failures[1] if fit_results_and_failures else None
 
             if failures and not self.accept_failures:
@@ -340,18 +346,25 @@ class FlServer(Server):
             if loss_aggregated:
                 self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
                 # Report evaluation results
-                self.reports_manager.report(
-                    {
-                        "val - loss - aggregated": loss_aggregated,
-                        "round": server_round,
-                        "eval_round_start": str(start_time),
-                        "eval_round_end": str(end_time),
-                    },
-                    server_round,
-                )
+                report_data = {
+                    "val - loss - aggregated": loss_aggregated,
+                    "round": server_round,
+                    "eval_round_start": str(start_time),
+                    "eval_round_end": str(end_time),
+                    "eval_round_time_elapsed": round((end_time - start_time).total_seconds()),
+                }
+                dummy_params = Parameters([], "None")
+                config = self.strategy.configure_evaluate(server_round, dummy_params, self._client_manager)[0][
+                    1
+                ].config
+                if config.get("local_epochs", None) is not None:
+                    report_data["fit_epoch"] = server_round * config["local_epochs"]
+                elif config.get("local_steps", None) is not None:
+                    report_data["fit_step"] = server_round * config["local_steps"]
+                self.reports_manager.report(report_data, server_round)
                 if len(metrics_aggregated) > 0:
                     self.reports_manager.report(
-                        {"eval_metrics_aggregated": metrics_aggregated},
+                        {"eval_round_metrics_aggregated": metrics_aggregated},
                         server_round,
                     )
 

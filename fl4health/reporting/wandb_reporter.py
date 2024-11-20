@@ -1,9 +1,11 @@
 from enum import Enum
+from logging import WARNING
 from pathlib import Path
 from typing import Any
 
 import wandb
 import wandb.wandb_run
+from flwr.common.logger import log
 
 from fl4health.reporting.base_reporter import BaseReporter
 
@@ -28,14 +30,15 @@ class WandBReporter(BaseReporter):
         tags: list[str] | None = None,
         name: str | None = None,
         id: str | None = None,
-        **kwargs: Any
+        resume: str = "allow",
+        **kwargs: Any,
     ) -> None:
         """
         _summary_
 
         Args:
-            wandb_step_type (StepType | str, optional): How frequently to log data. Either every 'round', 'epoch' or
-                'step'. Defaults to StepType.ROUND.
+            wandb_step_type (StepType | str, optional): Whether to use the 'round', 'epoch' or 'step' as the
+                wandb_step value when logging information to the wandb server.
             project (str | None, optional): The name of the project where you're sending the new run. If unspecified,
                 wandb will try to infer or set to "uncategorized"
             entity (str | None, optional): An entity is a username or team name where you're sending runs. This entity
@@ -54,7 +57,11 @@ class WandBReporter(BaseReporter):
             name (str | None, optional): A short display name for this run. Default generates a random two-word name.
             id (str | None, optional): A unique ID for this run. It must be unique in the project, and if you delete a
                 run you can't reuse the ID.
-            kwargs (Any):  Keyword arguments to wandb.init excluding the ones explicitly described above.
+            resume (str): Indicates how to handle the case when a run has the same entity, project and run id as
+                a previous run. 'must' enforces the run must resume from the run with same id and throws an error
+                if it does not exist. 'never' enforces that a run will not resume and throws an error if run id exists.
+                'allow' resumes if the run id already exists. Defaults to 'allow'.
+            kwargs (Any): Keyword arguments to wandb.init excluding the ones explicitly described above.
                 Documentation here: https://docs.wandb.ai/ref/python/init/
         """
 
@@ -75,6 +82,11 @@ class WandBReporter(BaseReporter):
         self.tags = tags
         self.name = name
         self.id = id
+        self.resume = resume
+
+        # Keep track of epoch and step. Initialize as 0.
+        self.current_epoch = 0
+        self.current_step = 0
 
         # Initialize run later to avoid creating runs while debugging
         self.run: wandb.wandb_run.Run
@@ -82,15 +94,58 @@ class WandBReporter(BaseReporter):
     def initialize(self, **kwargs: Any) -> None:
         """Checks if an id was provided by the client or server.
 
-        If an id was passed to the WandBReporter on init then it takes priority over the
-        one passed by the client/server.
+        If an id was passed to the WandBReporter on init then it takes priority over the one passed by the
+        client/server.
         """
         if self.id is None:
             self.id = kwargs.get("id")
             self.initialized = True
 
+    def define_metrics(self) -> None:
+        """This method defines some of the metrics we expect to see from Basic Client and server.
+
+        Note that you do not have to define metrics, but it can be useful for determining what should and shouldn't go
+        into the run summary.
+        """
+        # Note that the hidden argument is not working. Raised issue here: https://github.com/wandb/wandb/issues/8890
+        # Round, epoch and step
+        self.run.define_metric("fit_step", summary="none", hidden=True)  # Current fit step
+        self.run.define_metric("fit_epoch", summary="none", hidden=True)  # Current fit epoch
+        self.run.define_metric("round", summary="none", hidden=True)  # Current server round
+        self.run.define_metric("round_start", summary="none", hidden=True)
+        self.run.define_metric("round_end", summary="none", hidden=True)
+        # A server round contains a fit_round and maybe also an evaluate round
+        self.run.define_metric("fit_round_start", summary="none", hidden=True)
+        self.run.define_metric("fit_round_end", summary="none", hidden=True)
+        self.run.define_metric("eval_round_start", summary="none", hidden=True)
+        self.run.define_metric("eval_round_end", summary="none", hidden=True)
+        # The metrics computed on all the samples from the final epoch, or the entire round if training by steps
+        self.run.define_metric("fit_round_time_elapsed", summary="none")
+        self.run.define_metric("eval_round_time_elapsed", summary="none")
+        self.run.define_metric("fit_round_metrics", step_metric="round", summary="best")
+        self.run.define_metric("eval_round_metrics", step_metric="round", summary="best")
+        # Average of the losses for each step in the final epoch, or the entire round if training by steps.
+        self.run.define_metric("fit_round_losses", step_metric="round", summary="best", goal="minimize")
+        self.run.define_metric("eval_round_loss", step_metric="round", summary="best", goal="minimize")
+        # The metrics computed  at the end of the epoch on all the samples from the epoch
+        self.run.define_metric("fit_round_metrics", step_metric="fit_epoch", summary="best")
+        # Average of the losses for each step in the epoch
+        self.run.define_metric("fit_epoch_losses", step_metric="fit_epoch", summary="best", goal="minimize")
+        # The loss and metrics for each individual step
+        self.run.define_metric("fit_step_metrics", step_metric="fit_step", summary="best")
+        self.run.define_metric("fit_step_losses", step_metric="fit_step", summary="best", goal="minimize")
+        # FlServer (Base Server) specific metrics
+        self.run.define_metric("val - loss - aggregated", step_metric="round", summary="best", goal="minimize")
+        self.run.define_metric("eval_round_metrics_aggregated", step_metric="round", summary="best")
+        # The following metrics don't work with wandb since they are currently obtained after training instead of live
+        self.run.define_metric("val - loss - centralized", step_metric="round", summary="best", goal="minimize")
+        self.run.define_metric("eval_round_metrics_centralized", step_metric="round", summary="best")
+
     def start_run(self, wandb_init_kwargs: dict[str, Any]) -> None:
         """Initializes the wandb run.
+
+        We avoid doing this in the self.init function so that when debugging, jobs that fail before training starts do
+        not get uploaded to wandb.
 
         Args:
             wandb_init_kwargs (dict[str, Any]): Keyword arguments for wandb.init() excluding the ones explicitly
@@ -108,71 +163,77 @@ class WandBReporter(BaseReporter):
             tags=self.tags,
             name=self.name,
             id=self.id,
-            **wandb_init_kwargs  # Other less commonly used kwargs
+            resume=self.resume,
+            **wandb_init_kwargs,  # Other less commonly used kwargs
         )
         self.run_id = self.run._run_id  # If run_id was None, we need to reset run id
         self.run_started = True
 
-    def get_wandb_timestep(
-        self,
-        round: int | None,
-        epoch: int | None,
-        step: int | None,
-    ) -> int | None:
-        """Determines the current step based on the timestep type.
-
-        The report method is called every round epoch and step by default. Depending on the wandb_step_type we need to
-        determine whether or not to ignore the call to avoid reporting to frequently. E.g. if wandb_step_type is EPOCH
-        then we should not report data that is sent every step, but we should report data that is sent once an epoch or
-        once a round. We can do this by ignoring calls to report where step is not None.
-
-        Args:
-            round (int | None): The current round or None if called outside of a round.
-            epoch (int | None): The current epoch or None if called outside of a epoch.
-            step (int | None): The current step (total) or None if called outside of
-                step.
-
-        Returns:
-            int | None: Returns None if the reporter should not report metrics on this
-                call. If an integer is returned then it is what the reporter should use
-                as the current wandb step based on its wandb_step_type.
-        """
-        if self.wandb_step_type == StepType.ROUND and epoch is None and step is None:
-            return round  # If epoch or step are integers, we should ignore report whend wandb_step_type is ROUND
-        elif self.wandb_step_type == StepType.EPOCH and step is None:
-            return epoch  # If step is an integer, we should ignore report when wandb_step_type is EPOCH or ROUND
-        elif self.wandb_step_type == StepType.STEP:
-            return step  # Since step is the finest granularity step type, we always report for wandb_step_type STEP
-
-        # Return None otherwise
-        return None
+        # Wandb metric definitions
+        self.define_metrics()
 
     def report(
         self,
-        data: dict,
+        data: dict[str, Any],
         round: int | None = None,
         epoch: int | None = None,
-        batch: int | None = None,
+        step: int | None = None,
     ) -> None:
-        # If round is None, assume data is summary information. Always report this.
-        if round is None:
-            if not self.run_started:
-                self.start_run(self.wandb_init_kwargs)
-            self.run.summary.update(data)
+        """Reports wandb compatible data to the wandb server.
 
-        # Get wandb step based on timestep_type
-        wandb_step = self.get_wandb_timestep(round, epoch, batch)
+        Data passed to self.report is always reported. If round is None, the data is reported as config information.
+        If round is specified, the data is logged to the wandb run at the current wandb step which is either the
+        current round, epoch or step depending on the wandb_step_type passed on initialization. The current epoch and
+        step are initialized at 0 and updated internally when specified as arguments to report. Therefore leaving epoch
+        or step as None will overwrite the data for the previous epoch/step if the key is the same, otherwise the new
+        key-value pairs are added. For example, if {"loss": value} is logged every epoch but wandb_step_type is
+        'round', then the value for "loss" at round 1 will be it's value at the last epoch of that round. You can only
+        update or overwrite the current wandb step, previous steps can not be modified.
 
-        # If wandb_step is None, then we should not report on this call
-        if wandb_step is None:
-            return
-
-        # Check if wandb run has been initialized
+        Args:
+            data (dict[str, Any]): Dictionary of wandb compatible data to log
+            round (int | None, optional): The current FL round. If None, this indicates that the method was called
+                outside of a round (e.g. for summary information). Defaults to None.
+            epoch (int | None, optional): The current epoch (In total across all rounds). If None then this method was
+                not called at or within the scope of an epoch. Defaults to None.
+            step (int | None, optional): The current step (In total across all rounds and epochs). If None then this
+                method was called outside the scope of a training or evaluation step (eg. at the end of an epoch or
+                round) Defaults to None.
+        """
+        # Now that report has been called we are finally forced to start the run.
         if not self.run_started:
             self.start_run(self.wandb_init_kwargs)
 
-        # Log data
-        self.run.log(data, step=wandb_step)
+        # If round is None, assume data is summary information.
+        if round is None:
+            wandb.config.update(data)
+            return
+
+        # Update current epoch and step if they were specified
+        if epoch is not None:
+            if epoch < self.current_epoch:
+                log(
+                    WARNING,
+                    f"The specified current epoch ({epoch}) is less than a previous \
+                        current epoch ({self.current_epoch})",
+                )
+            self.current_epoch = epoch
+
+        if step is not None:
+            if step < self.current_step:
+                log(
+                    WARNING,
+                    f"The specified current step ({step}) is less than a previous current step ({self.current_step})",
+                )
+            self.current_step = step
+
+        # Log based on step type
+        if self.wandb_step_type == StepType.ROUND:
+            self.run.log(data, step=round)
+        elif self.wandb_step_type == StepType.EPOCH:
+            self.run.log(data, step=self.current_epoch)
+        elif self.wandb_step_type == StepType.STEP:
+            self.run.log(data, step=self.current_step)
 
     def shutdown(self) -> None:
         self.run.finish()
