@@ -99,7 +99,7 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     assert torch.equal(updated_model.linear.weight, loaded_model.linear.weight)
 
 
-@patch("fl4health.server.base_server.Server.fit")
+@patch("fl4health.servers.base_server.Server.fit")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     test_history = History()
@@ -128,7 +128,7 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     assert len(errors) == 0, f"Metrics check failed. Errors: {errors}, {reporter.metrics}"
 
 
-@patch("fl4health.server.base_server.Server.fit_round")
+@patch("fl4health.servers.base_server.Server.fit_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     test_round = 2
@@ -237,7 +237,7 @@ def test_handle_result_aggregation() -> None:
     )
 
 
-@patch("fl4health.server.base_server.FlServer._evaluate_round")
+@patch("fl4health.servers.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     test_round = 2
