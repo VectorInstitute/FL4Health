@@ -10,8 +10,8 @@ from flwr.server.server import fit_clients
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.base_server import FlServer
-from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
+from fl4health.servers.base_server import FlServer
+from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
 from fl4health.strategies.scaffold import OpacusScaffold, Scaffold
 
 

@@ -17,7 +17,7 @@ from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpoint
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
-from fl4health.server.instance_level_dp_server import InstanceLevelDpServer
+from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
 from fl4health.strategies.basic_fedavg import OpacusBasicFedAvg
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn

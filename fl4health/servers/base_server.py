@@ -18,7 +18,7 @@ from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchChec
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.server.polling import poll_clients
+from fl4health.servers.polling import poll_clients
 from fl4health.strategies.strategy_with_poll import StrategyWithPolling
 from fl4health.utils.config import narrow_dict_type_and_set_attribute
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix

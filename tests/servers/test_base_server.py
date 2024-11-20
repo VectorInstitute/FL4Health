@@ -18,7 +18,7 @@ from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
-from fl4health.server.base_server import FlServer, FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer, FlServerWithCheckpointing
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
@@ -99,7 +99,7 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     assert torch.equal(updated_model.linear.weight, loaded_model.linear.weight)
 
 
-@patch("fl4health.server.base_server.Server.fit")
+@patch("fl4health.servers.base_server.Server.fit")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     test_history = History()
@@ -128,7 +128,7 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     assert len(errors) == 0, f"Metrics check failed. Errors: {errors}, {reporter.metrics}"
 
 
-@patch("fl4health.server.base_server.Server.fit_round")
+@patch("fl4health.servers.base_server.Server.fit_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     test_round = 2
@@ -237,7 +237,7 @@ def test_handle_result_aggregation() -> None:
     )
 
 
-@patch("fl4health.server.base_server.FlServer._evaluate_round")
+@patch("fl4health.servers.base_server.FlServer._evaluate_round")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     test_round = 2

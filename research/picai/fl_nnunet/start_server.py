@@ -22,7 +22,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.nnunet_server import NnunetServer
+from fl4health.servers.nnunet_server import NnunetServer
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 
 
