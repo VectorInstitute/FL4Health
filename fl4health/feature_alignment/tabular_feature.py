@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Optional, Union
 
@@ -70,7 +72,7 @@ class TabularFeature:
         )
 
     @staticmethod
-    def from_json(json_str: str) -> "TabularFeature":
+    def from_json(json_str: str) -> TabularFeature:
         attributes = json.loads(json_str)
         return TabularFeature(
             json.loads(attributes["feature_name"]),

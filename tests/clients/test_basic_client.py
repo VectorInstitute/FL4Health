@@ -61,8 +61,8 @@ def test_metrics_reporter_fit() -> None:
         "rounds": {
             test_current_server_round: {
                 "round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-                "fit_losses": test_loss_dict,
-                "fit_metrics": test_metrics,
+                "fit_round_losses": test_loss_dict,
+                "fit_round_metrics": test_metrics,
                 "round": test_current_server_round,
             },
         },
@@ -103,10 +103,10 @@ def test_metrics_reporter_evaluate() -> None:
         "initialized": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
         "rounds": {
             test_current_server_round: {
-                "eval_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
-                "eval_loss": test_loss,
-                "eval_metrics": test_metrics_final,
-                "eval_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "eval_round_start": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
+                "eval_round_loss": test_loss,
+                "eval_round_metrics": test_metrics_final,
+                "eval_round_end": str(datetime.datetime(2012, 12, 12, 12, 12, 12)),
             },
         },
     }

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Dict, List, Optional, Union
 
@@ -87,7 +89,7 @@ class TabularFeaturesInfoEncoder:
         id_column: str,
         target_columns: Union[str, List[str]],
         fill_values: Optional[Dict[str, Scalar]] = None,
-    ) -> "TabularFeaturesInfoEncoder":
+    ) -> TabularFeaturesInfoEncoder:
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)
         # Leverage cyclops to perform type inference
@@ -119,7 +121,7 @@ class TabularFeaturesInfoEncoder:
         )
 
     @staticmethod
-    def from_json(json_str: str) -> "TabularFeaturesInfoEncoder":
+    def from_json(json_str: str) -> TabularFeaturesInfoEncoder:
         attributes = json.loads(json_str)
         return TabularFeaturesInfoEncoder(
             [TabularFeature.from_json(tab_str) for tab_str in json.loads(attributes["tabular_features"])],

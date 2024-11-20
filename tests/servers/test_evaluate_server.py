@@ -5,11 +5,11 @@ from freezegun import freeze_time
 
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.reporting import JsonReporter
-from fl4health.server.evaluate_server import EvaluateServer
+from fl4health.servers.evaluate_server import EvaluateServer
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 
 
-@patch("fl4health.server.evaluate_server.EvaluateServer.federated_evaluate")
+@patch("fl4health.servers.evaluate_server.EvaluateServer.federated_evaluate")
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_fit(mock_federated_evaluate: Mock) -> None:
     pass

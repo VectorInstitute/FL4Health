@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from examples.models.cnn_model import MnistNet
 from fl4health.checkpointing.checkpointer import LatestTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.server.model_merge_server import ModelMergeServer
+from fl4health.servers.model_merge_server import ModelMergeServer
 from fl4health.strategies.model_merge_strategy import ModelMergeStrategy
 from fl4health.utils.config import load_config
 from fl4health.utils.load_data import load_mnist_data
