@@ -116,12 +116,12 @@ class WandBReporter(BaseReporter):
         self.run.define_metric("round_end", summary="none", hidden=True)
         # A server round contains a fit_round and maybe also an evaluate round
         self.run.define_metric("fit_round_start", summary="none", hidden=True)
-        self.run.define_metric("fit_round_time_elapsed", summary="none", hidden=True)
         self.run.define_metric("fit_round_end", summary="none", hidden=True)
         self.run.define_metric("eval_round_start", summary="none", hidden=True)
-        self.run.define_metric("eval_round_time_elapsed", summary="none", hidden=True)
         self.run.define_metric("eval_round_end", summary="none", hidden=True)
         # The metrics computed on all the samples from the final epoch, or the entire round if training by steps
+        self.run.define_metric("fit_round_time_elapsed", summary="none")
+        self.run.define_metric("eval_round_time_elapsed", summary="none")
         self.run.define_metric("fit_round_metrics", step_metric="round", summary="best")
         self.run.define_metric("eval_round_metrics", step_metric="round", summary="best")
         # Average of the losses for each step in the final epoch, or the entire round if training by steps.
