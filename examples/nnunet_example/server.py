@@ -94,6 +94,8 @@ def main(
     server = NnunetServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
+        # The fit_config_fn contains all of the necessary information for param initialization, so we reuse it here
+        on_init_parameters_config_fn=fit_config_fn,
         model=None,
         parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
