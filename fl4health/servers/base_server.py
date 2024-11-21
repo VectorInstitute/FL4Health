@@ -119,16 +119,15 @@ class FlServer(Server):
         self.reports_manager.initialize(id=self.server_name)
         self._log_fl_config()
 
-    def update_before_fit_round(self, server_round: int, timeout: Optional[float] = None) -> None:
+    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
         """
-        Hook method to allow the server to do some work before calling fit on the clients in each server round.
-        In the base server, it is a no-op function, but it can be overridden in child classes for custom functionality.
-        For example, the NnUNetServer class uses this method to ask a client to initialize the global nnunet plans in
-        the first round if one is not provided in in the config. This can only be done after the clients have started
-        up and are ready to train.
+        Hook method to allow the server to do some work before starting the fit process. In the base server, it is a
+        no-op function, but it can be overridden in child classes for custom functionality. For example, the
+        NnUNetServer class uses this method to ask a client to initialize the global nnunet plans if one is not
+        provided in the config. This can only be done after the clients have started up and are ready to train.
 
         Args:
-            server_round (int): The current server round.
+            num_rounds (int): The number of server rounds of FL to be performed
             timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
@@ -243,7 +242,9 @@ class FlServer(Server):
 
     def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
         """
-        Run federated learning for a number of rounds.
+        Run federated learning for a number of rounds. This function also allows the server to perform some operations
+        prior to fitting starting. This is useful, for example, if you need to communicate with the clients to
+        initialize anything prior to FL starting (see nnunet server for an example)
 
         Args:
             num_rounds (int): Number of server rounds to run.
@@ -262,6 +263,9 @@ class FlServer(Server):
                 "host_type": "server",
             }
         )
+
+        self.update_before_fit(num_rounds, timeout)
+
         if self.per_round_checkpointer is not None:
             history, elapsed_time = self.fit_with_per_round_checkpointing(num_rounds, timeout)
         else:
@@ -289,8 +293,7 @@ class FlServer(Server):
         """
         This function is called at each round of federated training. The flow is generally the same as a flower
         server, where clients are sampled and client side training is requested from the clients that are chosen.
-        This function simply adds a bit of logging, post processing of the results and allows the server to do some
-        state management prior to calling the fit if desired.
+        This function simply adds a bit of logging, post processing of the results
 
         Args:
             server_round (int): Current round number of the FL training. Begins at 1
@@ -303,8 +306,6 @@ class FlServer(Server):
                 second is a dictionary of AGGREGATED metrics. The third component holds the individual (non-aggregated)
                 parameters, loss, and metrics for successful and unsuccessful client-side training.
         """
-
-        self.update_before_fit_round(server_round, timeout)
 
         round_start = datetime.datetime.now()
         fit_round_results = super().fit_round(server_round, timeout)
