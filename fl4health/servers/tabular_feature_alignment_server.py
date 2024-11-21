@@ -42,9 +42,8 @@ class TabularFeatureAlignmentServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
-            fl_config (Config): This should be the configuration that was used to setup the federated training.
-                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
-                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+            config (Config): This should be the configuration that was used to setup the federated alignment.
+                In most cases it should be the "source of truth" for how FL alignment should proceed.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the

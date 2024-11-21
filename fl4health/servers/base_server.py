@@ -102,8 +102,8 @@ class FlServer(Server):
         if intermediate_server_state_dir is not None:
             log(
                 WARNING,
-                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. This functionality still "
-                "experimental and only supported for BasicClient and NnunetClient currently.",
+                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. This functionality is "
+                "still experimental and only supported for BasicClient and NnunetClient currently.",
             )
             self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
@@ -263,7 +263,7 @@ class FlServer(Server):
             }
         )
         if self.per_round_checkpointer is not None:
-            self.fit_with_per_round_checkpointing(num_rounds, timeout)
+            history, elapsed_time = self.fit_with_per_round_checkpointing(num_rounds, timeout)
         else:
             history, elapsed_time = super().fit(num_rounds, timeout)
         end_time = datetime.datetime.now()
@@ -331,7 +331,7 @@ class FlServer(Server):
 
     def shutdown(self) -> None:
         """
-        Current just records termination of the server process and disconnects and reporters that need to be.
+        Currently just records termination of the server process and disconnects and reporters that need to be.
         """
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
