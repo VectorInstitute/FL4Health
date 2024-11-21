@@ -43,7 +43,7 @@ jobs:
           virtual-environment: .venv/
           # Ignoring vulnerability in cryptography
           # Fix is 43.0.1 but flwr 1.9 depends on < 43
-          # PYSEC-2022-43145 seems like a bug in pip audit, we should probably try to remove the ignore
+          # PYSEC-2022-43145 seems like a bug in pip audit, we should probably try to remove the ignore at some point
           ignore-vulns: |
             GHSA-h4gh-qq45-vh27
             GHSA-q34m-jh98-gwm2
