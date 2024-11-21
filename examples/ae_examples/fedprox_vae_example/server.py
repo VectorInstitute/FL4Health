@@ -10,7 +10,7 @@ from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDeco
 from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
 from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.servers.base_server import FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -67,8 +67,9 @@ def main(config: Dict[str, Any]) -> None:
         initial_loss_weight=config["initial_proximal_weight"],
     )
 
-    server = FlServerWithCheckpointing(
+    server = FlServer(
         client_manager=SimpleClientManager(),
+        fl_config=config,
         parameter_exchanger=parameter_exchanger,
         model=model,
         strategy=strategy,

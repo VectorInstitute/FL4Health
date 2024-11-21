@@ -57,7 +57,9 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         initial_parameters=get_all_model_parameters(model),
     )
 
-    server = FullExchangeServer(client_manager, model, strategy, checkpointer=checkpointer)
+    server = FullExchangeServer(
+        client_manager=client_manager, fl_config=config, model=model, strategy=strategy, checkpointer=checkpointer
+    )
 
     fl.server.start_server(
         server=server,

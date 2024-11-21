@@ -92,9 +92,10 @@ def main(
     )
 
     server = NnunetServer(
+        client_manager=SimpleClientManager(),
+        fl_config=config,
         model=None,
         parameter_exchanger=FullParameterExchanger(),
-        client_manager=SimpleClientManager(),
         strategy=strategy,
         intermediate_server_state_dir=(
             Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None
