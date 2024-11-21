@@ -269,7 +269,7 @@ class FlServer(Server):
         end_time = datetime.datetime.now()
         self.reports_manager.report(
             {
-                "fit_elapsed_time": str(end_time - start_time),
+                "fit_elapsed_time": round((end_time - start_time).total_seconds()),
                 "fit_end": str(end_time),
                 "num_rounds": num_rounds,
                 "host_type": "server",
@@ -311,7 +311,11 @@ class FlServer(Server):
         round_end = datetime.datetime.now()
 
         self.reports_manager.report(
-            {"fit_round_start": str(round_start), "fit_round_end": str(round_end)},
+            {
+                "fit_round_start": str(round_start),
+                "fit_round_end": str(round_end),
+                "fit_round_time_elapsed": round((round_end - round_start).total_seconds()),
+            },
             server_round,
         )
         if fit_round_results is not None:
@@ -388,6 +392,7 @@ class FlServer(Server):
                     "round": server_round,
                     "eval_round_start": str(start_time),
                     "eval_round_end": str(end_time),
+                    "eval_round_time_elapsed": round((end_time - start_time).total_seconds()),
                 }
 
                 if self.fl_config.get("local_epochs", None) is not None:

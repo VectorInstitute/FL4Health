@@ -30,6 +30,7 @@ class WandBReporter(BaseReporter):
         tags: list[str] | None = None,
         name: str | None = None,
         id: str | None = None,
+        resume: str = "allow",
         **kwargs: Any,
     ) -> None:
         """
@@ -56,7 +57,11 @@ class WandBReporter(BaseReporter):
             name (str | None, optional): A short display name for this run. Default generates a random two-word name.
             id (str | None, optional): A unique ID for this run. It must be unique in the project, and if you delete a
                 run you can't reuse the ID.
-            kwargs (Any):  Keyword arguments to wandb.init excluding the ones explicitly described above.
+            resume (str): Indicates how to handle the case when a run has the same entity, project and run id as
+                a previous run. 'must' enforces the run must resume from the run with same id and throws an error
+                if it does not exist. 'never' enforces that a run will not resume and throws an error if run id exists.
+                'allow' resumes if the run id already exists. Defaults to 'allow'.
+            kwargs (Any): Keyword arguments to wandb.init excluding the ones explicitly described above.
                 Documentation here: https://docs.wandb.ai/ref/python/init/
         """
 
@@ -77,6 +82,7 @@ class WandBReporter(BaseReporter):
         self.tags = tags
         self.name = name
         self.id = id
+        self.resume = resume
 
         # Keep track of epoch and step. Initialize as 0.
         self.current_epoch = 0
@@ -110,12 +116,12 @@ class WandBReporter(BaseReporter):
         self.run.define_metric("round_end", summary="none", hidden=True)
         # A server round contains a fit_round and maybe also an evaluate round
         self.run.define_metric("fit_round_start", summary="none", hidden=True)
-        self.run.define_metric("fit_round_time_elapsed", summary="none", hidden=True)
         self.run.define_metric("fit_round_end", summary="none", hidden=True)
         self.run.define_metric("eval_round_start", summary="none", hidden=True)
-        self.run.define_metric("eval_round_time_elapsed", summary="none", hidden=True)
         self.run.define_metric("eval_round_end", summary="none", hidden=True)
         # The metrics computed on all the samples from the final epoch, or the entire round if training by steps
+        self.run.define_metric("fit_round_time_elapsed", summary="none")
+        self.run.define_metric("eval_round_time_elapsed", summary="none")
         self.run.define_metric("fit_round_metrics", step_metric="round", summary="best")
         self.run.define_metric("eval_round_metrics", step_metric="round", summary="best")
         # Average of the losses for each step in the final epoch, or the entire round if training by steps.
@@ -157,6 +163,7 @@ class WandBReporter(BaseReporter):
             tags=self.tags,
             name=self.name,
             id=self.id,
+            resume=self.resume,
             **wandb_init_kwargs,  # Other less commonly used kwargs
         )
         self.run_id = self.run._run_id  # If run_id was None, we need to reset run id
