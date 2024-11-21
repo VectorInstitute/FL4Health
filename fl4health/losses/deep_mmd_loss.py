@@ -47,7 +47,6 @@ class DeepMmdLoss(torch.nn.Module):
         hidden_size: int = 10,
         output_size: int = 50,
         lr: float = 0.001,
-        training: bool = True,
         is_unbiased: bool = True,
         gaussian_degree: int = 1,
         optimization_steps: int = 5,
@@ -69,7 +68,6 @@ class DeepMmdLoss(torch.nn.Module):
             output_size (int, optional): The output size of the deep network as the deep kernel used to compute
                 the MMD loss. Defaults to 50.
             lr (float, optional): Learning rate for training the Deep Kernel. Defaults to 0.001.
-            training (bool, optional): Whether the Deep Kernel is in training mode. Defaults to True.
             is_unbiased (bool, optional): Whether to use the unbiased estimator for the MMD loss. Defaults to True.
             gaussian_degree (int, optional): The degree of the generalized Gaussian kernel. Defaults to 1.
             optimization_steps (int, optional): The number of optimization steps to train the Deep Kernel in each
@@ -79,27 +77,31 @@ class DeepMmdLoss(torch.nn.Module):
         super().__init__()
         self.device = device
         self.lr = lr
-        self.training = training
         self.is_unbiased = is_unbiased
         self.gaussian_degree = gaussian_degree  # generalized Gaussian (if L>1)
         self.optimization_steps = optimization_steps
 
         # Initialize the model
         self.featurizer = ModelLatentF(input_size, hidden_size, output_size).to(self.device)
+        # Set the model to evaluation mode as default
+        self.featurizer.eval()
 
         # Initialize parameters
         self.epsilon_opt: torch.Tensor = torch.log(torch.from_numpy(np.random.rand(1) * 10 ** (-10)).to(self.device))
-        self.epsilon_opt.requires_grad = self.training
+        self.epsilon_opt.requires_grad = False
         self.sigma_q_opt: torch.Tensor = torch.sqrt(torch.tensor(2 * 32 * 32, dtype=torch.float).to(self.device))
-        self.sigma_q_opt.requires_grad = self.training
+        self.sigma_q_opt.requires_grad = False
         self.sigma_phi_opt: torch.Tensor = torch.sqrt(torch.tensor(0.005, dtype=torch.float).to(self.device))
-        self.sigma_phi_opt.requires_grad = self.training
+        self.sigma_phi_opt.requires_grad = False
 
         # Initialize optimizers
         self.optimizer_F = torch.optim.AdamW(
             list(self.featurizer.parameters()) + [self.epsilon_opt] + [self.sigma_q_opt] + [self.sigma_phi_opt],
             lr=self.lr,
         )
+
+        # Set the model to training mode if required to train the Deep Kernel
+        self.training = False
 
     def pairwise_distiance_squared(self, X: torch.Tensor, Y: torch.Tensor) -> torch.Tensor:
         """
@@ -240,7 +242,12 @@ class DeepMmdLoss(torch.nn.Module):
         self.sigma_phi_opt.requires_grad = True
         self.epsilon_opt.requires_grad = True
 
-        features = torch.cat([X, Y], 0)
+        # Shuffle the data to ensure they are not always presented in the same order for training
+        # which might lead to overfitting
+        indices = torch.randperm(Y.size(0))
+        Y_shuffled = Y[indices]
+
+        features = torch.cat([X, Y_shuffled], 0)
 
         # ------------------------------
         #  Train deep network for MMD-D

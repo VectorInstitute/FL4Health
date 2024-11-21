@@ -39,7 +39,8 @@ Y = torch.Tensor(
 
 def test_forward() -> None:
     torch.manual_seed(42)
-    deep_mmd_loss_1 = DeepMmdLoss(device=DEVICE, input_size=3, training=True, optimization_steps=1)
+    deep_mmd_loss_1 = DeepMmdLoss(device=DEVICE, input_size=3, optimization_steps=1)
+    deep_mmd_loss_1.training = True
     train_outputs_1 = []
     val_outputs_1 = []
     for i in range(5):
@@ -54,11 +55,11 @@ def test_forward() -> None:
 
     # The output of the DeepMmdLoss in training mode should be different for each optimization step
     # as values are updated in each step
-    assert pytest.approx(train_outputs_1[0].item(), abs=0.001) == 0.0584
-    assert pytest.approx(train_outputs_1[1].item(), abs=0.001) == 0.0682
-    assert pytest.approx(train_outputs_1[2].item(), abs=0.001) == 0.0773
-    assert pytest.approx(train_outputs_1[3].item(), abs=0.001) == 0.0850
-    assert pytest.approx(train_outputs_1[4].item(), abs=0.001) == 0.0914
+    assert pytest.approx(train_outputs_1[0].item(), abs=0.001) == 0.0573
+    assert pytest.approx(train_outputs_1[1].item(), abs=0.001) == 0.0670
+    assert pytest.approx(train_outputs_1[2].item(), abs=0.001) == 0.0767
+    assert pytest.approx(train_outputs_1[3].item(), abs=0.001) == 0.0848
+    assert pytest.approx(train_outputs_1[4].item(), abs=0.001) == 0.0927
 
     for i in range(len(val_outputs_1)):
         # The output of the DeepMmdLoss in evaluation mode should be the same as the output of the DeepMmdLoss in
@@ -67,7 +68,8 @@ def test_forward() -> None:
 
     # Reset the seed for the second DeepMmdLoss
     torch.manual_seed(42)
-    deep_mmd_loss_2 = DeepMmdLoss(device=DEVICE, input_size=3, training=True, optimization_steps=5)
+    deep_mmd_loss_2 = DeepMmdLoss(device=DEVICE, input_size=3, optimization_steps=5)
+    deep_mmd_loss_2.training = True
     train_output = deep_mmd_loss_2(X, Y)
     deep_mmd_loss_2.training = False
     val_output = deep_mmd_loss_2(X, Y)
