@@ -701,9 +701,8 @@ class NnunetClient(BasicClient):
         """
         Return properties (sample counts and nnunet plans) of client.
 
-        If nnunet plans are not provided by the server, creates a new set of
-        nnunet plans from the local client dataset. These plans are intended
-        to be used for initializing global nnunet plans when they are not
+        If nnunet plans are not provided by the server, creates a new set of nnunet plans from the local client
+        dataset. These plans are intended to be used for initializing global nnunet plans when they are not
         provided.
 
         Args:

@@ -153,9 +153,9 @@ class NnunetServer(FlServer):
 
         self.server_model = model
 
-    def update_before_fit_round(self, server_round: int, timeout: Optional[float] = None) -> None:
+    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
         """
-        Hook method to allow the server to do some additional initialization prior to training. NunetServer
+        Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
         uses this method to sample a client for properties which are required to initialize the server.
 
         In particular, if a nnunet_plans file is not provided in the config, this method will sample a client
@@ -167,13 +167,10 @@ class NnunetServer(FlServer):
         checkpointing. These properties include num_segmentation_heads, num_input_channels and enable_deep_supervision.
 
         Args:
-            server_round (int): The current server round. This is not used in this implementation.
-            timeout (Optional[float], optional): How long the server will wait (in seconds) for responses from the
-                selected client(s). If none, it will wait indefinitely. Defaults to None.
+            num_rounds (int): The number of server rounds of FL to be performed
+            timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
+                information from a client. Defaults to None, which indicates indefinite timeout.
         """
-        # We only perform the operations below prior to the FIRST server round
-        if server_round > 1:
-            return
 
         # If no prior checkpoints exist, initialize server by sampling clients to get required properties to set
         # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
@@ -186,8 +183,8 @@ class NnunetServer(FlServer):
                 "Requesting initialization of global nnunet plans from one random client via get_properties",
             )
             random_client = self._client_manager.sample(1)[0]
-            ins = GetPropertiesIns(config=self.fl_config)
-            properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=server_round)
+            ins = GetPropertiesIns(config=self.fl_config | {"current_server_round": 0})
+            properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=0)
 
             if properties_res.status.code == Code.OK:
                 log(INFO, "Received global nnunet plans from one random client")
