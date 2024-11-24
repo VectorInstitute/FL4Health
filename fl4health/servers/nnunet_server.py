@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Type, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -69,6 +69,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         intermediate_server_state_dir: Path | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
+        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
     ) -> None:
         """
         A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
@@ -94,6 +95,8 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
+            nnunet_trainer_class (Type[nnUNetTrainer], optional): nnUNetTrainer class.
+                Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
         """
         FlServerWithCheckpointing.__init__(
             self,
@@ -107,6 +110,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             server_name=server_name,
         )
         self.initialized = False
+        self.nnunet_trainer_class = nnunet_trainer_class
 
         self.nnunet_plans_bytes: bytes
         self.num_input_channels: int
@@ -127,7 +131,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         plans = pickle.loads(self.nnunet_plans_bytes)
         plans_manager = PlansManager(plans)
         configuration_manager = plans_manager.get_configuration(self.nnunet_config.value)
-        model = nnUNetTrainer.build_network_architecture(
+        model = self.nnunet_trainer_class.build_network_architecture(
             configuration_manager.network_arch_class_name,
             configuration_manager.network_arch_init_kwargs,
             configuration_manager.network_arch_init_kwargs_req_import,

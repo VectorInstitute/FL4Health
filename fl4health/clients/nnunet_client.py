@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -78,6 +78,8 @@ class NnunetClient(BasicClient):
         checkpointer: Optional[ClientCheckpointModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         client_name: Optional[str] = None,
+        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class_kwargs: Optional[dict[str, Any]] = {},
     ) -> None:
         """
         A client for training nnunet models. Requires the nnunet environment variables
@@ -141,6 +143,10 @@ class NnunetClient(BasicClient):
                 provided. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
+            nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor.
+                Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
+            nnunet_trainer_class_kwargs (dict[str, Any]): Additonal kwargs to pass to nnunet_trainer_class.
+                Defaults to empty dictionary.
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
@@ -182,6 +188,8 @@ class NnunetClient(BasicClient):
         self.stream2debug = StreamToLogger(FLOWER_LOGGER, DEBUG)
 
         # nnunet specific attributes to be initialized in setup_client
+        self.nnunet_trainer_class = nnunet_trainer_class
+        self.nnunet_trainer_class_kwargs = nnunet_trainer_class_kwargs
         self.nnunet_trainer: nnUNetTrainer
         self.nnunet_config: NnunetConfig
         self.plans: dict[str, Any]
@@ -465,12 +473,13 @@ class NnunetClient(BasicClient):
         # Unless log level is DEBUG or lower hide nnunet output
         with redirect_stdout(self.stream2debug):
             # Create the nnunet trainer
-            self.nnunet_trainer = nnUNetTrainer(
+            self.nnunet_trainer = self.nnunet_trainer_class(
                 plans=self.plans,
                 configuration=self.nnunet_config.value,
                 fold=self.fold,
                 dataset_json=self.dataset_json,
                 device=self.device,
+                **self.nnunet_trainer_class_kwargs,
             )
             # nnunet_trainer initialization
             self.nnunet_trainer.initialize()
