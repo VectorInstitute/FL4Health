@@ -95,7 +95,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
-            nnunet_trainer_class (Type[nnUNetTrainer], optional): nnUNetTrainer class.
+            nnunet_trainer_class (Type[nnUNetTrainer]): nnUNetTrainer class.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
         """
         FlServerWithCheckpointing.__init__(
