@@ -145,6 +145,7 @@ class NnunetClient(BasicClient):
                 reporters which the client should send data to.
             nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
+                Must match the nnunet_trainer_class passed to the NnunetServer.
             nnunet_trainer_class_kwargs (dict[str, Any]): Additonal kwargs to pass to nnunet_trainer_class.
                 Defaults to empty dictionary.
         """

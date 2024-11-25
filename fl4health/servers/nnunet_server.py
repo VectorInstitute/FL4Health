@@ -97,6 +97,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
                 and throw an exception. Defaults to True.
             nnunet_trainer_class (Type[nnUNetTrainer]): nnUNetTrainer class.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
+                Must match the nnunet_trainer_class passed to the NnunetClient.
         """
         FlServerWithCheckpointing.__init__(
             self,
