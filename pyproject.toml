@@ -34,6 +34,7 @@ scikit-learn = "1.5.0" # Pin as it was causing issues with nnunet
 # Problematic grpcio versions cause issues, should be fixed in next flwr update
 # See https://github.com/adap/flower/pull/3853
 # https://github.com/grpc/grpc/issues/37162
+tornado = ">=6.4.2"
 
 [tool.poetry.group.dev.dependencies]
 # locked the 2.13 version because of restrictions with tensorflow-io
