@@ -9,7 +9,7 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import fit_clients
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.server_module import ScaffoldServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
@@ -22,7 +22,7 @@ class ScaffoldServer(FlServer):
         client_manager: ClientManager,
         fl_config: Config,
         strategy: Scaffold,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         warm_start: bool = False,
         accept_failures: bool = True,
@@ -41,9 +41,11 @@ class ScaffoldServer(FlServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform server
-                side checkpointing based on some criteria. If none, then no server-side checkpointing is performed.
-                Defaults to None.
+            checkpoint_and_state_module (ScaffoldServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
                 send data to before and after each round.
             warm_start (bool, optional): Whether or not to initialize control variates of each client as local
@@ -59,7 +61,7 @@ class ScaffoldServer(FlServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             accept_failures=accept_failures,
         )
@@ -172,7 +174,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
@@ -196,9 +198,11 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpoint_and_state_module (ScaffoldServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
             warm_start (bool, optional): Whether or not to initialize control variates of each client as
                 local gradients. The clients will perform a training pass (without updating the weights) in order to
                 provide a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
@@ -217,7 +221,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             warm_start=warm_start,
             reporters=reporters,
         )

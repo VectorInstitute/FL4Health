@@ -8,7 +8,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 from opacus.optimizers.optimizer import DPOptimizer
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.clients.instance_level_dp_client import InstanceLevelDpClient
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -35,7 +35,7 @@ class ScaffoldClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(
@@ -257,7 +257,7 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,

@@ -10,7 +10,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -49,8 +49,8 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
     best_checkpoint_name = "server_best_model.pkl"
     last_checkpoint_name = "server_last_model.pkl"
     checkpointer = [
-        BestLossTorchCheckpointer(checkpoint_dir, best_checkpoint_name),
-        LatestTorchCheckpointer(checkpoint_dir, last_checkpoint_name),
+        BestLossTorchModuleCheckpointer(checkpoint_dir, best_checkpoint_name),
+        LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
     ]
     client_manager = SimpleClientManager()
     # Initializing the model on the server side
@@ -84,7 +84,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
         config=fl.server.ServerConfig(num_rounds=config["n_server_rounds"]),
     )
 
-    assert isinstance(checkpointer[0], BestLossTorchCheckpointer)
+    assert isinstance(checkpointer[0], BestLossTorchModuleCheckpointer)
     log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer[0].best_score}")
 
     # Shutdown the server gracefully

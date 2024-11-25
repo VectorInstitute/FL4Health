@@ -20,7 +20,7 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
@@ -75,7 +75,7 @@ class NnunetClient(BasicClient):
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         client_name: Optional[str] = None,
     ) -> None:

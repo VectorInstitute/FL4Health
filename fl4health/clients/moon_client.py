@@ -5,7 +5,7 @@ from typing import Dict, Optional, Sequence, Tuple
 import torch
 from flwr.common.logger import log
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient, Config
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
@@ -22,7 +22,7 @@ class MoonClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         temperature: float = 0.5,
         contrastive_weight: float = 1.0,
         len_old_models_buffer: int = 1,

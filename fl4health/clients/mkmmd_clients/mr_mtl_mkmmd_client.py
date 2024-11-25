@@ -6,7 +6,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 
-from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointModule
+from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.clients.mr_mtl_client import MrMtlClient
 from fl4health.losses.mkmmd_loss import MkMmdLoss
 from fl4health.model_bases.feature_extractor_buffer import FeatureExtractorBuffer
@@ -22,7 +22,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         mkmmd_loss_weight: float = 10.0,
         feature_extraction_layers: Optional[Sequence[str]] = None,
         feature_l2_norm_weight: float = 0.0,

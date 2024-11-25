@@ -4,7 +4,7 @@ from pathlib import Path
 import torch
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.checkpointer import PerRoundCheckpointer
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from tests.test_utils.models_for_test import LinearModel
 
 
@@ -12,7 +12,7 @@ def test_per_round_checkpointer() -> None:
     model: torch.nn.Module = LinearModel()
     optimizer: Optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     with tempfile.TemporaryDirectory() as results_dir:
-        checkpointer = PerRoundCheckpointer(checkpoint_dir=Path(results_dir), checkpoint_name=Path("ckpt.pt"))
+        checkpointer = PerRoundStateCheckpointer(checkpoint_dir=Path(results_dir), checkpoint_name=Path("ckpt.pt"))
 
         assert not checkpointer.checkpoint_exists()
 

@@ -7,10 +7,10 @@ from flwr.common.logger import log
 from flwr.common.typing import Scalar
 from opacus import GradSampleModule
 
-from fl4health.checkpointing.checkpointer import FunctionTorchCheckpointer
+from fl4health.checkpointing.checkpointer import FunctionTorchModuleCheckpointer
 
 
-class OpacusCheckpointer(FunctionTorchCheckpointer):
+class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
     """
     This is a specific type of checkpointer to be used in saving models trained using Opacus for differential privacy.
     Certain layers within Opacus wrapped models do not interact well with torch.save functionality. This checkpointer
@@ -71,10 +71,10 @@ class OpacusCheckpointer(FunctionTorchCheckpointer):
             model (nn.Module): Model to be checkpointed via the state dictionary.
         """
         model_state_dict = model.state_dict()
-        with open(self.best_checkpoint_path, "wb") as handle:
+        with open(self.checkpoint_path, "wb") as handle:
             pickle.dump(model_state_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def load_best_checkpoint(self) -> nn.Module:
+    def load_checkpoint(self) -> nn.Module:
         raise NotImplementedError(
             "When loading from Opacus checkpointers, you need to provide a model into which state is loaded. "
             "Please use load_best_checkpoint_into_model instead and provide model architecture to load state into."
@@ -92,7 +92,7 @@ class OpacusCheckpointer(FunctionTorchCheckpointer):
             target_is_grad_sample_module (bool, optional): Whether the target_model that the state_dict is being
                 loaded into is an Opacus module or just a vanilla Pytorch module. Defaults to False.
         """
-        with open(self.best_checkpoint_path, "rb") as handle:
+        with open(self.checkpoint_path, "rb") as handle:
             model_state_dict = pickle.load(handle)
             # If the target is just a plain PyTorch module, we remove the _module key prefix that Opacus inserts into
             # its GradSampleModules.

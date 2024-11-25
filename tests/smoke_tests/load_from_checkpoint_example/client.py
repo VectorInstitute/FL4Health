@@ -11,7 +11,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
 from fl4health.reporting.base_reporter import BaseReporter
@@ -29,7 +29,7 @@ class CifarClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         intermediate_client_state_dir: Optional[Path] = None,

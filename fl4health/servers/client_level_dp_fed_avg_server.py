@@ -8,7 +8,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.privacy.fl_accountants import (
@@ -29,7 +29,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         strategy: ClientLevelDPFedAvgM,
         server_noise_multiplier: float,
         num_server_rounds: int,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         delta: Optional[int] = None,
         accept_failures: bool = True,
@@ -48,9 +48,11 @@ class ClientLevelDPFedAvgServer(FlServer):
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
             num_server_rounds (int): Number of rounds of FL training carried out by the server.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the server should send data to before and after each round.
             delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
@@ -63,7 +65,7 @@ class ClientLevelDPFedAvgServer(FlServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             accept_failures=accept_failures,
         )

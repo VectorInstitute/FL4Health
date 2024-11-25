@@ -14,7 +14,7 @@ from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.base_server import ExchangerType, FlServer
@@ -64,7 +64,7 @@ class NnunetServer(FlServer):
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]],
         model: nn.Module | None = None,
         strategy: Strategy | None = None,
-        checkpointer: TorchCheckpointer | Sequence[TorchCheckpointer] | None = None,
+        checkpointer: TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         parameter_exchanger: ExchangerType | None = None,
         intermediate_server_state_dir: Path | None = None,

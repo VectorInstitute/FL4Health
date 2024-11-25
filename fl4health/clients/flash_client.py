@@ -6,7 +6,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.utils.client import check_if_batch_is_empty_and_verify_input, move_data_to_device
 from fl4health.utils.config import narrow_dict_type
@@ -21,7 +21,7 @@ class FlashClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         """
         This client is used to perform client-side training associated with the Flash method described in

@@ -16,8 +16,8 @@ from examples.models.sequential_split_models import (
     SequentialGlobalFeatureExtractorMnist,
     SequentialLocalPredictionHeadMnist,
 )
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.parallel_split_models import ParallelFeatureJoinMode
@@ -106,15 +106,15 @@ if __name__ == "__main__":
     post_aggregation_checkpointer = None
 
     if args.checkpointer_type in ["pre", "both"]:
-        pre_aggregation_checkpointer = BestLossTorchCheckpointer(
+        pre_aggregation_checkpointer = BestLossTorchModuleCheckpointer(
             args.checkpoint_path, "fenda_ditto_client_pre_agg.pkl"
         )
     if args.checkpointer_type in ["post", "both"]:
-        post_aggregation_checkpointer = BestLossTorchCheckpointer(
+        post_aggregation_checkpointer = BestLossTorchModuleCheckpointer(
             args.checkpoint_path, "fenda_ditto_client_post_agg.pkl"
         )
 
-    checkpointer = ClientCheckpointModule(
+    checkpointer = ClientCheckpointAndStateModule(
         pre_aggregation=pre_aggregation_checkpointer,
         post_aggregation=post_aggregation_checkpointer,
     )

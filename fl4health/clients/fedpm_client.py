@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 import torch
 from flwr.common.typing import Config
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.masked_layers.masked_layers_utils import convert_to_masked_model
 from fl4health.parameter_exchange.fedpm_exchanger import FedPmExchanger
@@ -22,7 +22,7 @@ class FedPmClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(

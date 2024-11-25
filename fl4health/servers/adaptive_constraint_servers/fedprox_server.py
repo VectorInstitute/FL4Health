@@ -5,7 +5,7 @@ from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.reporting.base_reporter import BaseReporter
@@ -20,7 +20,7 @@ class FedProxServer(FlServer):
         fl_config: Config,
         strategy: FedAvgWithAdaptiveConstraint,
         model: Optional[nn.Module] = None,
-        checkpointer: Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]] = None,
+        checkpointer: Optional[Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]]] = None,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         """

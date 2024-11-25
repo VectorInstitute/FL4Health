@@ -4,7 +4,7 @@ from typing import Optional, Sequence
 import torch
 from flwr.common.typing import Config
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -20,7 +20,7 @@ class FendaClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,

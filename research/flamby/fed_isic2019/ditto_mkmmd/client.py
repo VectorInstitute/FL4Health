@@ -14,8 +14,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
@@ -41,7 +41,7 @@ class FedIsic2019DittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -175,7 +175,9 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointModule(post_aggregation=BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name))
+    checkpointer = ClientCheckpointAndStateModule(
+        post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+    )
 
     client = FedIsic2019DittoClient(
         data_path=Path(args.dataset_dir),

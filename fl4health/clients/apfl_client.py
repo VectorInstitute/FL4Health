@@ -5,7 +5,7 @@ import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.apfl_base import ApflModule
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
@@ -22,7 +22,7 @@ class ApflClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpointer, reporters)

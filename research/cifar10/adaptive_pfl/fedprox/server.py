@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -55,8 +55,8 @@ def main(
     best_checkpoint_name = "server_best_model.pkl"
     last_checkpoint_name = "server_last_model.pkl"
     checkpointer = [
-        BestLossTorchCheckpointer(checkpoint_dir, best_checkpoint_name),
-        LatestTorchCheckpointer(checkpoint_dir, last_checkpoint_name),
+        BestLossTorchModuleCheckpointer(checkpoint_dir, best_checkpoint_name),
+        LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
     ]
 
     client_manager = SimpleClientManager()
@@ -93,7 +93,7 @@ def main(
     )
 
     log(INFO, "Training Complete")
-    assert isinstance(checkpointer[0], BestLossTorchCheckpointer)
+    assert isinstance(checkpointer[0], BestLossTorchModuleCheckpointer)
     log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer[0].best_score}")
 
     # Shutdown the server gracefully

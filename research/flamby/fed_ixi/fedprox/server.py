@@ -9,7 +9,7 @@ from flamby.datasets.fed_ixi import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -31,9 +31,9 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     federated_checkpointing: bool = config.get("federated_checkpointing", True)
     log(INFO, f"Performing Federated Checkpointing: {federated_checkpointing}")
     checkpointer = (
-        BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
         if federated_checkpointing
-        else LatestTorchCheckpointer(checkpoint_dir, checkpoint_name)
+        else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
     client_manager = SimpleClientManager()
@@ -70,7 +70,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
     )
 
     if federated_checkpointing:
-        assert isinstance(checkpointer, BestLossTorchCheckpointer)
+        assert isinstance(checkpointer, BestLossTorchModuleCheckpointer)
         log(INFO, f"Best Aggregated (Weighted) Loss seen by the Server: \n{checkpointer.best_score}")
 
     # Shutdown the server gracefully

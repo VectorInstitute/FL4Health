@@ -9,7 +9,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.feature_alignment.constants import (
     CURRENT_SERVER_ROUND,
     FEATURE_INFO,
@@ -31,7 +31,7 @@ class TabularFeatureAlignmentServer(FlServer):
         config: Config,
         initialize_parameters: Callable[..., Parameters],
         strategy: BasicFedAvg,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
         reporters: Sequence[BaseReporter] | None = None,
         accept_failures: bool = True,

@@ -7,7 +7,7 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
@@ -25,7 +25,7 @@ class ConstrainedFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         loss_container: Optional[ConstrainedFendaLossContainer] = None,
     ) -> None:
         """

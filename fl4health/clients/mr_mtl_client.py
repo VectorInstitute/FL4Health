@@ -7,7 +7,7 @@ import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays, Scalar
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.adaptive_drift_constraint_client import AdaptiveDriftConstraintClient
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
@@ -22,7 +22,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
     ) -> None:

@@ -5,7 +5,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 
@@ -17,7 +17,7 @@ class FullExchangeServer(FlServer):
         fl_config: Config,
         model: Optional[nn.Module] = None,
         strategy: Optional[Strategy] = None,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpointer: Optional[TorchModuleCheckpointer] = None,
     ) -> None:
         # To help with model rehydration
         parameter_exchanger = FullParameterExchanger()

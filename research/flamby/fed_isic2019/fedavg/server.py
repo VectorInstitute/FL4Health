@@ -10,7 +10,7 @@ from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -28,7 +28,7 @@ def main(config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
     model = Baseline()

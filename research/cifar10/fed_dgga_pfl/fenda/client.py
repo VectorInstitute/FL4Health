@@ -12,8 +12,8 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer, LatestTorchCheckpointer
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_client import FendaClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.utils.config import narrow_dict_type
@@ -34,7 +34,7 @@ class CifarFendaClient(FendaClient):
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
@@ -136,14 +136,14 @@ if __name__ == "__main__":
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
     post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
     post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpointer = ClientCheckpointModule(
+    checkpointer = ClientCheckpointAndStateModule(
         pre_aggregation=[
-            BestLossTorchCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
-            LatestTorchCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
+            BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
         ],
         post_aggregation=[
-            BestLossTorchCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
-            LatestTorchCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
+            BestLossTorchModuleCheckpointer(checkpoint_dir, post_aggregation_best_checkpoint_name),
+            LatestTorchModuleCheckpointer(checkpoint_dir, post_aggregation_last_checkpoint_name),
         ],
     )
 

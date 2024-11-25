@@ -9,7 +9,7 @@ from flamby.datasets.fed_isic2019 import Baseline
 from flwr.common.logger import log
 from flwr.server.client_manager import SimpleClientManager
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -28,7 +28,7 @@ def main(config: Dict[str, Any], server_address: str, mu: float, checkpoint_stub
 
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
-    checkpointer = BestLossTorchCheckpointer(checkpoint_dir, checkpoint_name)
+    checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
 
     client_manager = SimpleClientManager()
     model = Baseline()

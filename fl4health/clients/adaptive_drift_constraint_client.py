@@ -6,7 +6,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.losses.weight_drift_loss import WeightDriftLoss
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -26,7 +26,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
     ) -> None:

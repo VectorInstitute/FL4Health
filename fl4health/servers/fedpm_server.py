@@ -6,7 +6,7 @@ from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.server import FitResultsAndFailures
 
-from fl4health.checkpointing.checkpointer import TorchCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedpm import FedPm
@@ -18,7 +18,7 @@ class FedPmServer(FlServer):
         client_manager: ClientManager,
         fl_config: Config,
         strategy: FedPm,
-        checkpointer: Optional[TorchCheckpointer] = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
         reset_frequency: int = 1,
         reporters: Sequence[BaseReporter] | None = None,
         accept_failures: bool = True,
@@ -36,9 +36,11 @@ class FedPmServer(FlServer):
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and other
                 information potentially sent by the participating clients. This strategy must be of SCAFFOLD type.
-            checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
-                server side checkpointing based on some criteria. If none, then no server-side checkpointing is
-                performed. Defaults to None.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
             reset_frequency (int): Determines the frequency with which the beta priors are reset. Defaults to 1.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
                 send data to before and after each round.
@@ -51,7 +53,7 @@ class FedPmServer(FlServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             accept_failures=accept_failures,
         )

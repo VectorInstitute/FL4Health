@@ -12,7 +12,7 @@ from flwr.server.history import History
 from flwr.server.strategy import FedAvg
 from freezegun import freeze_time
 
-from fl4health.checkpointing.checkpointer import BestLossTorchCheckpointer
+from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
@@ -37,7 +37,7 @@ def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
 
     # Checkpointer is defined but there is no server-side model defined to produce a model from the server state.
     # An assertion error should be throw stating this
@@ -53,7 +53,7 @@ def test_hydration_no_exchanger_with_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
 
     # Checkpointer is defined but there is no parameter exchanger defined to produce a model from the server state.
     # An assertion error should be throw stating this
@@ -79,7 +79,7 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
 
     # Server-side hydration to convert server state to model and checkpointing behavior are both defined, a model
     # should be saved and be loaded successfully.
@@ -87,7 +87,7 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
         client_manager=PoissonSamplingClientManager(), fl_config={}, checkpointer=checkpointer
     )
     fl_server_both._maybe_checkpoint(1.0, {}, server_round=5)
-    loaded_model = checkpointer.load_best_checkpoint()
+    loaded_model = checkpointer.load_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(model.linear.weight, loaded_model.linear.weight)
@@ -97,7 +97,7 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+    checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
     # Initial model held by server
     initial_model = LinearTransform()
     # represents the model computed by the clients aggregation
@@ -116,7 +116,7 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     server.parameters = ndarrays_to_parameters(parameter_exchanger.push_parameters(updated_model))
 
     server._maybe_checkpoint(1.0, {}, server_round=5)
-    loaded_model = checkpointer.load_best_checkpoint()
+    loaded_model = checkpointer.load_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
     # Correct loading tensors of the saved model
     assert torch.equal(updated_model.linear.weight, loaded_model.linear.weight)

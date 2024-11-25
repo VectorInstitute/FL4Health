@@ -1,12 +1,11 @@
 import datetime
 from logging import DEBUG, ERROR, INFO, WARNING
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
 from flwr.common.logger import log
-from flwr.common.parameter import parameters_to_ndarrays
 from flwr.common.typing import Code, Config, GetParametersIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -14,8 +13,7 @@ from flwr.server.history import History
 from flwr.server.server import EvaluateResultsAndFailures, FitResultsAndFailures, Server, evaluate_clients
 from flwr.server.strategy import Strategy
 
-from fl4health.checkpointing.checkpointer import PerRoundCheckpointer, TorchCheckpointer
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.polling import poll_clients
@@ -26,8 +24,6 @@ from fl4health.utils.parameter_extraction import get_all_model_parameters
 from fl4health.utils.random import generate_hash
 from fl4health.utils.typing import EvaluateFailures, FitFailures
 
-ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
-
 
 class FlServer(Server):
     def __init__(
@@ -36,10 +32,7 @@ class FlServer(Server):
         fl_config: Config,
         strategy: Optional[Strategy] = None,
         reporters: Sequence[BaseReporter] | None = None,
-        model: nn.Module | None = None,
-        checkpointer: Union[TorchCheckpointer, Sequence[TorchCheckpointer]] | None = None,
-        parameter_exchanger: ExchangerType | None = None,
-        intermediate_server_state_dir: Path | None = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
@@ -57,31 +50,19 @@ class FlServer(Server):
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server. Defaults to None.
-            reporters (Sequence[BaseReporter] | None, optional):  sequence of FL4Health reporters which the server
+            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
                 should send data to before and after each round. Defaults to None.
-            model (Optional[nn.Module]): This is the torch model to be checkpointed. It will be hydrated by the
-                _hydrate_model_for_checkpointing function so that it has the proper weights to be saved. If no model
-                is defined and checkpointing is attempted an error will throw. Defaults to None.
-            checkpointer (Optional[Union[TorchCheckpointer, Sequence[TorchCheckpointer]]], optional): To be provided
-                if the server should perform server side checkpointing based on some criteria. If none, then no
-                server-side checkpointing is performed. Multiple checkpointers can also be passed in a sequence to
-                checkpointer based on multiple criterion. Ensure checkpoint names are different for each checkpoint or
-                they will overwrite on another. Defaults to None.
-            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
-                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
-                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
-                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
-                provided model. Defaults to None.
-            intermediate_server_state_dir (Path): A directory to store and load state from for the server
-                during an FL experiment. This allows for the saving of server state in case federated training is
-                interrupted and needs to be restarted from the same point. If none, then no state is saved during each
-                server round. Defaults to None.
-            on_init_parameters_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
-                Function used to configure how one asks a client to provide parameters from which to initialize all
-                other clients by providing a Config dictionary. If this is none, then a blank config is sent with the
-                parameter request (which is default behavior for flower servers). Defaults to None.
-            server_name (Optional[str], optional): An optional string name to uniquely identify server.
-                Defaults to None.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
@@ -89,27 +70,17 @@ class FlServer(Server):
 
         super().__init__(client_manager=client_manager, strategy=strategy)
         self.fl_config = fl_config
-        self.server_model = model
-        self.on_init_parameters_config_fn = on_init_parameters_config_fn
-        self.checkpointer = [checkpointer] if isinstance(checkpointer, TorchCheckpointer) else checkpointer
-        # To facilitate model rehydration from server-side state for checkpointing
-        self.parameter_exchanger = parameter_exchanger
-        self.server_name = server_name if server_name is not None else generate_hash()
-        self.accept_failures = accept_failures
-
-        self.per_round_checkpointer: PerRoundCheckpointer | None
-
-        if intermediate_server_state_dir is not None:
-            log(
-                WARNING,
-                "intermediate_server_state_dir is not None. Creating PerRoundCheckpointer. This functionality is "
-                "still experimental and only supported for BasicClient and NnunetClient currently.",
-            )
-            self.per_round_checkpointer = PerRoundCheckpointer(
-                intermediate_server_state_dir, Path(f"{self.server_name}.ckpt")
-            )
+        if checkpoint_and_state_module is not None:
+            self.checkpoint_and_state_module = checkpoint_and_state_module
         else:
-            self.per_round_checkpointer = None
+            # Define a default module that does nothing.
+            self.checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+                model=None, parameter_exchanger=None, model_checkpointers=None, state_checkpointer=None
+            )
+        self.on_init_parameters_config_fn = on_init_parameters_config_fn
+        self.server_name = server_name if server_name is not None else generate_hash()
+        self.state_checkpoint_name = f"server_{self.server_name}_state.pt"
+        self.accept_failures = accept_failures
 
         self.current_round: int
         self.history: History
@@ -164,16 +135,14 @@ class FlServer(Server):
                 metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
-        # Initialize parameters
-        log(INFO, "Initializing global parameters")
 
-        assert self.per_round_checkpointer is not None
-
-        # if checkpoint exists, update history, server round and model accordingly
-        if self.per_round_checkpointer.checkpoint_exists():
-            self._load_server_state()
+        # Attempt to load the server state if it exists. If the state checkpoint exists, update history, server
+        # round and model accordingly
+        state_load_success = self._load_server_state()
+        if state_load_success:
+            log(INFO, "Server state checkpoint successfully loaded.")
         else:
-            log(INFO, "Initializing server state")
+            log(INFO, "Initializing server state and global parameters")
             self.parameters = self._get_initial_parameters(server_round=0, timeout=timeout)
             self.history = History()
             self.current_round = 1
@@ -231,7 +200,6 @@ class FlServer(Server):
             self.current_round += 1
 
             # Save checkpoint after training and testing
-            self._hydrate_model_for_checkpointing()
             self._save_server_state()
 
         # Bookkeeping
@@ -266,7 +234,7 @@ class FlServer(Server):
 
         self.update_before_fit(num_rounds, timeout)
 
-        if self.per_round_checkpointer is not None:
+        if self.checkpoint_and_state_module.state_checkpointer is not None:
             history, elapsed_time = self.fit_with_per_round_checkpointing(num_rounds, timeout)
         else:
             history, elapsed_time = super().fit(num_rounds, timeout)
@@ -386,7 +354,7 @@ class FlServer(Server):
                 self._terminate_after_unacceptable_failures(timeout)
 
             if loss_aggregated:
-                self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
+                self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
                 # Report evaluation results
                 report_data = {
                     "val - loss - aggregated": loss_aggregated,
@@ -415,72 +383,49 @@ class FlServer(Server):
             if not isinstance(config_value, bytes):
                 log(INFO, f"Key: {config_key} Value: {config_value!r}")
 
-    def _hydrate_model_for_checkpointing(self) -> None:
-        """
-        This function is used as a means of saving the server-side model after aggregation in the FL training
-        trajectory. In the current implementation, the server only holds numpy arrays. Without knowledge of a model
-        architecture to which the arrays correspond. Thus, in the default implementation, we require that a torch
-        architecture have been provided (self.server_model) and a parameter exchanger (self.parameter_exchanger) be
-        provided which handles mapping these numpy arrays into the architecture properly.
-
-        This function may be overridden if different behavior is desired.
-
-        NOTE: This function stores the weights directly in the self.server_model attribute
-        """
-
-        assert self.server_model is not None, (
-            "Model hydration has been called but no server_model is defined to hydrate. The functionality of "
-            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a torch architecture is "
-            "possible and desired"
-        )
-        assert self.parameter_exchanger is not None, (
-            "Model hydration has been called but no parameter_exchanger is defined to hydrate. The functionality of "
-            "_hydrate_model_for_checkpointing can be overridden if checkpointing without a parameter exchanger is "
-            "possible and desired"
-        )
-        model_ndarrays = parameters_to_ndarrays(self.parameters)
-        self.parameter_exchanger.pull_parameters(model_ndarrays, self.server_model)
-
     def _save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name. This
-        method can be overridden to add any necessary state to the checkpoint.
+        method can be overridden to add any necessary state to the checkpoint. The model will be injected into the
+        ckpt state by the checkpoint module
         """
-
-        assert self.per_round_checkpointer is not None
-
-        ckpt = {
-            "model": self.server_model,
+        other_state_to_save = {
             "history": self.history,
             "current_round": self.current_round,
             "reports_manager": self.reports_manager,
             "server_name": self.server_name,
         }
 
-        self.per_round_checkpointer.save_checkpoint(ckpt)
+        self.checkpoint_and_state_module.save_state(
+            state_checkpoint_name=self.state_checkpoint_name,
+            server_parameters=self.parameters,
+            other_state=other_state_to_save,
+        )
 
-        log(INFO, f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}")
-
-    def _load_server_state(self) -> None:
+    def _load_server_state(self) -> bool:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
         The method can be overridden to add any necessary state when loading the checkpoint.
         """
-        assert self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists()
 
-        ckpt = self.per_round_checkpointer.load_checkpoint()
+        # Attempt to load the server state if it exists. This variable will be None if it does not.
+        server_state = self.checkpoint_and_state_module.maybe_load_state(self.state_checkpoint_name)
 
-        log(INFO, f"Loading server state from checkpoint at {self.per_round_checkpointer.checkpoint_path}")
+        if server_state is None:
+            return False
 
-        narrow_dict_type_and_set_attribute(self, ckpt, "server_name", "server_name", str)
-        narrow_dict_type_and_set_attribute(self, ckpt, "current_round", "current_round", int)
-        narrow_dict_type_and_set_attribute(self, ckpt, "reports_manager", "reports_manager", ReportsManager)
-        narrow_dict_type_and_set_attribute(self, ckpt, "history", "history", History)
-        narrow_dict_type_and_set_attribute(self, ckpt, "model", "parameters", nn.Module, func=get_all_model_parameters)
+        narrow_dict_type_and_set_attribute(self, server_state, "server_name", "server_name", str)
+        narrow_dict_type_and_set_attribute(self, server_state, "current_round", "current_round", int)
+        narrow_dict_type_and_set_attribute(self, server_state, "reports_manager", "reports_manager", ReportsManager)
+        narrow_dict_type_and_set_attribute(self, server_state, "history", "history", History)
+        narrow_dict_type_and_set_attribute(
+            self, server_state, "model", "parameters", nn.Module, func=get_all_model_parameters
+        )
         # Needed for when _hydrate_model_for_checkpointing is called
-        narrow_dict_type_and_set_attribute(self, ckpt, "model", "server_model", nn.Module)
+        narrow_dict_type_and_set_attribute(self, server_state, "model", "server_model", nn.Module)
 
-        self.parameters = get_all_model_parameters(ckpt["model"])
+        self.parameters = get_all_model_parameters(server_state["model"])
+        return True
 
     def _terminate_after_unacceptable_failures(self, timeout: Optional[float]) -> None:
         assert not self.accept_failures

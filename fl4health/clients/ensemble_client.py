@@ -5,7 +5,7 @@ import torch
 from flwr.common.typing import Config
 from torch.optim import Optimizer
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.model_bases.ensemble_base import EnsembleModel
 from fl4health.utils.losses import EvaluationLosses, LossMeterType, TrainingLosses
@@ -20,7 +20,7 @@ class EnsembleClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
     ) -> None:
         """
         This client enables the training of ensemble models in a federated manner.

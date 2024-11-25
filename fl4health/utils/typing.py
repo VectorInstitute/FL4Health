@@ -1,13 +1,15 @@
 import logging
 from collections.abc import Callable
 from enum import Enum
-from typing import List, Tuple, Union
+from typing import List, Tuple, TypeVar, Union
 
 import torch
 import torch.nn as nn
 from flwr.common import EvaluateRes, FitRes
 from flwr.common.typing import NDArrays
 from flwr.server.client_proxy import ClientProxy
+
+from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 
 TorchInputType = torch.Tensor | dict[str, torch.Tensor]
 TorchTargetType = torch.Tensor | dict[str, torch.Tensor]
@@ -18,6 +20,8 @@ LayerSelectionFunction = Callable[[nn.Module, nn.Module | None], tuple[NDArrays,
 
 FitFailures = List[Union[Tuple[ClientProxy, FitRes], BaseException]]
 EvaluateFailures = List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]
+
+ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
 
 
 class LogLevel(Enum):

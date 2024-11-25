@@ -6,7 +6,7 @@ import torch
 from flwr.common.logger import log
 from flwr.common.typing import Config, NDArrays
 
-from fl4health.checkpointing.client_module import ClientCheckpointModule
+from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.ditto_client import DittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
@@ -25,7 +25,7 @@ class FendaDittoClient(DittoClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointModule] = None,
+        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
         freeze_global_feature_extractor: bool = False,
