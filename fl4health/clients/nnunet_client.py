@@ -73,93 +73,75 @@ class NnunetClient(BasicClient):
         verbose: bool = True,
         metrics: Optional[Sequence[Metric]] = None,
         progress_bar: bool = False,
-        intermediate_client_state_dir: Optional[Path] = None,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         client_name: Optional[str] = None,
         nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
         nnunet_trainer_class_kwargs: Optional[dict[str, Any]] = {},
     ) -> None:
         """
-        A client for training nnunet models. Requires the nnunet environment variables
-        to be set. Also requires the following additional keys in the config sent from
-        the server
+        A client for training nnunet models. Requires the nnunet environment variables to be set. Also requires the
+        following additional keys in the config sent from the server:
             'nnunet_plans': (serialized dict)
             'nnunet_config': (str)
 
         Args:
-            device (torch.device): Device indicator for where to send the
-                model, batches, labels etc. Often 'cpu' or 'cuda' or 'mps'
-            dataset_id (int): The nnunet dataset id for the local client dataset
-                to use for training and validation.
-            fold (Union[int, str]): Which fold of the local client dataset to
-                use for validation. nnunet defaults to 5 folds (0 to 4). Can
-                also be set to 'all' to use all the data for both training
-                and validation.
-            data_identifier (Optional[str], optional): The nnunet data
-                identifier prefix to use. The final data identifier will be
-                {data_identifier}_config where 'config' is the nnunet config
-                (eg. 2d, 3d_fullres, etc.). If preprocessed data already exists
-                can be used to specify which preprocessed data to use. The
-                default data_identifier prefix is the plans name used during
-                training (see the plans_identifier argument).
-            plans_identifier (Optional[str], optional): Specify what to save
-                the client's local copy of the plans file as. The client
-                modifies the source plans json file sent from the server and
-                makes a local copy. If left as default None, the plans
-                identifier will be set as 'FL_Dataset000_plansname' where 000
-                is the dataset_id and plansname is the 'plans_name' value of
-                the source plans file.
-            compile (bool, optional): If True, the client will jit compile the pytorch
-                model. This requires some overhead time at the beginning of training to
-                compile the model, but results in faster training times. Defaults to
-                True
-            always_preprocess (bool, optional): If True, will preprocess the
-                local client dataset even if the preprocessed data already
-                seems to exist. Defaults to False. The existence of the
-                preprocessed data is determined by matching the provided
-                data_identifier with that of the preprocessed data already on
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda' or 'mps'
+            dataset_id (int): The nnunet dataset id for the local client dataset to use for training and validation.
+            fold (Union[int, str]): Which fold of the local client dataset to use for validation. nnunet defaults to
+                5 folds (0 to 4). Can also be set to 'all' to use all the data for both training and validation.
+            data_identifier (Optional[str], optional): The nnunet data identifier prefix to use. The final data
+                identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,
+                etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
+                The default data_identifier prefix is the plans name used during training (see the plans_identifier
+                argument).
+            plans_identifier (Optional[str], optional): Specify what to save the client's local copy of the plans file
+                as. The client modifies the source plans json file sent from the server and makes a local copy.
+                If left as default None, the plans identifier will be set as 'FL_Dataset000_plansname' where 000 is
+                the dataset_id and plansname is the 'plans_name' value of the source plans file.
+            compile (bool, optional): If True, the client will jit compile the pytorch model. This requires some
+                overhead time at the beginning of training to compile the model, but results in faster training times.
+                Defaults to True
+            always_preprocess (bool, optional): If True, will preprocess the local client dataset even if the
+                preprocessed data already seems to exist. Defaults to False. The existence of the preprocessed data
+                is determined by matching the provided data_identifier with that of the preprocessed data already on
                 the client.
-            max_grad_norm (float, optional): The maximum gradient norm to use for
-                gradient clipping. Defaults to 12 which is the nnunetv2 2.5.1 default.
-            n_dataload_processes (Optional[int], optional): The number of processes to
-                spawn for each nnunet dataloader. If left as None we use the nnunetv2
-                version 2.5.1 defaults for each config
-            verbose (bool, optional): If True the client will log some extra INFO logs.
-                Defaults to False unless the log level is DEBUG or lower.
-            metrics (Sequence[Metric], optional): Metrics to be computed based
-                on the labels and predictions of the client model. Defaults to [].
-            progress_bar (bool, optional): Whether or not to print a progress bar to
-                stdout for training. Defaults to False
-            intermediate_client_state_dir (Optional[Path]): An optional path to store per round
-                checkpoints.
-            loss_meter_type (LossMeterType, optional): Type of meter used to
-                track and compute the losses over each batch. Defaults to
-                LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional):
-                Checkpointer module defining when and how to do checkpointing
-                during client-side training. No checkpointing is done if not
-                provided. Defaults to None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor.
-                Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
-                Must match the nnunet_trainer_class passed to the NnunetServer.
-            nnunet_trainer_class_kwargs (dict[str, Any]): Additonal kwargs to pass to nnunet_trainer_class.
-                Defaults to empty dictionary.
+            max_grad_norm (float, optional): The maximum gradient norm to use for gradient clipping. Defaults to 12
+                which is the nnunetv2 2.5.1 default.
+            n_dataload_processes (Optional[int], optional): The number of processes to spawn for each nnunet
+                dataloader. If left as None we use the nnunetv2 version 2.5.1 defaults for each config
+            verbose (bool, optional): If True the client will log some extra INFO logs. Defaults to False unless
+                the log level is DEBUG or lower.
+            metrics (Sequence[Metric], optional): Metrics to be computed based on the labels and predictions of the
+            client model. Defaults to None.
+            progress_bar (bool, optional): Whether or not to print a progress bar to stdout for training. Defaults
+                to False
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each
+                batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
+                send data to.
+            nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
+                nnUNetTrainer. Defaults to the standard nnUNetTrainer class. Must match the nnunet_trainer_class
+                passed to the NnunetServer.
+            nnunet_trainer_class_kwargs (dict[str, Any]): Additional kwargs to pass to nnunet_trainer_class. Defaults
+                to empty dictionary.
         """
         metrics = metrics if metrics else []
         # Parent method sets up several class attributes
         super().__init__(
             data_path=Path("dummy/path"),  # data_path not used by NnunetClient
-            metrics=metrics,  # self.metrics
-            device=device,  # self.device
+            metrics=metrics,
+            device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,  # self.checkpointer
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             progress_bar=progress_bar,
-            intermediate_client_state_dir=intermediate_client_state_dir,
             client_name=client_name,
         )
 

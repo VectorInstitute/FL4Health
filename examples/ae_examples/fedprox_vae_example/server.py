@@ -8,8 +8,10 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.ae_examples.fedprox_vae_example.models import MnistVariationalDecoder, MnistVariationalEncoder
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.model_bases.autoencoders_base import VariationalAe
-from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
+from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
+from fl4health.parameter_exchange.parameter_packer import ParameterPackerAdaptiveConstraint
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -47,8 +49,11 @@ def main(config: Dict[str, Any]) -> None:
     model_checkpoint_name = "best_VAE_model.pkl"
 
     # To facilitate checkpointing
-    parameter_exchanger = FullParameterExchanger()
+    parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
     checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], model_checkpoint_name)
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy and potentially adapts the
     # FedProx proximal weight mu
@@ -70,10 +75,8 @@ def main(config: Dict[str, Any]) -> None:
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

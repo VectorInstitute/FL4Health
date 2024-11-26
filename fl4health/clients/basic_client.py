@@ -1,6 +1,6 @@
 import datetime
 from collections.abc import Sequence
-from logging import INFO, WARNING
+from logging import INFO
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -14,7 +14,6 @@ from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
 from torch.utils.data import DataLoader
 
-from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import CheckpointMode, ClientCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger

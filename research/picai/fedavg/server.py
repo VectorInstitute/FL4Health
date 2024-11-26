@@ -1,6 +1,7 @@
 import argparse
 from functools import partial
 from logging import INFO
+from pathlib import Path
 from typing import Any, Dict
 
 import flwr as fl
@@ -9,6 +10,8 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAvg
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -35,7 +38,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any], server_address: str, n_clients: int) -> None:
+def main(config: Dict[str, Any], server_address: str, n_clients: int, artifact_dir: str) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,
@@ -47,7 +50,16 @@ def main(config: Dict[str, Any], server_address: str, n_clients: int) -> None:
     )
 
     client_manager = SimpleClientManager()
+
     model = get_model()
+    parameter_exchanger = FullParameterExchanger()
+    state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=Path(artifact_dir))
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model,
+        parameter_exchanger=parameter_exchanger,
+        model_checkpointers=None,
+        state_checkpointer=state_checkpointer,
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -66,10 +78,8 @@ def main(config: Dict[str, Any], server_address: str, n_clients: int) -> None:
     server = FlServer(
         client_manager=client_manager,
         fl_config=config,
-        model=model,
-        parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
-        intermediate_server_state_dir=args.artifact_dir,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(
@@ -112,4 +122,5 @@ if __name__ == "__main__":
 
     config = load_config(args.config_path)
     log(INFO, f"Server Address: {args.server_address}")
-    main(config, args.server_address, args.n_clients)
+    log(INFO, f"Artifact Directory: {args.artifact_dir}")
+    main(config, args.server_address, args.n_clients, args.artifact_dir)

@@ -11,6 +11,7 @@ from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from examples.models.cnn_model import Net
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting import JsonReporter
@@ -29,23 +30,21 @@ class CifarClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        intermediate_client_state_dir: Optional[Path] = None,
         client_name: Optional[str] = None,
         seed: int = 42,
     ) -> None:
         super().__init__(
-            data_path,
-            metrics,
-            device,
-            loss_meter_type,
-            checkpointer,
-            reporters,
-            progress_bar,
-            intermediate_client_state_dir,
-            client_name,
+            data_path=data_path,
+            metrics=metrics,
+            device=device,
+            loss_meter_type=loss_meter_type,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.seed = seed
 
@@ -104,11 +103,18 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    if args.intermediate_client_state_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(args.intermediate_client_state_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     client = CifarClient(
         data_path,
         [Accuracy("accuracy")],
         device,
-        intermediate_client_state_dir=args.intermediate_client_state_dir,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         client_name=args.client_name,
         seed=args.seed,
         reporters=[JsonReporter()],

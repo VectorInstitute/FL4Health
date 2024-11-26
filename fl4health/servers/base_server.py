@@ -354,7 +354,7 @@ class FlServer(Server):
                 self._terminate_after_unacceptable_failures(timeout)
 
             if loss_aggregated:
-                self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
+                self._maybe_checkpoint(loss_aggregated, metrics_aggregated, server_round)
                 # Report evaluation results
                 report_data = {
                     "val - loss - aggregated": loss_aggregated,
@@ -465,28 +465,15 @@ class FlServer(Server):
         server_round: int,
     ) -> None:
         """
-        This function will run through any provided checkpointers to save the server-side model. If no checkpointers
-        are present, this function simply logs that no server-side checkpointing is performed.
-
-        NOTE: The proper components for model hydration need to be in place for this implementation. If they are
-        not an exception will be thrown.
+        This function simply runs the maybe_checkpoint functionality of the checkpoint_and_state_module. If additional
+        functionality is desired, this function may be overridden.
 
         Args:
             loss_aggregated (float): aggregated loss value that can be used to determine whether to checkpoint
             metrics_aggregated (Dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
             server_round (int): What round of federated training we're on. This is just for logging purposes.
         """
-        if self.checkpointer:
-            self._hydrate_model_for_checkpointing()
-            assert self.server_model is not None
-            for checkpointer in self.checkpointer:
-                checkpointer.maybe_checkpoint(self.server_model, loss_aggregated, metrics_aggregated)
-        elif server_round == 1:
-            # No checkpointer, just log message on the first round
-            log(
-                INFO,
-                "No checkpointer present. Models will not be checkpointed on server-side.",
-            )
+        self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
 
     def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
         """

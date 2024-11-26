@@ -25,9 +25,10 @@ class FendaDittoClient(DittoClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
+        client_name: Optional[str] = None,
         freeze_global_feature_extractor: bool = False,
     ) -> None:
         """
@@ -64,14 +65,17 @@ class FendaDittoClient(DittoClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
-            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
-                reporters which the client should send data to.
-            progress_bar (bool): Whether or not to display a progress bar during client training and validation.
-                Uses tqdm. Defaults to False
-
+            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
             freeze_global_feature_extractor (bool, optional): Determines whether we freeze the FENDA global feature
                 extractor during training. If freeze_global_feature_extractor is False, both the global and the local
                 feature extractor in the local FENDA model will be trained. Otherwise, the global feature extractor
@@ -84,9 +88,10 @@ class FendaDittoClient(DittoClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.global_model: SequentiallySplitModel
         self.model: FendaModel

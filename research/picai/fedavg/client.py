@@ -13,6 +13,7 @@ from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torchmetrics.classification import MultilabelAveragePrecision
 
+from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.basic_client import BasicClient
 from fl4health.reporting.base_reporter import BaseReporter
@@ -38,10 +39,10 @@ class PicaiFedAvgClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        intermediate_client_state_dir: Optional[Path] = None,
+        client_name: Optional[str] = None,
         overviews_dir: Path = Path("./"),
         data_partition: Optional[int] = None,
     ) -> None:
@@ -50,10 +51,10 @@ class PicaiFedAvgClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
             progress_bar=progress_bar,
-            intermediate_client_state_dir=intermediate_client_state_dir,
+            client_name=client_name,
         )
 
         self.data_partition = data_partition
@@ -161,11 +162,18 @@ if __name__ == "__main__":
         )
     ]
 
+    if args.artifact_dir is not None:
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(
+            state_checkpointer=PerRoundStateCheckpointer(Path(args.artifact_dir))
+        )
+    else:
+        checkpoint_and_state_module = None
+
     client = PicaiFedAvgClient(
         data_path=Path(args.base_dir),
         metrics=metrics,
         device=device,
-        intermediate_client_state_dir=args.artifact_dir,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         overviews_dir=args.overviews_dir,
         data_partition=args.data_partition,
     )

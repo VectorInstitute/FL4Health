@@ -10,7 +10,12 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.checkpointer import (
+    BestLossTorchModuleCheckpointer,
+    LatestTorchModuleCheckpointer,
+    PerRoundStateCheckpointer,
+)
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
 from fl4health.servers.base_server import FlServer
@@ -50,6 +55,13 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
         BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl"),
         LatestTorchModuleCheckpointer(config["checkpoint_path"], "latest_model.pkl"),
     ]
+    state_checkpointer = PerRoundStateCheckpointer(Path(intermediate_server_state_dir))
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model,
+        parameter_exchanger=parameter_exchanger,
+        model_checkpointers=checkpointers,
+        state_checkpointer=state_checkpointer,
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -73,7 +85,7 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
         strategy=strategy,
         checkpointer=checkpointers,
         reporters=[JsonReporter()],
-        intermediate_server_state_dir=Path(intermediate_server_state_dir),
+        checkpoint_and_state_module=checkpoint_and_state_module,
         server_name=server_name,
     )
 

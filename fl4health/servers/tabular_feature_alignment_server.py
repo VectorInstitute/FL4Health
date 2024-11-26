@@ -5,11 +5,11 @@ from typing import Callable, Dict, Optional, Sequence, Tuple
 
 from flwr.common import Parameters
 from flwr.common.logger import log
-from flwr.common.typing import Config
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
-from fl4health.checkpointing.checkpointer import TorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.feature_alignment.constants import (
     CURRENT_SERVER_ROUND,
     FEATURE_INFO,
@@ -31,9 +31,11 @@ class TabularFeatureAlignmentServer(FlServer):
         config: Config,
         initialize_parameters: Callable[..., Parameters],
         strategy: BasicFedAvg,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
         tabular_features_source_of_truth: Optional[TabularFeaturesInfoEncoder] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
+        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
         """
@@ -57,9 +59,22 @@ class TabularFeatureAlignmentServer(FlServer):
             tab_features_source_of_truth (Optional[TabularFeaturesInfoEncoder]): The information that is required
                 for aligning client features. If it is not specified, then the server will randomly poll a client
                 and gather this information from its data source.
+            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
+                should send data to before and after each round. Defaults to None.
+            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
+                module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+                configure how one asks a client to provide parameters from which to initialize all other clients by
+                providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
+                (which is default behavior for flower servers). Defaults to None.
+            server_name (str | None, optional): An optional string name to uniquely identify server. This name is also
+                used as part of any state checkpointing done by the server. Defaults to None.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
-                    evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
-                    and throw an exception. Defaults to True.
+                evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
+                and throw an exception. Defaults to True.
         """
 
         if strategy.on_fit_config_fn is not None:
@@ -71,8 +86,10 @@ class TabularFeatureAlignmentServer(FlServer):
             client_manager=client_manager,
             fl_config=config,
             strategy=strategy,
-            checkpointer=checkpointer,
             reporters=reporters,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
+            server_name=server_name,
             accept_failures=accept_failures,
         )
         # The server performs one or two rounds of polls before the normal federated training.
@@ -84,7 +101,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self.source_info_gathered = False
         self.dimension_info: Dict[str, int] = {}
         # ensure that self.strategy has type BasicFedAvg so its on_fit_config_fn can be specified.
-        assert isinstance(self.strategy, BasicFedAvg)
+        assert isinstance(self.strategy, BasicFedAvg), "This server is only compatible with BasicFedAvg at this time"
         self.strategy.on_fit_config_fn = partial(fit_config, self.fl_config, self.source_info_gathered)
 
     def _set_dimension_info(self, input_dimension: int, output_dimension: int) -> None:

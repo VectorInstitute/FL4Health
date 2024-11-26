@@ -31,16 +31,17 @@ class MnistFedAvgClient(BasicClient):
         device: torch.device,
         checkpoint_dir: str,
     ) -> None:
+        # Checkpointing is crucial for the warm up process
+        checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
+        post_aggregation_checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
+        checkpoint_and_state_module = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
+
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
+            checkpoint_and_state_module=checkpoint_and_state_module,
         )
-
-        # Checkpointing is crucial for the warm up process
-        checkpoint_name = f"client_{self.client_name}_latest_model.pkl"
-        post_aggregation_checkpointer = LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
-        self.checkpointer = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
 
     def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)

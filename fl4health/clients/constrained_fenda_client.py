@@ -12,6 +12,7 @@ from fl4health.clients.fenda_client import FendaClient
 from fl4health.losses.fenda_loss_config import ConstrainedFendaLossContainer
 from fl4health.model_bases.fenda_base import FendaModelWithFeatureState
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
@@ -25,7 +26,10 @@ class ConstrainedFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         loss_container: Optional[ConstrainedFendaLossContainer] = None,
     ) -> None:
         """
@@ -39,18 +43,30 @@ class ConstrainedFendaClient(FendaClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
-            loss_configuration (Optional[ConstrainedFendaLossContainer], optional): Configuration that determines which
+            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
+            loss_container (Optional[ConstrainedFendaLossContainer], optional): Configuration that determines which
                 losses will be applied during FENDA training. Defaults to None.
         """
+
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
 
         if loss_container:

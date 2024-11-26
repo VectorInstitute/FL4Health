@@ -1,31 +1,32 @@
-from typing import Callable, Dict, Sequence
+from collections.abc import Sequence
+from typing import Callable, Dict, Optional, Tuple
 
+from flwr.common import Parameters
 from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
+from flwr.server.server import FitResultsAndFailures
 
-from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
-from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
+from fl4health.checkpointing.server_module import SparseCooServerCheckpointAndStateModule
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
-from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
+from fl4health.strategies.fedpm import FedPm
 
 
-class FedProxServer(FlServer):
+class SparseCooServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: FedAvgWithAdaptiveConstraint,
+        strategy: FedPm,
         reporters: Sequence[BaseReporter] | None = None,
-        checkpoint_and_state_module: AdaptiveConstraintServerCheckpointAndStateModule | None = None,
+        checkpoint_and_state_module: SparseCooServerCheckpointAndStateModule | None = None,
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
         """
-        This is a wrapper class around FlServer for using the FedProx method that enforces that the
-        strategy is of type FedAvgWithAdaptiveConstraint and that any checkpointing is done with the right server-side
-        model and state checkpointers.
+        Custom FL Server for the FedPM algorithm to allow for resetting the beta priors in Bayesian aggregation,
+        as specified in http://arxiv.org/pdf/2209.15328.
 
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
@@ -34,16 +35,16 @@ class FedProxServer(FlServer):
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
-            strategy (FedAvgWithAdaptiveConstraint): The aggregation strategy to be used by the server to handle.
-                client updates and other information potentially sent by the participating clients. This is required
-                to be of type FedAvgWithAdaptiveConstraint to use FedProx
-            reporters (Sequence[BaseReporter] | None, optional): sequence of FL4Health reporters which the server
-                should send data to before and after each round. Defaults to None.
-            checkpoint_and_state_module (AdaptiveConstraintServerCheckpointAndStateModule | None, optional): This
-                module is used to handle both model checkpointing and state checkpointing. The former is aimed at
-                saving model artifacts to be used or evaluated after training. The later is used to preserve training
-                state (including models) such that if FL training is interrupted, the process may be restarted. If no
+            strategy (FedPm): The aggregation strategy to be used by the server to handle client updates and other
+                information potentially sent by the participating clients. This strategy must be of FedPm type.
+            reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
+                send data to before and after each round.
+            checkpoint_and_state_module (SparseCooServerCheckpointAndStateModule | None, optional): This module is used
+                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+                artifacts to be used or evaluated after training. The later is used to preserve training state
+                (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
+            reset_frequency (int): Determines the frequency with which the beta priors are reset. Defaults to 1.
             on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
@@ -54,14 +55,8 @@ class FedProxServer(FlServer):
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
-        assert isinstance(
-            strategy, FedAvgWithAdaptiveConstraint
-        ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
-        assert isinstance(
-            checkpoint_and_state_module,
-            AdaptiveConstraintServerCheckpointAndStateModule,
-        ), "checkpoint_and_state_module must have type AdaptiveConstraintServerCheckpointAndStateModule"
         super().__init__(
+            self,
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,

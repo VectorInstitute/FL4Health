@@ -9,6 +9,7 @@ from flwr.server.strategy import FedAvg
 
 from examples.models.mnist_model import MnistNet
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.base_server import FlServer
 from fl4health.utils.config import load_config
@@ -48,6 +49,9 @@ def main(config: Dict[str, Any]) -> None:
 
     # To facilitate checkpointing
     checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], "best_model.pkl")
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
+    )
 
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvg(
@@ -66,10 +70,8 @@ def main(config: Dict[str, Any]) -> None:
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        parameter_exchanger=parameter_exchanger,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

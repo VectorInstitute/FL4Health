@@ -10,6 +10,7 @@ from fl4health.losses.perfcl_loss import PerFclLoss
 from fl4health.model_bases.perfcl_base import PerFclModel
 from fl4health.parameter_exchange.layer_exchanger import FixedLayerExchanger
 from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.client import clone_and_freeze_model
 from fl4health.utils.losses import EvaluationLosses, LossMeterType
 from fl4health.utils.metrics import Metric
@@ -23,7 +24,10 @@ class PerFclClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         global_feature_loss_temperature: float = 0.5,
         local_feature_loss_temperature: float = 0.5,
         global_feature_contrastive_loss_weight: float = 1.0,
@@ -37,14 +41,23 @@ class PerFclClient(BasicClient):
         related to FENDA, but with additional losses on the latent spaces of the local and global feature extractors.
 
         Args:
-            data_path (Path): Path to the data directory.
-            metrics (Sequence[Metric]): List of metrics to be used for evaluation.
-            device (torch.device): Device to be used for training.
-            loss_meter_type (LossMeterType, optional): Type of loss meter to be used. Defaults to
-                LossMeterType.AVERAGE.
-            checkpointer (Optional[ClientCheckpointModule], optional): Checkpointer module defining when and how to
-                do checkpointing during client-side training. No checkpointing is done if not provided. Defaults to
-                None.
+            data_path (Path): path to the data to be used to load the data for client-side training
+            metrics (Sequence[Metric]): Metrics to be computed based on the labels and predictions of the client model
+            device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
+                'cuda'
+            loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
+                each batch. Defaults to LossMeterType.AVERAGE.
+            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+                both checkpointing and state saving. The module, and its underlying model and state checkpointing
+                components will determine when and how to do checkpointing during client-side training.
+                No checkpointing (state or model) is done if not provided. Defaults to None.
+            reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
+                should send data to. Defaults to None.
+            progress_bar (bool, optional): Whether or not to display a progress bar during client training and
+                validation. Uses tqdm. Defaults to False
+            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+                If not passed, a hash is randomly generated. Client state will use this as part of its state file
+                name. Defaults to None.
             global_feature_loss_temperature (float, optional): Temperature to be used in the contrastive loss
                 associated with constraining the global feature extractor in the PerFCL loss. Defaults to 0.5.
             local_feature_loss_temperature (float, optional): Temperature to be used in the contrastive loss
@@ -59,7 +72,10 @@ class PerFclClient(BasicClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         self.global_feature_contrastive_loss_weight = global_feature_contrastive_loss_weight
         self.local_feature_contrastive_loss_weight = local_feature_contrastive_loss_weight

@@ -21,8 +21,6 @@ LayerSelectionFunction = Callable[[nn.Module, nn.Module | None], tuple[NDArrays,
 FitFailures = List[Union[Tuple[ClientProxy, FitRes], BaseException]]
 EvaluateFailures = List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]
 
-ExchangerType = TypeVar("ExchangerType", bound=ParameterExchanger)
-
 
 class LogLevel(Enum):
     NOTSET = logging.NOTSET
