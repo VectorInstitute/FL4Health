@@ -58,6 +58,11 @@ class MrMtlServer(FlServer):
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint
         ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                AdaptiveConstraintServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type AdaptiveConstraintServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,

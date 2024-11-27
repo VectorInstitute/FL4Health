@@ -54,6 +54,11 @@ class FedPmServer(FlServer):
             reset_frequency (int, optional): Determines the frequency with which the beta priors are reset.
                 Defaults to 1.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                LayerNamesServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type LayerNamesServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,

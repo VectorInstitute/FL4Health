@@ -69,6 +69,11 @@ class ClientLevelDPFedAvgServer(FlServer):
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                ClippingBitServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type ClippingBitServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,

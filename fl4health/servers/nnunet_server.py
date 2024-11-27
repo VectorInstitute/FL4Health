@@ -104,6 +104,11 @@ class NnunetServer(FlServer):
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
                 Must match the nnunet_trainer_class passed to the NnunetClient.
         """
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                NnUnetServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type NnUnetServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,

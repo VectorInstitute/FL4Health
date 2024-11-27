@@ -37,10 +37,10 @@ class DittoServer(FlServer):
                 strategy must be a derivative of the FedAvgWithAdaptiveConstraint class.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the server should
                 send data to before and after each round. Defaults to None.
-            checkpoint_and_state_module (BaseServerCheckpointAndStateModule | None, optional): This module is used
-                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
-                artifacts to be used or evaluated after training. The later is used to preserve training state
-                (including models) such that if FL training is interrupted, the process may be restarted. If no
+            checkpoint_and_state_module (AdaptiveConstraintServerCheckpointAndStateModule | None, optional): This
+                module is used to handle both model checkpointing and state checkpointing. The former is aimed at
+                saving model artifacts to be used or evaluated after training. The later is used to preserve training
+                state (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
                 NOTE: For Ditto, the model shared with the server is the GLOBAL MODEL, which isn't the target of FL
                 training for this algorithm. However, one may still want to save this model for other purposes.
@@ -57,6 +57,11 @@ class DittoServer(FlServer):
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint
         ), "Strategy must be of base type FedAvgWithAdaptiveConstraint"
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                AdaptiveConstraintServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type AdaptiveConstraintServerCheckpointAndStateModule"
         super().__init__(
             client_manager=client_manager,
             fl_config=fl_config,

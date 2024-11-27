@@ -67,7 +67,13 @@ class ScaffoldServer(FlServer):
                 a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
         """
-        super().__init__(
+        if checkpoint_and_state_module is not None:
+            assert isinstance(
+                checkpoint_and_state_module,
+                ScaffoldServerCheckpointAndStateModule,
+            ), "checkpoint_and_state_module must have type ScaffoldServerCheckpointAndStateModule"
+        FlServer.__init__(
+            self,
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
@@ -258,13 +264,13 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             self,
             client_manager=client_manager,
             fl_config=fl_config,
-            strategy=strategy,
             noise_multiplier=noise_multiplier,
+            num_server_rounds=num_server_rounds,
+            batch_size=batch_size,
+            strategy=strategy,
             local_epochs=local_epochs,
             local_steps=local_steps,
-            batch_size=batch_size,
             delta=delta,
-            num_server_rounds=num_server_rounds,
             on_init_parameters_config_fn=on_init_parameters_config_fn,
             server_name=server_name,
             accept_failures=accept_failures,
