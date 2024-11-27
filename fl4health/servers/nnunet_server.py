@@ -177,16 +177,27 @@ class NnunetServer(FlServer):
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
 
-        # If no prior checkpoints exist, initialize server by sampling clients to get required properties to set
+        # If the per_round_checkpointer has been specified and a state checkpoint exists, we load state
         # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
-        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
-            # Sample properties from a random client to initialize plans
+        if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
+            self._load_server_state()
+        # Otherwise, we're starting training from "scratch"
+        elif self.per_round_checkpointer is not None:
+            # If the state checkpointer is not None, then we want to do state checkpointing. So we need information
+            # from the clients in the form of get_properties.
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
-            log(
-                INFO,
-                "Requesting initialization of global nnunet plans from one random client via get_properties",
-            )
+            log(INFO, "Requesting properties from one random client via get_properties")
+
+            if self.fl_config.get("nnunet_plans") is None:
+                # If the nnUnet plans are not specified, we also need those plans from the client.
+                log(INFO, "Initialization of global nnunet plans will be sourced from this client")
+            else:
+                log(
+                    INFO,
+                    "Properties from NnUnetTrainer will be sourced from this client to facilitate state preservation",
+                )
+
             random_client = self._client_manager.sample(1)[0]
             ins = GetPropertiesIns(config=self.fl_config | {"current_server_round": 0})
             properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=0)
@@ -195,7 +206,6 @@ class NnunetServer(FlServer):
                 log(INFO, "Received global nnunet plans from one random client")
             else:
                 raise Exception("Failed to receive properties from client to initialize nnunet plans")
-
             properties = properties_res.properties
 
             # Set attributes of server that are dependent on client properties.
@@ -213,9 +223,6 @@ class NnunetServer(FlServer):
             self.nnunet_config = NnunetConfig(self.fl_config["nnunet_config"])
 
             self.initialize_server_model()
-        else:
-            # If a checkpoint exists, we load in previously checkpointed values for required properties
-            self._load_server_state()
 
         # Wrap config functions so that nnunet_plans is included
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
