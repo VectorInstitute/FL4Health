@@ -1,6 +1,5 @@
 import datetime
 from logging import DEBUG, ERROR, INFO, WARNING
-from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import torch.nn as nn

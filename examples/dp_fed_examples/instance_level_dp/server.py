@@ -10,6 +10,7 @@ from flwr.common.typing import Config
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
 from fl4health.checkpointing.opacus_checkpointer import BestLossOpacusCheckpointer
+from fl4health.checkpointing.server_module import OpacusServerCheckpointAndStateModule
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
@@ -67,7 +68,16 @@ def main(config: Dict[str, Any]) -> None:
         local_steps=config.get("local_steps"),
     )
 
-    initial_model = map_model_to_opacus_model(Net())
+    model = map_model_to_opacus_model(Net())
+
+    client_name = "".join(choices(string.ascii_uppercase, k=5))
+    checkpoint_dir = "examples/dp_fed_examples/instance_level_dp/"
+    checkpoint_name = f"server_{client_name}_best_model.pkl"
+    checkpointer = BestLossOpacusCheckpointer(checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name)
+
+    checkpoint_and_state_module = OpacusServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=FullParameterExchanger(), model_checkpointers=checkpointer
+    )
 
     # ClientManager that performs Poisson type sampling
     client_manager = PoissonSamplingClientManager()
@@ -75,7 +85,7 @@ def main(config: Dict[str, Any]) -> None:
     # Server performs simple FedAveraging with Instance Level Differential Privacy
     # Must be FedAvg sampling to ensure privacy loss is computed correctly
     strategy = OpacusBasicFedAvg(
-        model=initial_model,
+        model=model,
         fraction_fit=config["client_sampling_rate"],
         # Server waits for min_available_clients before starting FL rounds
         min_available_clients=config["n_clients"],
@@ -86,22 +96,16 @@ def main(config: Dict[str, Any]) -> None:
         on_evaluate_config_fn=fit_config_fn,
     )
 
-    client_name = "".join(choices(string.ascii_uppercase, k=5))
-    checkpoint_dir = "examples/dp_fed_examples/instance_level_dp/"
-    checkpoint_name = f"server_{client_name}_best_model.pkl"
-
     server = InstanceLevelDpServer(
         client_manager=client_manager,
         fl_config=config,
-        model=initial_model,
-        checkpointer=BestLossOpacusCheckpointer(checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name),
-        parameter_exchanger=FullParameterExchanger(),
         strategy=strategy,
         noise_multiplier=config["noise_multiplier"],
         local_epochs=config.get("local_epochs"),
         local_steps=config.get("local_steps"),
         batch_size=config["batch_size"],
         num_server_rounds=config["n_server_rounds"],
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

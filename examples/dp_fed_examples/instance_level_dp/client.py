@@ -48,12 +48,14 @@ if __name__ == "__main__":
     post_aggregation_checkpointer = BestLossOpacusCheckpointer(
         checkpoint_dir=checkpoint_dir, checkpoint_name=checkpoint_name
     )
-    checkpointer = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
 
     # Load model and data
     data_path = Path(args.dataset_path)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    client = CifarClient(data_path, [Accuracy("accuracy")], device, checkpointer=checkpointer)
+    client = CifarClient(
+        data_path, [Accuracy("accuracy")], device, checkpoint_and_state_module=checkpoint_and_state_module
+    )
     fl.client.start_client(server_address="0.0.0.0:8080", client=client.to_client())
 
     client.shutdown()

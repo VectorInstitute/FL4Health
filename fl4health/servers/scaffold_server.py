@@ -9,7 +9,10 @@ from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 from flwr.server.server import fit_clients
 
-from fl4health.checkpointing.server_module import ScaffoldServerCheckpointAndStateModule
+from fl4health.checkpointing.server_module import (
+    DpScaffoldServerCheckpointAndStateModule,
+    ScaffoldServerCheckpointAndStateModule,
+)
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.servers.instance_level_dp_server import InstanceLevelDpServer
@@ -65,7 +68,6 @@ class ScaffoldServer(FlServer):
                 Defaults to False.
         """
         super().__init__(
-            self,
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
@@ -184,7 +186,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         local_epochs: Optional[int] = None,
         local_steps: Optional[int] = None,
         delta: Optional[float] = None,
-        checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
+        checkpoint_and_state_module: DpScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
@@ -215,8 +217,8 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
                 other information potentially sent by the participating clients. This strategy must be of SCAFFOLD
                 type.
-            checkpoint_and_state_module (ScaffoldServerCheckpointAndStateModule | None, optional): This module is used
-                to handle both model checkpointing and state checkpointing. The former is aimed at saving model
+            checkpoint_and_state_module (DpScaffoldServerCheckpointAndStateModule | None, optional): This module is
+                used to handle both model checkpointing and state checkpointing. The former is aimed at saving model
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
@@ -245,10 +247,10 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
-            checkpoint_and_state_module=checkpoint_and_state_module,
             warm_start=warm_start,
             reporters=reporters,
             on_init_parameters_config_fn=on_init_parameters_config_fn,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             server_name=server_name,
             accept_failures=accept_failures,
         )
@@ -263,7 +265,6 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             batch_size=batch_size,
             delta=delta,
             num_server_rounds=num_server_rounds,
-            checkpoint_and_state_module=checkpoint_and_state_module,
             on_init_parameters_config_fn=on_init_parameters_config_fn,
             server_name=server_name,
             accept_failures=accept_failures,

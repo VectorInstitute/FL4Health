@@ -10,6 +10,7 @@ from flwr.common.typing import Config
 from flwr.server.client_manager import SimpleClientManager
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
 from fl4health.servers.adaptive_constraint_servers.fedprox_server import FedProxServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint
 from fl4health.utils.config import load_config
@@ -51,6 +52,10 @@ def main(
         config["n_server_rounds"],
         config["n_clients"],
     )
+
+    # Initializing the model on the server side
+    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     best_checkpoint_name = "server_best_model.pkl"
     last_checkpoint_name = "server_last_model.pkl"
@@ -58,10 +63,12 @@ def main(
         BestLossTorchModuleCheckpointer(checkpoint_dir, best_checkpoint_name),
         LatestTorchModuleCheckpointer(checkpoint_dir, last_checkpoint_name),
     ]
+    checkpoint_and_state_module = AdaptiveConstraintServerCheckpointAndStateModule(
+        model=model, model_checkpointers=checkpointer
+    )
 
     client_manager = SimpleClientManager()
-    # Initializing the model on the server side
-    model = ConvNet(in_channels=3, use_bn=False, dropout=0.1, hidden=512)
+
     # Server performs simple FedAveraging as its server-side optimization strategy
     strategy = FedAvgWithAdaptiveConstraint(
         min_fit_clients=config["n_clients"],
@@ -81,9 +88,8 @@ def main(
     server = FedProxServer(
         client_manager=client_manager,
         fl_config=config,
-        model=model,
         strategy=strategy,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

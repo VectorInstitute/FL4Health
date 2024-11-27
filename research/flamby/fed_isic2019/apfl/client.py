@@ -18,6 +18,7 @@ from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.apfl_client import ApflClient
 from fl4health.model_bases.apfl_base import ApflModule
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from research.flamby.fed_isic2019.apfl.apfl_model import ApflEfficientNet
@@ -34,14 +35,20 @@ class FedIsic2019ApflClient(ApflClient):
         learning_rate: float,
         alpha_learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
     ) -> None:
         super().__init__(
             data_path=data_path,
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
         assert 0 <= client_number < NUM_CLIENTS
 
@@ -126,7 +133,7 @@ if __name__ == "__main__":
 
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointAndStateModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
@@ -137,7 +144,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         alpha_learning_rate=args.alpha_learning_rate,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())
 

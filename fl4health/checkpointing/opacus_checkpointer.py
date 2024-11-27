@@ -74,7 +74,7 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
         with open(self.checkpoint_path, "wb") as handle:
             pickle.dump(model_state_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-    def load_checkpoint(self) -> nn.Module:
+    def load_checkpoint(self, path_to_checkpoint: str | None = None) -> nn.Module:
         raise NotImplementedError(
             "When loading from Opacus checkpointers, you need to provide a model into which state is loaded. "
             "Please use load_best_checkpoint_into_model instead and provide model architecture to load state into."

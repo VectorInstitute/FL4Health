@@ -103,6 +103,7 @@ if __name__ == "__main__":
     # Set the random seed for reproducibility
     set_all_random_seeds(args.seed)
 
+    checkpoint_and_state_module: ClientCheckpointAndStateModule | None
     if args.intermediate_client_state_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
             state_checkpointer=PerRoundStateCheckpointer(Path(args.intermediate_client_state_dir))

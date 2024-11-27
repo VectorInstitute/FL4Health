@@ -3,7 +3,6 @@ from logging import INFO
 from math import ceil
 from typing import Callable, Dict, List, Optional, Tuple
 
-import torch.nn as nn
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager

@@ -2,7 +2,6 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import torch.nn as nn
@@ -15,7 +14,6 @@ from flwr.server.history import History
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.server_module import NnUnetServerCheckpointAndStateModule
-from fl4health.parameter_exchange.parameter_exchanger_base import ExchangerType
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
 from fl4health.servers.base_server import FlServer
@@ -107,7 +105,6 @@ class NnunetServer(FlServer):
                 Must match the nnunet_trainer_class passed to the NnunetClient.
         """
         super().__init__(
-            self,
             client_manager=client_manager,
             fl_config=fl_config,
             strategy=strategy,
@@ -252,7 +249,7 @@ class NnunetServer(FlServer):
         }
 
         self.checkpoint_and_state_module.save_state(
-            state_checkpoint=self.state_checkpoint_name,
+            state_checkpoint_name=self.state_checkpoint_name,
             server_parameters=self.parameters,
             other_state=other_state_to_save,
         )
@@ -287,3 +284,4 @@ class NnunetServer(FlServer):
             self, server_state, "enable_deep_supervision", "enable_deep_supervision", bool
         )
         narrow_dict_type_and_set_attribute(self, server_state, "nnunet_config", "nnunet_config", NnunetConfig)
+        return True

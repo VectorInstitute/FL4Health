@@ -33,8 +33,9 @@ class SingleNodeTrainer:
         if not os.path.exists(checkpoint_dir):
             os.mkdir(checkpoint_dir)
 
-        per_round_checkpoint_name = "ckpt.pkl"
-        self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir), Path(per_round_checkpoint_name))
+        self.state_checkpoint_name = "ckpt.pkl"
+        self.state_checkpoint_path = os.path.join(checkpoint_dir, self.state_checkpoint_name)
+        self.per_epoch_checkpointer = PerRoundStateCheckpointer(Path(checkpoint_dir))
         best_metric_checkpoint_name = "best_ckpt.pkl"
         self.checkpointer = BestLossTorchModuleCheckpointer(checkpoint_dir, best_metric_checkpoint_name)
 
@@ -46,10 +47,12 @@ class SingleNodeTrainer:
         self.device = device
         self.epoch: int
 
-        if not self.per_epoch_checkpointer.checkpoint_exists():
-            self.per_epoch_checkpointer.save_checkpoint({"model": self.model, "optimizer": self.optimizer, "epoch": 0})
+        if not self.per_epoch_checkpointer.checkpoint_exists(self.state_checkpoint_path):
+            self.per_epoch_checkpointer.save_checkpoint(
+                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": 0}
+            )
 
-        ckpt = self.per_epoch_checkpointer.load_checkpoint()
+        ckpt = self.per_epoch_checkpointer.load_checkpoint(self.state_checkpoint_path)
         self.model, self.optimizer, self.epoch = ckpt["model"], ckpt["optimizer"], ckpt["epoch"]
 
     def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar]) -> None:
@@ -103,7 +106,7 @@ class SingleNodeTrainer:
 
             # Save checkpoint in case run gets pre-empted
             self.per_epoch_checkpointer.save_checkpoint(
-                {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
+                self.state_checkpoint_name, {"model": self.model, "optimizer": self.optimizer, "epoch": epoch + 1}
             )
 
     def validate(self, val_metric_mngr: MetricManager) -> None:

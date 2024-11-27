@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from logging import ERROR, INFO, WARNING
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, overload
+from typing import Any, Callable, Dict, Optional
 
 import torch
 import torch.nn as nn
@@ -40,12 +40,20 @@ class TorchModuleCheckpointer(ABC):
         """
         raise NotImplementedError("maybe_checkpoint must be implemented by inheriting classes")
 
-    @overload
-    def load_checkpoint(self) -> nn.Module:
-        return torch.load(self.checkpoint_path)
+    def load_checkpoint(self, path_to_checkpoint: str | None = None) -> nn.Module:
+        """
+        Checkpointer with the option to either specify a checkpoint path or fall back on the internal path of the
+        checkpointer
 
-    @overload
-    def load_checkpoint(self, path_to_checkpoint: str) -> nn.Module:
+        Args:
+            path_to_checkpoint (str | None, optional): If provided, the checkpoint will be loaded from this path.
+                If not specified, the checkpointer will load from self.checkpoint_path. Defaults to None.
+
+        Returns:
+            nn.Module: _description_
+        """
+        if path_to_checkpoint is None:
+            return torch.load(self.checkpoint_path)
         return torch.load(path_to_checkpoint)
 
 

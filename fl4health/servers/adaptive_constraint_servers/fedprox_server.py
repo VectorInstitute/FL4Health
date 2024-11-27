@@ -4,7 +4,6 @@ from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 
 from fl4health.checkpointing.server_module import AdaptiveConstraintServerCheckpointAndStateModule
-from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_with_adaptive_constraint import FedAvgWithAdaptiveConstraint

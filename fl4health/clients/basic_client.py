@@ -83,7 +83,7 @@ class BasicClient(NumPyClient):
         else:
             # Define a default module that does nothing.
             self.checkpoint_and_state_module = ClientCheckpointAndStateModule(
-                model=None, parameter_exchanger=None, model_checkpointers=None, state_checkpointer=None
+                pre_aggregation=None, post_aggregation=None, state_checkpointer=None
             )
 
         # Initialize reporters with client information.
@@ -401,7 +401,8 @@ class BasicClient(NumPyClient):
             bool: Whether to perform an evaluation on the client validation set after fitting.
         """
         pre_aggregation_checkpointing_enabled = (
-            self.checkpointer is not None and self.checkpointer.pre_aggregation is not None
+            self.checkpoint_and_state_module is not None
+            and self.checkpoint_and_state_module.pre_aggregation is not None
         )
         return evaluate_after_fit or pre_aggregation_checkpointing_enabled
 

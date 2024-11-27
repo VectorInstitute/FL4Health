@@ -17,6 +17,7 @@ from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.fenda_ditto_client import FendaDittoClient
 from fl4health.model_bases.fenda_base import FendaModel
 from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import F1, Accuracy, Metric
@@ -35,7 +36,10 @@ class CifarFendaDittoClient(FendaDittoClient):
         learning_rate: float,
         heterogeneity_level: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         freeze_global_feature_extractor: bool = False,
     ) -> None:
         super().__init__(
@@ -43,7 +47,10 @@ class CifarFendaDittoClient(FendaDittoClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             freeze_global_feature_extractor=freeze_global_feature_extractor,
         )
         self.client_number = client_number
@@ -152,7 +159,7 @@ if __name__ == "__main__":
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
     post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
     post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpointer = ClientCheckpointAndStateModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
             BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
@@ -175,7 +182,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         freeze_global_feature_extractor=args.freeze_global_extractor,
     )
 

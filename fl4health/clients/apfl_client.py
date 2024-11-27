@@ -30,7 +30,8 @@ class ApflClient(BasicClient):
         """
         Client specifically implementing the APFL Algorithm: https://arxiv.org/abs/2003.13461
         Twin models are trained. One of them is globally shared by all clients and aggregated on the server.
-        The other is strictly trained locally by each client. Predictions are made by a convex combination of the models.
+        The other is strictly trained locally by each client. Predictions are made by a convex combination of the
+        models.
 
         Args:
             data_path (Path): path to the data to be used to load the data for client-side training

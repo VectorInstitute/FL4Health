@@ -114,7 +114,7 @@ if __name__ == "__main__":
             args.checkpoint_path, "fenda_ditto_client_post_agg.pkl"
         )
 
-    checkpointer = ClientCheckpointAndStateModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=pre_aggregation_checkpointer,
         post_aggregation=post_aggregation_checkpointer,
     )
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         [Accuracy()],
         device,
         args.checkpoint_path,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         reporters=[JsonReporter()],
     )
     fl.client.start_client(server_address=args.server_address, client=client.to_client())

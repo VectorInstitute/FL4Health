@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.mkmmd_clients.ditto_mkmmd_client import DittoMkMmdClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.load_data import load_cifar10_data, load_cifar10_test_data
 from fl4health.utils.losses import LossMeterType
@@ -42,7 +43,10 @@ class CifarDittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         use_partitioned_data: bool = False,
     ) -> None:
         super().__init__(
@@ -50,7 +54,10 @@ class CifarDittoClient(DittoMkMmdClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             mkmmd_loss_weight=mkmmd_loss_weight,
             feature_extraction_layers=BASELINE_LAYERS[-1 * mkmmd_loss_depth :],
             feature_l2_norm_weight=feature_l2_norm_weight,
@@ -244,7 +251,7 @@ if __name__ == "__main__":
     pre_aggregation_last_checkpoint_name = f"pre_aggregation_client_{args.client_number}_last_model.pkl"
     post_aggregation_best_checkpoint_name = f"post_aggregation_client_{args.client_number}_best_model.pkl"
     post_aggregation_last_checkpoint_name = f"post_aggregation_client_{args.client_number}_last_model.pkl"
-    checkpointer = ClientCheckpointAndStateModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         pre_aggregation=[
             BestLossTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_best_checkpoint_name),
             LatestTorchModuleCheckpointer(checkpoint_dir, pre_aggregation_last_checkpoint_name),
@@ -263,7 +270,7 @@ if __name__ == "__main__":
         client_number=args.client_number,
         learning_rate=args.learning_rate,
         heterogeneity_level=args.beta,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         feature_l2_norm_weight=args.l2,
         mkmmd_loss_depth=args.mkmmd_loss_depth,
         mkmmd_loss_weight=args.mu,

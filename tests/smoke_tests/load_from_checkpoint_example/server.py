@@ -80,10 +80,7 @@ def main(config: Dict[str, Any], intermediate_server_state_dir: str, server_name
     server = FlServer(
         client_manager=SimpleClientManager(),
         fl_config=config,
-        model=model,
-        parameter_exchanger=parameter_exchanger,
         strategy=strategy,
-        checkpointer=checkpointers,
         reporters=[JsonReporter()],
         checkpoint_and_state_module=checkpoint_and_state_module,
         server_name=server_name,

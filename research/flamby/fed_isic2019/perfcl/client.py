@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
 from fl4health.clients.perfcl_client import PerFclClient
+from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType
 from fl4health.utils.metrics import BalancedAccuracy, Metric
 from fl4health.utils.random import set_all_random_seeds
@@ -33,7 +34,10 @@ class FedIsic2019PerFclClient(PerFclClient):
         client_number: int,
         learning_rate: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         mu: float = 10.0,
         gamma: float = 10.0,
     ) -> None:
@@ -42,7 +46,10 @@ class FedIsic2019PerFclClient(PerFclClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             global_feature_contrastive_loss_weight=mu,
             local_feature_contrastive_loss_weight=gamma,
         )
@@ -155,7 +162,7 @@ if __name__ == "__main__":
         if federated_checkpointing
         else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
-    checkpointer = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(post_aggregation=post_aggregation_checkpointer)
 
     client = FedIsic2019PerFclClient(
         data_path=Path(args.dataset_dir),
@@ -163,7 +170,7 @@ if __name__ == "__main__":
         device=device,
         client_number=args.client_number,
         learning_rate=args.learning_rate,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
         mu=args.mu,
         gamma=args.gamma,
     )

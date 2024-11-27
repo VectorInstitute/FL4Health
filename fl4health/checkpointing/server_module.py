@@ -5,7 +5,7 @@ import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
 from flwr.common.parameter import parameters_to_ndarrays
-from flwr.common.typing import NDArrays, Scalar
+from flwr.common.typing import Scalar
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 from fl4health.checkpointing.opacus_checkpointer import OpacusCheckpointer
@@ -170,7 +170,7 @@ class BaseServerCheckpointAndStateModule:
                 other_state["model"] = self.model
             else:
                 raise ValueError("Key 'model' already exists in the other_state dictionary.")
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name)
+            self.state_checkpointer.save_checkpoint(state_checkpoint_name, checkpoint_dict=other_state)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
@@ -239,7 +239,7 @@ class PackingServerCheckpointAndAndStateModule(BaseServerCheckpointAndStateModul
             ), "Parameter exchanger must be of based type FullParameterExchangerWithPacking"
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
 
-    def _hydrate_model_for_checkpointing(self, server_parameters: Parameters):
+    def _hydrate_model_for_checkpointing(self, server_parameters: Parameters) -> None:
         """
         This function is used as a means of saving the server-side model after aggregation in the FL training
         trajectory. Presently, the server only holds Flower Parameters, which are essentially just ndarrays. Without
@@ -294,7 +294,7 @@ class ScaffoldServerCheckpointAndStateModule(PackingServerCheckpointAndAndStateM
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
-            model_size = len(self.model.state_dict())
+            model_size = len(model.state_dict())
             parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         else:
             parameter_exchanger = None
@@ -397,7 +397,7 @@ class LayerNamesServerCheckpointAndStateModule(PackingServerCheckpointAndAndStat
                 checkpointer will save much more than just the model being trained. Defaults to None.
         """
         if model is not None:
-            parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithClippingBit())
+            parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithLayerNames())
         else:
             parameter_exchanger = None
         super().__init__(model, parameter_exchanger, model_checkpointers, state_checkpointer)
@@ -447,13 +447,14 @@ class OpacusServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
         state_checkpointer: PerRoundStateCheckpointer | None = None,
     ) -> None:
         """
-        This module is meant to handle FL flows with adaptive constraints, where the server and client communicate
-        a loss weight parameter in addition to the model weights. Unlike the module on the client side, this module
-        has no concept of pre- or post-aggregation checkpointing. It only considers checkpointing the global server
-        model after aggregation, perhaps based on validation statistics retrieved on the client side by running a
-        federated evaluation step. Multiple model checkpointers may be used. For state checkpointing, which saves the
-        state of the entire server-side FL process to help with FL restarts, we allow only a single checkpointer
-        responsible for saving the state after each fit and eval round of FL.
+        This module is meant to handle FL flows with Opacus models where special treatment by the checkpointers is
+        required. This module simply ensures the checkpointers are of the proper type before proceeding.
+        Unlike the module on the client side, this module has no concept of pre- or post-aggregation checkpointing.
+        It only considers checkpointing the global server model after aggregation, perhaps based on validation
+        statistics retrieved on the client side by running a federated evaluation step. Multiple model checkpointers
+        may be used. For state checkpointing, which saves the state of the entire server-side FL process to help with
+        FL restarts, we allow only a single checkpointer responsible for saving the state after each fit and eval
+        round of FL.
 
         Args:
             model (nn.Module | None, optional): Model architecture to be saved. The module will use this architecture
@@ -536,3 +537,44 @@ class NnUnetServerCheckpointAndStateModule(BaseServerCheckpointAndStateModule):
                 "possible and desired"
             )
         self._check_if_shared_checkpoint_names()
+
+
+class DpScaffoldServerCheckpointAndStateModule(ScaffoldServerCheckpointAndStateModule):
+    def __init__(
+        self,
+        model: nn.Module | None = None,
+        model_checkpointers: CheckpointModuleInput = None,
+        state_checkpointer: PerRoundStateCheckpointer | None = None,
+    ) -> None:
+        """
+        This module is meant to handle DP SCAFFOLD model and state checkpointing on the server-side of an FL process.
+        Unlike the module on the client side, this module has no concept of pre- or post-aggregation checkpointing.
+        It only considers checkpointing the global server model after aggregation, perhaps based on validation
+        statistics retrieved on the client side by running a federated evaluation step. Multiple model checkpointers
+        may be used. For state checkpointing, which saves the state of the entire server-side FL process to help with
+        FL restarts, we allow only a single checkpointer responsible for saving the state after each fit and eval
+        round of FL.
+
+        Args:
+            model (nn.Module | None, optional): Model architecture to be saved. The module will use this architecture
+                to hold the server parameters and facilitate checkpointing with the help of the parameter exchanger.
+                Recall that servers only have parameters rather than torch models. So we need to know where to route
+                these parameters to allow for real models to be saved. Defaults to None.
+            model_checkpointers (CheckpointModuleInput, optional): If defined, this checkpointer (or sequence of
+                checkpointers) is used to checkpoint models based on their defined scoring function. Defaults to None.
+            state_checkpointer (PerRoundStateCheckpointer | None, optional): If defined, this checkpointer will be
+                used to preserve FL training state to facilitate restarting training if interrupted. Generally, this
+                checkpointer will save much more than just the model being trained. Defaults to None.
+        """
+        super().__init__(model, model_checkpointers, state_checkpointer)
+        self._ensure_checkpointers_are_of_opacus_type()
+
+    def _ensure_checkpointers_are_of_opacus_type(self) -> None:
+        """
+        Helper function to ensure that the provided checkpointers are explicitly compatible with Opacus
+        """
+        if self.model_checkpointers is not None:
+            for checkpointer in self.model_checkpointers:
+                assert isinstance(
+                    checkpointer, OpacusCheckpointer
+                ), "Provided checkpointers must have base class OpacusCheckpointer"

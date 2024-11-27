@@ -38,8 +38,10 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
         exchange_percentage: float,
         norm_threshold: float,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
         reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
         store_initial_model: bool = True,
     ) -> None:
         super().__init__(
@@ -47,8 +49,10 @@ class BertDynamicLayerExchangeClient(PartialWeightExchangeClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
             reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
             store_initial_model=store_initial_model,
         )
         assert 0 < exchange_percentage <= 1.0 and norm_threshold > 0
@@ -180,7 +184,7 @@ if __name__ == "__main__":
     # Checkpointing
     checkpoint_dir = os.path.join(args.artifact_dir, args.run_name)
     checkpoint_name = f"client_{args.client_number}_best_model.pkl"
-    checkpointer = ClientCheckpointAndStateModule(
+    checkpoint_and_state_module = ClientCheckpointAndStateModule(
         post_aggregation=BestLossTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
 
@@ -191,7 +195,7 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         exchange_percentage=args.exchange_percentage,
         norm_threshold=args.norm_threshold,
-        checkpointer=checkpointer,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     # Note that the server must be started with the same grpc_max_message_length. Otherwise communication

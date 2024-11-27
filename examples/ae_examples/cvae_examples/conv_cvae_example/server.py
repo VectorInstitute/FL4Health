@@ -51,7 +51,7 @@ def main(config: Dict[str, Any]) -> None:
     parameter_exchanger = FullParameterExchanger()
     checkpointer = BestLossTorchModuleCheckpointer(config["checkpoint_path"], model_checkpoint_name)
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=model, parameter_exchanger=parameter_exchanger, checkpointer=checkpointer
+        model=model, parameter_exchanger=parameter_exchanger, model_checkpointers=checkpointer
     )
 
     # Server performs simple FedAveraging as its server-side optimization strategy

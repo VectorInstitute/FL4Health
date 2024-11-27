@@ -34,7 +34,7 @@ def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
-    state_checkpointer = PerRoundStateCheckpointer()
+    state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=checkpoint_dir)
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
         model=None,
         parameter_exchanger=None,

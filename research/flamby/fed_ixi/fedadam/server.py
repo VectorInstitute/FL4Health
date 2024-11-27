@@ -10,6 +10,8 @@ from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer, LatestTorchModuleCheckpointer
+from fl4health.checkpointing.server_module import BaseServerCheckpointAndStateModule
+from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -28,6 +30,9 @@ def main(
         config["n_server_rounds"],
     )
 
+    model = FedAdamUNet()
+    summarize_model_info(model)
+
     checkpoint_dir = os.path.join(checkpoint_stub, run_name)
     checkpoint_name = "server_best_model.pkl"
     federated_checkpointing: bool = config.get("federated_checkpointing", True)
@@ -37,10 +42,11 @@ def main(
         if federated_checkpointing
         else LatestTorchModuleCheckpointer(checkpoint_dir, checkpoint_name)
     )
+    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
+        model=model, parameter_exchanger=FullParameterExchanger(), model_checkpointers=checkpointer
+    )
 
     client_manager = SimpleClientManager()
-    model = FedAdamUNet()
-    summarize_model_info(model)
 
     strategy = FedAdam(
         min_fit_clients=config["n_clients"],
@@ -57,7 +63,10 @@ def main(
     )
 
     server = FullExchangeServer(
-        client_manager=client_manager, fl_config=config, model=model, strategy=strategy, checkpointer=checkpointer
+        client_manager=client_manager,
+        fl_config=config,
+        strategy=strategy,
+        checkpoint_and_state_module=checkpoint_and_state_module,
     )
 
     fl.server.start_server(

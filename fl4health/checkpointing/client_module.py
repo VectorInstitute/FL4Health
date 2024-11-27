@@ -136,7 +136,7 @@ class ClientCheckpointAndStateModule:
         """
 
         if self.state_checkpointer is not None:
-            self.state_checkpointer.save_checkpoint(state_checkpoint_name)
+            self.state_checkpointer.save_checkpoint(state_checkpoint_name, state)
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 

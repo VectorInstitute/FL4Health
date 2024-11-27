@@ -11,8 +11,6 @@ from flwr.common.logger import log
 from fl4health.checkpointing.checkpointer import BestLossTorchModuleCheckpointer
 from fl4health.checkpointing.server_module import ScaffoldServerCheckpointAndStateModule
 from fl4health.client_managers.fixed_without_replacement_manager import FixedSamplingByFractionClientManager
-from fl4health.parameter_exchange.packing_exchanger import FullParameterExchangerWithPacking
-from fl4health.parameter_exchange.parameter_packer import ParameterPackerWithControlVariates
 from fl4health.servers.scaffold_server import ScaffoldServer
 from fl4health.strategies.scaffold import Scaffold
 from fl4health.utils.config import load_config
@@ -37,10 +35,8 @@ def main(
     client_manager = FixedSamplingByFractionClientManager()
     model = Baseline()
 
-    model_size = len(model.state_dict())
     checkpoint_and_state_module = ScaffoldServerCheckpointAndStateModule(
         model=model,
-        parameter_exchanger=FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size)),
         model_checkpointers=checkpointer,
     )
 

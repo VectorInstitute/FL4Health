@@ -162,6 +162,7 @@ if __name__ == "__main__":
         )
     ]
 
+    checkpoint_and_state_module: ClientCheckpointAndStateModule | None
     if args.artifact_dir is not None:
         checkpoint_and_state_module = ClientCheckpointAndStateModule(
             state_checkpointer=PerRoundStateCheckpointer(Path(args.artifact_dir))

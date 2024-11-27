@@ -279,7 +279,10 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        progress_bar: bool = False,
+        client_name: Optional[str] = None,
     ) -> None:
         ScaffoldClient.__init__(
             self,
@@ -287,7 +290,10 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )
 
         InstanceLevelDpClient.__init__(
@@ -296,5 +302,8 @@ class DPScaffoldClient(ScaffoldClient, InstanceLevelDpClient):
             metrics=metrics,
             device=device,
             loss_meter_type=loss_meter_type,
-            checkpointer=checkpointer,
+            checkpoint_and_state_module=checkpoint_and_state_module,
+            reporters=reporters,
+            progress_bar=progress_bar,
+            client_name=client_name,
         )

@@ -8,7 +8,7 @@ from flwr.server.client_manager import SimpleClientManager
 
 from examples.models.cnn_model import Net
 from examples.utils.functions import make_dict_with_epochs_or_steps
-from fl4health.servers.sparse_coo_server import SparseCooServer
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.fedavg_sparse_coo_tensor import FedAvgSparseCooTensor
 from fl4health.utils.config import load_config
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn, fit_metrics_aggregation_fn
@@ -59,7 +59,7 @@ def main(config: Dict[str, Any]) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = SparseCooServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,
