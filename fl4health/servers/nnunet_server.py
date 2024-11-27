@@ -177,22 +177,25 @@ class NnunetServer(FlServer):
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
 
+        server_nnunet_plans_exist = self.fl_config.get("nnunet_plans") is not None
+
         # If the per_round_checkpointer has been specified and a state checkpoint exists, we load state
         # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
         if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
             self._load_server_state()
         # Otherwise, we're starting training from "scratch"
-        elif self.per_round_checkpointer is not None:
-            # If the state checkpointer is not None, then we want to do state checkpointing. So we need information
-            # from the clients in the form of get_properties.
+        elif self.per_round_checkpointer is not None or not server_nnunet_plans_exist:
+            # 1) If the per_round_checkpointer is not None, then we want to do state checkpointing. So we need
+            #       information from the clients in the form of get_properties.
+            # 2) If the nnUnet plans are not specified, we also need those plans from the client.
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
             log(INFO, "Requesting properties from one random client via get_properties")
 
-            if self.fl_config.get("nnunet_plans") is None:
+            if not server_nnunet_plans_exist:
                 # If the nnUnet plans are not specified, we also need those plans from the client.
                 log(INFO, "Initialization of global nnunet plans will be sourced from this client")
-            else:
+            if self.per_round_checkpointer is not None:
                 log(
                     INFO,
                     "Properties from NnUnetTrainer will be sourced from this client to facilitate state preservation",
@@ -212,7 +215,7 @@ class NnunetServer(FlServer):
 
             # If config contains nnunet_plans, server side initialization of plans
             # Else client side initialization with nnunet_plans from client
-            if self.fl_config.get("nnunet_plans") is not None:
+            if server_nnunet_plans_exist:
                 self.nnunet_plans_bytes = narrow_dict_type(self.fl_config, "nnunet_plans", bytes)
             else:
                 self.nnunet_plans_bytes = narrow_dict_type(properties, "nnunet_plans", bytes)
