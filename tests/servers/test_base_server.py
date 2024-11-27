@@ -22,6 +22,7 @@ from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
+from fl4health.utils.parameter_extraction import get_all_model_parameters
 from tests.test_utils.assert_metrics_dict import assert_metrics_dict
 from tests.test_utils.custom_client_proxy import CustomClientProxy
 from tests.test_utils.models_for_test import LinearTransform
@@ -35,23 +36,16 @@ def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
     state_checkpointer = PerRoundStateCheckpointer(checkpoint_dir=checkpoint_dir)
-    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=None,
-        parameter_exchanger=None,
-        model_checkpointers=checkpointer,
-        state_checkpointer=state_checkpointer,
-    )
-
     # Checkpointer is defined but there is no server-side model defined to produce a model from the server state.
     # An assertion error should be throw stating this
-    fl_server_no_hydration = FlServer(
-        client_manager=PoissonSamplingClientManager(),
-        fl_config={},
-        checkpoint_and_state_module=checkpoint_and_state_module,
-    )
     with pytest.raises(AssertionError) as assertion_error:
-        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "Model hydration has been called but no server_model is defined to hydrate" in str(assertion_error.value)
+        BaseServerCheckpointAndStateModule(
+            model=None,
+            parameter_exchanger=None,
+            model_checkpointers=checkpointer,
+            state_checkpointer=state_checkpointer,
+        )
+    assert "Checkpointer(s) is (are) defined but no model is defined to hydrate" in str(assertion_error.value)
 
 
 def test_hydration_no_exchanger_with_checkpointer(tmp_path: Path) -> None:
@@ -59,20 +53,11 @@ def test_hydration_no_exchanger_with_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
-    checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=model, parameter_exchanger=None, model_checkpointers=checkpointer
-    )
-
     # Checkpointer is defined but there is no parameter exchanger defined to produce a model from the server state.
     # An assertion error should be throw stating this
-    fl_server_no_hydration = FlServer(
-        client_manager=PoissonSamplingClientManager(),
-        fl_config={},
-        checkpoint_and_state_module=checkpoint_and_state_module,
-    )
     with pytest.raises(AssertionError) as assertion_error:
-        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "Model hydration has been called but no parameter_exchanger is defined to hydrate." in str(
+        BaseServerCheckpointAndStateModule(model=model, parameter_exchanger=None, model_checkpointers=checkpointer)
+    assert "Checkpointer(s) is (are) defined but no parameter_exchanger is defined to hydrate." in str(
         assertion_error.value
     )
 
@@ -84,7 +69,7 @@ def test_no_checkpointer_maybe_checkpoint(caplog: pytest.LogCaptureFixture) -> N
 
     # Neither checkpointing nor hydration is defined, we'll have no server-side checkpointing for the FL run.
     fl_server_no_checkpointer._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "No checkpointer present. Models will not be checkpointed on server-side." in caplog.text
+    assert "No model checkpointers specified. Skipping any checkpointing." in caplog.text
 
 
 def test_hydration_and_checkpointer(tmp_path: Path) -> None:
@@ -93,7 +78,7 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchModuleCheckpointer(str(checkpoint_dir), "best_model.pkl")
     checkpoint_and_state_module = BaseServerCheckpointAndStateModule(
-        model=model, parameter_exchanger=None, model_checkpointers=checkpointer
+        model=model, parameter_exchanger=FullParameterExchanger(), model_checkpointers=checkpointer
     )
 
     # Server-side hydration to convert server state to model and checkpointing behavior are both defined, a model
@@ -103,6 +88,9 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
         fl_config={},
         checkpoint_and_state_module=checkpoint_and_state_module,
     )
+    # Need to mock set the parameters as no FL or exchange is happening.
+    fl_server_both.parameters = get_all_model_parameters(model)
+
     fl_server_both._maybe_checkpoint(1.0, {}, server_round=5)
     loaded_model = checkpointer.load_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
