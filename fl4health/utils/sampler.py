@@ -1,7 +1,8 @@
 import math
 from abc import ABC, abstractmethod
+from collections.abc import Set
 from logging import INFO, WARN
-from typing import Any, Set, TypeVar
+from typing import Any, TypeVar
 
 import numpy as np
 import torch

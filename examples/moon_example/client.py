@@ -1,7 +1,6 @@
 import argparse
-from collections.abc import Sequence
+from collections.abc import Sequence, Set
 from pathlib import Path
-from typing import Set
 
 import flwr as fl
 import torch

@@ -1,4 +1,5 @@
-from typing import Set, TypeVar
+from collections.abc import Set
+from typing import TypeVar
 
 import torch
 import torch.nn as nn
