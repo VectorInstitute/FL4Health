@@ -143,7 +143,7 @@ class EvaluateServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures]: The first value is the
+            tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None: The first value is the
                 loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
                 The second is the aggregated metrics passed from the clients, the third is the set of raw results and
                 failure objects returned by the clients.

@@ -121,11 +121,7 @@ class FedDgGa(FedAvg):
                 Minimum number of clients used during validation. Defaults to 2.
             min_available_clients : int, optional
                 Minimum number of total clients in the system. Defaults to 2.
-            evaluate_fn :
-                Optional[
-                    Callable[[int, NDArrays, dict[str, Scalar]],
-                    tuple[float, dict[str, Scalar]]] | None
-                ]
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for validation. Defaults to None.
             on_fit_config_fn : Callable[[int], dict[str, Scalar]], optional
                 Function used to configure training. Must be specified for this strategy. Defaults to None.

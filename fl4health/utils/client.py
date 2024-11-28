@@ -1,8 +1,9 @@
 import copy
 import os
+from collections.abc import Iterable
 from inspect import currentframe, getframeinfo
 from logging import INFO, LogRecord
-from typing import Any, Iterable, TypeVar
+from typing import Any, TypeVar
 
 import torch
 import torch.nn as nn

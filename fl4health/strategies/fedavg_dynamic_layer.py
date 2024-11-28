@@ -45,9 +45,7 @@ class FedAvgDynamicLayer(BasicFedAvg):
             min_fit_clients (int, optional): Minimum number of clients used during fitting. Defaults to 2.
             min_evaluate_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
             min_available_clients (int, optional): Minimum number of clients used during validation. Defaults to 2.
-            evaluate_fn (Optional[
-                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
-            ]):
+            evaluate_fn (Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None):
                 Optional function used for central server-side evaluation. Defaults to None.
             on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
