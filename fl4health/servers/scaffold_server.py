@@ -1,6 +1,5 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO
-from typing import Callable
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log

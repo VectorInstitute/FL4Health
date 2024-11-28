@@ -1,6 +1,6 @@
 import math
+from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Callable
 
 import torch
 import torch.nn as nn

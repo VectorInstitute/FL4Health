@@ -1,6 +1,7 @@
 import math
+from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 from flwr.common import (

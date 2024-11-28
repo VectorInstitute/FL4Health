@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from typing import Callable
+from collections.abc import Callable, Sequence
 
 from flwr.common import Parameters
 from flwr.common.typing import Config, Scalar

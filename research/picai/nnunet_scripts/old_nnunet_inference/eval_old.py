@@ -3,8 +3,9 @@ import contextlib
 import os
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable
 from os.path import join
-from typing import Any, Iterable
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray

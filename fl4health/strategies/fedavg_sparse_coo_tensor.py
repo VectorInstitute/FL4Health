@@ -1,7 +1,8 @@
 from collections import defaultdict
+from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
-from typing import Callable, Union
+from typing import Union
 
 import torch
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters

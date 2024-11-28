@@ -4,10 +4,11 @@ import contextlib
 import os
 import time
 import warnings
+from collections.abc import Callable, Hashable
 from logging import INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Callable, Hashable, Union
+from typing import Any, Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -328,7 +329,7 @@ def get_picai_metrics(
             annotations. Must have shape (num_samples, num_classes or
             num_lesion_classes, ...). If num_classes is provided, the function
             will attempt to remove the background class from index 0 for you
-        case_identifiers (Iterable[str] | None, optional): A list of case
+        case_identifiers (list[str] | None, optional): A list of case
             identifiers. If not provided the subjects will be identified by
             their index Defaults to None.
         verbose (bool): Whether or not to print a log statement summarizing

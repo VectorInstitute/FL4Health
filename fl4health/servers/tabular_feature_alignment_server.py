@@ -1,8 +1,7 @@
 import random
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable
 
 from flwr.common import Parameters
 from flwr.common.logger import log

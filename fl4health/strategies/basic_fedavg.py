@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Callable, Union
+from typing import Union
 
 from flwr.common import (
     EvaluateIns,

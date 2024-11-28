@@ -9,7 +9,7 @@ from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Type, Union
+from typing import Any, Union
 
 import numpy as np
 import torch
@@ -78,7 +78,7 @@ class NnunetClient(BasicClient):
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         client_name: str | None = None,
-        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class: type[nnUNetTrainer] = nnUNetTrainer,
         nnunet_trainer_class_kwargs: dict[str, Any] | None = {},
     ) -> None:
         """
@@ -127,7 +127,7 @@ class NnunetClient(BasicClient):
                 No checkpointing (state or model) is done if not provided. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health reporters which the client should
                 send data to.
-            nnunet_trainer_class (Type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
+            nnunet_trainer_class (type[nnUNetTrainer]): A nnUNetTrainer constructor. Useful for passing custom
                 nnUNetTrainer. Defaults to the standard nnUNetTrainer class. Must match the nnunet_trainer_class
                 passed to the NnunetServer.
             nnunet_trainer_class_kwargs (dict[str, Any]): Additional kwargs to pass to nnunet_trainer_class. Defaults

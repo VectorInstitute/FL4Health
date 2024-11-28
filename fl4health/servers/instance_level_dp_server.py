@@ -1,7 +1,6 @@
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from logging import INFO
 from math import ceil
-from typing import Callable
 
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar

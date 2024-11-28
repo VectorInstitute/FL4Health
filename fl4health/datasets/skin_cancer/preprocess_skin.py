@@ -9,7 +9,8 @@ Code: https://github.com/wns823/medical_federated.git
 
 import json
 import os
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 

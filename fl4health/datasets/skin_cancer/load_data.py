@@ -6,10 +6,11 @@
 
 import json
 import random
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Union
+from typing import Any, Union
 
 import torch
 import torchvision.transforms as transforms

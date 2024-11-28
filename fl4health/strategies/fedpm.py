@@ -1,6 +1,6 @@
 from collections import defaultdict
+from collections.abc import Callable
 from functools import reduce
-from typing import Callable
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters

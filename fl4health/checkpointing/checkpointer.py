@@ -1,8 +1,9 @@
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from logging import ERROR, INFO, WARNING
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import torch
 import torch.nn as nn

@@ -1,8 +1,8 @@
 import random
 import warnings
+from collections.abc import Callable
 from logging import INFO
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import torch

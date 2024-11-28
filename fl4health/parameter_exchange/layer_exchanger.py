@@ -1,4 +1,4 @@
-from typing import Set, Type, TypeVar
+from typing import Set, TypeVar
 
 import torch
 import torch.nn as nn
@@ -40,7 +40,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
     is provided with the model in order to extract the proper layers to be exchanged based on the exclusion criteria
     """
 
-    def __init__(self, model: nn.Module, module_exclusions: Set[Type[TorchModule]]) -> None:
+    def __init__(self, model: nn.Module, module_exclusions: Set[type[TorchModule]]) -> None:
         # module_exclusion is a set of nn.Module types that should NOT be exchanged with the server.
         # {nn.BatchNorm1d}
         self.module_exclusions = module_exclusions
@@ -57,7 +57,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         # NOTE: Layers here refers to a collection of parameters in the state dictionary
         self.layers_to_transfer: list[str] = self.get_layers_to_transfer(model)
 
-    def should_module_be_excluded(self, module: Type[TorchModule]) -> bool:
+    def should_module_be_excluded(self, module: type[TorchModule]) -> bool:
         return type(module) in self.module_exclusions
 
     def should_layer_be_excluded(self, layer_name: str) -> bool:

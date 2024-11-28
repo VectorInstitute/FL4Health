@@ -1,6 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar, Union, cast
+from collections.abc import Callable
+from typing import TypeVar, Union, cast
 
 import torch
 from torch.utils.data import Dataset

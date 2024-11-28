@@ -1,4 +1,5 @@
-from typing import Any, Callable, Type, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 import yaml
 
@@ -44,14 +45,14 @@ def check_config(config: dict[str, Any]) -> None:
             raise InvalidConfigError(f"{key} must be greater than 0")
 
 
-def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: Type[T]) -> T:
+def narrow_dict_type(dictionary: dict[str, Any], key: str, narrow_type_to: type[T]) -> T:
     """
     Checks if a key exists in dictionary and if so, verify it is of type narrow_type_to.
 
     Args:
         dictionary (dict[str, Any]): A dictionary with string keys.
         key (str): The key to check dictionary for.
-        narrow_type_to (Type[T]): The expected type of dictionary[key]
+        narrow_type_to (type[T]): The expected type of dictionary[key]
 
     Returns:
         T: The type-checked value at dictionary[key]
@@ -75,7 +76,7 @@ def narrow_dict_type_and_set_attribute(
     dictionary: dict,
     dictionary_key: str,
     attribute_name: str,
-    narrow_type_to: Type[T],
+    narrow_type_to: type[T],
     func: Callable[[Any], Any] | None = None,
 ) -> None:
     """
@@ -88,7 +89,7 @@ def narrow_dict_type_and_set_attribute(
         self (object): The object to set attribute to dictionary[dictionary_key].
         dictionary (dict[str, Any]): A dictionary with string keys.
         dictionary_key (str): The key to check dictionary for.
-        narrow_type_to (Type[T]): The expected type of dictionary[key].
+        narrow_type_to (type[T]): The expected type of dictionary[key].
 
     Raises:
         ValueError: If dictionary[key] is not of type narrow_type_to or

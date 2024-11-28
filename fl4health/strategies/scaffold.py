@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 import torch.nn as nn

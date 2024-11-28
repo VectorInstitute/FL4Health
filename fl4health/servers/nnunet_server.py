@@ -2,7 +2,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from typing import Any, Type, Union
+from typing import Any, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -66,7 +66,7 @@ class NnunetServer(FlServer):
         checkpoint_and_state_module: NnUnetServerCheckpointAndStateModule | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
-        nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
+        nnunet_trainer_class: type[nnUNetTrainer] = nnUNetTrainer,
     ) -> None:
         """
         A Basic FlServer with added functionality to ask a client to initialize the global nnunet plans if one was not
@@ -100,7 +100,7 @@ class NnunetServer(FlServer):
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
                 and throw an exception. Defaults to True.
-            nnunet_trainer_class (Type[nnUNetTrainer]): nnUNetTrainer class.
+            nnunet_trainer_class (type[nnUNetTrainer]): nnUNetTrainer class.
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
                 Must match the nnunet_trainer_class passed to the NnunetClient.
         """

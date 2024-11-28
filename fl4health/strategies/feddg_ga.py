@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from enum import Enum
 from logging import INFO, WARNING
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 from flwr.common import EvaluateIns, MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
