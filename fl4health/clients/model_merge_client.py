@@ -1,7 +1,8 @@
 import datetime
 from abc import abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 import torch
 import torch.nn as nn

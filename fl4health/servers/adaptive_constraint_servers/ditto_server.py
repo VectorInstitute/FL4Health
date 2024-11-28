@@ -1,4 +1,5 @@
-from typing import Callable, Sequence
+from collections.abc import Sequence
+from typing import Callable
 
 from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager

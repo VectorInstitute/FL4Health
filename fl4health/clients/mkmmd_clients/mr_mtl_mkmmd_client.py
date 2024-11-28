@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from logging import ERROR, INFO
 from pathlib import Path
-from typing import Sequence
 
 import torch
 from flwr.common.logger import log

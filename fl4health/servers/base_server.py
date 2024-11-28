@@ -1,6 +1,7 @@
 import datetime
+from collections.abc import Sequence
 from logging import DEBUG, ERROR, INFO, WARNING
-from typing import Callable, Sequence, Union
+from typing import Callable, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters

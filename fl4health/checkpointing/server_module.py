@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from logging import INFO
-from typing import Any, Sequence, Union
+from typing import Any, Union
 
 import torch.nn as nn
 from flwr.common import Parameters

@@ -1,7 +1,7 @@
 import copy
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Sequence
 
 import torch
 import torch.nn as nn

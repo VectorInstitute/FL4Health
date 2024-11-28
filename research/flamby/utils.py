@@ -1,7 +1,7 @@
 import os
 import warnings
+from collections.abc import Sequence
 from logging import INFO
-from typing import Sequence
 
 import numpy as np
 import torch

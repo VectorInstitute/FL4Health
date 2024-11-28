@@ -4,11 +4,12 @@ import os
 import pickle
 import time
 import warnings
+from collections.abc import Sequence
 from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Sequence, Type, Union
+from typing import Any, Type, Union
 
 import numpy as np
 import torch

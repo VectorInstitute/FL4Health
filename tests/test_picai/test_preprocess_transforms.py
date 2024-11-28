@@ -1,6 +1,6 @@
+from collections.abc import Sequence
 from functools import partial
 from pathlib import Path
-from typing import Sequence
 
 import numpy as np
 import SimpleITK as sitk

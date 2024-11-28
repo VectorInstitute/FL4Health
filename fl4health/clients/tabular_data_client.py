@@ -1,6 +1,7 @@
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 import pandas as pd
 import torch

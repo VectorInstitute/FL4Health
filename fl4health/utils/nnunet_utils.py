@@ -3,11 +3,12 @@ import os
 import signal
 import sys
 import warnings
+from collections.abc import Sequence
 from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
 from math import ceil
-from typing import Any, Callable, Sequence, Union, no_type_check
+from typing import Any, Callable, Union, no_type_check
 
 import numpy as np
 import torch

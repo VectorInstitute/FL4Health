@@ -1,7 +1,8 @@
 import argparse
+from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Union
+from typing import Union
 
 import flwr as fl
 import numpy as np

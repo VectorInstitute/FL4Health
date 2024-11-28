@@ -1,7 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from enum import Enum
-from typing import Sequence
 
 import numpy as np
 import torch

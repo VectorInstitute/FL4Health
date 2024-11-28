@@ -1,8 +1,8 @@
 import datetime
+from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
 from pathlib import Path
-from typing import Sequence
 
 import torch
 from flwr.common.logger import log

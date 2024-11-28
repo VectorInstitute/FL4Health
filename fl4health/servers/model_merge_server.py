@@ -1,7 +1,7 @@
 import datetime
 import timeit
+from collections.abc import Sequence
 from logging import INFO, WARNING
-from typing import Sequence
 
 import torch.nn as nn
 from flwr.common.logger import log
