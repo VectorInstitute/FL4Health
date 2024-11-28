@@ -1,19 +1,18 @@
 import concurrent.futures
-from typing import Union
 
 from flwr.common.typing import Code, GetPropertiesIns, GetPropertiesRes
 from flwr.server.client_proxy import ClientProxy
 
 PollResultsAndFailures = tuple[
     list[tuple[ClientProxy, GetPropertiesRes]],
-    list[Union[tuple[ClientProxy, GetPropertiesRes], BaseException]],
+    list[tuple[ClientProxy, GetPropertiesRes] | BaseException],
 ]
 
 
 def _handle_finished_future_after_poll(
     future: concurrent.futures.Future,
     results: list[tuple[ClientProxy, GetPropertiesRes]],
-    failures: list[Union[tuple[ClientProxy, GetPropertiesRes], BaseException]],
+    failures: list[tuple[ClientProxy, GetPropertiesRes] | BaseException],
 ) -> None:
     """
     Convert finished future into either a result or a failure for polling.
@@ -22,7 +21,7 @@ def _handle_finished_future_after_poll(
         future (concurrent.futures.Future): The future returned by a client executing polling. It is either added
             to results if there are no exceptions or failures if there are any.
         results (list[tuple[ClientProxy, GetPropertiesRes]]): Set of good results from clients that have accumulated.
-        failures (list[Union[tuple[ClientProxy, GetPropertiesRes], BaseException]]): The set of failing results that
+        failures (list[tuple[ClientProxy, GetPropertiesRes] | BaseException]): The set of failing results that
             have accumulated for the polling.
     """
 
@@ -93,7 +92,7 @@ def poll_clients(
 
     # Gather results
     results: list[tuple[ClientProxy, GetPropertiesRes]] = []
-    failures: list[Union[tuple[ClientProxy, GetPropertiesRes], BaseException]] = []
+    failures: list[tuple[ClientProxy, GetPropertiesRes] | BaseException] = []
     for future in finished_fs:
         _handle_finished_future_after_poll(future=future, results=results, failures=failures)
 

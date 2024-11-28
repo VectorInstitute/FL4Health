@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,7 +18,7 @@ class MaskedConv1d(nn.Conv1d):
         out_channels: int,
         kernel_size: _size_1_t,
         stride: _size_1_t = 1,
-        padding: Union[str, _size_1_t] = 0,
+        padding: str | _size_1_t = 0,
         dilation: _size_1_t = 1,
         groups: int = 1,
         bias: bool = True,
@@ -105,7 +103,7 @@ class MaskedConv1d(nn.Conv1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _single(conv_module.padding)
@@ -137,7 +135,7 @@ class MaskedConv2d(nn.Conv2d):
         out_channels: int,
         kernel_size: _size_2_t,
         stride: _size_2_t = 1,
-        padding: Union[str, _size_2_t] = 0,
+        padding: str | _size_2_t = 0,
         dilation: _size_2_t = 1,
         groups: int = 1,
         bias: bool = True,
@@ -251,7 +249,7 @@ class MaskedConv3d(nn.Conv3d):
         out_channels: int,
         kernel_size: _size_3_t,
         stride: _size_3_t = 1,
-        padding: Union[str, _size_3_t] = 0,
+        padding: str | _size_3_t = 0,
         dilation: _size_3_t = 1,
         groups: int = 1,
         bias: bool = True,
@@ -473,7 +471,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = _single(conv_module.padding)
@@ -613,7 +611,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
         padding_ = _pair(conv_module.padding)
@@ -753,7 +751,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
+        # type int | tuple[int] and kernel_size_ has type tuple[int]
         kernel_size_ = _triple(conv_module.kernel_size)
         stride_ = _triple(conv_module.stride)
         padding_ = _triple(conv_module.padding)

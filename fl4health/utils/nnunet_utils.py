@@ -8,7 +8,7 @@ from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
 from math import ceil
-from typing import Any, Union, no_type_check
+from typing import Any, no_type_check
 
 import numpy as np
 import torch
@@ -130,7 +130,7 @@ def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
 # The two convert deepsupervision methods are necessary because fl4health requires
 # predictions, targets and inputs to be single torch.Tensors or Dicts of torch.Tensors
 def convert_deep_supervision_list_to_dict(
-    tensor_list: Union[list[torch.Tensor], tuple[torch.Tensor]], num_spatial_dims: int
+    tensor_list: list[torch.Tensor] | tuple[torch.Tensor], num_spatial_dims: int
 ) -> dict[str, torch.Tensor]:
     """
     Converts a list of torch.Tensors to a dictionary. Names the keys for
@@ -253,7 +253,7 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
     return approx_n_voxels
 
 
-def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> Union[torch.Tensor, list[torch.Tensor]]:
+def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> torch.Tensor | list[torch.Tensor]:
     """
     Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
 
@@ -278,26 +278,22 @@ def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> Union[to
 class nnUNetDataLoaderWrapper(DataLoader):
     def __init__(
         self,
-        nnunet_augmenter: Union[SingleThreadedAugmenter, NonDetMultiThreadedAugmenter, MultiThreadedAugmenter],
-        nnunet_config: Union[NnunetConfig, str],
+        nnunet_augmenter: SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter,
+        nnunet_config: NnunetConfig | str,
         infinite: bool = False,
     ) -> None:
         """
-        Wraps nnunet dataloader classes using the pytorch dataloader to make
-        them pytorch compatible. Also handles some unique stuff specific to
-        nnunet such as deep supervision and infinite dataloaders. The nnunet
-        dataloaders should only be used for training and validation, not final testing.
+        Wraps nnunet dataloader classes using the pytorch dataloader to make them pytorch compatible. Also handles
+        some unique stuff specific to nnunet such as deep supervision and infinite dataloaders. The nnunet dataloaders
+        should only be used for training and validation, not final testing.
 
         Args:
-            nnunet_dataloader (Union[SingleThreadedAugmenter,
-                NonDetMultiThreadedAugmenter]): The dataloader used by nnunet
-            nnunet_config (NnUNetConfig): The nnunet config. Enum type helps
-                ensure that nnunet config is valid
-            infinite (bool, optional): Whether or not to treat the dataset
-                as infinite. The dataloaders sample data with replacement
-                either way. The only difference is that if set to False, a
-                StopIteration is generated after num_samples/batch_size steps.
-                Defaults to False.
+            nnunet_dataloader (SingleThreadedAugmenter | NonDetMultiThreadedAugmenter | MultiThreadedAugmenter): The
+                dataloader used by nnunet
+            nnunet_config (NnUNetConfig): The nnunet config. Enum type helps ensure that nnunet config is valid
+            infinite (bool, optional): Whether or not to treat the dataset as infinite. The dataloaders sample data
+                with replacement either way. The only difference is that if set to False, a StopIteration is
+                generated after num_samples/batch_size steps. Defaults to False.
         """
         # The augmenter is a wrapper on the nnunet dataloader
         self.nnunet_augmenter = nnunet_augmenter
@@ -318,7 +314,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
         self.current_step = 0
         self.infinite = infinite
 
-    def __next__(self) -> tuple[torch.Tensor, Union[torch.Tensor, dict[str, torch.Tensor]]]:
+    def __next__(self) -> tuple[torch.Tensor, torch.Tensor | dict[str, torch.Tensor]]:
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
             raise StopIteration  # Raise stop iteration after epoch has completed
@@ -329,7 +325,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             # segmentations at various spatial scales/resolutions
             # nnUNet has a wrapper for loss functions to enable deep supervision
             inputs: torch.Tensor = batch["data"]
-            targets: Union[torch.Tensor, list[torch.Tensor]] = batch["target"]
+            targets: torch.Tensor | list[torch.Tensor] = batch["target"]
             if isinstance(targets, list):
                 target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
                 return inputs, target_dict
@@ -391,7 +387,7 @@ class Module2LossWrapper(_Loss):
 
 
 class StreamToLogger(io.StringIO):
-    def __init__(self, logger: Logger, level: Union[LogLevel, int]) -> None:
+    def __init__(self, logger: Logger, level: LogLevel | int) -> None:
         """
         File-like stream object that redirects writes to a logger. Useful for redirecting stdout to a logger.
 

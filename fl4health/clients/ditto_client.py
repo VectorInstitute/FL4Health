@@ -305,7 +305,7 @@ class DittoClient(AdaptiveDriftConstraintClient):
             features (TorchFeatureType): Feature(s) of the model(s) indexed by name.
             target (TorchTargetType): Ground truth data to evaluate predictions against.
         Returns:
-            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the model loss
                 - A dictionary with `local_loss`, `global_loss` as additionally reported loss values.
         """

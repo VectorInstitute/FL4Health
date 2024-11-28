@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from enum import Enum
 from logging import INFO, WARNING
-from typing import Union
 
 import numpy as np
 from flwr.common import EvaluateIns, MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
@@ -262,7 +261,7 @@ class FedDgGa(FedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate fit results by weighing them against the adjustment weights and then summing them.
@@ -272,7 +271,7 @@ class FedDgGa(FedAvg):
         Args:
             server_round: (int) the current server round.
             results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (list[Union[tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters
@@ -304,7 +303,7 @@ class FedDgGa(FedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, EvaluateRes]],
-        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate evaluation losses using weighted average.
@@ -315,7 +314,7 @@ class FedDgGa(FedAvg):
         Args:
             server_round: (int) the current server round.
             results: (list[tuple[ClientProxy, FitRes]]) The clients' evaluate results.
-            failures: (list[Union[tuple[ClientProxy, FitRes], BaseException]]) the clients' evaluate failures.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' evaluate failures.
 
         Returns:
             (tuple[float | None, dict[str, Scalar]]) A tuple containing the aggregated evaluation loss

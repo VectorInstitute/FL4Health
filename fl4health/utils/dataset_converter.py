@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from functools import partial
-from typing import Union
 
 import torch
 
@@ -11,7 +10,7 @@ class DatasetConverter(TensorDataset):
     def __init__(
         self,
         converter_function: Callable[[torch.Tensor, torch.Tensor], tuple[torch.Tensor, torch.Tensor]],
-        dataset: Union[None, TensorDataset],
+        dataset: TensorDataset | None,
     ) -> None:
         """
         Dataset converter classes are designed to re-format any dataset for a given training task,
@@ -48,7 +47,7 @@ class DatasetConverter(TensorDataset):
 class AutoEncoderDatasetConverter(DatasetConverter):
     def __init__(
         self,
-        condition: Union[None, str, torch.Tensor] = None,
+        condition: str | torch.Tensor | None = None,
         do_one_hot_encoding: bool = False,
         custom_converter_function: Callable | None = None,
         condition_vector_size: int | None = None,
@@ -61,7 +60,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         other converter functions can be added or passed to support other conditions.
 
         Args:
-            condition (Union[None, str, torch.Tensor]): Could be a fixed tensor used for all the data samples,
+            condition (str | torch.Tensor | None): Could be a fixed tensor used for all the data samples,
                 None for non-conditional models, or a name(str) passed for other custom conversions like 'label'.
             do_one_hot_encoding (bool, optional): Should converter perform one hot encoding on the condition or not.
             custom_converter_function (Callable | None, optional): User can define a new converter function.
@@ -136,14 +135,14 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         return converter_function
 
     def _only_replace_target_with_data(
-        self, data: torch.Tensor, target: Union[None, torch.Tensor]
+        self, data: torch.Tensor, target: torch.Tensor | None
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """The data converter function used for simple autoencoders or variational autoencoders."""
         # Target in self-supervised training for autoencoder is the data.
         return data, data
 
     def _cat_input_condition(
-        self, data: torch.Tensor, target: Union[None, torch.Tensor]
+        self, data: torch.Tensor, target: torch.Tensor | None
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """The data converter function used for conditional autoencoders.
         This converter is used when we have a torch tensor as condition for all the data samples.

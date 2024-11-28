@@ -10,7 +10,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import torch
 import torchvision.transforms as transforms
@@ -76,9 +76,9 @@ def load_skin_cancer_data(
     batch_size: int,
     split_percents: tuple[float, float, float] = (0.7, 0.15, 0.15),
     sampler: LabelBasedSampler | None = None,
-    train_transform: Union[None, Callable] = None,
-    val_transform: Union[None, Callable] = None,
-    test_transform: Union[None, Callable] = None,
+    train_transform: Callable | None = None,
+    val_transform: Callable | None = None,
+    test_transform: Callable | None = None,
     dataset_converter: DatasetConverter | None = None,
     seed: int | None = None,
 ) -> tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]:
@@ -91,9 +91,9 @@ def load_skin_cancer_data(
         batch_size (int): Batch size for the DataLoader.
         split_percents (tuple[float, float, float]): Percentages for splitting the data into train, val, and test sets.
         sampler (LabelBasedSampler | None): Sampler for the dataset. Defaults to None.
-        train_transform (Union[None, Callable]): Transformations to apply to the training data. Defaults to None.
-        val_transform (Union[None, Callable]): Transformations to apply to the validation data. Defaults to None.
-        test_transform (Union[None, Callable]): Transformations to apply to the test data. Defaults to None.
+        train_transform (Callable | None): Transformations to apply to the training data. Defaults to None.
+        val_transform (Callable | None): Transformations to apply to the validation data. Defaults to None.
+        test_transform (Callable | None): Transformations to apply to the test data. Defaults to None.
         dataset_converter (DatasetConverter | None): Converter to apply to the dataset. Defaults to None.
         seed (int | None): Random seed for shuffling data. Defaults to None.
 

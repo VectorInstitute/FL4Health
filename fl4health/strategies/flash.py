@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 from flwr.common import (
@@ -144,7 +143,7 @@ class Flash(BasicFedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """Aggregate fit results using the Flash method."""
 

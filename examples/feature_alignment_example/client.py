@@ -2,7 +2,6 @@ import argparse
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Union
 
 import flwr as fl
 import numpy as np
@@ -29,7 +28,7 @@ class Mimic3TabularDataClient(TabularDataClient):
         metrics: Sequence[Metric],
         device: torch.device,
         id_column: str,
-        targets: Union[str, list[str]],
+        targets: str | list[str],
     ) -> None:
         super().__init__(data_path, metrics, device, id_column, targets)
 

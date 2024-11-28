@@ -2,7 +2,6 @@ import datetime
 import math
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Union
 from unittest.mock import MagicMock
 
 import pytest
@@ -111,7 +110,7 @@ def test_metrics_reporter_setup_client() -> None:
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate() -> None:
     test_loss = 123.123
-    test_metrics: dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
+    test_metrics: dict[str, bool | bytes | float | int | str] = {"test_metric": 1234}
 
     reporter = JsonReporter()
     evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics, reporters=[reporter])

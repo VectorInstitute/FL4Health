@@ -1,7 +1,6 @@
 import math
 from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Union
 
 import numpy as np
 from flwr.common import (
@@ -273,7 +272,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
@@ -287,7 +286,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this strategy, the clients pack the weights to be
                 aggregated along with a clipping bit calculated during their local training cycle.
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:

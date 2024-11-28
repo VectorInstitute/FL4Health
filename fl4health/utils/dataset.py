@@ -1,7 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TypeVar, Union, cast
+from typing import TypeVar, cast
 
 import torch
 from torch.utils.data import Dataset
@@ -142,7 +142,7 @@ class SyntheticDataset(TensorDataset):
         return len(self.data)
 
 
-D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
+D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 
 def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:

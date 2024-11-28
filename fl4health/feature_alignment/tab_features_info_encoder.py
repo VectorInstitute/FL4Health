@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Union
 
 import pandas as pd
 from cyclops.data.df.feature import TabularFeatures
@@ -87,7 +86,7 @@ class TabularFeaturesInfoEncoder:
     def encoder_from_dataframe(
         df: pd.DataFrame,
         id_column: str,
-        target_columns: Union[str, list[str]],
+        target_columns: str | list[str],
         fill_values: dict[str, Scalar] | None = None,
     ) -> TabularFeaturesInfoEncoder:
         features_list = sorted(df.columns.values.tolist())

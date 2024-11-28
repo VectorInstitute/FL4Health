@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 import SimpleITK as sitk
 
@@ -9,7 +7,7 @@ def resample_img(
     spacing: tuple[float, float, float],
     size: tuple[int, int, int] | None = None,
     is_label: bool = False,
-    pad_value: Union[float, int] | None = 0.0,
+    pad_value: float | int | None = 0.0,
 ) -> sitk.Image:
     """
     Resample images to target resolution spacing.
@@ -23,7 +21,7 @@ def resample_img(
         size (tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
         is_label (bool): Whether or not this is an annotation.
-        pad_value (Union[float, int] | None): Amount of padding to use.
+        pad_value (float | int | None): Amount of padding to use.
 
     Returns:
         sitk.Image: The resampled image.

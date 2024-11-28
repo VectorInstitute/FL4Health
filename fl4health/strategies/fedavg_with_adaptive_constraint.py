@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Union
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
@@ -131,7 +130,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round and, if applicable, determine whether the constraint weight
@@ -142,7 +141,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. For adaptive constraints, the clients pack the weights
                 to be aggregated along with the training loss seen during their local training cycle.
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:

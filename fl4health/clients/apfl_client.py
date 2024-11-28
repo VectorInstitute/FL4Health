@@ -132,7 +132,7 @@ class ApflClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the personal loss
                 - A dictionary of with `global_loss` and `local_loss` keys and their calculated values
         """

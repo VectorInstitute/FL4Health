@@ -216,7 +216,7 @@ class PerFclClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `total_loss`, `global_feature_contrastive_loss`, and
                     `local_feature_contrastive_loss` representing the various and relevant pieces of the loss

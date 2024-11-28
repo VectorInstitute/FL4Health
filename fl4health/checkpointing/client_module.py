@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from enum import Enum
 from logging import INFO
-from typing import Any, Union
+from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -9,7 +9,7 @@ from flwr.common.typing import Scalar
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer, TorchModuleCheckpointer
 
-CheckpointModuleInput = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
+CheckpointModuleInput = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
 
 class CheckpointMode(Enum):

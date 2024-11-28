@@ -4,7 +4,6 @@ import warnings
 from functools import partial
 from logging import INFO
 from pathlib import Path
-from typing import Union
 
 from fl4health.checkpointing.checkpointer import PerRoundStateCheckpointer
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule
@@ -32,7 +31,7 @@ def main(
     plans_identifier: str | None,
     always_preprocess: bool,
     server_address: str,
-    fold: Union[str, int],
+    fold: str | int,
     verbose: bool,
     compile: bool,
     intermediate_client_state_dir: str | None = None,
@@ -181,7 +180,7 @@ if __name__ == "__main__":
     update_console_handler(level=args.logLevel)
 
     # Convert fold to an integer if it is not 'all'
-    fold: Union[int, str] = "all" if args.fold == "all" else int(args.fold)
+    fold: int | str = "all" if args.fold == "all" else int(args.fold)
 
     main(
         dataset_id=args.dataset_id,

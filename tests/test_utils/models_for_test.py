@@ -1,5 +1,3 @@
-from typing import Union
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -681,7 +679,7 @@ class EncodingBlock(nn.Module):
         if pooling_type is not None:
             self.downsample = get_downsampling_layer(dimensions, pooling_type)
 
-    def forward(self, x: torch.Tensor) -> Union[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+    def forward(self, x: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
         if self.residual:
             connection = self.conv_residual(x)
             x = self.conv1(x)

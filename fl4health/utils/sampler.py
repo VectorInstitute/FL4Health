@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from logging import INFO, WARN
-from typing import Any, Set, TypeVar, Union
+from typing import Any, Set, TypeVar
 
 import numpy as np
 import torch
@@ -10,7 +10,7 @@ from flwr.common.logger import log
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
 T = TypeVar("T")
-D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
+D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 
 class LabelBasedSampler(ABC):

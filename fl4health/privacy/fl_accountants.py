@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import Union
 
 from fl4health.privacy.moments_accountant import (
     FixedSamplingWithoutReplacement,
@@ -75,19 +74,19 @@ class FlInstanceLevelAccountant:
 
 
 class ClientLevelAccountant(ABC):
-    def __init__(self, noise_multiplier: Union[float, list[float]], moment_orders: list[float] | None = None) -> None:
+    def __init__(self, noise_multiplier: float | list[float], moment_orders: list[float] | None = None) -> None:
         self.noise_multiplier = noise_multiplier
         self.accountant = MomentsAccountant(moment_orders)
 
     @abstractmethod
-    def get_epsilon(self, server_updates: Union[int, list[int]], delta: float) -> float:
+    def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
         pass
 
     @abstractmethod
-    def get_delta(self, server_updates: Union[int, list[int]], epsilon: float) -> float:
+    def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
         pass
 
-    def _validate_server_updates(self, server_updates: Union[int, list[int]]) -> None:
+    def _validate_server_updates(self, server_updates: int | list[int]) -> None:
         if isinstance(server_updates, list):
             assert isinstance(self.noise_multiplier, list)
             assert len(server_updates) == len(self.noise_multiplier)
@@ -102,8 +101,8 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
 
     def __init__(
         self,
-        client_sampling_rate: Union[float, list[float]],
-        noise_multiplier: Union[float, list[float]],
+        client_sampling_rate: float | list[float],
+        noise_multiplier: float | list[float],
         moment_orders: list[float] | None = None,
     ) -> None:
         """
@@ -113,19 +112,19 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         parameters
         """
         super().__init__(noise_multiplier, moment_orders)
-        self.sampling_strategy: Union[SamplingStrategy, list[PoissonSampling]]
+        self.sampling_strategy: SamplingStrategy | list[PoissonSampling]
 
         if isinstance(client_sampling_rate, list):
             self.sampling_strategy = [PoissonSampling(q) for q in client_sampling_rate]
         else:
             self.sampling_strategy = PoissonSampling(client_sampling_rate)
 
-    def get_epsilon(self, server_updates: Union[int, list[int]], delta: float) -> float:
+    def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
         """server_updates: number of central server updates performed"""
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
 
-    def get_delta(self, server_updates: Union[int, list[int]], epsilon: float) -> float:
+    def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
         """server_updates: number of central server updates performed"""
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)
@@ -140,8 +139,8 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
     def __init__(
         self,
         n_total_clients: int,
-        n_clients_sampled: Union[int, list[int]],
-        noise_multiplier: Union[float, list[float]],
+        n_clients_sampled: int | list[int],
+        noise_multiplier: float | list[float],
         moment_orders: list[float] | None = None,
     ) -> None:
         """
@@ -152,7 +151,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         parameters
         """
         super().__init__(noise_multiplier, moment_orders)
-        self.sampling_strategy: Union[SamplingStrategy, list[FixedSamplingWithoutReplacement]]
+        self.sampling_strategy: SamplingStrategy | list[FixedSamplingWithoutReplacement]
 
         if isinstance(n_clients_sampled, list):
             self.sampling_strategy = [
@@ -161,12 +160,12 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         else:
             self.sampling_strategy = FixedSamplingWithoutReplacement(n_total_clients, n_clients_sampled)
 
-    def get_epsilon(self, server_updates: Union[int, list[int]], delta: float) -> float:
+    def get_epsilon(self, server_updates: int | list[int], delta: float) -> float:
         """server_updates: number of central server updates performed"""
         self._validate_server_updates(server_updates)
         return self.accountant.get_epsilon(self.sampling_strategy, self.noise_multiplier, server_updates, delta)
 
-    def get_delta(self, server_updates: Union[int, list[int]], epsilon: float) -> float:
+    def get_delta(self, server_updates: int | list[int], epsilon: float) -> float:
         """server_updates: number of central server updates performed"""
         self._validate_server_updates(server_updates)
         return self.accountant.get_delta(self.sampling_strategy, self.noise_multiplier, server_updates, epsilon)

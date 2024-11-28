@@ -2,7 +2,6 @@ from collections import defaultdict
 from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
-from typing import Union
 
 import torch
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters
@@ -103,7 +102,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round. The aggregation requires some special treatment, as the
@@ -122,7 +121,7 @@ class FedAvgSparseCooTensor(BasicFedAvg):
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this scheme, the clients pack the tensor names into
                 the results object along with the weight values to allow for alignment during aggregation.
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:

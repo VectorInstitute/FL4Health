@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from logging import WARNING
-from typing import Union
 
 from flwr.common import (
     EvaluateIns,
@@ -170,7 +169,7 @@ class ModelMergeStrategy(Strategy):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Performs model merging by taking an unweighted average of client weights and metrics.
@@ -179,7 +178,7 @@ class ModelMergeStrategy(Strategy):
             server_round (int): Indicates the server round we're currently on. Only one round for ModelMergeStrategy.
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local fit
                 that need to be aggregated on the server-side.
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during fit, such as timeouts or exceptions.
 
         Returns:
@@ -217,7 +216,7 @@ class ModelMergeStrategy(Strategy):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, EvaluateRes]],
-        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate the metrics returned from the clients as a result of the evaluation round.
@@ -227,7 +226,7 @@ class ModelMergeStrategy(Strategy):
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values
                 (None in this case) and the metrics dictionary.
-            failures (list[Union[tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
+            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:

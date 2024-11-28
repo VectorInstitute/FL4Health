@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from logging import INFO
-from typing import Any, Union
+from typing import Any
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -20,7 +20,7 @@ from fl4health.parameter_exchange.parameter_packer import (
     SparseCooParameterPacker,
 )
 
-CheckpointModuleInput = Union[TorchModuleCheckpointer, Sequence[TorchModuleCheckpointer]] | None
+CheckpointModuleInput = TorchModuleCheckpointer | Sequence[TorchModuleCheckpointer] | None
 
 
 class BaseServerCheckpointAndStateModule:

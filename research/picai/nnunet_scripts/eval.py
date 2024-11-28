@@ -8,7 +8,7 @@ from collections.abc import Callable, Hashable
 from logging import INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import SimpleITK as sitk
@@ -26,13 +26,13 @@ warnings.simplefilter("ignore", category=FutureWarning)
 # logger.setLevel(multiprocessing.SUBDEBUG)
 
 
-def read_image(path: Union[Path, str], npz_key: str | None = None) -> NDArray:
+def read_image(path: Path | str, npz_key: str | None = None) -> NDArray:
     """Taken from picai eval. Had to change one line so that they wouldn't
     throw away additional channels. They were assuming binary segmentation.
     Also made it work for any npz file
 
     Args:
-        path (Union[Path, str]): Path to the image file
+        path (Path | str): Path to the image file
         npz_key (str | None): If the file type is .npz, then a key must be
             provided to access the numpy array from the NpzFile object
     """
@@ -55,7 +55,7 @@ def read_image(path: Union[Path, str], npz_key: str | None = None) -> NDArray:
 
 
 def scan_folder_for_cases(
-    folder: Union[str, Path], postfixes: list[str] | None = None, extensions: list[str] | None = None
+    folder: str | Path, postfixes: list[str] | None = None, extensions: list[str] | None = None
 ) -> list[str]:
     if postfixes is None:
         postfixes = [""]
@@ -80,7 +80,7 @@ def scan_folder_for_cases(
 
 
 def get_case_files(
-    folder: Union[str, Path],
+    folder: str | Path,
     case_identifiers: list[str],
     postfixes: list[str] | None = None,
     extensions: list[str] | None = None,
@@ -109,8 +109,8 @@ def get_case_files(
 
 
 def generate_detection_map(
-    probability_map: Union[NDArray, str, Path],
-    save_path: Union[str, Path],
+    probability_map: NDArray | str | Path,
+    save_path: str | Path,
     npz_key: str | None = "probabilities",
     transforms: list[Callable[[NDArray], NDArray]] | None = None,
     **kwargs: Any,
@@ -121,12 +121,12 @@ def generate_detection_map(
     lesion detection map for each class/channel.
 
     Args:
-        probability_map (Union[NDArray, str, Path]): One hot encoded
+        probability_map (NDArray | str | Path]): One hot encoded
             probability map for a single image. Should be shape
             (num_classes, ...). num_classes includes the background class. If
             the probability maps are .npz files then a npz_key should be
             provided
-        save_path (Union[str, Path]): Path to save the detection map. Will be
+        save_path (str | Path): Path to save the detection map. Will be
             saved as a numpy compressed .npz file under key 'detection_map'.
             Detection map will have shape (num_classes - 1, ...) since a
             detection map is not computed for the background class.
@@ -160,8 +160,8 @@ def generate_detection_map(
 
 
 def generate_detection_maps(
-    input_folder: Union[str, Path],
-    output_folder: Union[str, Path],
+    input_folder: str | Path,
+    output_folder: str | Path,
     transforms: list[Callable[[NDArray], NDArray]] | None = None,
     npz_key: str | None = "probabilities",
     num_threads: int | None = None,
@@ -265,7 +265,7 @@ def one_hot_ndarray(input: NDArray, num_classes: int) -> NDArray:
 
 
 def evaluate_case_multichannel(
-    detection_map: Union[NDArray, str, Path], ground_truth: Union[NDArray, str, Path], **kwargs: Any
+    detection_map: NDArray | str | Path, ground_truth: NDArray | str | Path, **kwargs: Any
 ) -> tuple[list[tuple[int, float, float]], float, float, str]:
     if isinstance(detection_map, (str, Path)):
         detection_map = read_image(detection_map, npz_key="detection_map")
@@ -309,8 +309,8 @@ def evaluate_case_multichannel(
 
 
 def get_picai_metrics(
-    detection_map_folder: Union[str, Path],
-    ground_truth_annotations_folder: Union[str, Path],
+    detection_map_folder: str | Path,
+    ground_truth_annotations_folder: str | Path,
     num_threads: int | None = None,
     sample_weights: list[float] | None = None,
     case_identifiers: list[str] | None = None,
@@ -323,7 +323,7 @@ def get_picai_metrics(
     allow multiclass evaluation
 
     Args:
-        detection_maps_folder (Union[str, Path]): Path to the folder
+        detection_maps_folder (str | Path): Path to the folder
             containing the detection maps
         ground_truth_annotations_folder (NDArray): The ground truth
             annotations. Must have shape (num_samples, num_classes or

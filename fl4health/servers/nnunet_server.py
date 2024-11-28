@@ -2,7 +2,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from typing import Any, Union
+from typing import Any
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -27,7 +27,7 @@ with warnings.catch_warnings():
 
 FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, FitIns]]]
 EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, EvaluateIns]]]
-CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
+CFG_FN = FIT_CFG_FN | EVAL_CFG_FN
 
 
 def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:

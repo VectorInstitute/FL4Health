@@ -169,7 +169,7 @@ class MoonClient(BasicClient):
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
         """

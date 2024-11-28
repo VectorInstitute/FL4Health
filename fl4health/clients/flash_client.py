@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Union
 
 import torch
 from flwr.common.logger import log
@@ -66,7 +65,7 @@ class FlashClient(BasicClient):
         # gamma: Threshold for early stopping based on the change in validation loss.
         self.gamma: float | None = None
 
-    def process_config(self, config: Config) -> tuple[Union[int, None], Union[int, None], int, bool, bool]:
+    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
         local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics = (
             super().process_config(config)
         )

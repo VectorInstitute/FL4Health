@@ -1,6 +1,5 @@
 import datetime
 from pathlib import Path
-from typing import Union
 from unittest.mock import Mock, patch
 
 import pytest
@@ -248,7 +247,7 @@ def test_handle_result_aggregation() -> None:
         (client_proxy1, eval_res1),
         (client_proxy2, eval_res2),
     ]
-    failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]] = []
+    failures: list[tuple[ClientProxy, EvaluateRes] | BaseException] = []
 
     server_round = 1
     _, val_metrics_aggregated = fl_server._handle_result_aggregation(server_round, results, failures)

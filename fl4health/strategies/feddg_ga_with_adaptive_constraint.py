@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Union
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArrays, Parameters, ndarrays_to_parameters, parameters_to_ndarrays
@@ -121,7 +120,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate fit results by weighing them against the adjustment weights and then summing them.
@@ -134,7 +133,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         Args:
             server_round: (int) the current server round.
             results: (list[tuple[ClientProxy, FitRes]]) The clients' fit results.
-            failures: (list[Union[tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
+            failures: (list[tuple[ClientProxy, FitRes] | BaseException]) the clients' fit failures.
 
         Returns:
             (tuple[Parameters | None, dict[str, Scalar]]) A tuple containing the aggregated parameters

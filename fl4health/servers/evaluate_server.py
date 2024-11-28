@@ -2,7 +2,6 @@ import datetime
 from collections.abc import Sequence
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Union
 
 import torch
 from flwr.common import EvaluateIns, EvaluateRes, MetricsAggregationFn, Parameters, Scalar
@@ -219,7 +218,7 @@ class EvaluateServer(Server):
     def aggregate_evaluate(
         self,
         results: list[tuple[ClientProxy, EvaluateRes]],
-        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate evaluation results using the evaluate_metrics_aggregation_fn provided. Note that a dummy loss is
@@ -228,7 +227,7 @@ class EvaluateServer(Server):
         Args:
             results (list[tuple[ClientProxy, EvaluateRes]]): List of results objects that have the metrics returned
                 from each client, if successful, along with the number of samples used in the evaluation.
-            failures (list[Union[tuple[ClientProxy, EvaluateRes], BaseException]]): Failures reported by the clients
+            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): Failures reported by the clients
                 along with the client id, the results that we passed, if any, and the associated exception if one was
                 raised.
 

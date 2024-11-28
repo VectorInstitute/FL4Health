@@ -1,7 +1,6 @@
 from collections.abc import Callable
 from functools import reduce
 from logging import WARNING
-from typing import Union
 
 import numpy as np
 import torch.nn as nn
@@ -149,7 +148,7 @@ class Scaffold(BasicFedAvg):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Performs server-side aggregation of model weights and control variates associated with the SCAFFOLD method
@@ -164,7 +163,7 @@ class Scaffold(BasicFedAvg):
             results (list[tuple[ClientProxy, FitRes]]): These are the "successful" training run results. By default
                 these results are the only ones used in aggregation, even if some of the failed clients have partial
                 results (in the failures list).
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): This is the list of clients that
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): This is the list of clients that
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
         Returns:

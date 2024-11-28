@@ -51,7 +51,7 @@ class MultiAttributeEnum(Enum):
                 Cat = ['Felis Catus', True, 0.25]
 
         Args:
-            attributes (Union[dict[str, Any], List]): A list or dictionary of
+            attributes (dict[str, Any] | List): A list or dictionary of
                 attribute values for the enum member. If a list is given then
                 self.get_attribute_keys must be defined so that the class
                 knows what to name the attributes.

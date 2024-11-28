@@ -1,7 +1,6 @@
 import datetime
 from collections.abc import Callable, Sequence
 from logging import DEBUG, ERROR, INFO, WARNING
-from typing import Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
@@ -541,7 +540,7 @@ class FlServer(Server):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, EvaluateRes]],
-        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         val_results, test_results = self._unpack_metrics(results)
 

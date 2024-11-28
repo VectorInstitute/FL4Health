@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeVar
 
 import torch
 
@@ -98,7 +98,7 @@ class EvaluationLosses(Losses):
 class TrainingLosses(Losses):
     def __init__(
         self,
-        backward: Union[torch.Tensor, dict[str, torch.Tensor]],
+        backward: torch.Tensor | dict[str, torch.Tensor],
         additional_losses: dict[str, torch.Tensor] | None = None,
     ) -> None:
         """
@@ -106,7 +106,7 @@ class TrainingLosses(Losses):
         along with a method to return a dictionary representation.
 
         Args:
-            backward (Union[torch.Tensor, dict[str, torch.Tensor]]): The backward loss or
+            backward (torch.Tensor | dict[str, torch.Tensor]): The backward loss or
                 losses to optimize. In the normal case, backward is a Tensor corresponding to the
                 loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
             additional_losses (dict[str, torch.Tensor] | None): Optional dictionary of additional losses.

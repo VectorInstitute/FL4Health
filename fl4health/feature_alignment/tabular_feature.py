@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-from typing import Union
 
 from flwr.common.typing import Scalar
 
 from fl4health.feature_alignment.tabular_type import TabularType
 
-MetaData = Union[dict[str, int], list[Scalar]]
+MetaData = dict[str, int] | list[Scalar]
 
 
 class TabularFeature:

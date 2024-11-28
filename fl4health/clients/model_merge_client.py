@@ -2,7 +2,6 @@ import datetime
 from abc import abstractmethod
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Union
 
 import torch
 import torch.nn as nn
@@ -150,9 +149,7 @@ class ModelMergeClient(NumPyClient):
 
         return self.get_parameters(config), self.num_test_samples, val_metrics
 
-    def _move_data_to_device(
-        self, data: Union[TorchInputType, TorchTargetType]
-    ) -> Union[TorchTargetType, TorchInputType]:
+    def _move_data_to_device(self, data: TorchInputType | TorchTargetType) -> TorchTargetType | TorchInputType:
         """
         Moving data to self.device where data is intended to be either input to
         the model or the targets that the model is trying to achieve
@@ -166,7 +163,7 @@ class ModelMergeClient(NumPyClient):
                 TorchInputType or TorchTargetType
 
         Returns:
-            Union[TorchTargetType, TorchInputType]: The data argument except now it's been moved to self.device
+            TorchTargetType | TorchInputType: The data argument except now it's been moved to self.device
         """
         # Currently we expect both inputs and targets to be either tensors
         # or dictionaries of tensors

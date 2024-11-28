@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from typing import Union
 
 from dp_accounting import (
     DpEvent,
@@ -86,9 +85,9 @@ class MomentsAccountant:
 
     def _construct_rdp_accountant(
         self,
-        sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multipliers: Union[float, list[float]],
-        updates: Union[int, list[int]],
+        sampling_strategies: SamplingStrategy | Sequence[SamplingStrategy],
+        noise_multipliers: float | list[float],
+        updates: int | list[int],
     ) -> RdpAccountant:
         if isinstance(sampling_strategies, SamplingStrategy):
             sampling_strategies = [sampling_strategies]
@@ -107,9 +106,9 @@ class MomentsAccountant:
 
     def _validate_accountant_input(
         self,
-        sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, list[float]],
-        updates: Union[int, list[int]],
+        sampling_strategies: SamplingStrategy | Sequence[SamplingStrategy],
+        noise_multiplier: float | list[float],
+        updates: int | list[int],
     ) -> None:
         all_lists = all(
             [
@@ -129,9 +128,9 @@ class MomentsAccountant:
 
     def get_epsilon(
         self,
-        sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, list[float]],
-        updates: Union[int, list[int]],
+        sampling_strategies: SamplingStrategy | Sequence[SamplingStrategy],
+        noise_multiplier: float | list[float],
+        updates: int | list[int],
         delta: float,
     ) -> float:
         """
@@ -165,9 +164,9 @@ class MomentsAccountant:
 
     def get_delta(
         self,
-        sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, list[float]],
-        updates: Union[int, list[int]],
+        sampling_strategies: SamplingStrategy | Sequence[SamplingStrategy],
+        noise_multiplier: float | list[float],
+        updates: int | list[int],
         epsilon: float,
     ) -> float:
         """

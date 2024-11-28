@@ -1,5 +1,3 @@
-from typing import Union
-
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.criterion import Criterion
@@ -24,7 +22,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
     ) -> list[ClientProxy]:
         raise NotImplementedError
 
-    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Criterion | None = None) -> list[str]:
+    def wait_and_filter(self, min_num_clients: int | None, criterion: Criterion | None = None) -> list[str]:
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
         else:

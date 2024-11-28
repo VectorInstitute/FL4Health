@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import torch
 import torch.nn as nn
@@ -203,7 +203,7 @@ class BasicClient(NumPyClient):
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
-    def process_config(self, config: Config) -> tuple[Union[int, None], Union[int, None], int, bool, bool]:
+    def process_config(self, config: Config) -> tuple[int | None, int | None, int, bool, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
 
@@ -211,7 +211,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            tuple[Union[int, None], Union[int, None], int, bool, bool]: Returns the local_epochs, local_steps,
+            tuple[int | None, int | None, int, bool, bool]: Returns the local_epochs, local_steps,
                 current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
                 local_epochs and local_steps is defined in the config and sets the one that is not to None.
 
@@ -1048,7 +1048,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_optimizer(self, config: Config) -> Union[Optimizer, dict[str, Optimizer]]:
+    def get_optimizer(self, config: Config) -> Optimizer | dict[str, Optimizer]:
         """
         Method to be defined by user that returns the PyTorch optimizer used to train models locally
         Return value can be a single torch optimizer or a dictionary of string and torch optimizer.
@@ -1059,7 +1059,7 @@ class BasicClient(NumPyClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Union[Optimizer, dict[str, Optimizer]]: An optimizer or dictionary of optimizers to
+            Optimizer | dict[str, Optimizer]: An optimizer or dictionary of optimizers to
             train model.
 
         Raises:
@@ -1082,7 +1082,7 @@ class BasicClient(NumPyClient):
         """
         raise NotImplementedError
 
-    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> Union[None, _LRScheduler]:
+    def get_lr_scheduler(self, optimizer_key: str, config: Config) -> _LRScheduler | None:
         """
         Optional user defined method that returns learning rate scheduler
         to be used throughout training for the given optimizer. Defaults to None.
@@ -1094,18 +1094,18 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Union[None, _LRScheduler]: Client learning rate schedulers.
+            _LRScheduler | None: Client learning rate schedulers.
         """
         return None
 
-    def update_lr_schedulers(self, step: Union[int, None] = None, epoch: Union[int, None] = None) -> None:
+    def update_lr_schedulers(self, step: int | None = None, epoch: int | None = None) -> None:
         """
         Updates any schedulers that exist. Can be overridden to customize update logic based on client state
             (ie self.total_steps).
 
         Args:
-            step (Union[int, None]): If using local_steps, current step of this round. Otherwise None.
-            epoch (Union[int, None]): If using local_epochs current epoch of this round. Otherwise None.
+            step (int | None): If using local_steps, current step of this round. Otherwise None.
+            epoch (int | None): If using local_epochs current epoch of this round. Otherwise None.
         """
 
         assert (step is None) ^ (epoch is None)

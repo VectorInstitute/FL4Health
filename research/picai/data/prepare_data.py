@@ -3,7 +3,6 @@ import json
 import os
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -56,7 +55,7 @@ def filter_split_on_subject_id(
     scan_annotation_label_list: Sequence[tuple[Sequence[str], str, float]],
     split: dict[str, Sequence[str]],
     train: bool,
-) -> dict[str, Union[Sequence[float], Sequence[str]]]:
+) -> dict[str, Sequence[float] | Sequence[str]]:
     """
     Filters the scan_annotation_label_list to only include samples with a subject_id apart of split.
     Returns Dict with image paths, label paths and case labels
@@ -70,7 +69,7 @@ def filter_split_on_subject_id(
         train (bool): Whether to use the train or the test split.
 
     Returns:
-        dict[str, Union[Sequence[float], Sequence[str]]]: A Dict containing image_paths, label_paths
+        dict[str, Sequence[float] | Sequence[str]]: A Dict containing image_paths, label_paths
             and case_label for each sample part of the split.
     """
     train_or_val_string = "train" if train else "val"
@@ -79,7 +78,7 @@ def filter_split_on_subject_id(
         for (scan_paths, annotation_path, label) in scan_annotation_label_list
         if any([subject_id in annotation_path for subject_id in split[train_or_val_string]])
     ]
-    labeled_data: dict[str, Union[Sequence[float], Sequence[str]]] = {}
+    labeled_data: dict[str, Sequence[float] | Sequence[str]] = {}
     labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
         *filtered_scan_annotation_label_list
     )
@@ -115,7 +114,7 @@ def generate_dataset_json(
 
     if splits_path is None:
         # If splits_path is None, create a singe dataset overview
-        labeled_data: dict[str, Union[Sequence[str], Sequence[float]]] = {}
+        labeled_data: dict[str, Sequence[str] | Sequence[float]] = {}
         labeled_data["image_paths"], labeled_data["label_paths"], labeled_data["case_label"] = zip(
             *scan_annotation_label_list
         )

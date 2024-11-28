@@ -9,7 +9,7 @@ from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -64,7 +64,7 @@ class NnunetClient(BasicClient):
         self,
         device: torch.device,
         dataset_id: int,
-        fold: Union[int, str],
+        fold: int | str,
         data_identifier: str | None = None,
         plans_identifier: str | None = None,
         compile: bool = True,
@@ -91,7 +91,7 @@ class NnunetClient(BasicClient):
             device (torch.device): Device indicator for where to send the model, batches, labels etc. Often 'cpu' or
                 'cuda' or 'mps'
             dataset_id (int): The nnunet dataset id for the local client dataset to use for training and validation.
-            fold (Union[int, str]): Which fold of the local client dataset to use for validation. nnunet defaults to
+            fold (int | str): Which fold of the local client dataset to use for validation. nnunet defaults to
                 5 folds (0 to 4). Can also be set to 'all' to use all the data for both training and validation.
             data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
                 identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,

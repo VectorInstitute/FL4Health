@@ -4,7 +4,6 @@ import random
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import torch
@@ -245,7 +244,7 @@ def split_img_and_seg_paths(
 
 
 def get_dataloader(
-    img_paths: Union[Sequence[Sequence[str]], Sequence[str]],
+    img_paths: Sequence[Sequence[str]] | Sequence[str],
     seg_paths: Sequence[str],
     batch_size: int,
     img_transform: Compose,

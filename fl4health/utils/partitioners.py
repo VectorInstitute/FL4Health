@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARN
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeVar
 
 import numpy as np
 import torch
@@ -9,7 +9,7 @@ from flwr.common.logger import log
 from fl4health.utils.dataset import DictionaryDataset, TensorDataset, select_by_indices
 
 T = TypeVar("T")
-D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
+D = TypeVar("D", bound=TensorDataset | DictionaryDataset)
 
 
 class DirichletLabelBasedAllocation(Generic[T]):

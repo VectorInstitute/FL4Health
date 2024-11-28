@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from logging import INFO, WARNING
-from typing import Union
 
 from flwr.common import (
     EvaluateIns,
@@ -224,7 +223,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, FitRes]],
-        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+        failures: list[tuple[ClientProxy, FitRes] | BaseException],
     ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
@@ -234,7 +233,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             server_round (int): Indicates the server round we're currently on.
             results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side.
-            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[tuple[ClientProxy, FitRes] | BaseException]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
@@ -272,7 +271,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         self,
         server_round: int,
         results: list[tuple[ClientProxy, EvaluateRes]],
-        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+        failures: list[tuple[ClientProxy, EvaluateRes] | BaseException],
     ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate the metrics and losses returned from the clients as a result of the evaluation round.
@@ -281,7 +280,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values and the
                 metrics dictionary.
-            failures (list[Union[tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
+            failures (list[tuple[ClientProxy, EvaluateRes] | BaseException]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
