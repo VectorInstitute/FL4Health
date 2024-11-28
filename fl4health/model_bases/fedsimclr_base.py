@@ -12,7 +12,7 @@ class FedSimClrModel(nn.Module):
         self,
         encoder: nn.Module,
         projection_head: nn.Module = nn.Identity(),
-        prediction_head: Optional[nn.Module] = None,
+        prediction_head: nn.Module | None = None,
         pretrain: bool = True,
     ) -> None:
         """
@@ -26,7 +26,7 @@ class FedSimClrModel(nn.Module):
             projection_head (nn.Module): Projection Head that maps output
                 of encoder to final representation used in contrastive loss
                 for pretraining stage. Defaults to identity transformation.
-            prediction_head (Optional[nn.Module]): Prediction head that maps
+            prediction_head (nn.Module | None): Prediction head that maps
                 output of encoder to prediction in the finetuning stage.
                 Defaults to None.
             pretrain (bool): Determines whether or not to use the projection_head

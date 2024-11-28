@@ -135,8 +135,8 @@ def test_metrics_reporter_evaluate() -> None:
 class MockEvaluateClient(EvaluateClient):
     def __init__(
         self,
-        loss: Optional[float] = None,
-        metrics: Optional[Dict[str, Scalar]] = None,
+        loss: float | None = None,
+        metrics: Dict[str, Scalar] | None = None,
         reporters: Sequence[BaseReporter] | None = None,
     ):
         super().__init__(Path(""), [], torch.device(0), reporters=reporters)

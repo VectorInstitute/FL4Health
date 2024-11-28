@@ -27,7 +27,7 @@ def get_weighted_loss_from_server_log(run_folder_path: str) -> float:
 
 def main(hp_sweep_dir: str) -> None:
     hp_folders = get_hp_folders(hp_sweep_dir)
-    best_avg_loss: Optional[float] = None
+    best_avg_loss: float | None = None
     best_folder = ""
     for hp_folder in hp_folders:
         run_folders = get_run_folders(hp_folder)

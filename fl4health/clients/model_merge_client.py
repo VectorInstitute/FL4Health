@@ -26,8 +26,8 @@ class ModelMergeClient(NumPyClient):
         model_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        reporters: Optional[Sequence[BaseReporter]] = None,
-        client_name: Optional[str] = None,
+        reporters: Sequence[BaseReporter] | None = None,
+        client_name: str | None = None,
     ) -> None:
         """
         ModelMergeClient to support functionality to simply perform model merging across client

@@ -23,9 +23,9 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    reporting_config: Optional[Dict[str, str]] = None,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    reporting_config: Dict[str, str] | None = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     base_config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),

@@ -21,8 +21,8 @@ def construct_config(
     current_round: int,
     batch_size: int,
     adaptive_clipping: bool,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
     return {
@@ -38,8 +38,8 @@ def fit_config(
     batch_size: int,
     adaptive_clipping: bool,
     server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return construct_config(server_round, batch_size, adaptive_clipping, local_epochs, local_steps)
 

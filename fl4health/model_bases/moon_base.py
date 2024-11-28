@@ -8,7 +8,7 @@ from fl4health.model_bases.sequential_split_models import SequentiallySplitModel
 
 class MoonModel(SequentiallySplitModel):
     def __init__(
-        self, base_module: nn.Module, head_module: nn.Module, projection_module: Optional[nn.Module] = None
+        self, base_module: nn.Module, head_module: nn.Module, projection_module: nn.Module | None = None
     ) -> None:
         """
         A MOON Model is a specific type of sequentially split model, where one may specify an optional projection
@@ -19,7 +19,7 @@ class MoonModel(SequentiallySplitModel):
         Args:
             base_module (nn.Module): Feature extractor component of the model
             head_module (nn.Module): Classification (or other type) of head used by the model
-            projection_module (Optional[nn.Module], optional): An optional module for manipulating the features before
+            projection_module (nn.Module | None, optional): An optional module for manipulating the features before
                 they are passed to the head_module. Defaults to None.
         """
 

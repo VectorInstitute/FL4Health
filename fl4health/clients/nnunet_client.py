@@ -64,21 +64,21 @@ class NnunetClient(BasicClient):
         device: torch.device,
         dataset_id: int,
         fold: Union[int, str],
-        data_identifier: Optional[str] = None,
-        plans_identifier: Optional[str] = None,
+        data_identifier: str | None = None,
+        plans_identifier: str | None = None,
         compile: bool = True,
         always_preprocess: bool = False,
         max_grad_norm: float = 12,
-        n_dataload_processes: Optional[int] = None,
+        n_dataload_processes: int | None = None,
         verbose: bool = True,
-        metrics: Optional[Sequence[Metric]] = None,
+        metrics: Sequence[Metric] | None = None,
         progress_bar: bool = False,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         nnunet_trainer_class: Type[nnUNetTrainer] = nnUNetTrainer,
-        nnunet_trainer_class_kwargs: Optional[dict[str, Any]] = {},
+        nnunet_trainer_class_kwargs: dict[str, Any] | None = {},
     ) -> None:
         """
         A client for training nnunet models. Requires the nnunet environment variables to be set. Also requires the
@@ -92,12 +92,12 @@ class NnunetClient(BasicClient):
             dataset_id (int): The nnunet dataset id for the local client dataset to use for training and validation.
             fold (Union[int, str]): Which fold of the local client dataset to use for validation. nnunet defaults to
                 5 folds (0 to 4). Can also be set to 'all' to use all the data for both training and validation.
-            data_identifier (Optional[str], optional): The nnunet data identifier prefix to use. The final data
+            data_identifier (str | None, optional): The nnunet data identifier prefix to use. The final data
                 identifier will be {data_identifier}_config where 'config' is the nnunet config (eg. 2d, 3d_fullres,
                 etc.). If preprocessed data already exists can be used to specify which preprocessed data to use.
                 The default data_identifier prefix is the plans name used during training (see the plans_identifier
                 argument).
-            plans_identifier (Optional[str], optional): Specify what to save the client's local copy of the plans file
+            plans_identifier (str | None, optional): Specify what to save the client's local copy of the plans file
                 as. The client modifies the source plans json file sent from the server and makes a local copy.
                 If left as default None, the plans identifier will be set as 'FL_Dataset000_plansname' where 000 is
                 the dataset_id and plansname is the 'plans_name' value of the source plans file.
@@ -110,7 +110,7 @@ class NnunetClient(BasicClient):
                 the client.
             max_grad_norm (float, optional): The maximum gradient norm to use for gradient clipping. Defaults to 12
                 which is the nnunetv2 2.5.1 default.
-            n_dataload_processes (Optional[int], optional): The number of processes to spawn for each nnunet
+            n_dataload_processes (int | None, optional): The number of processes to spawn for each nnunet
                 dataloader. If left as None we use the nnunetv2 version 2.5.1 defaults for each config
             verbose (bool, optional): If True the client will log some extra INFO logs. Defaults to False unless
                 the log level is DEBUG or lower.
@@ -120,7 +120,7 @@ class NnunetClient(BasicClient):
                 to False
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over each
                 batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -527,7 +527,7 @@ class NnunetClient(BasicClient):
         preds: TorchPredType,
         features: Dict[str, torch.Tensor],
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]:
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor] | None]:
         """
         Checks the pred and target types and computes the loss
 
@@ -540,7 +540,7 @@ class NnunetClient(BasicClient):
                 a dictionary with the same number of tensors
 
         Returns:
-            Tuple[torch.Tensor, Optional[Dict[str, torch.Tensor]]]: A tuple
+            Tuple[torch.Tensor, Dict[str, torch.Tensor] | None]: A tuple
                 where the first element is the loss and the second element is an
                 optional additional loss
         """
@@ -671,8 +671,8 @@ class NnunetClient(BasicClient):
 
     def get_client_specific_logs(
         self,
-        current_round: Optional[int],
-        current_epoch: Optional[int],
+        current_round: int | None,
+        current_epoch: int | None,
         logging_mode: LoggingMode,
     ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
@@ -744,14 +744,14 @@ class NnunetClient(BasicClient):
         properties["enable_deep_supervision"] = self.nnunet_trainer.enable_deep_supervision
         return properties
 
-    def shutdown_dataloader(self, dataloader: Optional[DataLoader], dl_name: Optional[str] = None) -> None:
+    def shutdown_dataloader(self, dataloader: DataLoader | None, dl_name: str | None = None) -> None:
         """
         The nnunet dataloader/augmenter uses multiprocessing under the hood, so the
         shutdown method terminates the child processes gracefully
 
         Args:
             dataloader (DataLoader): The dataloader to shutdown
-            dl_name (Optional[str]): A string that identifies the dataloader
+            dl_name (str | None): A string that identifies the dataloader
                 to shutdown. Used for logging purposes. Defaults to None
         """
         if dataloader is not None and isinstance(dataloader, nnUNetDataLoaderWrapper):

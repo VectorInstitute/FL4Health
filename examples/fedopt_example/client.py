@@ -27,7 +27,7 @@ class NewsClassifierClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
     ) -> None:
         super().__init__(data_path, metrics, device, loss_meter_type, checkpoint_and_state_module)
         self.weight_matrix: torch.Tensor

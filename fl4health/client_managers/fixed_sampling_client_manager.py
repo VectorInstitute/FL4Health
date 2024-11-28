@@ -10,7 +10,7 @@ class FixedSamplingClientManager(SimpleClientManager):
 
     def __init__(self) -> None:
         super().__init__()
-        self.current_sample: Optional[List[ClientProxy]] = None
+        self.current_sample: List[ClientProxy] | None = None
 
     def reset_sample(self) -> None:
         """Resets the saved sample so self.sample produces a new sample again."""
@@ -19,8 +19,8 @@ class FixedSamplingClientManager(SimpleClientManager):
     def sample(
         self,
         num_clients: int,
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
+        min_num_clients: int | None = None,
+        criterion: Criterion | None = None,
     ) -> List[ClientProxy]:
         """
         Return a new client sample for the first time it runs. For subsequent runs,
@@ -28,9 +28,9 @@ class FixedSamplingClientManager(SimpleClientManager):
 
         Args:
             num_clients: (int) The number of clients to sample.
-            min_num_clients: (Optional[int]) The minimum number of clients to return in the sample.
+            min_num_clients: (int | None) The minimum number of clients to return in the sample.
                 Optional, default is num_clients.
-            criterion: (Optional[Criterion]) A criterion to filter clients to sample.
+            criterion: (Criterion | None) A criterion to filter clients to sample.
                 Optional, default is no criterion (no filter).
 
         Returns:

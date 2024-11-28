@@ -16,8 +16,8 @@ class FixedSamplingByFractionClientManager(BaseFractionSamplingManager):
         self,
         sample_fraction: float,
         # minimum number of clients required to be available
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
+        min_num_clients: int | None = None,
+        criterion: Criterion | None = None,
     ) -> List[ClientProxy]:
         """Sample a number of Flower ClientProxy instances."""
 

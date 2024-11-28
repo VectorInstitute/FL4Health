@@ -13,18 +13,18 @@ class WarmedUpModule:
 
     def __init__(
         self,
-        pretrained_model: Optional[torch.nn.Module] = None,
-        pretrained_model_path: Optional[Path] = None,
-        weights_mapping_path: Optional[Path] = None,
+        pretrained_model: torch.nn.Module | None = None,
+        pretrained_model_path: Path | None = None,
+        weights_mapping_path: Path | None = None,
     ) -> None:
         """Initialize the WarmedUpModule with the pretrained model states and weights mapping dict.
 
         Args:
-            pretrained_model (Optional[torch.nn.Module]): Pretrained model.
+            pretrained_model (torch.nn.Module | None): Pretrained model.
                                                           This is mutually exclusive with pretrained_model_path.
-            pretrained_model_path (Optional[Path]): Path of the pretrained model.
+            pretrained_model_path (Path | None): Path of the pretrained model.
                                                     This is mutually exclusive with pretrained_model.
-            weights_mapping_dir (Optional[str], optional): Path of to json file of the weights mapping dict.
+            weights_mapping_dir (str | None, optional): Path of to json file of the weights mapping dict.
             If models are not exactly the same, a weights mapping dict is needed to map the weights of the pretrained
             model to the target model.
         """
@@ -54,7 +54,7 @@ class WarmedUpModule:
             log(INFO, "Weights mapping dict is not provided. Matching states directly, based on target model's keys.")
             self.weights_mapping_dict = None
 
-    def get_matching_component(self, key: str) -> Optional[str]:
+    def get_matching_component(self, key: str) -> str | None:
         """Get the matching component of the key from the weights mapping dictionary. Since the provided mapping
         can contain partial names of the keys, this function is used to split the key of the target model and
         match it with the partial key in the mapping, returning the complete name of the key in the pretrained model.
@@ -67,7 +67,7 @@ class WarmedUpModule:
             key (str): Key to be matched in pretrained model.
 
         Returns:
-            Optional[str]: If no weights mapping dict is provided, returns the key. Otherwise, if the key is in the
+            str | None: If no weights mapping dict is provided, returns the key. Otherwise, if the key is in the
             weights mapping dict, returns the matching component of the key. Otherwise, returns None.
         """
 

@@ -32,7 +32,7 @@ class PersonalMrMtlServer(PersonalServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
     ) -> None:
         assert isinstance(
             strategy, FedAvgWithAdaptiveConstraint

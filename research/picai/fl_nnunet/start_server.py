@@ -35,9 +35,9 @@ def get_config(
     n_server_rounds: int,
     batch_size: int,
     n_clients: int,
-    nnunet_plans: Optional[str] = None,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    nnunet_plans: str | None = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     # Create config
     config: Config = {
@@ -60,8 +60,8 @@ def get_config(
 def main(
     config: dict,
     server_address: str,
-    intermediate_server_state_dir: Optional[str] = None,
-    server_name: Optional[str] = None,
+    intermediate_server_state_dir: str | None = None,
+    server_name: str | None = None,
 ) -> None:
     # Partial function with everything set except current server round
     fit_config_fn = partial(

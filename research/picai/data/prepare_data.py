@@ -88,7 +88,7 @@ def filter_split_on_subject_id(
 def generate_dataset_json(
     paths_for_each_sample: Sequence[Tuple[Sequence[Path], Path]],
     write_dir: Path,
-    splits_path: Optional[Path] = None,
+    splits_path: Path | None = None,
 ) -> None:
     """
     Generates JSON file(s) that include the image_paths, label_paths and case_labels.
@@ -99,7 +99,7 @@ def generate_dataset_json(
         paths_for_each_sample (Sequence[Tuple[Sequence[Path], Path]]): A sequence in which each member
             is tuple where the first entry is a list of scan paths and the second in the annotation path.
         write_dir (Path): The directory to write the dataset file(s).
-        splits_path (Optional[Path]): The path to the desired spits. JSON file with key for each split.
+        splits_path (Path | None): The path to the desired spits. JSON file with key for each split.
             Each key contains nested keys train and val. Inside the nested keys are lists of subject_id
             strings to be included in the split.
     """
@@ -149,13 +149,13 @@ def preprare_data(
     scans_write_dir: Path,
     annotation_write_dir: Path,
     overview_write_dir: Path,
-    size: Optional[Tuple[int, int, int]] = None,
-    physical_size: Optional[Tuple[float, float, float]] = None,
-    spacing: Optional[Tuple[float, float, float]] = None,
+    size: Tuple[int, int, int] | None = None,
+    physical_size: Tuple[float, float, float] | None = None,
+    spacing: Tuple[float, float, float] | None = None,
     scan_extension: str = "mha",
     annotation_extension: str = ".nii.gz",
     num_threads: int = 4,
-    splits_path: Optional[Path] = None,
+    splits_path: Path | None = None,
 ) -> None:
     """
     Runs preprocessing on data with specified settings.
@@ -170,17 +170,17 @@ def preprare_data(
             All annotations are written into same directory.
         overviews_write_dir (Path): The path where the dataset json files are located. For each split 1-5,
             there is a train and validation file with scan paths, label paths and case labels.
-        size (Optional[Tuple[int, int, int]]): Desired dimensions of preprocessed scans in voxels.
+        size (Tuple[int, int, int] | None): Desired dimensions of preprocessed scans in voxels.
             Triplet of the form: Depth x Height x Width.
-        physical_size (Optional[Tuple[float, float, float]]): Desired dimensions of preprocessed scans in mm.
+        physical_size (Tuple[float, float, float] | None): Desired dimensions of preprocessed scans in mm.
             Simply the product of the number of voxels by the spacing along a particular
             dimension: Triplet of the form: Depth x Height x Width.
-        spacing (Optional[Tuple[float, float, float]]): Desired spacing of preprocessed scans in in mm/voxel.
+        spacing (Tuple[float, float, float] | None): Desired spacing of preprocessed scans in in mm/voxel.
             Triplet of the form: Depth x Height x Width.
         scan_extension (str): The expected extension of scan file paths.
         annotation_extension (str): The expected extension of annotation file paths.
         num_threads (str): The number of threads to use during preprocessing.
-        splits_path (Optional[Path]): The path to the file containing the splits.
+        splits_path (Path | None): The path to the file containing the splits.
     """
     settings = PreprocessingSettings(
         scans_write_dir,

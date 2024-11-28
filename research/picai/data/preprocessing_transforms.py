@@ -7,9 +7,9 @@ import SimpleITK as sitk
 def resample_img(
     image: sitk.Image,
     spacing: Tuple[float, float, float],
-    size: Optional[Tuple[int, int, int]] = None,
+    size: Tuple[int, int, int] | None = None,
     is_label: bool = False,
-    pad_value: Optional[Union[float, int]] = 0.0,
+    pad_value: Union[float, int] | None = 0.0,
 ) -> sitk.Image:
     """
     Resample images to target resolution spacing.
@@ -23,7 +23,7 @@ def resample_img(
         size (Tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
         is_label (bool): Whether or not this is an annotation.
-        pad_value (Optional[Union[float, int]]): Amount of padding to use.
+        pad_value (Union[float, int] | None): Amount of padding to use.
 
     Returns:
         sitk.Image: The resampled image.
@@ -74,7 +74,7 @@ def resample_img(
 def input_verification_crop_or_pad(
     image: sitk.Image,
     size: Tuple[int, int, int] = (20, 256, 256),
-    physical_size: Optional[Tuple[float, float, float]] = None,
+    physical_size: Tuple[float, float, float] | None = None,
 ) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
     """
     Calculate target size for cropping and/or padding input image.
@@ -136,7 +136,7 @@ def input_verification_crop_or_pad(
 def crop_or_pad(
     image: sitk.Image,
     size: Tuple[int, int, int],
-    physical_size: Optional[Tuple[float, float, float]] = None,
+    physical_size: Tuple[float, float, float] | None = None,
     crop_only: bool = False,
 ) -> sitk.Image:
     """

@@ -21,7 +21,7 @@ def pred_and_eval(
     config_path: str,
     inputs_folder: str,
     labels_folder: str,
-    output_folder: Optional[str] = None,
+    output_folder: str | None = None,
     save_probability_maps: bool = False,
     save_detection_maps: bool = False,
     save_annotations: bool = False,
@@ -54,7 +54,7 @@ def pred_and_eval(
             N.
         labels_folder (str): Path to the folder containing the ground truth
             annotation maps. File names must match the case identifiers of the input images
-        output_folder (Optional[str], optional): Path to the output folder. By
+        output_folder (str | None, optional): Path to the output folder. By
             default the only output is a 'metrics.json' file containing the
             evaluation results. If left as none then nothing is saved.
             Defaults to None.

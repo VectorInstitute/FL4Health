@@ -35,19 +35,19 @@ class Scaffold(BasicFedAvg):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_eval_losses: bool = True,
         learning_rate: float = 1.0,
-        initial_control_variates: Optional[Parameters] = None,
-        model: Optional[nn.Module] = None,
+        initial_control_variates: Parameters | None = None,
+        model: nn.Module | None = None,
     ) -> None:
         """
         Scaffold Federated Learning strategy. Implementation based on https://arxiv.org/pdf/1910.06378.pdf
@@ -58,28 +58,28 @@ class Scaffold(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
             learning_rate (float, optional): Learning rate for server side optimization. Defaults to 1.0.
-            initial_control_variates (Optional[Parameters], optional): These are the initial set of control variates
+            initial_control_variates (Parameters | None, optional): These are the initial set of control variates
                 to use for the scaffold strategy both on the server and client sides. It is optional, but if it is not
                 provided, the strategy must receive a model that reflects the architecture to be used on the clients.
                 Defaults to None.
-            model (Optional[nn.Module], optional): If provided and initial_control_variates is not, this is used to
+            model (nn.Module | None, optional): If provided and initial_control_variates is not, this is used to
                 set the server control variates and the initial control variates on the client side to all zeros.
                 If initial_control_variates are provided, they take precedence. Defaults to None.
         """
@@ -107,7 +107,7 @@ class Scaffold(BasicFedAvg):
         self.parameter_packer = ParameterPackerWithControlVariates(len(self.server_model_weights))
 
     def initialize_control_variates(
-        self, initial_control_variates: Optional[Parameters], model: Optional[nn.Module]
+        self, initial_control_variates: Parameters | None, model: nn.Module | None
     ) -> Parameters:
         """
         This is a helper function for the SCAFFOLD strategy init function to initialize the server_control_variates.
@@ -115,11 +115,11 @@ class Scaffold(BasicFedAvg):
         architecture.
 
         Args:
-            initial_control_variates (Optional[Parameters]): These are the initial set of control variates
+            initial_control_variates (Parameters | None): These are the initial set of control variates
                 to use for the scaffold strategy both on the server and client sides. It is optional, but if it is not
                 provided, the strategy must receive a model that reflects the architecture to be used on the clients.
                 Defaults to None.
-            model (Optional[nn.Module]): If provided and initial_control_variates is not, this is used to
+            model (nn.Module | None): If provided and initial_control_variates is not, this is used to
                 set the server control variates and the initial control variates on the client side to all zeros.
                 If initial_control_variates are provided, they take precedence. Defaults to None.
 
@@ -152,7 +152,7 @@ class Scaffold(BasicFedAvg):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Performs server-side aggregation of model weights and control variates associated with the SCAFFOLD method
         Both model weights and control variates are aggregated through UNWEIGHTED averaging consistent with the paper.
@@ -170,7 +170,7 @@ class Scaffold(BasicFedAvg):
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
+            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
                 parameters are optional and will be none in the even that there are no successful clients or there
                 were failures and they are not accepted.
         """
@@ -363,14 +363,14 @@ class OpacusScaffold(Scaffold):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_eval_losses: bool = True,
         learning_rate: float = 1.0,
     ) -> None:
@@ -392,18 +392,18 @@ class OpacusScaffold(Scaffold):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset

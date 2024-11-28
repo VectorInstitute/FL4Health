@@ -26,11 +26,11 @@ class ConstrainedFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
-        loss_container: Optional[ConstrainedFendaLossContainer] = None,
+        client_name: str | None = None,
+        loss_container: ConstrainedFendaLossContainer | None = None,
     ) -> None:
         """
         This class extends the functionality of FENDA training to include various kinds of constraints applied during
@@ -43,7 +43,7 @@ class ConstrainedFendaClient(FendaClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -51,10 +51,10 @@ class ConstrainedFendaClient(FendaClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
-            loss_container (Optional[ConstrainedFendaLossContainer], optional): Configuration that determines which
+            loss_container (ConstrainedFendaLossContainer | None, optional): Configuration that determines which
                 losses will be applied during FENDA training. Defaults to None.
         """
 
@@ -82,9 +82,9 @@ class ConstrainedFendaClient(FendaClient):
 
         # Need to save previous local module, global module and aggregated global module at each communication round
         # to compute contrastive loss.
-        self.old_local_module: Optional[nn.Module] = None
-        self.old_global_module: Optional[nn.Module] = None
-        self.initial_global_module: Optional[nn.Module] = None
+        self.old_local_module: nn.Module | None = None
+        self.old_global_module: nn.Module | None = None
+        self.initial_global_module: nn.Module | None = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         assert isinstance(self.model, FendaModelWithFeatureState)

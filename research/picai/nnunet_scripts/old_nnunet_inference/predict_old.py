@@ -153,7 +153,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
         Checks model dict for trainer name and inference_allowed_mirroring_axes
 
         Returns:
-            Tuple[Optional[str], bool]: Tuple with elements trainer_name and
+            Tuple[str | None, bool]: Tuple with elements trainer_name and
                 inference_allowed_mirroring_axes. Defaults to
                 ('nnUNetTrainer, False)
         """
@@ -225,8 +225,8 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 def predict(
     config_path: str,
     input_folder: str,
-    probs_folder: Optional[str] = None,
-    annotations_folder: Optional[str] = None,
+    probs_folder: str | None = None,
+    annotations_folder: str | None = None,
     verbose: bool = True,
 ) -> Tuple[NDArray, NDArray, List[str]]:
     """
@@ -254,10 +254,10 @@ def predict(
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
-        preds_folder (Optional[str]): [OPTIONAL] Path to the output folder to
+        preds_folder (str | None): [OPTIONAL] Path to the output folder to
             save the model predicted probabilities. If not provided the
             probabilities are not saved
-        annotations_folder (Optional[str]): [OPTIONAL] Path to the output
+        annotations_folder (str | None): [OPTIONAL] Path to the output
             folder to save the model predicted annotations. If not provided the
             annotations are not saved
     Returns:

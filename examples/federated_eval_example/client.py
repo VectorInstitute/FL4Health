@@ -24,7 +24,7 @@ class CifarClient(EvaluateClient):
         data_path: Path,
         metrics: Sequence[Metric],
         device: torch.device,
-        model_checkpoint_path: Optional[Path],
+        model_checkpoint_path: Path | None,
         reporters: Sequence[BaseReporter] | None = None,
     ) -> None:
         super().__init__(
@@ -36,7 +36,7 @@ class CifarClient(EvaluateClient):
             reporters=reporters,
         )
 
-    def initialize_global_model(self, config: Config) -> Optional[nn.Module]:
+    def initialize_global_model(self, config: Config) -> nn.Module | None:
         # Initialized a global model to be hydrated with a server-side model if the parameters are passed
         return Net().to(self.device)
 

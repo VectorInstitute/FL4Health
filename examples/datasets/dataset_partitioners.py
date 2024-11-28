@@ -21,7 +21,7 @@ class DatasetPartitioner(ABC):
 
     @abstractmethod
     def partition_dataset(
-        self, n_partiions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: Dict[int, str] | None = None
     ) -> None:
         pass
 
@@ -36,7 +36,7 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
             self.json_lines = config["json_lines"] == "True"
 
     def partition_dataset(
-        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: Dict[int, str] | None = None
     ) -> None:
         df = pd.read_json(self.dataset_path, lines=self.json_lines)
         # Shuffle the dataframe rows
@@ -53,7 +53,7 @@ class JsonToPandasDatasetPartitioner(DatasetPartitioner):
 
 class CsvToPandasDatasetPartitioner(DatasetPartitioner):
     def partition_dataset(
-        self, n_partitions: int, label_column_name: Optional[str] = None, label_map: Optional[Dict[int, str]] = None
+        self, n_partitions: int, label_column_name: str | None = None, label_map: Dict[int, str] | None = None
     ) -> None:
         df = pd.read_csv(self.dataset_path, names=["label", "title", "body"])
         # Shuffle the dataframe rows

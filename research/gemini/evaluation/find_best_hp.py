@@ -49,7 +49,7 @@ def create_avg_loss_clients(run_folder_path: str, client_id: int) -> float:
 
 def main(hp_sweep_dir: str, client_id: int) -> None:
     hp_folders = get_hp_folders(hp_sweep_dir)
-    best_avg_loss: Optional[float] = None
+    best_avg_loss: float | None = None
     best_folder = ""
     for hp_folder in hp_folders:
         log(INFO, f"Now analyzing: {hp_folder}")

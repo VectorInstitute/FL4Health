@@ -143,13 +143,13 @@ class PcaModule(nn.Module):
             assert torch.allclose(torch.zeros(data_mean.size()), data_mean, atol=1e-6)
             return X
 
-    def project_lower_dim(self, X: Tensor, k: Optional[int] = None, center_data: bool = False) -> Tensor:
+    def project_lower_dim(self, X: Tensor, k: int | None = None, center_data: bool = False) -> Tensor:
         """
         Project input data X onto the top k principal components.
 
         Args:
             X (Tensor): Input data matrix whose rows are the data points.
-            k (Optional[int], optional): The number of principal components
+            k (int | None, optional): The number of principal components
             onto which projection is done. If k is None, then all principal components will
             be used in the projection. Defaults to None.
             center_data (bool): If true, then the *training* data mean (learned in the forward pass)
@@ -196,7 +196,7 @@ class PcaModule(nn.Module):
         else:
             return torch.matmul(X_lower_dim_prime, self.principal_components[:, :k].T)
 
-    def compute_reconstruction_error(self, X: Tensor, k: Optional[int], center_data: bool = False) -> float:
+    def compute_reconstruction_error(self, X: Tensor, k: int | None, center_data: bool = False) -> float:
         """
         Compute the reconstruction error of X under PCA reconstruction.
 
@@ -207,7 +207,7 @@ class PcaModule(nn.Module):
 
         Args:
             X (Tensor): Input data tensor whose rows represent data points.
-            k (Optional[int]): The number of principal components onto which
+            k (int | None): The number of principal components onto which
                 projection is applied.
             center_data (bool): Indicates whether to subtract data mean prior to
             projecting the data into a lower-dimensional subspace, and whether to add
@@ -224,7 +224,7 @@ class PcaModule(nn.Module):
         reconstruction = self.project_back(X_lower_dim, add_mean=center_data)
         return (torch.linalg.norm(reconstruction - X) ** 2).item() / N
 
-    def compute_projection_variance(self, X: Tensor, k: Optional[int], center_data: bool = False) -> float:
+    def compute_projection_variance(self, X: Tensor, k: int | None, center_data: bool = False) -> float:
         """
         Compute the variance of the data matrix X after projection via PCA.
 
@@ -234,7 +234,7 @@ class PcaModule(nn.Module):
 
         Args:
             X (Tensor): input data tensor whose rows represent data points.
-            k (Optional[int]): the number of principal components onto which
+            k (int | None): the number of principal components onto which
                 projection is applied.
         Returns:
             float: variance after projection as defined above.

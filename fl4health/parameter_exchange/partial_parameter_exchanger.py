@@ -25,6 +25,6 @@ class PartialParameterExchanger(ParameterExchanger, Generic[T]):
     def select_parameters(
         self,
         model: nn.Module,
-        initial_model: Optional[nn.Module] = None,
+        initial_model: nn.Module | None = None,
     ) -> Tuple[NDArrays, T]:
         raise NotImplementedError

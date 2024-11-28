@@ -36,14 +36,14 @@ class ModelMergeStrategy(Strategy):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = True
     ) -> None:
         """
@@ -62,18 +62,18 @@ class ModelMergeStrategy(Strategy):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
                 counts. Defaults to True.
             weighted_aggregation (bool, optional): Determines whether parameter aggregation is a linearly weighted
@@ -169,7 +169,7 @@ class ModelMergeStrategy(Strategy):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Performs model merging by taking an unweighted average of client weights and metrics.
 
@@ -181,7 +181,7 @@ class ModelMergeStrategy(Strategy):
                 from clients that experienced an issue during fit, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
         if not results:
             return None, {}
@@ -216,7 +216,7 @@ class ModelMergeStrategy(Strategy):
         server_round: int,
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+    ) -> Tuple[float | None, Dict[str, Scalar]]:
         """
         Aggregate the metrics returned from the clients as a result of the evaluation round.
             ModelMergeStrategy assumes only metrics will be computed on client and loss is set to None.
@@ -229,7 +229,7 @@ class ModelMergeStrategy(Strategy):
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[float], Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
+            Tuple[float | None, Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
                 are aggregated according to evaluate_metrics_aggregation_fn.
         """
         if not results:
@@ -248,7 +248,7 @@ class ModelMergeStrategy(Strategy):
 
         return None, metrics_aggregated
 
-    def evaluate(self, server_round: int, parameters: Parameters) -> Optional[Tuple[float, Dict[str, Scalar]]]:
+    def evaluate(self, server_round: int, parameters: Parameters) -> Tuple[float, Dict[str, Scalar]] | None:
         """
         Evaluate the model parameters after the merging has occurred. This function can be used to perform centralized
             (i.e., server-side) evaluation of model parameters.
@@ -258,7 +258,7 @@ class ModelMergeStrategy(Strategy):
             parameters: Parameters The current model parameters after merging has occurred.
 
         Returns:
-            Optional[Tuple[float, Dict[str, Scalar]]]: A Tuple containing loss and a
+            Tuple[float, Dict[str, Scalar]] | None: A Tuple containing loss and a
                 dictionary containing task-specific metrics (e.g., accuracy).
         """
         if self.evaluate_fn is None:
@@ -271,7 +271,7 @@ class ModelMergeStrategy(Strategy):
         loss, metrics = eval_res
         return loss, metrics
 
-    def initialize_parameters(self, client_manager: ClientManager) -> Optional[Parameters]:
+    def initialize_parameters(self, client_manager: ClientManager) -> Parameters | None:
         """
         Required definition of parent class. ModelMergeStrategy does not support server side initialization.
             Parameters are always set to None

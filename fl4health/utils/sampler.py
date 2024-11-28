@@ -100,7 +100,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
     def __init__(
         self,
         unique_labels: List[Any],
-        hash_key: Optional[int] = None,
+        hash_key: int | None = None,
         sample_percentage: float = 0.5,
         beta: float = 100,
     ) -> None:
@@ -124,7 +124,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
                 value is 0.5 and the dataset is of size 100, we will end up with 50 total data points. Defaults to 0.5.
             beta (float, optional): This controls the heterogeneity of the label sampling. The smaller the beta, the
                 more skewed the label assignments will be for the dataset. Defaults to 100.
-            hash_key (Optional[int], optional): Seed for the random number generators and samplers. Defaults to None.
+            hash_key (int | None, optional): Seed for the random number generators and samplers. Defaults to None.
         """
         super().__init__(unique_labels)
 

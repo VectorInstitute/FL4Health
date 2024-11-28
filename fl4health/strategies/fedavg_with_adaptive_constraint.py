@@ -25,15 +25,15 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         initial_loss_weight: float = 1.0,
         adapt_loss_weight: bool = False,
         loss_weight_delta: float = 0.1,
@@ -63,19 +63,19 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters (Parameters): Initial global model parameters.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             initial_loss_weight (float): Initial loss weight (mu in FedProx). If adaptivity is false, then this is the
                 constant weight used for all clients.
@@ -134,7 +134,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round and, if applicable, determine whether the constraint weight
         should be updated based on the aggregated loss seen on the clients.
@@ -148,7 +148,7 @@ class FedAvgWithAdaptiveConstraint(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
                 For adaptive constraints, the server also packs a constraint weight to be sent to the clients. This is
                 sent even if adaptive constraint weights are turned off and the value simply remains constant.
         """

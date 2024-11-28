@@ -74,8 +74,8 @@ class FedPmServer(FlServer):
     def fit_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[Parameters], Dict[str, Scalar], FitResultsAndFailures]]:
+        timeout: float | None,
+    ) -> Tuple[Parameters | None, Dict[str, Scalar], FitResultsAndFailures] | None:
         assert isinstance(self.strategy, FedPm)
         # If self.reset_frequency == x, then the beta priors are reset every x fitting rounds.
         # Note that (server_round + 1) % self.reset_frequency == 0 is to ensure that the priors

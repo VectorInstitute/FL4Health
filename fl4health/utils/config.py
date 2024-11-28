@@ -76,7 +76,7 @@ def narrow_dict_type_and_set_attribute(
     dictionary_key: str,
     attribute_name: str,
     narrow_type_to: Type[T],
-    func: Optional[Callable[[Any], Any]] = None,
+    func: Callable[[Any], Any] | None = None,
 ) -> None:
     """
     Checks a key exists in dictionary, verify its type and sets the corresponding attribute.

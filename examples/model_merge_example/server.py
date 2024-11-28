@@ -36,7 +36,7 @@ def server_side_evaluate_fn(
     _: int,
     parameters: NDArrays,
     config: Config,
-) -> Optional[Tuple[float, Dict[str, Scalar]]]:
+) -> Tuple[float, Dict[str, Scalar]] | None:
     model.to(device)
     model.eval()
     evaluate_metric_manager = MetricManager(metrics, "evaluate")

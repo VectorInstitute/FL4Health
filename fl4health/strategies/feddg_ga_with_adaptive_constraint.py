@@ -22,21 +22,21 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         initial_loss_weight: float = 1.0,
         adapt_loss_weight: bool = False,
         loss_weight_delta: float = 0.1,
         loss_weight_patience: int = 5,
         weighted_train_losses: bool = False,
-        fairness_metric: Optional[FairnessMetric] = None,
+        fairness_metric: FairnessMetric | None = None,
         adjustment_weight_step_size: float = 0.2,
     ):
         """
@@ -53,18 +53,18 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             evaluate_fn :
                 Optional[
                     Callable[[int, NDArrays, Dict[str, Scalar]],
-                    Optional[Tuple[float, Dict[str, Scalar]]]]
+                    Tuple[float, Dict[str, Scalar]]] | None
                 ]
                 Optional function used for validation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to configure
                 training. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional): Function used to configure
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to configure
                 validation. Defaults to None
             initial_parameters (Parameters): Initial global model parameters.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional):
                 Metrics aggregation function, Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional):
                 Metrics aggregation function. Defaults to None.
             initial_loss_weight (float, optional): Initial penalty loss weight (mu in FedProx). If adaptivity is false,
                 then this is the constant weight used for all clients. Defaults to 1.0.
@@ -79,7 +79,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             weighted_train_losses (bool, optional): Determines whether the training losses from the clients should be
                 aggregated using a weighted or unweighted average. These aggregated losses are used to adjust the
                 proximal weight in the adaptive setting. Defaults to False.
-            fairness_metric (Optional[FairnessMetric], optional): he metric to evaluate the local model of each
+            fairness_metric (FairnessMetric | None, optional): he metric to evaluate the local model of each
                 client against the global model in order to determine their adjustment weight for aggregation.
                 Can be set to any default metric in FairnessMetricType or set to use a custom metric.
                 Optional, default is FairnessMetric(FairnessMetricType.LOSS) when specified as None.
@@ -124,7 +124,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Aggregate fit results by weighing them against the adjustment weights and then summing them.
 
@@ -139,7 +139,7 @@ class FedDgGaAdaptiveConstraint(FedDgGa):
             failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
 
         Returns:
-            (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
+            (Tuple[Parameters | None, Dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics. For adaptive constraints, the server also packs a constraint weight
                 to be sent to the clients. This is sent even if adaptive constraint weights are turned off and
                 the value simply remains constant.

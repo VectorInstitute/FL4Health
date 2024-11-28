@@ -119,21 +119,21 @@ def select_layers_by_percentage(
 # Score generating functions used for selecting arbitrary sets of weights.
 # The ones implemented here are those that demonstrated good performance in the super-mask paper.
 # Link to this paper: https://arxiv.org/abs/1905.01067
-def largest_final_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def largest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
         names_to_scores[tensor_name] = torch.abs(tensor_values)
     return names_to_scores
 
 
-def smallest_final_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def smallest_final_magnitude_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     names_to_scores = {}
     for tensor_name, tensor_values in model.state_dict().items():
         names_to_scores[tensor_name] = (-1) * torch.abs(tensor_values)
     return names_to_scores
 
 
-def largest_magnitude_change_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def largest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
@@ -144,7 +144,7 @@ def largest_magnitude_change_scores(model: nn.Module, initial_model: Optional[nn
     return names_to_scores
 
 
-def smallest_magnitude_change_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def smallest_magnitude_change_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
@@ -155,7 +155,7 @@ def smallest_magnitude_change_scores(model: nn.Module, initial_model: Optional[n
     return names_to_scores
 
 
-def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
@@ -166,7 +166,7 @@ def largest_increase_in_magnitude_scores(model: nn.Module, initial_model: Option
     return names_to_scores
 
 
-def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+def smallest_increase_in_magnitude_scores(model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
     assert initial_model is not None
     names_to_scores = {}
     current_model_states = model.state_dict()
@@ -186,7 +186,7 @@ def _sample_masks(score_tensor: Tensor) -> NDArray:
 
 
 def _process_masked_module(
-    module: nn.Module, model_state_dict: Dict[str, Tensor], module_name: Optional[str] = None
+    module: nn.Module, model_state_dict: Dict[str, Tensor], module_name: str | None = None
 ) -> Tuple[NDArrays, List[str]]:
     """
     Perform Bernoulli sampling using the weight and bias scores of a masked module.
@@ -197,7 +197,7 @@ def _process_masked_module(
             In the latter case, the argument "model_state_dict" should be the same as "module.state_dict()".
             In either case, it is assumed that module is a masked module.
         model_state_dict (Dict[str, Tensor]): the state dictionary of the model trained in FedPM.
-        module_name (Optional[str]): the name of module if module is a submodule of the model trained in FedPM.
+        module_name (str | None): the name of module if module is a submodule of the model trained in FedPM.
             This is used to access the weight and bias score tensors in model_state_dict. Defaults to None.
     """
     masks_to_exchange = []
@@ -222,7 +222,7 @@ def _process_masked_module(
     return masks_to_exchange, score_tensor_names
 
 
-def select_scores_and_sample_masks(model: nn.Module, initial_model: Optional[nn.Module]) -> Tuple[NDArrays, List[str]]:
+def select_scores_and_sample_masks(model: nn.Module, initial_model: nn.Module | None) -> Tuple[NDArrays, List[str]]:
     """
     Selection function that first selects the "weight_scores" and "bias_scores" parameters for the
     masked layers, and then samples binary masks based on those scores to send to the server.

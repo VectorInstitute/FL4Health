@@ -27,9 +27,9 @@ class EvaluateClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        model_checkpoint_path: Optional[Path] = None,
+        model_checkpoint_path: Path | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         """
         This client implements an evaluation only flow. That is, there is no expectation of parameter exchange with
@@ -44,10 +44,10 @@ class EvaluateClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            model_checkpoint_path (Optional[Path], optional): _description_. Defaults to None.
+            model_checkpoint_path (Path | None, optional): _description_. Defaults to None.
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health reporters which the client
                 should send data to. Defaults to None.
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Defaults to None.
         """
         # EvaluateClient does not call BasicClient constructor and sets attributes
@@ -74,8 +74,8 @@ class EvaluateClient(BasicClient):
         # if they exist, to be evaluated on the client's dataset.
         self.data_loader: DataLoader
         self.criterion: _Loss
-        self.local_model: Optional[nn.Module] = None
-        self.global_model: Optional[nn.Module] = None
+        self.local_model: nn.Module | None = None
+        self.global_model: nn.Module | None = None
 
     def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
@@ -189,11 +189,11 @@ class EvaluateClient(BasicClient):
         return losses, metrics
 
     def validate(self, include_loss_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
-        local_loss: Optional[EvaluationLosses] = None
-        local_metrics: Optional[Dict[str, Scalar]] = None
+        local_loss: EvaluationLosses | None = None
+        local_metrics: Dict[str, Scalar] | None = None
 
-        global_loss: Optional[EvaluationLosses] = None
-        global_metrics: Optional[Dict[str, Scalar]] = None
+        global_loss: EvaluationLosses | None = None
+        global_metrics: Dict[str, Scalar] | None = None
 
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
@@ -225,8 +225,8 @@ class EvaluateClient(BasicClient):
 
     @staticmethod
     def merge_metrics(
-        global_metrics: Optional[Dict[str, Scalar]],
-        local_metrics: Optional[Dict[str, Scalar]],
+        global_metrics: Dict[str, Scalar] | None,
+        local_metrics: Dict[str, Scalar] | None,
     ) -> Dict[str, Scalar]:
         # Merge metrics if necessary
         if global_metrics:
@@ -262,14 +262,14 @@ class EvaluateClient(BasicClient):
         """
         raise NotImplementedError
 
-    def initialize_global_model(self, config: Config) -> Optional[nn.Module]:
+    def initialize_global_model(self, config: Config) -> nn.Module | None:
         """
         User defined method that to initializes a global model to potentially be hydrated by parameters sent by the
         server, by default, no global model is assumed to exist unless specified by the user
         """
         return None
 
-    def get_local_model(self, config: Config) -> Optional[nn.Module]:
+    def get_local_model(self, config: Config) -> nn.Module | None:
         """
         Functionality for initializing a model from a local checkpoint. This can be overridden for custom behavior
         """

@@ -23,15 +23,15 @@ class MrMtlMkMmdClient(MrMtlClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         mkmmd_loss_weight: float = 10.0,
-        feature_extraction_layers: Optional[Sequence[str]] = None,
+        feature_extraction_layers: Sequence[str] | None = None,
         feature_l2_norm_weight: float = 0.0,
         beta_global_update_interval: int = 20,
-        num_accumulating_batches: Optional[int] = None,
+        num_accumulating_batches: int | None = None,
     ) -> None:
         """
         This client implements the MK-MMD loss function in the MR-MTL framework. The MK-MMD loss is a measure of the
@@ -46,7 +46,7 @@ class MrMtlMkMmdClient(MrMtlClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -54,11 +54,11 @@ class MrMtlMkMmdClient(MrMtlClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
             mkmmd_loss_weight (float, optional): weight applied to the MK-MMD loss. Defaults to 10.0.
-            feature_extraction_layers (Optional[Sequence[str]], optional): List of layers from which to extract
+            feature_extraction_layers (Sequence[str] | None, optional): List of layers from which to extract
                 and flatten features. Defaults to None.
             feature_l2_norm_weight (float, optional): weight applied to the L2 norm of the features.
                 Defaults to 0.0.
@@ -138,7 +138,7 @@ class MrMtlMkMmdClient(MrMtlClient):
         weighted_mkmmd_loss = self.mkmmd_loss_weight != 0
         return step_at_interval and valid_components_present and weighted_mkmmd_loss
 
-    def update_after_step(self, step: int, current_round: Optional[int] = None) -> None:
+    def update_after_step(self, step: int, current_round: int | None = None) -> None:
         if self.beta_global_update_interval > 0 and self._should_optimize_betas(step):
             # Get the feature distribution of the local and initial global features with evaluation
             # mode

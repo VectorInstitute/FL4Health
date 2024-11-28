@@ -31,7 +31,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         num_server_rounds: int,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: ClippingBitServerCheckpointAndStateModule | None = None,
-        delta: Optional[int] = None,
+        delta: int | None = None,
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
@@ -57,7 +57,7 @@ class ClientLevelDPFedAvgServer(FlServer):
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
             on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
@@ -89,13 +89,13 @@ class ClientLevelDPFedAvgServer(FlServer):
         self.num_server_rounds = num_server_rounds
         self.delta = delta
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
         """
         Run federated averaging for a number of rounds.
 
         Args:
             num_rounds (int): Number of server rounds to run.
-            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+            timeout (float | None): The amount of time in seconds that the server will wait for results from the
                 clients selected to participate in federated training.
 
         Returns:

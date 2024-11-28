@@ -23,9 +23,9 @@ class EvaluateServer(Server):
         self,
         client_manager: ClientManager,
         fraction_evaluate: float,
-        model_checkpoint_path: Optional[Path] = None,
-        evaluate_config: Optional[Dict[str, Scalar]] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        model_checkpoint_path: Path | None = None,
+        evaluate_config: Dict[str, Scalar] | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         accept_failures: bool = True,
         min_available_clients: int = 1,
         reporters: Sequence[BaseReporter] | None = None,
@@ -35,11 +35,11 @@ class EvaluateServer(Server):
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
             fraction_evaluate (float): Fraction of clients used during evaluation.
-            model_checkpoint_path (Optional[Path], optional): Server side model checkpoint path to load global model
+            model_checkpoint_path (Path | None, optional): Server side model checkpoint path to load global model
                 from. Defaults to None.
-            evaluate_config (Optional[Dict[str, Scalar]], optional): Configuration dictionary to configure evaluation
+            evaluate_config (Dict[str, Scalar] | None, optional): Configuration dictionary to configure evaluation
                 on clients. Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional):  Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional):  Metrics aggregation function.
                  Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             min_available_clients (int, optional): Minimum number of total clients in the system. Defaults to 1.
@@ -78,14 +78,14 @@ class EvaluateServer(Server):
         log(INFO, "Model loaded and state converted to parameters")
         return parameters
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
         """
         In order to head off training and only run eval, we have to override the fit function as this is
         essentially the entry point for federated learning from the app.
 
         Args:
             num_rounds (int): Not used.
-            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to respond.
+            timeout (float | None): Timeout in seconds that the server should wait for the clients to respond.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
@@ -134,17 +134,17 @@ class EvaluateServer(Server):
 
     def federated_evaluate(
         self,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
         """
         Validate current global model on a number of clients.
 
         Args:
-            timeout (Optional[float]): Timeout in seconds that the server should wait for the clients to response.
+            timeout (float | None): Timeout in seconds that the server should wait for the clients to response.
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]: The first value is the
+            Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures]: The first value is the
                 loss, which is ignored since we pack loss from the global and local models into the metrics dictionary
                 The second is the aggregated metrics passed from the clients, the third is the set of raw results and
                 failure objects returned by the clients.
@@ -178,7 +178,7 @@ class EvaluateServer(Server):
         # the metrics. A dummy loss is returned by each of the clients. We therefore return none for the aggregated
         # loss
         aggregated_result: Tuple[
-            Optional[float],
+            float | None,
             Dict[str, Scalar],
         ] = self.aggregate_evaluate(results, failures)
 
@@ -220,7 +220,7 @@ class EvaluateServer(Server):
         self,
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+    ) -> Tuple[float | None, Dict[str, Scalar]]:
         """
         Aggregate evaluation results using the evaluate_metrics_aggregation_fn provided. Note that a dummy loss is
         returned as we assume that it was packed into the metrics dictionary for this functionality.
@@ -233,7 +233,7 @@ class EvaluateServer(Server):
                 raised.
 
         Returns:
-            Tuple[Optional[float], Dict[str, Scalar]]: A dummy float for the "loss" (these are packed with the metrics)
+            Tuple[float | None, Dict[str, Scalar]]: A dummy float for the "loss" (these are packed with the metrics)
                 and the aggregated metrics dictionary.
         """
         if not results:

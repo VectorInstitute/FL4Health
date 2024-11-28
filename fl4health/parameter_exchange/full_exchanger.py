@@ -10,13 +10,13 @@ from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExcha
 
 class FullParameterExchanger(ParameterExchanger):
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         # Sending all of parameters ordered by state_dict keys
         # NOTE: Order matters, because it is relied upon by pull_parameters below
         return [val.cpu().numpy() for _, val in model.state_dict().items()]
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         # Assumes all model parameters are contained in parameters
         # The state_dict is reconstituted because parameters is simply a list of bytes
         params_dict = zip(model.state_dict().keys(), parameters)

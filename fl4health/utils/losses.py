@@ -8,12 +8,12 @@ import torch
 
 
 class Losses(ABC):
-    def __init__(self, additional_losses: Optional[Dict[str, torch.Tensor]] = None) -> None:
+    def __init__(self, additional_losses: Dict[str, torch.Tensor] | None = None) -> None:
         """
         An abstract class to store the losses
 
         Args:
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (Dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         self.additional_losses = additional_losses if additional_losses else {}
 
@@ -48,14 +48,14 @@ class Losses(ABC):
 
 
 class EvaluationLosses(Losses):
-    def __init__(self, checkpoint: torch.Tensor, additional_losses: Optional[Dict[str, torch.Tensor]] = None) -> None:
+    def __init__(self, checkpoint: torch.Tensor, additional_losses: Dict[str, torch.Tensor] | None = None) -> None:
         """
         A class to store the checkpoint and additional_losses of a model
         along with a method to return a dictionary representation.
 
         Args:
             checkpoint (torch.Tensor): The loss used to checkpoint model (if checkpointing is enabled).
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (Dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         super().__init__(additional_losses)
         self.checkpoint = checkpoint
@@ -99,7 +99,7 @@ class TrainingLosses(Losses):
     def __init__(
         self,
         backward: Union[torch.Tensor, Dict[str, torch.Tensor]],
-        additional_losses: Optional[Dict[str, torch.Tensor]] = None,
+        additional_losses: Dict[str, torch.Tensor] | None = None,
     ) -> None:
         """
         A class to store the backward and additional_losses of a model
@@ -109,7 +109,7 @@ class TrainingLosses(Losses):
             backward (Union[torch.Tensor, Dict[str, torch.Tensor]]): The backward loss or
                 losses to optimize. In the normal case, backward is a Tensor corresponding to the
                 loss of a model. In the case of an ensemble_model, backward is dictionary of losses.
-            additional_losses (Optional[Dict[str, torch.Tensor]]): Optional dictionary of additional losses.
+            additional_losses (Dict[str, torch.Tensor] | None): Optional dictionary of additional losses.
         """
         super().__init__(additional_losses)
         self.backward = backward if isinstance(backward, dict) else {"backward": backward}

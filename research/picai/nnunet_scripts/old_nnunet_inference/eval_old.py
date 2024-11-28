@@ -21,7 +21,7 @@ warnings.simplefilter("ignore", category=FutureWarning)
 def load_images_from_folder(
     folder: str,
     case_identifiers: List[str],
-    postfixes: Optional[List[str]] = None,
+    postfixes: List[str] | None = None,
     extensions: List[str] = [".nii.gz", ".nii", ".mha", ".mhd", ".npz", ".npy"],
 ) -> NDArray:
     """
@@ -31,7 +31,7 @@ def load_images_from_folder(
         folder (str): The folder containing the images
         case_identifiers (List[str]): A list of case identifiers for each
             file. Typically just the filenames without the extension
-        postfixes (Optional[List[str]], optional): A list of strings to append
+        postfixes (List[str] | None, optional): A list of strings to append
             to the case identifiers when looking for files. For example
             '_labels'. Defaults to None.
         extensions (List[str], optional): A list of possible image extensions.
@@ -86,7 +86,7 @@ def get_detection_maps(probability_maps: NDArray) -> NDArray:
 def get_picai_metrics(
     detection_maps: NDArray,
     ground_truth_annotations: NDArray,
-    case_identifiers: Optional[Iterable[str]] = None,
+    case_identifiers: Iterable[str] | None = None,
     **kwargs: Any
 ) -> PicaiEvalMetrics:
     """
@@ -102,7 +102,7 @@ def get_picai_metrics(
             have shape (num_samples, num_classes or num_lesion_classes, ...).
             If num_classes is provided, the function will attempt to remove
             the background class from index 0 for you
-        case_identifiers (Optional[Iterable[str]], optional): A list of case
+        case_identifiers (Iterable[str] | None, optional): A list of case
             identifiers. If not provided the subjects will be identified by
             their index Defaults to None.
         **kwargs: Keyword arguments for the picai_eval.evaluate function

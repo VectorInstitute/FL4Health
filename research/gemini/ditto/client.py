@@ -41,7 +41,7 @@ class GeminiDittoClient(DittoClient):
         checkpoint_stub: str,
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
+        checkpointer: TorchModuleCheckpointer | None = None,
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals
         self.hospitals = hospital_id

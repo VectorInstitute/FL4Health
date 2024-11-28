@@ -14,8 +14,8 @@ class FullExchangeServer(FlServerWithCheckpointing):
         self,
         client_manager: ClientManager,
         model: nn.Module,
-        strategy: Optional[Strategy] = None,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
+        strategy: Strategy | None = None,
+        checkpointer: TorchModuleCheckpointer | None = None,
     ) -> None:
         # To help with model rehydration
         parameter_exchanger = FullParameterExchanger()

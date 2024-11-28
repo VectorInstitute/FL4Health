@@ -21,8 +21,8 @@ class PoissonSamplingClientManager(BaseFractionSamplingManager):
     def sample_fraction(
         self,
         sample_fraction: float,
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
+        min_num_clients: int | None = None,
+        criterion: Criterion | None = None,
     ) -> List[ClientProxy]:
         """Poisson Sampling of Flower ClientProxy instances with a probability determine by sample_fraction."""
 

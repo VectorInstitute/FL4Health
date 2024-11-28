@@ -22,11 +22,11 @@ class FixedLayerExchanger(ParameterExchanger):
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         return self.apply_layer_filter(model)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters
         for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
@@ -80,11 +80,11 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         return [model_state_dict[layer_to_transfer].cpu().numpy() for layer_to_transfer in self.layers_to_transfer]
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         return self.apply_layer_filter(model)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters. Assumes order of parameters is the same as in push_parameters
         for layer_name, layer_parameters in zip(self.layers_to_transfer, parameters):
@@ -113,17 +113,17 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
         self.parameter_packer = ParameterPackerWithLayerNames()
 
     def select_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None
     ) -> Tuple[NDArrays, List[str]]:
         return self.layer_selection_function(model, initial_model)
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         layers_to_transfer, layer_names = self.select_parameters(model, initial_model)
         return self.pack_parameters(layers_to_transfer, layer_names)
 
-    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: nn.Module, config: Config | None = None) -> None:
         current_state = model.state_dict()
         # update the correct layers to new parameters
         layer_params, layer_names = self.unpack_parameters(parameters)

@@ -49,8 +49,8 @@ class AutoEncoderDatasetConverter(DatasetConverter):
         self,
         condition: Union[None, str, torch.Tensor] = None,
         do_one_hot_encoding: bool = False,
-        custom_converter_function: Optional[Callable] = None,
-        condition_vector_size: Optional[int] = None,
+        custom_converter_function: Callable | None = None,
+        condition_vector_size: int | None = None,
     ) -> None:
         """
         A dataset converter specific to formatting supervised data such as MNIST for
@@ -63,7 +63,7 @@ class AutoEncoderDatasetConverter(DatasetConverter):
             condition (Union[None, str, torch.Tensor]): Could be a fixed tensor used for all the data samples,
                 None for non-conditional models, or a name(str) passed for other custom conversions like 'label'.
             do_one_hot_encoding (bool, optional): Should converter perform one hot encoding on the condition or not.
-            custom_converter_function (Optional[Callable], optional): User can define a new converter function.
+            custom_converter_function (Callable | None, optional): User can define a new converter function.
         """
         self.condition = condition
         if isinstance(self.condition, torch.Tensor):

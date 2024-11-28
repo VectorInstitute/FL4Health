@@ -140,10 +140,10 @@ def test_evaluate_after_fit_disabled() -> None:
 class MockBasicClient(BasicClient):
     def __init__(
         self,
-        loss_dict: Optional[Dict[str, float]] = None,
-        metrics: Optional[Dict[str, Scalar]] = None,
-        test_set_metrics: Optional[Dict[str, Scalar]] = None,
-        loss: Optional[float] = 0,
+        loss_dict: Dict[str, float] | None = None,
+        metrics: Dict[str, Scalar] | None = None,
+        test_set_metrics: Dict[str, Scalar] | None = None,
+        loss: float | None = 0,
         reporters: Sequence[BaseReporter] | None = None,
     ):
         super().__init__(Path(""), [], torch.device(0), reporters=reporters)

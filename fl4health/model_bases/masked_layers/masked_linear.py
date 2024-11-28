@@ -15,8 +15,8 @@ class MaskedLinear(nn.Linear):
         in_features: int,
         out_features: int,
         bias: bool = True,
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked linear layers.

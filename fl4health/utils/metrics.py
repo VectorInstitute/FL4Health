@@ -47,12 +47,12 @@ class Metric(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute(self, name: Optional[str]) -> Metrics:
+    def compute(self, name: str | None) -> Metrics:
         """
         Compute metric on accumulated input and output over updates.
 
         Args:
-            name (Optional[str]): Optional name used in conjunction with class attribute name
+            name (str | None): Optional name used in conjunction with class attribute name
                 to define key in metrics dictionary.
 
         Raises:
@@ -97,12 +97,12 @@ class TorchMetric(Metric):
         """
         self.metric.update(input, target.long())
 
-    def compute(self, name: Optional[str]) -> Metrics:
+    def compute(self, name: str | None) -> Metrics:
         """
         Compute value of underlying TorchMetric.
 
         Args:
-            name (Optional[str]): Optional name used in conjunction with class attribute name
+            name (str | None): Optional name used in conjunction with class attribute name
                 to define key in metrics dictionary.
 
         Returns:
@@ -142,12 +142,12 @@ class SimpleMetric(Metric, ABC):
         self.accumulated_inputs.append(input)
         self.accumulated_targets.append(target)
 
-    def compute(self, name: Optional[str] = None) -> Metrics:
+    def compute(self, name: str | None = None) -> Metrics:
         """
         Compute metric on accumulated input and output over updates.
 
         Args:
-            name (Optional[str]): Optional name used in conjunction with class attribute name
+            name (str | None): Optional name used in conjunction with class attribute name
                 to define key in metrics dictionary.
 
         Raises:
@@ -188,8 +188,8 @@ class TransformsMetric(Metric):
     def __init__(
         self,
         metric: Metric,
-        pred_transforms: Optional[Sequence[TorchTransformFunction]] = None,
-        target_transforms: Optional[Sequence[TorchTransformFunction]] = None,
+        pred_transforms: Sequence[TorchTransformFunction] | None = None,
+        target_transforms: Sequence[TorchTransformFunction] | None = None,
     ) -> None:
         """
         A thin wrapper class to allow transforms to be applied to preds and
@@ -197,11 +197,11 @@ class TransformsMetric(Metric):
 
         Args:
             metric (Metric): A FL4Health compatible metric
-            pred_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+            pred_transforms (Sequence[TorchTransformFunction] | None, optional): A
                 list of transform functions to apply to the model predictions before
                 computing the metrics. Each callable must accept and return a torch.
                 Tensor. Use partial to set other arguments.
-            target_transforms (Optional[Sequence[TorchTransformFunction]], optional): A
+            target_transforms (Sequence[TorchTransformFunction] | None, optional): A
                 list of transform functions to apply to the targets before computing
                 the metrics. Each callable must accept and return a torch.Tensor. Use
                 partial to set other arguments.
@@ -220,7 +220,7 @@ class TransformsMetric(Metric):
 
         self.metric.update(pred, target)
 
-    def compute(self, name: Optional[str]) -> Metrics:
+    def compute(self, name: str | None) -> Metrics:
         return self.metric.compute(name)
 
     def clear(self) -> None:
@@ -233,7 +233,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         name: str = "BinarySoftDiceCoefficient",
         epsilon: float = 1.0e-7,
         spatial_dimensions: Tuple[int, ...] = (2, 3, 4),
-        logits_threshold: Optional[float] = 0.5,
+        logits_threshold: float | None = 0.5,
     ):
         """
         Binary DICE Coefficient Metric with configurable spatial dimensions and logits threshold.
@@ -333,7 +333,7 @@ class F1(SimpleMetric):
     def __init__(
         self,
         name: str = "F1 score",
-        average: Optional[str] = "weighted",
+        average: str | None = "weighted",
     ):
         """
         Computes the F1 score using the sklearn f1_score function. As such, the values of average correspond to
@@ -341,7 +341,7 @@ class F1(SimpleMetric):
 
         Args:
             name (str, optional): Name of the metric. Defaults to "F1 score".
-            average (Optional[str], optional): Whether to perform averaging of the F1 scores and how. The values of
+            average (str | None, optional): Whether to perform averaging of the F1 scores and how. The values of
                 this string corresponds to those of the sklearn f1_score function. See:
                 https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html
                 Defaults to "weighted".

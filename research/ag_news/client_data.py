@@ -36,7 +36,7 @@ def create_text_classification_dataset(
 
 
 def construct_dataloaders(
-    batch_size: int, sample_percentage: float, beta: float, data_path: Optional[Path] = None
+    batch_size: int, sample_percentage: float, beta: float, data_path: Path | None = None
 ) -> Tuple[DataLoader, DataLoader]:
     assert 0 <= sample_percentage <= 1 and beta > 0
     sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=sample_percentage, beta=beta)

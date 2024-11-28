@@ -41,18 +41,18 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Optional[Parameters] = None,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
+        initial_parameters: Parameters | None = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         weighted_aggregation: bool = False,
         weighted_eval_losses: bool = True,
-        per_client_example_cap: Optional[float] = None,
+        per_client_example_cap: float | None = None,
         adaptive_clipping: bool = False,
         server_learning_rate: float = 1.0,
         clipping_learning_rate: float = 1.0,
@@ -78,27 +78,27 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of clients used during validation.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Optional[Tuple[float, Dict[str, Scalar]]]]
+                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
+            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
-            initial_parameters (Optional[Parameters], optional): Initial global model parameters. This strategy assumes
+            initial_parameters (Parameters | None, optional): Initial global model parameters. This strategy assumes
                 that the initial parameters is not None. So they need to be set in spite of the optional tag.
-            fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            fit_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
-            evaluate_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.
+            evaluate_metrics_aggregation_fn (MetricsAggregationFn | None, optional): Metrics aggregation function.
                 Defaults to None.
             weighted_aggregation (bool, optional): Determines whether the FedAvg update is weighted by client dataset
                 size or unweighted. Defaults to False.
             weighted_eval_losses (bool, optional): Determines whether losses during evaluation are linearly weighted
                 averages or a uniform average. FedAvg default is weighted average of the losses by client dataset
                 counts. Defaults to True.
-            per_client_example_cap (Optional[float], optional): The maximum number samples per client. hat{w} in
+            per_client_example_cap (float | None, optional): The maximum number samples per client. hat{w} in
                 https://arxiv.org/pdf/1710.06963.pdf. Defaults to None.
             adaptive_clipping (bool, optional): If enabled, the model expects the last entry of the parameter list to
                 be a binary value indicating whether or not the batch gradient was clipped. Defaults to False.
@@ -152,8 +152,8 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         # Weighted averaging requires list of sample counts
         # to compute client weights. Set by server after polling clients.
-        self.sample_counts: Optional[List[int]] = None
-        self.m_t: Optional[NDArrays] = None
+        self.sample_counts: List[int] | None = None
+        self.m_t: NDArrays | None = None
 
     def __repr__(self) -> str:
         rep = f"ClientLevelDPFedAvgM(accept_failures={self.accept_failures})"
@@ -276,7 +276,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
         perform adaptive clipping updates.
@@ -293,7 +293,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Optional[Parameters], Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
                 For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
                 if adaptive clipping is turned off and the value simply remains constant.
         """

@@ -32,7 +32,7 @@ class MnistFendaClient(FendaClient):
         metrics: Sequence[Metric],
         device: torch.device,
         pretrained_model_dir: Path,
-        weights_mapping_path: Optional[Path],
+        weights_mapping_path: Path | None,
     ) -> None:
         super().__init__(
             data_path=data_path,

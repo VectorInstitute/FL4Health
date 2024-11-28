@@ -43,10 +43,10 @@ class CifarDittoClient(DittoMkMmdClient):
         feature_l2_norm_weight: float = 1,
         mkmmd_loss_depth: int = 1,
         beta_global_update_interval: int = 20,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         use_partitioned_data: bool = False,
     ) -> None:
         super().__init__(
@@ -104,7 +104,7 @@ class CifarDittoClient(DittoMkMmdClient):
             )
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/cifar10/preprocess.py file

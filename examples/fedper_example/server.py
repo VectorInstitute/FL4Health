@@ -24,8 +24,8 @@ def fit_config(
     n_server_rounds: int,
     downsampling_ratio: float,
     current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),

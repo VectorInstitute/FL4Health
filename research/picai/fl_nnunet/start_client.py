@@ -28,15 +28,15 @@ from fl4health.utils.nnunet_utils import collapse_one_hot_tensor, get_segs_from_
 
 def main(
     dataset_id: int,
-    data_identifier: Optional[str],
-    plans_identifier: Optional[str],
+    data_identifier: str | None,
+    plans_identifier: str | None,
     always_preprocess: bool,
     server_address: str,
     fold: Union[str, int],
     verbose: bool,
     compile: bool,
-    intermediate_client_state_dir: Optional[str] = None,
-    client_name: Optional[str] = None,
+    intermediate_client_state_dir: str | None = None,
+    client_name: str | None = None,
 ) -> None:
 
     # Log device and server address

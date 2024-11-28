@@ -22,8 +22,8 @@ def fit_config(
     batch_size: int,
     n_server_rounds: int,
     current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
     evaluate_after_fit: bool = False,
     pack_losses_with_val_metrics: bool = False,
 ) -> Config:

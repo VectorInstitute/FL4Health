@@ -10,11 +10,11 @@ class MkMmdLoss(torch.nn.Module):
     def __init__(
         self,
         device: torch.device,
-        gammas: Optional[torch.Tensor] = None,
-        betas: Optional[torch.Tensor] = None,
+        gammas: torch.Tensor | None = None,
+        betas: torch.Tensor | None = None,
         minimize_type_two_error: bool = True,
         normalize_features: bool = False,
-        layer_name: Optional[str] = None,
+        layer_name: str | None = None,
         perform_linear_approximation: bool = False,
     ) -> None:
         """
@@ -23,19 +23,19 @@ class MkMmdLoss(torch.nn.Module):
 
         Args:
             device (torch.device): Device onto which tensors should be moved
-            gammas (Optional[torch.Tensor], optional): These are known as the length-scales of the RBF functions used
+            gammas (torch.Tensor | None, optional): These are known as the length-scales of the RBF functions used
                 to compute the Mk-MMD distances. The length of this list defines the number of kernels used in the
                 norm measurement. If none, a default of 19 kernels is used. Defaults to None.
-            betas (Optional[torch.Tensor], optional): These are the linear coefficients used on the basis of kernels
+            betas (torch.Tensor | None, optional): These are the linear coefficients used on the basis of kernels
                 to compute the Mk-MMD measure. If not provided, a unit-length, random default is constructed. These
                 can be optimized using the functions of this class. Defaults to None.
-            minimize_type_two_error (Optional[bool], optional): Whether we're aiming to minimize the type II error in
+            minimize_type_two_error (bool | None, optional): Whether we're aiming to minimize the type II error in
                 optimizing the betas or maximize it. The first coincides with trying to minimize feature distance. The
                 second coincides with trying to maximize their feature distance. Defaults to True.
-            normalize_features (Optional[bool], optional): Whether to normalize the features to have unit length before
+            normalize_features (bool | None, optional): Whether to normalize the features to have unit length before
                 computing the MK-MMD and optimizing betas. Defaults to False.
-            layer_name (Optional[str], optional): The name of the layer to extract features from. Defaults to None.
-            perform_linear_approximation (Optional[bool], optional): Whether to use linear approximations for the
+            layer_name (str | None, optional): The name of the layer to extract features from. Defaults to None.
+            perform_linear_approximation (bool | None, optional): Whether to use linear approximations for the
                 estimates of the mean and covariance of the kernel values. Experimentally, we have found that the
                 linear approximations largely hinder the statistical power of Mk-MMD. Defaults to False
         """

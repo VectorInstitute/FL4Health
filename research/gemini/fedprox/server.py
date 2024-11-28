@@ -28,9 +28,9 @@ class GeminiFedProxServer(FlServer):
         self,
         client_manager: ClientManager,
         client_model: nn.Module,
-        strategy: Optional[Strategy] = None,
-        checkpointer: Optional[BestMetricTorchCheckpointer] = None,
-        wandb_reporter: Optional[ServerWandBReporter] = None,
+        strategy: Strategy | None = None,
+        checkpointer: BestMetricTorchCheckpointer | None = None,
+        wandb_reporter: ServerWandBReporter | None = None,
     ) -> None:
         self.client_model = client_model
         # To help with model rehydration
@@ -49,8 +49,8 @@ class GeminiFedProxServer(FlServer):
     def evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> Tuple[Optional[float | None, Dict[str, Scalar], EvaluateResultsAndFailures]]:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)

@@ -12,7 +12,7 @@ from torch.nn.modules import Module
 from fl4health.parameter_exchange.parameter_packer import SparseCooParameterPacker
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
-ScoreGenFunction = Callable[[nn.Module, Optional[nn.Module]], Dict[str, Tensor]]
+ScoreGenFunction = Callable[[nn.Module, nn.Module | None], Dict[str, Tensor]]
 
 
 class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDArrays, List[str]]]):
@@ -42,7 +42,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         self.parameter_packer: SparseCooParameterPacker = SparseCooParameterPacker()
         self.score_gen_function = score_gen_function
 
-    def generate_parameter_scores(self, model: nn.Module, initial_model: Optional[nn.Module]) -> Dict[str, Tensor]:
+    def generate_parameter_scores(self, model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
         """Calling the score generating function to produce parameter scores."""
         return self.score_gen_function(model, initial_model)
 
@@ -56,7 +56,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             )
 
     def select_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None
     ) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
         """
         Select model parameters according to the sparsity level and pack them into
@@ -126,7 +126,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         return (selected_parameters_all_tensors, (selected_indices_all_tensors, tensor_shapes, tensor_names))
 
     def push_parameters(
-        self, model: nn.Module, initial_model: Optional[nn.Module] = None, config: Optional[Config] = None
+        self, model: nn.Module, initial_model: nn.Module | None = None, config: Config | None = None
     ) -> NDArrays:
         selected_parameters, additional_parameters = self.select_parameters(model, initial_model)
         return self.pack_parameters(
@@ -134,7 +134,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             additional_parameters=additional_parameters,
         )
 
-    def pull_parameters(self, parameters: NDArrays, model: Module, config: Optional[Config] = None) -> None:
+    def pull_parameters(self, parameters: NDArrays, model: Module, config: Config | None = None) -> None:
         selected_parameters, additional_info = self.parameter_packer.unpack_parameters(parameters)
         indices, shapes, names = additional_info
         current_state = model.state_dict()

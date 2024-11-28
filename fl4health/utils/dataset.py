@@ -7,7 +7,7 @@ from torch.utils.data import Dataset
 
 
 class BaseDataset(ABC, Dataset):
-    def __init__(self, transform: Optional[Callable], target_transform: Optional[Callable]) -> None:
+    def __init__(self, transform: Callable | None, target_transform: Callable | None) -> None:
         self.transform = transform
         self.target_transform = target_transform
 
@@ -38,9 +38,9 @@ class TensorDataset(BaseDataset):
     def __init__(
         self,
         data: torch.Tensor,
-        targets: Optional[torch.Tensor] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        targets: torch.Tensor | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
     ) -> None:
         super().__init__(transform, target_transform)
         self.data = data
@@ -67,9 +67,9 @@ class SslTensorDataset(TensorDataset):
     def __init__(
         self,
         data: torch.Tensor,
-        targets: Optional[torch.Tensor] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
+        targets: torch.Tensor | None = None,
+        transform: Callable | None = None,
+        target_transform: Callable | None = None,
     ) -> None:
         assert targets is not None, "SslTensorDataset targets must be None"
 

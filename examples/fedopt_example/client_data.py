@@ -55,7 +55,7 @@ class LabelEncoder:
 
 
 class Vocabulary:
-    def __init__(self, vocabulary_dict: Optional[Dict[str, int]], train_set: Optional[List[List[str]]]) -> None:
+    def __init__(self, vocabulary_dict: Dict[str, int] | None, train_set: List[List[str]] | None) -> None:
         if vocabulary_dict is not None:
             self.word2index = vocabulary_dict
         elif train_set is not None:

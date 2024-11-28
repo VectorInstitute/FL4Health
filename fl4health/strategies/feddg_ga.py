@@ -57,8 +57,8 @@ class FairnessMetric:
     def __init__(
         self,
         metric_type: FairnessMetricType,
-        metric_name: Optional[str] = None,
-        signal: Optional[float] = None,
+        metric_name: str | None = None,
+        signal: float | None = None,
     ):
         """
         Instantiates a fairness metric with a type and optional metric name and
@@ -98,16 +98,16 @@ class FedDgGa(FedAvg):
         evaluate_fn: Optional[
             Callable[
                 [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
+                Tuple[float, Dict[str, Scalar]] | None,
             ]
         ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
-        initial_parameters: Optional[Parameters] = None,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        fairness_metric: Optional[FairnessMetric] = None,
+        initial_parameters: Parameters | None = None,
+        fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
+        fairness_metric: FairnessMetric | None = None,
         adjustment_weight_step_size: float = 0.2,
     ):
         """
@@ -127,7 +127,7 @@ class FedDgGa(FedAvg):
             evaluate_fn :
                 Optional[
                     Callable[[int, NDArrays, Dict[str, Scalar]],
-                    Optional[Tuple[float, Dict[str, Scalar]]]]
+                    Tuple[float, Dict[str, Scalar]]] | None
                 ]
                 Optional function used for validation. Defaults to None.
             on_fit_config_fn : Callable[[int], Dict[str, Scalar]], optional
@@ -138,9 +138,9 @@ class FedDgGa(FedAvg):
                 Whether or not accept rounds containing failures. Defaults to True.
             initial_parameters : Parameters, optional
                 Initial global model parameters.
-            fit_metrics_aggregation_fn : Optional[MetricsAggregationFn]
+            fit_metrics_aggregation_fn : MetricsAggregationFn | None
                 Metrics aggregation function, optional.
-            evaluate_metrics_aggregation_fn : Optional[MetricsAggregationFn]
+            evaluate_metrics_aggregation_fn : MetricsAggregationFn | None
                 Metrics aggregation function, optional.
             fairness_metric : FairnessMetric, optional.
                 The metric to evaluate the local model of each client against the global model in order to
@@ -186,8 +186,8 @@ class FedDgGa(FedAvg):
 
         self.train_metrics: Dict[str, Dict[str, Scalar]] = {}
         self.evaluation_metrics: Dict[str, Dict[str, Scalar]] = {}
-        self.num_rounds: Optional[int] = None
-        self.initial_adjustment_weight: Optional[float] = None
+        self.num_rounds: int | None = None
+        self.initial_adjustment_weight: float | None = None
         self.adjustment_weights: Dict[str, float] = {}
 
     def configure_fit(
@@ -265,7 +265,7 @@ class FedDgGa(FedAvg):
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
+    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
         """
         Aggregate fit results by weighing them against the adjustment weights and then summing them.
 
@@ -277,7 +277,7 @@ class FedDgGa(FedAvg):
             failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' fit failures.
 
         Returns:
-            (Tuple[Optional[Parameters], Dict[str, Scalar]]) A tuple containing the aggregated parameters
+            (Tuple[Parameters | None, Dict[str, Scalar]]) A tuple containing the aggregated parameters
                 and the aggregated fit metrics.
         """
         if not results:
@@ -307,7 +307,7 @@ class FedDgGa(FedAvg):
         server_round: int,
         results: List[Tuple[ClientProxy, EvaluateRes]],
         failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
+    ) -> Tuple[float | None, Dict[str, Scalar]]:
         """
         Aggregate evaluation losses using weighted average.
 
@@ -320,7 +320,7 @@ class FedDgGa(FedAvg):
             failures: (List[Union[Tuple[ClientProxy, FitRes], BaseException]]) the clients' evaluate failures.
 
         Returns:
-            (Tuple[Optional[float], Dict[str, Scalar]]) A tuple containing the aggregated evaluation loss
+            (Tuple[float | None, Dict[str, Scalar]]) A tuple containing the aggregated evaluation loss
                 and the aggregated evaluation metrics.
         """
 
@@ -363,7 +363,7 @@ class FedDgGa(FedAvg):
         # reducing numerical fluctuation.
         decoded_and_sorted_results = decode_and_pseudo_sort_results(results)
 
-        aggregated_results: Optional[NDArrays] = None
+        aggregated_results: NDArrays | None = None
         for client_proxy, weights, _ in decoded_and_sorted_results:
             cid = client_proxy.cid
 

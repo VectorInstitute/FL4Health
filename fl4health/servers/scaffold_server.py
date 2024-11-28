@@ -85,7 +85,7 @@ class ScaffoldServer(FlServer):
         )
         self.warm_start = warm_start
 
-    def _get_initial_parameters(self, server_round: int, timeout: Optional[float]) -> Parameters:
+    def _get_initial_parameters(self, server_round: int, timeout: float | None) -> Parameters:
         """
         Overrides the _get_initial_parameters in the flwr server base class to strap on the possibility of a
         warm_start for SCAFFOLD. Initializes parameters (models weights and control variates) of the server.
@@ -95,7 +95,7 @@ class ScaffoldServer(FlServer):
 
         Args:
             server_round (int): The current server round.
-            timeout (Optional[float]): If the server strategy object does not have a server-side initial parameters
+            timeout (float | None): If the server strategy object does not have a server-side initial parameters
                 function defined, then one of the clients is polled and their model parameters are returned in order to
                 initialize the models of all clients. Timeout defines how long to wait for a response.
 
@@ -160,14 +160,14 @@ class ScaffoldServer(FlServer):
 
         return initial_parameters
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
         """
         Run the SCAFFOLD FL algorithm for a fixed number of rounds. This overrides the base server fit class just to
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
 
         Args:
             num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
-            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+            timeout (float | None): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.
 
@@ -189,9 +189,9 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         batch_size: int,
         num_server_rounds: int,
         strategy: OpacusScaffold,
-        local_epochs: Optional[int] = None,
-        local_steps: Optional[int] = None,
-        delta: Optional[float] = None,
+        local_epochs: int | None = None,
+        local_steps: int | None = None,
+        delta: float | None = None,
         checkpoint_and_state_module: DpScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
@@ -214,10 +214,10 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 DP-SGD.
             batch_size (int): The batch size to be used in training on the client-side. Used in privacy accounting.
             num_server_rounds (int): The number of server rounds to be done in FL training. Used in privacy accounting
-            local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
+            local_epochs (int | None, optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
+            local_steps (int | None, optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and
@@ -232,7 +232,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 gradients. The clients will perform a training pass (without updating the weights) in order to provide
                 a "warm" estimate of the SCAFFOLD control variates. If false, variates are initialized to 0.
                 Defaults to False.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
@@ -276,13 +276,13 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             accept_failures=accept_failures,
         )
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
         """
         Run DP Scaffold algorithm for the specified number of rounds.
 
         Args:
             num_rounds (int): Number of rounds of FL to perform (i.e. server rounds).
-            timeout (Optional[float]): Timeout associated with queries to the clients in seconds. The server waits for
+            timeout (float | None): Timeout associated with queries to the clients in seconds. The server waits for
                 timeout seconds before moving on without any unresponsive clients. If None, there is no timeout and the
                 server waits for the minimum number of clients to be available set in the strategy.
 

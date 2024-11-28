@@ -25,8 +25,8 @@ def fit_config(
     sample_percentage: float,
     beta: float,
     current_server_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     config: Config = {
         **make_dict_with_epochs_or_steps(local_epochs, local_steps),

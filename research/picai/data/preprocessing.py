@@ -20,9 +20,9 @@ class PreprocessingSettings:
         self,
         scans_write_dir: Path,
         annotation_write_dir: Path,
-        size: Optional[Tuple[int, int, int]],
-        physical_size: Optional[Tuple[float, float, float]],
-        spacing: Optional[Tuple[float, float, float]],
+        size: Tuple[int, int, int] | None,
+        physical_size: Tuple[float, float, float] | None,
+        spacing: Tuple[float, float, float] | None,
     ) -> None:
         """
         Dataclass encapsulating parameters of preprocessing.
@@ -30,13 +30,13 @@ class PreprocessingSettings:
         Args:
             scans_write_dir (Path): The directory to write the preprocessed scans.
             annotation_write_dir (Path): The directory to write the preprocessed annotation.
-            size (Optional[Tuple[int, int, int]]): Tuple of 3 int representing size of scan in voxels.
+            size (Tuple[int, int, int] | None): Tuple of 3 int representing size of scan in voxels.
                 In the format of Depth x Height x Width. If None, preprocessed scans and annotations retain
                 their original size.
-            physical_size (Optional[Tuple[float, float, float]]): Tuple of 3 float representing actual scan size in mm.
+            physical_size (Tuple[float, float, float] | None): Tuple of 3 float representing actual scan size in mm.
                 In the format of Depth x Height x Width. If None and size and spacing are not None,
                 physical_size will be inferred.
-            spacing (Optional[Tuple[float, float, float]]): Tuple of 3 float representing spacing between voxels
+            spacing (Tuple[float, float, float] | None): Tuple of 3 float representing spacing between voxels
                 of scan in mm/voxel. In the format of Depth x Height x Width. If None,
                 preprocessed scans and annotations retain their original spacing.
         """

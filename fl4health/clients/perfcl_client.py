@@ -24,10 +24,10 @@ class PerFclClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
         global_feature_loss_temperature: float = 0.5,
         local_feature_loss_temperature: float = 0.5,
         global_feature_contrastive_loss_weight: float = 1.0,
@@ -47,7 +47,7 @@ class PerFclClient(BasicClient):
                 'cuda'
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
-            checkpoint_and_state_module (Optional[ClientCheckpointAndStateModule], optional): A module meant to handle
+            checkpoint_and_state_module (ClientCheckpointAndStateModule | None, optional): A module meant to handle
                 both checkpointing and state saving. The module, and its underlying model and state checkpointing
                 components will determine when and how to do checkpointing during client-side training.
                 No checkpointing (state or model) is done if not provided. Defaults to None.
@@ -55,7 +55,7 @@ class PerFclClient(BasicClient):
                 should send data to. Defaults to None.
             progress_bar (bool, optional): Whether or not to display a progress bar during client training and
                 validation. Uses tqdm. Defaults to False
-            client_name (Optional[str], optional): An optional client name that uniquely identifies a client.
+            client_name (str | None, optional): An optional client name that uniquely identifies a client.
                 If not passed, a hash is randomly generated. Client state will use this as part of its state file
                 name. Defaults to None.
             global_feature_loss_temperature (float, optional): Temperature to be used in the contrastive loss
@@ -86,9 +86,9 @@ class PerFclClient(BasicClient):
         # In order to compute the PerFCL losses, we need to save final local module and global modules from the
         # previous iteration of client-side training and initial global module passed to the client after server-side
         # aggregation at each communication round
-        self.old_local_module: Optional[torch.nn.Module] = None
-        self.old_global_module: Optional[torch.nn.Module] = None
-        self.initial_global_module: Optional[torch.nn.Module] = None
+        self.old_local_module: torch.nn.Module | None = None
+        self.old_global_module: torch.nn.Module | None = None
+        self.initial_global_module: torch.nn.Module | None = None
 
     def get_parameter_exchanger(self, config: Config) -> ParameterExchanger:
         """

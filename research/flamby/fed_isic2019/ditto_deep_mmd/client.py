@@ -41,10 +41,10 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         deep_mmd_loss_weight: float = 10,
         deep_mmd_loss_depth: int = 1,
-        checkpoint_and_state_module: Optional[ClientCheckpointAndStateModule] = None,
+        checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         progress_bar: bool = False,
-        client_name: Optional[str] = None,
+        client_name: str | None = None,
     ) -> None:
         feature_extraction_layers_with_size = OrderedDict(
             list(FED_ISIC2019_BASELINE_LAYERS.items())[-1 * deep_mmd_loss_depth :]

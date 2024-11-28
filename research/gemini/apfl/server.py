@@ -23,18 +23,18 @@ class GeminiAPFLServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
     ) -> None:
         # APFL doesn't train a "server" model. Rather, each client trains a client specific model with some globally
         # shared weights. So we don't checkpoint a global model
         super().__init__(client_manager, strategy, checkpointer=None)
-        self.best_aggregated_loss: Optional[float] = None
+        self.best_aggregated_loss: float | None = None
 
     def evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> Tuple[Optional[float | None, Dict[str, Scalar], EvaluateResultsAndFailures]]:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)

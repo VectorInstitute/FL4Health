@@ -25,14 +25,14 @@ warnings.simplefilter("ignore", category=FutureWarning)
 # logger.setLevel(multiprocessing.SUBDEBUG)
 
 
-def read_image(path: Union[Path, str], npz_key: Optional[str] = None) -> NDArray:
+def read_image(path: Union[Path, str], npz_key: str | None = None) -> NDArray:
     """Taken from picai eval. Had to change one line so that they wouldn't
     throw away additional channels. They were assuming binary segmentation.
     Also made it work for any npz file
 
     Args:
         path (Union[Path, str]): Path to the image file
-        npz_key (Optional[str]): If the file type is .npz, then a key must be
+        npz_key (str | None): If the file type is .npz, then a key must be
             provided to access the numpy array from the NpzFile object
     """
     if isinstance(path, Path):
@@ -54,7 +54,7 @@ def read_image(path: Union[Path, str], npz_key: Optional[str] = None) -> NDArray
 
 
 def scan_folder_for_cases(
-    folder: Union[str, Path], postfixes: Optional[List[str]] = None, extensions: Optional[List[str]] = None
+    folder: Union[str, Path], postfixes: List[str] | None = None, extensions: List[str] | None = None
 ) -> List[str]:
     if postfixes is None:
         postfixes = [""]
@@ -81,8 +81,8 @@ def scan_folder_for_cases(
 def get_case_files(
     folder: Union[str, Path],
     case_identifiers: List[str],
-    postfixes: Optional[List[str]] = None,
-    extensions: Optional[List[str]] = None,
+    postfixes: List[str] | None = None,
+    extensions: List[str] | None = None,
     basename: bool = False,
 ) -> List[str]:
     if postfixes is None:
@@ -110,8 +110,8 @@ def get_case_files(
 def generate_detection_map(
     probability_map: Union[NDArray, str, Path],
     save_path: Union[str, Path],
-    npz_key: Optional[str] = "probabilities",
-    transforms: Optional[List[Callable[[NDArray], NDArray]]] = None,
+    npz_key: str | None = "probabilities",
+    transforms: List[Callable[[NDArray], NDArray]] | None = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -129,10 +129,10 @@ def generate_detection_map(
             saved as a numpy compressed .npz file under key 'detection_map'.
             Detection map will have shape (num_classes - 1, ...) since a
             detection map is not computed for the background class.
-        npz_key (Optional[str]): If probability_map is a path to a .npz
+        npz_key (str | None): If probability_map is a path to a .npz
             file then a key must be provided to access the numpy array from
             the NpzFile object. Defaults to 'probabilities'
-        transforms (Optional[List[Callable[[NDArray], NDArray]]]): A list of
+        transforms (List[Callable[[NDArray], NDArray]] | None): A list of
             transform functions to apply to the probability map before passing
             it to the lesion extraction method. The functions will be applied
             in the order they are given. Can be used, for example, to one hot
@@ -161,11 +161,11 @@ def generate_detection_map(
 def generate_detection_maps(
     input_folder: Union[str, Path],
     output_folder: Union[str, Path],
-    transforms: Optional[List[Callable[[NDArray], NDArray]]] = None,
-    npz_key: Optional[str] = "probabilities",
-    num_threads: Optional[int] = None,
-    postfixes: Optional[List[str]] = None,
-    extensions: Optional[List[str]] = None,
+    transforms: List[Callable[[NDArray], NDArray]] | None = None,
+    npz_key: str | None = "probabilities",
+    num_threads: int | None = None,
+    postfixes: List[str] | None = None,
+    extensions: List[str] | None = None,
     verbose: bool = True,
     **kwargs: Any,
 ) -> List[str]:
@@ -191,7 +191,7 @@ def generate_detection_maps(
             generated for the background class.
             Ie. (num_lesion_classes == num_classes - 1). Note that this method
             will overwrite existing files if they already exist
-        transforms (Optional[List[Callable[[NDArray], NDArray]]]): A list of
+        transforms (List[Callable[[NDArray], NDArray]] | None): A list of
             transform functions to apply to the probability map before passing
             it to the lesion extraction method. The functions will be applied
             in the order they are given. Can be used, for example, to one hot
@@ -207,7 +207,7 @@ def generate_detection_maps(
         num_threads (int, optional): The maximum number of threads to allow
             when extracting the detection maps. If left as None, the number of
             threads is automatically determined.
-        postfixes (Optional[List[str]]): File postfixes (endings after the
+        postfixes (List[str] | None): File postfixes (endings after the
             unique identifier but before the extension). Detection maps will
             only be generated for files with one or more of the specified
             postfixes. Postfixes are omitted from the returned case
@@ -310,9 +310,9 @@ def evaluate_case_multichannel(
 def get_picai_metrics(
     detection_map_folder: Union[str, Path],
     ground_truth_annotations_folder: Union[str, Path],
-    num_threads: Optional[int] = None,
-    sample_weights: Optional[List[float]] = None,
-    case_identifiers: Optional[List[str]] = None,
+    num_threads: int | None = None,
+    sample_weights: List[float] | None = None,
+    case_identifiers: List[str] | None = None,
     verbose: bool = True,
     **kwargs: Any,
 ) -> PicaiEvalMetrics:
@@ -328,7 +328,7 @@ def get_picai_metrics(
             annotations. Must have shape (num_samples, num_classes or
             num_lesion_classes, ...). If num_classes is provided, the function
             will attempt to remove the background class from index 0 for you
-        case_identifiers (Optional[Iterable[str]], optional): A list of case
+        case_identifiers (Iterable[str] | None, optional): A list of case
             identifiers. If not provided the subjects will be identified by
             their index Defaults to None.
         verbose (bool): Whether or not to print a log statement summarizing

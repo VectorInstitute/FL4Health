@@ -151,7 +151,7 @@ class NnunetServer(FlServer):
 
         self.checkpoint_and_state_module.model = model
 
-    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
+    def update_before_fit(self, num_rounds: int, timeout: float | None) -> None:
         """
         Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
         uses this method to sample a client for properties which are required to initialize the server.
@@ -166,7 +166,7 @@ class NnunetServer(FlServer):
 
         Args:
             num_rounds (int): The number of server rounds of FL to be performed
-            timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
+            timeout (float | None, optional): The server's timeout parameter. Useful if one is requesting
                 information from a client. Defaults to None, which indicates indefinite timeout.
         """
 

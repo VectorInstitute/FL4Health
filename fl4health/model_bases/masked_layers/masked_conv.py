@@ -25,8 +25,8 @@ class MaskedConv1d(nn.Conv1d):
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv1d layers.
@@ -142,8 +142,8 @@ class MaskedConv2d(nn.Conv2d):
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv2d layers.
@@ -256,8 +256,8 @@ class MaskedConv3d(nn.Conv3d):
         groups: int = 1,
         bias: bool = True,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked Conv2d layers.
@@ -369,8 +369,8 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         bias: bool = True,
         dilation: _size_1_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose1d layers. For more information on transposed convolution,
@@ -433,7 +433,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -513,8 +513,8 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         bias: bool = True,
         dilation: _size_2_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose2d layers. For more information on transposed convolution,
@@ -576,7 +576,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -653,8 +653,8 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         bias: bool = True,
         dilation: _size_3_t = 1,
         padding_mode: str = "zeros",
-        device: Optional[torch.device] = None,
-        dtype: Optional[torch.dtype] = None,
+        device: torch.device | None = None,
+        dtype: torch.dtype | None = None,
     ) -> None:
         """
         Implementation of masked ConvTranspose3d layers. For more information on transposed convolution,
@@ -716,7 +716,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: Optional[List[int]] = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")

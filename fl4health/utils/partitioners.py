@@ -17,9 +17,9 @@ class DirichletLabelBasedAllocation(Generic[T]):
         self,
         number_of_partitions: int,
         unique_labels: List[T],
-        min_label_examples: Optional[int] = None,
-        beta: Optional[float] = None,
-        prior_distribution: Optional[Dict[T, np.ndarray]] = None,
+        min_label_examples: int | None = None,
+        beta: float | None = None,
+        prior_distribution: Dict[T, np.ndarray] | None = None,
     ) -> None:
         """
         The class supports partitioning of a dataset into a set of datasets (of the same type) via Dirichlet
@@ -48,16 +48,16 @@ class DirichletLabelBasedAllocation(Generic[T]):
         Args:
             number_of_partitions (int): Number of new datasets that we want to break the current dataset into
             unique_labels (List[T]): This is the set of labels through which we'll iterate to perform allocation
-            min_label_examples (Optional[int], optional): This is an optional input if you want to ensure a minimum
+            min_label_examples (int | None, optional): This is an optional input if you want to ensure a minimum
                 number of labels is present on each partition. If prior distribution is provided, this is ignored.
                 NOTE: This does not guarantee feasibility. That is, if you have a very small beta and request a large
                 minimum number here, you are unlikely to satisfy this request. In partitioning, if the minimum isn't
                 satisfied, we resample from the Dirichlet distribution. This is repeated some limited number of times.
                 Otherwise the partitioner "gives up". Defaults to None.
-            beta (Optional[float]): This controls the heterogeneity of the partition allocations. The smaller the beta,
+            beta (float | None): This controls the heterogeneity of the partition allocations. The smaller the beta,
               the more skewed the label assignments will be to different clients. It is mutually exclusive with given
               prior distribution.
-            prior_distribution (Optional[Dict[T, np.ndarray]], optional): This is an optional input if you want to
+            prior_distribution (Dict[T, np.ndarray] | None, optional): This is an optional input if you want to
               provide a prior distribution for the Dirichlet distribution. This is useful if you want to make sure that
               the partitioning of test data is similar to the partitioning of the training data. Defaults to None. It
               is mutually exclusive with the beta parameter and min_label_examples.
@@ -149,7 +149,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
         return partitioned_indices[:-1], min_samples, partition_allocations
 
     def partition_dataset(
-        self, original_dataset: D, max_retries: Optional[int] = 5
+        self, original_dataset: D, max_retries: int | None = 5
     ) -> Tuple[List[D], Dict[T, np.ndarray]]:
         """
         Attempts partitioning of the original dataset up to max_retries times. Retries are potentially required if
@@ -159,7 +159,7 @@ class DirichletLabelBasedAllocation(Generic[T]):
 
         Args:
             original_dataset (D): The dataset to be partitioned
-            max_retries (Optional[int], optional): Number of times to attempt to satisfy a user provided minimum
+            max_retries (int | None, optional): Number of times to attempt to satisfy a user provided minimum
                 label-associated data points per partition. Set this value to None if you want to retry indefinitely.
                 Defaults to 5.
 

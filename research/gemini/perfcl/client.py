@@ -40,7 +40,7 @@ class GeminiPerFclClient(FendaClient):
         checkpoint_stub: str,
         run_name: str = "",
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
-        checkpointer: Optional[TorchModuleCheckpointer] = None,
+        checkpointer: TorchModuleCheckpointer | None = None,
         extra_loss_weights: Tuple[float, float] = (10, 10),
     ) -> None:
         # Checkpointing: create a string of the names of the hospitals

@@ -14,7 +14,7 @@ class EnsembleModel(nn.Module):
     def __init__(
         self,
         ensemble_models: Dict[str, nn.Module],
-        aggregation_mode: Optional[EnsembleAggregationMode] = EnsembleAggregationMode.AVERAGE,
+        aggregation_mode: EnsembleAggregationMode | None = EnsembleAggregationMode.AVERAGE,
     ) -> None:
         """
         Class that acts a wrapper to an ensemble of models to be trained in federated manner with support
@@ -22,7 +22,7 @@ class EnsembleModel(nn.Module):
 
         Args:
             ensemble_models (Dict[str, nn.Module]): A dictionary of models that make up the ensemble.
-            aggregation_mode (Optional[EnsembleAggregationMode]): The mode in which to aggregate the
+            aggregation_mode (EnsembleAggregationMode | None): The mode in which to aggregate the
                 predictions of individual models.
         """
         super().__init__()

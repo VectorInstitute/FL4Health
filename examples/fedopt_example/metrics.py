@@ -132,7 +132,7 @@ class CompoundMetric(Metric):
                     self.outcome_dict[true_class].false_negative += count
                     self.outcome_dict[pred_class].false_positive += count
 
-    def compute(self, name: Optional[str]) -> Metrics:
+    def compute(self, name: str | None) -> Metrics:
         sum_f1 = 0.0
         results: Metrics = {"total_preds": self.total_preds, "true_preds": self.true_preds}
         log_string = ""

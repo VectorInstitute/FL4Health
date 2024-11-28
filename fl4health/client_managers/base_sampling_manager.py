@@ -9,7 +9,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
     """Overrides the Simple Client Manager to Provide Fixed Sampling without replacement for Clients"""
 
     def sample(
-        self, num_clients: int, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
+        self, num_clients: int, min_num_clients: int | None = None, criterion: Criterion | None = None
     ) -> List[ClientProxy]:
         raise NotImplementedError(
             "The basic sampling function is not implemented for these managers. "
@@ -19,12 +19,12 @@ class BaseFractionSamplingManager(SimpleClientManager):
     def sample_fraction(
         self,
         sample_fraction: float,
-        min_num_clients: Optional[int] = None,
-        criterion: Optional[Criterion] = None,
+        min_num_clients: int | None = None,
+        criterion: Criterion | None = None,
     ) -> List[ClientProxy]:
         raise NotImplementedError
 
-    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Optional[Criterion] = None) -> List:
+    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Criterion | None = None) -> List:
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
         else:
@@ -36,9 +36,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
 
         return available_cids
 
-    def sample_all(
-        self, min_num_clients: Optional[int] = None, criterion: Optional[Criterion] = None
-    ) -> List[ClientProxy]:
+    def sample_all(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> List[ClientProxy]:
         available_cids = self.wait_and_filter(min_num_clients, criterion)
 
         return [self.clients[cid] for cid in available_cids]

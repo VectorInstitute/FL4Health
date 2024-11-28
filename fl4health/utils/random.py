@@ -9,7 +9,7 @@ from flwr.common.logger import log
 
 
 def set_all_random_seeds(
-    seed: Optional[int] = 42, use_deterministic_torch_algos: bool = False, disable_torch_benchmarking: bool = False
+    seed: int | None = 42, use_deterministic_torch_algos: bool = False, disable_torch_benchmarking: bool = False
 ) -> None:
     """
     Set seeds for python random, numpy random, and pytorch random. It also offers the option to force pytorch to use
@@ -24,7 +24,7 @@ def set_all_random_seeds(
     here: https://docs.nvidia.com/cuda/cublas/index.html#results-reproducibility
 
     Args:
-        seed (Optional[int], optional): The seed value to be used for random number generators. Default is 42. Seed
+        seed (int | None, optional): The seed value to be used for random number generators. Default is 42. Seed
             setting will no-op if the seed is explicitly set to None
         use_deterministic_torch_algos (bool, optional): Whether or not to set torch.use_deterministic_algorithms to
             True. Defaults to False.

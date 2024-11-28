@@ -15,8 +15,8 @@ class TabularFeature:
         self,
         feature_name: str,
         feature_type: TabularType,
-        fill_value: Optional[Scalar],
-        metadata: Optional[MetaData] = None,
+        fill_value: Scalar | None,
+        metadata: MetaData | None = None,
     ) -> None:
         """
         Information that represents a tabular feature.
@@ -24,7 +24,7 @@ class TabularFeature:
         Args:
             feature_name (str): name of the feature.
             feature_type (TabularType): data type of the feature.
-            fill_value (Optional[Scalar]): the default fill value for this feature when it is missing in a dataframe.
+            fill_value (Scalar | None): the default fill value for this feature when it is missing in a dataframe.
             metadata (MetaData, optional): metadata associated with this feature.
             For example, if the feature is categorical, then metadata would be all the categories. Defaults to None.
         """

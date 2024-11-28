@@ -189,15 +189,15 @@ class UNet3D(nn.Module):
         dimensions: int = 3,
         num_encoding_blocks: int = 3,
         out_channels_first_layer: int = 8,
-        normalization: Optional[str] = "batch",
+        normalization: str | None = "batch",
         pooling_type: str = "max",
         upsampling_type: str = "linear",
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 1,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "PReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "PReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
         monte_carlo_dropout: float = 0,
     ):
@@ -304,13 +304,13 @@ class ConvolutionalBlock(nn.Module):
         dimensions: int,
         in_channels: int,
         out_channels: int,
-        normalization: Optional[str] = None,
+        normalization: str | None = None,
         kernel_size: int = 3,
-        activation: Optional[str] = "ReLU",
-        preactivation: Optional[bool] = False,
+        activation: str | None = "ReLU",
+        preactivation: bool | None = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        dilation: Optional[int] = None,
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -373,7 +373,7 @@ class ConvolutionalBlock(nn.Module):
         return self.block(x)
 
     @staticmethod
-    def add_if_not_none(module_list: nn.ModuleList, module: Optional[nn.Module]) -> None:
+    def add_if_not_none(module_list: nn.ModuleList, module: nn.Module | None) -> None:
         if module is not None:
             module_list.append(module)
 
@@ -391,13 +391,13 @@ class Decoder(nn.Module):
         dimensions: int,
         upsampling_type: str,
         num_decoding_blocks: int,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -436,13 +436,13 @@ class DecodingBlock(nn.Module):
         in_channels_skip_connection: int,
         dimensions: int,
         upsampling_type: str,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = True,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -554,13 +554,13 @@ class Encoder(nn.Module):
         dimensions: int,
         pooling_type: str,
         num_encoding_blocks: int,
-        normalization: Optional[str],
+        normalization: str | None,
         preactivation: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        initial_dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        initial_dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
@@ -613,21 +613,21 @@ class EncodingBlock(nn.Module):
         in_channels: int,
         out_channels_first: int,
         dimensions: int,
-        normalization: Optional[str],
-        pooling_type: Optional[str],
-        preactivation: Optional[bool] = False,
+        normalization: str | None,
+        pooling_type: str | None,
+        preactivation: bool | None = False,
         is_first_block: bool = False,
         residual: bool = False,
         padding: int = 0,
         padding_mode: str = "zeros",
-        activation: Optional[str] = "ReLU",
-        dilation: Optional[int] = None,
+        activation: str | None = "ReLU",
+        dilation: int | None = None,
         dropout: float = 0,
     ):
         super().__init__()
 
-        self.preactivation: Optional[bool] = preactivation
-        self.normalization: Optional[str] = normalization
+        self.preactivation: bool | None = preactivation
+        self.normalization: str | None = normalization
 
         self.residual = residual
 
@@ -710,7 +710,7 @@ def get_downsampling_layer(dimensions: int, pooling_type: str, kernel_size: int 
 
 # Autoencoder: encoder and decoder units
 class VariationalEncoder(nn.Module):
-    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+    def __init__(self, embedding_size: int = 2, condition_vector_size: int | None = None) -> None:
         super().__init__()
         if condition_vector_size is not None:
             self.fc_mu = nn.Linear(100 + condition_vector_size, embedding_size)
@@ -719,21 +719,21 @@ class VariationalEncoder(nn.Module):
             self.fc_mu = nn.Linear(100, embedding_size)
             self.fc_logvar = nn.Linear(100, embedding_size)
 
-    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> Tuple[torch.Tensor, torch.Tensor]:
         if condition is not None:
             return self.fc_mu(torch.cat((x, condition), dim=-1)), self.fc_logvar(torch.cat((x, condition), dim=-1))
         return self.fc_mu(x), self.fc_logvar(x)
 
 
 class VariationalDecoder(nn.Module):
-    def __init__(self, embedding_size: int = 2, condition_vector_size: Optional[int] = None) -> None:
+    def __init__(self, embedding_size: int = 2, condition_vector_size: int | None = None) -> None:
         super().__init__()
         if condition_vector_size is not None:
             self.linear = nn.Linear(embedding_size + condition_vector_size, 100)
         else:
             self.linear = nn.Linear(embedding_size, 100)
 
-    def forward(self, x: torch.Tensor, condition: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> torch.Tensor:
         if condition is not None:
             return self.linear(torch.cat((x, condition), dim=-1))
         return self.linear(x)

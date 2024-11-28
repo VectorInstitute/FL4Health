@@ -24,20 +24,20 @@ class PersonalServer(FlServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
     ) -> None:
         # Personal approaches don't train a "server" model. Rather, each client trains a client specific model with
         # some globally shared weights. So we don't checkpoint a global model
         super().__init__(
             client_manager=client_manager, fl_config=fl_config, strategy=strategy, checkpoint_and_state_module=None
         )
-        self.best_aggregated_loss: Optional[float] = None
+        self.best_aggregated_loss: float | None = None
 
     def evaluate_round(
         self,
         server_round: int,
-        timeout: Optional[float],
-    ) -> Optional[Tuple[Optional[float], Dict[str, Scalar], EvaluateResultsAndFailures]]:
+        timeout: float | None,
+    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)

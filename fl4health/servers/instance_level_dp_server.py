@@ -26,11 +26,11 @@ class InstanceLevelDpServer(FlServer):
         batch_size: int,
         num_server_rounds: int,
         strategy: BasicFedAvg,
-        local_epochs: Optional[int] = None,
-        local_steps: Optional[int] = None,
+        local_epochs: int | None = None,
+        local_steps: int | None = None,
         checkpoint_and_state_module: OpacusServerCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
-        delta: Optional[float] = None,
+        delta: float | None = None,
         on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
@@ -53,10 +53,10 @@ class InstanceLevelDpServer(FlServer):
             strategy (BasicFedAvg): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. this must be an
                 OpacusBasicFedAvg strategy to ensure proper treatment of the model in the Opacus framework
-            local_epochs (Optional[int], optional): Number of local epochs to be performed on the client-side. This is
+            local_epochs (int | None, optional): Number of local epochs to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
-            local_steps (Optional[int], optional): Number of local steps to be performed on the client-side. This is
+            local_steps (int | None, optional): Number of local steps to be performed on the client-side. This is
                 used in privacy accounting. One of local_epochs or local_steps should be defined, but not both.
                 Defaults to None.
             checkpoint_and_state_module (OpacusServerCheckpointAndStateModule | None, optional): This module is used
@@ -66,7 +66,7 @@ class InstanceLevelDpServer(FlServer):
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
             reporters (Sequence[BaseReporter] | None, optional): A sequence of FL4Health
                 reporters which the client should send data to.
-            delta (Optional[float], optional): The delta value for epsilon-delta DP accounting. If None it defaults to
+            delta (float | None, optional): The delta value for epsilon-delta DP accounting. If None it defaults to
                 being 1/total_samples in the FL run. Defaults to None.
             on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
@@ -107,13 +107,13 @@ class InstanceLevelDpServer(FlServer):
         self.num_server_rounds = num_server_rounds
         self.delta = delta
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
         """
         Run federated averaging for a number of rounds.
 
         Args:
             num_rounds (int): Number of server rounds to run.
-            timeout (Optional[float]): The amount of time in seconds that the server will wait for results from the
+            timeout (float | None): The amount of time in seconds that the server will wait for results from the
                 clients selected to participate in federated training.
 
         Returns:

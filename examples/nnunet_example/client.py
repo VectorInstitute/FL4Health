@@ -36,8 +36,8 @@ def main(
     always_preprocess: bool = False,
     verbose: bool = True,
     compile: bool = True,
-    intermediate_client_state_dir: Optional[str] = None,
-    client_name: Optional[str] = None,
+    intermediate_client_state_dir: str | None = None,
+    client_name: str | None = None,
 ) -> None:
     # Log device and server address
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -63,7 +63,7 @@ class TabularFeaturesInfoEncoder:
         df: pd.DataFrame,
         feature_name: str,
         feature_type: TabularType,
-        fill_values: Optional[Dict[str, Scalar]],
+        fill_values: Dict[str, Scalar] | None,
     ) -> TabularFeature:
         if fill_values is None or feature_name not in fill_values:
             fill_value = TabularType.get_default_fill_value(feature_type)
@@ -88,7 +88,7 @@ class TabularFeaturesInfoEncoder:
         df: pd.DataFrame,
         id_column: str,
         target_columns: Union[str, List[str]],
-        fill_values: Optional[Dict[str, Scalar]] = None,
+        fill_values: Dict[str, Scalar] | None = None,
     ) -> TabularFeaturesInfoEncoder:
         features_list = sorted(df.columns.values.tolist())
         features_list.remove(id_column)

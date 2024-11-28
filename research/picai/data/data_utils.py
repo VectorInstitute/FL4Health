@@ -119,14 +119,14 @@ def get_seg_transform() -> Compose:
     return Compose(transforms)
 
 
-def z_score_norm(image: torch.Tensor, quantile: Optional[float] = None) -> torch.Tensor:
+def z_score_norm(image: torch.Tensor, quantile: float | None = None) -> torch.Tensor:
     """
     Function that performs instance wise Z-score normalization (mean=0; stdev=1), where intensities
     below or above the given percentile are discarded.
 
     Args:
         image (torch.Tensor): N-dimensional image to be normalized and optionally clipped.
-        quantile (Optional[float]): Quantile used to set threshold to clip activations.
+        quantile (float | None): Quantile used to set threshold to clip activations.
             If None, no clipping occurs. If a quantile is specified, must be 0 =< 0.5
 
     Returns:

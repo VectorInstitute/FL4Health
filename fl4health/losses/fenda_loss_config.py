@@ -36,9 +36,9 @@ class MoonContrastiveLossContainer:
 class ConstrainedFendaLossContainer:
     def __init__(
         self,
-        perfcl_loss_config: Optional[PerFclLossContainer],
-        cosine_similarity_loss_config: Optional[CosineSimilarityLossContainer],
-        contrastive_loss_config: Optional[MoonContrastiveLossContainer],
+        perfcl_loss_config: PerFclLossContainer | None,
+        cosine_similarity_loss_config: CosineSimilarityLossContainer | None,
+        contrastive_loss_config: MoonContrastiveLossContainer | None,
     ) -> None:
         self.perfcl_loss_config = perfcl_loss_config
         self.cos_sim_loss_config = cosine_similarity_loss_config

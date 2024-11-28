@@ -14,7 +14,7 @@ from batchgenerators.utilities.file_and_folder_operations import load_json, save
 from monai.apps.auto3dseg.auto_runner import AutoRunner
 
 
-def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str = ".nii.gz") -> str:
+def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = ".nii.gz") -> str:
     """
     Generates a MONAI dataset list for an nnUNet structured dataset
 
@@ -24,7 +24,7 @@ def gen_dataset_list(data_dir: str, output_path: Optional[str] = None, ext: str 
 
     Args:
         data_dir (str): Path to the nnUNet_raw dataset.
-        output_path (Optional[str]): Where and what to save the file as. Must be a json.
+        output_path (str | None): Where and what to save the file as. Must be a json.
             Default is to save as datalist.json in the data_dir
 
     Returns:

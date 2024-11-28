@@ -24,7 +24,7 @@ class CifarClient(BasicClient):
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
 
-    def get_test_data_loader(self, config: Config) -> Optional[DataLoader]:
+    def get_test_data_loader(self, config: Config) -> DataLoader | None:
         batch_size = narrow_dict_type(config, "batch_size", int)
         test_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return test_loader

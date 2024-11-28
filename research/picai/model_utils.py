@@ -6,7 +6,7 @@ from monai.networks.nets.unet import UNet
 
 
 def get_model(
-    device: Optional[torch.device] = None,
+    device: torch.device | None = None,
     model_type: str = "unet",
     spatial_dims: int = 3,
     in_channels: int = 3,

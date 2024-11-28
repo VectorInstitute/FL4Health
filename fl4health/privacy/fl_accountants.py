@@ -24,7 +24,7 @@ class FlInstanceLevelAccountant:
         epochs_per_round: int,
         client_batch_sizes: List[int],
         client_dataset_sizes: List[int],
-        moment_orders: Optional[List[float]] = None,
+        moment_orders: List[float] | None = None,
     ) -> None:
         """
         client_sampling_rate: probability that each client will be included in a round
@@ -75,9 +75,7 @@ class FlInstanceLevelAccountant:
 
 
 class ClientLevelAccountant(ABC):
-    def __init__(
-        self, noise_multiplier: Union[float, List[float]], moment_orders: Optional[List[float]] = None
-    ) -> None:
+    def __init__(self, noise_multiplier: Union[float, List[float]], moment_orders: List[float] | None = None) -> None:
         self.noise_multiplier = noise_multiplier
         self.accountant = MomentsAccountant(moment_orders)
 
@@ -106,7 +104,7 @@ class FlClientLevelAccountantPoissonSampling(ClientLevelAccountant):
         self,
         client_sampling_rate: Union[float, List[float]],
         noise_multiplier: Union[float, List[float]],
-        moment_orders: Optional[List[float]] = None,
+        moment_orders: List[float] | None = None,
     ) -> None:
         """
         client_sampling_rate: probability that each client will be included in a round
@@ -144,7 +142,7 @@ class FlClientLevelAccountantFixedSamplingNoReplacement(ClientLevelAccountant):
         n_total_clients: int,
         n_clients_sampled: Union[int, List[int]],
         noise_multiplier: Union[float, List[float]],
-        moment_orders: Optional[List[float]] = None,
+        moment_orders: List[float] | None = None,
     ) -> None:
         """
         n_total_clients: total number of clients to be sampled from

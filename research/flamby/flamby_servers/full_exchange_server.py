@@ -14,7 +14,7 @@ class FullExchangeServer(FlServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        strategy: Optional[Strategy] = None,
+        strategy: Strategy | None = None,
         checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
     ) -> None:
         super().__init__(

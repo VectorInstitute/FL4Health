@@ -25,8 +25,8 @@ def construct_config(
     batch_size: int,
     noise_multiplier: float,
     clipping_bound: float,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     # NOTE: a new client is created in each round
     # NOTE: The omitted variable is server_round which allows for dynamically changing the config each round
@@ -44,8 +44,8 @@ def fit_config(
     noise_multiplier: float,
     clipping_bound: float,
     current_round: int,
-    local_epochs: Optional[int] = None,
-    local_steps: Optional[int] = None,
+    local_epochs: int | None = None,
+    local_steps: int | None = None,
 ) -> Config:
     return construct_config(
         current_round,
