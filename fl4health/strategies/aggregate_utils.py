@@ -1,17 +1,16 @@
 from functools import reduce
-from typing import List, Tuple
 
 import numpy as np
 from flwr.common import NDArrays
 from flwr.server.strategy.aggregate import aggregate, weighted_loss_avg
 
 
-def aggregate_results(results: List[Tuple[NDArrays, int]], weighted: bool = True) -> NDArrays:
+def aggregate_results(results: list[tuple[NDArrays, int]], weighted: bool = True) -> NDArrays:
     """
     Compute weighted or unweighted average.
 
     Args:
-        results (List[Tuple[NDArrays, int]]): This is a set of NDArrays (list of numpy arrays) and the number of
+        results (list[tuple[NDArrays, int]]): This is a set of NDArrays (list of numpy arrays) and the number of
             relevant samples from each client (training or validation samples where appropriate). These are to be
             aggregated together in a weighted or unweighted average. The NDArrays most often represent model states.
         weighted (bool, optional): Whether or not the aggregation is a weighted average (by the sample counts
@@ -33,12 +32,12 @@ def aggregate_results(results: List[Tuple[NDArrays, int]], weighted: bool = True
         return [reduce(np.add, layer_updates) for layer_updates in zip(*weighted_weights)]
 
 
-def aggregate_losses(results: List[Tuple[int, float]], weighted: bool = True) -> float:
+def aggregate_losses(results: list[tuple[int, float]], weighted: bool = True) -> float:
     """
     Aggregate evaluation results obtained from multiple clients.
 
     Args:
-        results (List[Tuple[int, float]]): A list of sample counts and loss values (in that order). The sample counts
+        results (list[tuple[int, float]]): A list of sample counts and loss values (in that order). The sample counts
             from each client (training or validation samples where appropriate) are used if weighted averaging is
             requested.
         weighted (bool, optional): Whether or not the aggregation is a weighted average (by the sample counts

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from logging import INFO
-from typing import Dict, List
 
 import torch
 from flwr.common.logger import log
@@ -37,7 +36,7 @@ class Outcome:
             return 0.0
         return (2 * precision * recall) / (precision + recall)
 
-    def summarize(self) -> Dict[str, float]:
+    def summarize(self) -> dict[str, float]:
         return {
             f"{self.class_name}_precision": self.get_precision(),
             f"{self.class_name}_recall": self.get_recall(),
@@ -63,7 +62,7 @@ class Outcome:
 
 
 class ServerMetrics:
-    def __init__(self, true_preds: int, total_preds: int, outcomes: List[Outcome]) -> None:
+    def __init__(self, true_preds: int, total_preds: int, outcomes: list[Outcome]) -> None:
         self.true_preds = true_preds
         self.total_preds = total_preds
         self.outcomes = outcomes
@@ -91,10 +90,10 @@ class CompoundMetric(Metric):
         super().__init__(name)
         self.true_preds = 0
         self.total_preds = 0
-        self.classes: List[str]
-        self.label_to_class: Dict[int, str]
+        self.classes: list[str]
+        self.label_to_class: dict[int, str]
         self.n_classes: int
-        self.outcome_dict: Dict[str, Outcome]
+        self.outcome_dict: dict[str, Outcome]
 
     def setup(self, label_encoder: LabelEncoder) -> None:
         """
@@ -109,7 +108,7 @@ class CompoundMetric(Metric):
         self.label_to_class = label_encoder.label_to_class
         self.n_classes = len(self.classes)
 
-    def _initialize_outcomes(self, classes: List[str]) -> Dict[str, Outcome]:
+    def _initialize_outcomes(self, classes: list[str]) -> dict[str, Outcome]:
         return {topic: Outcome(topic) for topic in classes}
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:

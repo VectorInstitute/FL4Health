@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence
+from typing import Sequence
 
 import torch
 from flwr.common.logger import log
@@ -69,7 +69,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
             client_name=client_name,
         )
         # These are the tensors that will be used to compute the penalty loss
-        self.drift_penalty_tensors: List[torch.Tensor]
+        self.drift_penalty_tensors: list[torch.Tensor]
         # Exchanger with packing to be able to exchange the weights and auxiliary information with the server for
         # adaptation
         self.parameter_exchanger: FullParameterExchangerWithPacking[float]
@@ -187,7 +187,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
         return FullParameterExchangerWithPacking(ParameterPackerAdaptiveConstraint())
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and the corresponding loss
         dictionary. We use this to store the training loss that we want to use to adapt the penalty weight parameter
@@ -195,7 +195,7 @@ class AdaptiveDriftConstraintClient(BasicClient):
 
         Args:
             local_steps (int): The number of steps so far in the round in the local training.
-            loss_dict (Dict[str, float]): A dictionary of losses from local training.
+            loss_dict (dict[str, float]): A dictionary of losses from local training.
             config (Config): The config from the server
         """
         assert "loss_for_adaptation" in loss_dict

@@ -1,6 +1,6 @@
 from functools import partial
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import SimpleITK as sitk
@@ -29,8 +29,8 @@ class MockCase(Case):
         scan_paths: Sequence[Path],
         annotation_path: Path,
         settings: PreprocessingSettings,
-        original_scan_sizes: Sequence[Tuple[int, int, int]] = [(256, 256, 20), (512, 512, 40), (128, 128, 10)],
-        original_annotation_size: Tuple[int, int, int] = (384, 384, 30),
+        original_scan_sizes: Sequence[tuple[int, int, int]] = [(256, 256, 20), (512, 512, 40), (128, 128, 10)],
+        original_annotation_size: tuple[int, int, int] = (384, 384, 30),
     ) -> None:
         super().__init__(scan_paths, annotation_path, settings)
         self.original_scan_sizes = original_scan_sizes
@@ -41,7 +41,7 @@ class MockCase(Case):
         self.scans = [sitk.GetImageFromArray(scan) for scan in np_scans]
         self.annotation = sitk.GetImageFromArray(np.random.randint(0, 5, self.original_annotation_size))
 
-    def write(self) -> Tuple[Sequence[Path], Path]:
+    def write(self) -> tuple[Sequence[Path], Path]:
         return ([Path("") for _ in range(3)], Path(""))
 
 

@@ -1,6 +1,6 @@
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Tuple, TypeVar, Union, cast
+from typing import Callable, TypeVar, Union, cast
 
 import torch
 from torch.utils.data import Dataset
@@ -26,7 +26,7 @@ class BaseDataset(ABC, Dataset):
             self.target_transform = g
 
     @abstractmethod
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         raise NotImplementedError
 
     @abstractmethod
@@ -46,7 +46,7 @@ class TensorDataset(BaseDataset):
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.targets is not None
 
         data, target = self.data[index], self.targets[index]
@@ -75,7 +75,7 @@ class SslTensorDataset(TensorDataset):
 
         super().__init__(data, targets, transform, target_transform)
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         data = self.data[index]
 
         assert self.target_transform is not None, "Target transform cannot be None."
@@ -92,21 +92,21 @@ class SslTensorDataset(TensorDataset):
 
 
 class DictionaryDataset(Dataset):
-    def __init__(self, data: Dict[str, List[torch.Tensor]], targets: torch.Tensor) -> None:
+    def __init__(self, data: dict[str, list[torch.Tensor]], targets: torch.Tensor) -> None:
         """
         A torch dataset that supports a dictionary of input data rather than just a torch.Tensor. This kind of dataset
         is useful when dealing with non-trivial inputs to a model. For example, a language model may require token ids
         AND attention masks. This dataset supports that functionality.
 
         Args:
-            data (Dict[str, List[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
+            data (dict[str, list[torch.Tensor]]): A set of data for model training/input in the form of a dictionary
                 of tensors.
             targets (torch.Tensor): Target tensor.
         """
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[Dict[str, torch.Tensor], torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
         return {key: val[index] for key, val in self.data.items()}, self.targets[index]
 
     def __len__(self) -> int:
@@ -131,7 +131,7 @@ class SyntheticDataset(TensorDataset):
         self.data = data
         self.targets = targets
 
-    def __getitem__(self, index: int) -> Tuple[torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.targets is not None
 
         data, target = self.data[index], self.targets[index]
@@ -169,7 +169,7 @@ def select_by_indices(dataset: D, selected_indices: torch.Tensor) -> D:
         return cast(D, modified_dataset)
     elif isinstance(dataset, DictionaryDataset):
         new_targets = dataset.targets[selected_indices]
-        new_data: Dict[str, List[torch.Tensor]] = {}
+        new_data: dict[str, list[torch.Tensor]] = {}
         for key, val in dataset.data.items():
             # Since val is a list of tensors, we can't directly index into it
             # using selected_indices.

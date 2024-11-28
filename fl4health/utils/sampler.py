@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from logging import INFO, WARN
-from typing import Any, List, Set, TypeVar, Union
+from typing import Any, Set, TypeVar, Union
 
 import numpy as np
 import torch
@@ -15,12 +15,12 @@ D = TypeVar("D", bound=Union[TensorDataset, DictionaryDataset])
 
 class LabelBasedSampler(ABC):
 
-    def __init__(self, unique_labels: List[Any]) -> None:
+    def __init__(self, unique_labels: list[Any]) -> None:
         """
         This is an abstract class to be extended to create dataset samplers based on the class of samples.
 
         Args:
-            unique_labels (List[Any]): The full set of labels contained in the dataset.
+            unique_labels (list[Any]): The full set of labels contained in the dataset.
         """
         self.unique_labels = unique_labels
         self.num_classes = len(self.unique_labels)
@@ -31,7 +31,7 @@ class LabelBasedSampler(ABC):
 
 
 class MinorityLabelBasedSampler(LabelBasedSampler):
-    def __init__(self, unique_labels: List[T], downsampling_ratio: float, minority_labels: Set[T]) -> None:
+    def __init__(self, unique_labels: list[T], downsampling_ratio: float, minority_labels: Set[T]) -> None:
         """
         This class is used to subsample a dataset so the classes are distributed in a non-IID way.
         In particular, the MinorityLabelBasedSampler explicitly downsamples classes based on the
@@ -40,7 +40,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
         the resulting subsampled dataset.
 
         Args:
-            unique_labels (List[T]): The full set of labels contained in the dataset.
+            unique_labels (list[T]): The full set of labels contained in the dataset.
             downsampling_ratio (float): The percentage to which the specified "minority" labels are downsampled. For
                 example, if a label L has 10 examples and the downsampling_ratio is 0.2, then 8 of the datapoints with
                 label L are discarded.
@@ -61,7 +61,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
             D: New dataset with downsampled labels.
         """
         assert dataset.targets is not None, "A label-based sampler requires targets but this dataset has no targets"
-        selected_indices_list: List[torch.Tensor] = []
+        selected_indices_list: list[torch.Tensor] = []
         for label in self.unique_labels:
             # Get indices of samples equal to the current label
             indices_of_label = (dataset.targets == label).nonzero()
@@ -99,7 +99,7 @@ class MinorityLabelBasedSampler(LabelBasedSampler):
 class DirichletLabelBasedSampler(LabelBasedSampler):
     def __init__(
         self,
-        unique_labels: List[Any],
+        unique_labels: list[Any],
         hash_key: int | None = None,
         sample_percentage: float = 0.5,
         beta: float = 100,
@@ -119,7 +119,7 @@ class DirichletLabelBasedSampler(LabelBasedSampler):
         np.random.dirichlet([1000]*5): array([0.2066252 , 0.19644968, 0.20080513, 0.19992536, 0.19619462])
 
         Args:
-            unique_labels (List[Any]): The full set of labels contained in the dataset.
+            unique_labels (list[Any]): The full set of labels contained in the dataset.
             sample_percentage (float, optional): The downsampling of the entire dataset to do. For example, if this
                 value is 0.5 and the dataset is of size 100, we will end up with 50 total data points. Defaults to 0.5.
             beta (float, optional): This controls the heterogeneity of the label sampling. The smaller the beta, the

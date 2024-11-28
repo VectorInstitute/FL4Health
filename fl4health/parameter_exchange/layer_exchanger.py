@@ -1,4 +1,4 @@
-from typing import List, Set, Tuple, Type, TypeVar
+from typing import Set, Type, TypeVar
 
 import torch
 import torch.nn as nn
@@ -13,7 +13,7 @@ TorchModule = TypeVar("TorchModule", bound=nn.Module)
 
 
 class FixedLayerExchanger(ParameterExchanger):
-    def __init__(self, layers_to_transfer: List[str]) -> None:
+    def __init__(self, layers_to_transfer: list[str]) -> None:
         self.layers_to_transfer = layers_to_transfer
 
     def apply_layer_filter(self, model: nn.Module) -> NDArrays:
@@ -55,7 +55,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         }
         # Needs to be an ordered collection to facilitate exchange consistency between server and client
         # NOTE: Layers here refers to a collection of parameters in the state dictionary
-        self.layers_to_transfer: List[str] = self.get_layers_to_transfer(model)
+        self.layers_to_transfer: list[str] = self.get_layers_to_transfer(model)
 
     def should_module_be_excluded(self, module: Type[TorchModule]) -> bool:
         return type(module) in self.module_exclusions
@@ -68,7 +68,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         # We filter out any parameters prefixed with the name of an excluded module, as stored in modules_to_filter
         return any([layer_name.startswith(module_to_filter) for module_to_filter in self.modules_to_filter])
 
-    def get_layers_to_transfer(self, model: nn.Module) -> List[str]:
+    def get_layers_to_transfer(self, model: nn.Module) -> list[str]:
         # We store the state dictionary keys that do not correspond to excluded modules as held in modules_to_filter
         return [name for name in model.state_dict().keys() if not self.should_layer_be_excluded(name)]
 
@@ -92,7 +92,7 @@ class LayerExchangerWithExclusions(ParameterExchanger):
         model.load_state_dict(current_state, strict=True)
 
 
-class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
+class DynamicLayerExchanger(PartialParameterExchanger[list[str]]):
     def __init__(
         self,
         layer_selection_function: LayerSelectionFunction,
@@ -114,7 +114,7 @@ class DynamicLayerExchanger(PartialParameterExchanger[List[str]]):
 
     def select_parameters(
         self, model: nn.Module, initial_model: nn.Module | None = None
-    ) -> Tuple[NDArrays, List[str]]:
+    ) -> tuple[NDArrays, list[str]]:
         return self.layer_selection_function(model, initial_model)
 
     def push_parameters(

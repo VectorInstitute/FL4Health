@@ -1,6 +1,6 @@
 import pickle
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -17,7 +17,7 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
     fixes this issue.
     """
 
-    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
         """
         Overriding the checkpointing strategy of the FunctionTorchCheckpointer to save model state dictionaries
         instead of using the torch.save workflow.
@@ -25,7 +25,7 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
         Args:
             model (nn.Module): Model to be potentially saved (should be an Opacus wrapped model)
             loss (float): Loss value associated with the model to be used in checkpointing decisions.
-            metrics (Dict[str, Scalar]): Metrics associated with the model to be used in checkpointing decisions.
+            metrics (dict[str, Scalar]): Metrics associated with the model to be used in checkpointing decisions.
         """
         assert isinstance(
             model, GradSampleModule
@@ -47,16 +47,16 @@ class OpacusCheckpointer(FunctionTorchModuleCheckpointer):
                 f"{self.comparison_str} Best score ({self.best_score})",
             )
 
-    def _process_state_dict_keys(self, opacus_state_dict: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_state_dict_keys(self, opacus_state_dict: dict[str, Any]) -> dict[str, Any]:
         """
         State dictionary keys for Opacus modules will be prefixed with an _module. So we remove these when loading
         the state information into a standard torch model.
 
         Args:
-            opacus_state_dict (Dict[str, Any]): A state dictionary produced by an Opacus GradSamplingModule
+            opacus_state_dict (dict[str, Any]): A state dictionary produced by an Opacus GradSamplingModule
 
         Returns:
-            Dict[str, Any]: A state dictionary with the _module. removed from the key prefixes to facilitate loading
+            dict[str, Any]: A state dictionary with the _module. removed from the key prefixes to facilitate loading
                 the state dictionary into a non-Opacus model.
         """
 
@@ -113,12 +113,12 @@ class LatestOpacusCheckpointer(OpacusCheckpointer):
         """
 
         # This function is required by the parent class, but not used in the LatestOpacusCheckpointer
-        def latest_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+        def latest_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return 0.0
 
         super().__init__(checkpoint_dir, checkpoint_name, latest_score_function, False)
 
-    def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, _: dict[str, Scalar]) -> None:
         assert isinstance(
             model, GradSampleModule
         ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"
@@ -141,14 +141,14 @@ class BestLossOpacusCheckpointer(OpacusCheckpointer):
 
         # The BestLossOpacusCheckpointer just uses the provided loss to scoring checkpoints. More complicated
         # approaches may be used by other classes.
-        def loss_score_function(loss: float, _: Dict[str, Scalar]) -> float:
+        def loss_score_function(loss: float, _: dict[str, Scalar]) -> float:
             return loss
 
         super().__init__(
             checkpoint_dir, checkpoint_name, checkpoint_score_function=loss_score_function, maximize=False
         )
 
-    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, model: GradSampleModule, loss: float, metrics: dict[str, Scalar]) -> None:
         assert isinstance(
             model, GradSampleModule
         ), f"Model is of type: {type(model)}. This checkpointer need only be used to checkpoint Opacus modules"

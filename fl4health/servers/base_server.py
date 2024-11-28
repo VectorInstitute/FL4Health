@@ -1,6 +1,6 @@
 import datetime
 from logging import DEBUG, ERROR, INFO, WARNING
-from typing import Callable, Dict, List, Sequence, Tuple, Union
+from typing import Callable, Sequence, Union
 
 import torch.nn as nn
 from flwr.common import EvaluateRes, Parameters
@@ -32,7 +32,7 @@ class FlServer(Server):
         strategy: Strategy | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -56,7 +56,7 @@ class FlServer(Server):
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -118,7 +118,7 @@ class FlServer(Server):
                 round_metrics.update({metric: vals[round][1]})
             self.reports_manager.report({"eval_round_metrics_centralized": round_metrics}, round + 1)
 
-    def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit_with_per_round_checkpointing(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Runs federated learning for a number of rounds. Heavily based on the fit method from the base
         server provided by flower (flwr.server.server.Server) except that it is resilient to preemptions.
@@ -130,7 +130,7 @@ class FlServer(Server):
             timeout (float | None): The timeout for clients to return results in a given FL round.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the losses and
+            tuple[History, float]: The first element of the tuple is a history object containing the losses and
                 metrics computed during training and validation. The second element of the tuple is
                 the elapsed time in seconds.
         """
@@ -207,7 +207,7 @@ class FlServer(Server):
         log(INFO, "FL finished in %s", str(elapsed_time))
         return self.history, elapsed_time.total_seconds()
 
-    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run federated learning for a number of rounds. This function also allows the server to perform some operations
         prior to fitting starting. This is useful, for example, if you need to communicate with the clients to
@@ -219,7 +219,7 @@ class FlServer(Server):
                 clients selected to participate in federated training.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also contains the elapsed time in seconds for the round.
         """
@@ -256,7 +256,7 @@ class FlServer(Server):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[Parameters | None, Dict[str, Scalar], FitResultsAndFailures] | None:
+    ) -> tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None:
         """
         This function is called at each round of federated training. The flow is generally the same as a flower
         server, where clients are sampled and client side training is requested from the clients that are chosen.
@@ -268,7 +268,7 @@ class FlServer(Server):
                 Defaults to None, which indicates indefinite timeout.
 
         Returns:
-            Tuple[Parameters | None, Dict[str, Scalar], FitResultsAndFailures] | None: The results of training
+            tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None: The results of training
                 on the client sit. The first set of parameters are the AGGREGATED parameters from the strategy. The
                 second is a dictionary of AGGREGATED metrics. The third component holds the individual (non-aggregated)
                 parameters, loss, and metrics for successful and unsuccessful client-side training.
@@ -304,7 +304,7 @@ class FlServer(Server):
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
-    def poll_clients_for_sample_counts(self, timeout: float | None) -> List[int]:
+    def poll_clients_for_sample_counts(self, timeout: float | None) -> list[int]:
         """
         Poll clients for sample counts from their training set, if you want to use this functionality your strategy
         needs to inherit from the StrategyWithPolling ABC and implement a configure_poll function.
@@ -314,7 +314,7 @@ class FlServer(Server):
                 then the server waits indefinitely.
 
         Returns:
-            List[int]: The number of training samples held by each client in the pool of available clients.
+            list[int]: The number of training samples held by each client in the pool of available clients.
         """
         # Poll clients for sample counts, if you want to use this functionality your strategy needs to inherit from
         # the StrategyWithPolling ABC and implement a configure_poll function
@@ -327,7 +327,7 @@ class FlServer(Server):
             timeout=timeout,
         )
 
-        sample_counts: List[int] = [
+        sample_counts: list[int] = [
             int(get_properties_res.properties["num_train_samples"]) for (_, get_properties_res) in results
         ]
         log(INFO, f"Polling complete: Retrieved {len(sample_counts)} sample counts")
@@ -338,7 +338,7 @@ class FlServer(Server):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # By default the checkpointing works off of the aggregated evaluation loss from each of the clients
         # NOTE: parameter aggregation occurs **before** evaluation, so the parameters held by the server have been
         # updated prior to this function being called.
@@ -460,7 +460,7 @@ class FlServer(Server):
     def _maybe_checkpoint(
         self,
         loss_aggregated: float,
-        metrics_aggregated: Dict[str, Scalar],
+        metrics_aggregated: dict[str, Scalar],
         server_round: int,
     ) -> None:
         """
@@ -469,7 +469,7 @@ class FlServer(Server):
 
         Args:
             loss_aggregated (float): aggregated loss value that can be used to determine whether to checkpoint
-            metrics_aggregated (Dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
+            metrics_aggregated (dict[str, Scalar]): aggregated metrics from each of the clients for checkpointing
             server_round (int): What round of federated training we're on. This is just for logging purposes.
         """
         self.checkpoint_and_state_module.maybe_checkpoint(self.parameters, loss_aggregated, metrics_aggregated)
@@ -509,8 +509,8 @@ class FlServer(Server):
         return get_parameters_res.parameters
 
     def _unpack_metrics(
-        self, results: List[Tuple[ClientProxy, EvaluateRes]]
-    ) -> Tuple[List[Tuple[ClientProxy, EvaluateRes]], List[Tuple[ClientProxy, EvaluateRes]]]:
+        self, results: list[tuple[ClientProxy, EvaluateRes]]
+    ) -> tuple[list[tuple[ClientProxy, EvaluateRes]], list[tuple[ClientProxy, EvaluateRes]]]:
         val_results = []
         test_results = []
 
@@ -539,23 +539,23 @@ class FlServer(Server):
     def _handle_result_aggregation(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[float | None, Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, EvaluateRes]],
+        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+    ) -> tuple[float | None, dict[str, Scalar]]:
         val_results, test_results = self._unpack_metrics(results)
 
         # Aggregate the validation results
-        val_aggregated_result: Tuple[
+        val_aggregated_result: tuple[
             float | None,
-            Dict[str, Scalar],
+            dict[str, Scalar],
         ] = self.strategy.aggregate_evaluate(server_round, val_results, failures)
         val_loss_aggregated, val_metrics_aggregated = val_aggregated_result
 
         # Aggregate the test results if they are present
         if len(test_results) > 0:
-            test_aggregated_result: Tuple[
+            test_aggregated_result: tuple[
                 float | None,
-                Dict[str, Scalar],
+                dict[str, Scalar],
             ] = self.strategy.aggregate_evaluate(server_round, test_results, failures)
             test_loss_aggregated, test_metrics_aggregated = test_aggregated_result
 
@@ -570,7 +570,7 @@ class FlServer(Server):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         """Validate current global model on a number of clients."""
         # Get clients and their respective instructions from strategy
         client_instructions = self.strategy.configure_evaluate(

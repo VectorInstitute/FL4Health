@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Callable
 
 import flwr as fl
 import torch
@@ -20,7 +20,7 @@ from fl4health.utils.load_data import ToNumpy, get_cifar10_data_and_target_tenso
 from fl4health.utils.typing import TorchTargetType
 
 
-def get_transforms() -> Tuple[Callable, Callable]:
+def get_transforms() -> tuple[Callable, Callable]:
     input_transform = transforms.Compose(
         [
             ToNumpy(),
@@ -47,7 +47,7 @@ def get_transforms() -> Tuple[Callable, Callable]:
     return input_transform, target_transform
 
 
-def get_pretrain_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, DataLoader]:
+def get_pretrain_dataset(data_dir: Path, batch_size: int) -> tuple[DataLoader, DataLoader]:
     data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
     train_data, _, val_data, _ = split_data_and_targets(data, targets)
 
@@ -65,7 +65,7 @@ def get_pretrain_dataset(data_dir: Path, batch_size: int) -> Tuple[DataLoader, D
 
 
 class SslCifarClient(BasicClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader = get_pretrain_dataset(self.data_path, batch_size)
         return train_loader, val_loader

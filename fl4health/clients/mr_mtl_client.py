@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
+from typing import Sequence
 
 import torch
 import torch.nn as nn
@@ -71,7 +71,7 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         # NOTE: The initial global model is used to house the aggregate weight updates at the beginning of a round,
         # because in MR-MTL, the local models are not updated with these aggregates.
         self.initial_global_model: nn.Module
-        self.initial_global_tensors: List[torch.Tensor]
+        self.initial_global_tensors: list[torch.Tensor]
 
     def setup_client(self, config: Config) -> None:
         """
@@ -155,12 +155,12 @@ class MrMtlClient(AdaptiveDriftConstraintClient):
         # Use the rest of the training loss computation from the AdaptiveDriftConstraintClient parent
         return super().compute_training_loss(preds, features, target)
 
-    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
         Validate the current model on the entire validation dataset.
 
         Returns:
-            Tuple[float, Dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics from validation.
         """
         # ensure that the initial global model is in eval mode
         assert not self.initial_global_model.training

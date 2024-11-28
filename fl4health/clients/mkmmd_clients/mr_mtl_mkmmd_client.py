@@ -1,6 +1,6 @@
 from logging import ERROR, INFO
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.logger import log
@@ -103,7 +103,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             self.flatten_feature_extraction_layers = {layer: True for layer in feature_extraction_layers}
         else:
             self.flatten_feature_extraction_layers = {}
-        self.mkmmd_losses: Dict[str, MkMmdLoss] = {}
+        self.mkmmd_losses: dict[str, MkMmdLoss] = {}
         for layer in self.flatten_feature_extraction_layers.keys():
             self.mkmmd_losses[layer] = MkMmdLoss(
                 device=self.device, minimize_type_two_error=True, normalize_features=True, layer_name=layer
@@ -154,7 +154,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
     def update_buffers(
         self, local_model: torch.nn.Module, initial_global_model: torch.nn.Module
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Update the feature buffer of the local and global features.
 
@@ -163,7 +163,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             initial_global_model (torch.nn.Module): Initial global model to extract features from.
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple containing the extracted
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple containing the extracted
             features using the local and initial global models.
         """
 
@@ -217,18 +217,18 @@ class MrMtlMkMmdClient(MrMtlClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, TorchFeatureType]:
+    ) -> tuple[TorchPredType, TorchFeatureType]:
         """
          Computes the predictions for both models and pack them into the prediction dictionary
 
          Args:
              input (TorchInputType): Inputs to be fed into the model. If input is
-                 of type Dict[str, torch.Tensor], it is assumed that the keys of
+                 of type dict[str, torch.Tensor], it is assumed that the keys of
                  input match the names of the keyword arguments of self.model.
                  forward().
 
          Returns:
-             Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
+             tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                  first element contains a dictionary of predictions indexed by
                  name and the second element contains intermediate activations
                  indexed by name. By passing features, we can compute all the
@@ -252,7 +252,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
         return {"prediction": preds}, features
 
-    def _maybe_checkpoint(self, loss: float, metrics: Dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
+    def _maybe_checkpoint(self, loss: float, metrics: dict[str, Scalar], checkpoint_mode: CheckpointMode) -> None:
         # Hooks need to be removed before checkpointing the model
         self.local_feature_extractor.remove_hooks()
         super()._maybe_checkpoint(loss=loss, metrics=metrics, checkpoint_mode=checkpoint_mode)
@@ -314,7 +314,7 @@ class MrMtlMkMmdClient(MrMtlClient):
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -324,7 +324,7 @@ class MrMtlMkMmdClient(MrMtlClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Dict[str, torch.Tensor]]: A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]: A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.

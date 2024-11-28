@@ -1,6 +1,6 @@
 from logging import WARNING
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 import torch.nn as nn
@@ -102,7 +102,7 @@ class ConstrainedFendaClient(FendaClient):
         """
         return features.reshape(len(features), -1)
 
-    def _perfcl_keys_present(self, features: Dict[str, torch.Tensor]) -> bool:
+    def _perfcl_keys_present(self, features: dict[str, torch.Tensor]) -> bool:
         target_keys = {
             "old_local_features",
             "old_global_features",
@@ -110,16 +110,16 @@ class ConstrainedFendaClient(FendaClient):
         }
         return target_keys.issubset(features.keys())
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input.
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor].
+            for the union of torch.Tensor and dict[str, torch.Tensor].
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -143,7 +143,7 @@ class ConstrainedFendaClient(FendaClient):
 
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called after client-side training concludes. If a contrastive or PerFCL loss function has
         been defined, it is used to save the local and global feature extraction weights/modules to be used in the
@@ -151,7 +151,7 @@ class ConstrainedFendaClient(FendaClient):
 
         Args:
             local_steps (int): Number of steps performed during training
-            loss_dict (Dict[str, float]): Losses computed during training.
+            loss_dict (dict[str, float]): Losses computed during training.
         """
         # Save the parameters of the old model
         assert isinstance(self.model, FendaModelWithFeatureState)
@@ -185,19 +185,19 @@ class ConstrainedFendaClient(FendaClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For FENDA, the loss is the total loss and the additional losses are the loss, total loss and, based on
         client attributes set from server config, cosine similarity loss, contrastive loss and perfcl losses.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `total_loss` and, based on client attributes set from server config, also
                     `cos_sim_loss`, `contrastive_loss`, `contrastive_loss_minimize` and `contrastive_loss_minimize`
@@ -252,9 +252,9 @@ class ConstrainedFendaClient(FendaClient):
         client attributes set from server config.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:

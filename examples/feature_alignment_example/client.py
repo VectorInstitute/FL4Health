@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import List, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import flwr as fl
 import numpy as np
@@ -28,11 +28,11 @@ class Mimic3TabularDataClient(TabularDataClient):
         metrics: Sequence[Metric],
         device: torch.device,
         id_column: str,
-        targets: Union[str, List[str]],
+        targets: Union[str, list[str]],
     ) -> None:
         super().__init__(data_path, metrics, device, id_column, targets)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         # random train-valid split.
         indices = np.random.permutation(self.aligned_features.shape[0])

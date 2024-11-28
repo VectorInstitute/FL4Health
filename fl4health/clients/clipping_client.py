@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common import NDArrays
@@ -74,7 +74,7 @@ class NumpyClippingClient(BasicClient):
         # network Frobenius norm
         return pow(sum(layer_inner_products), 0.5)
 
-    def clip_parameters(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def clip_parameters(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.clipping_bound is not None
         assert self.adaptive_clipping is not None
         # performs flat clipping (i.e. parameters * min(1, C/||parameters||_2))
@@ -89,7 +89,7 @@ class NumpyClippingClient(BasicClient):
         # parameters and clipping bit
         return [layer_weights * clip_scalar for layer_weights in parameters], 0.0
 
-    def compute_weight_update_and_clip(self, parameters: NDArrays) -> Tuple[NDArrays, float]:
+    def compute_weight_update_and_clip(self, parameters: NDArrays) -> tuple[NDArrays, float]:
         assert self.initial_weights is not None
         assert len(parameters) == len(self.initial_weights)
         weight_update: NDArrays = [

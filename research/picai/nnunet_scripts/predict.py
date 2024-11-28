@@ -7,7 +7,6 @@ import time
 import warnings
 from logging import INFO
 from os.path import basename, exists, isdir, join
-from typing import List, Tuple
 
 import numpy as np
 import torch
@@ -35,13 +34,13 @@ def yaml_join(loader: yaml.Loader, node: yaml.SequenceNode) -> str:
     return os.path.join(*seq)
 
 
-def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
+def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
     Returns an initialized nnUNetPredictor for a set of nnunet models with the
     same config and architecture
 
     Args:
-        ckpt_list (List[str]): A list containing the paths to the checkpoint
+        ckpt_list (list[str]): A list containing the paths to the checkpoint
             files for the nnunet models
         nnunet_config (str): The nnunet config of the the models specific in
             ckpt_list.
@@ -57,12 +56,12 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     """
 
     # Helper function to make code cleaner
-    def check_for_ckpt_info(model: dict) -> Tuple[str, bool]:
+    def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
         Checks model dict for trainer name and inference_allowed_mirroring_axes
 
         Returns:
-            Tuple[str | None, bool]: Tuple with elements trainer_name and
+            tuple[str | None, bool]: Tuple with elements trainer_name and
                 inference_allowed_mirroring_axes. Defaults to
                 ('nnUNetTrainer, False)
         """

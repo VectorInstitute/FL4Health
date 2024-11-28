@@ -7,7 +7,7 @@ import time
 import warnings
 from logging import INFO
 from os.path import basename, isdir, join
-from typing import Any, Dict, Generator, List, Tuple
+from typing import Any, Generator
 
 import numpy as np
 import torch
@@ -34,7 +34,7 @@ with warnings.catch_warnings():
 class MyNnUNetPredictor(nnUNetPredictor):
     def predict_from_data_iterator(
         self, data_iterator: Generator, return_probabilities: bool = False, num_processes: int = default_num_processes
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Override of the predict from data iterator class so that we can have
         it return the model outputs along with their output filenames and data
@@ -124,13 +124,13 @@ class MyNnUNetPredictor(nnUNetPredictor):
         return return_dict
 
 
-def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
+def get_predictor(ckpt_list: list[str], nnunet_config: str, dataset_json: dict, plans: dict) -> nnUNetPredictor:
     """
     Returns an initialized nnUNetPredictor for a set of nnunet models with the
     same config and architecture
 
     Args:
-        ckpt_list (List[str]): A list containing the paths to the checkpoint
+        ckpt_list (list[str]): A list containing the paths to the checkpoint
             files for the nnunet models
         nnunet_config (str): The nnunet config of the the models specific in
             ckpt_list.
@@ -148,12 +148,12 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
     """
 
     # Helper function to make code cleaner
-    def check_for_ckpt_info(model: dict) -> Tuple[str, bool]:
+    def check_for_ckpt_info(model: dict) -> tuple[str, bool]:
         """
         Checks model dict for trainer name and inference_allowed_mirroring_axes
 
         Returns:
-            Tuple[str | None, bool]: Tuple with elements trainer_name and
+            tuple[str | None, bool]: Tuple with elements trainer_name and
                 inference_allowed_mirroring_axes. Defaults to
                 ('nnUNetTrainer, False)
         """
@@ -228,7 +228,7 @@ def predict(
     probs_folder: str | None = None,
     annotations_folder: str | None = None,
     verbose: bool = True,
-) -> Tuple[NDArray, NDArray, List[str]]:
+) -> tuple[NDArray, NDArray, list[str]]:
     """
     Uses multiprocessing to quickly do model inference for a single model, a
     group of models with the same nnunet config or an ensemble of different
@@ -266,7 +266,7 @@ def predict(
         NDArray[int]: a numpy array with a single predicted annotation map for
             each input image. Unlike the predicted probabilities these are NOT
             one hot encoded. Shape: (num_samples, spatial_dims...)
-        List[str]: A list containing the unique case identifier for
+        list[str]: A list containing the unique case identifier for
             each prediction
     """
     t_start = time.time()

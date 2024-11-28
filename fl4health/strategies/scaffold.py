@@ -1,6 +1,6 @@
 from functools import reduce
 from logging import WARNING
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Union
 
 import numpy as np
 import torch.nn as nn
@@ -33,10 +33,10 @@ class Scaffold(BasicFedAvg):
         fraction_evaluate: float = 1.0,
         min_available_clients: int = 2,
         evaluate_fn: (
-            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
         ) = None,
-        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
-        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
@@ -55,12 +55,12 @@ class Scaffold(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
+                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.
@@ -147,9 +147,9 @@ class Scaffold(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Performs server-side aggregation of model weights and control variates associated with the SCAFFOLD method
         Both model weights and control variates are aggregated through UNWEIGHTED averaging consistent with the paper.
@@ -160,14 +160,14 @@ class Scaffold(BasicFedAvg):
 
         Args:
             server_round (int): What round of FL we're on (from servers perspective).
-            results (List[Tuple[ClientProxy, FitRes]]): These are the "successful" training run results. By default
+            results (list[tuple[ClientProxy, FitRes]]): These are the "successful" training run results. By default
                 these results are the only ones used in aggregation, even if some of the failed clients have partial
                 results (in the failures list).
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): This is the list of clients that
+            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): This is the list of clients that
                 "failed" during the training phase for one reason or another, including timeouts and exceptions.
 
         Returns:
-            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated weighted and metrics dictionary. The
                 parameters are optional and will be none in the even that there are no successful clients or there
                 were failures and they are not accepted.
         """
@@ -243,13 +243,13 @@ class Scaffold(BasicFedAvg):
 
         return updated_parameters
 
-    def aggregate(self, params: List[NDArrays]) -> NDArrays:
+    def aggregate(self, params: list[NDArrays]) -> NDArrays:
         """
         Simple unweighted average to aggregate params, consistent with SCAFFOLD paper. This is "element-wise"
         averaging.
 
         Args:
-            params (List[NDArrays]): numpy arrays whose entries are to be averaged together.
+            params (list[NDArrays]): numpy arrays whose entries are to be averaged together.
 
         Returns:
             NDArrays: element-wise average over the list of numpy arrays.
@@ -263,7 +263,7 @@ class Scaffold(BasicFedAvg):
 
     def configure_fit_all(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, FitIns]]:
+    ) -> list[tuple[ClientProxy, FitIns]]:
         """
         This function configures ALL clients for a training round. That is, it forces the client manager to grab all
         of the available clients to participate in the training round. By default, the manager will at least wait for
@@ -281,7 +281,7 @@ class Scaffold(BasicFedAvg):
                 be BaseFractionSamplingManager, which has a "sample all" function built in.
 
         Returns:
-            List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as FitIns).
         """
 
@@ -358,10 +358,10 @@ class OpacusScaffold(Scaffold):
         fraction_evaluate: float = 1.0,
         min_available_clients: int = 2,
         evaluate_fn: (
-            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
         ) = None,
-        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
-        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
@@ -386,12 +386,12 @@ class OpacusScaffold(Scaffold):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
+                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional):Whether or not accept rounds containing failures. Defaults to True.

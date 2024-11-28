@@ -1,5 +1,4 @@
 from logging import INFO
-from typing import Dict, Tuple
 
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar
@@ -37,7 +36,7 @@ class PersonalServer(FlServer):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
+    ) -> tuple[float | None, dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)

@@ -1,7 +1,7 @@
 import os
 import warnings
 from logging import INFO
-from typing import Dict, List, Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ def fit_config(
     }
 
 
-def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tuple[Parameters, Parameters]:
+def get_initial_model_info_with_control_variates(client_model: nn.Module) -> tuple[Parameters, Parameters]:
     # Initializing the model parameters on the server side.
     model_weights = [val.cpu().numpy() for _, val in client_model.state_dict().items()]
     # Initializing the control variates to zero, as suggested in the original scaffold paper
@@ -37,12 +37,12 @@ def get_initial_model_info_with_control_variates(client_model: nn.Module) -> Tup
     return ndarrays_to_parameters(model_weights), ndarrays_to_parameters(control_variates)
 
 
-def get_all_run_folders(artifact_dir: str) -> List[str]:
+def get_all_run_folders(artifact_dir: str) -> list[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(artifact_dir) if "Run" in folder_name]
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def write_measurement_results(eval_write_path: str, results: Dict[str, float]) -> None:
+def write_measurement_results(eval_write_path: str, results: dict[str, float]) -> None:
     with open(eval_write_path, "w") as f:
         for key, metric_value in results.items():
             f.write(f"{key}: {metric_value}\n")
@@ -60,7 +60,7 @@ def load_global_model(run_folder_dir: str) -> nn.Module:
     return model
 
 
-def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
+def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
     mean = float(np.mean(metrics))
     std = float(np.std(metrics, ddof=1))
     return mean, std

@@ -1,7 +1,7 @@
 import random
 import uuid
 from logging import INFO
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import numpy as np
 import torch
@@ -60,13 +60,13 @@ def unset_all_random_seeds() -> None:
     torch.use_deterministic_algorithms(False)
 
 
-def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
+def save_random_state() -> tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]:
     """
     Save the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore the
     state of the random number generators at a later time.
 
     Returns:
-        Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
+        tuple[tuple[Any, ...], dict[str, Any], torch.Tensor]: A tuple containing the state of the random number
             generators for Python, NumPy, and
     """
     log(INFO, "Saving random state.")
@@ -77,15 +77,15 @@ def save_random_state() -> Tuple[Tuple[Any, ...], Dict[str, Any], torch.Tensor]:
 
 
 def restore_random_state(
-    random_state: Tuple[Any, ...], numpy_state: Dict[str, Any], torch_state: torch.Tensor
+    random_state: tuple[Any, ...], numpy_state: dict[str, Any], torch_state: torch.Tensor
 ) -> None:
     """
     Restore the state of the random number generators for Python, NumPy, and PyTorch. This will allow you to restore
     the state of the random number generators to a previously saved state.
 
     Args:
-        random_state (Tuple[Any, ...]): The state of the Python random number generator
-        numpy_state (Dict[str, Any]): The state of the NumPy random number generator
+        random_state (tuple[Any, ...]): The state of the Python random number generator
+        numpy_state (dict[str, Any]): The state of the NumPy random number generator
         torch_state (torch.Tensor): The state of the PyTorch random number generator
     """
     log(INFO, "Restoring random state.")

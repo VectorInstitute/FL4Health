@@ -3,7 +3,7 @@ import os
 import random
 from logging import INFO
 from pathlib import Path
-from typing import List, Sequence, Tuple, Union
+from typing import Sequence, Union
 
 import numpy as np
 import torch
@@ -157,7 +157,7 @@ def get_img_and_seg_paths(
     include_t2w: bool = True,
     include_adc: bool = True,
     include_hbv: bool = True,
-) -> Tuple[List[List[str]], List[str], torch.Tensor]:
+) -> tuple[list[list[str]], list[str], torch.Tensor]:
     """
     Gets the image paths, segmentation paths and label proportions for the specified fold.
     Exclude t2w, adc or hbv scan if specified.
@@ -173,7 +173,7 @@ def get_img_and_seg_paths(
         include_hbv (bool): Whether or not to include hbv Sequence as part of the input data.
 
     Returns:
-        Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
+        tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
             to the different MRI Sequences for a given patient exam. The second element is a list of strings
             representing the associated segmentation labels. The final element of the returned tuple is a
@@ -217,8 +217,8 @@ def get_img_and_seg_paths(
 
 
 def split_img_and_seg_paths(
-    img_paths: List[List[str]], seg_paths: List[str], splits: int, seed: int = 0
-) -> Tuple[List[List[List[str]]], List[List[str]]]:
+    img_paths: list[list[str]], seg_paths: list[str], splits: int, seed: int = 0
+) -> tuple[list[list[list[str]]], list[list[str]]]:
     """
     Split image and segmentation paths into a number of mutually exclusive sets.
 
@@ -228,14 +228,14 @@ def split_img_and_seg_paths(
     splits (int): The number of splits to partition the dataset.
 
     Returns:
-        Tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
+        tuple[Sequence[Sequence[str]], Sequence[str]]: The image and segmentation paths for
         images and segmentation labels.
     """
     assert len(img_paths) == len(seg_paths)
     random.seed(seed)
     client_assignments = [random.choice([i for i in range(splits)]) for _ in range(len(img_paths))]
-    client_img_paths: List[List[List[str]]] = [[] for _ in range(splits)]
-    client_seg_paths: List[List[str]] = [[] for _ in range(splits)]
+    client_img_paths: list[list[list[str]]] = [[] for _ in range(splits)]
+    client_seg_paths: list[list[str]] = [[] for _ in range(splits)]
     for i, assignment in enumerate(client_assignments):
         client_img_paths[assignment].append(img_paths[i])
         client_seg_paths[assignment].append(seg_paths[i])

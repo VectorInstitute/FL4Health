@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple, Type, Union
+from typing import Any, Sequence, Type, Union
 
 import numpy as np
 import torch
@@ -186,7 +186,7 @@ class NnunetClient(BasicClient):
             os.environ["nnUNet_compile"] = str("false")
 
     @use_default_signal_handlers  # Dataloaders use multiprocessing
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         """
         Gets the nnunet dataloaders and wraps them in another class to make them
         pytorch iterators
@@ -195,7 +195,7 @@ class NnunetClient(BasicClient):
             config (Config): The config file from the server
 
         Returns:
-            Tuple[DataLoader, DataLoader]: A tuple of length two. The client
+            tuple[DataLoader, DataLoader]: A tuple of length two. The client
                 train and validation dataloaders as pytorch dataloaders
         """
         start_time = time.time()
@@ -294,7 +294,7 @@ class NnunetClient(BasicClient):
             max_steps=total_steps,
         )
 
-    def create_plans(self, config: Config) -> Dict[str, Any]:
+    def create_plans(self, config: Config) -> dict[str, Any]:
         """
         Modifies the provided plans file to work with the local client dataset
 
@@ -303,7 +303,7 @@ class NnunetClient(BasicClient):
                 'nnunet_plans' key with a pickled dictionary as the value
 
         Returns:
-            Dict[str, Any]: The modified nnunet plans for the client
+            dict[str, Any]: The modified nnunet plans for the client
         """
         # Get the nnunet plans specified by the server
         plans = pickle.loads(narrow_dict_type(config, "nnunet_plans", bytes))
@@ -493,7 +493,7 @@ class NnunetClient(BasicClient):
         # We have to call parent method after setting up nnunet trainer
         super().setup_client(config)
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, dict[str, torch.Tensor]]:
         """
         Generate model outputs. Overridden because nnunets output lists when
         deep supervision is on so we have to reformat the output into dicts
@@ -502,7 +502,7 @@ class NnunetClient(BasicClient):
             input (TorchInputType): The model inputs
 
         Returns:
-            Tuple[TorchPredType, Dict[str, torch.Tensor]]: A tuple in which the
+            tuple[TorchPredType, dict[str, torch.Tensor]]: A tuple in which the
             first element model outputs indexed by name. The second element is
             unused by this subclass and therefore is always an empty dict
         """
@@ -525,22 +525,22 @@ class NnunetClient(BasicClient):
     def compute_loss_and_additional_losses(
         self,
         preds: TorchPredType,
-        features: Dict[str, torch.Tensor],
+        features: dict[str, torch.Tensor],
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor] | None]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         """
         Checks the pred and target types and computes the loss
 
         Args:
             preds (TorchPredType): Dictionary of model output tensors indexed
                 by name
-            features (Dict[str, torch.Tensor]): Not used by this subclass
+            features (dict[str, torch.Tensor]): Not used by this subclass
             target (TorchTargetType): The targets to evaluate the predictions
                 with. If multiple prediction tensors are given, target must be
                 a dictionary with the same number of tensors
 
         Returns:
-            Tuple[torch.Tensor, Dict[str, torch.Tensor] | None]: A tuple
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]: A tuple
                 where the first element is the loss and the second element is an
                 optional additional loss
         """
@@ -561,7 +561,7 @@ class NnunetClient(BasicClient):
 
         return self.criterion(loss_preds, loss_targets), None
 
-    def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def mask_data(self, pred: torch.Tensor, target: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Masks the pred and target tensors according to nnunet ignore_label.
         The number of classes in the input tensors should be at least 3
@@ -633,7 +633,7 @@ class NnunetClient(BasicClient):
             else:
                 m_target = list(target.values())[0]
         else:
-            raise TypeError("Was expecting target to be type Dict[str, torch.Tensor] or torch.Tensor")
+            raise TypeError("Was expecting target to be type dict[str, torch.Tensor] or torch.Tensor")
 
         # Check if target is one hot encoded. Prediction always is for nnunet
         # Add channel dimension if there isn't one
@@ -674,7 +674,7 @@ class NnunetClient(BasicClient):
         current_round: int | None,
         current_epoch: int | None,
         logging_mode: LoggingMode,
-    ) -> Tuple[str, List[Tuple[LogLevel, str]]]:
+    ) -> tuple[str, list[tuple[LogLevel, str]]]:
         if logging_mode == LoggingMode.TRAIN:
             lr = float(self.optimizers["global"].param_groups[0]["lr"])
             if current_epoch is None:
@@ -685,11 +685,11 @@ class NnunetClient(BasicClient):
         else:
             return "", []
 
-    def get_client_specific_reports(self) -> Dict[str, Any]:
+    def get_client_specific_reports(self) -> dict[str, Any]:
         return {"learning_rate": float(self.optimizers["global"].param_groups[0]["lr"])}
 
     @use_default_signal_handlers  # Experiment planner spawns a process I think
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
         Return properties (sample counts and nnunet plans) of client.
 
@@ -701,7 +701,7 @@ class NnunetClient(BasicClient):
             config (Config): The config from the server
 
         Returns:
-            Dict[str, Scalar]: A dictionary containing the train and
+            dict[str, Scalar]: A dictionary containing the train and
                 validation sample counts as well as the serialized nnunet plans
         """
         # Check if nnunet plans have already been initialized

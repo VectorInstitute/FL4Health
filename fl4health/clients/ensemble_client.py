@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.typing import Config
@@ -90,7 +90,7 @@ class EnsembleClient(BasicClient):
         assert isinstance(optimizers, dict)
         self.optimizers = optimizers
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
@@ -101,11 +101,11 @@ class EnsembleClient(BasicClient):
         Args:
             input (TorchInputType): The input to be fed into the model.
             TorchInputType is simply an alias for the union of torch.Tensor and
-            Dict[str, torch.Tensor].
+            dict[str, torch.Tensor].
             target (torch.Tensor): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, Dict[str, torch.Tensor]]: The losses object from the train step along with
+            tuple[TrainingLosses, dict[str, torch.Tensor]]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         assert isinstance(input, torch.Tensor)
@@ -136,9 +136,9 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -163,9 +163,9 @@ class EnsembleClient(BasicClient):
         Since the ensemble client has more than one model, there are multiple backward losses that exist.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name. Anything stored
                 in preds will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -179,7 +179,7 @@ class EnsembleClient(BasicClient):
         checkpoint_loss = loss_dict["ensemble-pred"]
         return EvaluationLosses(checkpoint=checkpoint_loss)
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Method to be defined by user that returns dictionary of optimizers with keys corresponding to the
         keys of the models in EnsembleModel that the optimizer applies too.
@@ -188,7 +188,7 @@ class EnsembleClient(BasicClient):
             config (Config): The config sent from the server.
 
         Returns:
-            Dict[str, Optimizer]: An optimizer or dictionary of optimizers to
+            dict[str, Optimizer]: An optimizer or dictionary of optimizers to
             train model.
 
         Raises:

@@ -4,7 +4,7 @@ import json
 import logging
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import yaml
 from flwr.common.typing import Config
@@ -32,8 +32,8 @@ async def run_smoke_test(
     # not printing the "Current FL Round" log message reliably
     skip_assert_client_fl_rounds: bool | None = False,
     seed: int | None = None,
-    server_metrics: Dict[str, Any] | None = None,
-    client_metrics: Dict[str, Any] | None = None,
+    server_metrics: dict[str, Any] | None = None,
+    client_metrics: dict[str, Any] | None = None,
 ) -> None:
     """Runs a smoke test for a given server, client, and dataset configuration.
 
@@ -119,10 +119,10 @@ async def run_smoke_test(
             assertion of the "Current FL Round" message on the clients' logs. This is necessary because some clients
             (namely client_level_dp, client_level_dp_weighted, instance_level_dp) do not reliably print that message.
         seed (int | None): The random seed to be passed in to both the client and the server.
-        server_metrics (Dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
+        server_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
-        client_metrics (Dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
+        client_metrics (dict[str, Any] | None): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
             Default is None.
     """
@@ -296,8 +296,8 @@ async def run_fault_tolerance_smoke_test(
     config_path: str,
     partial_config_path: str,
     dataset_path: str,
-    server_metrics: Dict[str, Any],
-    client_metrics: Dict[str, Any],
+    server_metrics: dict[str, Any],
+    client_metrics: dict[str, Any],
     seed: int | None = None,
     intermediate_checkpoint_dir: str = "./",
     server_name: str = "server",
@@ -324,9 +324,9 @@ async def run_fault_tolerance_smoke_test(
             to avoid problems when running on different runtimes.
         intermediate_checkpoint_dir (str): Path to store intermediate checkpoints for server and client.
         seed (int | None): The random seed to be passed in to both the client and the server.
-        server_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+        server_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
             saved by the server. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
-        client_metrics (Dict[str, Any]): A dictionary of metrics to be checked against the metrics file
+        client_metrics (dict[str, Any]): A dictionary of metrics to be checked against the metrics file
             saved by the clients. Should be in the same format as fl4health.reporting.metrics.MetricsReporter.
     """
     clear_metrics_folder()
@@ -538,8 +538,8 @@ DEFAULT_METRICS_FOLDER = Path("metrics")
 DEFAULT_TOLERANCE = 0.0005
 
 
-def _assert_metrics(metric_type: MetricType, metrics_to_assert: Dict[str, Any] | None = None) -> List[str]:
-    errors: List[str] = []
+def _assert_metrics(metric_type: MetricType, metrics_to_assert: dict[str, Any] | None = None) -> list[str]:
+    errors: list[str] = []
     if metrics_to_assert is None:
         return errors
 
@@ -563,7 +563,7 @@ def _assert_metrics(metric_type: MetricType, metrics_to_assert: Dict[str, Any] |
     return errors
 
 
-def _assert_metrics_dict(metrics_to_assert: Dict[str, Any], metrics_saved: Dict[str, Any]) -> List[str]:
+def _assert_metrics_dict(metrics_to_assert: dict[str, Any], metrics_saved: dict[str, Any]) -> list[str]:
     errors = []
 
     def _assert(value: Any, saved_value: Any) -> str | None:
@@ -620,7 +620,7 @@ def clear_metrics_folder() -> None:
             f.unlink()
 
 
-def load_metrics_from_file(file_path: str) -> Dict[str, Any]:
+def load_metrics_from_file(file_path: str) -> dict[str, Any]:
     with open(file_path, "r") as f:
         return json.load(f)
 

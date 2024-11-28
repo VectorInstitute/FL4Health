@@ -1,7 +1,6 @@
 import datetime
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock
 
 import freezegun
@@ -50,7 +49,7 @@ def test_json_reporter_shutdown() -> None:
 def test_metrics_reporter_fit() -> None:
     test_current_server_round = 2
     test_loss_dict = {"test_loss": 123.123}
-    test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
+    test_metrics: dict[str, Scalar] = {"test_metric": 1234}
     reporter = JsonReporter()
 
     fl_client = MockBasicClient(loss_dict=test_loss_dict, metrics=test_metrics, reporters=[reporter])
@@ -76,8 +75,8 @@ def test_metrics_reporter_fit() -> None:
 def test_metrics_reporter_evaluate() -> None:
     test_current_server_round = 2
     test_loss = 123.123
-    test_metrics: Dict[str, Scalar] = {"test_metric": 1234}
-    test_metrics_testing: Dict[str, Scalar] = {"testing_metric": 1234}
+    test_metrics: dict[str, Scalar] = {"test_metric": 1234}
+    test_metrics_testing: dict[str, Scalar] = {"testing_metric": 1234}
     test_metrics_final = {
         "test_metric": 1234,
         "testing_metric": 1234,
@@ -140,9 +139,9 @@ def test_evaluate_after_fit_disabled() -> None:
 class MockBasicClient(BasicClient):
     def __init__(
         self,
-        loss_dict: Dict[str, float] | None = None,
-        metrics: Dict[str, Scalar] | None = None,
-        test_set_metrics: Dict[str, Scalar] | None = None,
+        loss_dict: dict[str, float] | None = None,
+        metrics: dict[str, Scalar] | None = None,
+        test_set_metrics: dict[str, Scalar] | None = None,
         loss: float | None = 0,
         reporters: Sequence[BaseReporter] | None = None,
     ):

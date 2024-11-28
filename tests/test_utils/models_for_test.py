@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -423,7 +423,7 @@ class Decoder(nn.Module):
             if self.dilation is not None:
                 self.dilation //= 2
 
-    def forward(self, skip_connections: List[torch.Tensor], x: torch.Tensor) -> torch.Tensor:
+    def forward(self, skip_connections: list[torch.Tensor], x: torch.Tensor) -> torch.Tensor:
         zipped = zip(reversed(skip_connections), self.decoding_blocks)
         for skip_connection, decoding_block in zipped:
             x = decoding_block(skip_connection, x)
@@ -595,8 +595,8 @@ class Encoder(nn.Module):
             if self.dilation is not None:
                 self.dilation *= 2
 
-    def forward(self, x: torch.Tensor) -> Tuple[List[torch.Tensor], torch.Tensor]:
-        skip_connections: List[torch.Tensor] = []
+    def forward(self, x: torch.Tensor) -> tuple[list[torch.Tensor], torch.Tensor]:
+        skip_connections: list[torch.Tensor] = []
         for encoding_block in self.encoding_blocks:
             x, skip_connection = encoding_block(x)
             skip_connections.append(skip_connection)
@@ -681,7 +681,7 @@ class EncodingBlock(nn.Module):
         if pooling_type is not None:
             self.downsample = get_downsampling_layer(dimensions, pooling_type)
 
-    def forward(self, x: torch.Tensor) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
+    def forward(self, x: torch.Tensor) -> Union[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
         if self.residual:
             connection = self.conv_residual(x)
             x = self.conv1(x)
@@ -719,7 +719,7 @@ class VariationalEncoder(nn.Module):
             self.fc_mu = nn.Linear(100, embedding_size)
             self.fc_logvar = nn.Linear(100, embedding_size)
 
-    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, condition: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         if condition is not None:
             return self.fc_mu(torch.cat((x, condition), dim=-1)), self.fc_logvar(torch.cat((x, condition), dim=-1))
         return self.fc_mu(x), self.fc_logvar(x)
@@ -740,7 +740,7 @@ class VariationalDecoder(nn.Module):
 
 
 class ConstantConvNet(nn.Module):
-    def __init__(self, constants: List[float]) -> None:
+    def __init__(self, constants: list[float]) -> None:
         assert len(constants) == 4
         super().__init__()
         self.conv1 = nn.Conv2d(1, 6, 5, bias=False)

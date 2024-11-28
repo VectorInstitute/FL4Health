@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 from flwr.common import Parameters
 from flwr.common.typing import Config, Scalar
@@ -20,7 +20,7 @@ class FedPmServer(FlServer):
         strategy: FedPm,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: LayerNamesServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
         reset_frequency: int = 1,
@@ -42,7 +42,7 @@ class FedPmServer(FlServer):
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -75,7 +75,7 @@ class FedPmServer(FlServer):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[Parameters | None, Dict[str, Scalar], FitResultsAndFailures] | None:
+    ) -> tuple[Parameters | None, dict[str, Scalar], FitResultsAndFailures] | None:
         assert isinstance(self.strategy, FedPm)
         # If self.reset_frequency == x, then the beta priors are reset every x fitting rounds.
         # Note that (server_round + 1) % self.reset_frequency == 0 is to ensure that the priors

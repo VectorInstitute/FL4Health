@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Any, Union
 
 import torch
 import torch.nn as nn
@@ -203,7 +203,7 @@ class BasicClient(NumPyClient):
         self.reports_manager.report({"shutdown": str(datetime.datetime.now())})
         self.reports_manager.shutdown()
 
-    def process_config(self, config: Config) -> Tuple[Union[int, None], Union[int, None], int, bool, bool]:
+    def process_config(self, config: Config) -> tuple[Union[int, None], Union[int, None], int, bool, bool]:
         """
         Method to ensure the required keys are present in config and extracts values to be returned.
 
@@ -211,7 +211,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[Union[int, None], Union[int, None], int, bool, bool]: Returns the local_epochs, local_steps,
+            tuple[Union[int, None], Union[int, None], int, bool, bool]: Returns the local_epochs, local_steps,
                 current_server_round, evaluate_after_fit and pack_losses_with_val_metrics. Ensures only one of
                 local_epochs and local_steps is defined in the config and sets the one that is not to None.
 
@@ -242,7 +242,7 @@ class BasicClient(NumPyClient):
         # Either local epochs or local steps is none based on what key is passed in the config
         return local_epochs, local_steps, current_server_round, evaluate_after_fit, pack_losses_with_val_metrics
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         """
         Processes config, initializes client (if first round) and performs training based on the passed config.
         If per_round_checkpointer is not None, on initialization the client checks if a checkpointed client state
@@ -253,7 +253,7 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config from the server.
 
         Returns:
-            Tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
+            tuple[NDArrays, int, dict[str, Scalar]]: The parameters following the local training along with the
             number of samples in the local training dataset and the computed metrics throughout the fit.
 
         Raises:
@@ -336,7 +336,7 @@ class BasicClient(NumPyClient):
             metrics,
         )
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         """
         Evaluates the model on the validation set, and test set (if defined).
 
@@ -345,7 +345,7 @@ class BasicClient(NumPyClient):
             config (NDArrays): The config object from the server.
 
         Returns:
-            Tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
+            tuple[float, int, dict[str, Scalar]]: A loss associated with the evaluation, the number of samples in the
                 validation/test set and the metric_values associated with evaluation.
         """
         if not self.initialized:
@@ -477,7 +477,7 @@ class BasicClient(NumPyClient):
         current_round: int | None,
         current_epoch: int | None,
         logging_mode: LoggingMode,
-    ) -> Tuple[str, list[Tuple[LogLevel, str]]]:
+    ) -> tuple[str, list[tuple[LogLevel, str]]]:
         """
         This function can be overridden to provide any client specific
         information to the basic client logging. For example, perhaps a client
@@ -496,7 +496,7 @@ class BasicClient(NumPyClient):
             str | None: A string to append to the header log string that
                 typically announces the current server round and current epoch at the
                 beginning of each round or local epoch.
-            list[Tuple[LogLevel, str]]] | None: A list of tuples where the
+            list[tuple[LogLevel, str]]] | None: A list of tuples where the
                 first element is a LogLevel as defined in fl4health.utils.
                 typing and the second element is a string message. Each item
                 in the list will be logged at the end of each server round or epoch.
@@ -536,7 +536,7 @@ class BasicClient(NumPyClient):
         """
         metric_manager.update(preds, target)
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         """
         Given a single batch of input and target data, generate predictions, compute loss, update parameters and
         optionally update metrics if they exist. (ie backprop on a single batch of data).
@@ -547,7 +547,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
+            tuple[TrainingLosses, TorchPredType]: The losses object from the train step along with
                 a dictionary of any predictions produced by the model.
         """
         # Clear gradients from optimizer if they exist
@@ -565,7 +565,7 @@ class BasicClient(NumPyClient):
 
         return losses, preds
 
-    def val_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[EvaluationLosses, TorchPredType]:
+    def val_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[EvaluationLosses, TorchPredType]:
         """
         Given input and target, compute loss, update loss and metrics.
         Assumes self.model is in eval mode already.
@@ -575,7 +575,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): The target corresponding to the input.
 
         Returns:
-            Tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with
+            tuple[EvaluationLosses, TorchPredType]: The losses object from the val step along with
             a dictionary of the predictions produced by the model.
         """
 
@@ -591,7 +591,7 @@ class BasicClient(NumPyClient):
         self,
         epochs: int,
         current_round: int | None = None,
-    ) -> Tuple[dict[str, float], dict[str, Scalar]]:
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of epochs.
 
@@ -600,7 +600,7 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round.
 
         Returns:
-            Tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
@@ -654,7 +654,7 @@ class BasicClient(NumPyClient):
         self,
         steps: int,
         current_round: int | None = None,
-    ) -> Tuple[dict[str, float], dict[str, Scalar]]:
+    ) -> tuple[dict[str, float], dict[str, Scalar]]:
         """
         Train locally for the specified number of steps.
 
@@ -663,7 +663,7 @@ class BasicClient(NumPyClient):
             current_round (int | None, optional): The current FL round
 
         Returns:
-            Tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
+            tuple[dict[str, float], dict[str, Scalar]]: The loss and metrics dictionary from the local training.
                 Loss is a dictionary of one or more losses that represent the different components of the loss.
         """
         self.model.train()
@@ -719,7 +719,7 @@ class BasicClient(NumPyClient):
         metric_manager: MetricManager,
         logging_mode: LoggingMode = LoggingMode.VALIDATION,
         include_losses_in_metrics: bool = False,
-    ) -> Tuple[float, Dict[str, Scalar]]:
+    ) -> tuple[float, dict[str, Scalar]]:
         """
         Evaluate the model on the given validation or test dataset.
 
@@ -733,7 +733,7 @@ class BasicClient(NumPyClient):
                 dictionary. Defaults to False.
 
         Returns:
-            Tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
+            tuple[float, dict[str, Scalar]]: The loss and a dictionary of metrics from evaluation.
         """
         assert logging_mode in [
             LoggingMode.VALIDATION,
@@ -760,13 +760,13 @@ class BasicClient(NumPyClient):
 
         return loss_dict["checkpoint"], metrics
 
-    def validate(self, include_losses_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_losses_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         """
         Validate the current model on the entire validation
             and potentially an entire test dataset if it has been defined.
 
         Returns:
-            Tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
+            tuple[float, dict[str, Scalar]]: The validation loss and a dictionary of metrics
                 from validation (and test if present).
         """
         val_loss, val_metrics = self._validate_or_test(
@@ -863,7 +863,7 @@ class BasicClient(NumPyClient):
         """
         return FullParameterExchanger()
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
@@ -874,7 +874,7 @@ class BasicClient(NumPyClient):
                 forward().
 
         Returns:
-            Tuple[TorchPredType, TorchFeatureType]: A tuple in which the
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the
                 first element contains a dictionary of predictions indexed by
                 name and the second element contains intermediate activations
                 indexed by name. By passing features, we can compute losses
@@ -912,7 +912,7 @@ class BasicClient(NumPyClient):
 
     def compute_loss_and_additional_losses(
         self, preds: TorchPredType, features: TorchFeatureType, target: TorchTargetType
-    ) -> Tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor] | None]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
 
@@ -922,7 +922,7 @@ class BasicClient(NumPyClient):
             target (TorchTargetType): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, dict[str, torch.Tensor] | None]; A tuple with:
+            tuple[torch.Tensor, dict[str, torch.Tensor] | None]; A tuple with:
                 - The tensor for the loss
                 - A dictionary of additional losses with their names and values, or None if
                     there are no additional losses.
@@ -986,7 +986,7 @@ class BasicClient(NumPyClient):
         assert not isinstance(optimizer, dict)
         self.optimizers = {"global": optimizer}
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, ...]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, ...]:
         """
         User defined method that returns a PyTorch Train DataLoader
         and a PyTorch Validation DataLoader
@@ -995,7 +995,7 @@ class BasicClient(NumPyClient):
             config (Config): The config from the server.
 
         Returns:
-            Tuple[DataLoader, ...]: Tuple of length 2. The client train and validation loader.
+            tuple[DataLoader, ...]: Tuple of length 2. The client train and validation loader.
 
         Raises:
             NotImplementedError: To be defined in child class.

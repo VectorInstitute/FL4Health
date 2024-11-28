@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 import torch
 import torch.nn as nn
 
@@ -26,12 +24,12 @@ class PerFclModel(PartialLayerExchangeModel, ParallelSplitModel):
             self, first_feature_extractor=local_module, second_feature_extractor=global_module, model_head=model_head
         )
 
-    def layers_to_exchange(self) -> List[str]:
+    def layers_to_exchange(self) -> list[str]:
         return [
             layer_name for layer_name in self.state_dict().keys() if layer_name.startswith("second_feature_extractor.")
         ]
 
-    def forward(self, input: torch.Tensor) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def forward(self, input: torch.Tensor) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         # input is expected to be of shape (batch_size, *)
         local_output = self.first_feature_extractor.forward(input)
         global_output = self.second_feature_extractor.forward(input)

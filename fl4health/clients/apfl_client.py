@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.typing import Config
@@ -65,7 +65,7 @@ class ApflClient(BasicClient):
 
         self.model: ApflModule
         self.learning_rate: float
-        self.optimizers: Dict[str, torch.optim.Optimizer]
+        self.optimizers: dict[str, torch.optim.Optimizer]
 
     def is_start_of_local_training(self, step: int) -> bool:
         return step == 0
@@ -78,7 +78,7 @@ class ApflClient(BasicClient):
         if self.is_start_of_local_training(step) and self.model.adaptive_alpha:
             self.model.update_alpha()
 
-    def train_step(self, input: TorchInputType, target: TorchTargetType) -> Tuple[TrainingLosses, TorchPredType]:
+    def train_step(self, input: TorchInputType, target: TorchTargetType) -> tuple[TrainingLosses, TorchPredType]:
         # Return preds value thats Dict of torch.Tensor containing personal, global and local predictions
 
         # Mechanics of training loop follow from original implementation
@@ -121,18 +121,18 @@ class ApflClient(BasicClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For APFL, the loss will be the personal loss and the additional losses are the global and local loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the personal loss
                 - A dictionary of with `global_loss` and `local_loss` keys and their calculated values
         """
@@ -150,7 +150,7 @@ class ApflClient(BasicClient):
         assert isinstance(optimizers, dict) and set(("global", "local")) == set(optimizers.keys())
         self.optimizers = optimizers
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         """
         Returns a dictionary with global and local optimizers with string keys 'global' and 'local' respectively.
         """

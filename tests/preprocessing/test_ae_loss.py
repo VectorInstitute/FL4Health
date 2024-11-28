@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 from sklearn.metrics import mean_squared_error
 
@@ -7,7 +5,7 @@ from fl4health.preprocessing.autoencoders.loss import VaeLoss
 
 
 def kl_divergence_normal(
-    q_params: Tuple[torch.Tensor, torch.Tensor], p_params: Tuple[torch.Tensor, torch.Tensor]
+    q_params: tuple[torch.Tensor, torch.Tensor], p_params: tuple[torch.Tensor, torch.Tensor]
 ) -> torch.Tensor:
     mu_q, logvar_q = q_params
     mu_p, logvar_p = p_params

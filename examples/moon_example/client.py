@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Set, Tuple
+from typing import Sequence, Set
 
 import flwr as fl
 import torch
@@ -31,7 +31,7 @@ class MnistMoonClient(MoonClient):
         super().__init__(data_path=data_path, metrics=metrics, device=device, contrastive_weight=contrastive_weight)
         self.minority_numbers = minority_numbers
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         downsample_percentage = narrow_dict_type(config, "downsampling_ratio", float)
         sampler = MinorityLabelBasedSampler(list(range(10)), downsample_percentage, self.minority_numbers)

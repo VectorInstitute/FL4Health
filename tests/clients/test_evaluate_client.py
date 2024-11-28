@@ -2,7 +2,7 @@ import datetime
 import math
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Union
+from typing import Union
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,11 +19,11 @@ from tests.test_utils.models_for_test import SingleLayerWithSeed
 
 
 def test_evaluate_merge_metrics(caplog: pytest.LogCaptureFixture) -> None:
-    global_metrics: Dict[str, Scalar] = {
+    global_metrics: dict[str, Scalar] = {
         "global_metric_1": 0.22,
         "local_metric_2": 0.11,
     }
-    local_metrics: Dict[str, Scalar] = {"local_metric_1": 0.1, "local_metric_2": 0.99}
+    local_metrics: dict[str, Scalar] = {"local_metric_1": 0.1, "local_metric_2": 0.99}
     merged_metrics = EvaluateClient.merge_metrics(global_metrics, local_metrics)
     # Test merge is good, local metrics are folded in last, so they take precedence when overlap exists
     assert merged_metrics == {
@@ -111,7 +111,7 @@ def test_metrics_reporter_setup_client() -> None:
 @freeze_time("2012-12-12 12:12:12")
 def test_metrics_reporter_evaluate() -> None:
     test_loss = 123.123
-    test_metrics: Dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
+    test_metrics: dict[str, Union[bool, bytes, float, int, str]] = {"test_metric": 1234}
 
     reporter = JsonReporter()
     evaluate_client = MockEvaluateClient(loss=test_loss, metrics=test_metrics, reporters=[reporter])
@@ -136,7 +136,7 @@ class MockEvaluateClient(EvaluateClient):
     def __init__(
         self,
         loss: float | None = None,
-        metrics: Dict[str, Scalar] | None = None,
+        metrics: dict[str, Scalar] | None = None,
         reporters: Sequence[BaseReporter] | None = None,
     ):
         super().__init__(Path(""), [], torch.device(0), reporters=reporters)

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from logging import DEBUG, ERROR, INFO
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 from flwr.common import Parameters, ndarrays_to_parameters, parameters_to_ndarrays
 from flwr.common.logger import log
@@ -27,7 +27,7 @@ class ScaffoldServer(FlServer):
         strategy: Scaffold,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: ScaffoldServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
         warm_start: bool = False,
@@ -53,7 +53,7 @@ class ScaffoldServer(FlServer):
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -160,7 +160,7 @@ class ScaffoldServer(FlServer):
 
         return initial_parameters
 
-    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run the SCAFFOLD FL algorithm for a fixed number of rounds. This overrides the base server fit class just to
         ensure that the provided strategy is a Scaffold strategy object before proceeding.
@@ -172,7 +172,7 @@ class ScaffoldServer(FlServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a history object containing the full set of
+            tuple[History, float]: The first element of the tuple is a history object containing the full set of
                 FL training results, including things like aggregated loss and metrics.
                 Tuple also includes elapsed time in seconds for round.
         """
@@ -195,7 +195,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
         checkpoint_and_state_module: DpScaffoldServerCheckpointAndStateModule | None = None,
         warm_start: bool = False,
         reporters: Sequence[BaseReporter] | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -236,7 +236,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 being 1/total_samples in the FL run. Defaults to None.
             reporters (Sequence[BaseReporter], optional): A sequence of FL4Health
                 reporters which the client should send data to.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -276,7 +276,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
             accept_failures=accept_failures,
         )
 
-    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Run DP Scaffold algorithm for the specified number of rounds.
 
@@ -287,7 +287,7 @@ class DPScaffoldServer(ScaffoldServer, InstanceLevelDpServer):
                 server waits for the minimum number of clients to be available set in the strategy.
 
         Returns:
-            Tuple[History, float]: First element of tuple is history object containing the full set of FL
+            tuple[History, float]: First element of tuple is history object containing the full set of FL
                 training results, including aggregated loss and metrics.
                 Tuple also includes the elapsed time in seconds for round.
         """

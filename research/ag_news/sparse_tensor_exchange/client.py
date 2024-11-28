@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -62,7 +62,7 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
         model = BertForSequenceClassification.from_pretrained("google-bert/bert-base-cased", num_labels=num_classes)
         return model.to(self.device)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sample_percentage = narrow_dict_type(config, "sample_percentage", float)
         beta = narrow_dict_type(config, "beta", float)
@@ -84,7 +84,7 @@ class BertSparseTensorExchangeClient(PartialWeightExchangeClient):
         )
         return parameter_exchanger
 
-    def predict(self, input: TorchInputType) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    def predict(self, input: TorchInputType) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         outputs, features = super().predict(input)
         preds = {}
         preds["prediction"] = outputs["logits"]

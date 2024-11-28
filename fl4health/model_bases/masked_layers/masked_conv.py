@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Union
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -105,7 +105,7 @@ class MaskedConv1d(nn.Conv1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = conv_module.padding if isinstance(conv_module.padding, str) else _single(conv_module.padding)
@@ -433,7 +433,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -441,7 +441,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
 
         # (The type ignore below is just used to resolve some small typing issue.)
         # One cannot replace List by Tuple or Sequence in "_output_padding"
-        # because TorchScript does not support `Sequence[T]` or `Tuple[T, ...]`.
+        # because TorchScript does not support `Sequence[T]` or `tuple[T, ...]`.
         output_padding = self._output_padding(
             input,
             output_size,
@@ -473,7 +473,7 @@ class MaskedConvTranspose1d(nn.ConvTranspose1d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
         kernel_size_ = _single(conv_module.kernel_size)
         stride_ = _single(conv_module.stride)
         padding_ = _single(conv_module.padding)
@@ -576,7 +576,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -613,7 +613,7 @@ class MaskedConvTranspose2d(nn.ConvTranspose2d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
         kernel_size_ = _pair(conv_module.kernel_size)
         stride_ = _pair(conv_module.stride)
         padding_ = _pair(conv_module.padding)
@@ -716,7 +716,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         else:
             self.register_parameter("bias_scores", None)
 
-    def forward(self, input: Tensor, output_size: List[int] | None = None) -> Tensor:
+    def forward(self, input: Tensor, output_size: list[int] | None = None) -> Tensor:
         # Note: the same check is already present in super().__init__
         if self.padding_mode != "zeros":
             raise ValueError("Only `zeros` padding mode is supported for ConvTranspose1d")
@@ -753,7 +753,7 @@ class MaskedConvTranspose3d(nn.ConvTranspose3d):
         """
         has_bias = conv_module.bias is not None
         # we create new variables below to make mypy happy since kernel_size has
-        # type Union[int, Tuple[int]] and kernel_size_ has type Tuple[int]
+        # type Union[int, tuple[int]] and kernel_size_ has type tuple[int]
         kernel_size_ = _triple(conv_module.kernel_size)
         stride_ = _triple(conv_module.stride)
         padding_ = _triple(conv_module.padding)

@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -53,7 +53,7 @@ class FedIxiFedAvgClient(BasicClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fed_ixi_train_val_datasets(
             self.client_number, str(self.data_path)
         )

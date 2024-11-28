@@ -2,7 +2,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from typing import Any, Dict, Tuple, Type, Union
+from typing import Any, Type, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -25,8 +25,8 @@ with warnings.catch_warnings():
     from nnunetv2.training.nnUNetTrainer.nnUNetTrainer import nnUNetTrainer
     from nnunetv2.utilities.plans_handling.plans_handler import PlansManager
 
-FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, FitIns]]]
-EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[Tuple[ClientProxy, EvaluateIns]]]
+FIT_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, FitIns]]]
+EVAL_CFG_FN = Callable[[int, Parameters, ClientManager], list[tuple[ClientProxy, EvaluateIns]]]
 CFG_FN = Union[FIT_CFG_FN, EVAL_CFG_FN]
 
 
@@ -60,7 +60,7 @@ class NnunetServer(FlServer):
         self,
         client_manager: ClientManager,
         fl_config: Config,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]],
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]],
         strategy: Strategy | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: NnUnetServerCheckpointAndStateModule | None = None,
@@ -79,7 +79,7 @@ class NnunetServer(FlServer):
                 In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
                 example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
                 NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]]): Function used to configure how one
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]]): Function used to configure how one
                 asks a client to provide parameters from which to initialize all other clients by providing a
                 Config dictionary. For NnunetServers this is a required function to provide the additional information
                 necessary to a client for parameter initialization

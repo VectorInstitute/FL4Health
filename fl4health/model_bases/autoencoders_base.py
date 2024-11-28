@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Tuple
+from typing import Callable
 
 import torch
 import torch.nn as nn
@@ -58,7 +58,7 @@ class VariationalAe(AbstractAe):
         """
         super().__init__(encoder, decoder)
 
-    def encode(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def encode(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         mu, logvar = self.encoder(input)
         return mu, logvar
 
@@ -88,7 +88,7 @@ class ConditionalVae(AbstractAe):
         self,
         encoder: nn.Module,
         decoder: nn.Module,
-        unpack_input_condition: Callable[[torch.Tensor], Tuple[torch.Tensor, torch.Tensor]] | None = None,
+        unpack_input_condition: Callable[[torch.Tensor], tuple[torch.Tensor, torch.Tensor]] | None = None,
     ) -> None:
         """Conditional Variational Auto-Encoder model.
 
@@ -101,7 +101,7 @@ class ConditionalVae(AbstractAe):
         super().__init__(encoder, decoder)
         self.unpack_input_condition = unpack_input_condition
 
-    def encode(self, input: torch.Tensor, condition: torch.Tensor | None = None) -> Tuple[torch.Tensor, torch.Tensor]:
+    def encode(self, input: torch.Tensor, condition: torch.Tensor | None = None) -> tuple[torch.Tensor, torch.Tensor]:
         # User can decide how to use the condition in the encoder,
         # ex: using the condition in the middle layers of encoder.
         mu, logvar = self.encoder(input, condition)

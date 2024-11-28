@@ -1,6 +1,5 @@
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import datasets
 import torch
@@ -13,8 +12,8 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 def collate_fn_with_padding(
-    tokenizer: PreTrainedTokenizer, batch: List[Tuple[Dict[str, List[torch.Tensor]], torch.Tensor]]
-) -> Tuple[Dict[str, List[torch.Tensor]], torch.Tensor]:
+    tokenizer: PreTrainedTokenizer, batch: list[tuple[dict[str, list[torch.Tensor]], torch.Tensor]]
+) -> tuple[dict[str, list[torch.Tensor]], torch.Tensor]:
     """
     Pad the sequences within a batch to the same length.
     """
@@ -26,7 +25,7 @@ def collate_fn_with_padding(
 
 
 def create_text_classification_dataset(
-    dataset: datasets.Dataset, column_names: List[str], target_name: str
+    dataset: datasets.Dataset, column_names: list[str], target_name: str
 ) -> DictionaryDataset:
     data_dict = {}
     for column_name in column_names:
@@ -37,7 +36,7 @@ def create_text_classification_dataset(
 
 def construct_dataloaders(
     batch_size: int, sample_percentage: float, beta: float, data_path: Path | None = None
-) -> Tuple[DataLoader, DataLoader]:
+) -> tuple[DataLoader, DataLoader]:
     assert 0 <= sample_percentage <= 1 and beta > 0
     sampler = DirichletLabelBasedSampler(list(range(4)), sample_percentage=sample_percentage, beta=beta)
 

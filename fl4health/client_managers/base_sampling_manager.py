@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy
@@ -10,7 +10,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
 
     def sample(
         self, num_clients: int, min_num_clients: int | None = None, criterion: Criterion | None = None
-    ) -> List[ClientProxy]:
+    ) -> list[ClientProxy]:
         raise NotImplementedError(
             "The basic sampling function is not implemented for these managers. "
             "Please use the fraction sample function instead"
@@ -21,10 +21,10 @@ class BaseFractionSamplingManager(SimpleClientManager):
         sample_fraction: float,
         min_num_clients: int | None = None,
         criterion: Criterion | None = None,
-    ) -> List[ClientProxy]:
+    ) -> list[ClientProxy]:
         raise NotImplementedError
 
-    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Criterion | None = None) -> List:
+    def wait_and_filter(self, min_num_clients: Union[int, None], criterion: Criterion | None = None) -> list[str]:
         if min_num_clients is not None:
             self.wait_for(min_num_clients)
         else:
@@ -36,7 +36,7 @@ class BaseFractionSamplingManager(SimpleClientManager):
 
         return available_cids
 
-    def sample_all(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> List[ClientProxy]:
+    def sample_all(self, min_num_clients: int | None = None, criterion: Criterion | None = None) -> list[ClientProxy]:
         available_cids = self.wait_and_filter(min_num_clients, criterion)
 
         return [self.clients[cid] for cid in available_cids]

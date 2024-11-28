@@ -9,7 +9,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Tuple, Union
+from typing import Any, Callable, Union
 
 import torch
 import torchvision.transforms as transforms
@@ -22,16 +22,16 @@ from fl4health.utils.dataset_converter import DatasetConverter
 from fl4health.utils.sampler import LabelBasedSampler
 
 
-def load_image(item: Dict[str, Any], transform: Callable | None) -> Tuple[torch.Tensor, int]:
+def load_image(item: dict[str, Any], transform: Callable | None) -> tuple[torch.Tensor, int]:
     """
     Load and transform an image from a given item dictionary.
 
     Args:
-        item (Dict[str, Any]): A dictionary containing image path and labels.
+        item (dict[str, Any]): A dictionary containing image path and labels.
         transform (Callable | None): Transformation function to apply to the images.
 
     Returns:
-        Tuple[torch.Tensor, int]: A tuple containing the transformed image tensor and the target label.
+        tuple[torch.Tensor, int]: A tuple containing the transformed image tensor and the target label.
     """
     image_path = item["img_path"]
     image = Image.open(image_path).convert("RGB")
@@ -46,13 +46,13 @@ def load_image(item: Dict[str, Any], transform: Callable | None) -> Tuple[torch.
 
 
 def construct_skin_cancer_tensor_dataset(
-    data: List[Dict[str, Any]], transform: Callable | None = None, num_workers: int = 8
+    data: list[dict[str, Any]], transform: Callable | None = None, num_workers: int = 8
 ) -> TensorDataset:
     """
     Construct a TensorDataset for skin cancer data.
 
     Args:
-        data (List[Dict[str, Any]]): List of dictionaries containing image paths and labels.
+        data (list[dict[str, Any]]): List of dictionaries containing image paths and labels.
         transform (Callable | None): Transformation function to apply to the images. Defaults to None.
         num_workers (int): Number of workers for parallel processing. Defaults to 8.
 
@@ -73,14 +73,14 @@ def load_skin_cancer_data(
     data_dir: Path,
     dataset_name: str,
     batch_size: int,
-    split_percents: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+    split_percents: tuple[float, float, float] = (0.7, 0.15, 0.15),
     sampler: LabelBasedSampler | None = None,
     train_transform: Union[None, Callable] = None,
     val_transform: Union[None, Callable] = None,
     test_transform: Union[None, Callable] = None,
     dataset_converter: DatasetConverter | None = None,
     seed: int | None = None,
-) -> Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]:
     """
     Load skin cancer dataset (training, validation, and test set).
 
@@ -88,7 +88,7 @@ def load_skin_cancer_data(
         data_dir (Path): Directory containing the dataset files.
         dataset_name (str): Name of the dataset to load.
         batch_size (int): Batch size for the DataLoader.
-        split_percents (Tuple[float, float, float]): Percentages for splitting the data into train, val, and test sets.
+        split_percents (tuple[float, float, float]): Percentages for splitting the data into train, val, and test sets.
         sampler (LabelBasedSampler | None): Sampler for the dataset. Defaults to None.
         train_transform (Union[None, Callable]): Transformations to apply to the training data. Defaults to None.
         val_transform (Union[None, Callable]): Transformations to apply to the validation data. Defaults to None.
@@ -97,7 +97,7 @@ def load_skin_cancer_data(
         seed (int | None): Random seed for shuffling data. Defaults to None.
 
     Returns:
-        Tuple[DataLoader, DataLoader, DataLoader, Dict[str, int]]: DataLoaders for the training, validation,
+        tuple[DataLoader, DataLoader, DataLoader, dict[str, int]]: DataLoaders for the training, validation,
             and test sets, and a dictionary with the number of examples in each set.
     """
     if sum(split_percents) != 1.0:

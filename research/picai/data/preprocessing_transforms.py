@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -6,8 +6,8 @@ import SimpleITK as sitk
 
 def resample_img(
     image: sitk.Image,
-    spacing: Tuple[float, float, float],
-    size: Tuple[int, int, int] | None = None,
+    spacing: tuple[float, float, float],
+    size: tuple[int, int, int] | None = None,
     is_label: bool = False,
     pad_value: Union[float, int] | None = 0.0,
 ) -> sitk.Image:
@@ -18,9 +18,9 @@ def resample_img(
 
     Args:
         image (sitk.Image): Image to be resized.
-        spacing (Tuple[float, float, float]): Target spacing between voxels in mm.
+        spacing (tuple[float, float, float]): Target spacing between voxels in mm.
             Expected to be in Depth x Height x Width format.
-        size (Tuple[int, int, int]): Target size in voxels.
+        size (tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
         is_label (bool): Whether or not this is an annotation.
         pad_value (Union[float, int] | None): Amount of padding to use.
@@ -73,9 +73,9 @@ def resample_img(
 
 def input_verification_crop_or_pad(
     image: sitk.Image,
-    size: Tuple[int, int, int] = (20, 256, 256),
-    physical_size: Tuple[float, float, float] | None = None,
-) -> Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+    size: tuple[int, int, int] = (20, 256, 256),
+    physical_size: tuple[float, float, float] | None = None,
+) -> tuple[tuple[int, int, int], tuple[int, int, int]]:
     """
     Calculate target size for cropping and/or padding input image.
 
@@ -83,13 +83,13 @@ def input_verification_crop_or_pad(
 
     Args:
         image (sitk.Image): Image to be resized.
-        size (Tuple[int, int, int]): Target size in voxels.
+        size (tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
-        physical_size (Tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
+        physical_size (tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
             Expected to be in Depth x Height x Width format.
 
     Returns:
-        Tuple[Tuple[int, int, int], Tuple[int, int, int]]:
+        tuple[tuple[int, int, int], tuple[int, int, int]]:
             Shape of original image (in convention of SimpleITK (x, y, z) or numpy (z, y, x)) and
             Size of target image (in convention of SimpleITK (x, y, z) or numpy (z, y, x))
     """
@@ -135,8 +135,8 @@ def input_verification_crop_or_pad(
 
 def crop_or_pad(
     image: sitk.Image,
-    size: Tuple[int, int, int],
-    physical_size: Tuple[float, float, float] | None = None,
+    size: tuple[int, int, int],
+    physical_size: tuple[float, float, float] | None = None,
     crop_only: bool = False,
 ) -> sitk.Image:
     """
@@ -146,9 +146,9 @@ def crop_or_pad(
 
     Args:
         image (sitk.Image): Image to be resized.
-        size (Tuple[int, int, int]): Target size in voxels.
+        size (tuple[int, int, int]): Target size in voxels.
             Expected to be in Depth x Height x Width format.
-        physical_size (Tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
+        physical_size (tuple[float, float, float]): Target size in mm. (Number of Voxels x Spacing)
             Expected to be in Depth x Height x Width format.
 
     Returns:

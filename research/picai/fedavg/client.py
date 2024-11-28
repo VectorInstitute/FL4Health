@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -61,7 +61,7 @@ class PicaiFedAvgClient(BasicClient):
         self.overviews_dir = overviews_dir
         self.class_proportions: torch.Tensor
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_img_paths, train_seg_paths, class_proportions = get_img_and_seg_paths(
             self.overviews_dir, int(config["fold_id"]), True
         )

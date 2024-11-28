@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 
@@ -28,7 +26,7 @@ class MoonModel(SequentiallySplitModel):
         super().__init__(base_module, head_module, flatten_features=True)
         self.projection_module = projection_module
 
-    def sequential_forward(self, input: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def sequential_forward(self, input: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Overriding the sequential forward of the SequentiallySplitModel parent to allow for the injection of a
         projection module into the forward pass. The remainder of the functionality stays the same. That is,
@@ -38,7 +36,7 @@ class MoonModel(SequentiallySplitModel):
             input (torch.Tensor): Input to the model forward pass. Expected to be of shape (batch_size, *)
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
+            tuple[torch.Tensor, torch.Tensor]: Returns the predictions and features tensor from the sequential forward
         """
         x = self.base_module.forward(input)
         # A projection module is optionally specified for MOON models. If no module is provided, it is simply skipped

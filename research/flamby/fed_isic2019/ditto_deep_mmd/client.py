@@ -3,7 +3,7 @@ import os
 from collections import OrderedDict
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -67,7 +67,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         assert 0 <= client_number < NUM_CLIENTS
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         train_dataset, validation_dataset = construct_fedisic_train_val_datasets(
             self.client_number, str(self.data_path)
         )
@@ -79,7 +79,7 @@ class FedIsic2019DittoClient(DittoDeepMmdClient):
         model: nn.Module = Baseline().to(self.device)
         return model
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         # Note that the global optimizer operates on self.global_model.parameters() and local optimizer operates on
         # self.model.parameters().
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)

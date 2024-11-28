@@ -6,7 +6,7 @@ import flwr as fl
 import torch
 import torch.nn as nn
 from flwr.common.logger import log
-from flwr.common.typing import Config, Tuple
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -22,7 +22,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedProxClient(FedProxClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)

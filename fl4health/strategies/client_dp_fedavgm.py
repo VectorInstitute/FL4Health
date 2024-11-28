@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Union
 
 import numpy as np
 from flwr.common import (
@@ -39,10 +39,10 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         fraction_evaluate: float = 1.0,
         min_available_clients: int = 2,
         evaluate_fn: (
-            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
         ) = None,
-        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
-        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters | None = None,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
@@ -75,12 +75,12 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of clients used during validation.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
+                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
@@ -149,7 +149,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         # Weighted averaging requires list of sample counts
         # to compute client weights. Set by server after polling clients.
-        self.sample_counts: List[int] | None = None
+        self.sample_counts: list[int] | None = None
         self.m_t: NDArrays | None = None
 
     def __repr__(self) -> str:
@@ -178,19 +178,19 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
         return pow(sqrt_argument, -0.5)
 
     def split_model_weights_and_clipping_bits(
-        self, results: List[Tuple[ClientProxy, FitRes]]
-    ) -> Tuple[List[Tuple[NDArrays, int]], NDArrays]:
+        self, results: list[tuple[ClientProxy, FitRes]]
+    ) -> tuple[list[tuple[NDArrays, int]], NDArrays]:
         """
         Given results from an FL round of training, this function splits the result into sets of
         (weights, training counts) and clipping bits. The split is required because the clipping bits are packed with
         the weights in order to communicate them back to the server. The parameter packer facilitates this splitting.
 
         Args:
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this strategy, the clients pack the weights to be
                 aggregated along with a clipping bit calculated during training.
         Returns:
-            Tuple[List[Tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
+            tuple[list[tuple[NDArrays, int]], NDArrays]: The first tuple is the set of (weights, training counts) per
                 client. The second is a set of clipping bits, one for each client.
         """
         # Sorting the results by elements and sample counts. This is primarily to reduce numerical fluctuations in
@@ -200,7 +200,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
             (weights, sample_counts) for _, weights, sample_counts in decode_and_pseudo_sort_results(results)
         ]
 
-        weights_and_counts: List[Tuple[NDArrays, int]] = []
+        weights_and_counts: list[tuple[NDArrays, int]] = []
         clipping_bits: NDArrays = []
         for weights, sample_count in decoded_and_sorted_results:
             updated_weights, clipping_bit = self.parameter_packer.unpack_parameters(weights)
@@ -271,9 +271,9 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate fit using averaging of weights (can be unweighted or weighted) and inject noise and optionally
         perform adaptive clipping updates.
@@ -283,14 +283,14 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
         Args:
             server_round (int): Indicates the server round we're currently on.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side. In this strategy, the clients pack the weights to be
                 aggregated along with a clipping bit calculated during their local training cycle.
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
                 For this strategy, the server also packs a clipping bound to be sent to the clients. This is sent even
                 if adaptive clipping is turned off and the value simply remains constant.
         """
@@ -361,7 +361,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, FitIns]]:
+    ) -> list[tuple[ClientProxy, FitIns]]:
         """
         This function configures a sample of clients for a training round. Due to the privacy accounting, this strategy
         requires that the sampling manager be of type BaseFractionSamplingManager.
@@ -377,7 +377,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 be BaseFractionSamplingManager, which has a sample_fraction function built in.
 
         Returns:
-            List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as FitIns).
         """
         # This strategy requires the client manager to be of type at least BaseFractionSamplingManager
@@ -396,7 +396,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, EvaluateIns]]:
+    ) -> list[tuple[ClientProxy, EvaluateIns]]:
         """
         This function configures a sample of clients for an eval round. Due to the privacy accounting, this strategy
         requires that the sampling manager be of type BaseFractionSamplingManager.
@@ -412,7 +412,7 @@ class ClientLevelDPFedAvgM(BasicFedAvg):
                 be BaseFractionSamplingManager, which has a sample_fraction function built in.
 
         Returns:
-            List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
+            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
                 to be sent to each client (packaged as EvaluateIns)
         """
 

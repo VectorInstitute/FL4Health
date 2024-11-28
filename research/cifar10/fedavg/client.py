@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -66,7 +66,7 @@ class CifarFedAvgClient(BasicClient):
         assert 0 <= self.client_number < num_clients
         super().setup_client(config)
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         # The partitioned data should be generated prior to running the clients via preprocess_data function
         # in the research/cifar10/preprocess.py file

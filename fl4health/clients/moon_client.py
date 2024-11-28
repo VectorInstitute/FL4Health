@@ -1,6 +1,6 @@
 from logging import WARNING
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.logger import log
@@ -82,7 +82,7 @@ class MoonClient(BasicClient):
         self.old_models_list: list[torch.nn.Module] = []
         self.global_model: torch.nn.Module | None = None
 
-    def predict(self, input: TorchInputType) -> Tuple[TorchPredType, TorchFeatureType]:
+    def predict(self, input: TorchInputType) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the prediction(s) and features of the model(s) given the input. This function also produces the
         necessary features from the global_model (aggregated model from server) and old_models (previous client-side
@@ -90,11 +90,11 @@ class MoonClient(BasicClient):
 
         Args:
             input (TorchInputType): Inputs to be fed into the model. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor]. Here, the MOON models require input to
+            for the union of torch.Tensor and dict[str, torch.Tensor]. Here, the MOON models require input to
             simply be of type torch.Tensor
 
         Returns:
-            Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]: A tuple in which the first element
+            tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. Specifically the features of the model, features of the global model and features of
             the old model are returned. All predictions included in dictionary will be used to compute metrics.
@@ -117,14 +117,14 @@ class MoonClient(BasicClient):
             features.update({"global_features": global_model_features["features"]})
         return preds, features
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         This function is called immediately after client-side training has completed. This function saves the final
         trained model to the list of old models to be used in subsequent server rounds
 
         Args:
             local_steps (int): Number of local steps performed during training
-            loss_dict (Dict[str, float]): Loss dictionary associated with training.
+            loss_dict (dict[str, float]): Loss dictionary associated with training.
             config (Config): The config from the server
         """
         assert isinstance(self.model, SequentiallySplitModel)
@@ -157,19 +157,19 @@ class MoonClient(BasicClient):
         preds: TorchPredType,
         features: TorchFeatureType,
         target: TorchTargetType,
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Computes the loss and any additional losses given predictions of the model and ground truth data.
         For MOON, the loss is the total loss (criterion and weighted contrastive loss) and the additional losses are
         the loss, (unweighted) contrastive loss, and total loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
-            Tuple[torch.Tensor, Union[Dict[str, torch.Tensor], None]]; A tuple with:
+            tuple[torch.Tensor, Union[dict[str, torch.Tensor], None]]; A tuple with:
                 - The tensor for the total loss
                 - A dictionary with `loss`, `contrastive_loss` and `total_loss` keys and their calculated values.
         """
@@ -202,9 +202,9 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:
@@ -234,9 +234,9 @@ class MoonClient(BasicClient):
         base loss plus a model contrastive loss.
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in dictionary will be used to compute metrics.
-            features: (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features: (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target: (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:

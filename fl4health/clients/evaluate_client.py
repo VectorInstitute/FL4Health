@@ -1,7 +1,7 @@
 import datetime
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 import torch.nn as nn
@@ -77,10 +77,10 @@ class EvaluateClient(BasicClient):
         self.local_model: nn.Module | None = None
         self.global_model: nn.Module | None = None
 
-    def get_parameters(self, config: Dict[str, Scalar]) -> NDArrays:
+    def get_parameters(self, config: dict[str, Scalar]) -> NDArrays:
         raise ValueError("Get Parameters is not implemented for an Evaluation-Only Client")
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         raise ValueError("Fit is not implemented for an Evaluation-Only Client")
 
     def setup_client(self, config: Config) -> None:
@@ -118,7 +118,7 @@ class EvaluateClient(BasicClient):
             # be initialized with trained weights.
             self.global_model = None
 
-    def evaluate(self, parameters: NDArrays, config: Config) -> Tuple[float, int, Dict[str, Scalar]]:
+    def evaluate(self, parameters: NDArrays, config: Config) -> tuple[float, int, dict[str, Scalar]]:
         if not self.initialized:
             self.setup_client(config)
 
@@ -151,7 +151,7 @@ class EvaluateClient(BasicClient):
         )
 
     def _handle_logging(  # type: ignore
-        self, losses: EvaluationLosses, metrics_dict: Dict[str, Scalar], is_global: bool
+        self, losses: EvaluationLosses, metrics_dict: dict[str, Scalar], is_global: bool
     ) -> None:
         metric_string = "\t".join([f"{key}: {str(val)}" for key, val in metrics_dict.items()])
         loss_string = "\t".join([f"{key}: {str(val)}" for key, val in losses.as_dict().items()])
@@ -168,7 +168,7 @@ class EvaluateClient(BasicClient):
         metric_meter: MetricManager,
         loss_meter: LossMeter,
         is_global: bool,
-    ) -> Tuple[EvaluationLosses, Dict[str, Scalar]]:
+    ) -> tuple[EvaluationLosses, dict[str, Scalar]]:
         model.eval()
         metric_meter.clear()
         loss_meter.clear()
@@ -188,12 +188,12 @@ class EvaluateClient(BasicClient):
         self._handle_logging(losses, metrics, is_global)
         return losses, metrics
 
-    def validate(self, include_loss_in_metrics: bool = False) -> Tuple[float, Dict[str, Scalar]]:
+    def validate(self, include_loss_in_metrics: bool = False) -> tuple[float, dict[str, Scalar]]:
         local_loss: EvaluationLosses | None = None
-        local_metrics: Dict[str, Scalar] | None = None
+        local_metrics: dict[str, Scalar] | None = None
 
         global_loss: EvaluationLosses | None = None
-        global_metrics: Dict[str, Scalar] | None = None
+        global_metrics: dict[str, Scalar] | None = None
 
         if self.local_model:
             log(INFO, "Performing evaluation on local model")
@@ -225,9 +225,9 @@ class EvaluateClient(BasicClient):
 
     @staticmethod
     def merge_metrics(
-        global_metrics: Dict[str, Scalar] | None,
-        local_metrics: Dict[str, Scalar] | None,
-    ) -> Dict[str, Scalar]:
+        global_metrics: dict[str, Scalar] | None,
+        local_metrics: dict[str, Scalar] | None,
+    ) -> dict[str, Scalar]:
         # Merge metrics if necessary
         if global_metrics:
             metrics = global_metrics
@@ -256,7 +256,7 @@ class EvaluateClient(BasicClient):
         """
         return FullParameterExchanger()
 
-    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
+    def get_data_loader(self, config: Config) -> tuple[DataLoader]:
         """
         User defined method that returns a PyTorch DataLoader for validation
         """

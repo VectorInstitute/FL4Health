@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Union
 
 import torch
 import torch.nn as nn
@@ -9,7 +9,7 @@ from torch.nn.parameter import Parameter
 
 from fl4health.utils.functions import bernoulli_sample
 
-TorchShape = Union[int, List[int], torch.Size]
+TorchShape = Union[int, list[int], torch.Size]
 
 
 class MaskedLayerNorm(nn.LayerNorm):

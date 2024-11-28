@@ -1,7 +1,7 @@
 import datetime
 import timeit
 from logging import INFO, WARNING
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch.nn as nn
 from flwr.common.logger import log
@@ -69,7 +69,7 @@ class ModelMergeServer(Server):
         self.reports_manager = ReportsManager(reporters)
         self.reports_manager.initialize(id=self.server_name)
 
-    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """
         Performs a fit round in which the local client weights are evaluated on their test set,
             uploaded to the server and averaged, then redistributed to clients for evaluation.
@@ -81,7 +81,7 @@ class ModelMergeServer(Server):
                 If none, then it will wait for the minimum number to respond indefinitely.
 
         Returns:
-            Tuple[History, float]: The first element of the tuple is a History object containing the aggregated
+            tuple[History, float]: The first element of the tuple is a History object containing the aggregated
                 metrics returned from the clients. Tuple also contains elapsed time in seconds for round.
         """
         self.reports_manager.report({"host_type": "server", "fit_start": datetime.datetime.now()})
@@ -162,7 +162,7 @@ class ModelMergeServer(Server):
         return self.server_model
 
     def _maybe_checkpoint(
-        self, loss_aggregated: float, metrics_aggregated: Dict[str, Scalar], server_round: int
+        self, loss_aggregated: float, metrics_aggregated: dict[str, Scalar], server_round: int
     ) -> None:
         """
         Method to checkpoint merged model on server side if the checkpointer, server_model and
@@ -170,7 +170,7 @@ class ModelMergeServer(Server):
 
         Args:
             loss_aggregated (float): Not used.
-            metrics_aggregated (Dict[str, Scalar]): Not used.
+            metrics_aggregated (dict[str, Scalar]): Not used.
             server_round (int): Not used.
         """
         if self.checkpointer and self.server_model and self.parameter_exchanger:

@@ -1,6 +1,6 @@
 import argparse
 from functools import partial
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.typing import Config
@@ -28,7 +28,7 @@ def fit_config(
     }
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     fit_config_fn = partial(fit_config, config["batch_size"], local_epochs=config.get("local_epochs"))
 
     model = Net()

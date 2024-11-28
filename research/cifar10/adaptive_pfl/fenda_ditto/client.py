@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -59,7 +59,7 @@ class CifarFendaDittoClient(FendaDittoClient):
 
         log(INFO, f"Client Name: {self.client_name}, Client Number: {self.client_number}")
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = get_preprocessed_data(
             self.data_path, self.client_number, batch_size, self.heterogeneity_level
@@ -69,7 +69,7 @@ class CifarFendaDittoClient(FendaDittoClient):
     def get_criterion(self, config: Config) -> _Loss:
         return torch.nn.CrossEntropyLoss()
 
-    def get_optimizer(self, config: Config) -> Dict[str, Optimizer]:
+    def get_optimizer(self, config: Config) -> dict[str, Optimizer]:
         global_optimizer = torch.optim.AdamW(self.global_model.parameters(), lr=self.learning_rate)
         local_optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         return {"global": global_optimizer, "local": local_optimizer}

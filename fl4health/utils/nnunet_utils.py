@@ -7,7 +7,7 @@ from enum import Enum
 from importlib import reload
 from logging import DEBUG, INFO, WARN, Logger
 from math import ceil
-from typing import Any, Callable, Dict, List, Sequence, Tuple, Union, no_type_check
+from typing import Any, Callable, Sequence, Union, no_type_check
 
 import numpy as np
 import torch
@@ -129,8 +129,8 @@ def set_nnunet_env(verbose: bool = False, **kwargs: str) -> None:
 # The two convert deepsupervision methods are necessary because fl4health requires
 # predictions, targets and inputs to be single torch.Tensors or Dicts of torch.Tensors
 def convert_deep_supervision_list_to_dict(
-    tensor_list: Union[List[torch.Tensor], Tuple[torch.Tensor]], num_spatial_dims: int
-) -> Dict[str, torch.Tensor]:
+    tensor_list: Union[list[torch.Tensor], tuple[torch.Tensor]], num_spatial_dims: int
+) -> dict[str, torch.Tensor]:
     """
     Converts a list of torch.Tensors to a dictionary. Names the keys for
     each tensor based on the spatial resolution of the tensor and its
@@ -139,12 +139,12 @@ def convert_deep_supervision_list_to_dict(
     spatial dimensions of the tensors are last.
 
     Args:
-        tensor_list (List[torch.Tensor]): A list of tensors, usually either
+        tensor_list (list[torch.Tensor]): A list of tensors, usually either
             nnunet model outputs or targets, to be converted into a dictionary
         num_spatial_dims (int): The number of spatial dimensions. Assumes the
             spatial dimensions are last
     Returns:
-        Dict[str, torch.Tensor]: A dictionary containing the tensors as
+        dict[str, torch.Tensor]: A dictionary containing the tensors as
             values where the keys are 'i-XxYxZ' where i was the tensor's index
             in the list and X,Y,Z are the spatial dimensions of the tensor
     """
@@ -159,19 +159,19 @@ def convert_deep_supervision_list_to_dict(
     return tensors
 
 
-def convert_deep_supervision_dict_to_list(tensor_dict: Dict[str, torch.Tensor]) -> List[torch.Tensor]:
+def convert_deep_supervision_dict_to_list(tensor_dict: dict[str, torch.Tensor]) -> list[torch.Tensor]:
     """
     Converts a dictionary of tensors back into a list so that it can be used
     by nnunet deep supervision loss functions
 
     Args:
-        tensor_dict (Dict[str, torch.Tensor]): Dictionary containing
+        tensor_dict (dict[str, torch.Tensor]): Dictionary containing
             torch.Tensors. The key values must start with 'X-' where X is an
             integer representing the index at which the tensor should be placed
             in the output list
 
     Returns:
-        List[torch.Tensor]: A list of torch.Tensors
+        list[torch.Tensor]: A list of torch.Tensors
     """
     sorted_list = sorted(tensor_dict.items(), key=lambda x: int(x[0].split("-")[0]))
     return [tensor for key, tensor in sorted_list]
@@ -252,15 +252,15 @@ def get_dataset_n_voxels(source_plans: dict, n_cases: int) -> float:
     return approx_n_voxels
 
 
-def prepare_loss_arg(tensor: torch.Tensor | Dict[str, torch.Tensor]) -> Union[torch.Tensor, List[torch.Tensor]]:
+def prepare_loss_arg(tensor: torch.Tensor | dict[str, torch.Tensor]) -> Union[torch.Tensor, list[torch.Tensor]]:
     """
     Converts pred and target tensors into the proper data type to be passed to the nnunet loss functions.
 
     Args:
-        tensor (torch.Tensor | Dict[str, torch.Tensor]): The input tensor
+        tensor (torch.Tensor | dict[str, torch.Tensor]): The input tensor
 
     Returns:
-        torch.Tensor | List[torch.Tensor]: The tensor ready to be passed to the loss
+        torch.Tensor | list[torch.Tensor]: The tensor ready to be passed to the loss
             function. A single tensor if not using deep supervision and a list of
             tensors if deep supervision is on.
     """
@@ -317,7 +317,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
         self.current_step = 0
         self.infinite = infinite
 
-    def __next__(self) -> Tuple[torch.Tensor, Union[torch.Tensor, Dict[str, torch.Tensor]]]:
+    def __next__(self) -> tuple[torch.Tensor, Union[torch.Tensor, dict[str, torch.Tensor]]]:
         if not self.infinite and self.current_step == self.__len__():
             self.reset()
             raise StopIteration  # Raise stop iteration after epoch has completed
@@ -328,7 +328,7 @@ class nnUNetDataLoaderWrapper(DataLoader):
             # segmentations at various spatial scales/resolutions
             # nnUNet has a wrapper for loss functions to enable deep supervision
             inputs: torch.Tensor = batch["data"]
-            targets: Union[torch.Tensor, List[torch.Tensor]] = batch["target"]
+            targets: Union[torch.Tensor, list[torch.Tensor]] = batch["target"]
             if isinstance(targets, list):
                 target_dict = convert_deep_supervision_list_to_dict(targets, self.num_spatial_dims)
                 return inputs, target_dict

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List
 
 import pytest
 import torch
@@ -105,7 +104,7 @@ def test_client_checkpointer_module(tmp_path: Path) -> None:
 def test_client_checkpointer_module_with_sequence_of_checkpointers(tmp_path: Path) -> None:
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
-    pre_aggregation_checkpointer: List[TorchModuleCheckpointer] = [
+    pre_aggregation_checkpointer: list[TorchModuleCheckpointer] = [
         BestLossTorchModuleCheckpointer(str(checkpoint_dir), "pre_agg_best.pkl"),
         LatestTorchModuleCheckpointer(str(checkpoint_dir), "pre_agg_latest.pkl"),
     ]

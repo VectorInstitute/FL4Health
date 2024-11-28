@@ -1,5 +1,4 @@
 from logging import INFO, WARNING
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -59,7 +58,7 @@ class PcaModule(nn.Module):
         self.singular_values: Parameter
         self.data_mean: Tensor
 
-    def forward(self, X: Tensor, center_data: bool) -> Tuple[Tensor, Tensor]:
+    def forward(self, X: Tensor, center_data: bool) -> tuple[Tensor, Tensor]:
         """
         Perform PCA on the data matrix X by computing its SVD.
 
@@ -71,7 +70,7 @@ class PcaModule(nn.Module):
             will be thrown if it is not.
 
         Returns:
-            Tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
+            tuple[Tensor, Tensor]: The principal components (i.e., right singular vectors)
             and their corresponding singular values.
 
         Note: the algorithm assumes that the rows of X are the data points (after reshaping as needed).

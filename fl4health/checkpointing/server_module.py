@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Sequence, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
@@ -97,7 +97,7 @@ class BaseServerCheckpointAndStateModule:
                 f"will be lost. The current paths are:\n{formatted_all_paths}"
             )
 
-    def maybe_checkpoint(self, server_parameters: Parameters, loss: float, metrics: Dict[str, Scalar]) -> None:
+    def maybe_checkpoint(self, server_parameters: Parameters, loss: float, metrics: dict[str, Scalar]) -> None:
         """
         If there are model checkpointers defined in this class, we hydrate the model for checkpointing with the server
         parameters and call maybe checkpoint model on each of the checkpointers to decide whether to checkpoint based
@@ -107,7 +107,7 @@ class BaseServerCheckpointAndStateModule:
             server_parameters (Parameters): Parameters held by the server that should be injected into the model
             loss (float): The aggregated loss value obtained by the current aggregated server model.
                 Potentially used by checkpointer to decide whether to checkpoint the model.
-            metrics (Dict[str, Scalar]): The aggregated metrics obtained by the aggregated server model. Potentially
+            metrics (dict[str, Scalar]): The aggregated metrics obtained by the aggregated server model. Potentially
                 used by checkpointer to decide whether to checkpoint the model.
         """
         if self.model_checkpointers is not None and len(self.model_checkpointers) > 0:
@@ -141,7 +141,7 @@ class BaseServerCheckpointAndStateModule:
         self.parameter_exchanger.pull_parameters(model_ndarrays, self.model)
 
     def save_state(
-        self, state_checkpoint_name: str, server_parameters: Parameters, other_state: Dict[str, Any]
+        self, state_checkpoint_name: str, server_parameters: Parameters, other_state: dict[str, Any]
     ) -> None:
         """
         This function is meant to facilitate saving state required to restart on FL process on the server side. By
@@ -157,7 +157,7 @@ class BaseServerCheckpointAndStateModule:
             server_parameters (Parameters): Like model checkpointers, these are the aggregated Parameters stored by
                 the server representing model state. They are mapped to a torch model architecture via the
                 _hydrate_model_for_checkpointing function.
-            other_state (Dict[str, Any]): Any additional state (such as current server round) to be checkpointed in
+            other_state (dict[str, Any]): Any additional state (such as current server round) to be checkpointed in
                 order to allow FL to restart from where it left off.
 
         Raises:
@@ -174,7 +174,7 @@ class BaseServerCheckpointAndStateModule:
         else:
             raise ValueError("Attempting to save state but no state checkpointer is specified")
 
-    def maybe_load_state(self, state_checkpoint_name: str) -> Dict[str, Any] | None:
+    def maybe_load_state(self, state_checkpoint_name: str) -> dict[str, Any] | None:
         """
         This function facilitates loading of any pre-existing state (with the name state_checkpoint_name) in the
         directory of the state_checkpointer. If the state already exists at the proper path, the state is loaded
@@ -188,7 +188,7 @@ class BaseServerCheckpointAndStateModule:
             ValueError: Throws an error if this function is called, but no state checkpointer has been provided
 
         Returns:
-            Dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
+            dict[str, Any] | None: If the state checkpoint properly exists and is loaded correctly, this dictionary
                 carries that state. Otherwise, we return a None (or throw an exception).
         """
         if self.state_checkpointer is not None:

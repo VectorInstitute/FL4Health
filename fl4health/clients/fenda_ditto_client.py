@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.logger import log
@@ -239,7 +239,7 @@ class FendaDittoClient(DittoClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[TorchPredType, TorchFeatureType]:
+    ) -> tuple[TorchPredType, TorchFeatureType]:
         """
         Computes the predictions for both the GLOBAL and LOCAL models and pack them into the prediction dictionary
 
@@ -247,7 +247,7 @@ class FendaDittoClient(DittoClient):
             input (TorchInputType): Inputs to be fed into both models.
 
         Returns:
-            Tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element
+            tuple[TorchPredType, TorchFeatureType]: A tuple in which the first element
             contains predictions indexed by name and the second element contains intermediate activations
             index by name. For Ditto+FENDA, we only need the predictions, so the second dictionary is simply empty.
 
@@ -290,9 +290,9 @@ class FendaDittoClient(DittoClient):
         optimize the global model is stored in the additional losses dictionary under "global_loss".
 
         Args:
-            preds (Dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
+            preds (dict[str, torch.Tensor]): Prediction(s) of the model(s) indexed by name.
                 All predictions included in the dictionary will be used to compute metrics.
-            features (Dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
+            features (dict[str, torch.Tensor]): Feature(s) of the model(s) indexed by name.
             target (torch.Tensor): Ground truth data to evaluate predictions against.
 
         Returns:

@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Tuple
+from typing import Callable
 
 import torch
 import torch.nn as nn
@@ -12,10 +12,10 @@ from torch.nn.modules import Module
 from fl4health.parameter_exchange.parameter_packer import SparseCooParameterPacker
 from fl4health.parameter_exchange.partial_parameter_exchanger import PartialParameterExchanger
 
-ScoreGenFunction = Callable[[nn.Module, nn.Module | None], Dict[str, Tensor]]
+ScoreGenFunction = Callable[[nn.Module, nn.Module | None], dict[str, Tensor]]
 
 
-class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDArrays, List[str]]]):
+class SparseCooParameterExchanger(PartialParameterExchanger[tuple[NDArrays, NDArrays, list[str]]]):
     def __init__(self, sparsity_level: float, score_gen_function: ScoreGenFunction) -> None:
         """
         Parameter exchanger for sparse tensors.
@@ -42,7 +42,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
         self.parameter_packer: SparseCooParameterPacker = SparseCooParameterPacker()
         self.score_gen_function = score_gen_function
 
-    def generate_parameter_scores(self, model: nn.Module, initial_model: nn.Module | None) -> Dict[str, Tensor]:
+    def generate_parameter_scores(self, model: nn.Module, initial_model: nn.Module | None) -> dict[str, Tensor]:
         """Calling the score generating function to produce parameter scores."""
         return self.score_gen_function(model, initial_model)
 
@@ -57,7 +57,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
 
     def select_parameters(
         self, model: nn.Module, initial_model: nn.Module | None = None
-    ) -> Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]:
+    ) -> tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]:
         """
         Select model parameters according to the sparsity level and pack them into
         the sparse COO format to be exchanged.
@@ -82,7 +82,7 @@ class SparseCooParameterExchanger(PartialParameterExchanger[Tuple[NDArrays, NDAr
             initial_model (nn.Module): Initial model.
 
         Returns:
-            Tuple[NDArrays, Tuple[NDArrays, NDArrays, List[str]]]: the selected parameters
+            tuple[NDArrays, tuple[NDArrays, NDArrays, list[str]]]: the selected parameters
             and other information, as detailed above.
         """
         all_parameter_scores = self.generate_parameter_scores(model, initial_model)

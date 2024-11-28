@@ -1,5 +1,4 @@
 from logging import WARNING
-from typing import Dict, List, Tuple
 
 import pandas as pd
 from flwr.common.logger import log
@@ -35,8 +34,8 @@ class TabularFeaturesPreprocessor:
     """
 
     def __init__(self, tab_feature_encoder: TabularFeaturesInfoEncoder) -> None:
-        self.features_to_pipelines: Dict[str, Pipeline] = {}
-        self.targets_to_pipelines: Dict[str, Pipeline] = {}
+        self.features_to_pipelines: dict[str, Pipeline] = {}
+        self.targets_to_pipelines: dict[str, Pipeline] = {}
 
         self.tabular_features = tab_feature_encoder.get_tabular_features()
         self.tabular_targets = tab_feature_encoder.get_tabular_targets()
@@ -77,13 +76,13 @@ class TabularFeaturesPreprocessor:
         return Pipeline(steps=[("vectorizer", TextColumnTransformer(TfidfVectorizer(vocabulary=vocabulary)))])
 
     def initialize_default_pipelines(
-        self, tabular_features: List[TabularFeature], one_hot: bool
-    ) -> Dict[str, Pipeline]:
+        self, tabular_features: list[TabularFeature], one_hot: bool
+    ) -> dict[str, Pipeline]:
         """
         Initialize a default Pipeline for every data column in tabular_features.
 
         Args:
-            tabular_features (List[TabularFeature]): list of tabular
+            tabular_features (list[TabularFeature]): list of tabular
             features in the data columns.
         """
         columns_to_pipelines = {}
@@ -106,7 +105,7 @@ class TabularFeaturesPreprocessor:
             columns_to_pipelines[feature_name] = feature_pipeline
         return columns_to_pipelines
 
-    def return_column_transformer(self, pipelines: Dict[str, Pipeline]) -> ColumnTransformer:
+    def return_column_transformer(self, pipelines: dict[str, Pipeline]) -> ColumnTransformer:
         transformers = [
             (f"{feature_name}_pipeline", pipelines[feature_name], [feature_name])
             for feature_name in sorted(pipelines.keys())
@@ -129,7 +128,7 @@ class TabularFeaturesPreprocessor:
         else:
             log(WARNING, f"{feature_name} is neither a feature nor target and the provided pipeline will be ignored.")
 
-    def preprocess_features(self, df: pd.DataFrame) -> Tuple[NDArray, NDArray]:
+    def preprocess_features(self, df: pd.DataFrame) -> tuple[NDArray, NDArray]:
         # If the dataframe has an entire column missing, we need to fill it with some default value first.
         df_filled = self.fill_in_missing_columns(df)
         # After filling in missing columns, apply the feature alignment transform.

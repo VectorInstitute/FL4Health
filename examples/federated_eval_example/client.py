@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -40,7 +40,7 @@ class CifarClient(EvaluateClient):
         # Initialized a global model to be hydrated with a server-side model if the parameters are passed
         return Net().to(self.device)
 
-    def get_data_loader(self, config: Config) -> Tuple[DataLoader]:
+    def get_data_loader(self, config: Config) -> tuple[DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         evaluation_loader, _ = load_cifar10_test_data(self.data_path, batch_size)
         return (evaluation_loader,)

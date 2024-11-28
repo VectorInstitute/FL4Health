@@ -2,7 +2,7 @@ import copy
 import os
 from inspect import currentframe, getframeinfo
 from logging import INFO, LogRecord
-from typing import Any, Dict, Iterable, TypeVar
+from typing import Any, Iterable, TypeVar
 
 import torch
 import torch.nn as nn
@@ -19,7 +19,7 @@ T = TypeVar("T", TorchInputType, TorchTargetType)
 
 
 def fold_loss_dict_into_metrics(
-    metrics: Dict[str, Scalar], loss_dict: Dict[str, float], logging_mode: LoggingMode
+    metrics: dict[str, Scalar], loss_dict: dict[str, float], logging_mode: LoggingMode
 ) -> None:
     # Prefixing the loss value keys with the mode from which they are generated
     if logging_mode is LoggingMode.VALIDATION:
@@ -61,7 +61,7 @@ def move_data_to_device(data: T, device: torch.device) -> T:
         return {key: value.to(device) for key, value in data.items()}
     else:
         raise TypeError(
-            "data must be of type torch.Tensor or Dict[str, torch.Tensor]. If definition of TorchInputType or "
+            "data must be of type torch.Tensor or dict[str, torch.Tensor]. If definition of TorchInputType or "
             "TorchTargetType has changed this method might need to be updated or split into two."
         )
 
@@ -73,12 +73,12 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
     NOTE: This function assumes the input is BATCH FIRST
 
     Args:
-        input (TorchInputType): Input batch. input can be of type torch.Tensor or Dict[str, torch.Tensor], and in the
+        input (TorchInputType): Input batch. input can be of type torch.Tensor or dict[str, torch.Tensor], and in the
         latter case, the batch is considered to be empty if all tensors in the dictionary have length zero.
 
     Raises:
-        TypeError: Raised if input is not of type torch.Tensor or Dict[str, torch.Tensor].
-        ValueError: Raised if input has type Dict[str, torch.Tensor] and not all tensors within the dictionary have
+        TypeError: Raised if input is not of type torch.Tensor or dict[str, torch.Tensor].
+        ValueError: Raised if input has type dict[str, torch.Tensor] and not all tensors within the dictionary have
             the same size.
 
     Returns:
@@ -95,7 +95,7 @@ def check_if_batch_is_empty_and_verify_input(input: TorchInputType) -> bool:
         else:
             return first_val_len == 0
     else:
-        raise TypeError("Input must be of type torch.Tensor or Dict[str, torch.Tensor].")
+        raise TypeError("Input must be of type torch.Tensor or dict[str, torch.Tensor].")
 
 
 def clone_and_freeze_model(model: nn.Module) -> nn.Module:

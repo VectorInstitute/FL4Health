@@ -1,7 +1,7 @@
 import argparse
 from logging import INFO
 from pathlib import Path
-from typing import Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -24,7 +24,7 @@ from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
 class MnistFedBNClient(BasicClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=1)
         train_loader, val_loader, _ = load_mnist_data(self.data_path, batch_size, sampler)
@@ -49,7 +49,7 @@ class SkinCancerFedBNClient(BasicClient):
         super().__init__(data_path, metrics, device)
         self.dataset_name = dataset_name
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _, _ = load_skin_cancer_data(self.data_path, self.dataset_name, batch_size)
         return train_loader, val_loader

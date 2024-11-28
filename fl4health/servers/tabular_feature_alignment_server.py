@@ -1,7 +1,7 @@
 import random
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable, Dict, Sequence, Tuple
+from typing import Callable, Sequence
 
 from flwr.common import Parameters
 from flwr.common.logger import log
@@ -34,7 +34,7 @@ class TabularFeatureAlignmentServer(FlServer):
         tabular_features_source_of_truth: TabularFeaturesInfoEncoder | None = None,
         reporters: Sequence[BaseReporter] | None = None,
         checkpoint_and_state_module: BaseServerCheckpointAndStateModule | None = None,
-        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_init_parameters_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
     ) -> None:
@@ -66,7 +66,7 @@ class TabularFeatureAlignmentServer(FlServer):
                 artifacts to be used or evaluated after training. The later is used to preserve training state
                 (including models) such that if FL training is interrupted, the process may be restarted. If no
                 module is provided, no checkpointing or state preservation will happen. Defaults to None.
-            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional): Function used to
+            on_init_parameters_config_fn (Callable[[int], dict[str, Scalar]] | None, optional): Function used to
                 configure how one asks a client to provide parameters from which to initialize all other clients by
                 providing a Config dictionary. If this is none, then a blank config is sent with the parameter request
                 (which is default behavior for flower servers). Defaults to None.
@@ -99,7 +99,7 @@ class TabularFeatureAlignmentServer(FlServer):
         self.tab_features_info = tabular_features_source_of_truth
         self.initialize_parameters = initialize_parameters
         self.source_info_gathered = False
-        self.dimension_info: Dict[str, int] = {}
+        self.dimension_info: dict[str, int] = {}
         # ensure that self.strategy has type BasicFedAvg so its on_fit_config_fn can be specified.
         assert isinstance(self.strategy, BasicFedAvg), "This server is only compatible with BasicFedAvg at this time"
         self.strategy.on_fit_config_fn = partial(fit_config, self.fl_config, self.source_info_gathered)
@@ -114,7 +114,7 @@ class TabularFeatureAlignmentServer(FlServer):
         output_dimension = self.dimension_info[OUTPUT_DIMENSION]
         return self.initialize_parameters(input_dimension, output_dimension)
 
-    def fit(self, num_rounds: int, timeout: float | None) -> Tuple[History, float]:
+    def fit(self, num_rounds: int, timeout: float | None) -> tuple[History, float]:
         """Run federated averaging for a number of rounds."""
         assert isinstance(self.strategy, BasicFedAvg)
 
@@ -169,7 +169,7 @@ class TabularFeatureAlignmentServer(FlServer):
         feature_info = str(get_properties_res.properties[FEATURE_INFO])
         return feature_info
 
-    def poll_clients_for_dimension_info(self, timeout: float | None) -> Tuple[int, int]:
+    def poll_clients_for_dimension_info(self, timeout: float | None) -> tuple[int, int]:
         log(INFO, "Waiting for Clients to align features and then polling for dimension information.")
         assert isinstance(self.strategy, BasicFedAvg)
         client_instructions = self.strategy.configure_poll(server_round=1, client_manager=self._client_manager)

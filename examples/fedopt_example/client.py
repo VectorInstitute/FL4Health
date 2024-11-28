@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -35,7 +35,7 @@ class NewsClassifierClient(BasicClient):
         self.label_encoder: LabelEncoder
         self.batch_size: int
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         sequence_length = narrow_dict_type(config, "sequence_length", int)
         self.batch_size = narrow_dict_type(config, "batch_size", int)
         # NOTE: self.vocabulary and self.label_encoder are initialized in setup_client before the call to
@@ -72,13 +72,13 @@ class NewsClassifierClient(BasicClient):
     def predict(
         self,
         input: TorchInputType,
-    ) -> Tuple[Dict[str, torch.Tensor], Dict[str, torch.Tensor]]:
+    ) -> tuple[dict[str, torch.Tensor], dict[str, torch.Tensor]]:
         """
         Computes the prediction(s), and potentially features, of the model(s) given the input.
 
         Args:
             input (TorchInputType): the input to self.model's forward pass. TorchInputType is simply an alias
-            for the union of torch.Tensor and Dict[str, torch.Tensor].
+            for the union of torch.Tensor and dict[str, torch.Tensor].
         """
         # While this isn't optimal, this is a good example of a custom predict function to manipulate the predictions
         assert isinstance(self.model, LSTM) and isinstance(input, torch.Tensor)

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Sequence, Union
+from typing import Sequence, Union
 
 from dp_accounting import (
     DpEvent,
@@ -41,7 +41,7 @@ class FixedSamplingWithoutReplacement(SamplingStrategy):
 
 
 class MomentsAccountant:
-    def __init__(self, moment_orders: List[float] | None = None) -> None:
+    def __init__(self, moment_orders: list[float] | None = None) -> None:
         """Moment orders are equivalent to lambda from Deep Learning with Differential Privacy (Abadi et. al. 2016).
         They form the set of moments to estimate the infimum of Theorem 2 part 2. The default values were taken from
         the tensorflow federated DP tutorial notebook:
@@ -57,7 +57,7 @@ class MomentsAccountant:
             self.moment_orders = moment_orders
         else:
             low_orders = [1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 3.0, 3.5, 4.0, 4.5]
-            medium_orders: List[float] = list(range(5, 64))
+            medium_orders: list[float] = list(range(5, 64))
             high_orders = [128.0, 256.0, 512.0]
             self.moment_orders = low_orders + medium_orders + high_orders
 
@@ -74,8 +74,8 @@ class MomentsAccountant:
     def _construct_dp_events_trajectory(
         self,
         sampling_strategies: Sequence[SamplingStrategy],
-        noise_multipliers: List[float],
-        updates_list: List[int],
+        noise_multipliers: list[float],
+        updates_list: list[int],
     ) -> DpEvent:
         # Given a list of parameters this assumes that the DP operations were performed in sequence
         event_builder = DpEventBuilder()
@@ -86,8 +86,8 @@ class MomentsAccountant:
     def _construct_rdp_accountant(
         self,
         sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multipliers: Union[float, List[float]],
-        updates: Union[int, List[int]],
+        noise_multipliers: Union[float, list[float]],
+        updates: Union[int, list[int]],
     ) -> RdpAccountant:
         if isinstance(sampling_strategies, SamplingStrategy):
             sampling_strategies = [sampling_strategies]
@@ -107,8 +107,8 @@ class MomentsAccountant:
     def _validate_accountant_input(
         self,
         sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, List[float]],
-        updates: Union[int, List[int]],
+        noise_multiplier: Union[float, list[float]],
+        updates: Union[int, list[int]],
     ) -> None:
         all_lists = all(
             [
@@ -129,8 +129,8 @@ class MomentsAccountant:
     def get_epsilon(
         self,
         sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, List[float]],
-        updates: Union[int, List[int]],
+        noise_multiplier: Union[float, list[float]],
+        updates: Union[int, list[int]],
         delta: float,
     ) -> float:
         """
@@ -165,8 +165,8 @@ class MomentsAccountant:
     def get_delta(
         self,
         sampling_strategies: Union[SamplingStrategy, Sequence[SamplingStrategy]],
-        noise_multiplier: Union[float, List[float]],
-        updates: Union[int, List[int]],
+        noise_multiplier: Union[float, list[float]],
+        updates: Union[int, list[int]],
         epsilon: float,
     ) -> float:
         """

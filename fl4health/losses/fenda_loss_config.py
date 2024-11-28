@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import torch
 
 from fl4health.losses.contrastive_loss import MoonContrastiveLoss
@@ -76,7 +74,7 @@ class ConstrainedFendaLossContainer:
         global_features: torch.Tensor,
         old_global_features: torch.Tensor,
         initial_global_features: torch.Tensor,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         assert self.perfcl_loss_config is not None
         global_feature_contrastive_loss, local_feature_contrastive_loss = self.perfcl_loss_config.perfcl_loss_function(
             local_features, old_local_features, global_features, old_global_features, initial_global_features

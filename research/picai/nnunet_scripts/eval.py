@@ -7,7 +7,7 @@ import warnings
 from logging import INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, List, Tuple, Union
+from typing import Any, Callable, Hashable, Union
 
 import numpy as np
 import SimpleITK as sitk
@@ -54,8 +54,8 @@ def read_image(path: Union[Path, str], npz_key: str | None = None) -> NDArray:
 
 
 def scan_folder_for_cases(
-    folder: Union[str, Path], postfixes: List[str] | None = None, extensions: List[str] | None = None
-) -> List[str]:
+    folder: Union[str, Path], postfixes: list[str] | None = None, extensions: list[str] | None = None
+) -> list[str]:
     if postfixes is None:
         postfixes = [""]
     if extensions is None:
@@ -80,11 +80,11 @@ def scan_folder_for_cases(
 
 def get_case_files(
     folder: Union[str, Path],
-    case_identifiers: List[str],
-    postfixes: List[str] | None = None,
-    extensions: List[str] | None = None,
+    case_identifiers: list[str],
+    postfixes: list[str] | None = None,
+    extensions: list[str] | None = None,
     basename: bool = False,
-) -> List[str]:
+) -> list[str]:
     if postfixes is None:
         postfixes = [""]
     if extensions is None:
@@ -111,7 +111,7 @@ def generate_detection_map(
     probability_map: Union[NDArray, str, Path],
     save_path: Union[str, Path],
     npz_key: str | None = "probabilities",
-    transforms: List[Callable[[NDArray], NDArray]] | None = None,
+    transforms: list[Callable[[NDArray], NDArray]] | None = None,
     **kwargs: Any,
 ) -> None:
     """
@@ -132,7 +132,7 @@ def generate_detection_map(
         npz_key (str | None): If probability_map is a path to a .npz
             file then a key must be provided to access the numpy array from
             the NpzFile object. Defaults to 'probabilities'
-        transforms (List[Callable[[NDArray], NDArray]] | None): A list of
+        transforms (list[Callable[[NDArray], NDArray]] | None): A list of
             transform functions to apply to the probability map before passing
             it to the lesion extraction method. The functions will be applied
             in the order they are given. Can be used, for example, to one hot
@@ -161,14 +161,14 @@ def generate_detection_map(
 def generate_detection_maps(
     input_folder: Union[str, Path],
     output_folder: Union[str, Path],
-    transforms: List[Callable[[NDArray], NDArray]] | None = None,
+    transforms: list[Callable[[NDArray], NDArray]] | None = None,
     npz_key: str | None = "probabilities",
     num_threads: int | None = None,
-    postfixes: List[str] | None = None,
-    extensions: List[str] | None = None,
+    postfixes: list[str] | None = None,
+    extensions: list[str] | None = None,
     verbose: bool = True,
     **kwargs: Any,
-) -> List[str]:
+) -> list[str]:
     """
     Extracts lesions from predicted probability maps and saves the predicted
     lesions as detection maps in the output folder.
@@ -191,7 +191,7 @@ def generate_detection_maps(
             generated for the background class.
             Ie. (num_lesion_classes == num_classes - 1). Note that this method
             will overwrite existing files if they already exist
-        transforms (List[Callable[[NDArray], NDArray]] | None): A list of
+        transforms (list[Callable[[NDArray], NDArray]] | None): A list of
             transform functions to apply to the probability map before passing
             it to the lesion extraction method. The functions will be applied
             in the order they are given. Can be used, for example, to one hot
@@ -207,12 +207,12 @@ def generate_detection_maps(
         num_threads (int, optional): The maximum number of threads to allow
             when extracting the detection maps. If left as None, the number of
             threads is automatically determined.
-        postfixes (List[str] | None): File postfixes (endings after the
+        postfixes (list[str] | None): File postfixes (endings after the
             unique identifier but before the extension). Detection maps will
             only be generated for files with one or more of the specified
             postfixes. Postfixes are omitted from the returned case
             identifiers. Defaults to [""].
-        extensions (List[str], optional): File extensions to allow. Detection
+        extensions (list[str], optional): File extensions to allow. Detection
             maps will only be generated for files with on of the specified
             file extensions. File extensions are omitted from the returned
             case identifiers. Defaults to [".npz", ".npy", ".nii.gz", ".nii",
@@ -223,7 +223,7 @@ def generate_detection_maps(
             function from the report_guided_annotation API.
 
     Returns:
-        List[str]: A list of unique case identifiers. The case identifiers are
+        list[str]: A list of unique case identifiers. The case identifiers are
             the file basenames of the chosen input probability map files
             stripped of the the specified postfixes and their extension.
     """
@@ -265,7 +265,7 @@ def one_hot_ndarray(input: NDArray, num_classes: int) -> NDArray:
 
 def evaluate_case_multichannel(
     detection_map: Union[NDArray, str, Path], ground_truth: Union[NDArray, str, Path], **kwargs: Any
-) -> Tuple[List[Tuple[int, float, float]], float, float, str]:
+) -> tuple[list[tuple[int, float, float]], float, float, str]:
     if isinstance(detection_map, (str, Path)):
         detection_map = read_image(detection_map, npz_key="detection_map")
     if isinstance(ground_truth, (str, Path)):
@@ -311,8 +311,8 @@ def get_picai_metrics(
     detection_map_folder: Union[str, Path],
     ground_truth_annotations_folder: Union[str, Path],
     num_threads: int | None = None,
-    sample_weights: List[float] | None = None,
-    case_identifiers: List[str] | None = None,
+    sample_weights: list[float] | None = None,
+    case_identifiers: list[str] | None = None,
     verbose: bool = True,
     **kwargs: Any,
 ) -> PicaiEvalMetrics:
@@ -365,11 +365,11 @@ def get_picai_metrics(
         sample_weights = [1] * len(case_ids)
 
     # Initialize variables to hold results
-    case_targets: Dict[Hashable, int] = {}
-    case_weights: Dict[Hashable, float] = {}
-    case_preds: Dict[Hashable, float] = {}
-    lesion_results: Dict[Hashable, List[Tuple[int, float, float]]] = {}
-    lesion_weights: Dict[Hashable, List[float]] = {}
+    case_targets: dict[Hashable, int] = {}
+    case_weights: dict[Hashable, float] = {}
+    case_preds: dict[Hashable, float] = {}
+    lesion_results: dict[Hashable, list[tuple[int, float, float]]] = {}
+    lesion_weights: dict[Hashable, list[float]] = {}
 
     # Evaluation must be calculated separately for each class
     with concurrent.futures.ThreadPoolExecutor(num_threads) as pool:

@@ -4,7 +4,7 @@ from pathlib import Path
 import flwr as fl
 import torch
 import torch.nn as nn
-from flwr.common.typing import Config, Tuple
+from flwr.common.typing import Config
 from torch.nn.modules.loss import _Loss
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
@@ -17,7 +17,7 @@ from fl4health.utils.metrics import Accuracy
 
 
 class CifarFlashClient(FlashClient):
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(
             self.data_path,

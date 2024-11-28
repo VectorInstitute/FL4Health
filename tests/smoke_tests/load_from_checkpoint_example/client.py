@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import flwr as fl
 import torch
@@ -48,7 +48,7 @@ class CifarClient(BasicClient):
         )
         self.seed = seed
 
-    def get_data_loaders(self, config: Config) -> Tuple[DataLoader, DataLoader]:
+    def get_data_loaders(self, config: Config) -> tuple[DataLoader, DataLoader]:
         batch_size = narrow_dict_type(config, "batch_size", int)
         train_loader, val_loader, _ = load_cifar10_data(self.data_path, batch_size)
         return train_loader, val_loader
@@ -67,7 +67,7 @@ class CifarClient(BasicClient):
     def get_model(self, config: Config) -> nn.Module:
         return Net().to(self.device)
 
-    def fit(self, parameters: NDArrays, config: Config) -> Tuple[NDArrays, int, Dict[str, Scalar]]:
+    def fit(self, parameters: NDArrays, config: Config) -> tuple[NDArrays, int, dict[str, Scalar]]:
         set_all_random_seeds(self.seed)
         return super().fit(parameters, config)
 

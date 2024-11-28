@@ -2,7 +2,7 @@ import argparse
 import string
 from functools import partial
 from random import choices
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flwr.common.typing import Config
@@ -57,7 +57,7 @@ def fit_config(
     )
 
 
-def main(config: Dict[str, Any]) -> None:
+def main(config: dict[str, Any]) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(
         fit_config,

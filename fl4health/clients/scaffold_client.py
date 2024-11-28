@@ -1,7 +1,7 @@
 import copy
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Sequence, Tuple
+from typing import Sequence
 
 import torch
 from flwr.common.logger import log
@@ -19,7 +19,7 @@ from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.utils.losses import LossMeterType, TrainingLosses
 from fl4health.utils.metrics import Metric
 
-ScaffoldTrainStepOutput = Tuple[torch.Tensor, torch.Tensor]
+ScaffoldTrainStepOutput = tuple[torch.Tensor, torch.Tensor]
 
 
 class ScaffoldClient(BasicClient):
@@ -73,7 +73,7 @@ class ScaffoldClient(BasicClient):
         self.client_control_variates_updates: NDArrays | None = None  # delta_c_i in paper
         self.server_control_variates: NDArrays | None = None  # c in paper
         # Scaffold require vanilla SGD as optimizer, will assert during setup_client
-        self.optimizers: Dict[str, torch.optim.Optimizer]
+        self.optimizers: dict[str, torch.optim.Optimizer]
 
         self.server_model_weights: NDArrays | None = None  # x in paper
         self.parameter_exchanger: FullParameterExchangerWithPacking[NDArrays]
@@ -242,7 +242,7 @@ class ScaffoldClient(BasicClient):
         parameter_exchanger = FullParameterExchangerWithPacking(ParameterPackerWithControlVariates(model_size))
         return parameter_exchanger
 
-    def update_after_train(self, local_steps: int, loss_dict: Dict[str, float], config: Config) -> None:
+    def update_after_train(self, local_steps: int, loss_dict: dict[str, float], config: Config) -> None:
         """
         Called after training with the number of local_steps performed over the FL round and
         the corresponding loss dictionary.

@@ -6,7 +6,6 @@
 import argparse
 import os
 from os.path import join
-from typing import Dict
 
 import numpy as np
 import yaml
@@ -41,7 +40,7 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
     # Initialize datalist
     # The values to the testing and training keys should be a list of dictionaries
     # where each dictionary contains information about a single case
-    datalist: Dict[str, list] = {"testing": [], "training": []}
+    datalist: dict[str, list] = {"testing": [], "training": []}
 
     # nnUNet datasets store images as unique-case-identifier_xxxx.ext
     # xxxx is a 4 digit integer representing the channel/modality.

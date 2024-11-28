@@ -1,5 +1,5 @@
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Tuple, Union
+from typing import Callable, Union
 
 from flwr.common import (
     EvaluateIns,
@@ -39,10 +39,10 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: (
-            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
         ) = None,
-        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
-        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         initial_parameters: Parameters | None = None,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
@@ -70,12 +70,12 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
+                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
@@ -110,7 +110,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, FitIns]]:
+    ) -> list[tuple[ClientProxy, FitIns]]:
         """
         This function configures a sample of clients for a training round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
@@ -124,7 +124,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            List[Tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
+            list[tuple[ClientProxy, FitIns]]: List of sampled client identifiers and the configuration/parameters to
                 be sent to each client (packaged as FitIns).
         """
 
@@ -147,7 +147,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
     def configure_evaluate(
         self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, EvaluateIns]]:
+    ) -> list[tuple[ClientProxy, EvaluateIns]]:
         """
         This function configures a sample of clients for a evaluation round. It handles the case where the client
         manager has a sample fraction vs. a sample function (to allow for more flexible sampling).
@@ -161,7 +161,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample from the available clients.
 
         Returns:
-            List[Tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
+            list[tuple[ClientProxy, EvaluateIns]]: List of sampled client identifiers and the configuration/parameters
                 to be sent to each client (packaged as EvaluateIns).
         """
 
@@ -189,7 +189,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
 
     def configure_poll(
         self, server_round: int, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, GetPropertiesIns]]:
+    ) -> list[tuple[ClientProxy, GetPropertiesIns]]:
         """
         This function configures everything required to request properties from ALL of the clients. The client
         manger, regardless of type, is instructed to grab all available clients to perform the polling process.
@@ -199,7 +199,7 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
             client_manager (ClientManager): The manager used to sample all available clients.
 
         Returns:
-            List[Tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
+            list[tuple[ClientProxy, GetPropertiesIns]]: List of sampled client identifiers and the configuration
                 to be sent to each client (packaged as GetPropertiesIns).
         """
         config = {}
@@ -222,22 +222,22 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     def aggregate_fit(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
-    ) -> Tuple[Parameters | None, Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, FitRes]],
+        failures: list[Union[tuple[ClientProxy, FitRes], BaseException]],
+    ) -> tuple[Parameters | None, dict[str, Scalar]]:
         """
         Aggregate the results from the federated fit round. This is done with either weighted or unweighted FedAvg,
         depending on the settings used for the strategy.
 
         Args:
             server_round (int): Indicates the server round we're currently on.
-            results (List[Tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
+            results (list[tuple[ClientProxy, FitRes]]): The client identifiers and the results of their local training
                 that need to be aggregated on the server-side.
-            failures (List[Union[Tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
+            failures (list[Union[tuple[ClientProxy, FitRes], BaseException]]): These are the results and exceptions
                 from clients that experienced an issue during training, such as timeouts or exceptions.
 
         Returns:
-            Tuple[Parameters | None, Dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
+            tuple[Parameters | None, dict[str, Scalar]]: The aggregated model weights and the metrics dictionary.
         """
         if not results:
             return None, {}
@@ -270,21 +270,21 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
     def aggregate_evaluate(
         self,
         server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[float | None, Dict[str, Scalar]]:
+        results: list[tuple[ClientProxy, EvaluateRes]],
+        failures: list[Union[tuple[ClientProxy, EvaluateRes], BaseException]],
+    ) -> tuple[float | None, dict[str, Scalar]]:
         """
         Aggregate the metrics and losses returned from the clients as a result of the evaluation round.
 
         Args:
-            results (List[Tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
+            results (list[tuple[ClientProxy, EvaluateRes]]): The client identifiers and the results of their local
                 evaluation that need to be aggregated on the server-side. These results are loss values and the
                 metrics dictionary.
-            failures (List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
+            failures (list[Union[tuple[ClientProxy, EvaluateRes], BaseException]]): These are the results and
                 exceptions from clients that experienced an issue during evaluation, such as timeouts or exceptions.
 
         Returns:
-            Tuple[float | None, Dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
+            tuple[float | None, dict[str, Scalar]]: Aggregated loss values and the aggregated metrics. The metrics
                 are aggregated according to evaluate_metrics_aggregation_fn.
         """
         if not results:
@@ -323,10 +323,10 @@ class OpacusBasicFedAvg(BasicFedAvg):
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
         evaluate_fn: (
-            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+            Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]] | None] | None
         ) = None,
-        on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
-        on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
+        on_fit_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
+        on_evaluate_config_fn: Callable[[int], dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
         fit_metrics_aggregation_fn: MetricsAggregationFn | None = None,
         evaluate_metrics_aggregation_fn: MetricsAggregationFn | None = None,
@@ -353,12 +353,12 @@ class OpacusBasicFedAvg(BasicFedAvg):
             min_available_clients (int, optional): Minimum number of total clients in the system.
                 Defaults to 2.
             evaluate_fn (Optional[
-                Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]]] | None
+                Callable[[int, NDArrays, dict[str, Scalar]], tuple[float, dict[str, Scalar]]] | None
             ]):
                 Optional function used for central server-side evaluation. Defaults to None.
-            on_fit_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_fit_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
-            on_evaluate_config_fn (Callable[[int], Dict[str, Scalar]] | None, optional):
+            on_evaluate_config_fn (Callable[[int], dict[str, Scalar]] | None, optional):
                 Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.

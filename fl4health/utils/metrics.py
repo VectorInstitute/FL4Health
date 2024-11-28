@@ -1,7 +1,7 @@
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Dict, List, Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -127,8 +127,8 @@ class SimpleMetric(Metric, ABC):
             name (str): Name of the metric.
         """
         super().__init__(name)
-        self.accumulated_inputs: List[torch.Tensor] = []
-        self.accumulated_targets: List[torch.Tensor] = []
+        self.accumulated_inputs: list[torch.Tensor] = []
+        self.accumulated_targets: list[torch.Tensor] = []
 
     def update(self, input: torch.Tensor, target: torch.Tensor) -> None:
         """
@@ -232,7 +232,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         self,
         name: str = "BinarySoftDiceCoefficient",
         epsilon: float = 1.0e-7,
-        spatial_dimensions: Tuple[int, ...] = (2, 3, 4),
+        spatial_dimensions: tuple[int, ...] = (2, 3, 4),
         logits_threshold: float | None = 0.5,
     ):
         """
@@ -241,7 +241,7 @@ class BinarySoftDiceCoefficient(SimpleMetric):
         Args:
             name (str): Name of the metric.
             epsilon (float): Small float to add to denominator of DICE calculation to avoid divide by 0.
-            spatial_dimensions (Tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
+            spatial_dimensions (tuple[int, ...]): The spatial dimensions of the image within the prediction tensors.
                 The default assumes that the images are 3D and have shape:
                 batch_size, channel, spatial, spatial, spatial.
             logits_threshold: This is a threshold value where values above are classified as 1
@@ -369,7 +369,7 @@ class MetricManager:
         """
         self.original_metrics = metrics
         self.metric_manager_name = metric_manager_name
-        self.metrics_per_prediction_type: Dict[str, Sequence[Metric]] = {}
+        self.metrics_per_prediction_type: dict[str, Sequence[Metric]] = {}
 
     def update(self, preds: TorchPredType, target: TorchTargetType) -> None:
         """
@@ -425,7 +425,7 @@ class MetricManager:
         self.metrics_per_prediction_type = {}
 
     def check_target_prediction_keys_equal(
-        self, preds: Dict[str, torch.Tensor], target: Dict[str, torch.Tensor]
+        self, preds: dict[str, torch.Tensor], target: dict[str, torch.Tensor]
     ) -> None:
         assert target.keys() == preds.keys(), (
             "Received a dict with multiple targets, but the keys of the "

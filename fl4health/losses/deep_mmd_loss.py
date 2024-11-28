@@ -1,5 +1,3 @@
-from typing import Tuple
-
 import numpy as np
 import torch
 
@@ -126,7 +124,7 @@ class DeepMmdLoss(torch.nn.Module):
         k_y: torch.Tensor,
         k_xy: torch.Tensor,
         is_var_computed: bool,
-    ) -> Tuple[torch.Tensor, torch.Tensor | None]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Compute value of MMD and std of MMD using kernel matrix.
 
@@ -137,7 +135,7 @@ class DeepMmdLoss(torch.nn.Module):
             is_var_computed (bool): Whether to compute the variance of the MMD.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
                 if required to compute.
         """
         nx = k_x.shape[0]
@@ -176,7 +174,7 @@ class DeepMmdLoss(torch.nn.Module):
         epsilon: torch.Tensor,
         is_smooth: bool = True,
         is_var_computed: bool = True,
-    ) -> Tuple[torch.Tensor, torch.Tensor | None]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Compute value of deep-kernel MMD and std of deep-kernel MMD using merged data.
 
@@ -193,7 +191,7 @@ class DeepMmdLoss(torch.nn.Module):
                 Defaults to True.
 
         Returns:
-            Tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
+            tuple[torch.Tensor, torch.Tensor | None]: The value of MMD and the variance of MMD
                 if required to compute.
         """
         x = features[0:len_s, :]  # fetch the sample 1 (features of deep networks)

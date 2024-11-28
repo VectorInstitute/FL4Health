@@ -2,7 +2,7 @@ import argparse
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Sequence, Tuple
+from typing import Any, Sequence
 
 import flwr as fl
 import torch
@@ -36,7 +36,7 @@ def server_side_evaluate_fn(
     _: int,
     parameters: NDArrays,
     config: Config,
-) -> Tuple[float, Dict[str, Scalar]] | None:
+) -> tuple[float, dict[str, Scalar]] | None:
     model.to(device)
     model.eval()
     evaluate_metric_manager = MetricManager(metrics, "evaluate")
@@ -54,7 +54,7 @@ def server_side_evaluate_fn(
     return 0.0, evaluate_metric_manager.compute()
 
 
-def main(config: Dict[str, Any], data_path: Path) -> None:
+def main(config: dict[str, Any], data_path: Path) -> None:
     _, val_loader, _ = load_mnist_data(data_path, config["batch_size"])
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     server_side_evaluate_fn_partial = partial(server_side_evaluate_fn, MnistNet(), val_loader, [Accuracy("")], device)

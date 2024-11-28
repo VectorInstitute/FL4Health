@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict
+from typing import Any
 
 import flwr as fl
 from flamby.datasets.fed_heart_disease import Baseline
@@ -19,7 +19,7 @@ from research.flamby.utils import fit_config, get_initial_model_info_with_contro
 
 
 def main(
-    config: Dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
+    config: dict[str, Any], server_address: str, checkpoint_stub: str, run_name: str, server_learning_rate: float
 ) -> None:
     # This function will be used to produce a config that is sent to each client to initialize their own environment
     fit_config_fn = partial(

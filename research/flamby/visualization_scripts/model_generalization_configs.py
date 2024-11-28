@@ -1,7 +1,5 @@
-from typing import List, Tuple
-
 # File name mapped to tuples of name appearing on the graph, variable name for array, keys for the mean
-fed_isic_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
+fed_isic_file_names_to_info: list[tuple[str, str, str, list[str]]] = [
     (
         "client_0_eval_performance.txt",
         "Local 0",
@@ -226,7 +224,7 @@ fed_isic_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
 ]
 
 # File name mapped to tuples of name appearing on the graph, variable name for array
-fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
+fed_heart_disease_file_names_to_info: list[tuple[str, str, str, list[str]]] = [
     (
         "client_0_eval_performance_small_model.txt",
         "Local 0_S",
@@ -538,7 +536,7 @@ fed_heart_disease_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
 ]
 
 # File name mapped to tuples of name appearing on the graph, variable name for array, keys for the mean
-fed_ixi_file_names_to_info: List[Tuple[str, str, str, List[str]]] = [
+fed_ixi_file_names_to_info: list[tuple[str, str, str, list[str]]] = [
     (
         "client_0_eval_performance.txt",
         "Local 0",

@@ -1,6 +1,6 @@
 from logging import INFO
 from pathlib import Path
-from typing import Dict, List, Sequence, Union
+from typing import Sequence, Union
 
 import pandas as pd
 import torch
@@ -26,7 +26,7 @@ class TabularDataClient(BasicClient):
         metrics: Sequence[Metric],
         device: torch.device,
         id_column: str,
-        targets: Union[str, List[str]],
+        targets: Union[str, list[str]],
         loss_meter_type: LossMeterType = LossMeterType.AVERAGE,
         checkpoint_and_state_module: ClientCheckpointAndStateModule | None = None,
         reporters: Sequence[BaseReporter] | None = None,
@@ -44,7 +44,7 @@ class TabularDataClient(BasicClient):
                 'cuda'
             id_column (str): ID column. This is required for tabular encoding in cyclops, which we leverage. It should
                 be unique per row, but need not necessarily be a meaningful identifier (i.e. could be row number)
-            targets (Union[str, List[str]]): The target column or columns name. This allows for multiple targets to
+            targets (Union[str, list[str]]): The target column or columns name. This allows for multiple targets to
                 be specified if desired.
             loss_meter_type (LossMeterType, optional): Type of meter used to track and compute the losses over
                 each batch. Defaults to LossMeterType.AVERAGE.
@@ -80,7 +80,7 @@ class TabularDataClient(BasicClient):
         # The aligned data and targets, which are used to construct dataloaders.
         self.aligned_features: NDArray
         self.aligned_targets: NDArray
-        self.feature_specific_pipelines: Dict[str, Pipeline] = {}
+        self.feature_specific_pipelines: dict[str, Pipeline] = {}
 
     def setup_client(self, config: Config) -> None:
         """
@@ -143,7 +143,7 @@ class TabularDataClient(BasicClient):
         """
         raise NotImplementedError
 
-    def get_properties(self, config: Config) -> Dict[str, Scalar]:
+    def get_properties(self, config: Config) -> dict[str, Scalar]:
         """
         Return properties of client to be sent to the server.
         Depending on whether the server has communicated the information

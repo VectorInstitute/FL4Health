@@ -2,7 +2,7 @@ import random
 import warnings
 from logging import INFO
 from pathlib import Path
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import numpy as np
 import torch
@@ -29,7 +29,7 @@ class ToNumpy:
 
 def split_data_and_targets(
     data: torch.Tensor, targets: torch.Tensor, validation_proportion: float = 0.2, hash_key: int | None = None
-) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
     total_size = data.shape[0]
     train_size = int(total_size * (1 - validation_proportion))
@@ -42,7 +42,7 @@ def split_data_and_targets(
     return train_data, train_targets, val_data, val_targets
 
 
-def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def get_mnist_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
     mnist_dataset = MNIST(data_dir, train=train, download=True)
     data = torch.Tensor(mnist_dataset.data)
     targets = torch.Tensor(mnist_dataset.targets).long()
@@ -55,7 +55,7 @@ def get_train_and_val_mnist_datasets(
     target_transform: Callable | None = None,
     validation_proportion: float = 0.2,
     hash_key: int | None = None,
-) -> Tuple[TensorDataset, TensorDataset]:
+) -> tuple[TensorDataset, TensorDataset]:
     data, targets = get_mnist_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(
@@ -76,7 +76,7 @@ def load_mnist_data(
     dataset_converter: DatasetConverter | None = None,
     validation_proportion: float = 0.2,
     hash_key: int | None = None,
-) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     """
     Load MNIST Dataset (training and validation set).
 
@@ -95,7 +95,7 @@ def load_mnist_data(
             datasets.
 
     Returns:
-        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
             and a dictionary with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -132,7 +132,7 @@ def load_mnist_test_data(
     batch_size: int,
     sampler: LabelBasedSampler | None = None,
     transform: Callable | None = None,
-) -> Tuple[DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, dict[str, int]]:
     """
     Load MNIST Test Dataset.
 
@@ -144,7 +144,7 @@ def load_mnist_test_data(
         transform (Callable | None): Optional transform to be applied to input samples.
 
     Returns:
-        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
             of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -169,7 +169,7 @@ def load_mnist_test_data(
     return evaluation_loader, num_examples
 
 
-def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> Tuple[torch.Tensor, torch.Tensor]:
+def get_cifar10_data_and_target_tensors(data_dir: Path, train: bool) -> tuple[torch.Tensor, torch.Tensor]:
     cifar_dataset = CIFAR10(data_dir, train=train, download=True)
     data = torch.Tensor(cifar_dataset.data)
     targets = torch.Tensor(cifar_dataset.targets).long()
@@ -182,7 +182,7 @@ def get_train_and_val_cifar10_datasets(
     target_transform: Callable | None = None,
     validation_proportion: float = 0.2,
     hash_key: int | None = None,
-) -> Tuple[TensorDataset, TensorDataset]:
+) -> tuple[TensorDataset, TensorDataset]:
     data, targets = get_cifar10_data_and_target_tensors(data_dir, True)
 
     train_data, train_targets, val_data, val_targets = split_data_and_targets(
@@ -201,7 +201,7 @@ def load_cifar10_data(
     sampler: LabelBasedSampler | None = None,
     validation_proportion: float = 0.2,
     hash_key: int | None = None,
-) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, DataLoader, dict[str, int]]:
     """
     Load CIFAR10 Dataset (training and validation set).
 
@@ -216,7 +216,7 @@ def load_cifar10_data(
             datasets.
 
     Returns:
-        Tuple[DataLoader, DataLoader, Dict[str, int]]: The train data loader, validation data loader
+        tuple[DataLoader, DataLoader, dict[str, int]]: The train data loader, validation data loader
             and a dictionary with the sample counts of datasets underpinning the respective data loaders.
     """
     log(INFO, f"Data directory: {str(data_dir)}")
@@ -247,7 +247,7 @@ def load_cifar10_data(
 
 def load_cifar10_test_data(
     data_dir: Path, batch_size: int, sampler: LabelBasedSampler | None = None
-) -> Tuple[DataLoader, Dict[str, int]]:
+) -> tuple[DataLoader, dict[str, int]]:
     """
     Load CIFAR10 Test Dataset.
 
@@ -258,7 +258,7 @@ def load_cifar10_test_data(
         sampler (LabelBasedSampler | None): Optional sampler to subsample dataset based on labels.
 
     Returns:
-        Tuple[DataLoader, Dict[str, int]]: The test data loader and a dictionary containing the sample count
+        tuple[DataLoader, dict[str, int]]: The test data loader and a dictionary containing the sample count
             of the test dataset.
     """
     log(INFO, f"Data directory: {str(data_dir)}")

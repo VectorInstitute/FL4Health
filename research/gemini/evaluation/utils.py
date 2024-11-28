@@ -1,6 +1,6 @@
 import os
 import warnings
-from typing import Dict, List, Sequence, Tuple
+from typing import Sequence
 
 import numpy as np
 import torch
@@ -12,12 +12,12 @@ from fl4health.utils.metrics import Metric, MetricManager
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-def get_all_run_folders(artifact_dir: str) -> List[str]:
+def get_all_run_folders(artifact_dir: str) -> list[str]:
     run_folder_names = [folder_name for folder_name in os.listdir(artifact_dir) if "Run" in folder_name]
     return [os.path.join(artifact_dir, run_folder_name) for run_folder_name in run_folder_names]
 
 
-def write_measurement_results(eval_write_path: str, metric, results: Dict[str, float]) -> None:
+def write_measurement_results(eval_write_path: str, metric, results: dict[str, float]) -> None:
     metric_write_path = os.path.join(eval_write_path, f"{metric.name}_metric.txt")
     with open(metric_write_path, "w") as f:
         for key, metric_value in results.items():
@@ -38,7 +38,7 @@ def load_global_model(run_folder_dir: str) -> nn.Module:
     return model
 
 
-def get_metric_avg_std(metrics: List[float]) -> Tuple[float, float]:
+def get_metric_avg_std(metrics: list[float]) -> tuple[float, float]:
     mean = float(np.mean(metrics))
     std = float(np.std(metrics, ddof=1))
     return mean, std
