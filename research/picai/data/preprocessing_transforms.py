@@ -158,7 +158,7 @@ def crop_or_pad(
     shape, size = input_verification_crop_or_pad(image, size, physical_size)
 
     # Since the subarrays are being set in the below for loop
-    # We have to ensure that they are seperate lists
+    # We have to ensure that they are separate lists
     # and not the same reference (ie [[0, 0]] * rank)
     padding = [[0, 0] for _ in range(len(size))]
     slicer = [slice(None) for _ in range(len(size))]

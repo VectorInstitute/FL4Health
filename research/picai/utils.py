@@ -64,7 +64,7 @@ class MultiAttributeEnum(Enum):
             for key, value in zip(attribute_keys, attributes):
                 setattr(self, key, value)
 
-        # Creat attributes that will be assigned for each member seperately
+        # Creat attributes that will be assigned for each member separately
         self.attribute_keys: List[str]
         self.attribute_values: List[Any]
 

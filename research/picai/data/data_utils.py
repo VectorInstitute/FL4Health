@@ -91,7 +91,7 @@ class ZScoreNormalization(Transform):
 def get_img_transform() -> Compose:
     """
     Basic transformation pipeline for images that includes ensuring type and shape of data,
-    performing z score normalization, random roation, intensity scaling and adjusting contrast.
+    performing z score normalization, random rotation, intensity scaling and adjusting contrast.
 
     Returns:
         Compose: Image transformation pipeline.
@@ -130,7 +130,7 @@ def z_score_norm(image: torch.Tensor, quantile: float | None = None) -> torch.Te
             If None, no clipping occurs. If a quantile is specified, must be 0 =< 0.5
 
     Returns:
-       torch.Tensor: Z-Score Normalized vesrion of input that is clipped if a quantile is specified.
+       torch.Tensor: Z-Score Normalized version of input that is clipped if a quantile is specified.
     """
     image = image.float()
 
@@ -175,7 +175,7 @@ def get_img_and_seg_paths(
     Returns:
         Tuple[Sequence[Sequence[str]], Sequence[str], torch.Tensor]: The first element of the returned tuple
             is a list of list of strings where the outer list represents a list of file paths corresponding
-            to the diffferent MRI Sequences for a given patient exam. The second element is a list of strings
+            to the different MRI Sequences for a given patient exam. The second element is a list of strings
             representing the associated segmentation labels. The final element of the returned tuple is a
             torch tensor that give the class proportions.
     """
@@ -223,7 +223,7 @@ def split_img_and_seg_paths(
     Split image and segmentation paths into a number of mutually exclusive sets.
 
     img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents
-        a list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
+        a list of file paths corresponding to the different MRI Sequences for a given patient exam.
     seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
     splits (int): The number of splits to partition the dataset.
 
@@ -256,10 +256,10 @@ def get_dataloader(
     Initializes and returns MONAI Dataloader.
     Args:
         img_paths (Sequence[Sequence[str]]: List of list of strings where the outer list represents a
-            list of file paths corresponding to the diffferent MRI Sequences for a given patient exam.
+            list of file paths corresponding to the different MRI Sequences for a given patient exam.
         seg_paths (Sequence[str]): List of strings representing the segmentation labels associated with images.
         batch_size (str): The number of samples per batch yielded by the DataLoader.
-        img_transorm (Compose): The series of transformations applied to input images during dataloading.
+        img_transform (Compose): The series of transformations applied to input images during dataloading.
         seg_transform (Compose): The series of transformations applied to the segmentation labels during dataloading.
         shuffle (bool): Whether or not to shuffle the dataset.
         num_workers (int): The number of workers used by the DataLoader.
@@ -268,7 +268,7 @@ def get_dataloader(
        DataLoader: MONAI dataloader.
     """
     # Ignoring type of image_files because Sequence[Sequence[str]] is valid input
-    # list of files interpreted as multi-parametric sequnce. Supported by image loader:
+    # list of files interpreted as multi-parametric sequence. Supported by image loader:
     # https://docs.monai.io/en/stable/transforms.html#loadimage used by ImageDataset:
     # https://docs.monai.io/en/latest/data.html#monai.data.ImageDataset
     ds = ImageDataset(

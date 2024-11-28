@@ -143,7 +143,7 @@ def generate_dataset_json(
                 json.dump(val_labeled_data, f)
 
 
-def preprare_data(
+def prepare_data(
     scans_read_dir: Path,
     annotation_read_dir: Path,
     scans_write_dir: Path,
@@ -292,7 +292,7 @@ def main() -> None:
         raise ValueError("Argument spacing must have length 3")
     spacing = (float(args.spacing[0]), float(args.spacing[1]), float(args.spacing[2])) if args.spacing else None
 
-    preprare_data(
+    prepare_data(
         args.scans_read_dir,
         args.annotation_read_dir,
         args.scans_write_dir,

@@ -64,7 +64,7 @@ def use_default_signal_handlers(fn: Callable) -> Callable:
     flwr 1.9.0 overrides the default signal handlers with handlers that raise an error
     on any interruption or termination. Since nnunet spawns child processes which
     inherit these handlers, when those subprocesses are terminated (which is expected
-    behaviour), the flwr signal handlers raise an error (which we don't want).
+    behavior), the flwr signal handlers raise an error (which we don't want).
 
     Flwr is expected to fix this in the next release. See the following issue:
     https://github.com/adap/flower/issues/3837
@@ -429,8 +429,8 @@ class PolyLRSchedulerWrapper(_LRScheduler):
             optimizer (Optimizer): The optimizer to apply LR scheduler to.
             initial_lr (float): The initial learning rate of the optimizer.
             max_steps (int): The maximum total number of steps across all FL rounds.
-            exponent (float): Controls how quickly LR descreases over time. Higher values
-                lead to more rapdid descent. Defaults to 0.9.
+            exponent (float): Controls how quickly LR decreases over time. Higher values
+                lead to more rapid descent. Defaults to 0.9.
             steps_per_lr (int): The number of steps per LR before decaying.
                 (ie 10 means the LR will be constant for 10 steps prior to being decreased to the subsequent value).
                 Defaults to 250 as that is the default for nnunet (decay LR once an epoch and epoch is 250 steps).

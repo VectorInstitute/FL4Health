@@ -17,7 +17,7 @@ from numpy.typing import NDArray
 
 with warnings.catch_warnings():
     # We get a bunch of scipy deprecation warnings from these packages
-    # Curiosly this only happens if flwr is imported first
+    # Curiously this only happens if flwr is imported first
     # Raised issue https://github.com/MIC-DKFZ/nnUNet/issues/2370
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import nnunetv2
@@ -166,7 +166,7 @@ def get_predictor(ckpt_list: List[str], nnunet_config: str, dataset_json: dict, 
 
         return trainer_name, inference_allowed_mirror_axes
 
-    # Create unintialized predictor instance
+    # Create uninitialized predictor instance
     predictor = MyNnUNetPredictor(verbose=False, verbose_preprocessing=False, allow_tqdm=False)
 
     # Get parameters for each model and maybe some predictor init parameters
@@ -248,9 +248,9 @@ def predict(
             create a new json yourself with the 'label' and 'file_ending' keys
             and their corresponding values as specified by nnunet
         input_folder (str): Path to the folder containing the raw input data
-            that has notbeen processed by nnunet yet. File names must follow the
+            that has not been processed by nnunet yet. File names must follow the
             nnunet convention where each channel modality is stored as a
-            seperate file.File names should be case-identifier_0000 where 0000
+            separate file.File names should be case-identifier_0000 where 0000
             is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same number of channels N numbered
             from 0 to N.
@@ -355,7 +355,7 @@ def predict(
         log(INFO, f"\tNum Classes: {shape[1]}")
         log(INFO, f"\tSpatial Dimensions {shape[2:]}")
 
-    # Save predicted probabilites if output_folder was provided
+    # Save predicted probabilities if output_folder was provided
     if probs_folder is not None:
         t = time.time()
         for pred, case in zip(final_probs, case_identifiers):
@@ -428,7 +428,7 @@ def main() -> None:
         type=str,
         help="""Path to the folder containing the raw input data that has not
             been processed by nnunet yet. File names must follow the nnunet
-            convention where each channel modality is stored as a seperate
+            convention where each channel modality is stored as a separate
             file. File names should be case-identifier_0000 where 0000 is a 4
             digit integer representing the channel/modality of the image. All
             cases must have the same N channels numbered from 0 to N.""",

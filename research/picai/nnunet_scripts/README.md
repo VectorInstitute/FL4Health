@@ -88,12 +88,12 @@ The PICAI competition from which the picai datasets originates used the followin
 $$PICAI\ Score=\frac{AUROC+AP}{2}
 $$
 
-Where AUROC is the Area Under the Reciever Operating Characteristic curve and AP is the Average Precision.
+Where AUROC is the Area Under the Receiver Operating Characteristic curve and AP is the Average Precision.
 
 The eval.py script computes all of these metrics plus a few more under the hood such as:
 - Precision Recall (PR) Curve
-- Reciever Operating Characteristic (ROC) curve
-- Free-Response Reciever Operating Characteristic (FROC) curve
+- Receiver Operating Characteristic (ROC) curve
+- Free-Response Receiver Operating Characteristic (FROC) curve
 
 For more information on the evaluation metrics see the [picai_eval](https://github.com/DIAGNijmegen/picai_eval) repo
 

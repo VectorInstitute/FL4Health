@@ -482,7 +482,7 @@ class FlServer(Server):
 
         NOTE: The default behavior of flower servers is to simply send over a blank config, but this is insufficient
         for certain uses, where the client requires additional information from the server. This is needed, for example
-        in nnUnet based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770
+        in nnUnet-based Servers. An issue has been logged with flower: https://github.com/adap/flower/issues/3770
         """
         # Server-side parameter initialization
         parameters: Parameters | None = self.strategy.initialize_parameters(client_manager=self._client_manager)

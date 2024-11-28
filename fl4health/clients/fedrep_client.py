@@ -172,7 +172,7 @@ class FedRepClient(BasicClient):
         else:
             raise ValueError(
                 "Either configuration keys not properly present or a mix of steps and epochs based training was "
-                "specified and is not admissable. Keys should be one of {local_head_epochs, local_rep_epochs} or "
+                "specified and is not admissible. Keys should be one of {local_head_epochs, local_rep_epochs} or "
                 "{local_head_steps, local_rep_steps}"
             )
 

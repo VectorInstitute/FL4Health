@@ -23,8 +23,8 @@ def load_centralized_model(run_folder_dir: str) -> nn.Module:
 def write_measurement_results(eval_write_path: str, metric, results: Dict[str, float]) -> None:
     metric_write_path = os.path.join(eval_write_path, f"{metric.name}_metric.txt")
     with open(metric_write_path, "w") as f:
-        for key, metric_vaue in results.items():
-            f.write(f"{key}: {metric_vaue}\n")
+        for key, metric_value in results.items():
+            f.write(f"{key}: {metric_value}\n")
 
 
 def main(

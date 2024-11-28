@@ -58,7 +58,7 @@ class FedPCAClient(NumPyClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config) -> None:
         """
-        Sets the merged principal components transfered from the server.
+        Sets the merged principal components transferred from the server.
         Since federated PCA only runs for one round, the principal components obtained here
         are in fact the final result, so they are saved locally by each client for downstream tasks.
         """

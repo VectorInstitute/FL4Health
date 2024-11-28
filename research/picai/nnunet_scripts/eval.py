@@ -116,7 +116,7 @@ def generate_detection_map(
 ) -> None:
     """
     Generates a detection map from a probability map by doing lesion
-    extraction. Supports multiclass probability maps by extracting a seperate
+    extraction. Supports multiclass probability maps by extracting a separate
     lesion detection map for each class/channel.
 
     Args:
@@ -178,7 +178,7 @@ def generate_detection_maps(
 
     Args:
         input_folder (_type_): Path to the folder containing the predicted
-            probability maps. Each probability map must be saved as a seperate
+            probability maps. Each probability map must be saved as a separate
             file where the files basename will be used ato derive the case
             identifier. The probability maps must be one hot encoded and have
             shape (num_classes, ...) where num_classes includes the background
@@ -371,7 +371,7 @@ def get_picai_metrics(
     lesion_results: Dict[Hashable, List[Tuple[int, float, float]]] = {}
     lesion_weights: Dict[Hashable, List[float]] = {}
 
-    # Evaluation must be calculated seperately for each class
+    # Evaluation must be calculated separately for each class
     with concurrent.futures.ThreadPoolExecutor(num_threads) as pool:
         futures = {
             pool.submit(evaluate_case_multichannel, detection_map=det_map, ground_truth=gt, idx=case, **kwargs): case

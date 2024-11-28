@@ -44,8 +44,8 @@ def gen_dataset_list(data_dir: str, output_path: str | None = None, ext: str = "
     datalist: Dict[str, list] = {"testing": [], "training": []}
 
     # nnUNet datasets store images as unique-case-identifier_xxxx.ext
-    # xxxx is a 4 digit integer representing the channel/modaility.
-    # ext is the file extenstion
+    # xxxx is a 4 digit integer representing the channel/modality.
+    # ext is the file extention
     # Labels are stored as unique-case-identifier.ext as they do not have multiple channels
 
     if os.path.exists(test_dir):  # nnUNet Datasets do not always have test sets

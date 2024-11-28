@@ -15,7 +15,7 @@ from flwr.server.strategy import FedAvg, Strategy
 
 from fl4health.checkpointing.checkpointer import BestMetricTorchCheckpointer
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
-from fl4health.reporting.fl_wanb import ServerWandBReporter
+from fl4health.reporting.fl_wandb import ServerWandBReporter
 from fl4health.servers.server import FlServer
 from fl4health.utils.config import load_config
 from research.gemini.delirium_models.NN import NN as delirium_model

@@ -94,7 +94,7 @@ class EnsembleClient(BasicClient):
         """
         Given a single batch of input and target data, generate predictions
         (both individual models and ensemble prediction), compute loss, update parameters and
-        optionally update metrics if they exist. (ie backprop on a single batch of data).
+        optionally update metrics if they exist. (ie backpropagation on a single batch of data).
         Assumes self.model is in train mode already. Differs from parent method in that, there are multiple losses
         that we have to do backward passes on and multiple optimizers to update parameters each train step.
 

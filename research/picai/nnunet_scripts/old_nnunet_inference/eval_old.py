@@ -129,7 +129,7 @@ def get_picai_metrics(
             detection_maps.shape == ground_truth_annotations.shape
         ), "Got unexpected shapes for detection maps and ground truth annotations"
 
-    # Evaluation must be calculated seperately for each class
+    # Evaluation must be calculated separately for each class
     num_classes = detection_maps.shape[1]
     metrics: List[PicaiEvalMetrics] = []
     for cls in range(num_classes):

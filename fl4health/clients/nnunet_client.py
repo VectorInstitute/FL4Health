@@ -791,6 +791,6 @@ class NnunetClient(BasicClient):
     def transform_gradients(self, losses: TrainingLosses) -> None:
         """
         Apply the gradient clipping performed by the default nnunet trainer. This is
-        the default behaviour for nnunet 2.5.1
+        the default behavior for nnunet 2.5.1
         """
         nn.utils.clip_grad_norm_(self.model.parameters(), self.max_grad_norm)

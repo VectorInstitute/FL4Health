@@ -7,7 +7,7 @@
 #SBATCH --mem=5120MB
 #SBATCH --partition=gpu
 #SBATCH --qos=hipri
-#SBATCH --job-name=centeral-testing
+#SBATCH --job-name=central-testing
 #SBATCH --output=%j_%x.out
 #SBATCH --error=%j_%x.err
 #SBATCH --mail-user=your_email@vectorinstitute.ai

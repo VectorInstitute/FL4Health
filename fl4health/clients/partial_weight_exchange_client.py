@@ -138,7 +138,7 @@ class PartialWeightExchangeClient(BasicClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         """
-        Sets the local model parameters transfered from the server using a parameter exchanger to coordinate how
+        Sets the local model parameters transferred from the server using a parameter exchanger to coordinate how
         parameters are set.
 
         In the first fitting round, we assume the full model is being

@@ -106,7 +106,7 @@ class EvaluateClient(BasicClient):
 
     def set_parameters(self, parameters: NDArrays, config: Config, fitting_round: bool) -> None:
         assert not fitting_round
-        # Sets the global model parameters transfered from the server using a parameter exchanger to coordinate how
+        # Sets the global model parameters transferred from the server using a parameter exchanger to coordinate how
         # parameters are set
         if len(parameters) > 0:
             # If a non-empty set of parameters are passed, then they are inserted into a global model to be evaluated.

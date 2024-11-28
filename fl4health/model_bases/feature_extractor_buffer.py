@@ -112,9 +112,9 @@ class FeatureExtractorBuffer:
                 # Find the last specific layer under a given generic name
                 specific_layer = self.find_last_common_prefix(layer, named_layers)
                 # Split the specific layer name by '.' to get the hierarchical attribute
-                layer_hierarchicy_list = specific_layer.split(".")
+                layer_hierarchy_list = specific_layer.split(".")
                 self.fhooks.append(
-                    self.get_hierarchical_attr(self.model, layer_hierarchicy_list).register_forward_hook(
+                    self.get_hierarchical_attr(self.model, layer_hierarchy_list).register_forward_hook(
                         self.forward_hook(layer)
                     )
                 )

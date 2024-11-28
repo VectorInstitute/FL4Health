@@ -47,7 +47,7 @@ def pred_and_eval(
         inputs_folder (str): Path to the folder containing the raw input data
             that has not been processed by nnunet yet. File names must follow
             the nnunet convention where each channel modality is stored as a
-            seperate file. File names should be case-identifier_0000 where
+            separate file. File names should be case-identifier_0000 where
             0000 is a 4 digit integer representing the channel/modality of the
             image. All cases must have the same N channels numbered from 0 to
             N.
@@ -193,7 +193,7 @@ def main() -> None:
         type=str,
         help="""Path to the folder containing the raw input data that has not
             been processed by nnunet yet. File names must follow the nnunet
-            convention where each channel modality is stored as a seperate
+            convention where each channel modality is stored as a separate
             file. File names should be case-identifier_0000 where 0000 is a 4
             digit integer representing the channel/modality of the image. All
             cases must have the same N channels numbered from 0 to N.""",

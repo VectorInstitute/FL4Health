@@ -58,7 +58,7 @@ class BaseEfficientNet(nn.Module):
 
     def freeze_layers(self, frozen_blocks: int) -> None:
         # We freeze the bottom layers of the network. We always freeze the _conv_stem module, the _bn0 module and then
-        # we iterate throught the blocks freezing the specified number up to 15 (all of them)
+        # we iterate through the blocks freezing the specified number up to 15 (all of them)
 
         # Freeze the first two layers
         self.base_model._modules["_conv_stem"].requires_grad_(False)
