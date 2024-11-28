@@ -6,7 +6,7 @@
 import argparse
 import os
 from os.path import join
-from typing import Dict, Optional
+from typing import Dict
 
 import numpy as np
 import yaml

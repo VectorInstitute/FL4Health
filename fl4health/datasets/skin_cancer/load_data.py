@@ -9,7 +9,7 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 from logging import INFO
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import torch
 import torchvision.transforms as transforms

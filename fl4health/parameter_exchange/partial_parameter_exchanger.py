@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Generic, Optional, Tuple, TypeVar
+from typing import Generic, Tuple, TypeVar
 
 import torch.nn as nn
 from flwr.common.typing import NDArrays

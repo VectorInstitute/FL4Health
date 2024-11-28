@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple, Type, TypeVar
+from typing import List, Set, Tuple, Type, TypeVar
 
 import torch
 import torch.nn as nn

@@ -7,7 +7,7 @@ import time
 import warnings
 from logging import INFO
 from os.path import basename, isdir, join
-from typing import Any, Dict, Generator, List, Optional, Tuple
+from typing import Any, Dict, Generator, List, Tuple
 
 import numpy as np
 import torch

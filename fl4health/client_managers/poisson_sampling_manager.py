@@ -1,5 +1,5 @@
 from logging import WARNING
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from flwr.common.logger import log

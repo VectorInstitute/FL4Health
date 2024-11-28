@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARN
-from typing import Dict, Generic, List, Optional, Tuple, TypeVar, Union
+from typing import Dict, Generic, List, Tuple, TypeVar, Union
 
 import numpy as np
 import torch

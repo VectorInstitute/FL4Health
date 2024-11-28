@@ -7,7 +7,7 @@ import warnings
 from logging import INFO
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Callable, Dict, Hashable, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Hashable, List, Tuple, Union
 
 import numpy as np
 import SimpleITK as sitk

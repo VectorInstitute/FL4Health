@@ -1,6 +1,6 @@
 import math
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import torch
 import torch.nn as nn

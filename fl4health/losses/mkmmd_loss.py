@@ -1,5 +1,4 @@
 from logging import INFO
-from typing import Optional
 
 import torch
 from flwr.common.logger import log

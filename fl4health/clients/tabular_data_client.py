@@ -5,7 +5,7 @@ from typing import Dict, List, Sequence, Union
 import pandas as pd
 import torch
 from flwr.common.logger import log
-from flwr.common.typing import Config, NDArray, Optional, Scalar
+from flwr.common.typing import Config, NDArray, Scalar
 from sklearn.pipeline import Pipeline
 
 from fl4health.checkpointing.client_module import ClientCheckpointAndStateModule

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Tuple
 
 from flwr.common import Parameters
 from flwr.common.typing import Config, Scalar

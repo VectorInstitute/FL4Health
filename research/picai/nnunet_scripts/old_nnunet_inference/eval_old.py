@@ -4,7 +4,7 @@ import os
 import warnings
 from collections import defaultdict
 from os.path import join
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 import numpy as np
 from numpy.typing import NDArray

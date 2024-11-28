@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from logging import ERROR, INFO, WARNING
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 import torch
 import torch.nn as nn

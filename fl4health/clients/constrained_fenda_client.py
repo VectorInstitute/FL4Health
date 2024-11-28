@@ -1,6 +1,6 @@
 from logging import WARNING
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Sequence, Tuple
 
 import torch
 import torch.nn as nn

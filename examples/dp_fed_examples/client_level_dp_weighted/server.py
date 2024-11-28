@@ -1,7 +1,7 @@
 import argparse
 import pickle
 from functools import partial
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.typing import Config

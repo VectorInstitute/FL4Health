@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from logging import INFO
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import torch
 from flwr.common.logger import log

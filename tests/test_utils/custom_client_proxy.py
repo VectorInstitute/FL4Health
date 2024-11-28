@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flwr.common.typing import (
     Code,
     DisconnectRes,

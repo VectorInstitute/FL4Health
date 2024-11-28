@@ -2,7 +2,7 @@ import argparse
 import string
 from functools import partial
 from random import choices
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import flwr as fl
 from flwr.common.typing import Config

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 from flwr.server.client_manager import SimpleClientManager
 from flwr.server.client_proxy import ClientProxy

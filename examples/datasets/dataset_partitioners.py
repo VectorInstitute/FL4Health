@@ -2,7 +2,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, cast
 
 import numpy as np
 import pandas as pd

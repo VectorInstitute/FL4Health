@@ -2,7 +2,7 @@ import argparse
 from collections import OrderedDict
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict, Sequence, Tuple
 
 import flwr as fl
 import torch

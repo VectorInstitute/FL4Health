@@ -2,7 +2,7 @@ import random
 import warnings
 from logging import INFO
 from pathlib import Path
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import torch

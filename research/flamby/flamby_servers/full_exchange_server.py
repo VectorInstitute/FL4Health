@@ -1,5 +1,3 @@
-from typing import Optional
-
 from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy

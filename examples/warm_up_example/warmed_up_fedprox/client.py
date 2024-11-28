@@ -2,7 +2,7 @@ import argparse
 import os
 from logging import INFO
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
 import flwr as fl
 import torch

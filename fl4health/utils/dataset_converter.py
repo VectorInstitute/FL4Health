@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Tuple, Union
 
 import torch
 

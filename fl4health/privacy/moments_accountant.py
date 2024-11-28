@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Sequence, Union
+from typing import List, Sequence, Union
 
 from dp_accounting import (
     DpEvent,

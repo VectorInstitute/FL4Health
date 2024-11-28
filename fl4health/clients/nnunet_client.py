@@ -8,7 +8,7 @@ from contextlib import redirect_stdout
 from logging import DEBUG, ERROR, INFO, WARNING
 from os.path import exists, join
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Dict, List, Sequence, Tuple, Type, Union
 
 import numpy as np
 import torch

@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import reduce
-from typing import Callable, DefaultDict, Dict, List, Optional, Tuple
+from typing import Callable, DefaultDict, Dict, List, Tuple
 
 import numpy as np
 from flwr.common import MetricsAggregationFn, NDArray, NDArrays, Parameters
@@ -18,12 +18,9 @@ class FedPm(FedAvgDynamicLayer):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Tuple[float, Dict[str, Scalar]] | None,
-            ]
-        ] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+        ) = None,
         on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,

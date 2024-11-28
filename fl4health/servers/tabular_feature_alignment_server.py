@@ -1,7 +1,7 @@
 import random
 from functools import partial
 from logging import DEBUG, INFO, WARNING
-from typing import Callable, Dict, Optional, Sequence, Tuple
+from typing import Callable, Dict, Sequence, Tuple
 
 from flwr.common import Parameters
 from flwr.common.logger import log

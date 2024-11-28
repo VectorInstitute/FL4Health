@@ -1,7 +1,7 @@
 import math
 from abc import ABC, abstractmethod
 from logging import INFO, WARN
-from typing import Any, List, Optional, Set, TypeVar, Union
+from typing import Any, List, Set, TypeVar, Union
 
 import numpy as np
 import torch

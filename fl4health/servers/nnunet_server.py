@@ -2,7 +2,7 @@ import pickle
 import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
-from typing import Any, Dict, Optional, Tuple, Type, Union
+from typing import Any, Dict, Tuple, Type, Union
 
 import torch.nn as nn
 from flwr.common import Parameters

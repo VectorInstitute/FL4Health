@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, Tuple, Union
 
 import torch
 import torch.nn as nn

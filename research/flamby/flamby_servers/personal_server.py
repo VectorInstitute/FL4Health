@@ -1,5 +1,5 @@
 from logging import INFO
-from typing import Dict, Optional, Tuple
+from typing import Dict, Tuple
 
 from flwr.common.logger import log
 from flwr.common.typing import Config, Scalar

@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 from flamby.datasets.fed_ixi.model import Decoder, Encoder, EncodingBlock

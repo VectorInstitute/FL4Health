@@ -1,7 +1,7 @@
 import random
 import uuid
 from logging import INFO
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import torch

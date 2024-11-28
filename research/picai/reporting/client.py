@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Tuple
 
 import flwr as fl
 import torch

@@ -2,7 +2,7 @@ import datetime
 from collections.abc import Sequence
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import torch
 from flwr.common import EvaluateIns, EvaluateRes, MetricsAggregationFn, Parameters, Scalar

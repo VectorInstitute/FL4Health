@@ -2,7 +2,7 @@ import datetime
 import math
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Union
 from unittest.mock import MagicMock
 
 import pytest

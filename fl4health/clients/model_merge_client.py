@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple, Union
+from typing import Dict, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn

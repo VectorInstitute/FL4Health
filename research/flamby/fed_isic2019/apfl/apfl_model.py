@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 from flamby.datasets.fed_isic2019 import Baseline

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from math import ceil
-from typing import List, Optional, Union
+from typing import List, Union
 
 from fl4health.privacy.moments_accountant import (
     FixedSamplingWithoutReplacement,

@@ -1,5 +1,5 @@
 import concurrent.futures
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 from flwr.common.typing import Code, GetPropertiesIns, GetPropertiesRes
 from flwr.server.client_proxy import ClientProxy

@@ -1,5 +1,5 @@
 from logging import INFO, WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 from flwr.common import (
     EvaluateIns,
@@ -38,12 +38,9 @@ class BasicFedAvg(FedAvg, StrategyWithPolling):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Tuple[float, Dict[str, Scalar]] | None,
-            ]
-        ] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+        ) = None,
         on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
@@ -325,12 +322,9 @@ class OpacusBasicFedAvg(BasicFedAvg):
         min_fit_clients: int = 2,
         min_evaluate_clients: int = 2,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Tuple[float, Dict[str, Scalar]] | None,
-            ]
-        ] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+        ) = None,
         on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,

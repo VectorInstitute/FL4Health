@@ -2,7 +2,6 @@ import json
 import os
 from logging import INFO, WARNING
 from pathlib import Path
-from typing import Optional
 
 import torch
 from flwr.common.logger import log

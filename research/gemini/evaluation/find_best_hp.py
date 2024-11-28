@@ -1,7 +1,7 @@
 import argparse
 import os
 from logging import INFO
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from flwr.common.logger import log

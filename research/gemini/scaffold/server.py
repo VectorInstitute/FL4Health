@@ -2,7 +2,7 @@ import argparse
 import os
 from functools import partial
 from logging import INFO
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import flwr as fl
 import numpy as np
@@ -57,7 +57,7 @@ class GeminiSCAFFOLDServer(FlServer):
         self,
         server_round: int,
         timeout: float | None,
-    ) -> Tuple[Optional[float | None, Dict[str, Scalar], EvaluateResultsAndFailures]]:
+    ) -> Tuple[float | None, Dict[str, Scalar], EvaluateResultsAndFailures] | None:
         # loss_aggregated is the aggregated validation per step loss
         # aggregated over each client (weighted by num examples)
         eval_round_results = super().evaluate_round(server_round, timeout)

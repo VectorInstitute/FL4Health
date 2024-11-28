@@ -4,7 +4,6 @@ import time
 import warnings
 from logging import INFO
 from os.path import exists, join
-from typing import Optional
 
 import numpy as np
 from flwr.common.logger import log

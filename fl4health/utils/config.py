@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, Type, TypeVar
 
 import yaml
 

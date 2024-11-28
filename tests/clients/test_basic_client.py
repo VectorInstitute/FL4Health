@@ -1,7 +1,7 @@
 import datetime
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 from unittest.mock import MagicMock
 
 import freezegun

@@ -1,6 +1,6 @@
 import random
 from logging import WARNING
-from typing import List, Optional
+from typing import List
 
 from flwr.common.logger import log
 from flwr.server.client_proxy import ClientProxy

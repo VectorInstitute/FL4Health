@@ -1,7 +1,7 @@
 import copy
 from logging import INFO
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Dict, Sequence, Tuple
 
 import torch
 from flwr.common.logger import log

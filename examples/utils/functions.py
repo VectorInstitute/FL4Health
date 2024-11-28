@@ -1,6 +1,3 @@
-from typing import Optional
-
-
 def make_dict_with_epochs_or_steps(
     local_epochs: int | None = None,
     local_steps: int | None = None,

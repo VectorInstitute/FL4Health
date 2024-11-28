@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Optional, Union
+from typing import Union
 
 from flwr.common.typing import Dict, List, Scalar
 

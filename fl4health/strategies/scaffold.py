@@ -1,6 +1,6 @@
 from functools import reduce
 from logging import WARNING
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Tuple, Union
 
 import numpy as np
 import torch.nn as nn
@@ -32,12 +32,9 @@ class Scaffold(BasicFedAvg):
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Tuple[float, Dict[str, Scalar]] | None,
-            ]
-        ] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+        ) = None,
         on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,
@@ -360,12 +357,9 @@ class OpacusScaffold(Scaffold):
         fraction_fit: float = 1.0,
         fraction_evaluate: float = 1.0,
         min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Tuple[float, Dict[str, Scalar]] | None,
-            ]
-        ] = None,
+        evaluate_fn: (
+            Callable[[int, NDArrays, Dict[str, Scalar]], Tuple[float, Dict[str, Scalar]] | None] | None
+        ) = None,
         on_fit_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         on_evaluate_config_fn: Callable[[int], Dict[str, Scalar]] | None = None,
         accept_failures: bool = True,

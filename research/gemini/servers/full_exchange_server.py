@@ -1,5 +1,3 @@
-from typing import Optional
-
 import torch.nn as nn
 from flwr.server.client_manager import ClientManager
 from flwr.server.strategy import Strategy

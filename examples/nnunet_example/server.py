@@ -4,7 +4,6 @@ import pickle
 import warnings
 from functools import partial
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
