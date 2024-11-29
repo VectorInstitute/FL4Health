@@ -66,7 +66,7 @@ def main(config: dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        adapt_loss_weight=config["adapt_proximal_weight"],
+        adapt_loss_weight=config["adaptive_proximal_weight"],
         initial_loss_weight=config["initial_proximal_weight"],
     )
 
@@ -75,6 +75,7 @@ def main(config: dict[str, Any]) -> None:
         fl_config=config,
         strategy=strategy,
         checkpoint_and_state_module=checkpoint_and_state_module,
+        accept_failures=False,
     )
 
     fl.server.start_server(

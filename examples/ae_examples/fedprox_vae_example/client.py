@@ -16,7 +16,7 @@ from fl4health.model_bases.autoencoders_base import VariationalAe
 from fl4health.preprocessing.autoencoders.loss import VaeLoss
 from fl4health.utils.config import narrow_dict_type
 from fl4health.utils.dataset_converter import AutoEncoderDatasetConverter
-from fl4health.utils.load_data import load_mnist_data
+from fl4health.utils.load_data import ToNumpy, load_mnist_data
 from fl4health.utils.sampler import DirichletLabelBasedSampler
 
 
@@ -25,7 +25,7 @@ class VaeFedProxClient(FedProxClient):
         batch_size = narrow_dict_type(config, "batch_size", int)
         sampler = DirichletLabelBasedSampler(list(range(10)), sample_percentage=0.75, beta=100)
         # Flattening the input images to use an MLP-based variational autoencoder.
-        transform = transforms.Compose([transforms.ToTensor(), transforms.Lambda(torch.flatten)])
+        transform = transforms.Compose([ToNumpy(), transforms.ToTensor(), transforms.Lambda(torch.flatten)])
         # Create and pass the autoencoder data converter to the data loader.
         self.autoencoder_converter = AutoEncoderDatasetConverter(condition=None)
         train_loader, val_loader, _ = load_mnist_data(

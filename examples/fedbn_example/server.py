@@ -70,7 +70,7 @@ def main(config: dict[str, Any], server_address: str, dataset_name: str) -> None
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

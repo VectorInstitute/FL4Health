@@ -74,10 +74,11 @@ def main(config: dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
+        accept_failures=False,
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, accept_failures=False)
 
     fl.server.start_server(
         server=server,

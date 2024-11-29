@@ -23,6 +23,7 @@ def main(config: dict[str, Any], server_checkpoint_path: Path | None) -> None:
         evaluate_config=evaluate_config,
         evaluate_metrics_aggregation_fn=uniform_evaluate_metrics_aggregation_fn,
         min_available_clients=config["n_clients"],
+        accept_failures=False,
     )
 
     fl.server.start_server(
