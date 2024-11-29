@@ -74,7 +74,6 @@ def main(config: dict[str, Any]) -> None:
         fit_metrics_aggregation_fn=fit_metrics_aggregation_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
         initial_parameters=get_all_model_parameters(model),
-        accept_failures=False,
     )
 
     client_manager = SimpleClientManager()
