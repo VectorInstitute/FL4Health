@@ -185,6 +185,7 @@ class NnunetServer(FlServer):
             # 1) If the state checkpointer is not None, then we want to do state checkpointing. So we need information
             #       from the clients in the form of get_properties.
             # 2) If the nnUnet plans are not specified, we also need those plans from the client.
+            # In either case, we query clients for the information
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
             log(INFO, "Requesting properties from one random client via get_properties")
@@ -202,9 +203,9 @@ class NnunetServer(FlServer):
             properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=0)
 
             if properties_res.status.code == Code.OK:
-                log(INFO, "Received global nnunet plans from one random client")
+                log(INFO, "Received properties from one random client")
             else:
-                raise Exception("Failed to receive properties from client to initialize nnunet plans")
+                raise Exception("Failed to successfully receive properties from client")
             properties = properties_res.properties
 
             # Set attributes of server that are dependent on client properties.
@@ -215,15 +216,17 @@ class NnunetServer(FlServer):
                 self.nnunet_plans_bytes = narrow_dict_type(self.fl_config, "nnunet_plans", bytes)
             else:
                 self.nnunet_plans_bytes = narrow_dict_type(properties, "nnunet_plans", bytes)
+
             self.num_segmentation_heads = narrow_dict_type(properties, "num_segmentation_heads", int)
             self.num_input_channels = narrow_dict_type(properties, "num_input_channels", int)
             self.enable_deep_supervision = narrow_dict_type(properties, "enable_deep_supervision", bool)
 
+        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
+            # If we're starting training from scratch, set the nnunet_config property and initialize the server model
             self.nnunet_config = NnunetConfig(self.fl_config["nnunet_config"])
-
             self.initialize_server_model()
 
-        # Wrap config functions so that nnunet_plans is included
+        # Wrap config functions so that we are sure the nnunet_plans are included
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
         new_eval_cfg_fn = add_items_to_config_fn(
             self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
