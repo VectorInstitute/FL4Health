@@ -84,6 +84,7 @@ def main(config: Dict[str, Any]) -> None:
 
     server = ClientLevelDPFedAvgServer(
         client_manager=client_manager,
+        fl_config=config,
         strategy=strategy,
         num_server_rounds=config["n_server_rounds"],
         server_noise_multiplier=config["server_noise_multiplier"],

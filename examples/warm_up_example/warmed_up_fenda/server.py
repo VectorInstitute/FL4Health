@@ -80,7 +80,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         reporters = [wandb_reporter]
     else:
         reporters = []
-    server = FlServer(client_manager, strategy, reporters=reporters)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy, reporters=reporters)
 
     fl.server.start_server(
         server=server,

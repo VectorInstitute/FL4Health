@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import torch
-import torch.nn as nn
 from flwr.common import Code, EvaluateRes, Status
 from flwr.common.parameter import ndarrays_to_parameters
 from flwr.server.client_proxy import ClientProxy
@@ -18,7 +17,7 @@ from fl4health.client_managers.base_sampling_manager import SimpleClientManager
 from fl4health.client_managers.poisson_sampling_manager import PoissonSamplingClientManager
 from fl4health.parameter_exchange.full_exchanger import FullParameterExchanger
 from fl4health.reporting import JsonReporter
-from fl4health.servers.base_server import FlServer, FlServerWithCheckpointing
+from fl4health.servers.base_server import FlServer
 from fl4health.strategies.basic_fedavg import BasicFedAvg
 from fl4health.utils.metric_aggregation import evaluate_metrics_aggregation_fn
 from fl4health.utils.metrics import TEST_LOSS_KEY, TEST_NUM_EXAMPLES_KEY, MetricPrefix
@@ -30,25 +29,46 @@ model = LinearTransform()
 
 
 class DummyFLServer(FlServer):
-    def _hydrate_model_for_checkpointing(self) -> nn.Module:
-        return model
+    def _hydrate_model_for_checkpointing(self) -> None:
+        self.server_model = model
 
 
-def test_no_hydration_with_checkpointer(caplog: pytest.LogCaptureFixture, tmp_path: Path) -> None:
+def test_hydration_no_model_with_checkpointer(tmp_path: Path) -> None:
     # Temporary path to write pkl to, will be cleaned up at the end of the test.
     checkpoint_dir = tmp_path.joinpath("resources")
     checkpoint_dir.mkdir()
     checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
 
-    # Checkpointer is defined but there is no server-side model hydration to produce a model from the server state.
-    # This is not a deal breaker, but may be unintended behavior and the user should be warned
-    fl_server_no_hydration = FlServer(PoissonSamplingClientManager(), None, None, checkpointer)
-    fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
-    assert "Server model hydration is not defined" in caplog.text
+    # Checkpointer is defined but there is no server-side model defined to produce a model from the server state.
+    # An assertion error should be throw stating this
+    fl_server_no_hydration = FlServer(
+        client_manager=PoissonSamplingClientManager(), fl_config={}, checkpointer=checkpointer
+    )
+    with pytest.raises(AssertionError) as assertion_error:
+        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
+    assert "Model hydration has been called but no server_model is defined to hydrate" in str(assertion_error.value)
+
+
+def test_hydration_no_exchanger_with_checkpointer(tmp_path: Path) -> None:
+    # Temporary path to write pkl to, will be cleaned up at the end of the test.
+    checkpoint_dir = tmp_path.joinpath("resources")
+    checkpoint_dir.mkdir()
+    checkpointer = BestLossTorchCheckpointer(str(checkpoint_dir), "best_model.pkl")
+
+    # Checkpointer is defined but there is no parameter exchanger defined to produce a model from the server state.
+    # An assertion error should be throw stating this
+    fl_server_no_hydration = FlServer(
+        client_manager=PoissonSamplingClientManager(), fl_config={}, model=model, checkpointer=checkpointer
+    )
+    with pytest.raises(AssertionError) as assertion_error:
+        fl_server_no_hydration._maybe_checkpoint(1.0, {}, server_round=1)
+    assert "Model hydration has been called but no parameter_exchanger is defined to hydrate." in str(
+        assertion_error.value
+    )
 
 
 def test_no_checkpointer_maybe_checkpoint(caplog: pytest.LogCaptureFixture) -> None:
-    fl_server_no_checkpointer = FlServer(PoissonSamplingClientManager(), None, None, None)
+    fl_server_no_checkpointer = FlServer(client_manager=PoissonSamplingClientManager(), fl_config={})
 
     # Neither checkpointing nor hydration is defined, we'll have no server-side checkpointing for the FL run.
     fl_server_no_checkpointer._maybe_checkpoint(1.0, {}, server_round=1)
@@ -63,7 +83,9 @@ def test_hydration_and_checkpointer(tmp_path: Path) -> None:
 
     # Server-side hydration to convert server state to model and checkpointing behavior are both defined, a model
     # should be saved and be loaded successfully.
-    fl_server_both = DummyFLServer(PoissonSamplingClientManager(), None, None, checkpointer)
+    fl_server_both = DummyFLServer(
+        client_manager=PoissonSamplingClientManager(), fl_config={}, checkpointer=checkpointer
+    )
     fl_server_both._maybe_checkpoint(1.0, {}, server_round=5)
     loaded_model = checkpointer.load_best_checkpoint()
     assert isinstance(loaded_model, LinearTransform)
@@ -82,8 +104,9 @@ def test_fl_server_with_checkpointing(tmp_path: Path) -> None:
     updated_model = LinearTransform()
     parameter_exchanger = FullParameterExchanger()
 
-    server = FlServerWithCheckpointing(
+    server = FlServer(
         client_manager=PoissonSamplingClientManager(),
+        fl_config={},
         parameter_exchanger=parameter_exchanger,
         model=initial_model,
         strategy=None,
@@ -107,7 +130,7 @@ def test_metrics_reporter_fit(mock_fit: Mock) -> None:
     test_history.losses_centralized = [(1, 123.123), (2, 123)]
     mock_fit.return_value = (test_history, 1)
     reporter = JsonReporter()
-    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
+    fl_server = FlServer(client_manager=SimpleClientManager(), fl_config={}, reporters=[reporter])
     fl_server.fit(2, None)
     metrics_to_assert = {
         "host_type": "server",
@@ -136,7 +159,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
     mock_fit_round.return_value = (None, test_metrics_aggregated, None)
 
     reporter = JsonReporter()
-    fl_server = FlServer(SimpleClientManager(), reporters=[reporter])
+    fl_server = FlServer(client_manager=SimpleClientManager(), fl_config={}, reporters=[reporter])
     fl_server.fit_round(test_round, None)
 
     metrics_to_assert = {
@@ -155,7 +178,7 @@ def test_metrics_reporter_fit_round(mock_fit_round: Mock) -> None:
 def test_unpack_metrics() -> None:
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
-    fl_server = FlServer(client_manager=Mock(), strategy=strategy)
+    fl_server = FlServer(client_manager=Mock(), fl_config={}, strategy=strategy)
 
     client_proxy = CustomClientProxy("1")
     eval_res = EvaluateRes(
@@ -188,7 +211,7 @@ def test_unpack_metrics() -> None:
 def test_handle_result_aggregation() -> None:
     # Initialize the server with BasicFedAvg strategy
     strategy = BasicFedAvg(evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn)
-    fl_server = FlServer(client_manager=Mock(), strategy=strategy)
+    fl_server = FlServer(client_manager=Mock(), fl_config={}, strategy=strategy)
 
     client_proxy1 = CustomClientProxy("1")
     eval_res1 = EvaluateRes(
@@ -252,7 +275,10 @@ def test_metrics_reporter_evaluate_round(mock_evaluate_round: Mock) -> None:
     client_manager.register(CustomClientProxy("test_id", 1))
     reporter = JsonReporter()
     fl_server = FlServer(
-        client_manager, reporters=[reporter], strategy=FedAvg(min_evaluate_clients=1, min_available_clients=1)
+        client_manager=client_manager,
+        fl_config={},
+        reporters=[reporter],
+        strategy=FedAvg(min_evaluate_clients=1, min_available_clients=1),
     )
     fl_server.evaluate_round(test_round, None)
 

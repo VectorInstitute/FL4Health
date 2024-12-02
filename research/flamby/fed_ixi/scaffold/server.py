@@ -62,7 +62,9 @@ def main(
         initial_control_variates=initial_control_variates,
     )
 
-    server = ScaffoldServer(client_manager, model, strategy, checkpointer)
+    server = ScaffoldServer(
+        client_manager=client_manager, fl_config=config, model=model, strategy=strategy, checkpointer=checkpointer
+    )
 
     fl.server.start_server(
         server=server,

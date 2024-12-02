@@ -42,6 +42,9 @@ class TabularFeatureAlignmentServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            config (Config): This should be the configuration that was used to setup the federated alignment.
+                In most cases it should be the "source of truth" for how FL alignment should proceed.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
@@ -66,6 +69,7 @@ class TabularFeatureAlignmentServer(FlServer):
 
         super().__init__(
             client_manager=client_manager,
+            fl_config=config,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,
@@ -76,13 +80,12 @@ class TabularFeatureAlignmentServer(FlServer):
         # and the second one gathers the input/output dimensions of the model.
         self.initial_polls_complete = False
         self.tab_features_info = tabular_features_source_of_truth
-        self.config = config
         self.initialize_parameters = initialize_parameters
         self.source_info_gathered = False
         self.dimension_info: Dict[str, int] = {}
         # ensure that self.strategy has type BasicFedAvg so its on_fit_config_fn can be specified.
         assert isinstance(self.strategy, BasicFedAvg)
-        self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.source_info_gathered)
+        self.strategy.on_fit_config_fn = partial(fit_config, self.fl_config, self.source_info_gathered)
 
     def _set_dimension_info(self, input_dimension: int, output_dimension: int) -> None:
         self.dimension_info[INPUT_DIMENSION] = input_dimension
@@ -117,10 +120,10 @@ class TabularFeatureAlignmentServer(FlServer):
                 feature_info_source = self.tab_features_info.to_json()
 
             # the feature information is sent to clients through the config parameter.
-            self.config[FEATURE_INFO] = feature_info_source
+            self.fl_config[FEATURE_INFO] = feature_info_source
             self.source_info_gathered = True
 
-            self.strategy.on_fit_config_fn = partial(fit_config, self.config, self.source_info_gathered)
+            self.strategy.on_fit_config_fn = partial(fit_config, self.fl_config, self.source_info_gathered)
 
             # Now the server waits until feature alignment is performed on the clients' side
             # and subsequently requests the input and output dimensions, which are needed for initializing

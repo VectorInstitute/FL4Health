@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Dict, Optional, Tuple
 
 from flwr.common import Parameters
-from flwr.common.typing import Scalar
+from flwr.common.typing import Config, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.server import FitResultsAndFailures
 
@@ -16,6 +16,7 @@ class FedPmServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         strategy: FedPm,
         checkpointer: Optional[TorchCheckpointer] = None,
         reset_frequency: int = 1,
@@ -29,6 +30,10 @@ class FedPmServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (Scaffold): The aggregation strategy to be used by the server to handle client updates and other
                 information potentially sent by the participating clients. This strategy must be of SCAFFOLD type.
             checkpointer (Optional[TorchCheckpointer], optional): To be provided if the server should perform
@@ -44,6 +49,7 @@ class FedPmServer(FlServer):
         FlServer.__init__(
             self,
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,

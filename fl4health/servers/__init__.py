@@ -1,6 +1,6 @@
 # Note: This is commented out until logging issues resolved
 # Import server classes so that they can be directly imported from fl4health.server
-# from fl4health.servers.base_server import FlServer, FlServerWithCheckpointing, FlServerWithInitializer
+# from fl4health.servers.base_server import FlServer
 # from fl4health.servers.client_level_dp_fed_avg_server import ClientLevelDPFedAvgServer
 # from fl4health.servers.evaluate_server import EvaluateServer
 # from fl4health.servers.fedpm_server import FedPmServer

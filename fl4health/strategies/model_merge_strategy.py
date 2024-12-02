@@ -68,7 +68,7 @@ class ModelMergeStrategy(Strategy):
             on_fit_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
                 Function used to configure training by providing a configuration dictionary. Defaults to None.
             on_evaluate_config_fn (Optional[Callable[[int], Dict[str, Scalar]]], optional):
-                Function used to configure server-side central validation by providing a Config dictionary.
+                Function used to configure client-side validation by providing a Config dictionary.
                 Defaults to None.
             accept_failures (bool, optional): Whether or not accept rounds containing failures. Defaults to True.
             fit_metrics_aggregation_fn (Optional[MetricsAggregationFn], optional): Metrics aggregation function.

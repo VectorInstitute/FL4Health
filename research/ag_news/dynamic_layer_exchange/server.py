@@ -96,7 +96,7 @@ def main(config: Dict[str, Any], server_address: str) -> None:
     )
 
     client_manager = SimpleClientManager()
-    server = FlServer(client_manager, strategy)
+    server = FlServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     # grpc_max_message_length is reset here so the entire model can be exchanged between the server and clients.
     fl.server.start_server(

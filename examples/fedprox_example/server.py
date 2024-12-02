@@ -81,7 +81,9 @@ def main(config: Dict[str, Any], server_address: str) -> None:
         reporters = [wandb_reporter, json_reporter]
     else:
         reporters = [json_reporter]
-    server = FedProxServer(client_manager=client_manager, strategy=strategy, model=None, reporters=reporters)
+    server = FedProxServer(
+        client_manager=client_manager, fl_config=config, strategy=strategy, model=None, reporters=reporters
+    )
 
     fl.server.start_server(
         server=server,

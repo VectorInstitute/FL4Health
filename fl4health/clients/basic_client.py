@@ -86,9 +86,8 @@ class BasicClient(NumPyClient):
         if intermediate_client_state_dir is not None:
             log(
                 WARNING,
-                "intermediate_client_state_dir is not None. Creating PerRoundCheckpointer. \
-                This functionality still experimental and only supported for \
-                FlServerWithCheckpointing and NnunetServer currently.",
+                "intermediate_client_state_dir is not None. Creating PerRoundCheckpointer. This functionality is "
+                "still experimental and only supported with the base FlServer and NnunetServers at the moment",
             )
             self.per_round_checkpointer = PerRoundCheckpointer(
                 intermediate_client_state_dir, Path(f"client_{self.client_name}.pt")

@@ -61,7 +61,7 @@ def main(config: Dict[str, Any], server_address: str, lam: float) -> None:
         initial_loss_weight=lam,
     )
 
-    server = PersonalServer(client_manager, strategy)
+    server = PersonalServer(client_manager=client_manager, fl_config=config, strategy=strategy)
 
     fl.server.start_server(
         server=server,

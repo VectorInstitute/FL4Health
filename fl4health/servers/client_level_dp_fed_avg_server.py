@@ -4,6 +4,7 @@ from math import ceil
 from typing import List, Optional, Tuple
 
 from flwr.common.logger import log
+from flwr.common.typing import Config
 from flwr.server.client_manager import ClientManager
 from flwr.server.history import History
 
@@ -24,6 +25,7 @@ class ClientLevelDPFedAvgServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
+        fl_config: Config,
         strategy: ClientLevelDPFedAvgM,
         server_noise_multiplier: float,
         num_server_rounds: int,
@@ -38,6 +40,10 @@ class ClientLevelDPFedAvgServer(FlServer):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             strategy (ClientLevelDPFedAvgM): The aggregation strategy to be used by the server to handle.
                 client updates and other information potentially sent by the participating clients.
             server_noise_multiplier (float): Magnitude of noise added to the weights aggregation process by the server.
@@ -55,6 +61,7 @@ class ClientLevelDPFedAvgServer(FlServer):
         """
         super().__init__(
             client_manager=client_manager,
+            fl_config=fl_config,
             strategy=strategy,
             checkpointer=checkpointer,
             reporters=reporters,

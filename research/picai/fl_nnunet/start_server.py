@@ -93,9 +93,12 @@ def main(
     )
 
     server = NnunetServer(
+        client_manager=SimpleClientManager(),
+        fl_config=config,
+        # The fit_config_fn contains all of the necessary information for param initialization, so we reuse it here
+        on_init_parameters_config_fn=fit_config_fn,
         parameter_exchanger=FullParameterExchanger(),
         model=None,
-        client_manager=SimpleClientManager(),
         strategy=strategy,
         intermediate_server_state_dir=(
             Path(intermediate_server_state_dir) if intermediate_server_state_dir is not None else None

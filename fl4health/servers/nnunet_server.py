@@ -3,22 +3,21 @@ import warnings
 from collections.abc import Callable, Sequence
 from logging import INFO
 from pathlib import Path
-from typing import Any, Optional, Tuple, Type, Union
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import torch.nn as nn
 from flwr.common import Parameters
 from flwr.common.logger import log
-from flwr.common.typing import Code, Config, EvaluateIns, FitIns, GetPropertiesIns
+from flwr.common.typing import Code, Config, EvaluateIns, FitIns, GetPropertiesIns, Scalar
 from flwr.server.client_manager import ClientManager
 from flwr.server.client_proxy import ClientProxy
 from flwr.server.history import History
 from flwr.server.strategy import Strategy
 
 from fl4health.checkpointing.checkpointer import TorchCheckpointer
-from fl4health.parameter_exchange.parameter_exchanger_base import ParameterExchanger
 from fl4health.reporting.base_reporter import BaseReporter
 from fl4health.reporting.reports_manager import ReportsManager
-from fl4health.servers.base_server import FlServerWithCheckpointing, FlServerWithInitializer
+from fl4health.servers.base_server import ExchangerType, FlServer
 from fl4health.utils.config import narrow_dict_type, narrow_dict_type_and_set_attribute
 from fl4health.utils.nnunet_utils import NnunetConfig
 from fl4health.utils.parameter_extraction import get_all_model_parameters
@@ -57,15 +56,17 @@ def add_items_to_config_fn(fn: CFG_FN, items: Config) -> CFG_FN:
     return new_fn
 
 
-class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
+class NnunetServer(FlServer):
     def __init__(
         self,
         client_manager: ClientManager,
-        parameter_exchanger: ParameterExchanger,
+        fl_config: Config,
+        on_init_parameters_config_fn: Callable[[int], Dict[str, Scalar]],
         model: nn.Module | None = None,
         strategy: Strategy | None = None,
         checkpointer: TorchCheckpointer | Sequence[TorchCheckpointer] | None = None,
         reporters: Sequence[BaseReporter] | None = None,
+        parameter_exchanger: ExchangerType | None = None,
         intermediate_server_state_dir: Path | None = None,
         server_name: str | None = None,
         accept_failures: bool = True,
@@ -78,8 +79,15 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         Args:
             client_manager (ClientManager): Determines the mechanism by which clients are sampled by the server, if
                 they are to be sampled at all.
+            fl_config (Config): This should be the configuration that was used to setup the federated training.
+                In most cases it should be the "source of truth" for how FL training/evaluation should proceed. For
+                example, the config used to produce the on_fit_config_fn and on_evaluate_config_fn for the strategy.
+                NOTE: This config is DISTINCT from the Flwr server config, which is extremely minimal.
             model (nn.Module): This is the torch model to be hydrated by the _hydrate_model_for_checkpointing function
-            parameter_exchanger (ExchangerType): This is the parameter exchanger to be used to hydrate the model.
+            on_init_parameters_config_fn (Callable[[int], Dict[str, Scalar]]]): Function used to configure how one
+                asks a client to provide parameters from which to initialize all other clients by providing a
+                Config dictionary. For NnunetServers this is a required function to provide the additional information
+                necessary to a client for parameter initialization
             strategy (Optional[Strategy], optional): The aggregation strategy to be used by the server to handle
                 client updates and other information potentially sent by the participating clients. If None the
                 strategy is FedAvg as set by the flwr Server.
@@ -91,6 +99,11 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
                 send data to.
             intermediate_server_state_dir (Path): A directory to store and load checkpoints from for the server
                 during an FL experiment.
+            parameter_exchanger (Optional[ExchangerType], optional): A parameter exchanger used to facilitate
+                server-side model checkpointing if a checkpointer has been defined. If not provided then checkpointing
+                will not be done unless the _hydrate_model_for_checkpointing function is overridden. Because the
+                server only sees numpy arrays, the parameter exchanger is used to insert the numpy arrays into a
+                provided model. Defaults to None.
             server_name (Optional[str]): An optional string name to uniquely identify server.
             accept_failures (bool, optional): Determines whether the server should accept failures during training or
                 evaluation from clients or not. If set to False, this will cause the server to shutdown all clients
@@ -99,18 +112,20 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
                 Useful for passing custom nnUNetTrainer. Defaults to the standard nnUNetTrainer class.
                 Must match the nnunet_trainer_class passed to the NnunetClient.
         """
-        FlServerWithCheckpointing.__init__(
+        FlServer.__init__(
             self,
             client_manager=client_manager,
-            model=model,
-            parameter_exchanger=parameter_exchanger,
+            fl_config=fl_config,
             strategy=strategy,
-            checkpointer=checkpointer,
             reporters=reporters,
+            model=model,
+            checkpointer=checkpointer,
+            parameter_exchanger=parameter_exchanger,
             intermediate_server_state_dir=intermediate_server_state_dir,
+            on_init_parameters_config_fn=on_init_parameters_config_fn,
             server_name=server_name,
+            accept_failures=accept_failures,
         )
-        self.initialized = False
         self.nnunet_trainer_class = nnunet_trainer_class
 
         self.nnunet_plans_bytes: bytes
@@ -143,85 +158,79 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
 
         self.server_model = model
 
-    def fit(self, num_rounds: int, timeout: Optional[float]) -> Tuple[History, float]:
+    def update_before_fit(self, num_rounds: int, timeout: Optional[float]) -> None:
         """
-        Same as parent method except initialize hook method is called first
-        """
-        # Initialize the server
-        if not self.initialized:
-            self.initialize(server_round=0, timeout=timeout)
+        Hook method to allow the server to do some additional initialization prior to fitting. NunetServer
+        uses this method to sample a client for properties which are required to initialize the server.
 
-        return FlServerWithCheckpointing.fit(self, num_rounds, timeout)
+        In particular, if a nnunet_plans file is not provided in the config, this method will sample a client
+        which passes the nnunet_plans back to the sever through get_properties RPC. The server then distributes
+        the nnunet_plans to the other clients by including it in the config for subsequent FL rounds.
 
-    def initialize(self, server_round: int, timeout: Optional[float] = None) -> None:
-        """
-        Hook method to allow the server to do some additional initialization
-        prior to training. NunetServer uses this method to sample a
-        client for properties which are required to initialize the server.
-
-        In particular, if a nnunet_plans file is not provided in the config,
-        this method will sample a client which passes the nnunet_plans back to
-        the sever through get_properties RPC. The server then distributes the nnunet_plans
-        to the other clients by including it in the config for subsequent FL rounds.
-
-        Even if the nnunet_plans are included in the config, the server will
-        still poll a client in order to have the required properties to instantiate the
-        model architecture on the server side which is required for checkpointing.
-        These properties include num_segmentation_heads, num_input_channels and
-        enable_deep_supervision.
+        Even if the nnunet_plans are included in the config, the server will still poll a client in order to have the
+        required properties to instantiate the model architecture on the server side which is required for
+        checkpointing. These properties include num_segmentation_heads, num_input_channels and enable_deep_supervision.
 
         Args:
-            server_round (int): The current server round. This hook method is
-                only called with a server_round=0 at the beginning of self.fit
-            timeout (Optional[float], optional): The server's timeout
-                parameter. Useful if one is requesting information from a
-                client Defaults to None.
+            num_rounds (int): The number of server rounds of FL to be performed
+            timeout (Optional[float], optional): The server's timeout parameter. Useful if one is requesting
+                information from a client. Defaults to None, which indicates indefinite timeout.
         """
-        # Get fit config
-        dummy_params = Parameters([], "None")
-        config = self.strategy.configure_fit(server_round, dummy_params, self._client_manager)[0][1].config
 
-        # If no prior checkpoints exist, initialize server by sampling clients to get required properties to set
+        server_nnunet_plans_exist = self.fl_config.get("nnunet_plans") is not None
+
+        # If the per_round_checkpointer has been specified and a state checkpoint exists, we load state
         # NOTE: Inherent assumption that if checkpoint exists for server that it also will exist for client.
-        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
-            # Sample properties from a random client to initialize plans
+        if self.per_round_checkpointer is not None and self.per_round_checkpointer.checkpoint_exists():
+            self._load_server_state()
+        # Otherwise, we're starting training from "scratch"
+        elif self.per_round_checkpointer is not None or not server_nnunet_plans_exist:
+            # 1) If the per_round_checkpointer is not None, then we want to do state checkpointing. So we need
+            #       information from the clients in the form of get_properties.
+            # 2) If the nnUnet plans are not specified, we also need those plans from the client.
+            # In either case, we query clients for the information
             log(INFO, "")
             log(INFO, "[PRE-INIT]")
-            log(
-                INFO,
-                "Requesting initialization of global nnunet plans from one random client via get_properties",
-            )
+            log(INFO, "Requesting properties from one random client via get_properties")
+
+            if not server_nnunet_plans_exist:
+                # If the nnUnet plans are not specified, we also need those plans from the client.
+                log(INFO, "Initialization of global nnunet plans will be sourced from this client")
+            if self.per_round_checkpointer is not None:
+                log(
+                    INFO,
+                    "Properties from NnUnetTrainer will be sourced from this client to facilitate state preservation",
+                )
+
             random_client = self._client_manager.sample(1)[0]
-            ins = GetPropertiesIns(config=config)
-            properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=server_round)
+            ins = GetPropertiesIns(config=self.fl_config | {"current_server_round": 0})
+            properties_res = random_client.get_properties(ins=ins, timeout=timeout, group_id=0)
 
             if properties_res.status.code == Code.OK:
-                log(INFO, "Recieved global nnunet plans from one random client")
+                log(INFO, "Received properties from one random client")
             else:
-                raise Exception("Failed to receive properties from client to initialize nnunet plans")
-
+                raise Exception("Failed to successfully receive properties from client")
             properties = properties_res.properties
 
             # Set attributes of server that are dependent on client properties.
 
             # If config contains nnunet_plans, server side initialization of plans
             # Else client side initialization with nnunet_plans from client
-            if config.get("nnunet_plans") is not None:
-                self.nnunet_plans_bytes = narrow_dict_type(config, "nnunet_plans", bytes)
+            if server_nnunet_plans_exist:
+                self.nnunet_plans_bytes = narrow_dict_type(self.fl_config, "nnunet_plans", bytes)
             else:
                 self.nnunet_plans_bytes = narrow_dict_type(properties, "nnunet_plans", bytes)
+
             self.num_segmentation_heads = narrow_dict_type(properties, "num_segmentation_heads", int)
             self.num_input_channels = narrow_dict_type(properties, "num_input_channels", int)
             self.enable_deep_supervision = narrow_dict_type(properties, "enable_deep_supervision", bool)
 
-            self.nnunet_config = NnunetConfig(config["nnunet_config"])
-
+        if self.per_round_checkpointer is None or not self.per_round_checkpointer.checkpoint_exists():
+            # If we're starting training from scratch, set the nnunet_config property and initialize the server model
+            self.nnunet_config = NnunetConfig(self.fl_config["nnunet_config"])
             self.initialize_server_model()
-        else:
-            # If a checkpoint exists, we load in previously checkpointed values for required properties
-            self.load_server_state()
 
-        # Wrap config functions so that nnunet_plans is included
+        # Wrap config functions so that we are sure the nnunet_plans are included
         new_fit_cfg_fn = add_items_to_config_fn(self.strategy.configure_fit, {"nnunet_plans": self.nnunet_plans_bytes})
         new_eval_cfg_fn = add_items_to_config_fn(
             self.strategy.configure_evaluate, {"nnunet_plans": self.nnunet_plans_bytes}
@@ -230,12 +239,11 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
         setattr(self.strategy, "configure_evaluate", new_eval_cfg_fn)
 
         # Finish
-        self.initialized = True
         log(INFO, "")
 
     # TODO: We should have a get server state method
     # subclass could call parent method and not have to copy entire state.
-    def save_server_state(self) -> None:
+    def _save_server_state(self) -> None:
         """
         Save server checkpoint consisting of model, history, server round, metrics reporter and server name.
             This method overrides parent to also checkpoint nnunet_plans, num_input_channels,
@@ -272,7 +280,7 @@ class NnunetServer(FlServerWithInitializer, FlServerWithCheckpointing):
             f"Saving server state to checkpoint at {self.per_round_checkpointer.checkpoint_path}",
         )
 
-    def load_server_state(self) -> None:
+    def _load_server_state(self) -> None:
         """
         Load server checkpoint consisting of model, history, server name, current round and metrics reporter.
             The method overrides parent to add any necessary state when loading the checkpoint.
